@@ -116,7 +116,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.connector.WebRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericWebRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
   </extensions>

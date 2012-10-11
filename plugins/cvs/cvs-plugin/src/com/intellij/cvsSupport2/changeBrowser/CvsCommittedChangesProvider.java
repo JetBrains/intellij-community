@@ -290,12 +290,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       calendar.set(1970, Calendar.MARCH, 2);
       dateFrom = calendar.getTime();
     }
-    final List<LogInformationWrapper> log = new ArrayList<LogInformationWrapper>();
     final LoadHistoryOperation operation =
       new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
         @Override
         public void consume(LogInformationWrapper logInformationWrapper) {
-          log.add(logInformationWrapper);
+          builder.add(logInformationWrapper);
         }
       });
     final CvsResult executionResult = operation.run(myProject);
@@ -307,7 +306,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       throw executionResult.composeError();
     }
     else {
-      builder.addLogs(log);
       final List<CvsChangeList> versions = builder.getVersions();
       settings.filterChanges(versions);
       return versions;

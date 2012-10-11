@@ -1033,7 +1033,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return getFirstItem(items, null);
   }
 
-  public static <T> T getFirstItem(final Collection<T> items, @Nullable final T def) {
+  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T def) {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 

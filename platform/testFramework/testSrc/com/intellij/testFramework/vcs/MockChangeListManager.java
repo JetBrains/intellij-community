@@ -2,6 +2,7 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +18,7 @@ import java.util.*;
 /**
  * @author Kirill Likhodedov
  */
-public class MockChangeListManager extends ChangeListManager {
+public class MockChangeListManager extends ChangeListManagerEx {
 
   public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
 
@@ -145,7 +146,7 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public Change getChange(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+    return getChange(new FilePathImpl(file));
   }
 
   @Override
@@ -155,7 +156,14 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public Change getChange(FilePath file) {
-    throw new UnsupportedOperationException();
+    for (Change change : getAllChanges()) {
+      ContentRevision before = change.getBeforeRevision();
+      ContentRevision after = change.getAfterRevision();
+      if (after != null && after.getFile().equals(file) || before != null && before.getFile().equals(file)) {
+        return change;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -172,13 +180,21 @@ public class MockChangeListManager extends ChangeListManager {
   @NotNull
   @Override
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    throw new UnsupportedOperationException();
+    return getChangesIn(new FilePathImpl(dir));
   }
 
   @NotNull
   @Override
   public Collection<Change> getChangesIn(FilePath path) {
-    throw new UnsupportedOperationException();
+    List<Change> changes = new ArrayList<Change>();
+    for (Change change : getAllChanges()) {
+      ContentRevision before = change.getBeforeRevision();
+      ContentRevision after = change.getAfterRevision();
+      if (before != null && before.getFile().isUnder(path, false) || after != null && after.getFile().isUnder(path, false)) {
+        changes.add(change);
+      }
+    }
+    return changes;
   }
 
   @Override
@@ -263,7 +279,6 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public void letGo() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -324,4 +339,25 @@ public class MockChangeListManager extends ChangeListManager {
   public String editComment(@NotNull String fromName, String newComment) {
     throw new UnsupportedOperationException();
   }
+
+  @Nullable
+  @Override
+  public LocalChangeList getIdentityChangeList(Change change) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isInUpdate() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Collection<LocalChangeList> getInvolvedListsFilterChanges(Collection<Change> changes, List<Change> validChanges) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void freezeImmediately(@Nullable String reason) {
+  }
+
 }

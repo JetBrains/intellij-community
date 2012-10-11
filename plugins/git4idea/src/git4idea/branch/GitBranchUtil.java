@@ -15,17 +15,24 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.diagnostic.Logger;
 import git4idea.GitBranch;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.ui.branch.GitBranchUiUtil;
+import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitBranchUtil {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
 
   private GitBranchUtil() {}
 
@@ -64,5 +71,20 @@ public class GitBranchUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  static String getCurrentBranchOrRev(@NotNull Collection<GitRepository> repositories) {
+    if (repositories.size() > 1) {
+      GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(repositories);
+      String currentBranch = multiRootBranchConfig.getCurrentBranch();
+      LOG.assertTrue(currentBranch != null, "Repositories have unexpectedly diverged. " + multiRootBranchConfig);
+      return currentBranch;
+    }
+    else {
+      assert !repositories.isEmpty() : "No repositories passed to GitBranchOperationsProcessor.";
+      GitRepository repository = repositories.iterator().next();
+      return GitBranchUiUtil.getBranchNameOrRev(repository);
+    }
   }
 }

@@ -21,8 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,7 +83,7 @@ public class GitUpdateProcess {
     READ_FROM_SETTINGS
   }
 
-  public GitUpdateProcess(@NotNull Project project, @NotNull ProgressIndicator progressIndicator,
+  public GitUpdateProcess(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRepositories = repositories;
@@ -89,8 +91,9 @@ public class GitUpdateProcess {
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
     myMerger = new GitMerger(myProject);
-    mySaver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator,
-      "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
+    mySaver = GitChangesSaver.getSaver(myProject, platformFacade, myGit,
+                                       myProgressIndicator,
+                                       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
     myRootsToSave = new HashSet<VirtualFile>(1);
   }
 
@@ -218,7 +221,9 @@ public class GitUpdateProcess {
   @NotNull
   private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
     Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
-    Map<VirtualFile, Collection<Change>> changesUnderRoots = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(updaters.keySet());
+    Map<VirtualFile, Collection<Change>> changesUnderRoots =
+      new LocalChangesUnderRoots(ChangeListManager.getInstance(myProject), ProjectLevelVcsManager.getInstance(myProject)).
+        getChangesUnderRoots(updaters.keySet());
     for (Map.Entry<VirtualFile, GitUpdater> updaterEntry : updaters.entrySet()) {
       VirtualFile root = updaterEntry.getKey();
       GitUpdater updater = updaterEntry.getValue();

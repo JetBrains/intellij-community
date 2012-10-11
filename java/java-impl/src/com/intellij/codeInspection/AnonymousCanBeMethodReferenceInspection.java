@@ -73,7 +73,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaLocalInspec
             if (methods.length == 1 && aClass.getFields().length == 0) {
               final PsiCodeBlock body = methods[0].getBody();
               final PsiCallExpression callExpression =
-                LambdaCanBeMethReferenceInspection.canBeMethodReferenceProblem(body, methods[0].getParameterList().getParameters());
+                LambdaCanBeMethReferenceInspection.canBeMethodReferenceProblem(body, methods[0].getParameterList().getParameters(), baseClassType);
               if (callExpression != null && callExpression.resolveMethod() != methods[0]) {
                 final PsiElement parent = aClass.getParent();
                 if (parent instanceof PsiNewExpression) {
@@ -113,10 +113,10 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaLocalInspec
         if (methods.length != 1) return;
 
         final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-        final PsiCallExpression callExpression = LambdaCanBeMethReferenceInspection.canBeMethodReferenceProblem(methods[0].getBody(), parameters);
+        final PsiCallExpression callExpression = LambdaCanBeMethReferenceInspection.canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType());
         if (callExpression == null) return;
         final String methodRefText =
-          LambdaCanBeMethReferenceInspection.createMethodReferenceText(callExpression, parameters);
+          LambdaCanBeMethReferenceInspection.createMethodReferenceText(callExpression, parameters, anonymousClass.getBaseClassType());
 
         if (methodRefText != null) {
           final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();

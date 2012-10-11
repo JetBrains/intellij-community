@@ -119,7 +119,7 @@ public class RecordUtil {
       else if (parent instanceof PsiMethodStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
           alreadyPublic = true;
-          alreadyAbstract = !((PsiMethodStub)parent).isDefender();
+          alreadyAbstract = !((PsiMethodStub)parent).isExtensionMethod();
         }
       }
       else if (parent instanceof PsiFieldStub) {

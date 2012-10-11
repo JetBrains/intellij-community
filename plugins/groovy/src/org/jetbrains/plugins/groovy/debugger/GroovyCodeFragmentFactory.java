@@ -144,8 +144,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
                     "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
                     "   final java.lang.Class |c = |loader.parseClass(");
-    javaText.append("\"" + IMPORTS + "class DUMMY { " +
-                       "public groovy.lang.Closure " +
+    javaText.append("\"" + IMPORTS + "class DUMMY" + new Random().nextInt(239) + " { " +
+                    "public groovy.lang.Closure " +
                        EVAL_NAME + " = {" + TEXT + "}}\"");
     javaText.append(", \"DUMMY.groovy\");\n" +
                     "   int |i;\n" +

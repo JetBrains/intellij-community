@@ -15,18 +15,21 @@
  */
 package git4idea;
 
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +77,7 @@ public interface PlatformFacade {
 
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
-  ChangeListManager getChangeListManager(@NotNull Project project);
+  ChangeListManagerEx getChangeListManager(@NotNull Project project);
 
   LocalFileSystem getLocalFileSystem();
 
@@ -93,4 +96,18 @@ public interface PlatformFacade {
    */
   @Nullable
   String getLineSeparator(@NotNull VirtualFile file, boolean detect);
+
+  @NotNull
+  GitVcsSettings getSettings(Project project);
+
+  void saveAllDocuments();
+
+  @Nullable
+  VirtualFile getVirtualFileByPath(@NotNull String path);
+
+  @NotNull
+  ProjectManagerEx getProjectManager();
+
+  @NotNull
+  SaveAndSyncHandler getSaveAndSyncHandler();
 }

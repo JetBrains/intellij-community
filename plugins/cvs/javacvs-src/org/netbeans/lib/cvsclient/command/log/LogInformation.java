@@ -15,8 +15,8 @@ package org.netbeans.lib.cvsclient.command.log;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,11 +37,10 @@ public final class LogInformation {
 	private KeywordSubstitution keywordSubstitution;
 	private String totalRevisions;
 	private String selectedRevisions;
-	private String description;
 	private String locks;
-	private final List<Revision> revisions = new LinkedList<Revision>();
+	private final List<Revision> revisions = new ArrayList<Revision>();
 	private List<SymbolicName> symbolicNames;
-	private StringBuffer symNamesBuffer;
+	private StringBuilder symNamesBuffer;
 
 	// Setup ==================================================================
 
@@ -75,7 +74,7 @@ public final class LogInformation {
 	 * @param rcsFileName New value of property repositoryFilename.
 	 */
 	public void setRcsFileName(String rcsFileName) {
-		this.rcsFileName = rcsFileName;
+		this.rcsFileName = rcsFileName.intern();
 	}
 
 	/** Getter for property headRevision.
@@ -89,7 +88,7 @@ public final class LogInformation {
 	 * @param headRevision New value of property headRevision.
 	 */
 	public void setHeadRevision(String headRevision) {
-		this.headRevision = headRevision;
+		this.headRevision = headRevision.intern();
 	}
 
 	/** Getter for property branch.
@@ -103,7 +102,7 @@ public final class LogInformation {
 	 * @param branch New value of property branch.
 	 */
 	public void setBranch(String branch) {
-		this.branch = branch;
+		this.branch = branch.intern();
 	}
 
 	/** Getter for property accessList.
@@ -117,7 +116,7 @@ public final class LogInformation {
 	 * @param accessList New value of property accessList.
 	 */
 	public void setAccessList(String accessList) {
-		this.accessList = accessList;
+		this.accessList = accessList.intern();
 	}
 
 	/** Getter for property keywordSubstitution.
@@ -145,7 +144,7 @@ public final class LogInformation {
 	 * @param totalRevisions New value of property totalRevisions.
 	 */
 	public void setTotalRevisions(String totalRevisions) {
-		this.totalRevisions = totalRevisions;
+		this.totalRevisions = totalRevisions.intern();
 	}
 
 	/** Getter for property selectedRevisions.
@@ -159,21 +158,7 @@ public final class LogInformation {
 	 * @param selectedRevisions New value of property selectedRevisions.
 	 */
 	public void setSelectedRevisions(String selectedRevisions) {
-		this.selectedRevisions = selectedRevisions;
-	}
-
-	/** Getter for property description.
-	 * @return Value of property description.
-	 */
-	public String getDescription() {
-		return description;
-	}
-
-	/** Setter for property description.
-	 * @param description New value of property description.
-	 */
-	public void setDescription(String description) {
-		this.description = description;
+		this.selectedRevisions = selectedRevisions.intern();
 	}
 
 	/** Getter for property locks.
@@ -187,7 +172,7 @@ public final class LogInformation {
 	 * @param locks New value of property locks.
 	 */
 	public void setLocks(String locks) {
-		this.locks = locks;
+		this.locks = locks.intern();
 	}
 
 	/** adds a revision info  to the LogInformation instance
@@ -208,9 +193,8 @@ public final class LogInformation {
 	 */
 	public Revision getRevision(String number) {
 		final Iterator it = revisions.iterator();
-		Revision item;
 		while (it.hasNext()) {
-			item = (Revision)it.next();
+			Revision item = (Revision)it.next();
 			if (item.getNumber().equals(number)) {
 				return item;
 			}
@@ -223,7 +207,7 @@ public final class LogInformation {
 	 */
 	public void addSymbolicName(String symName, String revisionNumber) {
 		if (symNamesBuffer == null) {
-			symNamesBuffer = new StringBuffer();
+			symNamesBuffer = new StringBuilder();
 		}
 		symNamesBuffer.append(symName);
 		symNamesBuffer.append(' ');
@@ -232,12 +216,10 @@ public final class LogInformation {
 	}
 
 	private void createSymNames() {
-		symbolicNames = new LinkedList<SymbolicName>();
-
+		symbolicNames = new ArrayList<SymbolicName>();
 		if (symNamesBuffer == null) {
 			return;
 		}
-
 		int length = 0;
 		int lastLength = 0;
 		while (length < symNamesBuffer.length()) {
@@ -273,13 +255,11 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		final Iterator it = symbolicNames.iterator();
-		SymbolicName item;
-		final List<SymbolicName> list = new LinkedList<SymbolicName>();
-		while (it.hasNext()) {
-			item = (SymbolicName)it.next();
-			if (item.getRevision().equals(revNumber)) {
-				list.add(item);
+		final List<SymbolicName> list = new ArrayList<SymbolicName>();
+		for (int i = 0; i < symbolicNames.size(); i++) {
+			final SymbolicName symbolicName = symbolicNames.get(i);
+			if (symbolicName.getRevision().equals(revNumber)) {
+				list.add(symbolicName);
 			}
 		}
 		return list;
@@ -304,12 +284,9 @@ public final class LogInformation {
 	 * Return a string representation of this object. Useful for debugging.
 	 */
 	@SuppressWarnings({"HardCodedStringLiteral"})
-        public String toString() {
-		final StringBuffer buf = new StringBuffer(30);
-		buf.append("\nFile: " + ((file != null) ? file.getAbsolutePath() : "null"));
-		buf.append("\nRepositoryFile: " + rcsFileName);
-		buf.append("\nHead revision: " + headRevision);
-		return buf.toString();
+	public String toString() {
+		final String absolutePath = (file != null) ? file.getAbsolutePath() : "null";
+		return "File: " + absolutePath + "\nRepositoryFile: " + rcsFileName + "\nHead revision: " + headRevision;
 	}
 
 }

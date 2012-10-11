@@ -28,16 +28,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitMultiRootBranchConfig {
   
-  private final List<GitRepository> myRepositories;
+  private final Collection<GitRepository> myRepositories;
 
-  public GitMultiRootBranchConfig(@NotNull List<GitRepository> repositories) {
+  public GitMultiRootBranchConfig(@NotNull Collection<GitRepository> repositories) {
     myRepositories = repositories;
   }
 

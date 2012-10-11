@@ -92,7 +92,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
         projectJdksModel.doAdd(type, new Consumer<Sdk>() {
           public void consume(final Sdk jdk) {
             successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
-            myJdkChooser.updateList(jdk, type);
+            myJdkChooser.updateList(jdk, type, projectJdksModel.getSdks());
 
             if (!successfullyAdded[0]) {
               try {
@@ -159,7 +159,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
   public void updateStep() {
     if (!myInitialized) { //lazy default project initialization
-      myJdkChooser.fillList(myType);
+      myJdkChooser.fillList(myType, null);
       final Sdk defaultJdk = getDefaultJdk(myContext);
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);

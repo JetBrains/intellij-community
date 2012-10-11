@@ -31,7 +31,6 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -152,7 +151,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           return false;
         }
         if (type == JavaTokenType.ABSTRACT_KEYWORD) {
-          return !PsiUtil.isExtensionMethod((PsiMethod)parent);
+          return !((PsiMethod)parent).isExtensionMethod();
         }
       }
     }

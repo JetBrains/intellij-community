@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.history.browser.GitCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,9 @@ public interface Git {
 
   @NotNull
   GitCommandResult config(@NotNull GitRepository repository, String... params);
+
+  @NotNull
+  GitCommandResult diff(@NotNull GitRepository repository, @NotNull List<String> parameters, @NotNull String range);
 
   @NotNull
   GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
@@ -107,4 +111,13 @@ public interface Git {
   @NotNull
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
                              @NotNull Collection<VirtualFile> files);
+
+  @NotNull
+  GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message);
+
+  @NotNull
+  GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
 }

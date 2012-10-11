@@ -60,12 +60,6 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     if (originInfo != null) {
       setOriginInfo(originInfo);
     }
-    else {
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null && aClass.getName() != null) {
-        setOriginInfo(aClass.getName());
-      }
-    }
   }
 
   @NotNull
@@ -104,13 +98,21 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     return myMethod.hashCode();
   }
 
-  @NotNull
-  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original, final boolean isStatic) {
-    return createGdkMethod(original, isStatic, null);
+  @Nullable
+  public static PsiClass inferContainingClassByFirstParameter(PsiMethod method) {
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length < 1) return null;
+
+    PsiType type = parameters[0].getType();
+    if (!(type instanceof PsiClassType)) return null;
+
+    return ((PsiClassType)type).resolve();
   }
 
   @NotNull
-  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original, final boolean isStatic, @Nullable final String originInfo) {
+  public static GrGdkMethod createGdkMethod(@NotNull final PsiMethod original,
+                                            final boolean isStatic,
+                                            @Nullable final String originInfo) {
     final Key<CachedValue<GrGdkMethodImpl>> cachedValueKey = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     CachedValue<GrGdkMethodImpl> cachedValue = original.getUserData(cachedValueKey);
     if (cachedValue == null) {

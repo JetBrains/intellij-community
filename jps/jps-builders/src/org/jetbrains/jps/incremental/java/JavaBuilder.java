@@ -44,7 +44,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
+import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
@@ -215,18 +215,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         // form should be considered dirty if the class it is bound to is dirty
-        final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+        final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
         for (File srcFile : filesToCompile) {
           final String srcPath = srcFile.getPath();
-          final String formPath = sourceToFormMap.getState(srcPath);
-          if (formPath == null) {
-            continue;
-          }
-          final File formFile = new File(formPath);
-          if (!excludes.isExcluded(formFile)) {
-            if (formFile.exists()) {
-              FSOperations.markDirty(context, formFile);
-              formsToCompile.add(formFile);
+          final Collection<String> boundForms = sourceToFormMap.getState(srcPath);
+          if (boundForms != null) {
+            for (String formPath : boundForms) {
+              final File formFile = new File(formPath);
+              if (!excludes.isExcluded(formFile)) {
+                if (formFile.exists()) {
+                  FSOperations.markDirty(context, formFile);
+                  formsToCompile.add(formFile);
+                }
+              }
             }
             sourceToFormMap.remove(srcPath);
           }
@@ -950,7 +951,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                       OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
-    final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+    final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+    final Set<File> touchedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
@@ -1036,14 +1038,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
         else {
           final File sourceFile = outputClassFile.getSourceFile();
           if (sourceFile != null) {
-            sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
+            if (touchedFiles.add(sourceFile)) { // clear data once before updating
+              sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
+            }
+            else {
+              sourceToFormMap.appendData(sourceFile.getPath(), formFile.getPath());
+            }
           }
         }
       }
       catch (Exception e) {
         success = false;
-        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(),
-                                                   formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
       }
       finally {
         if (!success) {

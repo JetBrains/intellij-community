@@ -49,6 +49,8 @@ class RenderService {
   private final float myXdpi;
   private final float myYdpi;
 
+  private static final Object PROJECT_KEY = new Object();
+
   RenderService(LayoutLibrary layoutLibrary,
                 @NotNull RenderResources resourceResolver,
                 @NotNull RenderResources legacyResourceResolver,
@@ -99,8 +101,11 @@ class RenderService {
 
     final RenderResources resolver = myLayoutLib.getRevision() > 0 ? myResourceResolver : myLegacyResourceResolver;
 
+    // todo: support caching
+
+    myLayoutLib.clearCaches(PROJECT_KEY);
     final SessionParams params =
-      new SessionParams(parser, RenderingMode.NORMAL, this, dimension.width, dimension.height, density, xdpi, ydpi, resolver,
+      new SessionParams(parser, RenderingMode.NORMAL, PROJECT_KEY, dimension.width, dimension.height, density, xdpi, ydpi, resolver,
                         myProjectCallback, minSdkVersion, targetSdkVersion, log);
 
     params.setExtendedViewInfoMode(false);

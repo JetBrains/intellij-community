@@ -48,7 +48,9 @@ public class GdkMethodUtil {
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
   );
-  @NonNls public static final String WITH = "with";
+  @NonNls private static final String WITH = "with";
+  @NonNls private static final String IDENTITY = "identity";
+
   @NonNls public static final String USE = "use";
   @NonNls public static final String EACH_WITH_INDEX = "eachWithIndex";
   @NonNls public static final String INJECT = "inject";
@@ -95,14 +97,13 @@ public class GdkMethodUtil {
    *
    * @param place - context of processing
    * @param processor - processor to use
-   * @param resolveContext - qualifier of <code>use</code> call
    * @param categoryClass - category class to process
    * @return
    */
   public static boolean processCategoryMethods(final GroovyPsiElement place,
                                                final PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @NotNull PsiClass categoryClass) {
+                                               @NotNull final ResolveState state,
+                                               @NotNull final PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
@@ -110,7 +111,7 @@ public class GdkMethodUtil {
           if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
           final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
           if (parameters.length == 0) return true;
-          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
+          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false, categoryClass.getName()), state);
         }
         return true;
       }
@@ -120,6 +121,9 @@ public class GdkMethodUtil {
 
   public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor) {
     GrMethodCall call = checkMethodCall(block, WITH);
+    if (call == null) {
+      call = checkMethodCall(block, IDENTITY);
+    }
     if (call == null) return true;
     final GrExpression invoked = call.getInvokedExpression();
     LOG.assertTrue(invoked instanceof GrReferenceExpression);
@@ -161,12 +165,16 @@ public class GdkMethodUtil {
         final PsiElement pparent = parent.getParent();
         if (pparent instanceof GrMethodCall) {
           final PsiMethod method = ((GrMethodCall)pparent).resolveMethod();
-          if (method instanceof GrGdkMethod && WITH.equals(method.getName())) {
+          if (method instanceof GrGdkMethod && isWithName(method.getName())) {
             return true;
           }
         }
       }
     }
     return false;
+  }
+
+  public static boolean isWithName(String name) {
+    return WITH.equals(name) || IDENTITY.equals(name);
   }
 }

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiVariable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
  * @author Sergey Evdokimov
@@ -215,7 +215,7 @@ class FooSpec extends spock.lang.Specification {
   }
 
   public void testVariable_resolved() {
-    myFixture.enableInspections(GroovyAssignabilityCheckInspection, GroovyUnresolvedAccessInspection)
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection)
 
     myFixture.configureByText("FooSpec.groovy", """\
 class FooSpec extends spock.lang.Specification {

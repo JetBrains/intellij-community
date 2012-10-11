@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
@@ -37,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author nik
@@ -188,23 +188,25 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void rebuildAll() {
+    doBuild(CompileScopeTestBuilder.rebuild().all()).assertSuccessful();
+  }
+
+  protected BuildResult doBuild(CompileScopeTestBuilder scope) {
     ProjectDescriptor descriptor = createProjectDescriptor(BuildLoggingManager.DEFAULT);
     try {
-      CompileScope scope = new CompileScopeImpl(true, BuilderRegistry.getInstance().getTargetTypes(), Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>,Set<File>>emptyMap());
-      doBuild(descriptor, scope, false, true, false).assertSuccessful();
+      return doBuild(descriptor, scope);
     }
     finally {
       descriptor.release();
     }
   }
 
-  protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScope scope,
-                                final boolean make, final boolean rebuild, final boolean forceCleanCaches) {
+  protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
     IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL, null);
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {
-      builder.build(scope, make, rebuild, forceCleanCaches);
+      builder.build(scopeBuilder.build(), scopeBuilder.getBuildType() == BuildType.MAKE, scopeBuilder.getBuildType() == BuildType.PROJECT_REBUILD, false);
     }
     catch (RebuildRequestedException e) {
       throw new RuntimeException(e);
@@ -257,6 +259,15 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected String getProjectRelativePath(String path) {
     assertNotNull(myProjectDir);
     final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    return FileUtil.getRelativePath(projectDir, path, '/');
+    String dataStorageRoot = FileUtil.toSystemIndependentName(myDataStorageRoot.getAbsolutePath());
+    if (FileUtil.isAncestor(projectDir, path, true)) {
+      return FileUtil.getRelativePath(projectDir, path, '/');
+    }
+    else if (FileUtil.isAncestor(dataStorageRoot, path, true)) {
+      return FileUtil.getRelativePath(dataStorageRoot, path, '/');
+    }
+    else {
+      return path;
+    }
   }
 }

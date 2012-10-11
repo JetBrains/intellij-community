@@ -17,6 +17,8 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.ItemRemovable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -32,14 +34,15 @@ public class TableUtil {
   }
 
   public interface ItemChecker {
-    boolean isOperationApplyable(TableModel model, int row);
+    boolean isOperationApplyable(@NotNull TableModel model, int row);
   }
 
-  public static List<Object[]> removeSelectedItems(JTable table) {
+  @NotNull
+  public static List<Object[]> removeSelectedItems(@NotNull JTable table) {
     return removeSelectedItems(table, null);
   }
 
-  public static void selectRows(final JTable table, final int[] viewRows) {
+  public static void selectRows(@NotNull JTable table, @NotNull int[] viewRows) {
     ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.clearSelection();
     int count = table.getRowCount();
@@ -50,7 +53,7 @@ public class TableUtil {
     }
   }
 
-  public static void scrollSelectionToVisible(JTable table){
+  public static void scrollSelectionToVisible(@NotNull JTable table){
     ListSelectionModel selectionModel = table.getSelectionModel();
     int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
@@ -67,7 +70,8 @@ public class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
-  public static List<Object[]> removeSelectedItems(JTable table, ItemChecker applyable) {
+  @NotNull
+  public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
     if (table.isEditing()){
       table.getCellEditor().stopCellEditing();
     }
@@ -107,7 +111,7 @@ public class TableUtil {
     return removedItems;
   }
 
-  public static int moveSelectedItemsUp(JTable table) {
+  public static int moveSelectedItemsUp(@NotNull JTable table) {
     if (table.isEditing()){
       table.getCellEditor().stopCellEditing();
     }
@@ -134,7 +138,7 @@ public class TableUtil {
     return counter;
   }
 
-  public static int moveSelectedItemsDown(JTable table) {
+  public static int moveSelectedItemsDown(@NotNull JTable table) {
     if (table.isEditing()){
       table.getCellEditor().stopCellEditing();
     }
@@ -161,7 +165,7 @@ public class TableUtil {
     return counter;
   }
 
-  public static void editCellAt(final JTable table, int row, int column) {
+  public static void editCellAt(@NotNull JTable table, int row, int column) {
     if (table.editCellAt(row, column)) {
       final Component component = table.getEditorComponent();
       if (component != null) {
@@ -170,7 +174,7 @@ public class TableUtil {
     }
   }
 
-  public static void stopEditing(JTable table) {
+  public static void stopEditing(@NotNull JTable table) {
     if (table.isEditing()) {
       final TableCellEditor cellEditor = table.getCellEditor();
       if (cellEditor != null) {
@@ -190,12 +194,12 @@ public class TableUtil {
     }
   }
 
-  public static void ensureSelectionExists(JTable table) {
+  public static void ensureSelectionExists(@NotNull JTable table) {
     if (table.getSelectedRow() != -1 || table.getRowCount() == 0) return;
     table.setRowSelectionInterval(0, 0);
   }
 
-  public static void configureAllowedCellSelection(final JTable table, final Condition<Point> cellCondition) {
+  public static void configureAllowedCellSelection(@NotNull JTable table, @NotNull Condition<Point> cellCondition) {
     for (String keyStroke : new String[]{"ENTER","TAB","shift TAB","RIGHT","LEFT","UP","DOWN"}) {
       final Object key = SwingActionWrapper.getKeyForActionMap(table, KeyStroke.getKeyStroke(keyStroke));
       if (key != null) {
@@ -205,14 +209,14 @@ public class TableUtil {
   }
 
   public static class MyFocusAction extends SwingActionWrapper<JTable> {
-
     private final Condition<Point> myCellCondition;
 
-    public MyFocusAction(JTable table, Condition<Point> cellCondition, Object key) {
+    public MyFocusAction(@NotNull JTable table, @NotNull Condition<Point> cellCondition, @NotNull Object key) {
       super(table, key);
       myCellCondition = cellCondition;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final JTable table = getComponent();
       int originalRow = table.getSelectedRow();

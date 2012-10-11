@@ -150,7 +150,8 @@ public class InlineUtil {
   }
 
   private static PsiExpression surroundWithCast(PsiVariable variable, PsiExpression expr, PsiExpression expression) {
-    if (expression.getParent() instanceof PsiReferenceExpression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiReferenceExpression || parent instanceof PsiExpressionList) {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
       PsiTypeElement castTypeElement = cast.getCastType();
       assert castTypeElement != null;
@@ -159,6 +160,9 @@ public class InlineUtil {
       assert operand != null;
       operand.replace(expr);
       expr = (PsiTypeCastExpression)expr.replace(cast);
+      if (RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expr)) {
+        expr = (PsiExpression)expr.replace(((PsiTypeCastExpression)expr).getOperand());
+      }
     }
     return expr;
   }

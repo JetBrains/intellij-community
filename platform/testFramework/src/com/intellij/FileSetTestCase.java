@@ -75,7 +75,7 @@ public abstract class FileSetTestCase extends TestSuite {
       if (myPattern != null && !myPattern.matcher(file.getPath()).matches()){
         return;
       }
-      final ActualTest t = new ActualTest(file);
+      final ActualTest t = new ActualTest(file, createTestName(file));
       addTest(t);
     }
   }
@@ -84,11 +84,17 @@ public abstract class FileSetTestCase extends TestSuite {
     return "---";
   }
 
+  private static String createTestName(File testFile) {
+    return testFile.getName();
+  }
+
   private class ActualTest extends LightPlatformTestCase {
     private final File myTestFile;
+    private final String myTestName;
 
-    public ActualTest(File testFile) {
+    public ActualTest(File testFile, String testName) {
       myTestFile = testFile;
+      myTestName = testName;
     }
 
     @Override
@@ -162,7 +168,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     public String getName() {
-      return myTestFile.getAbsolutePath();
+      return myTestName;
     }
   }
 }

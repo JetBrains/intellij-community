@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
@@ -147,7 +146,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testMultiCatch() throws Exception { doTest(false, false); }
   public void testTryWithResources() throws Exception { doTest(false, false); }
-  public void testTryWithResourcesWarn() throws Exception { doTest(true, false, new DefUseInspection(), new DataFlowInspection()); }
+  public void testTryWithResourcesWarn() throws Exception { doTest(true, false, new DefUseInspection()); }
   public void testSafeVarargsApplicability() throws Exception { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
   public void testPreciseRethrow() throws Exception { doTest(false, false); }

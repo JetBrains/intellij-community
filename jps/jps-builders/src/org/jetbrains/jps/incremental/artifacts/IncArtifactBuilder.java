@@ -62,7 +62,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       final Collection<String> deletedFiles = pd.fsState.getAndClearDeletedPaths(target);
       final Map<BuildRootDescriptor, Set<File>> filesToRecompile = pd.fsState.getSourcesToRecompile(context, target);
       if (deletedFiles.isEmpty() && filesToRecompile.isEmpty()) {
-        state.markUpToDate(context);
         return;
       }
 
@@ -142,10 +141,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       context.checkCanceled();
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping);
-      final boolean processed = builder.buildJars();
-      if (processed && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-        state.markUpToDate(context);
-      }
+      builder.buildJars();
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -218,7 +214,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
           for (ArtifactRootDescriptor descriptor : descriptors) {
             try {
-              fsState.markDirty(null, file, descriptor, null);
+              fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage());
             }
             catch (IOException ignored) {
             }

@@ -229,27 +229,18 @@ public class MavenModelConverter {
 
   private static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Set<String> pluginKeys = new THashSet<String>();
     Build build = mavenModel.getBuild();
-    doConvertPlugins(build, false, result, pluginKeys);
-    if (build != null) doConvertPlugins(build.getPluginManagement(), true, result, pluginKeys);
-    return result;
-  }
 
-  private static void doConvertPlugins(PluginContainer container,
-                                       boolean management,
-                                       List<MavenPlugin> result,
-                                       Set<String> pluginKeys) throws RemoteException {
-    if (container == null) return;
-
-    List<Plugin> plugins = container.getPlugins();
-    if (plugins == null) return;
-
-    for (Plugin each : plugins) {
-      String key = each.getGroupId() + ":" + each.getArtifactId();
-      result.add(convertPlugin(management, each));
-      pluginKeys.add(key);
+    if (build != null) {
+      List<Plugin> plugins = build.getPlugins();
+      if (plugins != null) {
+        for (Plugin each : plugins) {
+          result.add(convertPlugin(false, each));
+        }
+      }
     }
+
+    return result;
   }
 
   private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) throws RemoteException {

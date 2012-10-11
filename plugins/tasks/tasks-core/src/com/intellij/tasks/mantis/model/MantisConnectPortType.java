@@ -7,326 +7,387 @@
 
 package com.intellij.tasks.mantis.model;
 
-public interface MantisConnectPortType extends java.rmi.Remote {
-    public java.lang.String mc_version() throws java.rmi.RemoteException;
+import java.math.BigInteger;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
-    /**
-     * Get the enumeration for statuses.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_status(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+public interface MantisConnectPortType extends Remote {
+  String mc_version() throws RemoteException;
 
-    /**
-     * Get the enumeration for priorities.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_priorities(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for statuses.
+   */
+  ObjectRef[] mc_enum_status(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for severities.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_severities(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for priorities.
+   */
+  ObjectRef[] mc_enum_priorities(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for reproducibilities.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_reproducibilities(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for severities.
+   */
+  ObjectRef[] mc_enum_severities(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for projections.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_projections(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for reproducibilities.
+   */
+  ObjectRef[] mc_enum_reproducibilities(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for ETAs.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_etas(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for projections.
+   */
+  ObjectRef[] mc_enum_projections(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for resolutions.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_resolutions(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for ETAs.
+   */
+  ObjectRef[] mc_enum_etas(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for access levels.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_access_levels(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for resolutions.
+   */
+  ObjectRef[] mc_enum_resolutions(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for project statuses.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_project_status(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for access levels.
+   */
+  ObjectRef[] mc_enum_access_levels(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for project view states.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_project_view_states(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for project statuses.
+   */
+  ObjectRef[] mc_enum_project_status(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for view states.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_view_states(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for project view states.
+   */
+  ObjectRef[] mc_enum_project_view_states(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for custom field types.
-     */
-    public com.intellij.tasks.mantis.model.ObjectRef[] mc_enum_custom_field_types(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for view states.
+   */
+  ObjectRef[] mc_enum_view_states(String username, String password) throws RemoteException;
 
-    /**
-     * Get the enumeration for the specified enumeration type.
-     */
-    public java.lang.String mc_enum_get(java.lang.String username, java.lang.String password, java.lang.String enumeration) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for custom field types.
+   */
+  ObjectRef[] mc_enum_custom_field_types(String username, String password) throws RemoteException;
 
-    /**
-     * Check there exists an issue with the specified id.
-     */
-    public boolean mc_issue_exists(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id) throws java.rmi.RemoteException;
+  /**
+   * Get the enumeration for the specified enumeration type.
+   */
+  String mc_enum_get(String username, String password, String enumeration) throws RemoteException;
 
-    /**
-     * Get the issue with the specified id.
-     */
-    public com.intellij.tasks.mantis.model.IssueData mc_issue_get(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id) throws java.rmi.RemoteException;
+  /**
+   * Check there exists an issue with the specified id.
+   */
+  boolean mc_issue_exists(String username, String password, BigInteger issue_id) throws RemoteException;
 
-    /**
-     * Get the latest submitted issue in the specified project.
-     */
-    public java.math.BigInteger mc_issue_get_biggest_id(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the issue with the specified id.
+   */
+  IssueData mc_issue_get(String username, String password, BigInteger issue_id) throws RemoteException;
 
-    /**
-     * Get the id of the issue with the specified summary.
-     */
-    public java.math.BigInteger mc_issue_get_id_from_summary(java.lang.String username, java.lang.String password, java.lang.String summary) throws java.rmi.RemoteException;
+  /**
+   * Get the latest submitted issue in the specified project.
+   */
+  BigInteger mc_issue_get_biggest_id(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Submit the specified issue details.
-     */
-    public java.math.BigInteger mc_issue_add(java.lang.String username, java.lang.String password, com.intellij.tasks.mantis.model.IssueData issue) throws java.rmi.RemoteException;
+  /**
+   * Get the id of the issue with the specified summary.
+   */
+  BigInteger mc_issue_get_id_from_summary(String username, String password, String summary) throws RemoteException;
 
-    /**
-     * Update Issue method.
-     */
-    public boolean mc_issue_update(java.lang.String username, java.lang.String password, java.math.BigInteger issueId, com.intellij.tasks.mantis.model.IssueData issue) throws java.rmi.RemoteException;
+  /**
+   * Submit the specified issue details.
+   */
+  BigInteger mc_issue_add(String username, String password, IssueData issue) throws RemoteException;
 
-    /**
-     * Sets the tags for a specified issue.
-     */
-    public boolean mc_issue_set_tags(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, com.intellij.tasks.mantis.model.TagData[] tags) throws java.rmi.RemoteException;
+  /**
+   * Update Issue method.
+   */
+  boolean mc_issue_update(String username, String password, BigInteger issueId, IssueData issue) throws RemoteException;
 
-    /**
-     * Delete the issue with the specified id.
-     */
-    public boolean mc_issue_delete(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id) throws java.rmi.RemoteException;
+  /**
+   * Sets the tags for a specified issue.
+   */
+  boolean mc_issue_set_tags(String username, String password, BigInteger issue_id, TagData[] tags) throws RemoteException;
 
-    /**
-     * Submit a new note.
-     */
-    public java.math.BigInteger mc_issue_note_add(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, com.intellij.tasks.mantis.model.IssueNoteData note) throws java.rmi.RemoteException;
+  /**
+   * Delete the issue with the specified id.
+   */
+  boolean mc_issue_delete(String username, String password, BigInteger issue_id) throws RemoteException;
 
-    /**
-     * Delete the note with the specified id.
-     */
-    public boolean mc_issue_note_delete(java.lang.String username, java.lang.String password, java.math.BigInteger issue_note_id) throws java.rmi.RemoteException;
+  /**
+   * Submit a new note.
+   */
+  BigInteger mc_issue_note_add(String username, String password, BigInteger issue_id, IssueNoteData note) throws RemoteException;
 
-    /**
-     * Update a specific note of a specific issue.
-     */
-    public boolean mc_issue_note_update(java.lang.String username, java.lang.String password, com.intellij.tasks.mantis.model.IssueNoteData note) throws java.rmi.RemoteException;
+  /**
+   * Delete the note with the specified id.
+   */
+  boolean mc_issue_note_delete(String username, String password, BigInteger issue_note_id) throws RemoteException;
 
-    /**
-     * Submit a new relationship.
-     */
-    public java.math.BigInteger mc_issue_relationship_add(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, com.intellij.tasks.mantis.model.RelationshipData relationship) throws java.rmi.RemoteException;
+  /**
+   * Update a specific note of a specific issue.
+   */
+  boolean mc_issue_note_update(String username, String password, IssueNoteData note) throws RemoteException;
 
-    /**
-     * Delete the relationship for the specified issue.
-     */
-    public boolean mc_issue_relationship_delete(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, java.math.BigInteger relationship_id) throws java.rmi.RemoteException;
+  /**
+   * Submit a new relationship.
+   */
+  BigInteger mc_issue_relationship_add(String username,
+                                       String password,
+                                       BigInteger issue_id,
+                                       RelationshipData relationship) throws RemoteException;
 
-    /**
-     * Submit a new issue attachment.
-     */
-    public java.math.BigInteger mc_issue_attachment_add(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, java.lang.String name, java.lang.String file_type, byte[] content) throws java.rmi.RemoteException;
+  /**
+   * Delete the relationship for the specified issue.
+   */
+  boolean mc_issue_relationship_delete(String username, String password, BigInteger issue_id, BigInteger relationship_id)
+    throws RemoteException;
 
-    /**
-     * Delete the issue attachment with the specified id.
-     */
-    public boolean mc_issue_attachment_delete(java.lang.String username, java.lang.String password, java.math.BigInteger issue_attachment_id) throws java.rmi.RemoteException;
+  /**
+   * Submit a new issue attachment.
+   */
+  BigInteger mc_issue_attachment_add(String username, String password, BigInteger issue_id, String name, String file_type, byte[] content)
+    throws RemoteException;
 
-    /**
-     * Get the data for the specified issue attachment.
-     */
-    public byte[] mc_issue_attachment_get(java.lang.String username, java.lang.String password, java.math.BigInteger issue_attachment_id) throws java.rmi.RemoteException;
+  /**
+   * Delete the issue attachment with the specified id.
+   */
+  boolean mc_issue_attachment_delete(String username, String password, BigInteger issue_attachment_id) throws RemoteException;
 
-    /**
-     * Add a new project to the tracker (must have admin privileges)
-     */
-    public java.math.BigInteger mc_project_add(java.lang.String username, java.lang.String password, com.intellij.tasks.mantis.model.ProjectData project) throws java.rmi.RemoteException;
+  /**
+   * Get the data for the specified issue attachment.
+   */
+  byte[] mc_issue_attachment_get(String username, String password, BigInteger issue_attachment_id) throws RemoteException;
 
-    /**
-     * Add a new project to the tracker (must have admin privileges)
-     */
-    public boolean mc_project_delete(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Add a new project to the tracker (must have admin privileges)
+   */
+  BigInteger mc_project_add(String username, String password, ProjectData project) throws RemoteException;
 
-    /**
-     * Update a specific project to the tracker (must have admin privileges)
-     */
-    public boolean mc_project_update(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, com.intellij.tasks.mantis.model.ProjectData project) throws java.rmi.RemoteException;
+  /**
+   * Add a new project to the tracker (must have admin privileges)
+   */
+  boolean mc_project_delete(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the id of the project with the specified name.
-     */
-    public java.math.BigInteger mc_project_get_id_from_name(java.lang.String username, java.lang.String password, java.lang.String project_name) throws java.rmi.RemoteException;
+  /**
+   * Update a specific project to the tracker (must have admin privileges)
+   */
+  boolean mc_project_update(String username, String password, BigInteger project_id, ProjectData project) throws RemoteException;
 
-    /**
-     * Get the issues that match the specified project id and paging
-     * details.
-     */
-    public com.intellij.tasks.mantis.model.IssueData[] mc_project_get_issues(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get the id of the project with the specified name.
+   */
+  BigInteger mc_project_get_id_from_name(String username, String password, String project_name) throws RemoteException;
 
-    /**
-     * Get the issue headers that match the specified project id and
-     * paging details.
-     */
-    public com.intellij.tasks.mantis.model.IssueHeaderData[] mc_project_get_issue_headers(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get the issues that match the specified project id and paging
+   * details.
+   */
+  IssueData[] mc_project_get_issues(String username,
+                                    String password,
+                                    BigInteger project_id,
+                                    BigInteger page_number,
+                                    BigInteger per_page) throws RemoteException;
 
-    /**
-     * Get appropriate users assigned to a project by access level.
-     */
-    public com.intellij.tasks.mantis.model.AccountData[] mc_project_get_users(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.math.BigInteger access) throws java.rmi.RemoteException;
+  /**
+   * Get the issue headers that match the specified project id and
+   * paging details.
+   */
+  IssueHeaderData[] mc_project_get_issue_headers(String username,
+                                                 String password,
+                                                 BigInteger project_id,
+                                                 BigInteger page_number,
+                                                 BigInteger per_page) throws RemoteException;
 
-    /**
-     * Get the list of projects that are accessible to the logged
-     * in user.
-     */
-    public com.intellij.tasks.mantis.model.ProjectData[] mc_projects_get_user_accessible(java.lang.String username, java.lang.String password) throws java.rmi.RemoteException;
+  /**
+   * Get appropriate users assigned to a project by access level.
+   */
+  AccountData[] mc_project_get_users(String username,
+                                     String password,
+                                     BigInteger project_id,
+                                     BigInteger access) throws RemoteException;
 
-    /**
-     * Get the categories belonging to the specified project.
-     */
-    public java.lang.String[] mc_project_get_categories(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the list of projects that are accessible to the logged
+   * in user.
+   */
+  ProjectData[] mc_projects_get_user_accessible(String username, String password) throws RemoteException;
 
-    /**
-     * Add a category of specific project.
-     */
-    public java.math.BigInteger mc_project_add_category(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.lang.String p_category_name) throws java.rmi.RemoteException;
+  /**
+   * Get the categories belonging to the specified project.
+   */
+  String[] mc_project_get_categories(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Delete a category of specific project.
-     */
-    public java.math.BigInteger mc_project_delete_category(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.lang.String p_category_name) throws java.rmi.RemoteException;
+  /**
+   * Add a category of specific project.
+   */
+  BigInteger mc_project_add_category(String username, String password, BigInteger project_id, String p_category_name)
+    throws RemoteException;
 
-    /**
-     * Rename a category of specific project.
-     */
-    public java.math.BigInteger mc_project_rename_category_by_name(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.lang.String p_category_name, java.lang.String p_category_name_new, java.math.BigInteger p_assigned_to) throws java.rmi.RemoteException;
+  /**
+   * Delete a category of specific project.
+   */
+  BigInteger mc_project_delete_category(String username, String password, BigInteger project_id, String p_category_name)
+    throws RemoteException;
 
-    /**
-     * Get the versions belonging to the specified project.
-     */
-    public com.intellij.tasks.mantis.model.ProjectVersionData[] mc_project_get_versions(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Rename a category of specific project.
+   */
+  BigInteger mc_project_rename_category_by_name(String username,
+                                                String password,
+                                                BigInteger project_id,
+                                                String p_category_name,
+                                                String p_category_name_new,
+                                                BigInteger p_assigned_to) throws RemoteException;
 
-    /**
-     * Submit the specified version details.
-     */
-    public java.math.BigInteger mc_project_version_add(java.lang.String username, java.lang.String password, com.intellij.tasks.mantis.model.ProjectVersionData version) throws java.rmi.RemoteException;
+  /**
+   * Get the versions belonging to the specified project.
+   */
+  ProjectVersionData[] mc_project_get_versions(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Update version method.
-     */
-    public boolean mc_project_version_update(java.lang.String username, java.lang.String password, java.math.BigInteger version_id, com.intellij.tasks.mantis.model.ProjectVersionData version) throws java.rmi.RemoteException;
+  /**
+   * Submit the specified version details.
+   */
+  BigInteger mc_project_version_add(String username, String password, ProjectVersionData version) throws RemoteException;
 
-    /**
-     * Delete the version with the specified id.
-     */
-    public boolean mc_project_version_delete(java.lang.String username, java.lang.String password, java.math.BigInteger version_id) throws java.rmi.RemoteException;
+  /**
+   * Update version method.
+   */
+  boolean mc_project_version_update(String username,
+                                    String password,
+                                    BigInteger version_id,
+                                    ProjectVersionData version) throws RemoteException;
 
-    /**
-     * Get the released versions that belong to the specified project.
-     */
-    public com.intellij.tasks.mantis.model.ProjectVersionData[] mc_project_get_released_versions(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Delete the version with the specified id.
+   */
+  boolean mc_project_version_delete(String username, String password, BigInteger version_id) throws RemoteException;
 
-    /**
-     * Get the unreleased version that belong to the specified project.
-     */
-    public com.intellij.tasks.mantis.model.ProjectVersionData[] mc_project_get_unreleased_versions(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the released versions that belong to the specified project.
+   */
+  ProjectVersionData[] mc_project_get_released_versions(String username,
+                                                        String password,
+                                                        BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the attachments that belong to the specified project.
-     */
-    public com.intellij.tasks.mantis.model.ProjectAttachmentData[] mc_project_get_attachments(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the unreleased version that belong to the specified project.
+   */
+  ProjectVersionData[] mc_project_get_unreleased_versions(String username,
+                                                          String password,
+                                                          BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the custom fields that belong to the specified project.
-     */
-    public com.intellij.tasks.mantis.model.CustomFieldDefinitionData[] mc_project_get_custom_fields(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the attachments that belong to the specified project.
+   */
+  ProjectAttachmentData[] mc_project_get_attachments(String username,
+                                                     String password,
+                                                     BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the data for the specified project attachment.
-     */
-    public byte[] mc_project_attachment_get(java.lang.String username, java.lang.String password, java.math.BigInteger project_attachment_id) throws java.rmi.RemoteException;
+  /**
+   * Get the custom fields that belong to the specified project.
+   */
+  CustomFieldDefinitionData[] mc_project_get_custom_fields(String username,
+                                                           String password,
+                                                           BigInteger project_id) throws RemoteException;
 
-    /**
-     * Submit a new project attachment.
-     */
-    public java.math.BigInteger mc_project_attachment_add(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.lang.String name, java.lang.String title, java.lang.String description, java.lang.String file_type, byte[] content) throws java.rmi.RemoteException;
+  /**
+   * Get the data for the specified project attachment.
+   */
+  byte[] mc_project_attachment_get(String username, String password, BigInteger project_attachment_id) throws RemoteException;
 
-    /**
-     * Delete the project attachment with the specified id.
-     */
-    public boolean mc_project_attachment_delete(java.lang.String username, java.lang.String password, java.math.BigInteger project_attachment_id) throws java.rmi.RemoteException;
+  /**
+   * Submit a new project attachment.
+   */
+  BigInteger mc_project_attachment_add(String username,
+                                       String password,
+                                       BigInteger project_id,
+                                       String name,
+                                       String title,
+                                       String description,
+                                       String file_type,
+                                       byte[] content) throws RemoteException;
 
-    /**
-     * Get the subprojects ID of a specific project.
-     */
-    public java.lang.String[] mc_project_get_all_subprojects(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Delete the project attachment with the specified id.
+   */
+  boolean mc_project_attachment_delete(String username, String password, BigInteger project_attachment_id) throws RemoteException;
 
-    /**
-     * Get the filters defined for the specified project.
-     */
-    public com.intellij.tasks.mantis.model.FilterData[] mc_filter_get(java.lang.String username, java.lang.String password, java.math.BigInteger project_id) throws java.rmi.RemoteException;
+  /**
+   * Get the subprojects ID of a specific project.
+   */
+  String[] mc_project_get_all_subprojects(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the issues that match the specified filter and paging details.
-     */
-    public com.intellij.tasks.mantis.model.IssueData[] mc_filter_get_issues(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.math.BigInteger filter_id, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get the filters defined for the specified project.
+   */
+  FilterData[] mc_filter_get(String username, String password, BigInteger project_id) throws RemoteException;
 
-    /**
-     * Get the issue headers that match the specified filter and paging
-     * details.
-     */
-    public com.intellij.tasks.mantis.model.IssueHeaderData[] mc_filter_get_issue_headers(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.math.BigInteger filter_id, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get the issues that match the specified filter and paging details.
+   */
+  IssueData[] mc_filter_get_issues(String username,
+                                   String password,
+                                   BigInteger project_id,
+                                   BigInteger filter_id,
+                                   BigInteger page_number,
+                                   BigInteger per_page) throws RemoteException;
 
-    /**
-     * Get the value for the specified configuration variable.
-     */
-    public java.lang.String mc_config_get_string(java.lang.String username, java.lang.String password, java.lang.String config_var) throws java.rmi.RemoteException;
+  /**
+   * Get the issue headers that match the specified filter and paging
+   * details.
+   */
+  IssueHeaderData[] mc_filter_get_issue_headers(String username,
+                                                String password,
+                                                BigInteger project_id,
+                                                BigInteger filter_id,
+                                                BigInteger page_number,
+                                                BigInteger per_page) throws RemoteException;
 
-    /**
-     * Notifies MantisBT of a check-in for the issue with the specified
-     * id.
-     */
-    public boolean mc_issue_checkin(java.lang.String username, java.lang.String password, java.math.BigInteger issue_id, java.lang.String comment, boolean fixed) throws java.rmi.RemoteException;
+  /**
+   * Get the value for the specified configuration variable.
+   */
+  String mc_config_get_string(String username, String password, String config_var) throws RemoteException;
 
-    /**
-     * Get the value for the specified user preference.
-     */
-    public java.lang.String mc_user_pref_get_pref(java.lang.String username, java.lang.String password, java.math.BigInteger project_id, java.lang.String pref_name) throws java.rmi.RemoteException;
+  /**
+   * Notifies MantisBT of a check-in for the issue with the specified
+   * id.
+   */
+  boolean mc_issue_checkin(String username, String password, BigInteger issue_id, String comment, boolean fixed) throws RemoteException;
 
-    /**
-     * Get profiles available to the current user.
-     */
-    public com.intellij.tasks.mantis.model.ProfileDataSearchResult mc_user_profiles_get_all(java.lang.String username, java.lang.String password, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get the value for the specified user preference.
+   */
+  String mc_user_pref_get_pref(String username, String password, BigInteger project_id, String pref_name) throws RemoteException;
 
-    /**
-     * Gets all the tags.
-     */
-    public com.intellij.tasks.mantis.model.TagDataSearchResult mc_tag_get_all(java.lang.String username, java.lang.String password, java.math.BigInteger page_number, java.math.BigInteger per_page) throws java.rmi.RemoteException;
+  /**
+   * Get profiles available to the current user.
+   */
+  ProfileDataSearchResult mc_user_profiles_get_all(String username,
+                                                   String password,
+                                                   BigInteger page_number,
+                                                   BigInteger per_page) throws RemoteException;
 
-    /**
-     * Creates a tag.
-     */
-    public java.math.BigInteger mc_tag_add(java.lang.String username, java.lang.String password, com.intellij.tasks.mantis.model.TagData tag) throws java.rmi.RemoteException;
+  /**
+   * Gets all the tags.
+   */
+  TagDataSearchResult mc_tag_get_all(String username,
+                                     String password,
+                                     BigInteger page_number,
+                                     BigInteger per_page) throws RemoteException;
 
-    /**
-     * Deletes a tag.
-     */
-    public boolean mc_tag_delete(java.lang.String username, java.lang.String password, java.math.BigInteger tag_id) throws java.rmi.RemoteException;
+  /**
+   * Creates a tag.
+   */
+  BigInteger mc_tag_add(String username, String password, TagData tag) throws RemoteException;
+
+  /**
+   * Deletes a tag.
+   */
+  boolean mc_tag_delete(String username, String password, BigInteger tag_id) throws RemoteException;
 }

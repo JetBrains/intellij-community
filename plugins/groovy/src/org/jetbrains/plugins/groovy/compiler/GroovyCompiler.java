@@ -105,7 +105,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
       }
 
       if (!LibrariesUtil.hasGroovySdk(module)) {
-        if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
+        if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOnTheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
           ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME);

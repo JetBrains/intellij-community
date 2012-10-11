@@ -201,8 +201,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Override
-  public void fastenBelt(int offset, @Nullable RangeMarker cachedRangeMarker) {
-    myElementInfo.fastenBelt(offset, cachedRangeMarker);
+  public void fastenBelt(int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
+    myElementInfo.fastenBelt(offset, cachedRangeMarkers);
   }
 
   @NotNull

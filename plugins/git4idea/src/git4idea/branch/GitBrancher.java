@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.intellij.util.Consumer;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +40,8 @@ public interface GitBrancher {
    *
    * @param name          name of the new branch to check out.
    * @param repositories  repositories to operate on.
-   * @param resultHandler This is called after the operation is executed.
-   *                      The boolean parameter passed to the consumer indicates whether checkout was successful
-   *                      or failed with an error (or user cancelled it). The consumer is called from the background thread.
    */
-  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories, @Nullable Consumer<Boolean> resultHandler);
+  void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories);
 
   /**
    * <p>Creates new tag on the selected reference.</p>
@@ -75,7 +71,7 @@ public interface GitBrancher {
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, Runnable)}.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, java.util.List, Runnable)}.
    *
    * @param newBranchName  the name of the new local branch.
    * @param startPoint     the reference to checkout.
@@ -127,12 +123,8 @@ public interface GitBrancher {
    * @param branchName    the branch to be merged into HEAD.
    * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
    * @param repositories  repositories to operate on.
-   * @param resultHandler This is called after the operation is executed.
-   *                      The boolean parameter passed to the consumer indicates whether checkout was successful
-   *                      or failed with an error (or user cancelled it). The consumer is called from the background thread.
    */
-  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories,
-             @Nullable Consumer<Boolean> resultHandler);
+  void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories);
 
   /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.

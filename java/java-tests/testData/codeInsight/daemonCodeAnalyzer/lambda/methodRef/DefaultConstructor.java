@@ -53,6 +53,53 @@ class DefaultConstructor2 {
 
     void f() {
         <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i1 = DefaultConstructor2 :: new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor2.I'">I i2 = this::new;</error>
+        I i2 = <error descr="Cannot find class this">this</error>::new;
     }
+}
+
+class DefaultConstructor3 {
+   public class Inner {}
+   public static class StaticInner {}
+   
+   static <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor3.I'">I i = Inner::new;</error>
+   static I1 i1 = StaticInner::new;
+   interface I {
+     Inner foo();
+   }
+
+   interface I1 {
+     StaticInner foo();
+   }
+}
+
+class DefaultConstructor4 {
+   public class Inner {}
+   public static class StaticInner {}
+   
+   static I i = Inner::new;
+   static <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor4.I1'">I1 i1 = StaticInner::new;</error>
+   interface I {
+     Inner foo(DefaultConstructor4 receiver);
+   }
+
+   interface I1 {
+     StaticInner foo(DefaultConstructor4 receiver);
+   }
+}
+
+class DefaultConstructor5 {
+    public class Inner {}
+
+    static void test() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor5.I'">I i = Inner::new;</error>
+    }
+
+    void test1() {
+        I i = Inner::new;
+    }
+
+    interface I {
+        DefaultConstructor5.Inner foo();
+    }
+
 }

@@ -69,6 +69,16 @@ Its elements should be calls to <code>parameter</code> method.'''),
             parameter(name:'type', type:Object.name, doc:'Parameter type name'),
             parameter(name:'doc', type:String.name, doc:'Parameter documentation text'),
     ]], doc:'Describe a method named parameter'
+    method name: "methodCall", type: "void", params: [generator: Closure.name]
+    closureInMethod(method:[name: 'methodCall', type: 'void', params: [Closure.name]], params: [args: [
+            parameter(name: 'name', type: String.name, doc: 'Called method name'),
+            parameter(name: 'argumentTypes', type: 'java.lang.String[]', doc: 'Call\'s argument types')
+    ]])
+
+    method name: 'closureInMethod', params: [args: [
+            parameter(name: 'method', type: Map.name),
+            parameter(name: 'params', type: Map.name)
+    ]]
 
     method name: "add", type: "void", params: [member: "com.intellij.psi.PsiMember"]
     method name: "findClass", type: "com.intellij.psi.PsiClass", params: [name: "java.lang.String"]

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
@@ -48,8 +49,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
   protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
     if (scope == null) return true;
     if (fileDropped(file)) return true;
-    final VirtualFile parent = file.getParent();
-    return (parent != null) && (scope.isRecursivelyDirty(parent));
+    return scope.belongsTo(new FilePathImpl(file));
   }
 
   public Map<VirtualFile, String> getFilesMapCopy() {

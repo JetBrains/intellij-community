@@ -15,20 +15,15 @@
  */
 package git4idea.branch;
 
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
-import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -43,17 +38,12 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
   @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
-  @NotNull private final String myPreviousBranch;
-  @Nullable private final Consumer<Boolean> myResultHandler;
 
-  GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
-                                @NotNull String newBranchName, @NotNull String previousBranch,
-                                @Nullable Consumer<Boolean> resultHandler, @NotNull ProgressIndicator indicator) {
-    super(project, git, repositories, previousBranch, indicator);
+  GitCheckoutNewBranchOperation(@NotNull Project project, PlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+                                @NotNull Collection<GitRepository> repositories, @NotNull String newBranchName) {
+    super(project, facade, git, uiHandler, repositories);
     myNewBranchName = newBranchName;
     myProject = project;
-    myPreviousBranch = previousBranch;
-    myResultHandler = resultHandler;
   }
 
   @Override
@@ -82,16 +72,6 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     if (!fatalErrorHappened) {
       notifySuccess();
       updateRecentBranch();
-      handleResult(true);
-    }
-    else {
-      handleResult(false);
-    }
-  }
-
-  private void handleResult(boolean success) {
-    if (myResultHandler != null) {
-      myResultHandler.consume(success);
     }
   }
 
@@ -110,7 +90,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (checkout back to " + myPreviousBranch + " and delete " + myNewBranchName + ") not to let branches diverge.";
+           "<br/>You may rollback (checkout back to " + myCurrentBranchOrRev + " and delete " + myNewBranchName + ") not to let branches diverge.";
   }
 
   @NotNull
@@ -125,7 +105,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
-      GitCommandResult result = myGit.checkout(repository, myPreviousBranch, null, true);
+      GitCommandResult result = myGit.checkout(repository, myCurrentBranchOrRev, null, true);
       checkoutResult.append(repository, result);
       if (result.success()) {
         deleteResult.append(repository, myGit.branchDelete(repository, myNewBranchName, false));
@@ -133,10 +113,8 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
       refresh(repository);
     }
     if (checkoutResult.totalSuccess() && deleteResult.totalSuccess()) {
-      GitUIUtil.notify(GitVcs.NOTIFICATION_GROUP_ID, myProject, "Rollback successful",
-                       String.format("Checked out %s and deleted %s on %s %s", code(myPreviousBranch), code(myNewBranchName),
-                                     StringUtil.pluralize("root", repositories.size()), successfulRepositoriesJoined()),
-                       NotificationType.INFORMATION, null);
+      myUiHandler.notifySuccess("Rollback successful", String.format("Checked out %s and deleted %s on %s %s", code(myCurrentBranchOrRev), code(myNewBranchName),
+                                           StringUtil.pluralize("root", repositories.size()), successfulRepositoriesJoined()));
     }
     else {
       StringBuilder message = new StringBuilder();
@@ -148,7 +126,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         message.append("Errors during deleting ").append(code(myNewBranchName));
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, myProject, "Error during rollback", message.toString(), NotificationType.ERROR, null);
+      myUiHandler.notifyError("Error during rollback", message.toString());
     }
   }
 

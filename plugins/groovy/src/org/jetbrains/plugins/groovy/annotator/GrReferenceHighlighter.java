@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -56,7 +56,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
         super.visitReferenceExpression(referenceExpression);
 
         visit(referenceExpression);
-        HighlightInfo info = GroovyUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
+        HighlightInfo info = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
         if (info != null) {
           myInfos.add(info);
         }
@@ -68,7 +68,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
         visit(refElement);
 
-        HighlightInfo info = GroovyUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
+        HighlightInfo info = GrUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
         if (info != null) {
           myInfos.add(info);
         }

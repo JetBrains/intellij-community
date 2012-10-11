@@ -14,4 +14,8 @@ public abstract class BuildRootDescriptor {
   public abstract BuildTarget<?> getTarget();
 
   public abstract FileFilter createFileFilter();
+
+  public boolean isGenerated() {
+    return false;
+  }
 }

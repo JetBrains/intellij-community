@@ -529,7 +529,7 @@ public class GroovyCompletionUtil {
                substituted instanceof PsiArrayType ||
                InheritanceUtil.isInheritor(substituted, CommonClassNames.JAVA_LANG_ITERABLE));
     }
-    if (GdkMethodUtil.WITH.equals(name)) return false;
+    if (GdkMethodUtil.isWithName(name)) return false;
 
     return true;
   }
