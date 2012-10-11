@@ -321,7 +321,9 @@ class GitBranchWorkerTest {
     if (newGitVersion()) {
       assertEquals "Incorrect set of local changes was shown in the dialog",
                    localChanges,
-                   changes.collect({ FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) })
+                   changes.collect({
+                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) }
+                   ).sort()
     }
   }
 
