@@ -179,6 +179,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return myContent;
   }
 
+  @NotNull
   @Override
   public CharSequence getContentAsText() {
     if (myFileType.isBinary()) {
