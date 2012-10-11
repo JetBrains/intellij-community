@@ -110,17 +110,23 @@ public class HgPusher {
     command.execute(new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        if ( result == null ) return;
+        if (result == null) {
+          return;
+        }
 
         int commitsNum = getNumberOfPushedCommits(result);
         if (commitsNum > 0 && result.getExitValue() == 0 ) {
           String successTitle = "Pushed successfully";
-          String successDescription = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + " ["+ repo.getPresentableName() +"]";
+          String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
+                                                    repo.getPresentableName());
           new HgCommandResultNotifier(project).process(result, successTitle, successDescription);
-        } else if (commitsNum == 0) {
+        }
+        else if (commitsNum == 0) {
           new HgCommandResultNotifier(project).process(result, "", "Nothing to push");
-        } else if ( result.getExitValue() != 0 ) {
-          new HgCommandResultNotifier( project ).process(result, null, null, "Push failed", "Failed to push to [" + repo.getPresentableName() + "]" );
+        }
+        else {
+          new HgCommandResultNotifier(project).process(result, null, null, "Push failed",
+                                                       "Failed to push to [" + repo.getPresentableName() + "]" );
         }
       }
     });
