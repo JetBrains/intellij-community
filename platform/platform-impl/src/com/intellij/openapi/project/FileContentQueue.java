@@ -139,47 +139,36 @@ public class FileContentQueue {
     }
   }
 
-  @Nullable
-  public FileContent take(@NotNull ProgressIndicator indicator) {
-    FileContent content = doTake();
-    if (content != null) {
-      final long length = content.getLength();
-      while (true) {
+  void waitForOtherContentReleaseToPreventOOM(ProgressIndicator indicator, FileContent content) {
+    final long length = content.getLength();
+    while (true) {
+      indicator.checkCanceled();
+      synchronized (this) {
+        boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+        if (requestingLargeSize) {
+          myLargeSizeRequested = true;
+        }
         try {
-          indicator.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          pushback(content);
-          throw e;
-        }
-        synchronized (this) {
-          boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
-          if (requestingLargeSize) {
-            myLargeSizeRequested = true;
-          }
-          try {
-            if (myLargeSizeRequested && !requestingLargeSize ||
-                myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
-              wait(300L);
-            else {
-              myTakenSize += length;
-              if (requestingLargeSize) {
-                myLargeSizeRequested = false;
-              }
-              return content;
+          if (myLargeSizeRequested && !requestingLargeSize ||
+              myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
+            wait(300L);
+          else {
+            myTakenSize += length;
+            if (requestingLargeSize) {
+              myLargeSizeRequested = false;
             }
+            return;
           }
-          catch (InterruptedException ignore) {
+        }
+        catch (InterruptedException ignore) {
 
-          }
         }
       }
     }
-    return content;
   }
 
   @Nullable
-  private FileContent doTake() {
+  FileContent take() {
     FileContent result;
     synchronized (this) {
       result = myPushbackBuffer.poll();
