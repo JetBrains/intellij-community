@@ -146,7 +146,7 @@
 
     <group id="CommittedChangesToolbar">
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
-              icon="AllIcons.Vcs.Refresh"/>
+              icon="AllIcons.Actions.Sync"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
               icon="AllIcons.Ant.Filter"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
@@ -163,7 +163,7 @@
 
     <group id="IncomingChangesToolbar">
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
-              icon="AllIcons.Vcs.Refresh"/>
+              icon="AllIcons.Actions.Refresh"/>
       <reference ref="CommittedChanges.Details"/>
       <!--
       <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
