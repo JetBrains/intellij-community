@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -401,6 +402,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       if (myProject.isDisposed()) return;
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
+      VirtualFileManager.getInstance().refresh(true);
     }
 
     @Override

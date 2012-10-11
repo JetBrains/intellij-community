@@ -28,6 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
 import git4idea.PlatformFacade
 import git4idea.commands.Git
+import git4idea.config.GitVersion
+import git4idea.config.GitVersionSpecialty
 import git4idea.history.browser.GitCommit
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
@@ -237,14 +239,24 @@ class GitBranchWorkerTest {
   }
   
   @Test
+  public void "checkout with several untracked files overwritten by checkout in first repo should show notification"() {
+    // note that in old Git versions only one file is listed in the error.
+    test_untracked_files_overwritten_by_in_first_repo("checkout", 3);
+  }
+
+  @Test
   public void "merge with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("merge");
   }
   
-  def test_untracked_files_overwritten_by_in_first_repo(String operation) {
+  def test_untracked_files_overwritten_by_in_first_repo(String operation, int untrackedFiles = 1) {
     branchWithCommit(myRepositories, "feature")
-    untrackedFileOverwrittenBy(myUltimate, "feature")
-    
+    def files = []
+    for (int i = 0; i < untrackedFiles; i++) {
+      files.add("untracked${i}.txt")
+    }
+    untrackedFileOverwrittenBy(myUltimate, "feature", files)
+
     boolean notificationShown = false;
     checkoutOrMerge operation, "feature", [
             showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
@@ -265,7 +277,8 @@ class GitBranchWorkerTest {
 
   def test_checkout_with_untracked_files_overwritten_by_in_second_repo(String operation) {
     branchWithCommit(myRepositories, "feature")
-    def untracked = untrackedFileOverwrittenBy(myCommunity, "feature")
+    def untracked = ["untracked.txt"]
+    untrackedFileOverwrittenBy(myCommunity, "feature", untracked)
 
     Collection<VirtualFile> untrackedFiles = null;
     checkoutOrMerge operation, "feature", [
@@ -284,12 +297,17 @@ class GitBranchWorkerTest {
   }
 
   @Test
+  public void "checkout with several local changes overwritten by checkout should show smart checkout dialog"() {
+    test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("checkout", 3);
+  }
+
+  @Test
   public void "merge with local changes overwritten by checkout should show smart checkout dialog"() {
     test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("merge");
   }
 
-  def test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(String operation) {
-    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
+  def test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(String operation, int numFiles = 1) {
+    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate, numFiles)
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
@@ -300,9 +318,17 @@ class GitBranchWorkerTest {
     ])
     
     assertNotNull "Local changes were not shown in the dialog", changes
-    assertEquals "Incorrect set of local changes was shown in the dialog", 
-                 localChanges,
-                 changes.collect({ FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) })
+    if (newGitVersion()) {
+      assertEquals "Incorrect set of local changes was shown in the dialog",
+                   localChanges,
+                   changes.collect({
+                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) }
+                   ).sort()
+    }
+  }
+
+  boolean newGitVersion() {
+    return !GitVersionSpecialty.OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN.existsIn(GitVersion.parse(git("version")));
   }
 
   Change[] changesFromFiles(Collection<String> paths) {
@@ -318,11 +344,11 @@ class GitBranchWorkerTest {
 
   @Test
   public void "agree to smart checkout should smart checkout"() {
-    agree_to_smart_operation("checkout", "Checked out <b><code>feature</code></b>")
+    def localChanges = agree_to_smart_operation("checkout", "Checked out <b><code>feature</code></b>")
 
     assertCurrentBranch("feature");
     cd myUltimate
-    def actual = cat("local.txt")
+    def actual = cat(localChanges[0])
     assertEquals("Content doesn't match",
 """line with branch changes
 common content
@@ -334,10 +360,11 @@ line with master changes
   
   @Test
   public void "agree to smart merge should smart merge"() {
-    agree_to_smart_operation("merge", "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
+    def localChanges = agree_to_smart_operation("merge",
+                       "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
 
     cd myUltimate
-    def actual = cat("local.txt")
+    def actual = cat(localChanges[0])
     assertEquals("Content doesn't match",
 """line with branch changes
 common content
@@ -347,18 +374,24 @@ line with master changes
 """, actual)
   }
   
-  def agree_to_smart_operation(String operation, String expectedSuccessMessage) {
-    prepareLocalChangesOverwrittenBy(myUltimate)
+  Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
+    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
 
     AgreeToSmartOperationTestUiHandler handler = new AgreeToSmartOperationTestUiHandler()
     checkoutOrMerge(operation, "feature", handler)
 
     assertNotNull "No success notification was shown", handler.mySuccessMessage
     assertEquals "Success message is incorrect", expectedSuccessMessage, handler.mySuccessMessage
+
+    localChanges
   }
 
-  def prepareLocalChangesOverwrittenBy(GitRepository repository) {
-    def localChanges = localChangesOverwrittenByWithoutConflict(repository, "feature")
+  Collection<String> prepareLocalChangesOverwrittenBy(GitRepository repository, int numFiles = 1) {
+    def localChanges = []
+    for (int i = 0; i < numFiles; i++) {
+      localChanges.add("local${i}.txt")
+    }
+    localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     // TODO we'd better avoid manual adding changes to the ChangeListManager.
     // Probably we should create GitTestChangeListManager that would fairly call git status and analyze the output.
     // Maybe we could reuse GitChangeProvider or at least GitNewChangesCollector.

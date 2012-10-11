@@ -1584,7 +1584,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement[] modifiers = list.getModifiers();
     Set<String> set = new THashSet<String>(modifiers.length);
     for (PsiElement modifier : modifiers) {
-      String name = modifier.getText();
+      @GrModifier.GrModifierConstant String name = modifier.getText();
       if (set.contains(name)) {
         final Annotation annotation = holder.createErrorAnnotation(list, GroovyBundle.message("duplicate.modifier", name));
         annotation.registerFix(new GrModifierFix(member, list, name, false, false));
@@ -1620,7 +1620,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
         .registerFix(new GrModifierFix(member, modifierList, PUBLIC, false, false));
     }
-    else if (member instanceof PsiClass && member.getContainingClass() == null) {
+    else if (member instanceof PsiClass &&
+             member.getContainingClass() == null &&
+             GroovyConfigUtils.getInstance().isVersionAtLeast(member, GroovyConfigUtils.GROOVY2_0)) {
       checkModifierIsNotAllowed(modifierList, PRIVATE, GroovyBundle.message("top.level.class.maynot.have.private.modifier"), holder);
       checkModifierIsNotAllowed(modifierList, PROTECTED, GroovyBundle.message("top.level.class.maynot.have.protected.modifier"), holder);
     }

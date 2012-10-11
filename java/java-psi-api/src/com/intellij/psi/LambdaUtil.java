@@ -296,7 +296,10 @@ public class LambdaUtil {
 
   @Nullable
   private static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
-    if (psiClass.isInterface()) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
+    if (psiClass != null && psiClass.isInterface()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
@@ -594,7 +597,9 @@ public class LambdaUtil {
 
     final JavaResolveResult result;
     try {
-      if (map.put(methodReferenceExpression, left) != null) return false;
+      if (map.put(methodReferenceExpression, left) != null) {
+        return false;
+      }
       result = methodReferenceExpression.advancedResolve(false);
     }
     finally {
@@ -642,7 +647,7 @@ public class LambdaUtil {
     return false;
   }
 
-  private static boolean isReceiverType(@Nullable PsiClass aClass, PsiClass containingClass) {
+  private static boolean isReceiverType(@Nullable PsiClass aClass, @Nullable PsiClass containingClass) {
     while (containingClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) return true;
       containingClass = containingClass.getContainingClass();
@@ -650,10 +655,11 @@ public class LambdaUtil {
     return false;
   }
 
-  public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
+  public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(receiverType));
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
+      LOG.assertTrue(containingClass != null);
       return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(receiverClass, resolveResult.getSubstitutor());

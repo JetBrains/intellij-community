@@ -87,15 +87,21 @@ common content
    * This produces the "some untracked files would be overwritten by..." error when trying to checkout or merge.
    * Branch with the given name shall exist.
    */
-  def untrackedFileOverwrittenBy(GitRepository repository, String branch) {
+  def untrackedFileOverwrittenBy(GitRepository repository, String branch, Collection<String> fileNames) {
     cd repository
     git("checkout $branch")
-    touch("untracked.txt", "branch content")
-    git("add untracked.txt")
-    git("commit -m untracked_file")
+
+    for (it in fileNames) {
+      touch(it, "branch content")
+      git("add $it")
+    }
+
+    git("commit -m untracked_files")
     git("checkout master")
-    touch("untracked.txt", "master content")
-    [ "untracked.txt" ]
+
+    for (it in fileNames) {
+      touch(it, "master content")
+    }
   }
 
   /**
@@ -105,22 +111,26 @@ common content
    *
    * NB: the branch should not exist before this is called!
    */
-  def localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch) {
+  def localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch, Collection<String> fileNames) {
     cd repository
 
-    echo("local.txt", LOCAL_CHANGES_OVERWRITTEN_BY.initial)
-    git("add local.txt")
+    for (it in fileNames) {
+      echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.initial)
+      git("add $it")
+    }
     git("commit -m initial_changes")
 
     git("checkout -b $branch")
-    prepend("local.txt", LOCAL_CHANGES_OVERWRITTEN_BY.branchLine)
-    git("add local.txt")
+    for (it in fileNames) {
+      prepend(it, LOCAL_CHANGES_OVERWRITTEN_BY.branchLine)
+      git("add $it")
+    }
     git("commit -m branch_changes")
 
     git("checkout master")
-    append("local.txt", LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
-
-    [ "local.txt" ]
+    for (it in fileNames) {
+      append(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
+    }
   }
 
   def append(String fileName, String content) {

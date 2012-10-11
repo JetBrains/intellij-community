@@ -61,6 +61,7 @@ class GitExecutor {
     File file = new File(myCurrentDir, fileName)
     assert !file.exists()
     file.createNewFile()
+    println("touch $fileName")
     file.path
   }
 
@@ -76,11 +77,14 @@ class GitExecutor {
   def mkdir(String dirName) {
     File file = new File(myCurrentDir, dirName)
     file.mkdir()
+    println("mkdir $dirName")
     file.path
   }
 
   def cat(String fileName) {
-    FileUtil.loadFile(new File(myCurrentDir, fileName))
+    def content = FileUtil.loadFile(new File(myCurrentDir, fileName))
+    println("cat fileName")
+    content
   }
 
 }

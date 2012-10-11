@@ -85,6 +85,18 @@ public enum GitVersionSpecialty {
     }
   },
 
+  /**
+   * Old style of messages returned by Git in the following 2 situations:
+   * - untracked files would be overwritten by checkout/merge;
+   * - local changes would be overwritten by checkout/merge;
+   */
+  OLD_STYLE_OF_UNTRACKED_AND_LOCAL_CHANGES_WOULD_BE_OVERWRITTEN {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isOlderOrEqual(new GitVersion(1, 7, 1, 0));
+    }
+  },
+
   DOESNT_DEFINE_HOME_ENV_VAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

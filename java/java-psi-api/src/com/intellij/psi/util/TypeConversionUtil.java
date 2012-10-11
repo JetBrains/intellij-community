@@ -656,6 +656,14 @@ public class TypeConversionUtil {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
       if (left instanceof PsiClassType) {
         return LambdaUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
+      } else if (left instanceof PsiLambdaExpressionType) {
+        final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
+        final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();
+        return Comparing.equal(rType, lType);
+      } else if (left instanceof PsiMethodReferenceType) {
+        final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
+        final PsiType lType = ((PsiMethodReferenceType)left).getExpression().getFunctionalInterfaceType();
+        return Comparing.equal(rType, lType);
       }
     }
     if (right instanceof PsiLambdaExpressionType) {

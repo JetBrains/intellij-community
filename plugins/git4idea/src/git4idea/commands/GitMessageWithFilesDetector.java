@@ -39,53 +39,25 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private final Event myEvent;
   private final VirtualFile myRoot;
 
-  public enum Event {
-    LOCAL_CHANGES_OVERWRITTEN_BY_MERGE(
-      "Your local changes to the following files would be overwritten by merge",
-      "commit your changes or stash them before"),
-    LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT(
-      "Your local changes to the following files would be overwritten by checkout",
-      "commit your changes or stash them before"),
-    UNTRACKED_FILES_OVERWRITTEN_BY(
-      "The following untracked working tree files would be overwritten by",
-      "Please move or remove them before"
-    )
-    ;
-
-    private final String myMessageStartMarker;
-    private final String myMessageEndMarker;
-
-    Event(String messageStartMarker, String messageEndMarker) {
-      myMessageStartMarker = messageStartMarker;
-      myMessageEndMarker = messageEndMarker;
-    }
-
-    public String getMessageStartMarker() {
-      return myMessageStartMarker;
-    }
-
-    public String getMessageEndMarker() {
-      return myMessageEndMarker;
-    }
-  }
-
-  private final Set<String> myAffectedFiles = new HashSet<String>();
-  private boolean myMessageDetected;
+  protected final Set<String> myAffectedFiles = new HashSet<String>();
+  protected boolean myMessageDetected;
   private boolean myFilesAreDisplayed;
 
-  public GitMessageWithFilesDetector(Event event, VirtualFile root) {
+  public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;
     myRoot = root;
   }
 
   @Override
-  public void onLineAvailable(String line, Key outputType) {
+  public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
     if (line.contains(myEvent.getMessageStartMarker())) {
       myMessageDetected = true;
       myFilesAreDisplayed = true;
-    } else if (line.contains(myEvent.getMessageEndMarker())) {
+    }
+    else if (line.contains(myEvent.getMessageEndMarker())) {
       myFilesAreDisplayed = false;
-    } else if (myFilesAreDisplayed) {
+    }
+    else if (myFilesAreDisplayed) {
       myAffectedFiles.add(line.trim());
     }
   }
@@ -123,6 +95,24 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
       }
     }
     return files;
+  }
+
+  public static class Event {
+    private final String myMessageStartMarker;
+    private final String myMessageEndMarker;
+
+    Event(String messageStartMarker, String messageEndMarker) {
+      myMessageStartMarker = messageStartMarker;
+      myMessageEndMarker = messageEndMarker;
+    }
+
+    public String getMessageStartMarker() {
+      return myMessageStartMarker;
+    }
+
+    public String getMessageEndMarker() {
+      return myMessageEndMarker;
+    }
   }
 
 }

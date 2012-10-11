@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
-import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -70,12 +68,14 @@ class GitCheckoutOperation extends GitBranchOperation {
       final GitRepository repository = next();
 
       VirtualFile root = repository.getRoot();
-      GitMessageWithFilesDetector localChangesOverwrittenByCheckout = new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, root);
+      GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+        new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
       GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
-      GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(UNTRACKED_FILES_OVERWRITTEN_BY, root);
+      GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
+        new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
       GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
-                                             localChangesOverwrittenByCheckout, unmergedFiles, untrackedOverwrittenByCheckout);
+                                             localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
       if (result.success()) {
         refresh(repository);
         markSuccessful(repository);
@@ -84,8 +84,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         fatalUnmergedFilesError();
         fatalErrorHappened = true;
       }
-      else if (localChangesOverwrittenByCheckout.wasMessageDetected()) {
-        boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesOverwrittenByCheckout);
+      else if (localChangesDetector.wasMessageDetected()) {
+        boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector);
         if (!smartCheckoutSucceeded) {
           fatalErrorHappened = true;
         }

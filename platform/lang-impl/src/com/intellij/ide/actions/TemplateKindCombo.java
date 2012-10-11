@@ -15,16 +15,15 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -84,7 +83,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   public void registerUpDownHint(JComponent component) {
-    final AnAction arrow = new AnAction() {
+    new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (e.getInputEvent() instanceof KeyEvent) {
@@ -92,10 +91,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
           scrollBy(code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0);
         }
       }
-    };
-    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
-    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), component);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), component);
   }
 
   private void scrollBy(int delta) {

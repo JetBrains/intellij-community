@@ -254,6 +254,20 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
   }
 
+  private boolean isLocatedInStaticContext(PsiClass containingClass) {
+    final PsiClass gContainingClass = containingClass.getContainingClass();
+    if (gContainingClass == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass aClass = null;
+      if (PsiTreeUtil.isAncestor(gContainingClass != null ? gContainingClass : containingClass, this, false)) {
+        aClass = gContainingClass != null ? gContainingClass : containingClass;
+      }
+      if (PsiUtil.getEnclosingStaticElement(this, aClass) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class MethodReferenceResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     @NotNull
     @Override
@@ -300,21 +314,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               if (parameterTypes.length == 1 && LambdaUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
                 hasReceiver = true;
               }
-              boolean insideStaticClass = containingClass.getContainingClass() == null;
-              if (!insideStaticClass) { //inner class
-                PsiClass parentClass = containingClass;
-                while (parentClass != null) {
-                  if (parentClass.hasModifierProperty(PsiModifier.STATIC)) {
-                    insideStaticClass = true;
-                    break;
-                  }
-  
-                  parentClass = parentClass.getContainingClass(); 
-                }
-              }
               final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
               ClassCandidateInfo candidateInfo = null;
-              if (insideStaticClass && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+              if (!isLocatedInStaticContext(containingClass) && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
                 candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
               }
               return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
@@ -356,17 +358,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             processor.setAccessClass(containingClass);
           }
 
-          if (beginsWithReferenceType) {
-            final PsiClass gContainingClass = containingClass.getContainingClass();
-            if (gContainingClass == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiClass aClass = null;
-              if (PsiTreeUtil.isAncestor(gContainingClass != null ? gContainingClass : containingClass, PsiMethodReferenceExpressionImpl.this, false)) {
-                aClass = gContainingClass != null ? gContainingClass : containingClass;
-              }
-              if (PsiUtil.getEnclosingStaticElement(PsiMethodReferenceExpressionImpl.this, aClass) != null) {
-                processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
-              }
-            }
+          if (beginsWithReferenceType && isLocatedInStaticContext(containingClass)) {
+             processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
           }
           ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
           containingClass.processDeclarations(processor, state,
@@ -392,6 +385,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return PsiUtil.resolveGenericsClassInType(types[0]).getSubstitutor();
       }
 
+      for (int i = 0; i < rightTypes.length; i++) {
+        rightTypes[i] = GenericsUtil.eliminateWildcards(rightTypes[i]);
+      }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
       PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), types, rightTypes, languageLevel);
       psiSubstitutor = psiSubstitutor.putAll(substitutor);

@@ -36,10 +36,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import git4idea.PlatformFacade;
 import git4idea.checkin.GitCheckinEnvironment;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitMessageWithFilesDetector;
-import git4idea.commands.GitSimpleEventDetector;
+import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -56,7 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
@@ -100,8 +96,8 @@ public class GitCherryPicker {
     for (GitCommit commit : commits) {
       GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(CHERRY_PICK_CONFLICT);
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
-      GitMessageWithFilesDetector untrackedFilesDetector = new GitMessageWithFilesDetector(UNTRACKED_FILES_OVERWRITTEN_BY,
-                                                                                           repository.getRoot());
+      GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
+        new GitUntrackedFilesOverwrittenByOperationDetector(repository.getRoot());
       GitCommandResult result = myGit.cherryPick(repository, commit.getHash().getValue(), myAutoCommit,
                                                  conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector);
       GitCommitWrapper commitWrapper = new GitCommitWrapper(commit);

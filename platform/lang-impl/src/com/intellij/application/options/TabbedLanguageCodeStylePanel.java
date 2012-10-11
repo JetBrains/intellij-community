@@ -543,7 +543,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   //========================================================================================================================================
   
-  private class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
+  protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
 
     private final IndentOptionsEditor myEditor;
     private final LanguageCodeStyleSettingsProvider myProvider;

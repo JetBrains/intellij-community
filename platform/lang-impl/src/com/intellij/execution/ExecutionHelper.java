@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -147,7 +148,7 @@ public class ExecutionHelper {
   }
 
   public static void showOutput(@NotNull final Project myProject,
-                                @NotNull final Output output,
+                                @NotNull final ProcessOutput output,
                                 @NotNull final String tabDisplayName,
                                 @Nullable final VirtualFile file,
                                 final boolean activateWindow) {

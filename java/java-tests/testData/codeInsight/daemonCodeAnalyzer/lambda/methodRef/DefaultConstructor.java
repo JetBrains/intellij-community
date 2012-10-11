@@ -86,3 +86,20 @@ class DefaultConstructor4 {
      StaticInner foo(DefaultConstructor4 receiver);
    }
 }
+
+class DefaultConstructor5 {
+    public class Inner {}
+
+    static void test() {
+        <error descr="Incompatible types. Found: '<method reference>', required: 'DefaultConstructor5.I'">I i = Inner::new;</error>
+    }
+
+    void test1() {
+        I i = Inner::new;
+    }
+
+    interface I {
+        DefaultConstructor5.Inner foo();
+    }
+
+}

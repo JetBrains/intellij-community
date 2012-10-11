@@ -53,7 +53,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
   public static final String GROOVY1_8 = "1.8";
-  public static final String GROOVY1_9 = "1.9";
+  public static final String GROOVY2_0 = "2.0";
 
   private GroovyConfigUtils() {
   }
@@ -140,7 +140,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return false;
   }
 
-  public boolean tryToSetUpGroovyFacetOntheFly(final Module module) {
+  public boolean tryToSetUpGroovyFacetOnTheFly(final Module module) {
     final Project project = module.getProject();
     final Library[] libraries = getAllSDKLibraries(project);
     if (libraries.length > 0) {
