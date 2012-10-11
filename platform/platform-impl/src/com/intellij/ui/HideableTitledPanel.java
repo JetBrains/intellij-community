@@ -18,17 +18,15 @@ public class HideableTitledPanel extends JPanel {
 
   private TitledSeparator myTitledSeparator;
   private boolean myOn;
-  private final JComponent myContent;
+  private JComponent myContent;
   private Dimension myPreviousContentSize;
 
-  public HideableTitledPanel(String title, JComponent content, boolean on) {
+  public HideableTitledPanel(String title) {
     super(new BorderLayout());
-    myContent = content;
-    add(myContent, BorderLayout.CENTER);
     myTitledSeparator = new TitledSeparator(title, null);
     add(myTitledSeparator, BorderLayout.NORTH);
-    myTitledSeparator.getLabel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myTitledSeparator.getLabel().addMouseListener(new MouseAdapter() {
+    myTitledSeparator.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    myTitledSeparator.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
         if (myOn) {
@@ -39,8 +37,17 @@ public class HideableTitledPanel extends JPanel {
         }
       }
     });
+  }
 
+  public HideableTitledPanel(String title, JComponent content, boolean on) {
+    this(title);
+    setContentComponent(content);
     setOn(on);
+  }
+
+  protected void setContentComponent(JComponent content) {
+    myContent = content;
+    add(myContent, BorderLayout.CENTER);
   }
 
   public void setOn(boolean on) {
@@ -51,6 +58,10 @@ public class HideableTitledPanel extends JPanel {
     else {
       off();
     }
+  }
+
+  public boolean isExpanded() {
+    return myOn;
   }
 
   public void setTitle(String title) {
