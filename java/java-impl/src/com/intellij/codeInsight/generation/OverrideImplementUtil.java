@@ -452,7 +452,7 @@ public class OverrideImplementUtil {
   }
 
   public static void setupMethodBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
-    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) || PsiUtil.isExtensionMethod(originalMethod);
+    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) || originalMethod.isExtensionMethod();
     String templateName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
     setupMethodBody(result, originalMethod, targetClass, template);
@@ -535,7 +535,7 @@ public class OverrideImplementUtil {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();
-        if (element instanceof PsiMethod && PsiUtil.isExtensionMethod((PsiMethod)element)) {
+        if (element instanceof PsiMethod && ((PsiMethod)element).isExtensionMethod()) {
           iterator.remove();
           secondary.add(candidate);
         }

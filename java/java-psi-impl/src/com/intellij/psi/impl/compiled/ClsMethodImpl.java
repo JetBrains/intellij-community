@@ -264,6 +264,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   @Override
+  public boolean isExtensionMethod() {
+    return getStub().isExtensionMethod();
+  }
+
+  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);

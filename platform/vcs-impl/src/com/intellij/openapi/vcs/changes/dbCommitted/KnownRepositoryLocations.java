@@ -33,6 +33,7 @@ public class KnownRepositoryLocations {
   private final MultiMap<String, String> myMap;
   private final Map<Pair<String, String>, Long> myLocations;
   private final Map<Long, Long> myLastRevision;
+  private final Map<Long, Long> myFirstRevision;
   private final Map<String, Long> myAuthors;
 
   public KnownRepositoryLocations() {
@@ -44,6 +45,7 @@ public class KnownRepositoryLocations {
     };
     myLocations = new HashMap<Pair<String, String>, Long>();
     myLastRevision = new HashMap<Long, Long>();
+    myFirstRevision = new HashMap<Long, Long>();
     myJustVcs = new HashMap<String, Long>();
     myAuthors = new HashMap<String, Long>();
   }
@@ -131,6 +133,18 @@ public class KnownRepositoryLocations {
   public void setLastRevision(final Long rootId, final long number) {
     synchronized (myMap) {
       myLastRevision.put(rootId, number);
+    }
+  }
+
+  public Long getFirstRevision(final Long rootId) {
+    synchronized (myMap) {
+      return myFirstRevision.get(rootId);
+    }
+  }
+
+  public void setFirstRevision(final Long rootId, final long number) {
+    synchronized (myMap) {
+      myFirstRevision.put(rootId, number);
     }
   }
 }

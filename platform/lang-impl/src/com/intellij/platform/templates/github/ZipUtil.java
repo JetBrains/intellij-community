@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -75,41 +74,16 @@ public class ZipUtil {
     }
   }
 
-  private static boolean isSingleTopLevelDir(@NotNull Enumeration<? extends ZipEntry> zipEntries) {
-    String singleTopLevelDirName = null;
-    char pathDelimiterChar = '/';
-    int cnt = 0;
-    while (zipEntries.hasMoreElements()) {
-      cnt++;
-      ZipEntry zipEntry = zipEntries.nextElement();
-      String name = zipEntry.getName();
-      int ind = (name + pathDelimiterChar).indexOf(pathDelimiterChar);
-      String topLevelFileName = name.substring(0, ind);
-      if (singleTopLevelDirName == null) {
-        singleTopLevelDirName = topLevelFileName;
-      }
-      else if (!singleTopLevelDirName.equals(topLevelFileName)) {
-        return false;
-      }
-    }
-    return cnt > 0;
-  }
-
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final File extractToDir,
                                       ZipInputStream stream) throws IOException {
-    final char pathDelimiterChar = '/';
-    String relativeExtractPath = createRelativeExtractPath(zipEntry, pathDelimiterChar, true);
-    int ind = relativeExtractPath.lastIndexOf(pathDelimiterChar);
-    final String relativeParentDir;
-    final String name;
-    if (ind != -1) {
-      relativeParentDir = relativeExtractPath.substring(0, ind);
-      name = relativeExtractPath.substring(ind + 1);
-    } else {
-      relativeParentDir = "";
-      name = relativeExtractPath;
+
+    String relativeExtractPath = createRelativeExtractPath(zipEntry);
+    File child = new File(extractToDir, relativeExtractPath);
+    File dir = zipEntry.isDirectory() ? child : child.getParentFile();
+    if (!dir.exists() && !dir.mkdirs()) {
+      throw new IOException("Unable to create dir: '" + dir + "'!");
     }
     if (zipEntry.isDirectory()) {
       return;
@@ -117,14 +91,6 @@ public class ZipUtil {
     if (progress != null) {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
-    File parentDir = new File(extractToDir, relativeParentDir);
-    if (!parentDir.exists() || !parentDir.isDirectory()) {
-      boolean created = parentDir.mkdirs();
-      if (!created) {
-        throw new RuntimeException("Unable to create dir: '" + parentDir + "'!");
-      }
-    }
-    File child = new File(parentDir, name);
     FileOutputStream fileOutputStream = new FileOutputStream(child);
     try {
       FileUtil.copy(stream, fileOutputStream);
@@ -134,15 +100,13 @@ public class ZipUtil {
     LOG.info("Extract: " + relativeExtractPath);
   }
 
-  private static String createRelativeExtractPath(ZipEntry zipEntry, char pathDelimiterChar, boolean singleTopLevelDir) {
+  private static String createRelativeExtractPath(ZipEntry zipEntry) {
     String name = zipEntry.getName();
-    if (singleTopLevelDir) {
-      int ind = name.indexOf(pathDelimiterChar);
-      if (ind >= 0) {
-        name = name.substring(ind + 1);
-      }
+    int ind = name.indexOf('/');
+    if (ind >= 0) {
+      name = name.substring(ind + 1);
     }
-    return StringUtil.trimEnd(name, String.valueOf(pathDelimiterChar));
+    return StringUtil.trimEnd(name, "/");
   }
 
 }

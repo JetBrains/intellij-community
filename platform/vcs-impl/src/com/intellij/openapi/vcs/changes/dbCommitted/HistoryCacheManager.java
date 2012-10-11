@@ -78,6 +78,11 @@ public class HistoryCacheManager {
     myQueue.run(new AppendChanges(vcs, root, lists));
   }
 
+  public List<CommittedChangeList> readLists(final AbstractVcs vcs, final RepositoryLocation location, final long lastRev, final long oldRev)
+    throws VcsException {
+    return myDbUtil.readLists(vcs, location, lastRev, oldRev);
+  }
+
   private class AppendChanges extends Task.Backgroundable {
     private final List<CommittedChangeList> myLists;
     private final String myRoot;

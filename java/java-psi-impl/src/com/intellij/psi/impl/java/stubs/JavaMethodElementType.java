@@ -76,7 +76,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     boolean isVarArgs = false;
     boolean isDeprecatedByComment = false;
     boolean hasDeprecatedAnnotation = false;
-    boolean isDefender = false;
+    boolean isExtension = false;
     String defValueText = null;
 
     boolean expectingDef = false;
@@ -111,7 +111,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
           defValueText = LightTreeUtil.toFilteredString(tree, child, null);
         }
         else {
-          isDefender = true;
+          isExtension = true;
         }
         break;
       }
@@ -119,7 +119,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
     final TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
     final boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, isDefender);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, isExtension);
 
     return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
   }

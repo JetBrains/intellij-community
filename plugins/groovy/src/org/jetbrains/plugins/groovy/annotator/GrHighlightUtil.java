@@ -18,22 +18,15 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomDeclarationSearcher;
-import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -150,7 +143,7 @@ public class GrHighlightUtil {
   }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
-      return isAssignmentLhs(refExpr) && isExpandoQualified(refExpr);
+    return isAssignmentLhs(refExpr) && isScriptPropertyAccess(refExpr);
   }
 
   private static boolean isAssignmentLhs(GrReferenceExpression refExpr) {
@@ -158,7 +151,7 @@ public class GrHighlightUtil {
            refExpr.equals(((GrAssignmentExpression)refExpr.getParent()).getLValue());
   }
 
-  private static boolean isExpandoQualified(GrReferenceExpression refExpr) {
+  private static boolean isScriptPropertyAccess(GrReferenceExpression refExpr) {
     final GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
       final PsiClass clazz = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
@@ -169,7 +162,8 @@ public class GrHighlightUtil {
     }
 
     final PsiType type = qualifier.getType();
-    if (type instanceof PsiClassType) {
+    if (type instanceof PsiClassType &&
+        !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof GroovyScriptClass)) {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
       if (psiClass instanceof GroovyScriptClass) {
@@ -177,39 +171,6 @@ public class GrHighlightUtil {
       }
     }
     return false;
-  }
-
-  public static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
-    PsiElement refNameElement = referenceExpression.getReferenceNameElement();
-    if (refNameElement != null && referenceExpression.getQualifier() == null) {
-      final IElementType type = refNameElement.getNode().getElementType();
-      if (TokenSets.STRING_LITERAL_SET.contains(type)) return false;
-    }
-
-    if (isDeclarationAssignment(referenceExpression)) return false;
-
-    GrExpression qualifier = referenceExpression.getQualifier();
-    if (qualifier != null && qualifier.getType() == null && !isRefToPackage(qualifier)) return false;
-
-    if (qualifier != null &&
-        referenceExpression.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER &&
-        referenceExpression.multiResolve(false).length > 0) {
-      return false;
-    }
-
-    if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
-
-    CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
-    for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
-      searcher.findDeclarationsAt(referenceExpression, 0, consumer);
-      if (consumer.getResult().size() > 0) return false;
-    }
-
-    return true;
-  }
-
-  private static boolean isRefToPackage(GrExpression expr) {
-    return expr instanceof GrReferenceExpression && ((GrReferenceExpression)expr).resolve() instanceof PsiPackage;
   }
 
   public static TextRange getMethodHeaderTextRange(PsiMethod method) {

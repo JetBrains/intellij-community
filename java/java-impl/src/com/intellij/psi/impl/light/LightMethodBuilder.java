@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,6 +265,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   @Override
   public boolean isVarArgs() {
     return PsiImplUtil.isVarArgs(this);
+  }
+
+  @Override
+  public boolean isExtensionMethod() {
+    return false;
   }
 
   @Override

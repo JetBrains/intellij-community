@@ -319,6 +319,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return PsiImplUtil.isVarArgs(getParameters());
   }
 
+  @Override
+  public boolean isExtensionMethod() {
+    return false;
+  }
+
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);

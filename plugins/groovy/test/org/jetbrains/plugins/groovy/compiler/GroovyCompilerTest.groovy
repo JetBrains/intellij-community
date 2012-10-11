@@ -222,8 +222,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
     catch (Throwable e) {
       if (ideaLog.exists()) {
-        println "Idea Log:"
-        println ideaLog.text
+        //println "Idea Log:"
+        //println ideaLog.text
       }
       if (makeLog.exists()) {
         println "Server Log:"
@@ -721,7 +721,10 @@ public class Main {
     assert msg?.virtualFile
     ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
 
-    def error = make().find { it.message.contains('InvalidType') }
+    def messages = make()
+    assert messages 
+    println messages
+    def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
     

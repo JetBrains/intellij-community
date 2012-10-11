@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 
 /**
@@ -195,7 +195,7 @@ contribute(currentType("java.lang.String")) { property name:"foo" }
 
   private def checkHighlighting(String text) {
     myFixture.configureByText('a.groovy', text)
-    myFixture.enableInspections(new GroovyUnresolvedAccessInspection())
+    myFixture.enableInspections(new GrUnresolvedAccessInspection())
     myFixture.checkHighlighting(true, false, false)
   }
 }

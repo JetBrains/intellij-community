@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperty
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -54,7 +54,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private GrReferenceExpression doDynamicFix() throws Throwable {
-    myFixture.enableInspections(new GroovyUnresolvedAccessInspection());
+    myFixture.enableInspections(new GrUnresolvedAccessInspection());
 
     final List<IntentionAction> actions = myFixture.getAvailableIntentions(getTestName(false) + ".groovy");
 

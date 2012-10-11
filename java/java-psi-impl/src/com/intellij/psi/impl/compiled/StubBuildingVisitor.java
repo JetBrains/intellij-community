@@ -59,8 +59,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
-  private static final int ACC_DEFENDER = Opcodes.ACC_INTERFACE;  // todo[r.sh] use right constant once ASM gets Java 8 support
-
   private final InnerClassSourceStrategy<T> myInnersStrategy;
   private final StubElement myParent;
   private final int myAccess;
@@ -103,8 +101,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     LanguageLevel languageLevel = convertFromVersion(version);
-
     ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
+
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
 
     CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
@@ -363,12 +361,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
                                    final String desc,
                                    final String signature,
                                    final String[] exceptions) {
-    boolean isSynthetic = (access & Opcodes.ACC_SYNTHETIC) != 0;
-
     // JLS 13.1 says: Any constructs introduced by the compiler that do not have a corresponding construct in the source code
     // must be marked as synthetic, except for default constructors and the class initialization method.
-    // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation. See IDEA-78649
-    if (isSynthetic) return null;
+    // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation.
+    // See IDEA-78649
+    if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
 
     if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
@@ -376,11 +373,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
     boolean isAnnotationMethod = myResult.isAnnotationType();
-    boolean isDefender = (access & ACC_DEFENDER) != 0;
+    boolean isExtensionMethod = myResult.isInterface() && (access & Opcodes.ACC_ABSTRACT) == 0;
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, isDefender);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, isExtensionMethod);
 
     String canonicalMethodName = isConstructor ? myResult.getName() : name;
     final List<String> args = new ArrayList<String>();
@@ -405,7 +402,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     stub.setReturnType(TypeInfo.fromString(returnType));
-
 
     final boolean isNonStaticInnerClassConstructor =
       isConstructor && !(myParent instanceof PsiFileStub) && (myModList.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
