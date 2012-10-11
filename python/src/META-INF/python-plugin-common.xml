@@ -512,6 +512,9 @@
     <localInspection language="DjangoTemplate" shortName="EndBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.end-block-name.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.EndBlockNamesInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoRelationInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.relation.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoRelationInspection"/>
 
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
