@@ -41,6 +41,16 @@ public enum ChangeTypeEnum {
     return myCode;
   }
 
+  public static ChangeTypeEnum getChangeType(final long type) {
+    final ChangeTypeEnum[] values = values();
+    for (ChangeTypeEnum value : values) {
+      if (value.getCode() == type) {
+        return value;
+      }
+    }
+    return null;
+  }
+
   public static ChangeTypeEnum getChangeType(final Change change) {
     if (change.getBeforeRevision() == null) {
       return ADD;
