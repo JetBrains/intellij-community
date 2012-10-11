@@ -219,11 +219,12 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   }
 
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    ProgressIndicator oldIndicator = myThreadIndicator.get();
+    ProgressIndicator oldIndicator = null;
 
-    if (progress != null) myThreadIndicator.set(progress);
+    boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
+    if (set) myThreadIndicator.set(progress);
 
-    final boolean modal = progress != null && progress.isModal();
+    boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
     if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
@@ -231,7 +232,9 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       process.run();
     }
     finally {
-      myThreadIndicator.set(oldIndicator);
+      if (set) {
+        myThreadIndicator.set(oldIndicator);
+      }
 
       if (modal) myCurrentModalProgressCount.decrementAndGet();
       if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
