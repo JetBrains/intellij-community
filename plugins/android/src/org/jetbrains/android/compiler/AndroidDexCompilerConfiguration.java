@@ -25,7 +25,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "AndroidDexCompilerConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/androidDexCompiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
