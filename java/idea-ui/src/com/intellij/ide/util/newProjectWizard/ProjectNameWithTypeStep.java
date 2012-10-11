@@ -27,7 +27,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -298,10 +297,9 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
           }
         }
       };
-      final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
-      final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
-      arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNamePathComponent.getNameComponent());
-      arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myModuleName);
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN);
+      arrow.registerCustomShortcutSet(shortcutSet, myNamePathComponent.getNameComponent());
+      arrow.registerCustomShortcutSet(shortcutSet, myModuleName);
     }
   }
 
