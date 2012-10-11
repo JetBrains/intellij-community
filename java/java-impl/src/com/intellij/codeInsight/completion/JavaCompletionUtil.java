@@ -792,7 +792,9 @@ public class JavaCompletionUtil {
 
         boolean insertAdditionalSemicolon = true;
         final PsiReferenceExpression referenceExpression = PsiTreeUtil.getTopmostParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiReferenceExpression.class);
-        if (referenceExpression != null) {
+        if (referenceExpression instanceof PsiMethodReferenceExpression && LambdaUtil.insertSemicolon(referenceExpression.getParent())) {
+          insertAdditionalSemicolon = false;
+        } else if (referenceExpression != null) {
           PsiElement parent = referenceExpression.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
