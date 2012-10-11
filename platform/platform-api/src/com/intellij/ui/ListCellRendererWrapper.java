@@ -30,7 +30,7 @@ import java.awt.*;
  * @since 30.09.2010
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
-  private final ListCellRenderer myDefaultRenderer = new JComboBox().getRenderer();
+  private final ListCellRenderer myDefaultRenderer;
 
   private boolean mySeparator;
   private Icon myIcon;
@@ -40,13 +40,16 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Color myBackground;
   private Font myFont;
 
-  public ListCellRendererWrapper() { }
+  public ListCellRendererWrapper() {
+    myDefaultRenderer = new JComboBox().getRenderer();
+    assert myDefaultRenderer != null : "LaF: " + UIManager.getLookAndFeel();
+  }
 
   /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final JComboBox comboBox) { }
+  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final JComboBox comboBox) { this(); }
 
   /** @deprecated please use {@linkplain #ListCellRendererWrapper()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) { }
+  @SuppressWarnings("UnusedDeclaration") public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) { this(); }
 
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
