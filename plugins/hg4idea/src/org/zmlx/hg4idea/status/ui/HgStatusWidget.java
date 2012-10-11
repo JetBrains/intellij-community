@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -37,19 +36,21 @@ import org.zmlx.hg4idea.status.HgChangesetStatus;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * Widget to display basic hg status in the IJ status bar.
  */
-public class HgStatusWidget extends EditorBasedWidget
-  implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe, HgUpdater {
+public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, HgUpdater {
 
-  private final HgVcs myVcs;
-  private final HgProjectSettings myProjectSettings;
-  private final HgCurrentBranchStatus myCurrentBranchStatus;
-  private final HgChangesetStatus myIncomingChangesStatus;
-  private final HgChangesetStatus myOutgoingChangesStatus;
+  private static final String MAX_STRING = "hg: default; in: 99; out: 99";
+
+  @NotNull private final HgVcs myVcs;
+  @NotNull private final HgProjectSettings myProjectSettings;
+  @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
+  @NotNull private final HgChangesetStatus myIncomingChangesStatus;
+  @NotNull private final HgChangesetStatus myOutgoingChangesStatus;
 
   private MessageBusConnection myBusConnection;
   private HgRemoteStatusUpdater myRemoteStatusUpdater;
@@ -58,10 +59,7 @@ public class HgStatusWidget extends EditorBasedWidget
   private volatile String myText = "";
   private volatile String myTooltip = "";
 
-  private static final String myMaxString = "hg: default; in: 99; out: 99";
-
-
-  public HgStatusWidget(HgVcs vcs, Project project, HgProjectSettings projectSettings) {
+  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project);
     this.myVcs = vcs;
     this.myProjectSettings = projectSettings;
@@ -103,25 +101,26 @@ public class HgStatusWidget extends EditorBasedWidget
   }
 
   @Override
-  public ListPopup getPopupStep() {
-    return null;
+  public String getTooltipText() {
+    return myTooltip;
   }
 
+  @NotNull
   @Override
-  public String getSelectedValue() {
+  public String getText() {
     final String text = myText;
     return StringUtil.isEmpty(text) ? "" : "Hg: " + text;
   }
 
   @NotNull
   @Override
-  public String getMaxValue() {
-    return myMaxString;
+  public String getMaxPossibleText() {
+    return MAX_STRING;
   }
 
   @Override
-  public String getTooltipText() {
-    return myTooltip;
+  public float getAlignment() {
+    return Component.LEFT_ALIGNMENT;
   }
 
   @Override
@@ -161,7 +160,7 @@ public class HgStatusWidget extends EditorBasedWidget
           myTooltip += "\n" + myOutgoingChangesStatus.getToolTip();
         }
 
-        int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
+        int maxLength = MAX_STRING.length();
         myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
 
         myStatusBar.updateWidget(ID());
