@@ -59,7 +59,6 @@ public class Hash {
         byte[] data = buildData(inputStr);
         Hash newHash = new Hash(data);
         if (cache.containsKey(newHash)) {
-            System.out.println(newHash.toStrHash());
             return cache.get(newHash);
         } else {
             cache.put(newHash, newHash);
