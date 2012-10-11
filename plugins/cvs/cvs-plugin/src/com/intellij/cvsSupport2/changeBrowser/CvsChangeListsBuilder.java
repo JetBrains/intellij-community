@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.netbeans.lib.cvsclient.command.log.SymbolicName;
 import java.util.*;
 
 public class CvsChangeListsBuilder {
+
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
 
   private static class ChangeListKey extends Trinity<String, String, String> {
@@ -44,8 +45,7 @@ public class CvsChangeListsBuilder {
   private final Project myProject;
   private final VirtualFile myRootFile;
 
-  public CvsChangeListsBuilder(final String rootPath, final CvsEnvironment environment, final Project project,
-                               final VirtualFile rootFile) {
+  public CvsChangeListsBuilder(final String rootPath, final CvsEnvironment environment, final Project project, final VirtualFile rootFile) {
     myRootPath = rootPath;
     myEnvironment = environment;
     myProject = project;
@@ -60,14 +60,14 @@ public class CvsChangeListsBuilder {
     return result;
   }
 
-  public CvsChangeList addRevision(RevisionWrapper revision) {
-    final Revision cvsRevision = revision.getRevision();
-    final CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
-                                                         revision.getTime(),
-                                                         cvsRevision.getAuthor(),
-                                                         revision.getBranch(),
-                                                         revision.getFile());
-    version.addFileRevision(revision);
+  public CvsChangeList addRevision(RevisionWrapper revisionWrapper) {
+    final Revision revision = revisionWrapper.getRevision();
+    final CvsChangeList version = findOrCreateVersionFor(revision.getMessage(),
+                                                         revisionWrapper.getTime(),
+                                                         revision.getAuthor(),
+                                                         revisionWrapper.getBranch(),
+                                                         revisionWrapper.getFile());
+    version.addFileRevision(revisionWrapper);
     return version;
   }
 
@@ -83,15 +83,12 @@ public class CvsChangeListsBuilder {
         }
       }
     }
-
-    final CvsChangeList result = new CvsChangeList(myProject, myEnvironment, myRootFile,
-                                                   myLastNumber, message, date, author, myRootPath);
+    final CvsChangeList result =
+      new CvsChangeList(myProject, myEnvironment, myRootFile, myLastNumber, message, date, author, myRootPath);
     myLastNumber += 1;
-
     if (!myCache.containsKey(key)) {
       myCache.put(key, new ArrayList<CvsChangeList>());
     }
-
     myCache.get(key).add(result);
     return result;
   }
@@ -102,7 +99,7 @@ public class CvsChangeListsBuilder {
     if (!CvsChangeList.isAncestor(myRootPath, file)) {
       return null;
     }
-    final List<RevisionWrapper> result = new LinkedList<RevisionWrapper>();
+    final List<RevisionWrapper> result = new ArrayList<RevisionWrapper>();
     for (Revision revision : log.getRevisions()) {
       if (revision != null) {
         if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
@@ -118,19 +115,13 @@ public class CvsChangeListsBuilder {
     return result;
   }
 
-  public void addLogs(final List<LogInformationWrapper> logs) {
-    final List<RevisionWrapper> revisionWrappers = new ArrayList<RevisionWrapper>();
-
-    for (LogInformationWrapper log : logs) {
-      final List<RevisionWrapper> wrappers = revisionWrappersFromLog(log);
-      if (wrappers != null) {
-        revisionWrappers.addAll(wrappers);
-      }
+  public void add(LogInformationWrapper log) {
+    final List<RevisionWrapper> wrappers = revisionWrappersFromLog(log);
+    if (wrappers == null) {
+      return;
     }
-
-    Collections.sort(revisionWrappers);
-    for (RevisionWrapper revisionWrapper : revisionWrappers) {
-      addRevision(revisionWrapper);
+    for (RevisionWrapper wrapper : wrappers) {
+      addRevision(wrapper);
     }
   }
 
