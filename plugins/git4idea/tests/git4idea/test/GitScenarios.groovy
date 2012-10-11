@@ -87,15 +87,21 @@ common content
    * This produces the "some untracked files would be overwritten by..." error when trying to checkout or merge.
    * Branch with the given name shall exist.
    */
-  def untrackedFileOverwrittenBy(GitRepository repository, String branch) {
+  def untrackedFileOverwrittenBy(GitRepository repository, String branch, Collection<String> fileNames) {
     cd repository
     git("checkout $branch")
-    touch("untracked.txt", "branch content")
-    git("add untracked.txt")
-    git("commit -m untracked_file")
+
+    for (it in fileNames) {
+      touch(it, "branch content")
+      git("add $it")
+    }
+
+    git("commit -m untracked_files")
     git("checkout master")
-    touch("untracked.txt", "master content")
-    [ "untracked.txt" ]
+
+    for (it in fileNames) {
+      touch(it, "master content")
+    }
   }
 
   /**

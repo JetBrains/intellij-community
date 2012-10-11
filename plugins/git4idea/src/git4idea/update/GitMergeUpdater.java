@@ -73,9 +73,8 @@ public class GitMergeUpdater extends GitUpdater {
 
     final MergeLineListener mergeLineListener = new MergeLineListener();
     mergeHandler.addLineListener(mergeLineListener);
-    GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector = new GitMessageWithFilesDetector(
-      GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
-    mergeHandler.addLineListener(untrackedFilesWouldBeOverwrittenByMergeDetector);
+    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
+    mergeHandler.addLineListener(untrackedFilesDetector);
 
     final GitTask mergeTask = new GitTask(myProject, mergeHandler, "Merging changes");
     mergeTask.setProgressIndicator(myProgressIndicator);
@@ -98,7 +97,7 @@ public class GitMergeUpdater extends GitUpdater {
     });
 
     if (failure.get()) {
-      updateResult.set(handleMergeFailure(mergeLineListener, untrackedFilesWouldBeOverwrittenByMergeDetector, merger, mergeHandler));
+      updateResult.set(handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, mergeHandler));
     }
     return updateResult.get();
   }

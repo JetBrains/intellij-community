@@ -39,8 +39,8 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private final Event myEvent;
   private final VirtualFile myRoot;
 
-  private final Set<String> myAffectedFiles = new HashSet<String>();
-  private boolean myMessageDetected;
+  protected final Set<String> myAffectedFiles = new HashSet<String>();
+  protected boolean myMessageDetected;
   private boolean myFilesAreDisplayed;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
@@ -97,18 +97,13 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
     return files;
   }
 
-  public enum Event {
-    LOCAL_CHANGES_OVERWRITTEN_BY_MERGE(
+  public static class Event {
+    public static final Event LOCAL_CHANGES_OVERWRITTEN_BY_MERGE = new Event(
       "Your local changes to the following files would be overwritten by merge",
-      "commit your changes or stash them before"),
-    LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT(
+      "commit your changes or stash them before");
+    public static final Event LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT = new Event(
       "Your local changes to the following files would be overwritten by checkout",
-      "commit your changes or stash them before"),
-    UNTRACKED_FILES_OVERWRITTEN_BY(
-      "The following untracked working tree files would be overwritten by",
-      "Please move or remove them before"
-    )
-    ;
+      "commit your changes or stash them before");
 
     private final String myMessageStartMarker;
     private final String myMessageEndMarker;

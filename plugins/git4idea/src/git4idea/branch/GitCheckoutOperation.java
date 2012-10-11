@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.commands.GitMessageWithFilesDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT;
-import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -70,9 +69,11 @@ class GitCheckoutOperation extends GitBranchOperation {
       final GitRepository repository = next();
 
       VirtualFile root = repository.getRoot();
-      GitMessageWithFilesDetector localChangesOverwrittenByCheckout = new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, root);
+      GitMessageWithFilesDetector localChangesOverwrittenByCheckout =
+        new GitMessageWithFilesDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHECKOUT, root);
       GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
-      GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(UNTRACKED_FILES_OVERWRITTEN_BY, root);
+      GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
+        new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
       GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
                                              localChangesOverwrittenByCheckout, unmergedFiles, untrackedOverwrittenByCheckout);

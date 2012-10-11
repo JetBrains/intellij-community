@@ -237,14 +237,24 @@ class GitBranchWorkerTest {
   }
   
   @Test
+  public void "checkout with several untracked files overwritten by checkout in first repo should show notification"() {
+    // note that in old Git versions only one file is listed in the error.
+    test_untracked_files_overwritten_by_in_first_repo("checkout", 3);
+  }
+
+  @Test
   public void "merge with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("merge");
   }
   
-  def test_untracked_files_overwritten_by_in_first_repo(String operation) {
+  def test_untracked_files_overwritten_by_in_first_repo(String operation, int untrackedFiles = 1) {
     branchWithCommit(myRepositories, "feature")
-    untrackedFileOverwrittenBy(myUltimate, "feature")
-    
+    def files = []
+    for (int i = 0; i < untrackedFiles; i++) {
+      files.add("untracked${i}.txt")
+    }
+    untrackedFileOverwrittenBy(myUltimate, "feature", files)
+
     boolean notificationShown = false;
     checkoutOrMerge operation, "feature", [
             showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
@@ -265,7 +275,8 @@ class GitBranchWorkerTest {
 
   def test_checkout_with_untracked_files_overwritten_by_in_second_repo(String operation) {
     branchWithCommit(myRepositories, "feature")
-    def untracked = untrackedFileOverwrittenBy(myCommunity, "feature")
+    def untracked = ["untracked.txt"]
+    untrackedFileOverwrittenBy(myCommunity, "feature", untracked)
 
     Collection<VirtualFile> untrackedFiles = null;
     checkoutOrMerge operation, "feature", [
