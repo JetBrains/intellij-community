@@ -215,6 +215,10 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     myRemoteSdkDataHolder.setHelpersVersionChecked(helpersVersionChecked);
   }
 
+  @Override
+  public void completeInitialization() {
+  }
+
   @NotNull
   public static PyRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
     final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(sdk.getHomePath());
