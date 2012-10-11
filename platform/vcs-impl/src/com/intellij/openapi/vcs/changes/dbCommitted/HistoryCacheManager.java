@@ -83,6 +83,18 @@ public class HistoryCacheManager {
     return myDbUtil.readLists(vcs, location, lastRev, oldRev);
   }
 
+  public long getLastRevision(final AbstractVcs vcs, final RepositoryLocation location) {
+    return myDbUtil.getLastRevision(vcs, location2string(location));
+  }
+
+  private String location2string(RepositoryLocation location) {
+    return FileUtil.toSystemIndependentName(location.toPresentableString());
+  }
+
+  public long getFirstRevision(final AbstractVcs vcs, final RepositoryLocation location) {
+    return myDbUtil.getFirstRevision(vcs, location2string(location));
+  }
+
   private class AppendChanges extends Task.Backgroundable {
     private final List<CommittedChangeList> myLists;
     private final String myRoot;
@@ -134,7 +146,7 @@ public class HistoryCacheManager {
         myCachesHolder.iterateAllRepositoryLocations(new PairProcessor<RepositoryLocation, AbstractVcs>() {
           @Override
           public boolean process(RepositoryLocation location, AbstractVcs vcs) {
-            map.putValue(vcs.getName(), FileUtil.toSystemIndependentName(location.toPresentableString()));
+            map.putValue(vcs.getName(), location2string(location));
             return true;
           }
         });

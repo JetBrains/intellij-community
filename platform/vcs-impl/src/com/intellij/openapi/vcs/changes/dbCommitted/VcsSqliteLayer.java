@@ -256,13 +256,21 @@ public class VcsSqliteLayer {
 
     long maxRev = -1;
     long minRev = Long.MAX_VALUE;
+    final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
+    final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
 
     final List<List<CommittedChangeList>> split = new CollectionSplitter<CommittedChangeList>(20).split(lists);
     final Map<String, Long> knowPaths = new HashMap<String, Long>();
     for (List<CommittedChangeList> changeLists : split) {
       final Set<String> names = new HashSet<String>();
       final Set<String> paths = new HashSet<String>();
-      for (CommittedChangeList list : changeLists) {
+      for (Iterator<CommittedChangeList> iterator = changeLists.iterator(); iterator.hasNext(); ) {
+        final CommittedChangeList list = iterator.next();
+        if (lastRevision != null && list.getNumber() <= lastRevision && list.getNumber() >= firstRevision) {
+          iterator.remove();
+          continue;
+        }
+
         maxRev = Math.max(maxRev, list.getNumber());
         minRev = Math.min(minRev, list.getNumber());
 
@@ -281,11 +289,9 @@ public class VcsSqliteLayer {
       checkAndAddPaths(paths, knowPaths, locationId);
       insertChangeListsIfNotExists(vcs, knownAuthors, changeLists, locationId, knowPaths);
 
-      final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
       if (firstRevision == null || minRev < firstRevision) {
         myKnownRepositoryLocations.setFirstRevision(locationId, minRev);
       }
-      final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
       if (lastRevision == null || maxRev > lastRevision) {
         myKnownRepositoryLocations.setLastRevision(locationId, maxRev);
       }
@@ -310,11 +316,8 @@ public class VcsSqliteLayer {
     final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
     try {
       statement.setLong(1, locationId);
-      final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
-      final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
 
       for (CommittedChangeList list : lists) {
-        if (lastRevision != null && list.getNumber() <= lastRevision && list.getNumber() >= firstRevision) continue;
         statement.setLong(2, authors.get(list.getCommitterName()));
         statement.setLong(3, list.getCommitDate().getTime());
         statement.setLong(4, list.getNumber());
@@ -368,6 +371,10 @@ public class VcsSqliteLayer {
 
           insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getAfterRevision().getFile().getPath())));
           insert.setLong(4, beforeId);
+          insert.setLong(3, type.getCode());
+          SqliteUtil.insert(insert);
+        } else if (change.getAfterRevision() == null) {
+          insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getBeforeRevision().getFile().getPath())));
           insert.setLong(3, type.getCode());
           SqliteUtil.insert(insert);
         } else {
