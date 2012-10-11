@@ -248,11 +248,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
+      assert classType.isValid();
       assert aClass.isValid();
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
         if (containsInMap(typeParameter)) {
-          return substituteTypeParameter(typeParameter);
+          PsiType result = substituteTypeParameter(typeParameter);
+          if (result != null) {
+            assert result.isValid();
+          }
+          return result;
         }
         else {
           return classType;
@@ -262,8 +267,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }
-      return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
-        .createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
+      PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
+      assert result.isValid();
+      return result;
     }
 
     private PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
