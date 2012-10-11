@@ -33,8 +33,6 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 
 /**
- * Brace matcher for Groovy language
- *
  * @author ilyas
  */
 public class GroovyBraceMatcher implements PairedBraceMatcher {
@@ -44,7 +42,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
     new BracePair(mLBRACK, mRBRACK, false),
     new BracePair(mLCURLY, mRCURLY, true),
 
-    new BracePair(mGDOC_INLINE_TAG_START, mGDOC_INLINE_TAG_END, true),
+    new BracePair(mGDOC_INLINE_TAG_START, mGDOC_INLINE_TAG_END, false),
     new BracePair(mGDOC_TAG_VALUE_LPAREN, mGDOC_TAG_VALUE_RPAREN, false),
 
     new BracePair(mGSTRING_BEGIN, mGSTRING_END, false),
