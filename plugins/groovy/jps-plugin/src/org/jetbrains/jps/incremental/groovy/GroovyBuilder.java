@@ -73,6 +73,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
+      LOG.info("forStubs=" + myForStubs);
+      LOG.info("toCompile: " + toCompile);
 
       Map<ModuleBuildTarget, String> finalOutputs = getCanonicalModuleOutputs(context, chunk);
       if (finalOutputs == null) {
@@ -147,6 +149,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
       List<GroovycOSProcessHandler.OutputItem> compiled = new ArrayList<GroovycOSProcessHandler.OutputItem>();
       for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
+        LOG.info("compiled=" + item);
         compiled.add(ensureCorrectOutput(context, chunk, item, generationOutputs, compilerOutput));
       }
 
