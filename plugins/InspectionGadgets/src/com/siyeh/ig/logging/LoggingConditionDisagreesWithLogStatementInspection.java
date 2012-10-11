@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -69,8 +70,27 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
-      if (!loggingLevels.contains(referenceName)) {
+      if (referenceName == null) {
         return;
+      }
+      final String loggingLevel;
+      if (!loggingLevels.contains(referenceName)) {
+        if (!"log".equals(referenceName)) {
+          return;
+        }
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length < 2) {
+          return;
+        }
+        final PsiExpression argument = arguments[0];
+        loggingLevel = JavaUtilLoggingProblemChecker.getLoggingLevelFromArgument(argument);
+        if (loggingLevel == null) {
+          return;
+        }
+      }
+      else {
+        loggingLevel = referenceName;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -149,10 +169,10 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
       }
       final String qualifiedName = containingClass.getQualifiedName();
       final LoggingProblemChecker problemChecker = problemCheckers.get(qualifiedName);
-      if (problemChecker == null || !problemChecker.hasLoggingProblem(referenceName, methodCallExpression)) {
+      if (problemChecker == null || !problemChecker.hasLoggingProblem(loggingLevel, methodCallExpression)) {
         return;
       }
-      registerMethodCallError(methodCallExpression, referenceName);
+      registerMethodCallError(methodCallExpression, loggingLevel);
     }
   }
 
@@ -183,30 +203,38 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         return false;
       }
       final PsiExpression argument = arguments[0];
-      if (!(argument instanceof PsiReferenceExpression)) {
+      final String loggingLevel = getLoggingLevelFromArgument(argument);
+      if (loggingLevel == null) {
         return false;
+      }
+      return !loggingLevel.equals(priority);
+    }
+
+    @Nullable
+    public static String getLoggingLevelFromArgument(PsiExpression argument) {
+      if (!(argument instanceof PsiReferenceExpression)) {
+        return null;
       }
       final PsiReferenceExpression argumentReference = (PsiReferenceExpression)argument;
       final PsiType type = argument.getType();
       if (!(type instanceof PsiClassType)) {
-        return false;
+        return null;
       }
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
       if (aClass == null) {
-        return false;
+        return null;
       }
       final String qName = aClass.getQualifiedName();
       if (!"java.util.logging.Level".equals(qName)) {
-        return false;
+        return null;
       }
       final PsiElement argumentTarget = argumentReference.resolve();
       if (!(argumentTarget instanceof PsiField)) {
-        return false;
+        return null;
       }
       final PsiField field = (PsiField)argumentTarget;
-      final String enabledFor = field.getName().toLowerCase();
-      return enabledFor != priority;
+      return field.getName().toLowerCase();
     }
   }
 
