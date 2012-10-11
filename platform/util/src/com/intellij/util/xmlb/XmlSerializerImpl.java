@@ -79,8 +79,8 @@ class XmlSerializerImpl {
     Binding binding = map.get(p);
     if (binding == null) {
       binding = _getNonCachedClassBinding(aClass, accessor, originalType);
-      map.put(p, binding);
       binding.init();
+      map.put(p, binding);
     }
 
     return binding;

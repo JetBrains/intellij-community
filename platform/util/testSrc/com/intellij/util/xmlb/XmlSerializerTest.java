@@ -18,11 +18,13 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.*;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
 import java.util.*;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author mike
@@ -436,6 +438,40 @@ public class XmlSerializerTest extends TestCase {
   public static class BeanWithFieldWithTagAnnotation {
     @Tag("name")
     public String STRING_V = "hello";
+  }
+
+  public void testParallelDeserialization() throws InterruptedException {
+    final Element e = new Element("root").addContent(new Element("name").setText("x"));
+    XmlSerializer.deserialize(e, BeanWithArray.class);//to initialize XmlSerializerImpl.ourBindings
+    Thread[] threads = new Thread[5];
+    final AtomicReference<AssertionFailedError> exc = new AtomicReference<AssertionFailedError>();
+    for (int i = 0; i < threads.length; i++) {
+      threads[i] = new Thread("XmlSerializerTest#testParallelDeserialization-" + i) {
+        @Override
+        public void run() {
+          try {
+            for (int j = 0; j < 10; j++) {
+              BeanWithFieldWithTagAnnotation bean = XmlSerializer.deserialize(e, BeanWithFieldWithTagAnnotation.class);
+              assertNotNull(bean);
+              assertEquals("x", bean.STRING_V);
+            }
+          }
+          catch (AssertionFailedError e) {
+            exc.set(e);
+          }
+        }
+      };
+    }
+    for (Thread thread : threads) {
+      thread.start();
+    }
+    for (Thread thread : threads) {
+      thread.join();
+    }
+    AssertionFailedError error = exc.get();
+    if (error != null) {
+      throw error;
+    }
   }
 
   public void testFieldWithTagAnnotation() {
