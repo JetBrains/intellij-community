@@ -12,6 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * TODO quotations!
+ * TODO quotations!
+ * TODO quotations!
+ * TODO quotations!
+ * TODO quotations!
+ * TODO quotations!
  */
 package com.intellij.openapi.vcs.changes.dbCommitted;
 
@@ -566,5 +572,71 @@ public class VcsSqliteLayer {
       throw new VcsException(e);
     }
     return result;
+  }
+
+  public PathState getPathState(final AbstractVcs vcs, final RepositoryLocation location, final String path) throws VcsException {
+    final String normalizedPath = FileUtil.toSystemIndependentName(path);
+    final String normalizedLocation = FileUtil.toSystemIndependentName(location.toPresentableString());
+    if (! myKnownRepositoryLocations.exists(vcs.getName(), normalizedLocation)) return null;
+
+    final PreparedStatement maxStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_PATH_DATA,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("SELECT MAX(R." + SqliteTables.REVISION.NUMBER_INT + ") MAX, MAX(P."+ SqliteTables.PATHS.ID +
+            ") PATH_ID FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME + " PR INNER JOIN " +
+            SqliteTables.REVISION.TABLE_NAME + " R, " + SqliteTables.PATHS.TABLE_NAME + " P ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
+            SqliteTables.REVISION.ID + " AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=P." + SqliteTables.PATHS.ID +
+            " WHERE P." + SqliteTables.PATHS.PATH + "=? AND R." + SqliteTables.REVISION.ROOT_FK + "=?");
+        }
+      });
+
+    try {
+      maxStatement.setString(1, normalizedPath);
+      final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), normalizedLocation);
+      maxStatement.setLong(2, locationId);
+      final long pathId[] = new long[1];
+      final long maxRev[] = new long[1];
+      maxRev[0] = -1;
+      final ResultSet set = maxStatement.executeQuery();
+      SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
+        @Override
+        public void run() throws SQLException {
+          maxRev[0] = set.getLong("MAX");
+          pathId[0] = set.getLong("PATH_ID");
+        }
+      });
+
+      if (maxRev[0] == -1) return null;
+
+      final PreparedStatement lastChangeType = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_PATHS_2_REVS,
+        new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+          @Override
+          public PreparedStatement convert(Connection connection) throws SQLException {
+            return connection.prepareStatement("SELECT PR." + SqliteTables.PATHS_2_REVS.TYPE + " FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME +
+              " PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
+              SqliteTables.REVISION.ID + " WHERE R." + SqliteTables.REVISION.NUMBER_INT + "=? AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK +
+              "=?");
+          }
+        });
+      lastChangeType.setLong(1, maxRev[0]);
+      lastChangeType.setLong(2, pathId[0]);
+      final ResultSet typeSet = lastChangeType.executeQuery();
+      final long[] type = new long[1];
+      type[0] = -100;
+      SqliteUtil.readSelectResults(typeSet, new ThrowableRunnable<SQLException>() {
+        @Override
+        public void run() throws SQLException {
+          type[0] = typeSet.getLong(1);
+        }
+      });
+      if (type[0] == -100) return null;
+      final ChangeTypeEnum changeType = ChangeTypeEnum.getChangeType(type[0]);
+      if (changeType == null) return null;
+      return new PathState(maxRev[0], ! ChangeTypeEnum.DELETE.equals(changeType));
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
   }
 }

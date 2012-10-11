@@ -95,6 +95,10 @@ public class HistoryCacheManager {
     return myDbUtil.getFirstRevision(vcs, location2string(location));
   }
 
+  public PathState getPathState(final AbstractVcs vcs, final RepositoryLocation location, final String path) throws VcsException {
+    return myDbUtil.getPathState(vcs, location, path);
+  }
+
   private class AppendChanges extends Task.Backgroundable {
     private final List<CommittedChangeList> myLists;
     private final String myRoot;
