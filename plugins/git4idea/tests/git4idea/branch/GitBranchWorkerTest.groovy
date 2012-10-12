@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
@@ -349,13 +350,13 @@ class GitBranchWorkerTest {
     assertCurrentBranch("feature");
     cd myUltimate
     def actual = cat(localChanges[0])
-    assertEquals("Content doesn't match",
-"""line with branch changes
+    def expectedContent = """line with branch changes
 common content
 common content
 common content
 line with master changes
-""", actual)
+"""
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, File.separator), actual)
   }
   
   @Test
@@ -365,13 +366,13 @@ line with master changes
 
     cd myUltimate
     def actual = cat(localChanges[0])
-    assertEquals("Content doesn't match",
-"""line with branch changes
+    def expectedContent = """line with branch changes
 common content
 common content
 common content
 line with master changes
-""", actual)
+"""
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, File.separator), actual)
   }
   
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
