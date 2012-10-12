@@ -333,11 +333,11 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   @Override
   protected void doOKAction() {
     final String targetClassName = getTargetClassName();
-    PsiClass newClass = myDefaultTargetClass;
 
     if (myDefaultTargetClass == null || !targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(myContext.getPlace());
-      newClass = JavaPsiFacade.getInstance(myContext.getProject()).findClass(targetClassName, GlobalSearchScope.projectScope(myContext.getProject()));
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(myContext.getProject());
+      PsiClass newClass = facade.findClass(targetClassName, GlobalSearchScope.projectScope(myContext.getProject()));
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
@@ -345,6 +345,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());
+    }
+    else {
+      myTargetClassInfo = new TargetClassInfo(myDefaultTargetClass);
     }
 
 

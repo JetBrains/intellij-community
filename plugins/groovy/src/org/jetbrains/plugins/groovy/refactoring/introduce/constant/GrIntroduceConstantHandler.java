@@ -95,7 +95,10 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     while (true) {
       final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
       if (typeDefinition == null) return null;
-      if (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null) return typeDefinition;
+      if (!typeDefinition.isAnonymous() &&
+          (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null)) {
+        return typeDefinition;
+      }
       place = typeDefinition;
     }
   }
