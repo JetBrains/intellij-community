@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
@@ -46,7 +47,8 @@ public class ResourcesValidityState implements ValidityState {
       return;
     }
 
-    AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    final AndroidFacetConfiguration configuration = facet.getConfiguration();
+    AndroidPlatform platform = configuration.getAndroidPlatform();
     IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetName = target != null ? target.getFullName() : "";
 
@@ -75,9 +77,11 @@ public class ResourcesValidityState implements ValidityState {
       if (depResDir != null) {
         collectFiles(depResDir);
       }
-      final VirtualFile depAssetDir = AndroidRootUtil.getAssetsDir(depFacet);
-      if (depAssetDir != null) {
-        collectFiles(depAssetDir);
+      if (configuration.isIncludeAssetsFromLibraries()) {
+        final VirtualFile depAssetDir = AndroidRootUtil.getAssetsDir(depFacet);
+        if (depAssetDir != null) {
+          collectFiles(depAssetDir);
+        }
       }
     }
   }

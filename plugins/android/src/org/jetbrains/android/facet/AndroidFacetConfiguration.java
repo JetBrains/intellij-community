@@ -52,6 +52,8 @@ import java.util.List;
 public class AndroidFacetConfiguration implements FacetConfiguration {
   @NonNls private static final String RES_OVERLAY_FOLDERS_ELEMENT_NAME = "resOverlayFolders";
   @NonNls private static final String PATH_ELEMENT_NAME = "path";
+
+  @NonNls private static final String INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME = "includeAssetsFromLibraries";
   @NonNls private static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
   public String GEN_FOLDER_RELATIVE_PATH_APT = "/" + SdkConstants.FD_GEN_SOURCES;
@@ -62,6 +64,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String RES_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_RES;
   public String ASSETS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_ASSETS;
   public String LIBS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_NATIVE_LIBS;
+
+  private boolean myIncludeAssetsFromLibraries = false;
 
   public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/res-overlay");
 
@@ -170,15 +174,18 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     }
 
     final Element includeSystemProguardFile = element.getChild(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
-    if (includeSystemProguardFile != null) {
-      final String includeSystemProguardFileValue = includeSystemProguardFile.getValue();
+    final String includeSystemProguardFileValue = includeSystemProguardFile != null
+                                                  ? includeSystemProguardFile.getValue()
+                                                  : null;
+    myIncludeSystemProguardCfgPath = includeSystemProguardFileValue != null &&
+                                     Boolean.parseBoolean(includeSystemProguardFileValue);
 
-      if (includeSystemProguardFileValue != null) {
-        myIncludeSystemProguardCfgPath = Boolean.parseBoolean(includeSystemProguardFileValue);
-        return;
-      }
-    }
-    myIncludeSystemProguardCfgPath = false;
+    final Element includeAssetsFromLibraries = element.getChild(INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME);
+    final String includeAssetsFromLibrariesValue = includeAssetsFromLibraries != null
+                                                   ? includeAssetsFromLibraries.getValue()
+                                                   : null;
+    myIncludeAssetsFromLibraries = includeAssetsFromLibrariesValue == null ||
+                                   Boolean.parseBoolean(includeAssetsFromLibrariesValue);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -240,5 +247,13 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public void setAdditionalNativeLibraries(@NotNull List<AndroidNativeLibData> additionalNativeLibraries) {
     myAdditionalNativeLibraries = additionalNativeLibraries;
+  }
+
+  public boolean isIncludeAssetsFromLibraries() {
+    return myIncludeAssetsFromLibraries;
+  }
+
+  public void setIncludeAssetsFromLibraries(boolean includeAssetsFromLibraries) {
+    myIncludeAssetsFromLibraries = includeAssetsFromLibraries;
   }
 }
