@@ -120,7 +120,8 @@ public class GridCellImpl implements GridCell {
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
-          minimizeOrClose(e);
+          // see RunnerContentUi tabMouseListener as well
+          closeOrMinimize(e);
         }
       }
     });
@@ -448,16 +449,16 @@ public class GridCellImpl implements GridCell {
     minimize(new Content[]{content});
   }
 
-  public void minimizeOrClose(MouseEvent e) {
+  public void closeOrMinimize(MouseEvent e) {
     TabInfo tabInfo = myTabs.findInfo(e);
     if (tabInfo == null) return;
 
     Content content = getContentFor(tabInfo);
-    if (MinimizeViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) {
-      minimize(content);
-    }
-    else if (CloseViewAction.isEnabled(new Content[]{content})) {
+    if (CloseViewAction.isEnabled(new Content[]{content})) {
       CloseViewAction.perform(myContext, content);
+    }
+    else if (MinimizeViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) {
+      minimize(content);
     }
   }
 
