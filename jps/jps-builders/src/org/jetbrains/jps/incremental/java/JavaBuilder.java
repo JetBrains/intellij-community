@@ -38,6 +38,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -234,13 +235,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+      final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled() && context.isMake()) {
         if (filesToCompile.size() > 0) {
-          logFiles(filesToCompile, logger, "Compiling files:");
+          logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
         }
         if (!formsToCompile.isEmpty()) {
-          logFiles(formsToCompile, logger, "Compiling forms:");
+          logger.logCompiledFiles(formsToCompile, FORMS_BUILDER_NAME, "Compiling forms:");
         }
       }
 
@@ -259,20 +260,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new ProjectBuildException(message, e);
     }
-  }
-
-  private static void logFiles(Set<File> files, JavaBuilderLogger logger, final String description) throws IOException {
-    logger.log(description);
-    final String[] buffer = new String[files.size()];
-    int i = 0;
-    for (final File f : files) {
-      buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
-    }
-    Arrays.sort(buffer);
-    for (final String s : buffer) {
-      logger.log(s);
-    }
-    logger.log("End of files");
   }
 
   @Override

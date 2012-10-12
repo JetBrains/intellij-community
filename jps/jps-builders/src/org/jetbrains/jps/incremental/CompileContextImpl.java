@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;

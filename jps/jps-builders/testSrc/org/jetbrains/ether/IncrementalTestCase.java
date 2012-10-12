@@ -19,16 +19,14 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
-import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -37,10 +35,9 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author db
@@ -173,8 +170,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   protected BuildResult doTestBuild(int makesCount) {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
-    final TestJavaBuilderLogger builderLogger = new TestJavaBuilderLogger(rootPath, log);
-    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), builderLogger,
+    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(),
                                                                                  new TestProjectBuilderLogger(rootPath, log)));
     try {
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
@@ -238,10 +234,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     }
   }
 
-  private static CompileScope createAllModulesScope(final boolean forcedCompilation) {
-    return new CompileScopeImpl(forcedCompilation, JavaModuleBuildTargetType.ALL_TYPES, Collections.<BuildTarget<?>>emptySet(), Collections.<BuildTarget<?>, Set<File>>emptyMap());
-  }
-
   private JpsSdk<JpsDummyElement> getOrCreateJdk() {
     if (myJdk == null) {
       myJdk = addJdk("IDEA jdk");
@@ -259,27 +251,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
   }
 
-  private static class TestJavaBuilderLogger implements JavaBuilderLogger {
-    private final String myRoot;
-    private final StringBuilder myLog;
-
-    public TestJavaBuilderLogger(String root, final StringBuilder log) {
-      myRoot = root;
-      myLog = log;
-    }
-
-    @Override
-    public void log(String line) {
-      myLog.append(StringUtil.trimStart(line, myRoot)).append('\n');
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return true;
-    }
-  }
-
-  private static class TestProjectBuilderLogger extends ProjectBuilderLoggerImpl {
+  private static class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
     private StringBuilder myLog;
 

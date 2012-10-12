@@ -7,6 +7,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
@@ -49,7 +50,7 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataPaths.getDataStorageRoot(), "output-roots");
   }
 
-  public SourceToOutputMappingImpl getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
+  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
     SourceToOutputMappingImpl mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
