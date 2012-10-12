@@ -17,6 +17,8 @@ package com.intellij.platform.templates;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -50,7 +53,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
       try {
         file.getParentFile().mkdirs();
         stream = new ZipOutputStream(new FileOutputStream(file));
-        VirtualFile dir = project.getBaseDir();
+
+        VirtualFile dir = getDirectoryToSave(project, dialog.getModuleToSave());
         String description = dialog.getDescription();
         if (descriptionFile == null) {
           stream.putNextEntry(new ZipEntry(dir.getName() + "/" + ArchivedProjectTemplate.DESCRIPTION_PATH));
@@ -77,6 +81,19 @@ public class SaveProjectAsTemplateAction extends AnAction {
       finally {
         StreamUtil.closeStream(stream);
       }
+    }
+  }
+
+  private static VirtualFile getDirectoryToSave(Project project, @Nullable String moduleName) {
+    if (moduleName == null) {
+      return project.getBaseDir();
+    }
+    else {
+      Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+      assert module != null : "Can't find module " + moduleName;
+      VirtualFile moduleFile = module.getModuleFile();
+      assert moduleFile != null;
+      return moduleFile.getParent();
     }
   }
 
