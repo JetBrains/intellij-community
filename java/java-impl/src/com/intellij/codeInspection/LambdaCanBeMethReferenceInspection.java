@@ -168,12 +168,12 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
   }
 
   @Nullable
-  protected static String createMethodReferenceText(PsiElement element, final PsiParameter[] parameters, PsiType functionalInterfaceType) {
+  protected static String createMethodReferenceText(PsiElement element, PsiType functionalInterfaceType) {
     String methodRefText = null;
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
       final PsiMethod psiMethod = methodCall.resolveMethod();
-      LOG.assertTrue(psiMethod != null);
+      if (psiMethod == null) return null;
       final PsiClass containingClass = psiMethod.getContainingClass();
       LOG.assertTrue(containingClass != null);
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
@@ -227,7 +227,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final PsiElement element = descriptor.getPsiElement();
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      final String methodRefText = createMethodReferenceText(element, lambdaExpression.getParameterList().getParameters(), lambdaExpression.getFunctionalInterfaceType());
+      final String methodRefText = createMethodReferenceText(element, lambdaExpression.getFunctionalInterfaceType());
 
       if (methodRefText != null) {
         final PsiExpression psiExpression =

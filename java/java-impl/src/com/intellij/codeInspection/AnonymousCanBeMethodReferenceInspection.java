@@ -116,7 +116,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaLocalInspec
         final PsiCallExpression callExpression = LambdaCanBeMethReferenceInspection.canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType());
         if (callExpression == null) return;
         final String methodRefText =
-          LambdaCanBeMethReferenceInspection.createMethodReferenceText(callExpression, parameters, anonymousClass.getBaseClassType());
+          LambdaCanBeMethReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType());
 
         if (methodRefText != null) {
           final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
