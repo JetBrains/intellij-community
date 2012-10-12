@@ -82,6 +82,7 @@ public class AndroidCommonUtils {
   };
 
   @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
+  @NonNls public static final String INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME = "includeAssetsFromLibraraies";
   @NonNls public static final String ADDITIONAL_NATIVE_LIBS_ELEMENT = "additionalNativeLibs";
   @NonNls public static final String ITEM_ELEMENT = "item";
   @NonNls public static final String ARCHITECTURE_ATTRIBUTE = "architecture";
