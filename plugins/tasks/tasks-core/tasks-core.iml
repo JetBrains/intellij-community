@@ -19,6 +19,7 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/axis-1.4.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/axis-jaxrpc-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/wsdl4j-1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

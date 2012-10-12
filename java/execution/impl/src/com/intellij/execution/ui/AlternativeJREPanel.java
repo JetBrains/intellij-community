@@ -27,9 +27,9 @@ import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBCheckBox;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -45,12 +45,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private JComponent myAnchor;
 
   public AlternativeJREPanel() {
-    super(new GridBagLayout());
-
     myCbEnabled = new JBCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
-    final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    add(myCbEnabled, gc);
 
     myFieldWithHistory = new TextFieldWithHistory();
     final ArrayList<String> foundJDKs = new ArrayList<String>();
@@ -64,15 +59,12 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
                                         ExecutionBundle.message("run.configuration.select.jre.dir.label"),
                                         null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
                                         TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
-    gc.gridx = 1;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets.left = 10;
-    add(myPathField, gc);
-    InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
-    //gc.weighty = 1;
-    //add(Box.createVerticalBox(), gc);
+    setLayout(new MigLayout("ins 0, gap 10, fill, flowx"));
+    add(myCbEnabled, "shrinkx");
+    add(myPathField, "growx, pushx");
+
+    InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
     myCbEnabled.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

@@ -20,6 +20,8 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
+import static javax.swing.SwingConstants.*;
+
 public class SeparatorWithText extends JComponent {
 
   private String myCaption = "";
@@ -50,7 +52,7 @@ public class SeparatorWithText extends JComponent {
     return size;
   }
 
-  public Dimension getPreferredFontSize() {
+  private Dimension getPreferredFontSize() {
     if (hasCaption()) {
       FontMetrics fm = getFontMetrics(getFont());
       int preferredHeight = fm.getHeight();
@@ -67,7 +69,7 @@ public class SeparatorWithText extends JComponent {
   }
 
   private boolean hasCaption() {
-    return myCaption != null && !"".equals(myCaption.trim());
+    return myCaption != null && !myCaption.trim().isEmpty();
   }
 
   public Dimension getMinimumSize() {
@@ -82,24 +84,25 @@ public class SeparatorWithText extends JComponent {
     g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
 
     if (hasCaption()) {
-      final FontMetrics fm = getFontMetrics(getFont());
-      final int baseline = getVgap() + fm.getAscent();
-
-      final int fontWidth = getPreferredFontSize().width;
-      final int lineY = getVgap() + fm.getHeight() / 2;
-
-      final int lineX;
-      if (myCaptionCentered) {
-        lineX = (getWidth() - fontWidth) / 2;
-        g.drawLine(0, lineY, lineX, lineY);
-      } else {
-        lineX = 0;
+      Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+      Rectangle iconR = new Rectangle();
+      Rectangle textR = new Rectangle();
+      String s = SwingUtilities
+        .layoutCompoundLabel(g.getFontMetrics(), myCaption, null, CENTER,
+                             myCaptionCentered ? CENTER : LEFT,
+                             CENTER,
+                             myCaptionCentered ? CENTER : LEFT,
+                             viewR, iconR, textR, 0);
+      final int lineY = textR.y + textR.height / 2;
+      if (s.equals(myCaption) && viewR.width - textR.width > 2 * getHgap()) {
+        if (myCaptionCentered) {
+          g.drawLine(0, lineY, textR.x - getHgap(), lineY);
+        }
+        g.drawLine(textR.x + textR.width + getHgap(), lineY, getWidth() - 1, lineY);
       }
-      g.drawLine(lineX + fontWidth, lineY, getWidth() - 1, lineY);
-
       UIUtil.applyRenderingHints(g);
       g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
-      g.drawString(myCaption, lineX + getHgap(), baseline);
+      g.drawString(s, textR.x, textR.y + g.getFontMetrics().getAscent());
     }
     else {
       g.drawLine(0, getVgap(), getWidth() - 1, getVgap());

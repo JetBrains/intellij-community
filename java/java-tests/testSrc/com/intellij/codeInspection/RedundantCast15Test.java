@@ -42,6 +42,7 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
   
   public void testIDEA22899() throws Exception { doTest();}
+  public void testRawCast1() throws Exception { doTest();}
 
   public void testTypeParameterAccessChecksJava7() throws Exception {
     final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
