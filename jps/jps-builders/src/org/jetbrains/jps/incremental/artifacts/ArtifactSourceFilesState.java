@@ -29,13 +29,10 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private File myOutSrcMappingsFile;
   private final ProjectDescriptor myProjectDescriptor;
 
-  public ArtifactSourceFilesState(ArtifactBuildTarget target,
-                                  ProjectDescriptor projectDescriptor,
-                                  File mappingsDir) {
-    int artifactId = projectDescriptor.getTargetsState().getBuildTargetId(target);
+  public ArtifactSourceFilesState(ArtifactBuildTarget target, ProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
     myTarget = target;
-    myOutSrcMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "out-src");
+    myOutSrcMappingsFile = new File(projectDescriptor.dataManager.getDataPaths().getTargetDataRoot(target), "out-src" + File.separator + "data");
   }
 
   public ArtifactOutputToSourceMapping getOrCreateOutSrcMapping() throws IOException {

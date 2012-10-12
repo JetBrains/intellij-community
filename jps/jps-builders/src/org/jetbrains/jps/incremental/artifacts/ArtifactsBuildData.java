@@ -1,11 +1,9 @@
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,17 +13,15 @@ import java.util.Map;
  */
 public class ArtifactsBuildData extends CompositeStorageOwner {
   private Map<ArtifactBuildTarget, ArtifactSourceFilesState> myArtifactState;
-  private final File myMappingsDir;
 
-  public ArtifactsBuildData(File artifactsDataDir) throws IOException {
+  public ArtifactsBuildData() throws IOException {
     myArtifactState = new HashMap<ArtifactBuildTarget, ArtifactSourceFilesState>();
-    myMappingsDir = new File(artifactsDataDir, "mappings");
   }
 
   public ArtifactSourceFilesState getOrCreateState(ArtifactBuildTarget target, ProjectDescriptor projectDescriptor) {
     ArtifactSourceFilesState state = myArtifactState.get(target);
     if (state == null) {
-      state = new ArtifactSourceFilesState(target, projectDescriptor, myMappingsDir);
+      state = new ArtifactSourceFilesState(target, projectDescriptor);
       myArtifactState.put(target, state);
     }
     return state;
@@ -44,7 +40,6 @@ public class ArtifactsBuildData extends CompositeStorageOwner {
       }
     }
     myArtifactState.clear();
-    FileUtil.delete(myMappingsDir);
     if (exc != null) {
       throw exc;
     }
