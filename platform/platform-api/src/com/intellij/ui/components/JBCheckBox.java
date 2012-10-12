@@ -16,37 +16,16 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
   private JComponent myAnchor;
 
   public JBCheckBox() {
-    super();
+    this(null);
   }
 
-  public JBCheckBox(Icon icon) {
-    super(icon);
+  public JBCheckBox(@Nullable String text) {
+    this(text, false);
   }
 
-  public JBCheckBox(Icon icon, boolean selected) {
-    super(icon, selected);
+  public JBCheckBox(@Nullable String text, boolean selected) {
+    super(text, null, selected);
   }
-
-  public JBCheckBox(String text) {
-    super(text);
-  }
-
-  public JBCheckBox(Action a) {
-    super(a);
-  }
-
-  public JBCheckBox(String text, boolean selected) {
-    super(text, selected);
-  }
-
-  public JBCheckBox(String text, Icon icon) {
-    super(text, icon);
-  }
-
-  public JBCheckBox(String text, Icon icon, boolean selected) {
-    super(text, icon, selected);
-  }
-
 
   @Override
   public JComponent getAnchor() {
