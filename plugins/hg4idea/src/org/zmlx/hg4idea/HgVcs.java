@@ -14,7 +14,6 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -287,8 +285,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
     // Force a branch topic update
     myProject.getMessageBus().syncPublisher(Topics.BRANCH_TOPIC).update(myProject);
-
-    invokeLaterRecalculateWindows();
   }
 
   @Override
@@ -380,23 +376,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public static VcsKey getKey() {
     return ourKey;
-  }
-
-  private void invokeLaterRecalculateWindows() {
-    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-      public void run() {
-        recalculateWindows();
-      }
-    }.callMe();
-  }
-
-  private void recalculateWindows() {
-
-//   final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance( myProject );
-//   final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-//   final Content content = contentFactory.createContent(incomingChangesViewProvider.initContent(), "Incoming", false);
-//   content.setCloseable(false);
-//   cvcm.addContent(content);
   }
 
 }
