@@ -55,11 +55,12 @@ public class StatisticsWeigher extends CompletionWeigher {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
-      int maxUseCount = 0;
+      String prefix = myLocation.getCompletionParameters().getLookup().itemPattern(item);
       int minRecency = Integer.MAX_VALUE;
-      for (StatisticsInfo eachInfo : composeStatsWithPrefix(baseInfo, myLocation.getCompletionParameters().getLookup().itemPattern(item))) {
-        maxUseCount = Math.max(maxUseCount, ourStatManager.getUseCount(eachInfo));
+      int maxUseCount = 0;
+      for (StatisticsInfo eachInfo : composeStatsWithPrefix(baseInfo, prefix, false)) {
         minRecency = Math.min(minRecency, ourStatManager.getLastUseRecency(eachInfo));
+        maxUseCount = Math.max(maxUseCount, ourStatManager.getUseCount(eachInfo));
       }
       return minRecency == Integer.MAX_VALUE ? maxUseCount : 100 - minRecency;
     }
@@ -91,13 +92,19 @@ public class StatisticsWeigher extends CompletionWeigher {
     return info == null ? StatisticsInfo.EMPTY : info;
   }
 
-  public static List<StatisticsInfo> composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix) {
-    ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>(fullPrefix.length() + 1);
-    infos.add(info);
-    for (int i = 1; i <= fullPrefix.length(); i++) {
-      String subPrefix = fullPrefix.substring(0, i);
-      infos.add(new StatisticsInfo(info.getContext() + "###prefix=" + subPrefix, info.getValue()));
+  public static List<StatisticsInfo> composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix, boolean forWriting) {
+    ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>(fullPrefix.length() + 3);
+    if (forWriting) {
+      infos.add(info);
     }
+    for (int i = 0; i <= fullPrefix.length(); i++) {
+      infos.add(composeWithPrefix(info, fullPrefix.substring(0, i), forWriting));
+    }
+    infos.add(composeWithPrefix(info, fullPrefix, !forWriting));
     return infos;
+  }
+
+  private static StatisticsInfo composeWithPrefix(StatisticsInfo info, String subPrefix, boolean partial) {
+    return new StatisticsInfo(info.getContext() + "###prefix=" + subPrefix + "###part#" + partial, info.getValue());
   }
 }

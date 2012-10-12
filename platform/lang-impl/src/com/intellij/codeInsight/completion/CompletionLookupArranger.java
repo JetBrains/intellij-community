@@ -387,7 +387,7 @@ public class CompletionLookupArranger extends LookupArranger {
       return new StatisticsUpdate(Collections.<StatisticsInfo>emptyList());
     }
 
-    StatisticsUpdate update = new StatisticsUpdate(StatisticsWeigher.composeStatsWithPrefix(base, lookup.itemPattern(item)));
+    StatisticsUpdate update = new StatisticsUpdate(StatisticsWeigher.composeStatsWithPrefix(base, lookup.itemPattern(item), true));
     ourPendingUpdate = update;
     Disposer.register(update, new Disposable() {
       @Override
