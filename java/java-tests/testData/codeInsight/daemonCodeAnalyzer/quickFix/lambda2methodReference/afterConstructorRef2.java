@@ -23,7 +23,7 @@ class NonStaticInner3 {
 
     {
         I1<Foo> b1 = (i) -> new Foo(i);
-        I2<Foo> b2 = NonStaticInner3.Foo::new;
+        I2<Foo> b2 = Foo::new;
     }
 
     {
