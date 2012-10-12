@@ -50,10 +50,10 @@ public abstract class JpsLoaderBase {
       return element;
     }
     catch (JDOMException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Cannot parse xml file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Cannot read file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
   }
 
