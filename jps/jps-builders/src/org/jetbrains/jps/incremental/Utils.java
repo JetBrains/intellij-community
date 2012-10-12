@@ -138,7 +138,7 @@ public class Utils {
 
   public static String formatDuration(long duration) {
     final long minutes = duration / 60000;
-    final long seconds = (duration % 60000) / 1000;
+    final long seconds = ((duration + 500L) % 60000) / 1000;
     if (minutes > 0L) {
       return minutes + " min " + seconds + " sec";
     }
