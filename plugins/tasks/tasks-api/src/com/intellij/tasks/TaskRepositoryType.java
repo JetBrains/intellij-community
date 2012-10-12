@@ -51,7 +51,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   public abstract Class<T> getRepositoryClass();
 
-  public final boolean isSupported(int feature) {
+  public boolean isSupported(int feature) {
     return (getFeatures() & feature) != 0;
   }
 
