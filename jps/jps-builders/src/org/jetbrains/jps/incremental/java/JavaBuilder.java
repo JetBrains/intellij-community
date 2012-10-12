@@ -1139,7 +1139,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       String message = diagnostic.getMessage(Locale.US);
-      LOG.info(message);
+      if (Utils.IS_TEST_MODE) {
+        LOG.info(message);
+      }
       myContext.processMessage(
         new CompilerMessage(BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
                             diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
