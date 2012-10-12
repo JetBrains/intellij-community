@@ -196,6 +196,10 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
     includeSystemProguerdFile.setText(Boolean.toString(myIncludeSystemProguardCfgPath));
     element.addContent(includeSystemProguerdFile);
 
+    final Element includeAssetsFromLibraries = new Element(INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME);
+    includeAssetsFromLibraries.setText(Boolean.toString(myIncludeAssetsFromLibraries));
+    element.addContent(includeAssetsFromLibraries);
+
     final Element additionalNativeLibs = new Element(AndroidCommonUtils.ADDITIONAL_NATIVE_LIBS_ELEMENT);
 
     for (AndroidNativeLibData lib : myAdditionalNativeLibraries) {
