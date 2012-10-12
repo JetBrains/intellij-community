@@ -7,6 +7,7 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -38,8 +39,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
   @Override
   public void build(@NotNull ArtifactBuildTarget target,
-                    @NotNull CompileContext context,
-                    DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder) throws ProjectBuildException {
+                    @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
     if (StringUtil.isEmpty(artifact.getOutputPath())) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));

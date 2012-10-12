@@ -23,9 +23,8 @@ import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.BuildLoggingManager;
-import org.jetbrains.jps.incremental.ProjectBuilderLoggerImpl;
-import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -105,7 +104,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected BuildResult doBuild(CompileScopeTestBuilder scope) {
     BuildResult result;
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl(), new ProjectBuilderLoggerImpl()));
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new ProjectBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
       result = doBuild(descriptor, scope);

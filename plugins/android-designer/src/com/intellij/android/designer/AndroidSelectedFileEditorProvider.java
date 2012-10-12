@@ -15,14 +15,14 @@
  */
 package com.intellij.android.designer;
 
-import com.intellij.openapi.components.*;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProvider {
+  private static final String KEY = "AndroidLayoutSelectedEditor";
+
   @Nullable
   @Override
   public FileEditorProvider getSelectedProvider(Project project, VirtualFile openedFile) {
@@ -37,7 +39,7 @@ public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProv
       return null;
     }
 
-    String editorTypeId = MyState.getInstance(project).editorTypeId;
+    String editorTypeId = PropertiesComponent.getInstance(project).getValue(KEY);
     if (editorTypeId != null) {
       return FileEditorProviderManager.getInstance().getProvider(editorTypeId);
     }
@@ -72,7 +74,7 @@ public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProv
                 if (file != null && AndroidDesignerEditorProvider.acceptLayout(myProject, file)) {
                   FileEditorProvider provider = EditorHistoryManager.getInstance(myProject).getSelectedProvider(file);
                   if (provider != null) {
-                    MyState.getInstance(myProject).editorTypeId = provider.getEditorTypeId();
+                    PropertiesComponent.getInstance(myProject).setValue(KEY, provider.getEditorTypeId());
                   }
                 }
               }
@@ -97,26 +99,6 @@ public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProv
     @Override
     public String getComponentName() {
       return "AndroidLayoutSelectedEditorListener";
-    }
-  }
-
-  @State(name = "AndroidLayoutSelectedEditor", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-  public static class MyState implements PersistentStateComponent<MyState> {
-    public String editorTypeId;
-
-    @Nullable
-    @Override
-    public MyState getState() {
-      return this;
-    }
-
-    @Override
-    public void loadState(MyState state) {
-      XmlSerializerUtil.copyBean(state, this);
-    }
-
-    public static MyState getInstance(Project project) {
-      return ServiceManager.getService(project, MyState.class);
     }
   }
 }

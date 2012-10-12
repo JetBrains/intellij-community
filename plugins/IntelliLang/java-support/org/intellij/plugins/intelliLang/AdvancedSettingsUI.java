@@ -27,7 +27,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.ShiftTabAction;
 import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.Nls;
@@ -75,7 +74,6 @@ public class AdvancedSettingsUI implements Configurable {
     }, myConfiguration.getLanguageAnnotationClass());
     myAnnotationField.addActionListener(new BrowseClassListener(project, myAnnotationField));
     myAnnotationField.setEnabled(!project.isDefault());
-    ShiftTabAction.attachTo(myAnnotationField.getEditorTextField());
     addField(myLanguageAnnotationPanel, myAnnotationField);
 
     myPatternField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
@@ -85,7 +83,6 @@ public class AdvancedSettingsUI implements Configurable {
     }, myConfiguration.getPatternAnnotationClass());
     myPatternField.addActionListener(new BrowseClassListener(project, myPatternField));
     myPatternField.setEnabled(!project.isDefault());
-    ShiftTabAction.attachTo(myPatternField.getEditorTextField());
     addField(myPatternAnnotationPanel, myPatternField);
 
     mySubstField = new ReferenceEditorWithBrowseButton(null, project, new Function<String, Document>() {
@@ -95,10 +92,9 @@ public class AdvancedSettingsUI implements Configurable {
     }, myConfiguration.getPatternAnnotationClass());
     mySubstField.addActionListener(new BrowseClassListener(project, mySubstField));
     mySubstField.setEnabled(!project.isDefault());
-    ShiftTabAction.attachTo(mySubstField.getEditorTextField());
     addField(mySubstAnnotationPanel, mySubstField);
   }
-
+  //
   /**
    * Adds textfield into placeholder panel and assigns a directly preceding label
    */

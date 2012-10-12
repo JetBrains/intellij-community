@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -128,12 +129,12 @@ public class FSOperations {
   }
 
   static void markDirtyFiles(CompileContext context,
-                             ModuleBuildTarget target,
+                             BuildTarget<?> target,
                              Timestamps timestamps, boolean forceMarkDirty,
                              @Nullable THashSet<File> currentFiles) throws IOException {
     final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
-    markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles,
-                   new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule())));
+    Set<File> excludes = target instanceof ModuleBuildTarget ? new HashSet<File>(rootsIndex.getModuleExcludes(((ModuleBuildTarget)target).getModule())) : Collections.<File>emptySet();
+    markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles, excludes);
   }
 
   static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles, final Set<File> excludes) throws IOException {

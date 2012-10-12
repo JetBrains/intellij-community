@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -60,8 +61,10 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context,
-                    DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder) throws ProjectBuildException {
+  public void build(@NotNull AndroidProjectBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }

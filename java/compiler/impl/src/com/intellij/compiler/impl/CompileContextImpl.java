@@ -263,6 +263,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public void addMessage(CompilerMessage msg) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info("addMessage: " + msg);
+    }
+
     Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
     if (messages == null) {
       messages = new LinkedHashSet<CompilerMessage>();

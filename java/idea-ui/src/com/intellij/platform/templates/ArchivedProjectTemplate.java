@@ -17,7 +17,6 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -90,7 +89,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
 
   @NotNull
   @Override
-  public ProjectBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     return new ModuleBuilder() {
       @Override
       public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {

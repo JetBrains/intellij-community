@@ -16,7 +16,6 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -70,7 +69,7 @@ public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
 
           @NotNull
           @Override
-          public ProjectBuilder createModuleBuilder() {
+          public ModuleBuilder createModuleBuilder() {
             return builder;
           }
         };

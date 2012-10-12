@@ -109,6 +109,9 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (kind == BuildMessage.Kind.ERROR) {
               hasErrors.set(true);
             }
+            if (Utils.IS_TEST_MODE) {
+              LOG.info("Processing message: " + buildMessage);
+            }
             response = CmdlineProtoUtil.createCompileMessage(
               kind, text, compilerMessage.getSourcePath(),
               compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
