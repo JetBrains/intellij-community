@@ -111,7 +111,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
     integrateEnvironment = new HgIntegrateEnvironment(project);
-    commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
+    commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }

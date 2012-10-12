@@ -30,11 +30,7 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgContentRevision;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
 
 import java.io.DataInput;
@@ -46,9 +42,11 @@ import java.util.*;
 public class HgCachingCommitedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
   private final Project project;
+  private final HgVcs myVcs;
 
-  public HgCachingCommitedChangesProvider(Project project) {
+  public HgCachingCommitedChangesProvider(Project project, HgVcs vcs) {
     this.project = project;
+    myVcs = vcs;
   }
 
   public int getFormatVersion() {
@@ -67,7 +65,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
       changes.add(new Change(beforeRevision, afterRevision));
     }
-    return new HgCommitedChangeList(revision, comment, committerName, commitDate, changes);
+    return new HgCommitedChangeList(myVcs, revision, comment, committerName, commitDate, changes);
   }
 
   public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
@@ -210,7 +208,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
 
-      result.add(new HgCommitedChangeList(vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
+      result.add(new HgCommitedChangeList(myVcs, vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
                                           changes));
 
     }
