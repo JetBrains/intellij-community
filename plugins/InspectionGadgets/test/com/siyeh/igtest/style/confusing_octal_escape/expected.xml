@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ConfusingOctalEscape.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
+    <description>Octal escape sequence &lt;code&gt;\123&lt;/code&gt; immediately followed by digit #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConfusingOctalEscape.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
+    <description>Octal escape sequence &lt;code&gt;\4&lt;/code&gt; immediately followed by digit #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConfusingOctalEscape.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
+    <description>Octal escape sequence &lt;code&gt;\012&lt;/code&gt; immediately followed by digit #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConfusingOctalEscape.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
+    <description>Octal escape sequence &lt;code&gt;\01&lt;/code&gt; immediately followed by digit #loc</description>
+  </problem>
+</problems>
