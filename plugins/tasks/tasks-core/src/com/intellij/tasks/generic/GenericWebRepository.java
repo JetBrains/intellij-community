@@ -1,7 +1,6 @@
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
@@ -109,7 +108,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private String getFullTasksUrl(final String query) {
     return getTasksListURL()
       .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl())
-      .replaceAll(StringUtil.escapePattern(QUERY_PLACEHOLDER), query);
+      .replaceAll(placeholder2regexp(QUERY_PLACEHOLDER), query);
   }
 
   private String getFullLoginUrl() {
