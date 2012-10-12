@@ -289,7 +289,7 @@ class GitBranchWorkerTest {
     assertTrue "Untracked files dialog was not shown", untrackedFiles != null
     assertEquals "Incorrect set of untracked files was shown in the dialog",
                  untracked,
-                 untrackedFiles.collect { FileUtil.getRelativePath(myCommunity.root.path, it.path, File.separatorChar) }
+                 untrackedFiles.collect { FileUtil.getRelativePath(myCommunity.root.path, it.path, '/'.toCharacter()) }
   }
 
   @Test
@@ -323,7 +323,7 @@ class GitBranchWorkerTest {
       assertEquals "Incorrect set of local changes was shown in the dialog",
                    localChanges,
                    changes.collect({
-                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) }
+                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, '/'.toCharacter()) }
                    ).sort()
     }
   }
