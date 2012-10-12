@@ -17,14 +17,16 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -50,10 +52,19 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
 
   @NotNull
   @Override
-  public ProjectBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     final ModuleBuilder builder = WebModuleType.getInstance().createModuleBuilder();
-    return new ProjectBuilder() {
-      @Nullable
+    return new ModuleBuilder() {
+      @Override
+      public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+        builder.setupRootModel(modifiableRootModel);
+      }
+
+      @Override
+      public ModuleType getModuleType() {
+        return builder.getModuleType();
+      }
+
       @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
         List<Module> modules = builder.commit(project, model, modulesProvider);
