@@ -1,5 +1,6 @@
 <idea-plugin version="2">
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <!-- YAML -->
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
