@@ -283,6 +283,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return myTree.findConfigurable(configurableClass);
   }
 
+  @Nullable
+  public SearchableConfigurable findConfigurableById(@NotNull String configurableId) {
+    return myTree.findConfigurableById(configurableId);
+  }
+
   public ActionCallback clearSearchAndSelect(Configurable configurable) {
     clearFilter();
     return select(configurable, "");
