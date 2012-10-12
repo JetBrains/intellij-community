@@ -62,6 +62,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String ASSETS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_ASSETS;
   public String LIBS_FOLDER_RELATIVE_PATH = "/" + SdkConstants.FD_NATIVE_LIBS;
 
+  public boolean PACK_ASSETS_FROM_LIBRARIES = false;
+
   public List<String> RES_OVERLAY_FOLDERS = Arrays.asList("/res-overlay");
 
   public boolean USE_CUSTOM_APK_RESOURCE_FOLDER = false;

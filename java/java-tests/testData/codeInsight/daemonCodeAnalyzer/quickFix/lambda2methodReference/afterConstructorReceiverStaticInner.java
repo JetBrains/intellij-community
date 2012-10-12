@@ -12,6 +12,6 @@ class StaticInner {
 
 
   static {
-    I1 i1 = StaticInner.Inner::new;
+    I1 i1 = Inner::new;
   }
 }

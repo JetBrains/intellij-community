@@ -21,11 +21,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
+import com.intellij.util.LineSeparator
 import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.config.GitVersion
@@ -288,7 +290,7 @@ class GitBranchWorkerTest {
     assertTrue "Untracked files dialog was not shown", untrackedFiles != null
     assertEquals "Incorrect set of untracked files was shown in the dialog",
                  untracked,
-                 untrackedFiles.collect { FileUtil.getRelativePath(myCommunity.root.path, it.path, File.separatorChar) }
+                 untrackedFiles.collect { FileUtil.getRelativePath(myCommunity.root.path, it.path, '/'.toCharacter()) }
   }
 
   @Test
@@ -322,7 +324,7 @@ class GitBranchWorkerTest {
       assertEquals "Incorrect set of local changes was shown in the dialog",
                    localChanges,
                    changes.collect({
-                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, File.separatorChar) }
+                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, '/'.toCharacter()) }
                    ).sort()
     }
   }
@@ -349,13 +351,13 @@ class GitBranchWorkerTest {
     assertCurrentBranch("feature");
     cd myUltimate
     def actual = cat(localChanges[0])
-    assertEquals("Content doesn't match",
-"""line with branch changes
+    def expectedContent = """line with branch changes
 common content
 common content
 common content
 line with master changes
-""", actual)
+"""
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
   }
   
   @Test
@@ -365,13 +367,13 @@ line with master changes
 
     cd myUltimate
     def actual = cat(localChanges[0])
-    assertEquals("Content doesn't match",
-"""line with branch changes
+    def expectedContent = """line with branch changes
 common content
 common content
 common content
 line with master changes
-""", actual)
+"""
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
   }
   
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {

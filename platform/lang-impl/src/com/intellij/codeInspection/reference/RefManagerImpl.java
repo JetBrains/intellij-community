@@ -212,6 +212,7 @@ public class RefManagerImpl extends RefManager {
       final RefElement refElement = (RefElement)refEntity;
       final SmartPsiElementPointer pointer = refElement.getPointer();
       PsiFile psiFile = pointer.getContainingFile();
+      if (psiFile == null) return null;
 
       Element fileElement = new Element("file");
       Element lineElement = new Element("line");

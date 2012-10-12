@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class KeymapManager {
@@ -33,7 +34,7 @@ public abstract class KeymapManager {
     return ApplicationManager.getApplication().getComponent(KeymapManager.class);
   }
 
-  public abstract void addKeymapManagerListener(KeymapManagerListener listener);
+  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener);
 
-  public abstract void removeKeymapManagerListener(KeymapManagerListener listener);
+  public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
 }

@@ -54,6 +54,8 @@ public class JpsAndroidModuleProperties {
 
   public boolean PACK_TEST_CODE;
 
+  public boolean PACK_ASSETS_FROM_LIBRARIES;
+
   public boolean RUN_PROGUARD;
   public String PROGUARD_CFG_PATH;
 

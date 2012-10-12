@@ -78,7 +78,8 @@ public class TimestampStorage extends AbstractStateStorage<File, TimestampStorag
             remove(file);
           }
           else {
-            ArrayUtil.remove(state, i);
+            TimestampPerTarget[] newState = ArrayUtil.remove(state, i);
+            update(file, newState);
             break;
           }
         }

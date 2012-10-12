@@ -3,6 +3,7 @@ package com.intellij.tasks.mantis;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
@@ -34,7 +35,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
 
   @Override
   public void apply() {
-    if (!myRepository.getUrl().equals(myURLText.getText()) ||
+    if (!myRepository.getUrl().equals(StringUtil.trimEnd(myURLText.getText(), "/")) ||
         !myRepository.getUsername().equals(myUserNameText.getText()) ||
         !myRepository.getPassword().equals(myPasswordText.getText())) {
       resetComboBoxes();

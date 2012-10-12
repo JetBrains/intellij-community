@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -120,6 +119,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(mavenProject.getPackaging())) {
       facet.getConfiguration().LIBRARY_PROJECT = true;
     }
+    facet.getConfiguration().PACK_ASSETS_FROM_LIBRARIES = true;
 
     if (hasApkSources) {
       reportError("'apksources' dependency is deprecated and can be poorly supported by IDE. " +

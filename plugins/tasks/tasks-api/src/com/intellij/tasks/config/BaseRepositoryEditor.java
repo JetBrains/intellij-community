@@ -67,6 +67,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected JBCheckBox myLoginAnonymouslyJBCheckBox;
 
   private boolean myApplying;
+  protected Project myProject;
   protected final T myRepository;
   private final Consumer<T> myChangeListener;
   private final Document myDocument;
@@ -74,6 +75,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JComponent myAnchor;
 
   public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
+    myProject = project;
     myRepository = repository;
     myChangeListener = changeListener;
 
@@ -115,12 +117,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myComment.setText("Available placeholders: " + repository.getComment());
 
     installListener(myAddCommitMessage);
-    myDocument.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-        doApply();
-      }
-    });
+    installListener(myDocument);
 
     installListener(myURLText);
     installListener(myUserNameText);
@@ -189,6 +186,15 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     comboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
+        doApply();
+      }
+    });
+  }
+
+  protected void installListener(final Document document) {
+    document.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         doApply();
       }
     });

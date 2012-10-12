@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -44,7 +43,7 @@ import java.util.List;
 final class Stripe extends JPanel{
   private final int myAnchor;
   private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
-  private final WeakKeymapManagerListener myWeakKeymapManagerListener;
+  private final MyKeymapManagerListener myWeakKeymapManagerListener;
   private final MyUISettingsListener myUISettingsListener;
 
   private Dimension myPrefSize;
@@ -63,7 +62,7 @@ final class Stripe extends JPanel{
     setOpaque(true);
     myManager = manager;
     myAnchor = anchor;
-    myWeakKeymapManagerListener=new WeakKeymapManagerListener(KeymapManagerEx.getInstanceEx(), new MyKeymapManagerListener());
+    myWeakKeymapManagerListener=new MyKeymapManagerListener();
     myUISettingsListener=new MyUISettingsListener();
     setBorder(new AdaptiveBorder());
   }
@@ -130,19 +129,21 @@ final class Stripe extends JPanel{
   /**
    * Invoked when enclosed frame is being shown.
    */
+  @Override
   public void addNotify(){
     super.addNotify();
     updateText();
     updateState();
-    KeymapManagerEx.getInstanceEx().addKeymapManagerListener(myWeakKeymapManagerListener);
+    KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
+  @Override
   public void removeNotify(){
-    KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(myWeakKeymapManagerListener);
+    KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
     Disposer.dispose(myDisposable);
     super.removeNotify();
   }
@@ -166,11 +167,13 @@ final class Stripe extends JPanel{
     return Collections.unmodifiableList(myButtons);
   }
 
+  @Override
   public void invalidate() {
     myPrefSize = null;
     super.invalidate();
   }
 
+  @Override
   public void doLayout() {
     if (!myFinishingDrop) {
       myLastLayoutData = recomputeBounds(true, getSize());
@@ -432,6 +435,7 @@ final class Stripe extends JPanel{
     return myAnchor == SwingConstants.TOP || myAnchor == SwingConstants.BOTTOM;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     if (myPrefSize == null) {
       myPrefSize = recomputeBounds(false, null).size;
@@ -473,6 +477,7 @@ final class Stripe extends JPanel{
     myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
 
     myManager.invokeLater(new Runnable() {
+      @Override
       public void run() {
         resetDrop();
       }
@@ -515,12 +520,14 @@ final class Stripe extends JPanel{
   }
 
   private final class MyKeymapManagerListener implements KeymapManagerListener {
+    @Override
     public void activeKeymapChanged(final Keymap keymap){
       updateText();
     }
   }
 
   private final class MyUISettingsListener implements UISettingsListener{
+    @Override
     public void uiSettingsChanged(final UISettings source){
       updateText();
       updateState();
@@ -572,6 +579,7 @@ final class Stripe extends JPanel{
     return myCachedBg;
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     if (!myFinishingDrop && isDroppingButton() && myDragButton.getParent() != this) {

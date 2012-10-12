@@ -173,6 +173,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     return postMethod;
   }
 
+  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
     PostMethod method = getLoginMethodFor4x();

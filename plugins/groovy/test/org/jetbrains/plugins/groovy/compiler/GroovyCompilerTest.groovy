@@ -207,7 +207,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   @Override
-  void runBare() {
+  void runTest() {
     def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
     def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
     if (ideaLog.exists()) {
@@ -218,7 +218,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
 
     try {
-      super.runBare()
+      super.runTest()
     }
     catch (Throwable e) {
       if (ideaLog.exists()) {

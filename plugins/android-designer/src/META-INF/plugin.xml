@@ -13,12 +13,20 @@
 
     <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
 
+    <selectedFileEditorProvider implementation="com.intellij.android.designer.AndroidSelectedFileEditorProvider"/>
+
     <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"
                     serviceImplementation="com.intellij.android.designer.profile.ProfileList"/>
 
     <projectService serviceInterface="com.intellij.android.designer.model.ViewsMetaManager"
                     serviceImplementation="com.intellij.android.designer.model.ViewsMetaManager"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.android.designer.AndroidSelectedFileEditorProvider$MyEditorListener</implementation-class>
+    </component>
+  </project-components>
 
   <extensions defaultExtensionNs="org.jetbrains.android">
     <refactoringContextProvider implementation="com.intellij.android.designer.AndroidDesignerRefactoringContextProvider"/>

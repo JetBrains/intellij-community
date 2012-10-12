@@ -258,6 +258,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return method;
   }
 
+  @Nullable
   @Override
   public Task findTask(final String id) throws Exception {
     final String realId = getRealId(id);
@@ -316,6 +317,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return name + (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : "");
   }
 
+  @Nullable
   @Override
   public String getTaskComment(final Task task) {
     if (isShouldFormatCommitMessage()) {

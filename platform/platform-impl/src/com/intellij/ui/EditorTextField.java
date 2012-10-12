@@ -246,7 +246,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
-  public void setText(final String text) {
+  public void setText(@NotNull final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

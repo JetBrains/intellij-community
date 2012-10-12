@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -60,8 +61,10 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context,
-                    DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder) throws ProjectBuildException {
+  public void build(@NotNull AndroidProjectBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
@@ -249,10 +252,12 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
 
         boolean updateState = true;
 
+        // todo: recompile if PACK_ASSETS_FROM_LIBRARIES was changed
+
         if (!extension.isLibrary() &&
             !(context.isMake() &&
-              checkUpToDate(module, resourcesStates, resourcesStorage) &&
-              checkUpToDate(module, assetsStates, assetsStorage) &&
+              checkUpToDate(module, resourcesStates, resourcesStorage, true) &&
+              checkUpToDate(module, assetsStates, assetsStorage, extension.isPackAssetsFromLibraries()) &&
               manifestFile.lastModified() == manifestStorage.getStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))) {
 
           updateState = packageResources(extension, manifestFile, context);
@@ -465,20 +470,23 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
 
   private static boolean checkUpToDate(@NotNull JpsModule module,
                                        @NotNull Map<JpsModule, AndroidFileSetState> module2state,
-                                       @NotNull AndroidFileSetStorage storage) throws IOException {
+                                       @NotNull AndroidFileSetStorage storage,
+                                       boolean withDependencies) throws IOException {
     final AndroidFileSetState moduleState = module2state.get(module);
     final AndroidFileSetState savedState = storage.getState(module.getName());
     if (savedState == null || !savedState.equalsTo(moduleState)) {
       return false;
     }
 
-    for (JpsAndroidModuleExtension libExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
-      final JpsModule libModule = libExtension.getModule();
-      final AndroidFileSetState currentLibState = module2state.get(libModule);
-      final AndroidFileSetState savedLibState = storage.getState(libModule.getName());
+    if (withDependencies) {
+      for (JpsAndroidModuleExtension libExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
+        final JpsModule libModule = libExtension.getModule();
+        final AndroidFileSetState currentLibState = module2state.get(libModule);
+        final AndroidFileSetState savedLibState = storage.getState(libModule.getName());
 
-      if (savedLibState == null || !savedLibState.equalsTo(currentLibState)) {
-        return false;
+        if (savedLibState == null || !savedLibState.equalsTo(currentLibState)) {
+          return false;
+        }
       }
     }
     return true;
@@ -557,11 +565,13 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       result.add(assetsDir.getPath());
     }
 
-    for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
-      final File depAssetsDir = depExtension.getAssetsDir();
+    if (extension.isPackAssetsFromLibraries()) {
+      for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
+        final File depAssetsDir = depExtension.getAssetsDir();
 
-      if (depAssetsDir != null) {
-        result.add(depAssetsDir.getPath());
+        if (depAssetsDir != null) {
+          result.add(depAssetsDir.getPath());
+        }
       }
     }
   }

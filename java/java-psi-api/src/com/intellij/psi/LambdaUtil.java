@@ -566,11 +566,14 @@ public class LambdaUtil {
      if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
        return true;
      }
-    final PsiElement parent = lambdaExpression.getParent();
-    if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
+    if (insertSemicolon(lambdaExpression.getParent())) {
       return false;
     }
     return true;
+  }
+
+  public static boolean insertSemicolon(PsiElement parent) {
+    return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
   }
 
   public static boolean isValidQualifier(PsiMethodReferenceExpression expression) {

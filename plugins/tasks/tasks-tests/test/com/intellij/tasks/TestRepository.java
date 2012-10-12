@@ -35,6 +35,7 @@ class TestRepository extends BaseRepository {
     return ContainerUtil.newArrayList(myTasks);
   }
 
+  @Nullable
   @Override
   public Task findTask(final String id) throws Exception {
     return ContainerUtil.find(myTasks, new Condition<Task>() {

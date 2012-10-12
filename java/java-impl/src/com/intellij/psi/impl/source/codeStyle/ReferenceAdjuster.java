@@ -52,7 +52,8 @@ public class ReferenceAdjuster {
   public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
     IElementType elementType = element.getElementType();
     if (elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) {
-      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION || uncompleteCode) {
+      final IElementType parentElementType = element.getTreeParent().getElementType();
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || parentElementType == JavaElementType.REFERENCE_EXPRESSION || parentElementType == JavaElementType.METHOD_REF_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiReferenceParameterList parameterList = ref.getParameterList();
         if (parameterList != null) {

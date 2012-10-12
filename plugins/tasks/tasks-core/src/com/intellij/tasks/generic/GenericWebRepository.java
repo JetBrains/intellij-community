@@ -21,17 +21,18 @@ import java.util.regex.Pattern;
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-@Tag("Web")
+@Tag("Generic")
 public class GenericWebRepository extends BaseRepositoryImpl {
-  private String myTasksListURL;
-  private String myTaskPattern;
-  private String myLoginURL;
+  private String myTasksListURL = "";
+  private String myTaskPattern = "";
+  private String myLoginURL = "";
 
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
   final static String PASSWORD_PLACEHOLDER = "{password}";
   final static String ID_PLACEHOLDER = "{id}";
   final static String SUMMARY_PLACEHOLDER = "{summary}";
+  final static String QUERY_PLACEHOLDER = "{query}";
   final static String DESCRIPTION_PLACEHOLDER = "{description}";
   final static String PAGE_PLACEHOLDER = "{page}";
 
@@ -56,7 +57,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
     if (!isLoginAnonymously()) login(httpClient);
 
-    final GetMethod getMethod = new GetMethod(getFullTasksUrl());
+    final GetMethod getMethod = new GetMethod(getFullTasksUrl(query != null ? query : ""));
     httpClient.executeMethod(getMethod);
     if (getMethod.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + getMethod.getStatusCode());
     final String response = getMethod.getResponseBodyAsString(Integer.MAX_VALUE);
@@ -104,9 +105,10 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return vars;
   }
 
-  private String getFullTasksUrl() {
+  private String getFullTasksUrl(final String query) {
     return getTasksListURL()
-      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl());
+      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl())
+      .replaceAll(placeholder2regexp(QUERY_PLACEHOLDER), query);
   }
 
   private String getFullLoginUrl() {

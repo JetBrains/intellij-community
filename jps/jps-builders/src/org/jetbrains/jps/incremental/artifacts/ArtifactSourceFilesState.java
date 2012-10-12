@@ -11,10 +11,7 @@ import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
-import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
-import org.jetbrains.jps.incremental.storage.StorageOwner;
+import org.jetbrains.jps.incremental.storage.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,13 +29,10 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private File myOutSrcMappingsFile;
   private final ProjectDescriptor myProjectDescriptor;
 
-  public ArtifactSourceFilesState(ArtifactBuildTarget target,
-                                  ProjectDescriptor projectDescriptor,
-                                  File mappingsDir) {
-    int artifactId = projectDescriptor.getTargetsState().getBuildTargetId(target);
+  public ArtifactSourceFilesState(ArtifactBuildTarget target, ProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
     myTarget = target;
-    myOutSrcMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "out-src");
+    myOutSrcMappingsFile = new File(projectDescriptor.dataManager.getDataPaths().getTargetDataRoot(target), "out-src" + File.separator + "data");
   }
 
   public ArtifactOutputToSourceMapping getOrCreateOutSrcMapping() throws IOException {
@@ -58,7 +52,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     BuildTargetConfiguration configuration = myProjectDescriptor.getTargetsState().getTargetConfiguration(myTarget);
     if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget)) {
       IncProjectBuilder.clearOutputFiles(context, myTarget);
-      myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget).clean();
+      ((SourceToOutputMappingImpl)myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget)).clean();
       getOrCreateOutSrcMapping().clean();
       markDirtyFiles(dataManager, null, true, context);
       configuration.save();

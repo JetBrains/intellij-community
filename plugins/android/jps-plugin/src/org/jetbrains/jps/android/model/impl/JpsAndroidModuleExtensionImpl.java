@@ -178,6 +178,11 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   }
 
   @Override
+  public boolean isPackAssetsFromLibraries() {
+    return myProperties.PACK_ASSETS_FROM_LIBRARIES;
+  }
+
+  @Override
   public boolean isRunProcessResourcesMavenTask() {
     return myProperties.RUN_PROCESS_RESOURCES_MAVEN_TASK;
   }

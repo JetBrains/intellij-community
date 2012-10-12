@@ -282,6 +282,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptionNode.extractHighlightedText(description, psiElement): "") , " #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
+      if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
       problemClassElement.addContent(getDisplayName());
       if (refEntity instanceof RefElement){

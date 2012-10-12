@@ -112,7 +112,7 @@ public class ConcurrencyUtil {
   }
 
   @NotNull
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull final String threadFactoryName, final int threadPriority) {
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls @NotNull final String threadFactoryName, final int threadPriority) {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         final Thread thread = new Thread(r, threadFactoryName);

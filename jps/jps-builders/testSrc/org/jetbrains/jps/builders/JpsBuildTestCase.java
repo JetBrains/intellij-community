@@ -11,6 +11,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;

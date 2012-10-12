@@ -28,6 +28,6 @@ class NonStaticInner3 {
 
     {
         I3<Foo> b1 = (rec, i) -> rec.new Foo(i);
-        I4<Foo> b2 = NonStaticInner3.Foo::new;
+        I4<Foo> b2 = Foo::new;
     }
 }

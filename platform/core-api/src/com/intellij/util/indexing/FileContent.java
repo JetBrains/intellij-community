@@ -39,6 +39,7 @@ public interface FileContent extends UserDataHolder {
 
   byte[] getContent();
 
+  @NotNull
   CharSequence getContentAsText();
 
   Project getProject();

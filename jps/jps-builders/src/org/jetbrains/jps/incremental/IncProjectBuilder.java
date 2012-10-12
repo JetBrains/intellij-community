@@ -25,6 +25,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -525,8 +526,7 @@ public class IncProjectBuilder {
 
     BuildTarget<?> target = targets.iterator().next();
     if (target instanceof ModuleBuildTarget) {
-      ModuleBuildTarget moduleBuildTarget = (ModuleBuildTarget)target;
-      return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton(moduleBuildTarget)));
+      return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)));
     }
     else {
       try {
@@ -563,7 +563,9 @@ public class IncProjectBuilder {
         }
       };
       //noinspection unchecked
-      ((TargetBuilder<R,T>)builder).build(target, context, holder);
+      BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
+      ((TargetBuilder<R,T>)builder).build(target, holder, outputConsumer, context);
+      outputConsumer.fireFileGeneratedEvent();
       context.checkCanceled();
     }
   }
@@ -757,9 +759,7 @@ public class IncProjectBuilder {
             FSOperations.processFilesToRecompile(context, chunk, processor);
           }
         };
-        if (!context.isProjectRebuild()) {
-          deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
-        }
+        deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
 
         BUILDER_CATEGORY_LOOP:
         for (BuilderCategory category : BuilderCategory.values()) {
@@ -833,6 +833,10 @@ public class IncProjectBuilder {
 
   private static <R extends BuildRootDescriptor,T extends BuildTarget<R>>
   void deleteOutputsOfDirtyFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+    if (context.isProjectRebuild()) {
+      return;
+    }
+
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
       ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -958,13 +962,12 @@ public class IncProjectBuilder {
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
     if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(target)) {
+      clearOutputFiles(context, target);
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, Collections.<File>emptySet());
       configuration.save();
     }
-    else if (context.isMake()) {
-      if (pd.fsState.markInitialScanPerformed(target)) {
-        FSOperations.markDirtyFiles(context, target, timestamps, false, null, Collections.<File>emptySet());
-      }
+    else if (pd.fsState.markInitialScanPerformed(target)) {
+      FSOperations.markDirtyFiles(context, target, timestamps, false, null, Collections.<File>emptySet());
     }
   }
 
@@ -992,19 +995,21 @@ public class IncProjectBuilder {
               forceMarkDirty = true;
             }
           }
-          initModuleFSState(context, target, forceMarkDirty);
+          initTargetFSState(context, target, forceMarkDirty);
+          updateOutputRootsLayout(context, target);
         }
       }
       else {
         // forced compilation mode
         if (context.getScope().isRecompilationForced(target)) {
-          initModuleFSState(context, target, true);
+          initTargetFSState(context, target, true);
+          updateOutputRootsLayout(context, target);
         }
       }
     }
   }
 
-  private static void initModuleFSState(CompileContext context, ModuleBuildTarget target, final boolean forceMarkDirty) throws IOException {
+  private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
@@ -1022,8 +1027,6 @@ public class IncProjectBuilder {
         fsState.registerDeleted(target, file, timestamps);
       }
     }
-    
-    updateOutputRootsLayout(context, target);
   }
 
   private static void updateOutputRootsLayout(CompileContext context, ModuleBuildTarget target) throws IOException {
@@ -1119,4 +1122,34 @@ public class IncProjectBuilder {
     });
   }
 
+  private static class BuildOutputConsumerImpl implements BuildOutputConsumer {
+    private final BuildTarget<?> myTarget;
+    private final CompileContext myContext;
+    private FileGeneratedEvent myFileGeneratedEvent;
+    private File myOutputDir;
+
+    public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
+      myTarget = target;
+      myContext = context;
+      myFileGeneratedEvent = new FileGeneratedEvent();
+      myOutputDir = myTarget.getOutputDir(myContext.getProjectDescriptor().dataManager.getDataPaths());
+    }
+
+    @Override
+    public void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException {
+      String relativePath = FileUtil.getRelativePath(myOutputDir, new File(outputFilePath));
+      if (myOutputDir != null && relativePath != null) {
+        myFileGeneratedEvent.add(myOutputDir.getAbsolutePath(), relativePath);
+      }
+      for (String sourceFile : sourceFiles) {
+        myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget).appendOutput(sourceFile, outputFilePath);
+      }
+    }
+
+    public void fireFileGeneratedEvent() {
+      if (!myFileGeneratedEvent.getPaths().isEmpty()) {
+        myContext.processMessage(myFileGeneratedEvent);
+      }
+    }
+  }
 }

@@ -116,6 +116,6 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testSwitchEnumCases() { doTest15(); }
   public void testTryWithResources() { doTest15(true); }
 
-  //public void testSCR15406() { doTest(); }  // added by cdr, 2005
+  public void testSCR15406() { doTest(); }
   //public void testIDEADEV11033() { doTest15(); }  // added by max, 2007
 }

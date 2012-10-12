@@ -96,6 +96,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     });
   }
 
+  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
     PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
@@ -133,6 +134,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     return client;
   }
 
+  @Nullable
   public Task findTask(String id) throws Exception {
     HttpMethod method = doREST("/rest/issue/byid/" + id, false);
     InputStream stream = method.getResponseBodyAsStream();

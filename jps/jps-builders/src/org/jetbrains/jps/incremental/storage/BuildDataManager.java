@@ -7,6 +7,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
@@ -19,7 +20,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 14;
+  private static final int VERSION = 15;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String MAPPINGS_STORAGE = "mappings";
@@ -41,7 +42,7 @@ public class BuildDataManager implements StorageOwner {
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
     myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
-    myArtifactsBuildData = new ArtifactsBuildData(new File(dataPaths.getDataStorageRoot(), "artifacts"));
+    myArtifactsBuildData = new ArtifactsBuildData();
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
   }
 
@@ -49,7 +50,7 @@ public class BuildDataManager implements StorageOwner {
     return new File(myDataPaths.getDataStorageRoot(), "output-roots");
   }
 
-  public SourceToOutputMappingImpl getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
+  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
     SourceToOutputMappingImpl mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);

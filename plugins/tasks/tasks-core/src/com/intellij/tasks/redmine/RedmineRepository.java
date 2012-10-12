@@ -240,6 +240,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
     return method;
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     final String realId = getRealId(id);

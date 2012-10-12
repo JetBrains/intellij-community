@@ -306,7 +306,8 @@ public final class AndroidApt {
           }
           else {
             tempDir = FileUtil.createTempDirectory("android_combined_assets", "tmp");
-            for (String assetDir : nonEmptyAssetDirs) {
+            for (int i = nonEmptyAssetDirs.length - 1; i >= 0; i--) {
+              final String assetDir = nonEmptyAssetDirs[i];
               FileUtil.copyDir(new File(assetDir), tempDir, assetsFilter);
             }
             args.add("-A");

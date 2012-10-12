@@ -45,6 +45,8 @@ public class TestProxy extends AbstractTestProxy {
     Pattern.compile("(.*)expected same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   @NonNls public static final Pattern EXPECTED_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+  @NonNls public static final Pattern EXPECTED_BUT_WAS_SET_PATTERN =
+    Pattern.compile("(.*)expected \\[(.*)\\] but got \\[(.*)\\].*", Pattern.DOTALL);
   @NonNls public static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>.*", Pattern.DOTALL);
   private final List<TestProxy> results = new ArrayList<TestProxy>();
@@ -343,6 +345,9 @@ public class TestProxy extends AbstractTestProxy {
     Matcher matcher = COMPARISION_PATTERN.matcher(s);
     if (!matcher.matches()) {
       matcher = EXPECTED_BUT_WAS_PATTERN.matcher(s);
+    }
+    if (!matcher.matches()) {
+      matcher = EXPECTED_BUT_WAS_SET_PATTERN.matcher(s);
     }
     if (!matcher.matches()) {
       matcher = EXPECTED_NOT_SAME_BUT_WAS_PATTERN.matcher(s);

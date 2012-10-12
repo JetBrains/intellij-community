@@ -83,7 +83,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
       }
     };
 
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
       for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {

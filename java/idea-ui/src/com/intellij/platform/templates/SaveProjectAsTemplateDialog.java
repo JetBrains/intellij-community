@@ -17,19 +17,26 @@ package com.intellij.platform.templates;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -37,13 +44,32 @@ import java.io.IOException;
  */
 public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
+  private static final String WHOLE_PROJECT = "<whole project>";
   private JPanel myPanel;
   private JTextField myName;
   private EditorTextField myDescription;
+  private JComboBox myModuleCombo;
+  private JLabel myModuleLabel;
 
   protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
+
     setTitle("Save Project As Template");
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    if (modules.length < 2) {
+      myModuleLabel.setVisible(false);
+      myModuleCombo.setVisible(false);
+    }
+    else {
+      List<String> items = new ArrayList<String>(ContainerUtil.map(modules, new Function<Module, String>() {
+        @Override
+        public String fun(Module module) {
+          return module.getName();
+        }
+      }));
+      items.add(WHOLE_PROJECT);
+      myModuleCombo.setModel(new CollectionComboBoxModel(items, WHOLE_PROJECT));
+    }
     myDescription.setFileType(FileTypeManager.getInstance().getFileTypeByExtension(".html"));
     if (descriptionFile != null) {
       try {
@@ -93,6 +119,13 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   String getDescription() {
     return myDescription.getText();
+  }
+
+  @Nullable
+  String getModuleToSave() {
+    String item = (String)myModuleCombo.getSelectedItem();
+    if (item == null || item.equals(WHOLE_PROJECT)) return null;
+    return item;
   }
 
   private final static Logger LOG = Logger.getInstance(SaveProjectAsTemplateDialog.class);

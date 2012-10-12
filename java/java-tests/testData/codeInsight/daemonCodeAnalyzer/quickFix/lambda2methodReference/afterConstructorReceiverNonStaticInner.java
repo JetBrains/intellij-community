@@ -8,6 +8,6 @@ class NonStaticInner {
     Inner m(NonStaticInner rec);
   }
   static {
-    I1 i1 = NonStaticInner.Inner::new;
+    I1 i1 = Inner::new;
   }
 }

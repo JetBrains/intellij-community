@@ -88,7 +88,7 @@ public class OpenTaskDialog extends DialogWrapper {
         mySelectedTask = task;
         taskChanged();
       }
-    }, false);
+    }, false, null);
     myEditorPanel.add(myTaskName);
     myTaskName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

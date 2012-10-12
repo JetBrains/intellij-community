@@ -100,6 +100,7 @@ public class TracRepository extends BaseRepositoryImpl {
     return new XmlRpcClient(getUrl());
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     return getTask(Integer.parseInt(id), getRpcClient(), new Transport());
@@ -142,6 +143,7 @@ public class TracRepository extends BaseRepositoryImpl {
     return o instanceof Date ? (Date)o : new Date((Integer)o * 1000l);
   }
 
+  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
 

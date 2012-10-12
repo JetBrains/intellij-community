@@ -215,13 +215,14 @@ class CacheUpdateRunner {
         if (myProject.isDisposed()) return;
         if (myInnerIndicator.isCanceled()) return;
 
-        final FileContent fileContent = myQueue.take(myInnerIndicator);
+        final FileContent fileContent = myQueue.take();
         if (fileContent == null) {
           myFinished.set(Boolean.TRUE);
           return;
         }
 
         try {
+          myQueue.waitForOtherContentReleaseToPreventOOM(myInnerIndicator, fileContent);
           final Runnable action = new Runnable() {
             public void run() {
               myInnerIndicator.checkCanceled();

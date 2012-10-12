@@ -41,7 +41,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class QuickAccessSettings implements ApplicationComponent, KeymapManagerListener, Disposable {
-  private Set<Integer> myModifierVks = new HashSet<Integer>();
+  private final Set<Integer> myModifierVks = new HashSet<Integer>();
   private Keymap myKeymap;
   @NonNls public static final String SWITCH_UP = "SwitchUp";
   @NonNls public static final String SWITCH_DOWN = "SwitchDown";
