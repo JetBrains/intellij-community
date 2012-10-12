@@ -20,6 +20,9 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
@@ -53,6 +56,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -123,8 +128,14 @@ public class SelectTemplateStep extends ModuleWizardStep {
         return AlphaComparator.INSTANCE.compare(o1, o2);
       }
     }) {
+
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return false;
+      }
+
+      @Override
+      public boolean isToEnsureSelectionOnFocusGained() {
         return false;
       }
     };
@@ -195,11 +206,9 @@ public class SelectTemplateStep extends ModuleWizardStep {
         doFilter();
       }
     });
-//    doFilter();
-  }
+    myDescriptionPanel.setVisible(false);
+    mySettingsPanel.setVisible(false);
 
-  @Override
-  public void updateStep() {
     TreeState state = SelectTemplateSettings.getInstance().getTreeState();
     if (state != null) {
       state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
@@ -207,7 +216,31 @@ public class SelectTemplateStep extends ModuleWizardStep {
     else {
       myBuilder.expandAll(null);
     }
-//    myBuilder.queueUpdate();
+
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        InputEvent event = e.getInputEvent();
+        if (event instanceof KeyEvent) {
+          int row = myTemplatesTree.getMaxSelectionRow();
+          switch (((KeyEvent)event).getKeyCode()) {
+            case KeyEvent.VK_UP:
+              myTemplatesTree.setSelectionRow(row == 0 ? myTemplatesTree.getRowCount() - 1 : row - 1);
+              break;
+            case KeyEvent.VK_DOWN:
+              myTemplatesTree.setSelectionRow(row < myTemplatesTree.getRowCount() - 1 ? row + 1 : 0);
+              break;
+            case KeyEvent.VK_ENTER:
+              myTemplatesTree.expandRow(row);
+          }
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_ENTER), mySearchField);
+  }
+
+  @Override
+  public void updateStep() {
+    myBuilder.queueUpdate();
   }
 
   @Override
@@ -308,6 +341,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
   @Override
   public void disposeUIResources() {
     Disposer.dispose(myBuilder);
+  }
+
+  private void createUIComponents() {
+    mySearchField = new SearchTextField(false);
   }
 
   private class GroupNode extends SimpleNode {

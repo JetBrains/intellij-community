@@ -177,6 +177,7 @@ public class SmartList<E> extends AbstractList<E> {
     return oldValue;
   }
 
+  @NotNull
   @Override
   public Iterator<E> iterator() {
     if (mySize == 0) {
@@ -228,6 +229,22 @@ public class SmartList<E> extends AbstractList<E> {
 
   public int getModificationCount() {
     return modCount;
+  }
+
+  @NotNull
+  @Override
+  public <T> T[] toArray(@NotNull T[] a) {
+    if (mySize == 1) {
+      int length = a.length;
+      if (length  != 0) {
+        a[0] = (T)myElem;
+        if (length > 1) {
+          a[1] = null;
+        }
+        return a;
+      }
+    }
+    return super.toArray(a);
   }
 }
 

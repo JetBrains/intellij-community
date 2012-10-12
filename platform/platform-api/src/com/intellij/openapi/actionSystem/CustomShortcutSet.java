@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +36,10 @@ public final class CustomShortcutSet implements ShortcutSet {
     this(new KeyboardShortcut(keyStroke, null));
   }
 
+  public CustomShortcutSet() {
+    myShortcuts = Shortcut.EMPTY_ARRAY;
+  }
+
   /**
    * Creates <code>CustomShortcutSet</code> which contains specified keyboard and
    * mouse shortcuts.
@@ -42,6 +48,15 @@ public final class CustomShortcutSet implements ShortcutSet {
    */
   public CustomShortcutSet(@NotNull Shortcut... shortcuts){
     myShortcuts = shortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : shortcuts.clone();
+  }
+
+  public CustomShortcutSet(Integer... keyCodes) {
+    myShortcuts = ContainerUtil.map(keyCodes, new Function<Integer, Shortcut>() {
+      @Override
+      public Shortcut fun(Integer integer) {
+        return new KeyboardShortcut(KeyStroke.getKeyStroke(integer, 0), null);
+      }
+    }, Shortcut.EMPTY_ARRAY);
   }
 
   @Override

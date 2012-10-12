@@ -964,17 +964,4 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isIgnoredName(@Nullable final String name) {
     return "ignore".equals(name) || "ignored".equals(name);
   }
-
-  public static boolean isExtensionMethod(@Nullable final PsiMethod method) {
-    return findExtensionMethodMarker(method) != null;
-  }
-
-  @Nullable
-  public static PsiJavaToken findExtensionMethodMarker(@Nullable final PsiMethod method) {
-    if (method == null) return null;
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) return null;
-    final PsiElement previous = PsiTreeUtil.skipSiblingsBackward(body, PsiComment.class, PsiWhiteSpace.class);
-    return previous instanceof PsiJavaToken && isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD) ? (PsiJavaToken)previous : null;
-  }
 }

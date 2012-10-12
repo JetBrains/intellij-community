@@ -39,6 +39,9 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyResourcesInResourceList3() { doTest() }
   public void testOnlyResourcesInResourceList4() { doTest() }
 
+  public void testMethodReferenceNoStatic() { doTest() }
+  public void testMethodReferenceCallContext() { doTest() }
+
   public void testResourceParentInResourceList() {
     configureByFile(getTestName(false) + ".java")
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]

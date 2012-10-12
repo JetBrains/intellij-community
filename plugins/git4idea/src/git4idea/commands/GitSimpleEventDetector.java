@@ -32,6 +32,7 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     UNMERGED_PREVENTING_MERGE("is not possible because you have unmerged files"),
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
     MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
+    MERGE_CONFLICT_ON_UNSTASH("Merge conflict"),
     ALREADY_UP_TO_DATE("Already up-to-date");
 
     private final String myDetectionString;

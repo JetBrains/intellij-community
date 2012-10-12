@@ -78,10 +78,10 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    File file = getTemplateFile();
-    if (StringUtil.isEmpty(file.getName())) {
+    if (StringUtil.isEmpty(myName.getText())) {
       return new ValidationInfo("Template name should not be empty");
     }
+    File file = getTemplateFile();
     return file.exists() ? new ValidationInfo("Template already exists") : null;
   }
 

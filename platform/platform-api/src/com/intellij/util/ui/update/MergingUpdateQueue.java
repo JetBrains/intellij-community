@@ -66,7 +66,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public MergingUpdateQueue(@NonNls String name,
                             int mergingTimeSpan,
                             boolean isActive,
-                            JComponent modalityStateComponent,
+                            @Nullable JComponent modalityStateComponent,
                             @Nullable Disposable parent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null);
   }
@@ -74,7 +74,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public MergingUpdateQueue(@NonNls String name,
                             int mergingTimeSpan,
                             boolean isActive,
-                            JComponent modalityStateComponent,
+                            @Nullable JComponent modalityStateComponent,
                             @Nullable Disposable parent,
                             @Nullable JComponent activationComponent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, activationComponent, true);
@@ -83,7 +83,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public MergingUpdateQueue(@NonNls String name,
                             int mergingTimeSpan,
                             boolean isActive,
-                            JComponent modalityStateComponent,
+                            @Nullable JComponent modalityStateComponent,
                             @Nullable Disposable parent,
                             @Nullable JComponent activationComponent,
                             boolean executeInDispatchThread) {
@@ -400,9 +400,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates;
+    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates.size();
   }
 
+  @Nullable
   private ModalityState getMergerModalityState() {
     return myModalityStateComponent == ANY_COMPONENT ? null : getModalityState();
   }

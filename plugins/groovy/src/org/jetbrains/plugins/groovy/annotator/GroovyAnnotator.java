@@ -527,14 +527,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitVariable(GrVariable variable) {
     checkName(variable);
 
+    PsiElement parent = variable.getParent();
+    if (parent instanceof GrForInClause) {
+      PsiElement delimiter = ((GrForInClause)parent).getDelimiter();
+      if (delimiter.getNode().getElementType() == GroovyTokenTypes.mCOLON) {
+        GrTypeElement typeElement = variable.getTypeElementGroovy();
+        GrModifierList modifierList = variable.getModifierList();
+        if (typeElement == null && StringUtil.isEmptyOrSpaces(modifierList.getText())) {
+          Annotation annotation = myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle
+            .message("java.style.for.each.statement.requires.a.type.declaration"));
+          annotation.registerFix(new ReplaceDelimiterFix());
+        }
+      }
+    }
+
+
     final GrVariable toSearchFor = ResolveUtil.isScriptField(variable)? GrScriptField.createScriptFieldFrom(variable):variable;
     PsiNamedElement duplicate = ResolveUtil.resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
     if (duplicate == null) {
       if (variable instanceof GrParameter) {
         @SuppressWarnings({"ConstantConditions"})
-        final PsiElement parent = variable.getContext().getContext();
-        if (parent instanceof GrClosableBlock) {
-          duplicate = ResolveUtil.resolveExistingElement((GrClosableBlock)parent, new DuplicateVariablesProcessor(variable),
+        final PsiElement context = variable.getContext().getContext();
+        if (context instanceof GrClosableBlock) {
+          duplicate = ResolveUtil.resolveExistingElement((GrClosableBlock)context, new DuplicateVariablesProcessor(variable),
                                                          GrVariable.class, GrReferenceExpression.class);
         }
       }
@@ -1181,6 +1196,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiClass annot = ResolveUtil.resolveAnnotation(annotationArgumentList);
     if (annot == null) return;
 
+
+    if ("groovy.lang.Newify".equals(annot.getQualifiedName()) && annotation.getParameterList().getAttributes().length == 0) {
+      return;
+    }
+
     final GrAnnotationNameValuePair[] attributes = annotationArgumentList.getAttributes();
 
     Set<String> usedAttrs = new HashSet<String>();
@@ -1564,7 +1584,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement[] modifiers = list.getModifiers();
     Set<String> set = new THashSet<String>(modifiers.length);
     for (PsiElement modifier : modifiers) {
-      String name = modifier.getText();
+      @GrModifier.GrModifierConstant String name = modifier.getText();
       if (set.contains(name)) {
         final Annotation annotation = holder.createErrorAnnotation(list, GroovyBundle.message("duplicate.modifier", name));
         annotation.registerFix(new GrModifierFix(member, list, name, false, false));
@@ -1600,7 +1620,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
         .registerFix(new GrModifierFix(member, modifierList, PUBLIC, false, false));
     }
-    else if (member instanceof PsiClass && member.getContainingClass() == null) {
+    else if (member instanceof PsiClass &&
+             member.getContainingClass() == null &&
+             GroovyConfigUtils.getInstance().isVersionAtLeast(member, GroovyConfigUtils.GROOVY2_0)) {
       checkModifierIsNotAllowed(modifierList, PRIVATE, GroovyBundle.message("top.level.class.maynot.have.private.modifier"), holder);
       checkModifierIsNotAllowed(modifierList, PROTECTED, GroovyBundle.message("top.level.class.maynot.have.protected.modifier"), holder);
     }

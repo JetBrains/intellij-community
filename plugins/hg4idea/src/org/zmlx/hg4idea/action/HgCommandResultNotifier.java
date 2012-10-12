@@ -35,6 +35,12 @@ public final class HgCommandResultNotifier {
   }
 
   public void process(HgCommandResult result, @Nullable String successTitle, @Nullable String successDescription) {
+    process(result, successTitle, successDescription, null, null );
+  }
+
+  public void process( HgCommandResult result,
+                       @Nullable String successTitle, @Nullable String successDescription,
+                       @Nullable String failureTitle, @Nullable String failureDescription ){
     List<String> out = result.getOutputLines();
     List<String> err = result.getErrorLines();
     if (!out.isEmpty()) {
@@ -44,9 +50,10 @@ public final class HgCommandResultNotifier {
       VcsImplUtil.showErrorMessage(
         myProject, "<html>" + StringUtil.join(err, "<br>") + "</html>", "Error"
       );
+    } else if ( result.getExitValue() != 0 && failureTitle != null && failureDescription != null ){
+      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, failureTitle, failureDescription, NotificationType.ERROR), myProject);
     } else if (successTitle != null && successDescription != null) {
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION), myProject);
     }
   }
-
 }

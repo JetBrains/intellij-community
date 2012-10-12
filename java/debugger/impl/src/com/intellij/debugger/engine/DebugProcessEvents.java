@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -181,7 +182,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
               protected void action() throws Exception {
                 
-                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL && !enableBreakpointsDuringEvaluation()) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
@@ -419,7 +420,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
 
-        if(evaluatingContext != null) {
+        if (evaluatingContext != null && !enableBreakpointsDuringEvaluation()) {
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
@@ -473,6 +474,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     });
+  }
+
+  private static boolean enableBreakpointsDuringEvaluation() {
+    return Registry.is("debugger.enable.breakpoints.during.evaluation");
   }
 
   private void processDefaultEvent(SuspendContextImpl suspendContext) {

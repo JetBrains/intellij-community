@@ -6,6 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
@@ -20,8 +22,11 @@ import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -157,8 +162,46 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     myMethods.add(args);
   }
 
+  public void methodCall(Closure<Map<Object, Object>> generator) {
+    PsiElement place = myDescriptor.getPlace();
+
+    PsiElement parent = place.getParent();
+    if (isMethodCall(place, parent)) {
+      assert parent instanceof GrMethodCall && place instanceof GrReferenceExpression;
+
+      GrMethodCall call = (GrMethodCall)parent;
+      GrReferenceExpression ref = (GrReferenceExpression)place;
+
+      PsiType[] argTypes =
+        PsiUtil.getArgumentTypes(call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), false, null, false);
+      if (argTypes == null) return;
+
+      String[] types = new String[argTypes.length];
+      ContainerUtil.map(argTypes, new Function<PsiType, Object>() {
+        @Override
+        public Object fun(PsiType type) {
+          String canonical = type.getCanonicalText();
+          return canonical != null ? canonical : type.getPresentableText();
+        }
+      }, types);
+
+      generator.setDelegate(this);
+
+      HashMap<String, Object> args = new HashMap<String, Object>();
+      args.put("name", ref.getReferenceName());
+      args.put("argumentTypes", types);
+      generator.call(args);
+    }
+  }
+
+  private static boolean isMethodCall(PsiElement place, PsiElement parent) {
+    return place instanceof GrReferenceExpression &&
+        parent instanceof GrMethodCall &&
+        ((GrMethodCall)parent).getInvokedExpression() == place;
+  }
+
   @SuppressWarnings("unchecked")
-  private static void parseMethod(Map args) {
+  private void parseMethod(Map args) {
     String type = stringifyType(args.get("type"));
     args.put("type", type);
 
@@ -195,6 +238,11 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     }
     else if (toThrow != null) {
       args.put(THROWS, Collections.singletonList(stringifyType(toThrow)));
+    }
+
+    PsiClass aClass = getPsiClass();
+    if (aClass != null && aClass.getQualifiedName() != null) {
+      args.put("containingClass", aClass.getQualifiedName());
     }
   }
 

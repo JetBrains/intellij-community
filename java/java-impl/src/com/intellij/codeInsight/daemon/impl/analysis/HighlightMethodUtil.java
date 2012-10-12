@@ -851,7 +851,7 @@ public class HighlightMethodUtil {
     if (method.getBody() == null) return null;
     PsiClass aClass = method.getContainingClass();
     boolean isInterface = aClass != null && aClass.isInterface();
-    boolean isExtension = PsiUtil.isExtensionMethod(method);
+    boolean isExtension = method.isExtensionMethod();
 
     String message = null;
     if (isInterface) {

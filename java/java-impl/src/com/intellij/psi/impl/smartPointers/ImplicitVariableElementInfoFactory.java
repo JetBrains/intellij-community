@@ -65,7 +65,7 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
     }
 
     @Override
-    public void fastenBelt(int offset, RangeMarker cachedRangeMarker) {
+    public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
     }
 
     @Override

@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +218,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (nullPassed && currentSubstitution == null) return RAW_INFERENCE;
         } else if (argumentType instanceof PsiMethodReferenceType) {
           final PsiMethodReferenceExpression referenceExpression = ((PsiMethodReferenceType)argumentType).getExpression();
-          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, parameterType);
+          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, partialSubstitutor.substitute(parameterType));
         }
         else {
           currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
@@ -601,13 +602,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                                             final PsiMethodReferenceExpression methodReferenceExpression,
                                                                                             final PsiType functionalInterfaceType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-    if (method != null) {
-      final PsiSubstitutor subst = LambdaUtil.getSubstitutor(method, resolveResult);
-      final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+    final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (functionalInterfaceMethod != null) {
+      final PsiSubstitutor subst = LambdaUtil.getSubstitutor(functionalInterfaceMethod, resolveResult);
+      final PsiParameter[] methodParameters = functionalInterfaceMethod.getParameterList().getParameters();
       PsiType[] methodParamTypes = new PsiType[methodParameters.length];
       for (int i = 0; i < methodParameters.length; i++) {
-        methodParamTypes[i] = subst.substitute(methodParameters[i].getType());
+        methodParamTypes[i] = GenericsUtil.eliminateWildcards(subst.substitute(methodParameters[i].getType()));
       }
 
       if (methodParamsDependOn(typeParam, methodReferenceExpression, functionalInterfaceType, methodParameters, subst)) {
@@ -615,20 +616,46 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
 
       final PsiType[] args = new PsiType[methodParameters.length];
-      final PsiElement resolved = methodReferenceExpression.resolve();
-      if (resolved instanceof PsiMethod) {
-        final PsiParameter[] parameters = ((PsiMethod)resolved).getParameterList().getParameters();
-        if (parameters.length != methodParameters.length) return null;
-        for (int i = 0; i < parameters.length; i++) {
-          args[i] = subst.substitute(parameters[i].getType());
+      Map<PsiMethodReferenceExpression,PsiType> map = LambdaUtil.ourRefs.get();
+      if (map == null) {
+        map = new HashMap<PsiMethodReferenceExpression, PsiType>();
+        LambdaUtil.ourRefs.set(map);
+      }
+      final PsiType added = map.put(methodReferenceExpression, functionalInterfaceType);
+      final JavaResolveResult methReferenceResolveResult;
+      try {
+        methReferenceResolveResult = methodReferenceExpression.advancedResolve(false);
+      }
+      finally {
+        if (added == null) {
+          map.remove(methodReferenceExpression);
         }
-        final Pair<PsiType, ConstraintType> constraint = inferTypeForMethodTypeParameterInner(typeParam, methodParamTypes, args, subst, null,
-                                                                                              DefaultParameterTypeInferencePolicy.INSTANCE);
+      }
+      final PsiElement resolved = methReferenceResolveResult.getElement();
+      if (resolved instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)resolved;
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        boolean hasReceiver = false;
+        if (methodParamTypes.length == parameters.length + 1) {
+          if (!LambdaUtil.isReceiverType(methodParamTypes[0], method.getContainingClass(), methReferenceResolveResult.getSubstitutor())) return null;
+          hasReceiver = true;
+        } else if (parameters.length != methodParameters.length) {
+          return null;
+        }
+        for (int i = 0; i < parameters.length; i++) {
+          args[i] = methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(parameters[i].getType()));
+        }
+
+        final PsiType[] typesToInfer = hasReceiver ? ArrayUtil.remove(methodParamTypes, 0) : methodParamTypes;
+        final Pair<PsiType, ConstraintType> constraint = inferTypeForMethodTypeParameterInner(typeParam, typesToInfer, args, subst, null, DefaultParameterTypeInferencePolicy.INSTANCE);
         if (constraint != null){
           return constraint;
         }
-        return getSubstitutionForTypeParameterConstraint(typeParam, GenericsUtil.eliminateWildcards(subst.substitute(method.getReturnType())), 
-                                                         ((PsiMethod)resolved).getReturnType(), true, PsiUtil.getLanguageLevel(method));
+        PsiType functionalInterfaceReturnType = functionalInterfaceMethod.getReturnType();
+        if (functionalInterfaceReturnType != null && functionalInterfaceReturnType != PsiType.VOID) {
+          functionalInterfaceReturnType = GenericsUtil.eliminateWildcards(subst.substitute(functionalInterfaceReturnType));
+          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType())), true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+        }
       }
     }
     return null;

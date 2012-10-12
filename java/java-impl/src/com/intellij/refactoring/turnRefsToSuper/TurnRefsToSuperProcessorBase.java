@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -501,32 +502,50 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
       else {
-        LOG.assertTrue(false);
+        LOG.error("Unexpected scope: " + declScope);
       }
+    }
+    else if (variable instanceof PsiResourceVariable) {
+      final PsiJavaParserFacade facade = JavaPsiFacade.getInstance(myProject).getParserFacade();
+      checkConstrainingType(type, facade.createTypeFromText(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, variable));
     }
   }
 
   private void analyzeVarUsage(final PsiElement element) {
     PsiType constrainingType = null;
+
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
       assert method != null;
       constrainingType = method.getReturnType();
-    } else if (parent instanceof PsiAssignmentExpression) {
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
-    } else if (parent instanceof PsiLocalVariable) {
+    }
+    //todo[ann] this works for AImpl->A but fails on List<AImpl> (see testForEach1() and testIDEADEV23807()).
+    //else if (parent instanceof PsiForeachStatement) {
+    //  final PsiType exprType = ((PsiExpression)element).getType();
+    //  if (!(exprType instanceof PsiArrayType)) {
+    //    final PsiJavaParserFacade facade = JavaPsiFacade.getInstance(myProject).getParserFacade();
+    //    constrainingType = facade.createTypeFromText(CommonClassNames.JAVA_LANG_ITERABLE, parent);
+    //  }
+    //}
+    else if (parent instanceof PsiLocalVariable) {
       constrainingType = ((PsiLocalVariable)parent).getType();
     }
-    //TODO: I expect more cases here
 
+    checkConstrainingType(element, constrainingType);
+  }
+
+  private void checkConstrainingType(PsiElement element, @Nullable PsiType constrainingType) {
     if (constrainingType instanceof PsiClassType) {
       final PsiClass resolved = ((PsiClassType)constrainingType).resolve();
       if (!myClass.equals(resolved)) {
-          if (resolved == null || !isSuperInheritor(resolved)) {
-            markNode(element);
-          }
+        if (resolved == null || !isSuperInheritor(resolved)) {
+          markNode(element);
         }
+      }
     }
   }
 

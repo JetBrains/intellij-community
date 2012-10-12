@@ -15,13 +15,17 @@
  */
 package git4idea;
 
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
@@ -29,8 +33,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,8 +92,8 @@ public class PlatformFacadeImpl implements PlatformFacade {
   }
 
   @Override
-  public ChangeListManager getChangeListManager(@NotNull Project project) {
-    return ChangeListManager.getInstance(project);
+  public ChangeListManagerEx getChangeListManager(@NotNull Project project) {
+    return (ChangeListManagerEx)ChangeListManager.getInstance(project);
   }
 
   @Override
@@ -115,6 +123,40 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public String getLineSeparator(@NotNull VirtualFile file, boolean detect) {
     return LoadTextUtil.detectLineSeparator(file, detect);
+  }
+
+  @NotNull
+  @Override
+  public GitVcsSettings getSettings(@NotNull Project project) {
+    return GitVcsSettings.getInstance(project);
+  }
+
+  @Override
+  public void saveAllDocuments() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile getVirtualFileByPath(@NotNull String path) {
+    return VcsUtil.getVirtualFile(path);
+  }
+
+  @NotNull
+  @Override
+  public ProjectManagerEx getProjectManager() {
+    return ProjectManagerEx.getInstanceEx();
+  }
+
+  @NotNull
+  @Override
+  public SaveAndSyncHandler getSaveAndSyncHandler() {
+    return SaveAndSyncHandlerImpl.getInstance();
   }
 
   @NotNull

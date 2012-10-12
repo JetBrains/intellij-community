@@ -77,4 +77,8 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
   public void testAmbiguity() throws Exception {
     doTest();
   }
+
+  public void testSubst() throws Exception {
+    doTest();
+  }
 }

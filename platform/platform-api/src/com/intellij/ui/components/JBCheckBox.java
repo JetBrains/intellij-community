@@ -60,12 +60,24 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
 
   @Override
   public Dimension getPreferredSize() {
-    return myAnchor == null || myAnchor == this ? super.getPreferredSize() : myAnchor.getPreferredSize();
+    Dimension size = super.getPreferredSize();
+    if (myAnchor != null && myAnchor != this) {
+      Dimension anchorSize = myAnchor.getPreferredSize();
+      size.width = Math.max(size.width, anchorSize.width);
+      size.height = Math.max(size.height, anchorSize.height);
+    }
+    return size;
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return myAnchor == null || myAnchor == this ? super.getMinimumSize() : myAnchor.getMinimumSize();
+    Dimension size = super.getMinimumSize();
+    if (myAnchor != null && myAnchor != this) {
+      Dimension anchorSize = myAnchor.getMinimumSize();
+      size.width = Math.max(size.width, anchorSize.width);
+      size.height = Math.max(size.height, anchorSize.height);
+    }
+    return size;
   }
 
   /**

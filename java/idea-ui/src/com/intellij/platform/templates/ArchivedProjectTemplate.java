@@ -51,6 +51,7 @@ import java.util.zip.ZipInputStream;
  */
 public class ArchivedProjectTemplate implements ProjectTemplate {
 
+  static final String DESCRIPTION_PATH = ".idea/description.html";
   private final String myDisplayName;
   private final URL myArchivePath;
   private final WizardContext myContext;
@@ -76,7 +77,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
       ZipInputStream stream = getStream();
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
-        if (entry.getName().endsWith("/description.html")) {
+        if (entry.getName().endsWith(DESCRIPTION_PATH)) {
           return StreamUtil.readText(stream);
         }
       }

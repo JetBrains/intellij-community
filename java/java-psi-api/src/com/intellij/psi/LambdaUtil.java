@@ -296,13 +296,16 @@ public class LambdaUtil {
 
   @Nullable
   private static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
-    if (psiClass.isInterface()) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
+    if (psiClass != null && psiClass.isInterface()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-        if (!overridesPublicObjectMethod(psiMethod) && !PsiUtil.isExtensionMethod(psiMethod)) {
+        if (!overridesPublicObjectMethod(psiMethod) && !psiMethod.isExtensionMethod()) {
           methods.add(signature);
         }
       }
@@ -563,13 +566,30 @@ public class LambdaUtil {
      if (lambdaExpression.getBody() instanceof PsiCodeBlock) {
        return true;
      }
-    final PsiElement parent = lambdaExpression.getParent();
-    if (parent instanceof PsiExpressionList || parent instanceof PsiExpression) {
+    if (insertSemicolon(lambdaExpression.getParent())) {
       return false;
     }
     return true;
   }
 
+  public static boolean insertSemicolon(PsiElement parent) {
+    return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
+  }
+
+  public static boolean isValidQualifier(PsiMethodReferenceExpression expression) {
+    final PsiElement referenceNameElement = expression.getReferenceNameElement();
+    if (referenceNameElement instanceof PsiKeyword) {
+      final PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement) {
+        return true;
+      }
+      if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
     Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
@@ -580,7 +600,9 @@ public class LambdaUtil {
 
     final JavaResolveResult result;
     try {
-      if (map.put(methodReferenceExpression, left) != null) return false;
+      if (map.put(methodReferenceExpression, left) != null) {
+        return false;
+      }
       result = methodReferenceExpression.advancedResolve(false);
     }
     finally {
@@ -628,7 +650,7 @@ public class LambdaUtil {
     return false;
   }
 
-  private static boolean isReceiverType(@Nullable PsiClass aClass, PsiClass containingClass) {
+  private static boolean isReceiverType(@Nullable PsiClass aClass, @Nullable PsiClass containingClass) {
     while (containingClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) return true;
       containingClass = containingClass.getContainingClass();
@@ -636,14 +658,39 @@ public class LambdaUtil {
     return false;
   }
 
-  public static boolean isReceiverType(PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
+  public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(receiverType));
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
+      LOG.assertTrue(containingClass != null);
       return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
              PsiUtil.isRawSubstitutor(receiverClass, resolveResult.getSubstitutor());
     } 
+    return false;
+  }
+  
+  public static boolean isReceiverType(PsiType functionalInterfaceType, PsiClass containingClass, @Nullable PsiMethod referencedMethod) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final MethodSignature function = getFunction(resolveResult.getElement());
+    if (function != null) {
+      final int interfaceMethodParamsLength = function.getParameterTypes().length;
+      if (interfaceMethodParamsLength > 0) {
+        final PsiType firstParamType = resolveResult.getSubstitutor().substitute(function.getParameterTypes()[0]);
+        boolean isReceiver = isReceiverType(firstParamType,
+                                            containingClass, PsiUtil.resolveGenericsClassInType(firstParamType).getSubstitutor());
+        if (isReceiver) {
+          if (referencedMethod == null){
+            if (interfaceMethodParamsLength == 1) return true;
+            return false;
+          }
+          if (referencedMethod.getParameterList().getParametersCount() != interfaceMethodParamsLength - 1) {
+            return false;
+          }
+          return true;
+        }
+      }
+    }
     return false;
   }
   

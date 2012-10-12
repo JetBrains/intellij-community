@@ -30,18 +30,12 @@ import java.awt.datatransfer.StringSelection;
  */
 public class HgCopyHistoryRevisionNumberAction extends AnAction implements DumbAware {
 
-  /**
-   * The constructor
-   */
   public HgCopyHistoryRevisionNumberAction() {
     super(HgVcsMessages.message("hg4idea.history.copy.revision.number"),
           HgVcsMessages.message("hg4idea.history.copy.revision.number"),
           PlatformIcons.COPY_ICON);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void actionPerformed(AnActionEvent e) {
     VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
@@ -50,9 +44,6 @@ public class HgCopyHistoryRevisionNumberAction extends AnAction implements DumbA
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void update(AnActionEvent e) {
     super.update(e);

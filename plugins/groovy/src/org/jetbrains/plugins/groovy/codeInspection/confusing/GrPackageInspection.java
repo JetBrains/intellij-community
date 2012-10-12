@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.GrMoveToDirFix;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -93,7 +93,7 @@ public class GrPackageInspection extends BaseInspection {
           if (toHighlight == null) return;
 
           registerError(toHighlight, "Package name mismatch. Actual: '" + actual + "', expected: '" + expectedPackage+"'",
-                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage), new MoveToPackageFix(actual)},
+                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage), new GrMoveToDirFix(actual)},
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }

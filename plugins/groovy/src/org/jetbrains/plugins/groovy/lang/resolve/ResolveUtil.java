@@ -599,7 +599,7 @@ public class ResolveUtil {
       if (!(clParent instanceof GrMethodCall)) continue;
       final GrExpression expression = ((GrMethodCall)clParent).getInvokedExpression();
       if (expression instanceof GrReferenceExpression &&
-          GdkMethodUtil.WITH.equals(((GrReferenceExpression)expression).getReferenceName()) &&
+          GdkMethodUtil.isWithName(((GrReferenceExpression)expression).getReferenceName()) &&
           ((GrReferenceExpression)expression).resolve() instanceof GrGdkMethod) {
         final GrExpression withQualifier = ((GrReferenceExpression)expression).getQualifierExpression();
         if (withQualifier != null) {

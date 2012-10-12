@@ -325,5 +325,20 @@ print "\\
 '''
   }
 
+  public void "test enter after doc with wrong braces"() {
+    doTest '''
+/**
+ * {@link #z
+ */
+protected void z() {<caret>
+}''', '''
+/**
+ * {@link #z
+ */
+protected void z() {
+  <caret>
+}'''
+  }
+
 }
 

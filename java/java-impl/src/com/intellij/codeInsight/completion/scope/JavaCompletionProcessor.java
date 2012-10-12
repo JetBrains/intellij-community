@@ -199,6 +199,25 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
+    final PsiElement elementParent = myElement.getParent();
+    if (!(elementParent instanceof PsiMethodReferenceExpression) && checkStaticFlag(element)) return true;
+
+    if (element instanceof PsiPackage && myScope instanceof PsiClass) {
+      if (!(elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null)) {
+        return true;
+      }
+    }
+
+    if (satisfies(element, state) && isAccessible(element)) {
+      CompletionElement element1 = new CompletionElement((PsiNamedElement)element, state.get(PsiSubstitutor.KEY));
+      if (myResultNames.add(element1.getUniqueId())) {
+        myResults.add(element1);
+      }
+    }
+    return true;
+  }
+
+  private boolean checkStaticFlag(PsiElement element) {
     if (!(element instanceof PsiClass) && element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
@@ -216,20 +235,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
     }
-    final PsiElement elementParent = myElement.getParent();
-    if (element instanceof PsiPackage && myScope instanceof PsiClass) {
-      if (!(elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null)) {
-        return true;
-      }
-    }
-
-    if (satisfies(element, state) && isAccessible(element)) {
-      CompletionElement element1 = new CompletionElement((PsiNamedElement)element, state.get(PsiSubstitutor.KEY));
-      if (myResultNames.add(element1.getUniqueId())) {
-        myResults.add(element1);
-      }
-    }
-    return true;
+    return false;
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {

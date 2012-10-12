@@ -17,6 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -83,12 +84,12 @@ public class ProcessOutput {
   }
 
   /**
-   * If exit code is nonzero or the process timed out, logs stdout and exit code and returns false,
+   * If exit code is nonzero or the process timed out, logs stderr and exit code and returns false,
    * else just returns true.
    * @param logger where to put error information
    * @return true iff exit code is zero
    */
-  public boolean checkSuccess(Logger logger) {
+  public boolean checkSuccess(@NotNull final Logger logger) {
     if (getExitCode() != 0) {
       logger.info(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
       return false;

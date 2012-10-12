@@ -4,18 +4,24 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
-import org.jetbrains.jps.incremental.storage.*;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
+import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
+import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author nik
@@ -61,8 +67,8 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
       markDirtyFiles(dataManager, currentPaths, false, context);
-      final SourceToOutputMappingImpl mapping = dataManager.getSourceToOutputMap(myTarget);
-      final Iterator<String> iterator = mapping.getKeysIterator();
+      final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
+      final Iterator<String> iterator = mapping.getSourcesIterator();
       while (iterator.hasNext()) {
         String path = iterator.next();
         File file = new File(FileUtil.toSystemDependentName(path));
@@ -104,21 +110,6 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       if (forceMarkDirty || myProjectDescriptor.timestamps.getStorage().getStamp(file, myTarget) != FileSystemUtil.lastModified(file)) {
         myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage());
       }
-    }
-  }
-
-  public void markUpToDate(CompileContext context) throws IOException {
-    BuildFSState fsState = myProjectDescriptor.fsState;
-    if (context.isProjectRebuild()) {
-      fsState.markInitialScanPerformed(myTarget);
-    }
-    List<ArtifactRootDescriptor> descriptors = myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context);
-    boolean marked = false;
-    for (ArtifactRootDescriptor descriptor : descriptors) {
-      marked |= fsState.markAllUpToDate(descriptor, myProjectDescriptor.timestamps.getStorage(), context.getCompilationStartStamp());
-    }
-    if (marked) {
-      context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
     }
   }
 }

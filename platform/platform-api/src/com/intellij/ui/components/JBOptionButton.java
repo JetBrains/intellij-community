@@ -248,7 +248,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     };
 
     if (under && myOptions.length > 0) {
-      final JMenuItem mainAction = new JMenuItem(getAction());
+      final JMenuItem mainAction = createMenuItem(getAction());
       configureItem(getMenuInfo(getAction()), mainAction);
       result.add(mainAction);
       result.addSeparator();
@@ -257,7 +257,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
     for (Action each : myOptions) {
       if (getAction() == each) continue;
       final OptionInfo info = getMenuInfo(each);
-      final JMenuItem eachItem = new JMenuItem(each);
+      final JMenuItem eachItem = createMenuItem(each);
 
       configureItem(info, eachItem);
       result.add(eachItem);
@@ -265,12 +265,22 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
 
     if (!under && myOptions.length > 0) {
       result.addSeparator();
-      final JMenuItem mainAction = new JMenuItem(getAction());
+      final JMenuItem mainAction = createMenuItem(getAction());
       configureItem(getMenuInfo(getAction()), mainAction);
       result.add(mainAction);
     }
 
     return result;
+  }
+
+  private JMenuItem createMenuItem(final Action action) {
+    return new JMenuItem(action) {
+      @Override
+      public void paint(Graphics g) {
+        GraphicsUtil.setupAntialiasing(g);
+        super.paint(g);
+      }
+    };
   }
 
   private void configureItem(OptionInfo info, JMenuItem eachItem) {

@@ -16,7 +16,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
@@ -239,7 +239,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          SaveAndSyncHandler.getInstance().maybeRefresh(ModalityState.current());
+          SaveAndSyncHandlerImpl.getInstance().maybeRefresh(ModalityState.current());
         }
 
         @Override

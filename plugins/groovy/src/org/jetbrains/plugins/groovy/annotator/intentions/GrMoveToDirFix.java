@@ -16,24 +16,20 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -41,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Max Medvedev
  */
-public class GrMoveToDirFix implements IntentionAction {
+public class GrMoveToDirFix implements LocalQuickFix {
   private String myPackageName;
 
   public GrMoveToDirFix(String packageName) {
@@ -50,8 +46,9 @@ public class GrMoveToDirFix implements IntentionAction {
 
   @NotNull
   @Override
-  public String getText() {
-    return GroovyIntentionsBundle.message("move.to.correct.dir", myPackageName);
+  public String getName() {
+    String packName = StringUtil.isEmptyOrSpaces(myPackageName) ? "default package" : myPackageName;
+    return GroovyIntentionsBundle.message("move.to.correct.dir", packName);
   }
 
   @NotNull
@@ -61,25 +58,9 @@ public class GrMoveToDirFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof GroovyFile)) return false;
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiFile file = descriptor.getPsiElement().getContainingFile();
 
-    VirtualFile vfile = file.getVirtualFile();
-    if (vfile == null) return false;
-
-    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(vfile);
-    if (sourceRoot == null) return false;
-
-    final PsiManager manager = PsiManager.getInstance(project);
-    PackageWrapper aPackage = new PackageWrapper(manager, myPackageName);
-    final PsiDirectory targetDir = RefactoringUtil.findPackageDirectoryInSourceRoot(aPackage, sourceRoot);
-
-    PsiDirectory currentDir = file.getContainingDirectory();
-    return targetDir == null || !manager.areElementsEquivalent(targetDir, currentDir);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!(file instanceof GroovyFile)) return;
 
     VirtualFile vfile = file.getVirtualFile();
@@ -98,10 +79,5 @@ public class GrMoveToDirFix implements IntentionAction {
       return;
     }
     new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, directory, false, false, false, null, null).run();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

@@ -19,9 +19,9 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -66,7 +66,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
 
     final PsiMethod[] methods = anInterface.getMethods();
     for (final PsiMethod method : methods) {
-      final PsiJavaToken marker = PsiUtil.findExtensionMethodMarker(method);
+      final PsiJavaToken marker = PsiImplUtil.findExtensionMethodMarker(method);
       final PsiModifierList modifierList = method.getModifierList();
       modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
       if (marker != null) {

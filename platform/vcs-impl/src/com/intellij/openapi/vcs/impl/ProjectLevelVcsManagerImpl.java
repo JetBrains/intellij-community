@@ -116,7 +116,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final FileIndexFacade myExcludedIndex;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
-  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus, final FileIndexFacade excludedFileIndex) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus,
+                                    final FileIndexFacade excludedFileIndex) {
     myProject = project;
     myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();

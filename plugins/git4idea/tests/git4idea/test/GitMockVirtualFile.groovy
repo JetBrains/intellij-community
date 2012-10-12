@@ -16,19 +16,22 @@
 package git4idea.test
 
 import com.intellij.mock.MockVirtualFileSystem
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-
 /**
  * VirtualFile test implementation based on {@link java.io.File}.
  *
  * @author Kirill Likhodedov
  */
 class GitMockVirtualFile extends VirtualFile {
+
+  private static VirtualFileSystem ourFileSystem = new MockVirtualFileSystem()
 
   private String myPath;
 
@@ -60,7 +63,7 @@ class GitMockVirtualFile extends VirtualFile {
   @NotNull
   @Override
   VirtualFileSystem getFileSystem() {
-    new MockVirtualFileSystem()
+    ourFileSystem
   }
 
   @Override
@@ -119,7 +122,6 @@ class GitMockVirtualFile extends VirtualFile {
 
   @Override
   void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -136,6 +138,11 @@ class GitMockVirtualFile extends VirtualFile {
   @Override
   String getUrl() {
     myPath;
+  }
+
+  @Override
+  FileType getFileType() {
+    return FileTypes.PLAIN_TEXT;
   }
 
   boolean equals(o) {

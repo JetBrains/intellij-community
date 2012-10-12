@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.LookAheadLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -36,10 +38,39 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
   );
 
   public GroovyDocLexer() {
-    super(new AsteriskStripperLexer(new _GroovyDocLexer()),
-        TOKENS_TO_MERGE);
+    super(new LookAheadLexer(new AsteriskStripperLexer(new _GroovyDocLexer())) {
+      @Override
+      protected void lookAhead(Lexer baseLexer) {
+        if (baseLexer.getTokenType() == mGDOC_INLINE_TAG_END) {
+          advanceAs(baseLexer, mGDOC_COMMENT_DATA);
+          return;
+        }
+        
+        if (baseLexer.getTokenType() == mGDOC_INLINE_TAG_START) {
+          int depth = 0;
+          while (true) {
+            IElementType type = baseLexer.getTokenType();
+            if (type == null) {
+              break;
+            }
+            if (type == mGDOC_INLINE_TAG_START) {
+              depth++;
+            }
+            advanceLexer(baseLexer);
+            if (type == mGDOC_INLINE_TAG_END) {
+              depth--;
+            }
+            if (depth == 0) {
+              break;
+            }
+          }
+          return;
+        }
+        
+        super.lookAhead(baseLexer);
+      }
+    }, TOKENS_TO_MERGE);
   }
-
 
   private static class AsteriskStripperLexer extends LexerBase {
     private final _GroovyDocLexer myFlexLexer;

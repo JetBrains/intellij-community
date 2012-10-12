@@ -87,7 +87,7 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   }
 
   public void testGstringExtendsString() {
-    myFixture.testCompletionVariants getTestName(false)+".groovy", "stripIndent", "stripIndent", "stripIndentFromLine"
+    doBasicTest()
   }
 
   public void testCompletionInEachClosure() {
@@ -148,7 +148,7 @@ for (def ch: "abc".toCharArray()) {
       new FooImpl().<caret>
     """
     myFixture.completeBasic()
-    assertOrderedEquals myFixture.lookupElementStrings,"""\
+    assertOrderedEquals myFixture.lookupElementStrings, '''\
 fromThis
 fromThis2
 fromThis3
@@ -165,6 +165,7 @@ class
 equals
 getProperty
 hashCode
+identity
 invokeMethod
 metaClass
 notify
@@ -205,19 +206,13 @@ getMetaClass
 getMetaPropertyValues
 getProperties
 grep
-hasPerInstanceMetaClass
 hasProperty
-identity
 inject
 inspect
 is
 isCase
 iterator
 metaClass
-primitiveArrayGet
-primitiveArrayGet
-primitiveArrayGet
-primitiveArrayPut
 print
 print
 printf
@@ -235,7 +230,7 @@ sprintf
 use
 use
 use\
-""".split('\n')
+'''.split('\n')
   }
 
 }

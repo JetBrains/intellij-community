@@ -8,11 +8,11 @@ class Sub implements Int<Xyz> {
     }
 }
 
-interface Xint {
+interface XInt {
     void inInt();
 }
 
-class Xyz implements Xint {
+class Xyz implements XInt {
     public void inInt() {
     }
 

@@ -43,8 +43,21 @@ public class GitTestRunEnv {
 
 
   public GitTestRunEnv(@NotNull File rootDir) {
-    ourGitExecutable = getExecutable();
+    if (ourGitExecutable == null) {
+      ourGitExecutable = findExecutable();
+      outputGitVersion();
+    }
+
     myRootDir = rootDir;
+  }
+
+  private void outputGitVersion() {
+    try {
+      run(false, "version");
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -80,9 +93,8 @@ public class GitTestRunEnv {
     if (out.length() > 0) {
       log(out);
     }
-    if (stdout.contains("fatal")) {
-      if (stdout.contains("Unable to create") && stdout.contains(".git/index.lock") && myRetryCount <= MAX_RETRIES){
-        // retry
+    if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {
+      if (myRetryCount <= MAX_RETRIES) {// retry
         myRetryCount++;
         return run(silent, command, params);
       }
@@ -97,11 +109,7 @@ public class GitTestRunEnv {
     System.out.println(message);
   }
 
-  private static String getExecutable() {
-    if (ourGitExecutable != null) {
-      return ourGitExecutable;
-    }
-
+  private static String findExecutable() {
     String exec = System.getenv(GIT_EXECUTABLE_ENV);
     if (exec != null && new File(exec).canExecute()) {
       log("Using Git from IDEA_TEST_GIT_EXECUTABLE: " + exec);

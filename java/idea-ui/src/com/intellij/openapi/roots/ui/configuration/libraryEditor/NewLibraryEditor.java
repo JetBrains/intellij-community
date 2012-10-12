@@ -172,7 +172,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
     model.setProperties(myProperties);
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
-        model.addRoot(pointer.getUrl(), type);
+        if (!myJarDirectories.contains(type, pointer.getUrl())) {
+          model.addRoot(pointer.getUrl(), type);
+        }
       }
     }
     for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
@@ -186,7 +188,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
     editor.setProperties(myProperties);
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
-        editor.addRoot(pointer.getUrl(), type);
+        if (!myJarDirectories.contains(type, pointer.getUrl())) {
+          editor.addRoot(pointer.getUrl(), type);
+        }
       }
     }
     for (OrderRootType rootType : myJarDirectories.getRootTypes()) {

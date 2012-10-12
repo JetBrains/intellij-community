@@ -27,8 +27,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -42,9 +40,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
@@ -785,57 +781,26 @@ public class GitUtil {
    * <code>git diff --name-only master..origin/master</code>
    */
   @NotNull
-  public static Collection<String> getPathsDiffBetweenRefs(@NotNull String beforeRef, @NotNull String afterRef, @NotNull Project project,
-                                                           @NotNull VirtualFile root) throws VcsException {
-    final GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-only", "--pretty=format:");
-    diff.addParameters(beforeRef + ".." + afterRef);
-    diff.setNoSSH(true);
-    diff.setStdoutSuppressed(true);
-    diff.setStderrSuppressed(true);
-    diff.setSilent(true);
-    final String output = diff.run();
+  public static Collection<String> getPathsDiffBetweenRefs(@NotNull Git git, @NotNull GitRepository repository,
+                                                           @NotNull String beforeRef, @NotNull String afterRef) throws VcsException {
+    List<String> parameters = Arrays.asList("--name-only", "--pretty=format:");
+    String range = beforeRef + ".." + afterRef;
+    GitCommandResult result = git.diff(repository, parameters, range);
+    if (!result.success()) {
+      LOG.info(String.format("Couldn't get diff in range [%s] for repository [%s]", range, repository.toLogString()));
+      return Collections.emptyList();
+    }
 
     final Collection<String> remoteChanges = new HashSet<String>();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(result.getOutputAsJoinedString()); s.hasMoreData(); ) {
       final String relative = s.line();
       if (StringUtil.isEmptyOrSpaces(relative)) {
         continue;
       }
-      final String path = root.getPath() + "/" + unescapePath(relative);
+      final String path = repository.getRoot().getPath() + "/" + unescapePath(relative);
       remoteChanges.add(FilePathsHelper.convertPath(path));
     }
     return remoteChanges;
-  }
-
-  /**
-   * Given the list of paths converts them to the list of {@link Change Changes} found in the {@link ChangeListManager},
-   * i.e. this works only for local changes.
-   * Paths can be absolute or relative to the repository.
-   * If a path is not in the local changes, it is ignored.
-   */
-  @NotNull
-  public static List<Change> convertPathsToChanges(@NotNull GitRepository repository,
-                                                   @NotNull Collection<String> affectedPaths, boolean relativePaths) {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(repository.getProject());
-    List<Change> affectedChanges = new ArrayList<Change>();
-    for (String path : affectedPaths) {
-      VirtualFile file;
-      if (relativePaths) {
-        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
-      }
-      else {
-        file = VcsUtil.getVirtualFile(path);
-      }
-
-      if (file != null) {
-        Change change = changeListManager.getChange(file);
-        if (change != null) {
-          affectedChanges.add(change);
-        }
-      }
-    }
-    return affectedChanges;
   }
 
   @NotNull

@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.fileTypes.FileType;
-
 /**
  * @author gregsh
  */
