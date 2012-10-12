@@ -15,9 +15,6 @@
 
     <selectedFileEditorProvider implementation="com.intellij.android.designer.AndroidSelectedFileEditorProvider"/>
 
-    <projectService serviceInterface="com.intellij.android.designer.AndroidSelectedFileEditorProvider$MyState"
-                    serviceImplementation="com.intellij.android.designer.AndroidSelectedFileEditorProvider$MyState"/>
-
     <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"
                     serviceImplementation="com.intellij.android.designer.profile.ProfileList"/>
 
