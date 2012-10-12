@@ -230,4 +230,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return null;
   }
 
+  @Override
+  public boolean supportsIncomingChanges() {
+    return false;
+  }
 }

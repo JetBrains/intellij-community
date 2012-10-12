@@ -215,6 +215,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return null;
   }
 
+  @Override
+  public boolean supportsIncomingChanges() {
+    return true;
+  }
+
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;

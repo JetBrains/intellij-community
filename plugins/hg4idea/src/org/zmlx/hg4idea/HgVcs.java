@@ -25,14 +25,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -94,9 +90,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private CommitExecutor myCommitAndPushExecutor;
 
   private HgStatusWidget myStatusWidget;
-
-  private IncomingChangesViewProvider myChangesViewProvider;
-
 
   public HgVcs(Project project, HgGlobalSettings globalSettings, HgProjectSettings projectSettings, ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
@@ -281,8 +274,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       });
     }
 
-    myChangesViewProvider = new IncomingChangesViewProvider(myProject, myProject.getMessageBus());
-
     // Force a branch topic update
     myProject.getMessageBus().syncPublisher(Topics.BRANCH_TOPIC).update(myProject);
   }
@@ -301,11 +292,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
-    }
-
-    if (null != myChangesViewProvider) {
-      myChangesViewProvider.disposeContent();
-      myChangesViewProvider = null;
     }
 
     super.deactivate();

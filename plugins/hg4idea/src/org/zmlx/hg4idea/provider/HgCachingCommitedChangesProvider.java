@@ -262,4 +262,9 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   public RepositoryLocation getForNonLocal(VirtualFile file) {
     return null;
   }
+
+  @Override
+  public boolean supportsIncomingChanges() {
+    return false;
+  }
 }
