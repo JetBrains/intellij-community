@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-@Tag("Web")
+@Tag("Generic")
 public class GenericWebRepository extends BaseRepositoryImpl {
   private String myTasksListURL;
   private String myTaskPattern;
@@ -131,16 +132,18 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return new GenericWebRepository(this);
   }
 
+  @NotNull
   public String getTasksListURL() {
-    return myTasksListURL;
+    return myTasksListURL == null ? "" : myTasksListURL;
   }
 
   public void setTasksListURL(final String tasksListURL) {
     myTasksListURL = tasksListURL;
   }
 
+  @NotNull
   public String getTaskPattern() {
-    return myTaskPattern;
+    return myTaskPattern == null ? "" : myTaskPattern;
   }
 
   public void setTaskPattern(final String taskPattern) {
@@ -175,8 +178,9 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     };
   }
 
+  @NotNull
   public String getLoginURL() {
-    return myLoginURL;
+    return myLoginURL == null ? "" : myLoginURL;
   }
 
   public void setLoginURL(final String loginURL) {

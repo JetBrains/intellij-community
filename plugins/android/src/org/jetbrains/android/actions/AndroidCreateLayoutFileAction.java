@@ -150,7 +150,7 @@ public class AndroidCreateLayoutFileAction extends CreateTypedResourceFileAction
       setTitle(AndroidBundle.message("new.typed.resource.dialog.title", "Layout"));
       final List<String> tagNames = getSortedAllowedTagNames(facet);
       myRootElementField = new TextFieldWithAutoCompletion<String>(
-        facet.getModule().getProject(), new TextFieldWithAutoCompletion.StringsCompletionProvider(tagNames, null), true);
+        facet.getModule().getProject(), new TextFieldWithAutoCompletion.StringsCompletionProvider(tagNames, null), true, null);
       myRootElementField.setText(myDefaultRootTag);
       myRootElementFieldWrapper.add(myRootElementField, BorderLayout.CENTER);
       myRootElementLabel.setLabelFor(myRootElementField);

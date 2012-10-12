@@ -213,7 +213,7 @@ public class CreateResourceFileDialog extends DialogWrapper {
     if (action != null) {
       final List<String> allowedTagNames = action.getSortedAllowedTagNames(myFacet);
       myRootElementField = new TextFieldWithAutoCompletion<String>(
-        myFacet.getModule().getProject(), new TextFieldWithAutoCompletion.StringsCompletionProvider(allowedTagNames, null), true);
+        myFacet.getModule().getProject(), new TextFieldWithAutoCompletion.StringsCompletionProvider(allowedTagNames, null), true, null);
       myRootElementField.setEnabled(allowedTagNames.size() > 1);
       myRootElementField.setText(!action.isChooseTagName() && myPredefinedResourceType != ResourceType.LAYOUT
                                  ? action.getDefaultRootTag()
