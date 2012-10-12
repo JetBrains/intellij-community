@@ -928,9 +928,7 @@ public class ListUtils {
     configure()
     assertNotNull(getLookup());
     type('*fz');
-    final List<LookupElement> list = getLookup().getItems();
-    assertEquals("azzzfzzz", list.get(1).getLookupString());
-    assertEquals("fzazzz", list.get(0).getLookupString());
+    assert !lookup
   }
 
   public void testSmartEnterWrapsConstructorCall() throws Throwable { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
@@ -1193,39 +1191,8 @@ public class ListUtils {
   public void testImportAsterisk() {
     myFixture.configureByText "a.java", "import java.lang.<caret>"
     myFixture.completeBasic()
-    myFixture.type '*\n'
-    myFixture.checkResult "import java.lang.*<caret>"
-  }
-
-  public void testIntersectionTypesSOE() {
-    myFixture.configureByText("a.java", """
-      import java.util.*;
-      import java.io.*;
-      class SOE {
-         public boolean setLocation(Iterable<? extends File> path) {
-           return true;
-         }
-
-         public void compile(List<File> classpath) {
-             setLocation(<caret>);
-         }
-    }
-  """)
-    myFixture.completeBasic()
-    myFixture.type '*\n'
-    myFixture.checkResult """
-      import java.util.*;
-      import java.io.*;
-      class SOE {
-         public boolean setLocation(Iterable<? extends File> path) {
-           return true;
-         }
-
-         public void compile(List<File> classpath) {
-             setLocation(classpath);
-         }
-    }
-  """
+    myFixture.type '*;'
+    myFixture.checkResult "import java.lang.*;<caret>"
   }
 
   public void testDontPreselectCaseInsensitivePrefixMatch() {
