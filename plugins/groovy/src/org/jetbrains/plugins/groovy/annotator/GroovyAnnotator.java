@@ -318,22 +318,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkConstructors(myHolder, typeDefinition);
   }
 
-  private static void checkReferenceList(AnnotationHolder holder,
-                                         GrReferenceList list,
-                                         boolean interfaceExpected,
-                                         String message,
-                                         @Nullable IntentionAction fix) {
-    if (list == null) return;
-    for (GrCodeReferenceElement refElement : list.getReferenceElements()) {
-      final PsiElement psiClass = refElement.resolve();
-      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() != interfaceExpected) {
-        if (fix != null) {
-          holder.createErrorAnnotation(refElement, message).registerFix(fix);
-        }
-      }
-    }
-  }
-
   private static void checkConstructors(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.isEnum() || typeDefinition.isInterface() || typeDefinition.isAnonymous()) return;
     final PsiClass superClass = typeDefinition.getSuperClass();
@@ -1329,6 +1313,49 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkAnnotationList(myHolder, importStatement.getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
   }
 
+  @Override
+  public void visitExtendsClause(GrExtendsClause extendsClause) {
+    GrTypeDefinition typeDefinition = (GrTypeDefinition)extendsClause.getParent();
+
+    if (typeDefinition.isInterface()) {
+      checkReferenceList(myHolder, extendsClause, true, GroovyBundle.message("no.class.expected.here"), null);
+    }
+    else {
+      checkReferenceList(myHolder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
+    }
+
+    checkForWildCards(myHolder, extendsClause);
+  }
+
+  @Override
+  public void visitImplementsClause(GrImplementsClause implementsClause) {
+    GrTypeDefinition typeDefinition = (GrTypeDefinition)implementsClause.getParent();
+
+    if (typeDefinition.isInterface()) {
+      myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"));
+    }
+    else {
+      checkReferenceList(myHolder, implementsClause, true, GroovyBundle.message("no.class.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
+    }
+
+    checkForWildCards(myHolder, implementsClause);
+  }
+
+  private static void checkReferenceList(@NotNull AnnotationHolder holder,
+                                         @NotNull GrReferenceList list,
+                                         boolean interfaceExpected,
+                                         @NotNull String message,
+                                         @Nullable IntentionAction fix) {
+    for (GrCodeReferenceElement refElement : list.getReferenceElements()) {
+      final PsiElement psiClass = refElement.resolve();
+      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() != interfaceExpected) {
+        if (fix != null) {
+          holder.createErrorAnnotation(refElement, message).registerFix(fix);
+        }
+      }
+    }
+  }
+
   private static void checkFlowInterruptStatement(GrFlowInterruptingStatement statement, AnnotationHolder holder) {
     final PsiElement label = statement.getLabelIdentifier();
 
@@ -1669,30 +1696,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
-    final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
-
-
-    if (typeDefinition.isInterface()) {
-      checkReferenceList(holder, extendsClause, true, GroovyBundle.message("no.interface.expected.here"), null);
-      if (implementsClause != null) {
-        holder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"));
-      }
-    }
-    else {
-      checkReferenceList(holder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"),
-                         ExtendsImplementsFix.MOVE_TO_IMPLEMENTS_LIST);
-      checkReferenceList(holder, implementsClause, true, GroovyBundle.message("no.class.expected.here"),
-                         ExtendsImplementsFix.MOVE_TO_EXTENDS_LIST);
-    }
-
-    if (extendsClause != null) {
-      checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
-    }
-
-    checkForWildCards(holder, extendsClause);
-    checkForWildCards(holder, implementsClause);
-
     checkDuplicateClass(typeDefinition, holder);
 
     checkCyclicInheritance(holder, typeDefinition);
@@ -1758,8 +1761,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     final String qName = typeDefinition.getQualifiedName();
     if (qName != null) {
-      final PsiClass[] classes =
-        JavaPsiFacade.getInstance(typeDefinition.getProject()).findClasses(qName, typeDefinition.getResolveScope());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(typeDefinition.getProject());
+      final PsiClass[] classes = facade.findClasses(qName, typeDefinition.getResolveScope());
       if (classes.length > 1) {
         String packageName = getPackageName(typeDefinition);
 
@@ -1788,22 +1791,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isScriptGeneratedClass(PsiClass[] allClasses) {
     return allClasses.length == 2 && (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
   }
-
-  private static void checkForExtendingInterface(AnnotationHolder holder,
-                                                 GrExtendsClause extendsClause,
-                                                 GrImplementsClause implementsClause,
-                                                 GrTypeDefinition myClass) {
-    for (GrCodeReferenceElement ref : extendsClause.getReferenceElements()) {
-      final PsiElement clazz = ref.resolve();
-      if (clazz == null) continue;
-
-      if (myClass.isInterface() && clazz instanceof PsiClass && !((PsiClass)clazz).isInterface()) {
-        final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.expected.here"));
-        annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
-      }
-    }
-  }
-
 
   public static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;

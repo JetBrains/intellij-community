@@ -16,13 +16,11 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -47,19 +46,13 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
   private final GrExtendsClause myExtendsClause;
   @Nullable
   private final GrImplementsClause myImplementsClause;
+  @NotNull
+  private final GrTypeDefinition myClass;
 
-  final GrTypeDefinition myClass;
-
-  public ChangeExtendsImplementsQuickFix(GrExtendsClause extendsClause, GrImplementsClause implementsClause) {
-    myExtendsClause = extendsClause;
-    myImplementsClause = implementsClause;
-
-    if (myImplementsClause != null) {
-      myClass = (GrTypeDefinition) myImplementsClause.getParent();
-    } else {
-      assert myExtendsClause != null;
-      myClass = (GrTypeDefinition) myExtendsClause.getParent();
-    }
+  public ChangeExtendsImplementsQuickFix(@NotNull GrTypeDefinition aClass) {
+    myClass = aClass;
+    myExtendsClause = aClass.getExtendsClause();
+    myImplementsClause = aClass.getImplementsClause();
   }
 
   @NotNull
@@ -73,113 +66,82 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myClass != null && myClass.isValid() && myClass.getManager().isInProject(file);
+    return myClass.isValid() && myClass.getManager().isInProject(file);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    GrCodeReferenceElement[] extendsReferenceElements = GrCodeReferenceElement.EMPTY_ARRAY;
-    GrCodeReferenceElement[] implementsReferenceElements = GrCodeReferenceElement.EMPTY_ARRAY;
+    Set<String> classes = new LinkedHashSet<String>();
+    Set<String> interfaces = new LinkedHashSet<String>();
+    Set<String> unknownClasses = new LinkedHashSet<String>();
+    Set<String> unknownInterfaces = new LinkedHashSet<String>();
+
     if (myExtendsClause != null) {
-      extendsReferenceElements = myExtendsClause.getReferenceElements();
+      collectRefs(myExtendsClause.getReferenceElements(), classes, interfaces, myClass.isInterface() ? unknownInterfaces : unknownClasses);
+      myExtendsClause.delete();
     }
 
     if (myImplementsClause != null) {
-      implementsReferenceElements = myImplementsClause.getReferenceElements();
+      collectRefs(myImplementsClause.getReferenceElements(), classes, interfaces, unknownInterfaces);
+      myImplementsClause.delete();
     }
 
-    Set<String> classes = new TreeSet<String>();
-    Set<String> interfaces = new TreeSet<String>();
-
-    for (GrCodeReferenceElement extendsReferenceElement : extendsReferenceElements) {
-      final PsiElement extendsElement = extendsReferenceElement.resolve();
-      if (!(extendsElement instanceof PsiClass)) continue;
-
-      if (myClass.isInterface() && !((PsiClass) extendsElement).isInterface()) continue;
-
-      if (myClass.isInterface()) {
-        if (((PsiClass) extendsElement).isInterface()) {
-          classes.add(extendsReferenceElement.getCanonicalText());
-        }
-      } else {
-        if (((PsiClass) extendsElement).isInterface()) {
-          interfaces.add(extendsReferenceElement.getCanonicalText());
-        } else {
-          classes.add(extendsReferenceElement.getCanonicalText());
-        }
-      }
-//      if (((PsiClass) extendsElement).isInterface()) {
-//        interfaces.add(extendsReferenceElement.getCanonicalText());
-//      } else {
-//        classes.add(extendsReferenceElement.getCanonicalText());
-//      }
+    if (myClass.isInterface()) {
+      interfaces.addAll(classes);
+      unknownInterfaces.addAll(unknownClasses);
+      addNewClause(interfaces, unknownInterfaces, project, true);
     }
-
-    for (GrCodeReferenceElement implementsReferenceElement : implementsReferenceElements) {
-      //interface cannot implement anything
-
-      final PsiElement implementsElement = implementsReferenceElement.resolve();
-      if (!(implementsElement instanceof PsiClass)) continue;
-
-      if (myClass.isInterface()) {
-        if (((PsiClass) implementsElement).isInterface()) {
-          classes.add(implementsReferenceElement.getCanonicalText());
-        }
-      } else {
-        if (((PsiClass) implementsElement).isInterface()) {
-          interfaces.add(implementsReferenceElement.getCanonicalText());
-        } else {
-          classes.add(implementsReferenceElement.getCanonicalText());
-        }
-      }
+    else {
+      addNewClause(classes, unknownClasses, project, true);
+      addNewClause(interfaces, unknownInterfaces, project, false);
     }
-
-    if (myExtendsClause != null) {
-      final ASTNode extendsClauseNode = myExtendsClause.getNode();
-      extendsClauseNode.getTreeParent().removeChild(extendsClauseNode);
-    }
-
-    if (myImplementsClause != null) {
-      final ASTNode implClauseNode = myImplementsClause.getNode();
-      implClauseNode.getTreeParent().removeChild(implClauseNode);
-    }
-
-    if (!classes.isEmpty()) {
-      addNewClause(classes, project, true);
-    }
-
-    if (!interfaces.isEmpty()) {
-      addNewClause(interfaces, project, false);
-    }
-
-    CodeStyleManager.getInstance(project).reformatText(myClass.getContainingFile(),
-        myClass.getTextRange().getStartOffset(), myClass.getBody().getTextOffset() + 2);
   }
 
-  private void addNewClause(Set<String> elements, Project project, boolean isExtends) throws IncorrectOperationException {
-    String classText = "class A " + (isExtends ? "extends " : "implements ");
+  private static void collectRefs(GrCodeReferenceElement[] refs, Collection<String> classes, Collection<String> interfaces, Collection<String> unknown) {
+    for (GrCodeReferenceElement ref : refs) {
+      final PsiElement extendsElement = ref.resolve();
+      String canonicalText = ref.getCanonicalText();
 
-    boolean first = true;
+      if (extendsElement instanceof PsiClass) {
+        if (((PsiClass)extendsElement).isInterface()) {
+          interfaces.add(canonicalText);
+        }
+        else {
+          classes.add(canonicalText);
+        }
+      }
+      else {
+        unknown.add(canonicalText);
+      }
+    }
+  }
+
+  private void addNewClause(Collection<String> elements, Collection<String> additional, Project project, boolean isExtends) throws IncorrectOperationException {
+    if (elements.isEmpty() && additional.isEmpty()) return;
+
+    StringBuilder classText = new StringBuilder();
+    classText.append("class A ");
+    classText.append(isExtends ? "extends " : "implements ");
 
     for (String str : elements) {
-      if (!first) classText += ", ";
-      classText += str;
-      first = false;
+      classText.append(str);
+      classText.append(", ");
     }
 
-//      for (int i = 0; i < elements.size(); i++) {
-//            if (i > 0) classText += ", ";
-//
-//            classText += elements.get(i);
-//        }
+    for (String str : additional) {
+      classText.append(str);
+      classText.append(", ");
+    }
 
-    classText += " {}";
+    classText.delete(classText.length() - 2, classText.length());
 
-    final GrTypeDefinition definition = GroovyPsiElementFactory.getInstance(project).createTypeDefinition(classText);
+    classText.append(" {}");
+
+    final GrTypeDefinition definition = GroovyPsiElementFactory.getInstance(project).createTypeDefinition(classText.toString());
     GroovyPsiElement clause = isExtends ? definition.getExtendsClause() : definition.getImplementsClause();
-
     assert clause != null;
-    myClass.getNode().addChild(clause.getNode(), myClass.getBody().getNode());
-    GrReferenceAdjuster.shortenReferences(clause);
+
+    PsiElement addedClause = myClass.addBefore(clause, myClass.getBody());
+    GrReferenceAdjuster.shortenReferences(addedClause);
   }
 
   public boolean startInWriteAction() {
