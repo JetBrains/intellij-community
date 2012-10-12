@@ -44,7 +44,7 @@ import java.awt.event.MouseEvent;
  */
 public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, HgUpdater {
 
-  private static final String MAX_STRING = "hg: default; in: 99; out: 99";
+  private static final String MAX_STRING = "hg: default branch (128)";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
@@ -61,12 +61,12 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
 
   public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project);
-    this.myVcs = vcs;
-    this.myProjectSettings = projectSettings;
+    myVcs = vcs;
+    myProjectSettings = projectSettings;
 
-    this.myIncomingChangesStatus = new HgChangesetStatus("In");
-    this.myOutgoingChangesStatus = new HgChangesetStatus("Out");
-    this.myCurrentBranchStatus = new HgCurrentBranchStatus();
+    myIncomingChangesStatus = new HgChangesetStatus("In");
+    myOutgoingChangesStatus = new HgChangesetStatus("Out");
+    myCurrentBranchStatus = new HgCurrentBranchStatus();
   }
 
   @Override
@@ -109,7 +109,7 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   @Override
   public String getText() {
     final String text = myText;
-    return StringUtil.isEmpty(text) ? "" : "Hg: " + text;
+    return StringUtil.isEmpty(text) ? "" : "hg: " + text;
   }
 
   @NotNull
@@ -151,12 +151,10 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
         }
 
         if (myIncomingChangesStatus.getNumChanges() > 0) {
-          myText += "; " + myIncomingChangesStatus.getStatusName() + ": " + myIncomingChangesStatus.getNumChanges();
           myTooltip = "\n" + myIncomingChangesStatus.getToolTip();
         }
 
         if (myOutgoingChangesStatus.getNumChanges() > 0) {
-          myText += "; " + myOutgoingChangesStatus.getStatusName() + ": " + myOutgoingChangesStatus.getNumChanges();
           myTooltip += "\n" + myOutgoingChangesStatus.getToolTip();
         }
 
