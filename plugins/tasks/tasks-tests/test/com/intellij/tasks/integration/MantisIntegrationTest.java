@@ -19,9 +19,8 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
   public void testMantis12() throws Exception {
     MantisRepository mantisRepository = new MantisRepository(new MantisRepositoryType());
     mantisRepository.setUrl("http://trackers-tests.labs.intellij.net:8142/");
-    mantisRepository.setUsername("guest");
-    mantisRepository.setPassword("guest");
-    myManager.testConnection(mantisRepository);
+    mantisRepository.setUsername("deva");
+    mantisRepository.setPassword("deva");
 
     assertTrue(mantisRepository.getProjects().size() >= 2);
     final MantisProject mantisProject = mantisRepository.getProjects().get(1);
