@@ -125,6 +125,9 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
           }
         }
         else {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            LOG.info("messageReceived: " + builderMessage);
+          }
           handler.handleBuildMessage(ctx.getChannel(), sessionId, builderMessage);
         }
         break;
