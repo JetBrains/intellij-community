@@ -10,7 +10,6 @@ import com.intellij.tasks.mantis.model.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -31,7 +28,7 @@ import java.util.Set;
 public class MantisRepository extends BaseRepositoryImpl {
   private final static String SOAP_API_LOCATION = "/api/soap/mantisconnect.php";
 
-  private Map<MantisProject, List<MantisFilter>> myProject2FiltersCachedData;
+  private List<MantisProject> myProjects;
 
   private MantisProject myProject;
   private MantisFilter myFilter;
@@ -93,6 +90,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     });
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     IssueData data = createSoap().mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.valueOf(id)));
@@ -145,23 +143,23 @@ public class MantisRepository extends BaseRepositoryImpl {
     return task;
   }
 
-  public Set<MantisProject> getProjects() throws Exception {
-    if (myProject2FiltersCachedData == null) {
+  public List<MantisProject> getProjects() throws Exception {
+    if (myProjects == null) {
       refreshProjectAndFiltersData();
     }
-    return myProject2FiltersCachedData.keySet();
+    return myProjects;
   }
 
   public List<MantisFilter> getFilters(MantisProject project) throws Exception {
-    if (myProject2FiltersCachedData == null) {
+    if (myProjects == null) {
       refreshProjectAndFiltersData();
     }
-    return myProject2FiltersCachedData.get(project);
+    return project.getFilters();
   }
 
   public void refreshProjectAndFiltersData() throws Exception {
     final MantisConnectPortType soap = createSoap();
-    myProject2FiltersCachedData = new HashMap<MantisProject, List<MantisFilter>>();
+    myProjects = new ArrayList<MantisProject>();
     ProjectData[] projectDatas = soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     List<MantisProject> projects = ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
       @Override
@@ -169,7 +167,7 @@ public class MantisRepository extends BaseRepositoryImpl {
         return new MantisProject(data.getId().intValue(), data.getName());
       }
     });
-    projects.add(MantisProject.ALL_PROJECTS);
+    projects.add(0, MantisProject.ALL_PROJECTS);
     String version = soap.mc_version();
     for (MantisProject project : projects) {
       FilterData[] filterDatas = soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
@@ -183,7 +181,8 @@ public class MantisRepository extends BaseRepositoryImpl {
           return new MantisFilter(data.getId().intValue(), data.getName());
         }
       }));
-      myProject2FiltersCachedData.put(project, filters);
+      project.setFilters(filters);
+      myProjects.add(project);
     }
   }
 

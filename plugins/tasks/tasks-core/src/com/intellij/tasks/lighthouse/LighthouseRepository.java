@@ -254,6 +254,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     method.addRequestHeader("X-LighthouseToken", myAPIKey);
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     final String[] split = id.split("\\-");

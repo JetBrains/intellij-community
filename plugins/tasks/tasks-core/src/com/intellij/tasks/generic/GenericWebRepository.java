@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,9 +23,9 @@ import java.util.regex.Pattern;
  */
 @Tag("Generic")
 public class GenericWebRepository extends BaseRepositoryImpl {
-  private String myTasksListURL;
-  private String myTaskPattern;
-  private String myLoginURL;
+  private String myTasksListURL = "";
+  private String myTaskPattern = "";
+  private String myLoginURL = "";
 
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
@@ -132,18 +131,16 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return new GenericWebRepository(this);
   }
 
-  @NotNull
   public String getTasksListURL() {
-    return myTasksListURL == null ? "" : myTasksListURL;
+    return myTasksListURL;
   }
 
   public void setTasksListURL(final String tasksListURL) {
     myTasksListURL = tasksListURL;
   }
 
-  @NotNull
   public String getTaskPattern() {
-    return myTaskPattern == null ? "" : myTaskPattern;
+    return myTaskPattern;
   }
 
   public void setTaskPattern(final String taskPattern) {
@@ -178,9 +175,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
   public String getLoginURL() {
-    return myLoginURL == null ? "" : myLoginURL;
+    return myLoginURL;
   }
 
   public void setLoginURL(final String loginURL) {

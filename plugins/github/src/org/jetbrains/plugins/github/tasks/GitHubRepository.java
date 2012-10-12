@@ -319,6 +319,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return matcher.find() ? matcher.group(1) : null;
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id;
