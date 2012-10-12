@@ -25,6 +25,9 @@
   <extensionPoint name="fileEditorProvider"
                   interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
 
+  <extensionPoint name="selectedFileEditorProvider"
+                  interface="com.intellij.openapi.fileEditor.SelectedFileEditorProvider"/>
+
   <extensionPoint name="fileTypeFactory"
                   interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 

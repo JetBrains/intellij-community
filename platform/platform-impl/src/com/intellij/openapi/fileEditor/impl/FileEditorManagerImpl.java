@@ -796,7 +796,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     // Restore selected editor
-    final FileEditorProvider selectedProvider = editorHistoryManager.getSelectedProvider(file);
+    final FileEditorProvider selectedProvider = getSelectedFileEditorProvider(editorHistoryManager, file);
     if (selectedProvider != null) {
       final FileEditor[] _editors = newSelectedComposite.getEditors();
       final FileEditorProvider[] _providers = newSelectedComposite.getProviders();
@@ -864,6 +864,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
 
     return Pair.create(editors, providers);
+  }
+
+  @Nullable
+  private FileEditorProvider getSelectedFileEditorProvider(EditorHistoryManager editorHistoryManager, VirtualFile file) {
+    for (SelectedFileEditorProvider selectedEditorProvider : Extensions
+      .getExtensions(SelectedFileEditorProvider.EP_SELECTED_FILE_EDITOR_PROVIDER)) {
+      FileEditorProvider provider = selectedEditorProvider.getSelectedProvider(myProject, file);
+      if (file != null) {
+        return provider;
+      }
+    }
+    return editorHistoryManager.getSelectedProvider(file);
   }
 
   @Override
