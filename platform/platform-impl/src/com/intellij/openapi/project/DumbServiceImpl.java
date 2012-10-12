@@ -348,7 +348,7 @@ public class DumbServiceImpl extends DumbService {
             runAction(proxy, myAction);
           }
           catch (RuntimeException e) {
-            LOG.debug(e);
+            LOG.error(e);
             throw e;
           }
           finally {
@@ -373,7 +373,7 @@ public class DumbServiceImpl extends DumbService {
             }
             updateRunner.updatingDone();
             myProcessedItems += count;
-            
+
             updateRunner = getNextUpdateRunner();
           }
         }
