@@ -306,6 +306,8 @@ public class MethodSignatureUtil {
       for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
         superSupers.add(methodSubstitutor.substitute(PsiUtil.captureToplevelWildcards(result.substitute(superSuper), methodTypeParameter)));
       }
+      methodSupers.remove(PsiType.getJavaLangObject(methodTypeParameter.getManager(), methodTypeParameter.getResolveScope()));
+      superSupers.remove(PsiType.getJavaLangObject(superTypeParameter.getManager(), superTypeParameter.getResolveScope()));
       if (!methodSupers.equals(superSupers)) return null;
     }
 
