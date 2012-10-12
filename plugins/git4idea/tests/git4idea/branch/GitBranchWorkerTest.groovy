@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
+import com.intellij.util.LineSeparator
 import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.config.GitVersion
@@ -356,7 +357,7 @@ common content
 common content
 line with master changes
 """
-    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, File.separator), actual)
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
   }
   
   @Test
@@ -372,7 +373,7 @@ common content
 common content
 line with master changes
 """
-    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, File.separator), actual)
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
   }
   
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
