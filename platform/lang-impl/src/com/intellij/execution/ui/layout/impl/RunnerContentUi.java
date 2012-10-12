@@ -19,6 +19,7 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
+import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -244,10 +245,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       public void mousePressed(MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
           final TabInfo tabInfo = myTabs.findInfo(e);
-          final GridImpl grid = getGridFor(tabInfo);
+          final GridImpl grid = tabInfo == null? null : getGridFor(tabInfo);
           final Content[] contents = grid != null ? CONTENT_KEY.getData(grid) : null;
-          if (contents != null && CloseViewAction.isEnabled(contents)) {
+          if (contents == null) return;
+          // see GridCellImpl.closeOrMinimize as well
+          if (CloseViewAction.isEnabled(contents)) {
             CloseViewAction.perform(RunnerContentUi.this, contents[0]);
+          }
+          else if (MinimizeViewAction.isEnabled(RunnerContentUi.this, contents, ViewContext.TAB_TOOLBAR_PLACE)) {
+            grid.getCellFor(contents[0]).minimize(contents[0]);
           }
         }
       }
