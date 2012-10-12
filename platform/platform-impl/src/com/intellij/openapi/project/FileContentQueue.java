@@ -139,36 +139,46 @@ public class FileContentQueue {
     }
   }
 
-  void waitForOtherContentReleaseToPreventOOM(ProgressIndicator indicator, FileContent content) {
-    final long length = content.getLength();
-    while (true) {
-      indicator.checkCanceled();
-      synchronized (this) {
-        boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
-        if (requestingLargeSize) {
-          myLargeSizeRequested = true;
-        }
+  @Nullable
+  public FileContent take(@NotNull ProgressIndicator indicator) throws ProcessCanceledException{
+    final FileContent content = doTake();
+    if (content != null) {
+      final long length = content.getLength();
+      while (true) {
         try {
-          if (myLargeSizeRequested && !requestingLargeSize ||
-              myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
-            wait(300L);
-          else {
-            myTakenSize += length;
-            if (requestingLargeSize) {
-              myLargeSizeRequested = false;
-            }
-            return;
-          }
+          indicator.checkCanceled();
         }
-        catch (InterruptedException ignore) {
-
+        catch (ProcessCanceledException e) {
+          pushback(content);
+          throw e;
+        }
+        synchronized (this) {
+          final boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+          if (requestingLargeSize) {
+            myLargeSizeRequested = true;
+          }
+          try {
+            if (myLargeSizeRequested && !requestingLargeSize || myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length)) {
+              wait(300L);
+            }
+            else {
+              myTakenSize += length;
+              if (requestingLargeSize) {
+                myLargeSizeRequested = false;
+              }
+              return content;
+            }
+          }
+          catch (InterruptedException ignore) {
+          }
         }
       }
     }
+    return content;
   }
 
   @Nullable
-  FileContent take() {
+  private FileContent doTake() {
     FileContent result;
     synchronized (this) {
       result = myPushbackBuffer.poll();

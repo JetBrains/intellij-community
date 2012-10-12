@@ -81,4 +81,8 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
   public void testSubst() throws Exception {
     doTest();
   }
+
+  public void testTypeElementOnTheLeft() throws Exception {
+    doTest();
+  }
 }

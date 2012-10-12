@@ -993,7 +993,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             if (method == null || methodParamsDependOn(typeParameter, expression, 
                                                        functionalInterfaceType, method.getParameterList().getParameters(),
                                                        LambdaUtil.getSubstitutor(method, resolveResult))) {
-              return getFailedInferenceConstraint(typeParameter);
+              if (expression instanceof PsiMethodReferenceExpression) {
+                return getFailedInferenceConstraint(typeParameter);
+              }
+              return null;
             }
           }
         }

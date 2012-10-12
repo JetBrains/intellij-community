@@ -316,7 +316,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (myConfiguration.PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
       return true;
     }
-    if (myConfiguration.PACK_ASSETS_FROM_LIBRARIES != myIncludeAssetsFromLibraries.isSelected()) {
+    if (myConfiguration.isIncludeAssetsFromLibraries() != myIncludeAssetsFromLibraries.isSelected()) {
       return true;
     }
 
@@ -437,7 +437,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     
     myConfiguration.PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
 
-    myConfiguration.PACK_ASSETS_FROM_LIBRARIES = myIncludeAssetsFromLibraries.isSelected();
+    myConfiguration.setIncludeAssetsFromLibraries(myIncludeAssetsFromLibraries.isSelected());
 
     String absProguardPath = myProguardConfigFileTextField.getText().trim();
     if (absProguardPath.length() == 0) {
@@ -566,7 +566,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
     myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.PACK_TEST_CODE);
-    myIncludeAssetsFromLibraries.setSelected(myConfiguration.PACK_ASSETS_FROM_LIBRARIES);
+    myIncludeAssetsFromLibraries.setSelected(myConfiguration.isIncludeAssetsFromLibraries());
 
     updateAptPanel();
 

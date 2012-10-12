@@ -257,7 +257,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
         if (!extension.isLibrary() &&
             !(context.isMake() &&
               checkUpToDate(module, resourcesStates, resourcesStorage, true) &&
-              checkUpToDate(module, assetsStates, assetsStorage, extension.isPackAssetsFromLibraries()) &&
+              checkUpToDate(module, assetsStates, assetsStorage, extension.isIncludeAssetsFromLibraries()) &&
               manifestFile.lastModified() == manifestStorage.getStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))) {
 
           updateState = packageResources(extension, manifestFile, context);
@@ -565,7 +565,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       result.add(assetsDir.getPath());
     }
 
-    if (extension.isPackAssetsFromLibraries()) {
+    if (extension.isIncludeAssetsFromLibraries()) {
       for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
         final File depAssetsDir = depExtension.getAssetsDir();
 

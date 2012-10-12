@@ -292,7 +292,7 @@ public class DumbServiceImpl extends DumbService {
     private volatile int myTotalItems;
     private double myCurrentBaseTotal;
 
-    public IndexUpdateRunnable(CacheUpdateRunner action) {
+    public IndexUpdateRunnable(@NotNull CacheUpdateRunner action) {
       myAction = action;
       myTotalItems = 0;
       myCurrentBaseTotal = 0;
@@ -359,21 +359,28 @@ public class DumbServiceImpl extends DumbService {
 
         private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
           while (updateRunner != null) {
-            indicator.setIndeterminate(true);
-            indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-            int count = updateRunner.queryNeededFiles(indicator);
+            try {
+              indicator.checkCanceled();
+              indicator.setIndeterminate(true);
+              indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+              int count = updateRunner.queryNeededFiles(indicator);
 
-            myCurrentBaseTotal = count;
-            myTotalItems += count;
+              myCurrentBaseTotal = count;
+              myTotalItems += count;
 
-            indicator.setIndeterminate(false);
-            indicator.setText(IdeBundle.message("progress.indexing.updating"));
-            if (count > 0) {
-              updateRunner.processFiles(indicator, true);
+              indicator.setIndeterminate(false);
+              indicator.setText(IdeBundle.message("progress.indexing.updating"));
+              if (count > 0) {
+                updateRunner.processFiles(indicator, true);
+              }
+              updateRunner.updatingDone();
+              myProcessedItems += count;
             }
-            updateRunner.updatingDone();
-            myProcessedItems += count;
-
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable unexpected) {
+              LOG.error(unexpected);
+            }
             updateRunner = getNextUpdateRunner();
           }
         }
@@ -398,7 +405,7 @@ public class DumbServiceImpl extends DumbService {
           // try to obtain the next action or terminate if no actions left
           while (!myProject.isDisposed()) {
             try {
-              Ref<CacheUpdateRunner> ref = actionQueue.poll(500, TimeUnit.MILLISECONDS);
+              Ref<CacheUpdateRunner> ref = actionQueue.poll(500L, TimeUnit.MILLISECONDS);
               if (ref != null) {
                 return ref.get();
               }

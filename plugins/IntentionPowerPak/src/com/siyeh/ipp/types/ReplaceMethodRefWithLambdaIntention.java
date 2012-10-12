@@ -92,11 +92,18 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
       if (isReceiver){
         buf.append(parameters[0].getName()).append(".");
-      } else if (qualifier != null && 
-                 !(qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null) && 
-                 !(referenceNameElement instanceof PsiKeyword)){
-        buf.append(qualifier.getText()).append(".");
-      }
+      } else {
+        if (!(referenceNameElement instanceof PsiKeyword)) {
+          if (qualifier instanceof PsiTypeElement) {
+            final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
+            LOG.assertTrue(referenceElement != null);
+            buf.append(referenceElement.getReferenceName()).append(".");
+          }
+          else if (qualifier != null && !(qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+            buf.append(qualifier.getText()).append(".");
+          }
+        }
+      } 
 
       //new or method name
       buf.append(referenceExpression.getReferenceName());

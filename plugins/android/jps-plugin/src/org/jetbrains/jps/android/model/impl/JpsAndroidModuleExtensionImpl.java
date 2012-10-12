@@ -178,8 +178,8 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   }
 
   @Override
-  public boolean isPackAssetsFromLibraries() {
-    return myProperties.PACK_ASSETS_FROM_LIBRARIES;
+  public boolean isIncludeAssetsFromLibraries() {
+    return myProperties.myIncludeAssetsFromLibraries;
   }
 
   @Override
