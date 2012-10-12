@@ -157,7 +157,11 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @Override
   @Nullable
   public ValidationInfo validate() {
-    return null;
+    Object obj = myComboBox.getSelectedItem();
+    if (obj instanceof GithubTagInfo) {
+      return null;
+    }
+    return new ValidationInfo("Can't handle selected version: " + obj);
   }
 
   @Override

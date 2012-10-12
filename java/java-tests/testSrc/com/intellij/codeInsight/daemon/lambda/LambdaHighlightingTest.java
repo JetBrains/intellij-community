@@ -152,7 +152,11 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testRecursiveAccess() throws Exception {
     doTest();
   }
-  
+
+  public void testIncompatibleFormalParameterTypes() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

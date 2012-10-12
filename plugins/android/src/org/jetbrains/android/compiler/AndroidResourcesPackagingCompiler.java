@@ -102,7 +102,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     if (assetsDir != null) {
       result.add(FileUtil.toSystemDependentName(assetsDir.getPath()));
     }
-    if (facet.getConfiguration().PACK_ASSETS_FROM_LIBRARIES) {
+    if (facet.getConfiguration().isIncludeAssetsFromLibraries()) {
       for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
         final VirtualFile depAssetsDir = AndroidRootUtil.getAssetsDir(depFacet);
 

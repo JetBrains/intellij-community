@@ -538,11 +538,14 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       return false;
     }
 
-    if (psiElement().afterLeaf(
-      or(
-        psiElement().withoutText(".").inside(psiElement(PsiModifierList.class).withParent(not(psiElement(PsiParameter.class)))).andNot(
-          psiElement().inside(PsiAnnotationParameterList.class)),
-        psiElement().isNull())).accepts(position)) {
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev == null) {
+      return true;
+    }
+    if (psiElement().withoutText(".").inside(
+      psiElement(PsiModifierList.class).withParent(
+        not(psiElement(PsiParameter.class)).andNot(psiElement(PsiParameterList.class)))).accepts(prev) &&
+        !psiElement().inside(PsiAnnotationParameterList.class).accepts(prev)) {
       return true;
     }
 

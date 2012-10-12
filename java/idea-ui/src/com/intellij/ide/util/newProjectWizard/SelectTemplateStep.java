@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -251,8 +252,13 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (getSelectedTemplate() == null) {
+    ProjectTemplate template = getSelectedTemplate();
+    if (template == null) {
       throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
+    }
+    ValidationInfo info = template.validateSettings();
+    if (info != null) {
+      throw new ConfigurationException(info.message);
     }
     return true;
   }

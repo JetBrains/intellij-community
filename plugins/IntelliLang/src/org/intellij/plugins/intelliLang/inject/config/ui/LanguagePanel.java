@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ShiftTabAction;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -94,9 +93,6 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
       public void ancestorMoved(AncestorEvent event) {
       }
     });
-
-    ShiftTabAction.attachTo(myPrefix);
-    ShiftTabAction.attachTo(mySuffix);
   }
 
   private void updateHighlighters() {

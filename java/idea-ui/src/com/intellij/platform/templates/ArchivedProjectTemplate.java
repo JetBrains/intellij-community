@@ -17,7 +17,6 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -26,6 +25,7 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -37,6 +37,7 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -90,7 +91,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
 
   @NotNull
   @Override
-  public ProjectBuilder createModuleBuilder() {
+  public ModuleBuilder createModuleBuilder() {
     return new ModuleBuilder() {
       @Override
       public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
@@ -128,6 +129,12 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
         return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public ValidationInfo validateSettings() {
+    return null;
   }
 
   private ZipInputStream getStream() throws IOException {

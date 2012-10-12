@@ -17,6 +17,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -119,7 +120,8 @@ public class GridCellImpl implements GridCell {
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
-            minimize(e);
+          // see RunnerContentUi tabMouseListener as well
+          closeOrMinimize(e);
         }
       }
     });
@@ -250,7 +252,8 @@ public class GridCellImpl implements GridCell {
     if (myTabs.getSelectedInfo() != tab) {
       if (activate) {
         tab.fireAlert();
-      } else {
+      }
+      else {
         tab.stopAlerting();
       }
     }
@@ -337,7 +340,8 @@ public class GridCellImpl implements GridCell {
         tab.setDetached(myPlaceInGrid, false);
       }
       myContext.detachTo(window, this).notifyWhenDone(result);
-    } else {
+    }
+    else {
       result.setDone();
     }
 
@@ -432,7 +436,7 @@ public class GridCellImpl implements GridCell {
   public Dimension getSize() {
     return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
   }
-  
+
   private String getDimensionKey() {
     return "GridCell.Tab." + myContainer.getTab().getIndex() + "." + myPlaceInGrid.name();
   }
@@ -445,12 +449,16 @@ public class GridCellImpl implements GridCell {
     minimize(new Content[]{content});
   }
 
-  public void minimize(MouseEvent e) {
-    if (!MinimizeViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) return;
-
+  public void closeOrMinimize(MouseEvent e) {
     TabInfo tabInfo = myTabs.findInfo(e);
-    if (tabInfo != null) {
-      minimize(getContentFor(tabInfo));
+    if (tabInfo == null) return;
+
+    Content content = getContentFor(tabInfo);
+    if (CloseViewAction.isEnabled(new Content[]{content})) {
+      CloseViewAction.perform(myContext, content);
+    }
+    else if (MinimizeViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) {
+      minimize(content);
     }
   }
 

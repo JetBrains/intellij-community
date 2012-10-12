@@ -77,7 +77,7 @@ public class ResourcesValidityState implements ValidityState {
       if (depResDir != null) {
         collectFiles(depResDir);
       }
-      if (configuration.PACK_ASSETS_FROM_LIBRARIES) {
+      if (configuration.isIncludeAssetsFromLibraries()) {
         final VirtualFile depAssetDir = AndroidRootUtil.getAssetsDir(depFacet);
         if (depAssetDir != null) {
           collectFiles(depAssetDir);

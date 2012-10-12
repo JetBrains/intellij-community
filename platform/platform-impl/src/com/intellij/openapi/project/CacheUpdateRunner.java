@@ -212,43 +212,44 @@ class CacheUpdateRunner {
 
     public void run() {
       while (true) {
-        if (myProject.isDisposed()) return;
-        if (myInnerIndicator.isCanceled()) return;
-
-        final FileContent fileContent = myQueue.take();
-        if (fileContent == null) {
-          myFinished.set(Boolean.TRUE);
+        if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
           return;
         }
-
         try {
-          myQueue.waitForOtherContentReleaseToPreventOOM(myInnerIndicator, fileContent);
+          final FileContent fileContent = myQueue.take(myInnerIndicator);
+          if (fileContent == null) {
+            myFinished.set(Boolean.TRUE);
+            return;
+          }
+
           final Runnable action = new Runnable() {
             public void run() {
               myInnerIndicator.checkCanceled();
-
-              if (myProject.isDisposed()) return;
-
-              final VirtualFile file = fileContent.getVirtualFile();
-              myProgressUpdater.consume(file);
-              mySession.processFile(fileContent);
+              if (!myProject.isDisposed()) {
+                final VirtualFile file = fileContent.getVirtualFile();
+                myProgressUpdater.consume(file);
+                mySession.processFile(fileContent);
+              }
             }
           };
-          if (myProcessInReadAction) {
-            myApplication.runReadAction(action);
+          try {
+            if (myProcessInReadAction) {
+              myApplication.runReadAction(action);
+            }
+            else {
+              action.run();
+            }
           }
-          else {
-            action.run();
+          catch (ProcessCanceledException e) {
+            myQueue.pushback(fileContent);
+            return;
+          }
+          finally {
+            myQueue.release(fileContent);
           }
         }
         catch (ProcessCanceledException e) {
-          myQueue.pushback(fileContent);
           return;
-        }
-        finally {
-          if (fileContent != null) {
-            myQueue.release(fileContent);
-          }
         }
       }
     }
