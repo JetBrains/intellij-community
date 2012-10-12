@@ -65,11 +65,11 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
       changes.add(new Change(beforeRevision, afterRevision));
     }
-    return new HgCommitedChangeList(myVcs, revision, comment, committerName, commitDate, changes);
+    return new HgCommittedChangeList(myVcs, revision, comment, committerName, commitDate, changes);
   }
 
   public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
-    HgCommitedChangeList changeList = (HgCommitedChangeList)committedChangeList;
+    HgCommittedChangeList changeList = (HgCommittedChangeList)committedChangeList;
     writeRevisionNumber(dataOutput, changeList.getRevision());
     dataOutput.writeUTF(changeList.getCommitterName());
     dataOutput.writeUTF(changeList.getComment());
@@ -208,7 +208,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
 
-      result.add(new HgCommitedChangeList(myVcs, vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
+      result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
                                           changes));
 
     }

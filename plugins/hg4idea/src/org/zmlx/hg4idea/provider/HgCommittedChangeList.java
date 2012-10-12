@@ -10,20 +10,21 @@ import org.zmlx.hg4idea.HgVcs;
 import java.util.Collection;
 import java.util.Date;
 
-public class HgCommitedChangeList extends CommittedChangeListImpl {
+public class HgCommittedChangeList extends CommittedChangeListImpl {
 
   @NotNull private final HgVcs myVcs;
-  private HgRevisionNumber revision;
+  @NotNull private HgRevisionNumber myRevision;
 
-  public HgCommitedChangeList(@NotNull HgVcs vcs, HgRevisionNumber revision, String comment, String committerName, Date commitDate,
-                              Collection<Change> changes) {
+  public HgCommittedChangeList(@NotNull HgVcs vcs, @NotNull HgRevisionNumber revision, String comment, String committerName,
+                               Date commitDate, Collection<Change> changes) {
     super(revision.asString() + ": " + comment, comment, committerName, revision.getRevisionAsLong(), commitDate, changes);
     myVcs = vcs;
-    this.revision = revision;
+    myRevision = revision;
   }
 
+  @NotNull
   public HgRevisionNumber getRevision() {
-    return revision;
+    return myRevision;
   }
 
   @Override
