@@ -23,10 +23,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -75,5 +77,11 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
         return modules;
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public ValidationInfo validateSettings() {
+    return myPeer.getValue().validate();
   }
 }
