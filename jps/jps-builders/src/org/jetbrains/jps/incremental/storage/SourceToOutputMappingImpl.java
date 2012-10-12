@@ -27,7 +27,7 @@ public class SourceToOutputMappingImpl implements SourceToOutputMapping {
 
   @Override
   public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.update(outputPath, outputPath);
+    myMapping.update(srcPath, outputPath);
   }
 
   @Override
