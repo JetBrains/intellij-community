@@ -1,6 +1,7 @@
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
@@ -32,6 +33,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   final static String PASSWORD_PLACEHOLDER = "{password}";
   final static String ID_PLACEHOLDER = "{id}";
   final static String SUMMARY_PLACEHOLDER = "{summary}";
+  final static String QUERY_PLACEHOLDER = "{query}";
   final static String DESCRIPTION_PLACEHOLDER = "{description}";
   final static String PAGE_PLACEHOLDER = "{page}";
 
@@ -56,7 +58,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
     if (!isLoginAnonymously()) login(httpClient);
 
-    final GetMethod getMethod = new GetMethod(getFullTasksUrl());
+    final GetMethod getMethod = new GetMethod(getFullTasksUrl(query != null ? query : ""));
     httpClient.executeMethod(getMethod);
     if (getMethod.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + getMethod.getStatusCode());
     final String response = getMethod.getResponseBodyAsString(Integer.MAX_VALUE);
@@ -104,9 +106,10 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return vars;
   }
 
-  private String getFullTasksUrl() {
+  private String getFullTasksUrl(final String query) {
     return getTasksListURL()
-      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl());
+      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl())
+      .replaceAll(StringUtil.escapePattern(QUERY_PLACEHOLDER), query);
   }
 
   private String getFullLoginUrl() {

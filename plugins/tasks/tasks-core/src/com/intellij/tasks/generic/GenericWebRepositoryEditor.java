@@ -83,7 +83,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
       .addTooltip(
         "Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + USERNAME_PLACEHOLDER + ", " + PASSWORD_PLACEHOLDER + useCompletionText)
       .addLabeledComponent(myTasksListURLLabel, myTasksListURLText)
-      .addTooltip("Available placeholders: " + SERVER_URL_PLACEHOLDER + useCompletionText)
+      .addTooltip("Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + QUERY_PLACEHOLDER + " (use for faster tasks search)" + useCompletionText)
       .addLabeledComponent(myTaskPatternLabel, myTaskPatternText)
       .addTooltip("Task pattern should be a regexp with two matching group: ({id}.+?) and ({summary}.+?)" + useCompletionText)
       .getPanel();
