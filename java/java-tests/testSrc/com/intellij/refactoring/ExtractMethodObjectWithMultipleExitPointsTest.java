@@ -110,4 +110,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   public void testExtractFromIfStatementInsideAnonymous() throws Exception {
     doTest();
   }
+
+  public void testConditionalExitWithoutCodeBlock() throws Exception {
+    doTest();
+  }
 }
