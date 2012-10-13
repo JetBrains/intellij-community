@@ -68,27 +68,32 @@ public final class GitPusher {
   private static final String INDICATOR_TEXT = "Pushing";
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
-  private final @NotNull Project myProject;
-  private final @NotNull GitRepositoryManager myRepositoryManager;
-  private final @NotNull ProgressIndicator myProgressIndicator;
-  private final @NotNull Collection<GitRepository> myRepositories;
-  private final @NotNull GitVcsSettings mySettings;
-  private final @NotNull GitPushSettings myPushSettings;
-  private final @NotNull Git myGit;
+  @NotNull private final Project myProject;
+  @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final ProgressIndicator myProgressIndicator;
+  @NotNull private final Collection<GitRepository> myRepositories;
+  @NotNull private final GitVcsSettings mySettings;
+  @NotNull private final GitPushSettings myPushSettings;
+  @NotNull private final Git myGit;
   @NotNull private final PlatformFacade myPlatformFacade;
 
-  public static void showPushDialogAndPerformPush(@NotNull final Project project, @NotNull final PlatformFacade facade) {
+  public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull PlatformFacade facade) {
     final GitPushDialog dialog = new GitPushDialog(project);
     dialog.show();
     if (dialog.isOK()) {
-      Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          new GitPusher(project, facade, indicator).push(dialog.getPushInfo());
-        }
-      };
-      GitVcs.runInBackground(task);
+      runPushInBackground(project, facade, dialog);
     }
+  }
+
+  private static void runPushInBackground(@NotNull final Project project, @NotNull final PlatformFacade facade,
+                                          @NotNull final GitPushDialog dialog) {
+    Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        new GitPusher(project, facade, indicator).push(dialog.getPushInfo());
+      }
+    };
+    GitVcs.runInBackground(task);
   }
 
   // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
