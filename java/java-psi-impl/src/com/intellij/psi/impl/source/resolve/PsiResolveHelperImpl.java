@@ -187,6 +187,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                                     @Nullable PsiElement parent,
                                                                                     final ParameterTypeInferencePolicy policy) {
     PsiWildcardType wildcardToCapture = null;
+    Pair<PsiType, ConstraintType> rawInference = null;
     PsiType lowerBound = PsiType.NULL;
     PsiType upperBound = PsiType.NULL;
     if (paramTypes.length > 0) {
@@ -231,7 +232,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         final ConstraintType constraintType = currentSubstitution.getSecond();
         final PsiType type = currentSubstitution.getFirst();
-        if (type == null) return RAW_INFERENCE;
+        if (type == null) {
+          rawInference = RAW_INFERENCE;
+          continue;
+        }
         switch(constraintType) {
           case EQUALS:
             if (!(type instanceof PsiWildcardType)) return currentSubstitution;
@@ -270,6 +274,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.EQUALS);
+    if (rawInference != null) return rawInference;
 
     if (parent != null) {
       final Pair<PsiType, ConstraintType> constraint =
