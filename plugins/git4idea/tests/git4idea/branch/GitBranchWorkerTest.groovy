@@ -351,15 +351,12 @@ class GitBranchWorkerTest {
     assertCurrentBranch("feature");
     cd myUltimate
     def actual = cat(localChanges[0])
-    def expectedContent = """line with branch changes
-common content
-common content
-common content
-line with master changes
-"""
-    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
+    def expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.initial +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.masterLine;
+    assertContent(expectedContent, actual)
   }
-  
+
   @Test
   public void "agree to smart merge should smart merge"() {
     def localChanges = agree_to_smart_operation("merge",
@@ -367,13 +364,10 @@ line with master changes
 
     cd myUltimate
     def actual = cat(localChanges[0])
-    def expectedContent = """line with branch changes
-common content
-common content
-common content
-line with master changes
-"""
-    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.CRLF.separatorString), actual)
+    def expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.initial +
+                          LOCAL_CHANGES_OVERWRITTEN_BY.masterLine;
+    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString), actual)
   }
   
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
@@ -774,6 +768,12 @@ line with master changes
   private void assertFile(GitRepository repository, String path, String content) throws IOException {
     cd repository
     assertEquals "Content doesn't match", content, cat(path)
+  }
+
+  private static void assertContent(String expectedContent, String actual) {
+    assertEquals "Content doesn't match",
+                 StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString),
+                 actual
   }
 
   // TODO Somehow I wasn't able to make dynamic partial implementations, because both overloaded notifySuccess() methods are needed,

@@ -30,14 +30,14 @@ class GitScenarios {
 
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
 
-  private static final def LOCAL_CHANGES_OVERWRITTEN_BY = [
+  static final def LOCAL_CHANGES_OVERWRITTEN_BY = [
           initial:
 """common content
 common content
 common content
 """,
-          branchLine: "line with branch changes",
-          masterLine: "line with master changes"
+          branchLine: "line with branch changes\n",
+          masterLine: "line with master changes\n"
   ]
 
   /**
@@ -139,7 +139,7 @@ common content
 
   def prepend(String fileName, String content) {
     def previousContent = cat(fileName)
-    new File(myCurrentDir, fileName).withWriter("UTF-8") { it.write(content + "\n" + previousContent) }
+    new File(myCurrentDir, fileName).withWriter("UTF-8") { it.write(content + previousContent) }
   }
 
 }
