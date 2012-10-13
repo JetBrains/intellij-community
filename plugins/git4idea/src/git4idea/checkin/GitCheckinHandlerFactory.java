@@ -17,6 +17,9 @@ package git4idea.checkin;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -48,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Prohibits commiting with an empty messages.
@@ -104,12 +108,25 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      PlatformFacade platformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
-      Git git = ServiceManager.getService(Git.class);
+      final PlatformFacade platformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
+      final Git git = ServiceManager.getService(Git.class);
 
-      Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
-      GitCrlfProblemsDetector crlfHelper = GitCrlfProblemsDetector.detect(myProject, platformFacade, git, files);
-      if (crlfHelper.shouldWarn()) {
+      final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
+      final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<GitCrlfProblemsDetector>();
+      ProgressManager.getInstance().run(
+        new Task.Modal(myProject, "Checking for line separator issues...", true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            crlfHelper.set(GitCrlfProblemsDetector.detect(GitCheckinHandlerFactory.MyCheckinHandler.this.myProject,
+                                                          platformFacade, git, files));
+          }
+        });
+
+      if (crlfHelper.get() == null) { // detection cancelled
+        return ReturnResult.CANCEL;
+      }
+
+      if (crlfHelper.get().shouldWarn()) {
         final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override

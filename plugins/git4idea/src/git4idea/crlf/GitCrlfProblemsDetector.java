@@ -16,6 +16,7 @@
 package git4idea.crlf;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -116,6 +117,7 @@ public class GitCrlfProblemsDetector {
     Map<String, Collection<GitAttribute>> attributes = parser.getAttributes();
     Collection<VirtualFile> filesWithoutAttrs = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
+      ProgressIndicatorProvider.checkCanceled();
       String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '/');
       Collection<GitAttribute> attrs = attributes.get(relativePath);
       if (attrs == null || !attrs.contains(GitAttribute.TEXT) && !attrs.contains(GitAttribute.CRLF)) {
@@ -146,6 +148,7 @@ public class GitCrlfProblemsDetector {
   private Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<VirtualFile> files) {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
+      ProgressIndicatorProvider.checkCanceled();
       String separator = myPlatformFacade.getLineSeparator(file, true);
       if (CRLF.equals(separator)) {
         filesWithCrlf.add(file);
