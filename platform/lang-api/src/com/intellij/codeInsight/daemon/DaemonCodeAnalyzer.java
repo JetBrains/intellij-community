@@ -17,6 +17,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -34,6 +35,7 @@ public abstract class DaemonCodeAnalyzer {
   public abstract void updateVisibleHighlighters(@NotNull Editor editor);
 
   public abstract void setUpdateByTimerEnabled(boolean value);
+  public abstract void disableUpdateByTimer(Disposable parentDisposable);
 
   public abstract boolean isHighlightingAvailable(PsiFile file);
 

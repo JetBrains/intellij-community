@@ -49,7 +49,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -378,6 +377,22 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
     stopProcess(value);
+  }
+
+  private int myDisableCount = 0;
+  @Override
+  public void disableUpdateByTimer(Disposable parentDisposable) {
+    setUpdateByTimerEnabled(false);
+    myDisableCount++;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myDisableCount--;
+        if (myDisableCount == 0) {
+          setUpdateByTimerEnabled(true);
+        }
+      }
+    });
   }
 
   public boolean isUpdateByTimerEnabled() {

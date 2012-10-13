@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -133,16 +132,8 @@ public class LookupManagerImpl extends LookupManager {
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    final boolean previousUpdate;
-    if (daemonCodeAnalyzer != null) {
-      previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
-      daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
-    }
-    else {
-      previousUpdate = false;
-    }
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(lookup);
 
    final UiNotifyConnector connector = new UiNotifyConnector(editor.getContentComponent(), new Activatable() {
       @Override
@@ -198,9 +189,6 @@ public class LookupManagerImpl extends LookupManager {
         ApplicationManager.getApplication().assertIsDispatchThread();
 
         alarm.cancelAllRequests();
-        if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
-        }
         LookupImpl lookup = myActiveLookup;
         if (lookup == null) return;
 

@@ -18,13 +18,11 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +39,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -857,24 +858,10 @@ public abstract class ChooseByNameBase {
     myTextPopup.setLocation(bounds.getLocation());
 
     new MnemonicHelper().register(myTextFieldPanel);
-    final boolean previousUpdate;
-    final DaemonCodeAnalyzer daemonCodeAnalyzer = myProject != null ? DaemonCodeAnalyzer.getInstance(myProject) : null;
-    if (daemonCodeAnalyzer != null) {
-      previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
-      daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
-    }
-    else {
-      previousUpdate = false;
+    if (myProject != null) {
+      DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }
 
-    Disposer.register(myTextPopup, new Disposable() {
-      @Override
-      public void dispose() {
-        if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
-        }
-      }
-    });
     myTextPopup.show(layeredPane);
   }
 
