@@ -1220,6 +1220,14 @@ public class ListUtils {
 
   public void testConstantInAnno() { doTest() }
 
+  public void testInnerClassInExtendsGenerics() {
+    def text = "package bar; class Foo extends List<Inne<caret>> { public static class Inner {} }"
+    myFixture.configureFromExistingVirtualFile(myFixture.addClass(text).containingFile.virtualFile)
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult(text.replace('Inne<caret>', 'Foo.Inner<caret>'))
+  }
+
   public void testClassNameDot() { doTest('.') }
 
   public void testClassNameDotBeforeCall() {

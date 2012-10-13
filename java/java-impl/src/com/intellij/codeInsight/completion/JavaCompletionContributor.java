@@ -599,7 +599,9 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+          if (ref.getParent() instanceof PsiTypeElement) {
+            context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
+          }
 
           if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
             final PsiReferenceParameterList paramList = ref.getParameterList();
