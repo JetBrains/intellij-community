@@ -221,7 +221,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
       if (ideaLog.exists()) {
         println "\n\nIdea Log:"
-        def limit = 15000
+        def limit = 20000
         def logText = ideaLog.text
         println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
       }

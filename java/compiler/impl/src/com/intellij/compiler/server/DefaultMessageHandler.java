@@ -73,6 +73,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         handleBuildEvent(sessionId, msg.getBuildEvent());
         break;
       case COMPILE_MESSAGE:
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("compiler messageReceived: " + msg.getCompileMessage().getKind() + " this=" + this);
+        }
         handleCompileMessage(sessionId, msg.getCompileMessage());
         break;
       case CONSTANT_SEARCH_TASK:
