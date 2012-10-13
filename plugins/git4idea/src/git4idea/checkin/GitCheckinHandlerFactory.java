@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -101,7 +100,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private ReturnResult warnAboutCrlfIfNeeded() {
       GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
-      if (!Registry.is("git.warn.about.crlf") || !settings.warnAboutCrlf()) {
+      if (!settings.warnAboutCrlf()) {
         return ReturnResult.COMMIT;
       }
 
