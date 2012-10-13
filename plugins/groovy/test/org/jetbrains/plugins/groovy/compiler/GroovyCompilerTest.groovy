@@ -208,15 +208,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
-    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
-    if (ideaLog.exists()) {
-      println 'deleting idea.log'
-      ideaLog.delete()
-    } else {
-      println 'no idea.log'
-      println new File(TestLoggerFactory.testLogDir).exists()
-      println new File(TestLoggerFactory.testLogDir).list()
-    }
     new File(PathManager.systemPath, "compile-server/server.log").delete()
     super.runBare()
   }
@@ -230,7 +221,9 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
       if (ideaLog.exists()) {
         println "\n\nIdea Log:"
-        println ideaLog.text
+        def limit = 15000
+        def logText = ideaLog.text
+        println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
       }
       def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
       if (makeLog.exists()) {
