@@ -15,7 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.Topics;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgSwitchDialog;
@@ -62,7 +62,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
           public void run() {
             HgCommandResult result = command.execute();
             new HgCommandResultNotifier(project).process(result, null, null);
-            project.getMessageBus().syncPublisher( Topics.BRANCH_TOPIC).update(project);
+            project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
           }
         });
       }

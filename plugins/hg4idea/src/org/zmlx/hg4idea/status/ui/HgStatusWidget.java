@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.Topics;
 import org.zmlx.hg4idea.status.HgChangesetStatus;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
@@ -174,7 +173,7 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     }
 
     myBusConnection = project.getMessageBus().connect();
-    myBusConnection.subscribe(Topics.STATUS_TOPIC, this);
+    myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
 
     myCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(myVcs, myCurrentBranchStatus);
     myCurrentBranchStatusUpdater.activate();

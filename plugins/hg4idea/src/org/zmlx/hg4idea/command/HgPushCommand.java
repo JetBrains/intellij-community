@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.Topics;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
@@ -74,7 +74,7 @@ public class HgPushCommand {
       @Override
       public void process(@Nullable HgCommandResult result) {
         if (!myProject.isDisposed()) {
-          myProject.getMessageBus().syncPublisher( Topics.REMOTE_TOPIC).update(myProject);
+          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
         }
         resultHandler.process(result);
       }

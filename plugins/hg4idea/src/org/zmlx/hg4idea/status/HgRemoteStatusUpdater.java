@@ -79,7 +79,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
 
-            project.getMessageBus().syncPublisher(Topics.STATUS_TOPIC).update(project);
+            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project);
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -92,7 +92,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
 
   public void activate() {
     busConnection = myVcs.getProject().getMessageBus().connect();
-    busConnection.subscribe(Topics.REMOTE_TOPIC, this);
+    busConnection.subscribe(HgVcs.REMOTE_TOPIC, this);
 
     int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {

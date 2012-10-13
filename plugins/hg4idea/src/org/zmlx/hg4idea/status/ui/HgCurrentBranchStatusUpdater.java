@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.Topics;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
@@ -94,14 +93,14 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
 
     currentBranchStatus.updateFor(branch, parents);
 
-    project.getMessageBus().syncPublisher(Topics.STATUS_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project);
   }
 
 
   public void activate() {
 
     busConnection = vcs.getProject().getMessageBus().connect();
-    busConnection.subscribe(Topics.BRANCH_TOPIC, this);
+    busConnection.subscribe(HgVcs.BRANCH_TOPIC, this);
   }
 
 

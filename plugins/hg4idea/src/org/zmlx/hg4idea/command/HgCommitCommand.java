@@ -21,8 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.Topics;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -69,8 +69,8 @@ public class HgCommitCommand {
 
     ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
     final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher( Topics.REMOTE_TOPIC).update(myProject);
-    messageBus.syncPublisher( Topics.BRANCH_TOPIC).update(myProject);
+    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+    messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject);
   }
 
   private File saveCommitMessage() throws VcsException {

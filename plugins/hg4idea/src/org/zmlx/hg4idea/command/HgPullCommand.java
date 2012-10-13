@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.Topics;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -84,7 +84,7 @@ public class HgPullCommand {
       new HgCommandResultNotifier(project).process(result, null, null);
       return false;
     } else {
-      project.getMessageBus().syncPublisher( Topics.REMOTE_TOPIC).update(project);
+      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
       return true;
     }
   }
