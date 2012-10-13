@@ -224,9 +224,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
    */
-  public
   @NotNull
-  File getPromptHooksExtensionFile() {
+  public File getPromptHooksExtensionFile() {
     if (myPromptHooksExtensionFile == null) {
       // check that hooks are available
       myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
