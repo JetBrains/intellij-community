@@ -51,7 +51,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
   private final Set<Object> myResultNames = new THashSet<Object>();
-  private final List<CompletionElement> myResults;
+  private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -59,13 +59,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
-  private final boolean myCheckAccess;
+  private final Options myOptions;
   private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
   private boolean myAllowStaticWithInstanceQualifier;
 
-  public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess, boolean checkInitialized, boolean filterStaticAfterInstance, @Nullable Condition<String> nameCondition) {
-    myCheckAccess = checkAccess;
-    myResults = new ArrayList<CompletionElement>();
+  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
+    myOptions = options;
     myElement = element;
     myMatcher = nameCondition;
     myFilter = filter;
@@ -106,11 +105,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       }
     }
 
-    if (checkInitialized) {
+    if (myOptions.checkInitialized) {
       myNonInitializedFields.addAll(getNonInitializedFields(element));
     }
 
-    myAllowStaticWithInstanceQualifier = !filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
+    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
                                          SuppressManager.getInstance()
                                            .isSuppressedFor(element, AccessStaticViaInstance.ACCESS_STATIC_VIA_INSTANCE);
 
@@ -199,17 +198,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return true;
     }
 
-    final PsiElement elementParent = myElement.getParent();
-    if (!(elementParent instanceof PsiMethodReferenceExpression) && checkStaticFlag(element)) return true;
+    if (!(myElement.getParent() instanceof PsiMethodReferenceExpression) && !isStaticsOk(element)) {
+      return true;
+    }
 
-    if (element instanceof PsiPackage && myScope instanceof PsiClass) {
-      if (!(elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null)) {
-        return true;
-      }
+    if (element instanceof PsiPackage && myScope instanceof PsiClass && !isQualifiedContext()) {
+      return true;
     }
 
     if (satisfies(element, state) && isAccessible(element)) {
-      CompletionElement element1 = new CompletionElement((PsiNamedElement)element, state.get(PsiSubstitutor.KEY));
+      CompletionElement element1 = new CompletionElement(element, state.get(PsiSubstitutor.KEY));
       if (myResultNames.add(element1.getUniqueId())) {
         myResults.add(element1);
       }
@@ -217,13 +215,21 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return true;
   }
 
-  private boolean checkStaticFlag(PsiElement element) {
+  private boolean isQualifiedContext() {
+    final PsiElement elementParent = myElement.getParent();
+    return elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null;
+  }
+
+  private boolean isStaticsOk(PsiElement element) {
+    if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
+      return true;
+    }
     if (!(element instanceof PsiClass) && element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
         if (!modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non static method in static context.
-          return true;
+          return false;
         }
       }
       else {
@@ -231,16 +237,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
             && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
             && !myMembersFlag) {
           // according settings we don't need to process such fields/methods
-          return true;
+          return false;
         }
       }
     }
-    return false;
+    return true;
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
     final String name = PsiUtilCore.getName(element);
-    if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.value(name))) {
+    if (name != null && StringUtil.isNotEmpty(name) && myMatcher.value(name)) {
       if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
         return true;
       }
@@ -254,7 +260,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   private boolean isAccessible(final PsiElement element) {
-    if (!myCheckAccess) return true;
+    if (!myOptions.checkAccess) return true;
     if (!(element instanceof PsiMember)) return true;
 
     PsiMember member = (PsiMember)element;
@@ -302,12 +308,43 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
+      //noinspection unchecked
       return (T)this;
     }
     if (hintKey == JavaCompletionHints.NAME_FILTER) {
+      //noinspection unchecked
       return (T)myMatcher;
     }
 
     return super.getHint(hintKey);
+  }
+
+  public static class Options {
+    public static final Options DEFAULT_OPTIONS = new Options(true, false, true, false);
+    public static final Options CHECK_NOTHING = new Options(false, false, false, false);
+    final boolean checkAccess;
+    final boolean checkInitialized;
+    final boolean filterStaticAfterInstance;
+    final boolean showInstanceInStaticContext;
+
+    private Options(boolean checkAccess, boolean checkInitialized, boolean filterStaticAfterInstance, boolean showInstanceInStaticContext) {
+      this.checkAccess = checkAccess;
+      this.checkInitialized = checkInitialized;
+      this.filterStaticAfterInstance = filterStaticAfterInstance;
+      this.showInstanceInStaticContext = showInstanceInStaticContext;
+    }
+
+    public Options withInitialized(boolean checkInitialized) {
+      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+    }
+    public Options withCheckAccess(boolean checkAccess) {
+      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+    }
+    public Options withFilterStaticAfterInstance(boolean filterStaticAfterInstance) {
+      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+    }
+    public Options withShowInstanceInStaticContext(boolean showInstanceInStaticContext) {
+      return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
+    }
   }
 }

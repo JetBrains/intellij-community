@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
@@ -276,7 +277,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final InheritorsHolder inheritors) {
     final Set<String> usedWords = new HashSet<String>();
     final PsiElement position = parameters.getPosition();
-    final boolean checkAccess = parameters.getInvocationCount() <= 1;
+    final boolean first = parameters.getInvocationCount() <= 1;
     final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
@@ -286,10 +287,15 @@ public class JavaCompletionContributor extends CompletionContributor {
           final ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
             final PsiFile originalFile = parameters.getOriginalFile();
+            JavaCompletionProcessor.Options options =
+              JavaCompletionProcessor.Options.DEFAULT_OPTIONS
+                .withCheckAccess(first)
+                .withFilterStaticAfterInstance(first)
+                .withShowInstanceInStaticContext(!first);
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                                   (PsiJavaReference)reference,
                                                                                   new ElementExtractorFilter(filter),
-                                                                                  checkAccess, checkAccess,
+                                                                                  options,
                                                                                   result.getPrefixMatcher(), parameters)) {
               if (inheritors.alreadyProcessed(element)) {
                 continue;
@@ -429,7 +435,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
       final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(
-        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, true, false, result.getPrefixMatcher(), parameters);
+        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, JavaCompletionProcessor.Options.DEFAULT_OPTIONS, result.getPrefixMatcher(), parameters);
       for (final LookupElement element : set) {
         result.addElement(element);
       }

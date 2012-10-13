@@ -497,6 +497,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult()
   }
 
+  public void testAccessInstanceFromStaticSecond() throws Throwable {
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResult()
+  }
+
   public void testContinueLabel() throws Throwable { doTest(); }
 
   public void testAnonymousProcess() {
