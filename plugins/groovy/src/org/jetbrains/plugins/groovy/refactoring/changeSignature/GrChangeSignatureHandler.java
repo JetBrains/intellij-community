@@ -79,7 +79,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      ChangeSignatureUtil.invokeChangeSignatureOn(method, project);
+      ChangeSignatureUtil.invokeChangeSignatureOn(newMethod, project);
       return;
     }
 
