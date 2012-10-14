@@ -25,6 +25,8 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -35,6 +37,10 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
 
   protected BaseTaskAction(String text) {
     super(text);
+  }
+
+  protected BaseTaskAction(@Nullable final String text, @Nullable final String description, @Nullable final Icon icon) {
+    super(text, description, icon);
   }
 
   public void update(AnActionEvent event){

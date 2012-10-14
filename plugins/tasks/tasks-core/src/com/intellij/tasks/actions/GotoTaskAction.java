@@ -5,9 +5,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -49,7 +47,7 @@ public class GotoTaskAction extends GotoActionBase {
     myInAction = getClass();
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
       @NotNull
       @Override
       public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
@@ -123,6 +121,16 @@ public class GotoTaskAction extends GotoActionBase {
         shiftPressed.set(false);
       }
     });
+
+    final DefaultActionGroup group = new DefaultActionGroup(new ConfigureServersAction() {
+      @Override
+      protected void serversChanged() {
+        popup.rebuildList(true);
+      }
+    });
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    popup.setToolArea(actionToolbar.getComponent());
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override

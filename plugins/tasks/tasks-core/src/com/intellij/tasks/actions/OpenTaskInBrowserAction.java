@@ -45,6 +45,7 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
     } else {
       presentation.setText("Open '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' In _Browser");
     }
+    super.update(event);
   }
 
   @Nullable

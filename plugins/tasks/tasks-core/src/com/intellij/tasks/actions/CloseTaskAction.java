@@ -42,5 +42,6 @@ public class CloseTaskAction extends BaseTaskAction {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null && !TaskManager.getManager(project).getActiveTask().isDefault());
+    super.update(event);
   }
 }
