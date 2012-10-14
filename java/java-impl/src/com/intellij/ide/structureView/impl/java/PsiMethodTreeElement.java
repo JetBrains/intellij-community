@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,14 +86,24 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   @Override
   public String getLocationString() {
     if (!Registry.is("show.method.base.class.in.java.file.structure")) return null;
+    final PsiMethod method = getElement();
     if (myLocation == null) {
-      final PsiMethod method = getElement();
+      if (isInherited()) {
+        final PsiClass cls = method.getContainingClass();
+        if (cls == null) {
+          myLocation = "";
+        } else {
+          myLocation = cls.getName();
+          char rightArrow = '\u2192';
+          myLocation = UIUtil.getLabelFont().canDisplay(rightArrow) ? rightArrow + myLocation :  "->" + myLocation;
+        }
+      } else {
       try {
         final MethodSignatureBackedByPsiMethod baseMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
         if (baseMethod != null && !method.isEquivalentTo(baseMethod.getMethod())) {
           PsiMethod base = baseMethod.getMethod();
           PsiClass baseClass = base.getContainingClass();
-          if (baseClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) {
+          if (baseClass != null /*&& !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())*/) {
             if (baseClass.getMethods().length > 1) {
               myLocation = baseClass.getName();
             }
@@ -110,6 +119,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
       } else {
         char upArrow = '\u2191';
         myLocation = UIUtil.getLabelFont().canDisplay(upArrow) ? upArrow + myLocation : myLocation;
+      }
       }
     }
     return StringUtil.isEmpty(myLocation) ? null : myLocation;
