@@ -41,8 +41,10 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-import static groovy.util.GroovyTestCase.assertEquals
-import static junit.framework.Assert.*
+import java.util.regex.Matcher
+
+import static groovy.util.GroovyTestCase.*
+
 /**
  *
  * @author Kirill Likhodedov
@@ -778,7 +780,7 @@ class GitBranchWorkerTest {
   }
 
   private static String substWhitespaces(String s) {
-    return s.replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll(" ", "_")
+    return s.replaceAll("\r", Matcher.quoteReplacement("\\r")).replaceAll("\n", Matcher.quoteReplacement("\\n")).replaceAll(" ", "_")
   }
 
   // TODO Somehow I wasn't able to make dynamic partial implementations, because both overloaded notifySuccess() methods are needed,
