@@ -86,6 +86,7 @@ import com.intellij.util.Function;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -104,6 +105,7 @@ import org.jetbrains.jps.incremental.Utils;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -443,22 +445,36 @@ public class CompileDriver {
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+      private final SequentialTaskExecutor myContextUpdater = new SequentialTaskExecutor(new Executor() {
+        @Override
+        public void execute(Runnable command) {
+          ApplicationManager.getApplication().executeOnPooledThread(command);
+        }
+      });
+
       @Override
       public void buildStarted(UUID sessionId) {
       }
 
       @Override
-      public void sessionTerminated(UUID sessionId) {
+      public void sessionTerminated(final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
-          final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
-          view.clearProgress();
-          view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+          myContextUpdater.execute(new Runnable() {
+            @Override
+            public void run() {
+              if (!myProject.isDisposed()) {
+                final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
+                view.clearProgress();
+                view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+              }
+            }
+          });
         }
       }
 
       @Override
       public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
+        submitMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
         final String trace = failure.getStacktrace();
         if (trace != null) {
           LOG.info(trace);
@@ -471,9 +487,10 @@ public class CompileDriver {
       protected void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
         final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
         //System.out.println(compilerMessage.getText());
+        final String messageText = message.getText();
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
-          indicator.setText(message.getText());
+          indicator.setText(messageText);
           if (message.hasDone()) {
             indicator.setFraction(message.getDone());
           }
@@ -489,10 +506,17 @@ public class CompileDriver {
           final long line = message.hasLine() ? message.getLine() : -1;
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-          compileContext.addMessage(
-            category, message.getText(), srcUrl, (int)line, (int)column
-          );
+          submitMessage(category, messageText, srcUrl, (int)line, (int)column);
         }
+      }
+
+      private void submitMessage(final CompilerMessageCategory category, final String messageText, final String srcUrl, final int line, final int column) {
+        myContextUpdater.execute(new Runnable() {
+          @Override
+          public void run() {
+            compileContext.addMessage(category, messageText, srcUrl, line, column);
+          }
+        });
       }
 
       @Override
