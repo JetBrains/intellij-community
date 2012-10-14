@@ -360,7 +360,7 @@ public class GroovyCompletionUtil {
 
     String originInfo = OriginInfoProvider.getOriginInfo(element);
     if (originInfo != null) {
-      builder = builder.appendTailText(originInfo, true);
+      builder = builder.appendTailText(" " + originInfo, true);
     }
 
     return builder;
