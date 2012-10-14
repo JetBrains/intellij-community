@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePathImpl
@@ -52,13 +51,7 @@ import static groovy.util.GroovyTestCase.*
  */
 @Mixin(GitExecutor)
 @Mixin(GitScenarios)
-@Mixin(GitLightTest)
-class GitBranchWorkerTest {
-
-  private String myRootDir
-  private GitMockProject myProject
-  private PlatformFacade myPlatformFacade
-  private Git myGit
+class GitBranchWorkerTest extends GitLightTest {
 
   private GitRepository myUltimate
   private GitRepository myCommunity
@@ -68,10 +61,7 @@ class GitBranchWorkerTest {
 
   @Before
   public void setUp() {
-    myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new GitMockProject(myRootDir)
-    myPlatformFacade = new GitTestPlatformFacade()
-    myGit = new GitTestImpl()
+    super.setUp();
 
     cd(myRootDir)
     def community = mkdir("community")
@@ -108,19 +98,9 @@ class GitBranchWorkerTest {
     }
   }
 
-  private void initRepo(String repoRoot) {
-    cd repoRoot
-    git("init")
-    setupUsername();
-    touch("file.txt")
-    git("add file.txt")
-    git("commit -m initial")
-  }
-
   @After
   public void tearDown() {
-    FileUtil.delete(new File(myRootDir))
-    Disposer.dispose(myProject)
+    super.tearDown();
   }
 
   @Test
@@ -242,7 +222,7 @@ class GitBranchWorkerTest {
   public void "checkout with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("checkout");
   }
-  
+
   @Test
   public void "checkout with several untracked files overwritten by checkout in first repo should show notification"() {
     // note that in old Git versions only one file is listed in the error.
@@ -253,7 +233,7 @@ class GitBranchWorkerTest {
   public void "merge with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("merge");
   }
-  
+
   def test_untracked_files_overwritten_by_in_first_repo(String operation, int untrackedFiles = 1) {
     branchWithCommit(myRepositories, "feature")
     def files = []
@@ -266,15 +246,15 @@ class GitBranchWorkerTest {
     checkoutOrMerge operation, "feature", [
             showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
     ]
-    
+
     assertTrue "Untracked files notification was not shown", notificationShown
   }
-  
+
   @Test
   public void "checkout with untracked files overwritten by checkout in second repo should show rollback proposal with file list"() {
     test_checkout_with_untracked_files_overwritten_by_in_second_repo("checkout");
   }
-  
+
   @Test
   public void "merge with untracked files overwritten by checkout in second repo should show rollback proposal with file list"() {
     test_checkout_with_untracked_files_overwritten_by_in_second_repo("merge");
@@ -317,11 +297,11 @@ class GitBranchWorkerTest {
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog: { Project p, List<Change> cs, String op, boolean force ->
-              changes = cs  
+              changes = cs
               DialogWrapper.CANCEL_EXIT_CODE
             }
     ])
-    
+
     assertNotNull "Local changes were not shown in the dialog", changes
     if (newGitVersion()) {
       assertEquals "Incorrect set of local changes was shown in the dialog",
@@ -372,7 +352,7 @@ class GitBranchWorkerTest {
                           LOCAL_CHANGES_OVERWRITTEN_BY.masterLine;
     assertContent(expectedContent, actual)
   }
-  
+
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
     def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
 
@@ -408,7 +388,7 @@ class GitBranchWorkerTest {
   public void "deny to smart checkout in first repo should show nothing"() {
     test_deny_to_smart_operation_in_first_repo_should_show_notification("checkout");
   }
-  
+
   @Test
   public void "deny to smart merge in first repo should show nothing"() {
     test_deny_to_smart_operation_in_first_repo_should_show_notification("merge");
@@ -426,7 +406,7 @@ class GitBranchWorkerTest {
     assertNull "Error message was not shown", errorMessage
     assertCurrentBranch("master");
   }
-  
+
   @Test
   public void "deny to smart checkout in second repo should show rollback proposal"() {
     test_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("checkout");
@@ -434,7 +414,7 @@ class GitBranchWorkerTest {
     assertCurrentBranch(myCommunity, "master")
     assertCurrentBranch(myContrib, "master")
   }
-  
+
   @Test
   public void "deny to smart merge in second repo should show rollback proposal"() {
     test_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("merge");
@@ -451,7 +431,7 @@ class GitBranchWorkerTest {
 
     assertNotNull "Rollback proposal was not shown", rollbackMsg
   }
-  
+
   @Test
   public void "rollback of 'checkout branch as new branch' should delete branches"() {
     branchWithCommit(myRepositories, "feature")
