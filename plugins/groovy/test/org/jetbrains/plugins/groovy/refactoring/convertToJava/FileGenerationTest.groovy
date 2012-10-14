@@ -42,7 +42,7 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
     final PsiFile file = myFixture.configureByFile("${testName}.groovy");
     assertInstanceOf file, GroovyFile
 
-    new ConvertToJavaProcessor(project, [file] as GroovyFile[]).run()
+    new ConvertToJavaProcessor(project, file).run()
 
     myFixture.checkResultByFile("${testName}.java")
   }
@@ -85,4 +85,12 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
   void testDynamicMethodsAccess() {doTest()}
   void _testArg() {doTest()}
   void testCasts() {doTest()}
+  void testReferenceExpressionsToClass() {
+    myFixture.addClass('''\
+package foo;
+
+public enum A {
+  Const
+}''')
+    doTest()}
 }

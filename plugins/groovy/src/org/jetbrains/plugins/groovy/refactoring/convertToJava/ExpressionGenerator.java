@@ -952,6 +952,9 @@ public class ExpressionGenerator extends Generator {
             builder.append(".get()");
           }
         }
+        else if (resolved instanceof PsiClass) {
+          writeType(builder, referenceExpression.getType(), referenceExpression);
+        }
         else {
           builder.append(refName);
         }
