@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -49,7 +49,7 @@ import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 /**
  * @author Max Medvedev
  */
-public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPass {
+public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPass implements DumbAware {
   private final GroovyFile myFile;
 
   private List<HighlightInfo> toHighlight;
@@ -80,12 +80,6 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         else {
           if (element instanceof GrLabel) {
             addInfo(element, LABEL);
-          }
-          else if (element instanceof GrCodeReferenceElement) {
-            PsiElement resolved = ((GrCodeReferenceElement)element).resolve();
-            if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-              addInfo(element, ANNOTATION);
-            }
           }
           super.visitElement(element);
         }
@@ -118,12 +112,13 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
   @Override
   public void doApplyInformationToEditor() {
     if (toHighlight == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
+    UpdateHighlightersUtil
+      .setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
   }
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
-    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType()==GroovyTokenTypes.mAT) {
+    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
       return ANNOTATION;
     }
 

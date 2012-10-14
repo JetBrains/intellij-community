@@ -102,6 +102,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import java.util.*;
 
 import static com.intellij.psi.PsiModifier.*;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.ANNOTATION;
 
 /**
  * @author ven
@@ -650,6 +651,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GrTypeElement[] elements = argList.getTypeArgumentElements();
     for (GrTypeElement element : elements) {
       checkTypeArgForPrimitive(element, GroovyBundle.message("primitive.type.parameters.are.not.allowed"));
+    }
+  }
+
+  @Override
+  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    PsiElement resolved = refElement.resolve();
+    if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+      myHolder.createInfoAnnotation(refElement, null).setTextAttributes(ANNOTATION);
     }
   }
 
