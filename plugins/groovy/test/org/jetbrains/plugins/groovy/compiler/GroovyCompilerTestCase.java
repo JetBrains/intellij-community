@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -398,6 +399,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+      System.out.println("compileContext = " + compileContext);
+      System.out.println(DebugUtil.currentStackTrace());
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
