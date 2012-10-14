@@ -1,8 +1,13 @@
 package org.hanuna.gitalk.parser;
 
 import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitList;
+import org.hanuna.gitalk.commitmodel.CommitListBuilder;
 import org.hanuna.gitalk.commitmodel.Hash;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,18 +26,34 @@ public class GitLogParser {
         Matcher matcher = pattern.matcher(inputStr);
         if (matcher.matches()) {
             Hash hash = Hash.buildHash(matcher.group(1));
-            String mainParent = matcher.group(2);
-            String secondParent = matcher.group(3);
+            String mainParentStr = matcher.group(2);
+            String secondParentStr = matcher.group(3);
             String author = matcher.group(4);
             long timeStamp = Long.parseLong(matcher.group(5));
             String message = matcher.group(6);
 
-            myAssert(mainParent != null || secondParent == null, "secondParent != null, but mainParent is null");
-            Hash mainParentHash = mainParent == null ? null : Hash.buildHash(mainParent);
-            Hash secondParentHash = secondParent == null ? null : Hash.buildHash(secondParent);
+            myAssert(mainParentStr != null || secondParentStr == null, "secondParent != null, but mainParent is null");
+            Hash mainParentHash = mainParentStr == null ? null : Hash.buildHash(mainParentStr);
+            Hash secondParentHash = secondParentStr == null ? null : Hash.buildHash(secondParentStr);
             return new CommitData(hash, mainParentHash, secondParentHash, author, timeStamp, message);
         } else {
             throw new IllegalArgumentException("unexpected format of string");
         }
+    }
+
+    public static CommitList parseCommitLog(Reader inputReader) throws IOException {
+        BufferedReader input;
+        if (inputReader instanceof BufferedReader) {
+            input = (BufferedReader) inputReader;
+        } else  {
+            input = new BufferedReader(inputReader);
+        }
+        CommitListBuilder builder = new CommitListBuilder();
+        String line;
+        while ((line = input.readLine()) != null) {
+            CommitData data = parseCommitData(line);
+            builder.append(data);
+        }
+        return builder.build();
     }
 }

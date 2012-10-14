@@ -5,7 +5,7 @@ package org.hanuna.gitalk.common;
  */
 public class MyAssert extends RuntimeException {
 
-    private MyAssert(String message) {
+    public MyAssert(String message) {
         super(message);
     }
 
