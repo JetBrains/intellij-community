@@ -771,9 +771,14 @@ class GitBranchWorkerTest {
   }
 
   private static void assertContent(String expectedContent, String actual) {
-    assertEquals "Content doesn't match",
+    assertEquals String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
+                               substWhitespaces(expectedContent), substWhitespaces(actual)),
                  StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString),
                  actual
+  }
+
+  private static String substWhitespaces(String s) {
+    return s.replaceAll("\r", "\\r").replaceAll("\n", "\\n").replaceAll(" ", "_")
   }
 
   // TODO Somehow I wasn't able to make dynamic partial implementations, because both overloaded notifySuccess() methods are needed,
