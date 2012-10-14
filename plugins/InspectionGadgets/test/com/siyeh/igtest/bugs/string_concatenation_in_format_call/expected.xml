@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>StringContenationInFormatCall.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'format()' call</problem_class>
+    <description>&lt;code&gt;format()&lt;/code&gt; call has a String concatenation argument #loc</description>
+  </problem>
+
+  <problem>
+    <file>StringContenationInFormatCall.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">String concatenation as argument to 'format()' call</problem_class>
+    <description>&lt;code&gt;format()&lt;/code&gt; call has a String concatenation argument #loc</description>
+  </problem>
+</problems>
