@@ -37,7 +37,7 @@ common content
 common content
 """,
           branchLine: "line with branch changes\n",
-          masterLine: "line with master changes\n"
+          masterLine: "line with master changes"
   ]
 
   /**
