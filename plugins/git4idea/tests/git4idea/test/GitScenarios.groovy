@@ -31,11 +31,7 @@ class GitScenarios {
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
 
   static final def LOCAL_CHANGES_OVERWRITTEN_BY = [
-          initial:
-"""common content
-common content
-common content
-""",
+          initial:    "common content\ncommon content\ncommon content\n",
           branchLine: "line with branch changes\n",
           masterLine: "line with master changes"
   ]

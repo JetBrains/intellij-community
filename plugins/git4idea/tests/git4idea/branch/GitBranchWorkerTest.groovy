@@ -369,7 +369,7 @@ class GitBranchWorkerTest {
     def expectedContent = LOCAL_CHANGES_OVERWRITTEN_BY.branchLine +
                           LOCAL_CHANGES_OVERWRITTEN_BY.initial +
                           LOCAL_CHANGES_OVERWRITTEN_BY.masterLine;
-    assertEquals("Content doesn't match", StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString), actual)
+    assertContent(expectedContent, actual)
   }
   
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
@@ -775,8 +775,8 @@ class GitBranchWorkerTest {
   private static void assertContent(String expectedContent, String actual) {
     assertEquals String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
                                substWhitespaces(expectedContent), substWhitespaces(actual)),
-                 StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString),
-                 actual
+                 StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString).trim(),
+                 actual.trim()
   }
 
   private static String substWhitespaces(String s) {
