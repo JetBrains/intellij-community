@@ -714,7 +714,7 @@ public class Main {
     assert findClassFile("Client")
   }
 
-  public void "test navigate from stub to source"() {
+  public void "_test navigate from stub to source"() {
     GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
     myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
 
