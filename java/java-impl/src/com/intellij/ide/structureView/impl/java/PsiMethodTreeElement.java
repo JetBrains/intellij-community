@@ -17,7 +17,6 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
-import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -40,8 +39,7 @@ import java.util.HashSet;
 
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
 
-public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement, LocationPresentation {
-  private String myLocation;
+public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
 
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
     super(isInherited, method);
@@ -89,14 +87,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     final PsiMethod method = getElement();
     if (myLocation == null) {
       if (isInherited()) {
-        final PsiClass cls = method.getContainingClass();
-        if (cls == null) {
-          myLocation = "";
-        } else {
-          myLocation = cls.getName();
-          char rightArrow = '\u2192';
-          myLocation = UIUtil.getLabelFont().canDisplay(rightArrow) ? rightArrow + myLocation :  "->" + myLocation;
-        }
+        return super.getLocationString();
       } else {
       try {
         final MethodSignatureBackedByPsiMethod baseMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
