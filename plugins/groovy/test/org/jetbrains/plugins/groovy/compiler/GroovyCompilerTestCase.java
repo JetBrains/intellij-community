@@ -68,6 +68,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -399,7 +400,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
-          for (CompilerMessage message : compileContext.getMessages(category)) {
+          CompilerMessage[] messages = compileContext.getMessages(category);
+          System.out.println("category = " + category);
+          System.out.println("messages = " + Arrays.toString(messages));
+          for (CompilerMessage message : messages) {
             if (category != CompilerMessageCategory.INFORMATION || !message.getMessage().startsWith("Compilation completed successfully")) {
               myMessages.add(message);
             }
