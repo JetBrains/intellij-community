@@ -40,6 +40,11 @@ public class GrLightLocalVariable extends GrLightVariable implements GrVariable 
     myExpr = expr;
   }
 
+  @Override
+  public PsiElement getContext() {
+    return myExpr;
+  }
+
   @Nullable
   @Override
   public GrExpression getInitializerGroovy() {

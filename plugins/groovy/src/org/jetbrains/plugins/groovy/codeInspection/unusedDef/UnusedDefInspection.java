@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -180,7 +181,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
           return false;
         }
         else {
-          LogMessageEx.error(LOG, "var: " + var.getName() + ", offset:" + var.getTextRange().getStartOffset(), file.getText());
+          TextRange range = var.getTextRange();
+          LogMessageEx.error(LOG, "var: " + var.getName() + ", offset:" + (range != null ? range.getStartOffset() : -1), file.getText());
           return false;
         }
       }
