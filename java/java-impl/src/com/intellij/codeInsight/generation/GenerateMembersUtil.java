@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -38,10 +37,12 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -345,7 +346,7 @@ public class GenerateMembersUtil {
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor) {
     PsiParameter[] parameters = sourceParameterList.getParameters();
-    Map<PsiType, Pair<String, Integer>> m = new HashMap<PsiType, Pair<String, Integer>>();
+    UniqueNameGenerator generator = new UniqueNameGenerator();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
@@ -358,25 +359,14 @@ public class GenerateMembersUtil {
       }
 
       if (paramName == null || isBaseNameGenerated && !isSubstituted && isBaseNameGenerated(codeStyleManager, parameterType, paramName)) {
-        Pair<String, Integer> pair = m.get(substituted);
-        if (pair != null) {
-          paramName = pair.first + pair.second;
-          m.put(substituted, Pair.create(pair.first, pair.second.intValue() + 1));
-        }
-        else {
-          String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, substituted).names;
-          if (names.length > 0) {
-            paramName = names[0];
-          }
-          else {
-            paramName = "p" + i;
-          }
-
-          m.put(substituted, new Pair<String, Integer>(paramName, 1));
+        String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, substituted).names;
+        if (names.length > 0) {
+          paramName = generator.generateUniqueName(names[0]);
         }
       }
 
       if (paramName == null) paramName = "p" + i;
+      generator.addExistingName(paramName);
       final PsiParameter newParameter = factory.createParameter(paramName, substituted);
       copyOrReplaceModifierList(parameter, newParameter);
       targetParameterList.add(newParameter);
@@ -431,16 +421,8 @@ public class GenerateMembersUtil {
     return JVMElementFactories.getFactory(target.getLanguage(), method.getProject());
   }
 
-  private static boolean isBaseNameGenerated(JavaCodeStyleManager codeStyleManager, PsiType parameterType, String paramName) {
-    final String[] baseSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names;
-    boolean isBaseNameGenerated = false;
-    for (String s : baseSuggestions) {
-      if (s.equals(paramName)) {
-        isBaseNameGenerated = true;
-        break;
-      }
-    }
-    return isBaseNameGenerated;
+  private static boolean isBaseNameGenerated(JavaCodeStyleManager csManager, PsiType parameterType, String paramName) {
+    return Arrays.asList(csManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names).contains(paramName);
   }
 
   private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type) {
