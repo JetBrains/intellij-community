@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,61 +34,66 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.format.call.display.name");
+    return InspectionGadgetsBundle.message("string.concatenation.in.format.call.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.concatenation.in.format.call.problem.descriptor");
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)infos[0];
-    final String referenceName = referenceExpression.getReferenceName();
-    return new StringConcatenationInFormatCallFix(referenceName);
+    return new StringConcatenationInFormatCallFix(((Boolean)infos[0]).booleanValue());
   }
 
-  private static class StringConcatenationInFormatCallFix
-    extends InspectionGadgetsFix {
+  private static class StringConcatenationInFormatCallFix extends InspectionGadgetsFix {
 
-    private final String variableName;
 
-    public StringConcatenationInFormatCallFix(String variableName) {
-      this.variableName = variableName;
+    private final boolean myPlural;
+
+    public StringConcatenationInFormatCallFix(boolean plural) {
+      myPlural = plural;
     }
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "string.concatenation.in.format.call.quickfix", variableName);
+      if (myPlural) {
+        return InspectionGadgetsBundle.message("string.concatenation.in.format.call.plural.quickfix");
+      }
+      else {
+        return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix");
+      }
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement().getParent().getParent();
+      if (!(element instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)element;
-      final PsiElement parent = binaryExpression.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      final PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
+      if (!(formatArgument instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        return;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)formatArgument;
+      final StringBuilder newExpression = new StringBuilder();
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (operand instanceof PsiReferenceExpression) {
+          argumentList.add(operand);
+          continue;
+        }
+        final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
+        if (token != null) {
+          newExpression.append(token.getText());
+        }
+        newExpression.append(operand.getText());
       }
-      parent.add(rhs);
-      parent.addAfter(lhs, binaryExpression);
-      binaryExpression.delete();
+      replaceExpression(polyadicExpression, newExpression.toString());
     }
   }
 
@@ -97,59 +102,38 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
     return new StringConcatenationInFormatCallVisitor();
   }
 
-  private static class StringConcatenationInFormatCallVisitor
-    extends BaseInspectionVisitor {
+  private static class StringConcatenationInFormatCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!FormatUtils.isFormatCall(expression)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
+      final PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
+      if (!ExpressionUtils.hasStringType(formatArgument)) {
         return;
       }
-      final PsiExpression firstArgument = arguments[0];
-      final PsiType type = firstArgument.getType();
-      if (type == null) {
+      if (!(formatArgument instanceof PsiPolyadicExpression)) {
         return;
       }
-      final int formatArgumentIndex;
-      if ("java.util.Locale".equals(type.getCanonicalText())
-          && arguments.length > 1) {
-        formatArgumentIndex = 1;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)formatArgument;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      int count = 0;
+      for (final PsiExpression operand : operands) {
+        if (!(operand instanceof PsiReferenceExpression)) {
+          continue;
+        }
+        count++;
+        if (count > 1) {
+          break;
+        }
       }
-      else {
-        formatArgumentIndex = 0;
-      }
-      final PsiExpression formatArgument = arguments[formatArgumentIndex];
-      final PsiType formatArgumentType = formatArgument.getType();
-      if (formatArgumentType == null ||
-          !formatArgumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (count == 0) {
         return;
       }
-      if (!(formatArgument instanceof PsiBinaryExpression)) {
-        return;
-      }
-      if (PsiUtil.isConstantExpression(formatArgument)) {
-        return;
-      }
-
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)formatArgument;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiType lhsType = lhs.getType();
-      if (lhsType == null || !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return;
-      }
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (!(rhs instanceof PsiReferenceExpression)) {
-        return;
-      }
-      registerError(formatArgument, rhs);
+      registerMethodCallError(expression, Boolean.valueOf(count > 1));
     }
   }
 }

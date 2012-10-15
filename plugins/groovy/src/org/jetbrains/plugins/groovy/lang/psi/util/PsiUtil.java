@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.light.JavaIdentifier;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,12 +65,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -80,7 +81,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -357,7 +357,7 @@ public class PsiUtil {
     if (!(place instanceof GrReferenceExpression)) return true;
 
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
-    final PsiClass containingClass = ((PsiMember)member).getContainingClass();
+    final PsiClass containingClass = getContainingClass((PsiMember)member);
     if (qualifier != null) {
       final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
       if (qualifier instanceof GrReferenceExpression) {
@@ -383,13 +383,13 @@ public class PsiUtil {
             return true;
           }
 
-          //non-physical method, e.g. gdk
-          if (containingClass == null) {
+          if (isStatic) {
             return true;
           }
 
-          if (isStatic) {
-            return true;
+          //non-physical method, e.g. gdk
+          if (containingClass == null) {
+            return isStatic;
           }
 
           //members from java.lang.Class can be invoked without ".class"
@@ -430,6 +430,7 @@ public class PsiUtil {
       if (containingClass == null) return true;
       if (member instanceof GrVariable && !(member instanceof GrField)) return true;
       if (member.hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) return true;
 
       if (resolveContext != null) {
         PsiElement stopAt = PsiTreeUtil.findCommonParent(place, resolveContext);
@@ -493,6 +494,25 @@ public class PsiUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  private static PsiClass getContainingClass(PsiMember member) {
+    PsiClass aClass = member.getContainingClass();
+
+    if (aClass != null) return aClass;
+
+    if (member instanceof GrGdkMethod && !member.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiMethod method = ((GrGdkMethod)member).getStaticMethod();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length > 0) {
+        PsiType type = parameters[0].getType();
+        if (type instanceof PsiClassType) {
+          return ((PsiClassType)type).resolve();
+        }
+      }
+    }
+    return null;
   }
 
   public static boolean isInStaticContext(GrQualifiedReference refExpression) {
@@ -736,7 +756,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, state, null, expr);
       }
 
-      ResolveUtil.processNonCodeMembers(qualifierType, processor, expr, state);
+      ResolveUtil.processNonCodeMembers(qualifierType, processor, qualifier, state);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {
@@ -1319,17 +1339,6 @@ public class PsiUtil {
     return getArgumentsList(context) != null;
   }
 
-  @Nullable
-  public static GrMemberOwner getMemberOwner(GrStatement statement) {
-    PsiElement parent = statement.getParent();
-    while (!(parent instanceof GrMemberOwner)) {
-      if (parent == null) return null;
-      if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
-      parent = parent.getParent();
-    }
-    return ((GrMemberOwner) parent);
-  }
-
   @NotNull
   public static List<GrImportStatement> getValidImportStatements(final GroovyFile file) {
     final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
@@ -1345,5 +1354,16 @@ public class PsiUtil {
   public static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+  }
+
+  @Nullable
+  public static PsiType extractIteratedType(GrForInClause forIn) {
+    GrExpression iterated = forIn.getIteratedExpression();
+    if (iterated == null) return null;
+    PsiType type = iterated.getType();
+    if (type == null) return null;
+
+    if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
+    return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,7 +110,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
       }
       final PsiExpression lhs = expression.getLOperand();
       final PsiExpression rhs = expression.getROperand();
-      if (rhs == null || !isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
+      if (rhs == null || !TypeUtils.hasFloatingPointType(lhs) && !TypeUtils.hasFloatingPointType(rhs)) {
         return;
       }
       if (isNaN(lhs)) {
@@ -118,17 +119,6 @@ public class ComparisonToNaNInspection extends BaseInspection {
       else if (isNaN(rhs)) {
         registerError(rhs, expression);
       }
-    }
-
-    private static boolean isFloatingPointType(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
     }
 
     private static boolean isNaN(PsiExpression expression) {

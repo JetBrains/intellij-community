@@ -4,6 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
@@ -15,6 +21,8 @@ import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,9 +32,9 @@ public class LayoutElementBuildersRegistry {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry");
 
   private static class InstanceHolder {
+
     static final LayoutElementBuildersRegistry ourInstance = new LayoutElementBuildersRegistry();
   }
-
   public static LayoutElementBuildersRegistry getInstance() {
     return InstanceHolder.ourInstance;
   }
@@ -53,16 +61,30 @@ public class LayoutElementBuildersRegistry {
     generateInstructions(artifact.getRootElement(), creator, context);
   }
 
+  public Collection<BuildTarget<?>> getDependencies(JpsPackagingElement element) {
+    LayoutElementBuilderService builder = getElementBuilder(element);
+    if (builder != null) {
+      //noinspection unchecked
+      return builder.getDependencies(element);
+    }
+    return Collections.emptyList();
+  }
+
   private void generateInstructions(JpsPackagingElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
                                    ArtifactInstructionsBuilderContext builderContext) {
-    final LayoutElementBuilderService builder = myBuilders.get(layoutElement.getClass());
+    final LayoutElementBuilderService builder = getElementBuilder(layoutElement);
     if (builder != null) {
       //noinspection unchecked
       builder.generateInstructions(layoutElement, instructionCreator, builderContext);
     }
-    else {
+  }
+
+  private LayoutElementBuilderService<?> getElementBuilder(JpsPackagingElement layoutElement) {
+    final LayoutElementBuilderService<?> builder = myBuilders.get(layoutElement.getClass());
+    if (builder == null) {
       LOG.error("Builder not found for artifact output layout element of class " + layoutElement.getClass());
     }
+    return builder;
   }
 
   private void generateChildrenInstructions(JpsCompositePackagingElement element, ArtifactCompilerInstructionCreator instructionCreator,
@@ -86,7 +108,7 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static void generateModuleOutputInstructions(String outputUrl, ArtifactCompilerInstructionCreator creator) {
+  private static void generateModuleOutputInstructions(@Nullable String outputUrl, ArtifactCompilerInstructionCreator creator) {
     if (outputUrl != null) {
       creator.addDirectoryCopyInstructions(JpsPathUtil.urlToFile(outputUrl));
     }
@@ -194,6 +216,15 @@ public class LayoutElementBuildersRegistry {
                                      ArtifactInstructionsBuilderContext builderContext) {
       generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
     }
+
+    @Override
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsProductionModuleOutputPackagingElement element) {
+      JpsModule module = element.getModuleReference().resolve();
+      if (module != null) {
+        return Collections.singletonList(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+      }
+      return Collections.emptyList();
+    }
   }
 
   private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<JpsTestModuleOutputPackagingElement> {
@@ -206,6 +237,15 @@ public class LayoutElementBuildersRegistry {
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
       generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
+    }
+
+    @Override
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsTestModuleOutputPackagingElement element) {
+      JpsModule module = element.getModuleReference().resolve();
+      if (module != null) {
+        return Collections.singletonList(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+      }
+      return Collections.emptyList();
     }
   }
 

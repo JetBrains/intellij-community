@@ -41,6 +41,14 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         }
       };
 
+  public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
+    this(testsOutputConsoleView.getConsole(), properties, unboundOutputRoot);
+  }
+
+  /**
+   * @deprecated left for JSTestDriver compatibility
+   */
+  @Deprecated
   public TestsOutputConsolePrinter(final ConsoleView console, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myConsole = console;
     myProperties = properties;

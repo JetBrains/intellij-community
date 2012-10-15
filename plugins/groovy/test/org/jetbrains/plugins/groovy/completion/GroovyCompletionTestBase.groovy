@@ -40,8 +40,8 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
-  protected void doBasicTest() {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
+  protected void doBasicTest(String type = "") {
+    myFixture.testCompletionTyping(getTestName(false) + ".groovy", type, getTestName(false) + "_after.groovy");
   }
 
   protected void doBasicTest(String before, String after) {
@@ -56,6 +56,14 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.BASIC);
     assertOrderedEquals(myFixture.lookupElementStrings, variants);
+  }
+
+  public void doHasVariantsTest(String... variants) {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.BASIC);
+    if (!myFixture.lookupElementStrings.containsAll(variants)) {
+      assertOrderedEquals(myFixture.lookupElementStrings, variants)
+    }
   }
 
   public void doSmartCompletion(String... variants) {

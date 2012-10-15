@@ -15,6 +15,7 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -27,6 +28,7 @@ import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
@@ -110,7 +112,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       if (! child.exists()) {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
-      repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, myProject);
+      repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, PlatformFacade.class), myProject);
       repository.update(GitRepository.TrackedTopic.BRANCHES);
       repository.getBranches();
     }

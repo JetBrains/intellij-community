@@ -416,6 +416,8 @@
 
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
-
+    <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template...">
+      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+    </action>
   </actions>
 </component>

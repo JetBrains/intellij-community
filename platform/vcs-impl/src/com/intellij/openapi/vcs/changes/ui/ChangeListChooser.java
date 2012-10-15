@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +52,8 @@ public class ChangeListChooser extends DialogWrapper {
       }
     }
 
-    myPanel = new ChangeListChooserPanel(myProject, new Consumer<String>() {
-      public void consume(final String errorMessage) {
+    myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<String>() {
+      public void consume(final @Nullable String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage);
       }

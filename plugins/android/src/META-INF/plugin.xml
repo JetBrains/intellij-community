@@ -306,8 +306,9 @@
 
     <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
-    <refactoring.safeDeleteProcessor id="android" order="before javaProcessor"
-                                     implementation="org.jetbrains.android.AndroidSafeDeleteProcessorDelegate"/>
+    <refactoring.safeDeleteProcessor id="android_component" order="before javaProcessor"
+                                     implementation="org.jetbrains.android.AndroidComponentSafeDeleteProcessor"/>
+    <refactoring.safeDeleteProcessor id="android_resource_file" implementation="org.jetbrains.android.AndroidResourceFileSafeDeleteProcessor"/>
 
     <externalAnnotator language="JAVA" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
     <externalAnnotator language="XML" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator"/>
@@ -318,6 +319,7 @@
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.android.inspections.AndroidQuickFixProvider"/>
     <lang.psiAugmentProvider implementation="org.jetbrains.android.augment.AndroidPsiAugmentProvider"/>
+    <java.elementFinder implementation="org.jetbrains.android.augment.AndroidPsiElementFinder"/>
 
     <packaging.elementType implementation="org.jetbrains.android.compiler.artifact.AndroidFinalPackageElementType"/>
     <packaging.sourceItemProvider implementation="org.jetbrains.android.compiler.artifact.AndroidSourceItemsProvider"/>

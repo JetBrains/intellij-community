@@ -164,20 +164,20 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   private static File getStubOutput(Module module, boolean tests) {
     final Project project = module.getProject();
     final String rootPath = CompilerPaths.getGeneratedDataDirectory(project).getPath() + "/" + GROOVY_STUBS + "/";
-    return new File(rootPath + project.getLocationHash() + "/" + module.getName() + "/" + (tests ? "tests" : "production") + "/");
+    return new File(rootPath + module.getName() + "/" + (tests ? "tests" : "production") + "/");
   }
 
   @Nullable
   public static PsiClass findClassByStub(Project project, VirtualFile stubFile) {
     final String[] components = StringUtil.trimEnd(stubFile.getPath(), ".java").split("[\\\\/]");
     final int stubs = Arrays.asList(components).indexOf(GROOVY_STUBS);
-    if (stubs < 0 || stubs >= components.length - 4) return null;
+    if (stubs < 0 || stubs >= components.length - 3) return null;
 
-    final String moduleName = components[stubs + 2];
+    final String moduleName = components[stubs + 1];
     final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     if (module == null) return null;
 
-    final String fqn = StringUtil.join(Arrays.asList(components).subList(stubs + 4, components.length), ".");
+    final String fqn = StringUtil.join(Arrays.asList(components).subList(stubs + 3, components.length), ".");
     return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 

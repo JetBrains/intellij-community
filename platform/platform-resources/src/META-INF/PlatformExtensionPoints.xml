@@ -25,6 +25,9 @@
   <extensionPoint name="fileEditorProvider"
                   interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
 
+  <extensionPoint name="selectedFileEditorProvider"
+                  interface="com.intellij.openapi.fileEditor.SelectedFileEditorProvider"/>
+
   <extensionPoint name="fileTypeFactory"
                   interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
@@ -139,6 +142,7 @@
   <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor"/>
 
   <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter"/>
+  <extensionPoint name="pathMacroExpendableProtocol" beanClass="com.intellij.application.options.PathMacroExpendableProtocolBean"/>
 
   <extensionPoint name="serverPipelineConsumer" interface="com.intellij.util.Consumer"/>
   

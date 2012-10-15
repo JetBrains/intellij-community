@@ -796,4 +796,7 @@
 
   <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
   <pathMacroFilter implementation="com.intellij.openapi.application.StructuralSearchPathMacroFilter"/>
+
+  <postStartupActivity implementation="com.intellij.codeInsight.highlighting.BraceHighlighter"/>
+
 </extensions>

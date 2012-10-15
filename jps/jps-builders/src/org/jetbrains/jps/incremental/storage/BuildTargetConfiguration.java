@@ -75,6 +75,6 @@ public class BuildTargetConfiguration {
   }
 
   private File getConfigFile() {
-    return new File(myTargetsState.getTargetDataRoot(myTarget), "config.dat");
+    return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "config.dat");
   }
 }

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class HgUpdateCommand {
 
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
-    final HgCommandResult result = executor.executeInCurrentThread(repo, "update", arguments);
+    final HgCommandResult result = executor.executeInCurrentThread(repo, "update", arguments,new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
     return result;
   }

@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -29,15 +30,15 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   private boolean myIsSortable = false;
   private SortOrder mySortOrder = SortOrder.ASCENDING;
 
-  public ListTableModel(ColumnInfo... columnInfos) {
+  public ListTableModel(@NotNull ColumnInfo... columnInfos) {
     this(columnInfos, new ArrayList<Item>(), 0, SortOrder.ASCENDING);
   }
 
-  public ListTableModel(ColumnInfo[] columnNames, List<Item> items, int selectedColumn) {
+  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn) {
     this(columnNames, items, selectedColumn, SortOrder.ASCENDING);
   }
 
-  public ListTableModel(ColumnInfo[] columnNames, List<Item> items, int selectedColumn, final SortOrder order) {
+  public ListTableModel(@NotNull ColumnInfo[] columnNames, @NotNull List<Item> items, int selectedColumn, @NotNull SortOrder order) {
     myColumnInfos = columnNames;
     myItems = items;
     mySortByColumn = selectedColumn;
@@ -51,22 +52,27 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     }) != null);
   }
 
+  @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     return myColumnInfos[columnIndex].isCellEditable(myItems.get(rowIndex));
   }
 
+  @Override
   public Class getColumnClass(int columnIndex) {
     return myColumnInfos[columnIndex].getColumnClass();
   }
 
+  @Override
   public ColumnInfo[] getColumnInfos() {
     return myColumnInfos;
   }
 
+  @Override
   public String getColumnName(int column) {
     return myColumnInfos[column].getName();
   }
 
+  @Override
   public int getRowCount() {
     return myItems.size();
   }
@@ -85,19 +91,23 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     return myItems.get(row);
   }
 
+  @Override
   public int getColumnCount() {
     return myColumnInfos.length;
   }
 
-  public void setItems(List<Item> items) {
+  @Override
+  public void setItems(@NotNull List<Item> items) {
     myItems = items;
     fireTableDataChanged();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     return myColumnInfos[columnIndex].valueOf(myItems.get(rowIndex));
   }
 
+  @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     if (rowIndex < myItems.size()) {
       myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
@@ -110,7 +120,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
    * @param columnInfos
    * @return
    */
-  public boolean setColumnInfos(final ColumnInfo[] columnInfos) {
+  public boolean setColumnInfos(ColumnInfo[] columnInfos) {
     if (myColumnInfos != null && Arrays.equals(columnInfos, myColumnInfos)) {
       return false;
     }
@@ -121,6 +131,8 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     return true;
   }
 
+  @NotNull
+  @Override
   public List<Item> getItems() {
     return Collections.unmodifiableList(myItems);
   }
@@ -129,10 +141,12 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     return myColumnInfos[aspectIndex].valueOf(item);
   }
 
+  @Override
   public void setSortable(boolean aBoolean) {
     myIsSortable = aBoolean;
   }
 
+  @Override
   public boolean isSortable() {
     return myIsSortable;
   }
@@ -145,11 +159,13 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   public void addRow() {
   }
 
+  @Override
   public void removeRow(int idx) {
     myItems.remove(idx);
     fireTableRowsDeleted(idx, idx);
   }
 
+  @Override
   public void exchangeRows(int idx1, int idx2) {
     Collections.swap(myItems, idx1, idx2);
     if (idx1 < idx2) {
@@ -170,7 +186,12 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);
   }
 
-  public void addRows(final Collection<Item> items) {
+  public void insertRow(int index, Item item) {
+    myItems.add(index, item);
+    fireTableRowsInserted(index, index);
+  }
+
+  public void addRows(@NotNull Collection<Item> items) {
     myItems.addAll(items);
     fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
   }

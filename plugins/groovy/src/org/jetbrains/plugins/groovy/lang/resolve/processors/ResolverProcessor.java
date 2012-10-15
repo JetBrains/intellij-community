@@ -110,7 +110,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected final void addCandidate(GroovyResolveResult candidate) {
     PsiElement element = candidate.getElement();
-    assert element == null || element.isValid() : "invalid resolve candidate";
+    assert element == null || element.isValid() : "invalid resolve candidate: " + element.getClass();
 
     if (myCandidates == null) myCandidates = new ArrayList<GroovyResolveResult>();
     myCandidates.add(candidate);
@@ -148,7 +148,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {
-      return PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace, resolveContext, filterStaticAfterInstanceQualifier);
+      return PsiUtil.isStaticsOK((PsiModifierListOwner)element, myPlace, resolveContext, filterStaticAfterInstanceQualifier);
     }
     return true;
   }

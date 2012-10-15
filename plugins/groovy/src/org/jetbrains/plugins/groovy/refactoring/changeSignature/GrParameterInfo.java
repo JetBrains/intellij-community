@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -28,12 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author Maxim.Medvedev
  */
 public class GrParameterInfo implements JavaParameterInfo {
-  private String myName;
-  private final String myDefaultValue;
-  private final String myDefaultInitializer;
+  @NotNull private String myName;
+  @NotNull private String myDefaultValue;
+  @NotNull private String myDefaultInitializer;
   private final int myPosition;
-  private CanonicalTypes.Type myTypeWrapper;
-  private final boolean myUseAnySingleVariable;
+  @Nullable private CanonicalTypes.Type myTypeWrapper;
+  private boolean myUseAnySingleVariable;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -63,18 +64,14 @@ public class GrParameterInfo implements JavaParameterInfo {
                          int position,
                          boolean useAnySingleVariable) {
     myName = name;
-    myDefaultValue = defaultValue;
-    myDefaultInitializer = defaultInitializer;
     myPosition = position;
     myUseAnySingleVariable = useAnySingleVariable;
-    if (type != null) {
-      myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
-    }
-    else {
-      myTypeWrapper = null;
-    }
+    setType(type);
+    setDefaultValue(defaultValue);
+    setInitializer(defaultInitializer);
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -83,22 +80,19 @@ public class GrParameterInfo implements JavaParameterInfo {
     return myPosition;
   }
 
+  @NotNull
   public String getDefaultValue() {
-    if (forceOptional()) return getDefaultInitializer();
-    return myDefaultValue;
+    return forceOptional() ? getDefaultInitializer() : myDefaultValue;
   }
 
   @Nullable
   public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-    if (myTypeWrapper == null) return null;
-    return myTypeWrapper.getType(context, manager);
+    return myTypeWrapper != null ? myTypeWrapper.getType(context, manager) : null;
   }
 
+  @NotNull
   public String getTypeText() {
-    if (myTypeWrapper != null) {
-      return myTypeWrapper.getTypeText();
-    }
-    return "";
+    return myTypeWrapper != null ? myTypeWrapper.getTypeText() : "";
   }
 
   @Nullable
@@ -119,14 +113,15 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   @Override
-  public void setUseAnySingleVariable(boolean b) {
-    throw new UnsupportedOperationException();
+  public void setUseAnySingleVariable(boolean useAnyVar) {
+    myUseAnySingleVariable = useAnyVar;
   }
 
   public boolean isOptional() {
     return getDefaultInitializer().length() > 0;
   }
 
+  @NotNull
   public String getDefaultInitializer() {
     return myDefaultInitializer;
   }
@@ -136,13 +131,25 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public boolean forceOptional() {
-    return myPosition < 0 && myDefaultValue.length() == 0;
+    return myPosition < 0 && StringUtil.isEmpty(myDefaultValue);
   }
 
   /**
    * for testing only
    */
-  public void setName(String newName) {
+  public void setName(@NotNull String newName) {
     myName = newName;
+  }
+
+  public void setType(@Nullable PsiType type) {
+    myTypeWrapper = type == null ? null : CanonicalTypes.createTypeWrapper(type);
+  }
+
+  public void setInitializer(@Nullable String initializer) {
+    myDefaultInitializer = StringUtil.notNullize(initializer);
+  }
+
+  public void setDefaultValue(@Nullable String defaultValue) {
+    myDefaultValue = StringUtil.notNullize(defaultValue);
   }
 }

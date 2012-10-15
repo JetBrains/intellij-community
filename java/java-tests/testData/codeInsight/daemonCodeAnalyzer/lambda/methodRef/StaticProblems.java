@@ -111,5 +111,14 @@ class MyTest2 {
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s4 = MyTest2 ::m4;</error>
         call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
     }
+
+    static void call3(I1 s) {}
+    static void call3(I2 s) {}
+    static {
+          call3(MyTest2::m1);
+          call3<error descr="Ambiguous method call: both 'MyTest2.call3(I1)' and 'MyTest2.call3(I2)' match">(MyTest2::m2)</error>;
+          call3(MyTest2::m3);
+          call3<error descr="Cannot resolve method 'call3(<method reference>)'">(MyTest2::m4)</error>;
+    }
 }
 

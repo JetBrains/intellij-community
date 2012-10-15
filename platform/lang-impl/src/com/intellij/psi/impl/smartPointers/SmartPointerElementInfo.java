@@ -30,7 +30,7 @@ interface SmartPointerElementInfo {
   Document getDocumentToSynchronize();
 
   void documentAndPsiInSync();
-  void fastenBelt(int offset, RangeMarker cachedRangeMarker);
+  void fastenBelt(int offset, RangeMarker[] cachedRangeMarkers);
 
   void unfastenBelt(int offset);
 

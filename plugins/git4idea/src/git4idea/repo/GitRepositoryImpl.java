@@ -16,10 +16,9 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
@@ -43,6 +42,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   private static final Object STUB_OBJECT = new Object();
 
   private final Project myProject;
+  @NotNull private final PlatformFacade myPlatformFacade;
   private final VirtualFile myRootDir;
   private final GitRepositoryReader myReader;
   private final VirtualFile myGitDir;
@@ -59,29 +59,29 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   /**
    * Get the GitRepository instance from the {@link GitRepositoryManager}.
    * If you need to have an instance of GitRepository for a repository outside the project, use
-   * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, com.intellij.openapi.Disposable)}.
+   * {@link #getLightInstance(VirtualFile, Project, PlatformFacade, Disposable)}.
    */
-  private GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable,
-                            final boolean light) {
+  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull PlatformFacade facade, @NotNull Project project,
+                            @NotNull Disposable parentDisposable, final boolean light) {
     myRootDir = rootDir;
+    myPlatformFacade = facade;
     myProject = project;
     Disposer.register(parentDisposable, this);
 
     myGitDir = GitUtil.findGitDir(myRootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
 
-    myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
+    myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
 
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
-    if (! light) {
+    if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
-
-      update(TrackedTopic.ALL);
     } else {
       myUntrackedFilesHolder = null;
     }
+    update(TrackedTopic.ALL);
   }
 
   /**
@@ -90,16 +90,18 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * {@link GitUntrackedFilesHolder}.
    */
   @NotNull
-  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    return new GitRepositoryImpl(root, project, parentDisposable, true);
+  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull PlatformFacade facade,
+                                               @NotNull Disposable parentDisposable) {
+    return new GitRepositoryImpl(root, facade, project, parentDisposable, true);
   }
 
   /**
    * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
-  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, project, parentDisposable, false);
+  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull PlatformFacade facade,
+                                              @NotNull Disposable parentDisposable) {
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, facade, project, parentDisposable, false);
     repository.myUntrackedFilesHolder.setupVfsListener(project);
     repository.setupUpdater();
     return repository;
@@ -240,8 +242,8 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   }
 
   private void updateConfig() {
-    File configFile = new File(VfsUtil.virtualToIoFile(myGitDir), "config");
-    myConfig = GitConfig.read(ServiceManager.getService(PlatformFacade.class), configFile);
+    File configFile = new File(VfsUtilCore.virtualToIoFile(myGitDir), "config");
+    myConfig = GitConfig.read(myPlatformFacade, configFile);
   }
 
   /**
@@ -269,7 +271,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     myBranches = myReader.readBranches();
   }
 
-  private void notifyListeners() {
+  protected void notifyListeners() {
     myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
   }
 

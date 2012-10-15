@@ -5,6 +5,7 @@ import com.intellij.util.Function;
 import junit.framework.Assert;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
   private final List<BuildMessage> myInfoMessages;
+  private boolean myUpToDate = true;
 
   public BuildResult() {
     myErrorMessages = new ArrayList<BuildMessage>();
@@ -25,10 +27,18 @@ public class BuildResult implements MessageHandler {
   public void processMessage(BuildMessage msg) {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       myErrorMessages.add(msg);
+      myUpToDate = false;
     }
     else {
       myInfoMessages.add(msg);
     }
+    if (msg instanceof UptoDateFilesSavedEvent) {
+      myUpToDate = false;
+    }
+  }
+
+  public void assertUpToDate() {
+    Assert.assertTrue("Project sources weren't up to date", myUpToDate);
   }
 
   public void assertFailed() {

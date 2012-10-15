@@ -33,7 +33,7 @@ public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;
   public String myStatusName;
-  private final Map<String, String> myErrorsMap;
+  private final Map<String, String> myErrorsMap = new HashMap<String, String>();
 
   private final Collection<UpdatedFile> myFiles = new ArrayList<UpdatedFile>();
   public boolean mySupportsDeletion;
@@ -75,11 +75,9 @@ public class FileGroup implements JDOMExternalizable {
     myCanBeAbsent = canBeAbsent;
     myUpdateName = updateName;
     myStatusName = statusName;
-    myErrorsMap = new HashMap<String, String>();
   }
 
   public FileGroup() {
-    myErrorsMap = new HashMap<String, String>();
   }
 
   public void addChild(FileGroup child) {
@@ -94,6 +92,7 @@ public class FileGroup implements JDOMExternalizable {
     myErrorsMap.put(path, error);
   }
 
+  @NotNull
   public Map<String, String> getErrorsMap() {
     return myErrorsMap;
   }

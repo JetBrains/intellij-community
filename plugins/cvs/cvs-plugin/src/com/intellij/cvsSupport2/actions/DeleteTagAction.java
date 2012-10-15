@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -23,9 +24,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.DeleteTagDialog;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * author: lesya
  */
@@ -33,27 +31,21 @@ public class DeleteTagAction extends ActionOnSelectedElement{
 
   public DeleteTagAction() {
     super(false);
-    CvsActionVisibility visibility = getVisibility();
+    final CvsActionVisibility visibility = getVisibility();
     visibility.canBePerformedOnSeveralFiles();
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("action.name.delete.tag");
+    return CvsBundle.message("action.name.delete.tag");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    DeleteTagDialog deleteTagDialog = new DeleteTagDialog(collectFiles(context),
-                                                          context.getProject());
+    final FilePath[] selectedFiles = context.getSelectedFilePaths();
+    final DeleteTagDialog deleteTagDialog = new DeleteTagDialog(selectedFiles, context.getProject());
     deleteTagDialog.show();
-    if (!deleteTagDialog.isOK())
-      return CvsHandler.NULL;
-    return CommandCvsHandler.createRemoveTagAction(context.getSelectedFiles(),
-        deleteTagDialog.getTagName());
-  }
+    if (!deleteTagDialog.isOK()) return CvsHandler.NULL;
 
-  private Collection<FilePath> collectFiles(VcsContext context) {
-    return Arrays.asList(context.getSelectedFilePaths());
+    return CommandCvsHandler.createRemoveTagAction(selectedFiles, deleteTagDialog.getTagName());
   }
-
 }

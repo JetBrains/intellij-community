@@ -293,11 +293,15 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.CommonCodeStyleSettingsProvider"/>
 
     <!-- new project wizard -->
+    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode" id="CreateFromTemplateMode"
+                order="after CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportMode" order="before ImportImlMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportImlMode" id="ImportImlMode"/>
 
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode" id="CreateFromTemplateMode" order="last"/>
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.EmptyModuleTemplatesFactory"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
 
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 

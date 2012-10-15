@@ -70,15 +70,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent = component;
 
     myComponent.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusLost(FocusEvent e) {
         manageSearchPopup(null);
       }
     });
     myComponent.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyTyped(KeyEvent e) {
         processKeyEvent(e);
       }
 
+      @Override
       public void keyPressed(KeyEvent e) {
         processKeyEvent(e);
       }
@@ -316,11 +319,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return true;
   }
 
+  @Override
   @Nullable
   public String getEnteredPrefix() {
     return mySearchPopup != null ? mySearchPopup.mySearchField.getText() : null;
   }
 
+  @Override
   public void refreshSelection() {
     if ( mySearchPopup != null ) mySearchPopup.refreshSelection();
   }
@@ -340,6 +345,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       mySearchField.setForeground(foregroundColor);
 
       mySearchField.setDocument(new PlainDocument() {
+        @Override
         public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
           String oldText;
           try {
@@ -370,6 +376,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       updateSelection(element);
     }
 
+    @Override
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
@@ -433,6 +440,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       setFocusable(false);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       Dimension dim = super.getPreferredSize();
       dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10;
@@ -443,6 +451,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
      * I made this method public in order to be able to call it from the outside.
      * This is needed for delegating calls.
      */
+    @Override
     public void processKeyEvent(KeyEvent e) {
       int i = e.getKeyCode();
       if (i == KeyEvent.VK_BACK_SPACE && getDocument().getLength() == 0) {
@@ -526,7 +535,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myPopupLayeredPane = null;
     }
     if (myPopupLayeredPane == null) {
-      LOG.error(toString() + " in " + String.valueOf(myComponent));
+      LOG.error(toString() + " in " + myComponent);
       return;
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
@@ -563,15 +572,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   private class MyToolWindowManagerListener extends ToolWindowManagerAdapter {
+    @Override
     public void stateChanged() {
       manageSearchPopup(null);
     }
   }
 
   protected class ViewIterator implements ListIterator<Object> {
-    private SpeedSearchBase mySpeedSearch;
+    private final SpeedSearchBase mySpeedSearch;
     private int myCurrentIndex;
-    private Object[] myElements;
+    private final Object[] myElements;
 
     public ViewIterator(@NotNull final SpeedSearchBase speedSearch, final int startIndex) {
       mySpeedSearch = speedSearch;

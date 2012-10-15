@@ -43,24 +43,20 @@ public class AnnotationArguments implements GroovyElementTypes {
     }
 
     if (ParserUtils.lookAhead(builder, mIDENT, mASSIGN)) {
-      if (!parseAnnotationMemberValuePairs(builder, parser)) {
-        annArgs.rollbackTo();
-        return;
-      }
-    } else {
+      parsePairs(builder, parser);
+    }
+    else {
       PsiBuilder.Marker pairMarker = builder.mark();
-      if (!parseAnnotationMemberValueInitializer(builder, parser)) {
-        pairMarker.drop();
-      } else {
+      if (parseAnnotationMemberValueInitializer(builder, parser)) {
         pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
+      }
+      else {
+        pairMarker.drop();
       }
     }
 
     ParserUtils.getToken(builder, mNLS);
-
-    if (!ParserUtils.getToken(builder, mRPAREN)) {
-      builder.error(GroovyBundle.message("rparen.expected"));
-    }
+    ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
     annArgs.done(ANNOTATION_ARGUMENTS);
   }
 
@@ -71,14 +67,15 @@ public class AnnotationArguments implements GroovyElementTypes {
   public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() == mAT) {
       return Annotation.parse(builder, parser);
-    } else if(builder.getTokenType() == mLBRACK) {
+    }
+    else if (builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLBRACK);
-      while (parseAnnotationMemberValueInitializer(builder, parser)){
+      while (parseAnnotationMemberValueInitializer(builder, parser)) {
         if (builder.eof() || builder.getTokenType() == mRBRACK) break;
         ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       }
-      
+
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       marker.done(ANNOTATION_ARRAY_INITIALIZER);
       return true;
@@ -92,10 +89,10 @@ public class AnnotationArguments implements GroovyElementTypes {
    * anntotationMemberValuePairs ::= annotationMemberValuePair ( COMMA nls annotationMemberValuePair )*
    */
 
-  private static boolean parseAnnotationMemberValuePairs(PsiBuilder builder, GroovyParser parser) {
+  private static boolean parsePairs(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker start = builder.mark();
 
-    if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
+    if (!parsePair(builder, parser)) {
       start.rollbackTo();
       return false;
     }
@@ -103,10 +100,7 @@ public class AnnotationArguments implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (!parseAnnotationMemberValueSinglePair(builder, parser)) {
-        start.rollbackTo();
-        return false;
-      }
+      parsePair(builder, parser);
     }
     start.drop();
 
@@ -117,26 +111,23 @@ public class AnnotationArguments implements GroovyElementTypes {
    * annotationMemberValuePair ::= IDENT ASSIGN nls annotationMemberValueInitializer
    */
 
-  private static boolean parseAnnotationMemberValueSinglePair(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker annmvp = builder.mark();
+  private static boolean parsePair(PsiBuilder builder, GroovyParser parser) {
+    PsiBuilder.Marker marker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
-      annmvp.rollbackTo();
-      return false;
+    if (ParserUtils.lookAhead(builder, mIDENT, mASSIGN)) {
+      ParserUtils.getToken(builder, mIDENT);
+      ParserUtils.getToken(builder, mASSIGN);
+      ParserUtils.getToken(builder, mNLS);
     }
-
-    if (!ParserUtils.getToken(builder, mASSIGN)) {
-      annmvp.rollbackTo();
-      return false;
+    else {
+      builder.error(GroovyBundle.message("attribute.name.expected"));
     }
-
-    ParserUtils.getToken(builder, mNLS);
 
     if (!parseAnnotationMemberValueInitializer(builder, parser)) {
       builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
     }
 
-    annmvp.done(ANNOTATION_MEMBER_VALUE_PAIR);
+    marker.done(ANNOTATION_MEMBER_VALUE_PAIR);
     return true;
   }
 }

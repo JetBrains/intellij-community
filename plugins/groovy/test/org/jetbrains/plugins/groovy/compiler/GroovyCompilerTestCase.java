@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -68,6 +69,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -242,7 +244,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     }.execute();
   }
 
-  protected List<String> make() {
+  protected List<CompilerMessage> make() {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -251,7 +253,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> rebuild() {
+  protected List<CompilerMessage> rebuild() {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -260,7 +262,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> compileModule(final Module module) {
+  protected List<CompilerMessage> compileModule(final Module module) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -269,7 +271,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  protected List<String> compileFiles(final VirtualFile... files) {
+  protected List<CompilerMessage> compileFiles(final VirtualFile... files) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
       public void consume(ErrorReportingCallback callback) {
@@ -278,7 +280,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
-  private List<String> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
+  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
@@ -389,7 +391,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
-    private final List<String> myMessages = new ArrayList<String>();
+    private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
@@ -397,17 +399,18 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+      System.out.println("compileContext = " + compileContext);
+      System.out.println(DebugUtil.currentStackTrace());
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
-          for (CompilerMessage message : compileContext.getMessages(category)) {
-            final String msg = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION || !msg.startsWith("Compilation completed successfully")) {
-              myMessages.add(category + ": " + msg);
+          CompilerMessage[] messages = compileContext.getMessages(category);
+          System.out.println("category = " + category);
+          System.out.println("messages = " + Arrays.toString(messages));
+          for (CompilerMessage message : messages) {
+            if (category != CompilerMessageCategory.INFORMATION || !message.getMessage().startsWith("Compilation completed successfully")) {
+              myMessages.add(message);
             }
           }
-        }
-        if (errors > 0) {
-          fail("Compiler errors occurred! " + StringUtil.join(myMessages, "\n"));
         }
         assertFalse("Code did not compile!", aborted);
       }
@@ -425,7 +428,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       }
     }
 
-    public List<String> getMessages() {
+    public List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }

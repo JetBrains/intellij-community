@@ -30,7 +30,7 @@
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="defaultImportContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
-    <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
+    <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor"/>
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
@@ -79,9 +79,8 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
@@ -92,11 +91,14 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
 
+    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
+
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
-    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor"/>
-    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
@@ -104,7 +106,7 @@
                       namedArgsProvider="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider"/>
 
     <mapContentProvider implementation="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperMapContentProvider"/>
-    <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEhancer"/>
+    <referenceTypeEnhancer implementation="org.jetbrains.plugins.groovy.configSlurper.GroovyMapValueTypeEnhancer"/>
 
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
@@ -133,7 +135,6 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.types.GrStringTypeConverter"/>
@@ -478,7 +479,7 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
 
-    <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
+    <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                  groupPath="Groovy"
                  groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                  implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
@@ -636,6 +637,10 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyTrivialIf" displayName="Redundant 'if' statement"
                      groupName="Control Flow" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="JavaStylePropertiesInvocation"
+                     displayName="Java-style property access"
+                     groupName="Style" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessToStaticFieldLockedOnInstance"
                      displayName="Access to static field locked on instance data"
                      groupName="Threading issues" enabledByDefault="true" level="WARNING"
@@ -747,6 +752,10 @@
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrPackage"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="gr.package" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrDeprecatedAPIUsage"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="gr.deprecated.api.usage" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
@@ -925,10 +934,10 @@
                      groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnresolvedAccess" displayName="Access to unresolved expression"
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrUnresolvedAccess" displayName="Access to unresolved expression"
                      groupName="Probable bugs"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection"/>
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySingletonAnnotation"
                      displayName="Check '@Singleton' annotation conventions"
                      groupName="Annotations verifying" enabledByDefault="true" level="WARNING"

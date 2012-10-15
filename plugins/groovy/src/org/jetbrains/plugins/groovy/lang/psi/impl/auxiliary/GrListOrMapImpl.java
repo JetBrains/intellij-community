@@ -37,7 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -83,10 +85,10 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     if (psi instanceof GrExpression || psi instanceof GrNamedArgument) {
       PsiElement prev = PsiUtil.getPrevNonSpace(psi);
       PsiElement next = PsiUtil.getNextNonSpace(psi);
-      if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+      if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == mCOMMA) {
         super.deleteChildInternal(prev.getNode());
       }
-      else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+      else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == mCOMMA) {
         super.deleteChildInternal(next.getNode());
       }
     }
@@ -149,7 +151,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     public PsiType fun(GrListOrMapImpl listOrMap) {
       final GlobalSearchScope scope = listOrMap.getResolveScope();
       if (listOrMap.isMap()) {
-        return inferMapInitializerType(listOrMap, JavaPsiFacade.getInstance(listOrMap.getProject()), scope);
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
+        return inferMapInitializerType(listOrMap, facade, scope);
       }
 
       PsiElement parent = listOrMap.getParent();
@@ -200,7 +203,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      return new GrMapType(facade, scope, stringEntries, otherEntries);
+      return GrMapType.create(facade, scope, stringEntries, otherEntries);
     }
 
 

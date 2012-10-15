@@ -15,13 +15,9 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Processor;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +28,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -155,13 +150,13 @@ class GitRepositoryReader {
     if (!headName.exists()) {
       return null;
     }
-    String branchName = tryLoadFile(headName, calcEncoding(headName)).trim();
+    String branchName = tryLoadFile(headName).trim();
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
     return new GitBranch(branchName, true, false);
   }
-  
+
   private boolean isMergeInProgress() {
     File mergeHead = new File(myGitDir, "MERGE_HEAD");
     return mergeHead.exists();
@@ -298,7 +293,7 @@ class GitRepositoryReader {
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
     try {
-      return tryLoadFile(branchFile, null);
+      return tryLoadFile(branchFile);
     }
     catch (GitRepoStateException e) {  // notify about error but don't break the process
       LOG.error("Couldn't read " + branchFile, e);
@@ -341,7 +336,7 @@ class GitRepositoryReader {
     if (!myPackedRefsFile.exists()) {
       return GitBranchesCollection.EMPTY;
     }
-    final String content = tryLoadFile(myPackedRefsFile, calcEncoding(myPackedRefsFile));
+    final String content = tryLoadFile(myPackedRefsFile);
     
     for (String line : content.split("\n")) {
       parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
@@ -362,7 +357,7 @@ class GitRepositoryReader {
 
     
   private static String readBranchFile(File branchFile) {
-    String rev = tryLoadFile(branchFile, null); // we expect just hash in branch file, no need to check encoding
+    String rev = tryLoadFile(branchFile);
     return rev.trim();
   }
 
@@ -373,7 +368,7 @@ class GitRepositoryReader {
   }
 
   private Head readHead() {
-    String headContent = tryLoadFile(myHeadFile, calcEncoding(myHeadFile));
+    String headContent = tryLoadFile(myHeadFile);
     headContent = headContent.trim(); // remove possible leading and trailing spaces to clearly match regexps
 
     Matcher matcher = BRANCH_PATTERN.matcher(headContent);
@@ -396,15 +391,14 @@ class GitRepositoryReader {
    * Loads the file content.
    * Tries 3 times, then a {@link GitRepoStateException} is thrown.
    * @param file      File to read.
-   * @param encoding  Encoding of the file, or null for using "UTF-8". Encoding is important for non-latin branch names.
    * @return file content.
    */
   @NotNull
-  private static String tryLoadFile(@NotNull final File file, @Nullable final Charset encoding) {
+  private static String tryLoadFile(final File file) {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return FileUtil.loadFile(file, encoding == null ? "UTF-8" : encoding.name());
+        return FileUtil.loadFile(file);
       }
     }, file);
   }
@@ -482,15 +476,6 @@ class GitRepositoryReader {
 
   private interface PackedRefsLineResultHandler {
     void handleResult(@Nullable String hash, @Nullable String branchName);
-  }
-
-  /**
-   * @return File encoding or <code>null</code> if the encoding is unknown.
-   */
-  @Nullable
-  private static Charset calcEncoding(File file) {
-    VirtualFile vf = VcsUtil.getVirtualFile(file);
-    return ApplicationManager.getApplication().isDisposed() ? null : EncodingManager.getInstance().getEncoding(vf, false);
   }
 
   /**

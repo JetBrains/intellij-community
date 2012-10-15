@@ -644,6 +644,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
       Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
+      if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       if (refEntity instanceof RefElement) {

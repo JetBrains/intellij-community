@@ -82,7 +82,7 @@ public class ZipUtil {
   }
 
   public static boolean addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream,
-                                                @NotNull File jarFile,
+                                                @Nullable File jarFile,
                                                 @NotNull File file,
                                                 @NotNull String relativePath,
                                                 @Nullable FileFilter fileFilter,
@@ -95,12 +95,12 @@ public class ZipUtil {
   }
 
   public static boolean addDirToZipRecursively(@NotNull ZipOutputStream outputStream,
-                                               @NotNull File jarFile,
+                                               @Nullable File jarFile,
                                                @NotNull File dir,
                                                @NotNull String relativePath,
                                                @Nullable FileFilter fileFilter,
                                                @Nullable Set<String> writtenItemRelativePaths) throws IOException {
-    if (FileUtil.isAncestor(dir, jarFile, false)) {
+    if (jarFile != null && FileUtil.isAncestor(dir, jarFile, false)) {
       return false;
     }
     if (relativePath.length() != 0) {

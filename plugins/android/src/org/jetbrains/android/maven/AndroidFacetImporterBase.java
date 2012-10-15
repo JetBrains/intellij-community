@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -120,6 +119,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(mavenProject.getPackaging())) {
       facet.getConfiguration().LIBRARY_PROJECT = true;
     }
+    facet.getConfiguration().setIncludeAssetsFromLibraries(true);
 
     if (hasApkSources) {
       reportError("'apksources' dependency is deprecated and can be poorly supported by IDE. " +
@@ -920,10 +920,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   @Nullable
   private static String getRelativePath(String basePath, String absPath) {
     absPath = FileUtil.toSystemIndependentName(absPath);
-    if (VfsUtil.isAncestor(new File(basePath), new File(absPath), true)) {
-      return FileUtil.getRelativePath(basePath, absPath, '/');
-    }
-    return null;
+    return FileUtil.getRelativePath(basePath, absPath, '/');
   }
 
   @Override

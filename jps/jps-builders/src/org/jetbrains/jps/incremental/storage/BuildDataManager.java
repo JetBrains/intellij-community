@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
@@ -18,43 +20,42 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 12;
+  private static final int VERSION = 15;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
-  private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String MAPPINGS_STORAGE = "mappings";
 
   private final Object mySourceToOutputLock = new Object();
   private final Map<BuildTarget<?>, SourceToOutputMappingImpl> mySourceToOutputs = new HashMap<BuildTarget<?>, SourceToOutputMappingImpl>();
 
-  private final SourceToFormMapping mySrcToFormMap;
+  private final OneToManyPathsMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
   private final ModuleOutputRootsLayout myOutputRootsLayout;
   private final Mappings myMappings;
-  private final File myDataStorageRoot;
+  private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final File myVersionFile;
 
-  public BuildDataManager(final File dataStorageRoot, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
-    myDataStorageRoot = dataStorageRoot;
+  public BuildDataManager(final BuildDataPaths dataPaths, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
+    myDataPaths = dataPaths;
     myTargetsState = targetsState;
-    mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
+    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
     myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
-    myArtifactsBuildData = new ArtifactsBuildData(new File(dataStorageRoot, "artifacts"));
-    myVersionFile = new File(myDataStorageRoot, "version.dat");
+    myArtifactsBuildData = new ArtifactsBuildData();
+    myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
   }
 
   private File getOutputsLayoutRoot() {
-    return new File(myDataStorageRoot, "output-roots");
+    return new File(myDataPaths.getDataStorageRoot(), "output-roots");
   }
 
-  public SourceToOutputMappingImpl getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
+  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
     SourceToOutputMappingImpl mapping;
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
-        mapping = new SourceToOutputMappingImpl(new File(myTargetsState.getTargetDataRoot(target), "src-out" + File.separator + "data"));
+        mapping = new SourceToOutputMappingImpl(new File(myDataPaths.getTargetDataRoot(target), "src-out" + File.separator + "data"));
         mySourceToOutputs.put(target, mapping);
       }
     }
@@ -65,7 +66,7 @@ public class BuildDataManager implements StorageOwner {
     return myArtifactsBuildData;
   }
 
-  public SourceToFormMapping getSourceToFormMap() {
+  public OneToManyPathsMapping getSourceToFormMap() {
     return mySrcToFormMap;
   }
 
@@ -204,16 +205,16 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public File getSourceToFormsRoot() {
-    return new File(myDataStorageRoot, SRC_TO_FORM_STORAGE);
+  private File getSourceToFormsRoot() {
+    return new File(myDataPaths.getDataStorageRoot(), SRC_TO_FORM_STORAGE);
   }
 
-  public File getMappingsRoot() {
-    return new File(myDataStorageRoot, MAPPINGS_STORAGE);
+  private File getMappingsRoot() {
+    return new File(myDataPaths.getDataStorageRoot(), MAPPINGS_STORAGE);
   }
 
-  public File getDataStorageRoot() {
-    return myDataStorageRoot;
+  public BuildDataPaths getDataPaths() {
+    return myDataPaths;
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {

@@ -271,10 +271,37 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        returnStatements.add(statement);
+      }
+    });
+    if (myExtractProcessor.generatesConditionalExit()) {
+      for (int i = 0; i < returnStatements.size() - 1; i++) {
+        final PsiReturnStatement condition = returnStatements.get(i);
+        final PsiElement container = condition.getParent();
+        final PsiStatement resultStmt = myElementFactory.createStatementFromText("myResult = true;", container);
+        if (!RefactoringUtil.isLoopOrIf(container)) {
+          container.addBefore(resultStmt, condition);
+        } else {
+          RefactoringUtil.putStatementInLoopBody(resultStmt, container, condition);
+        }
+      }
+
+      LOG.assertTrue(!returnStatements.isEmpty());
+      final PsiReturnStatement returnStatement = returnStatements.get(returnStatements.size() - 1);
+      final PsiElement container = returnStatement.getParent();
+      final PsiStatement resultStmt = myElementFactory.createStatementFromText("myResult = false;", container);
+      if (!RefactoringUtil.isLoopOrIf(container)) {
+        container.addBefore(resultStmt, returnStatement);
+      } else {
+        RefactoringUtil.putStatementInLoopBody(resultStmt, container, returnStatement);
+      }
+    }
+    body.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
       public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         try {
-          returnStatements.add(statement);
           replacementMap.put(statement, myElementFactory.createStatementFromText("return this;", statement));
         }
         catch (IncorrectOperationException e) {
@@ -323,17 +350,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       }
     });
-
-    if (myExtractProcessor.generatesConditionalExit()) {
-      for (int i = 0; i < returnStatements.size() - 1; i++) {
-        final PsiReturnStatement condition = returnStatements.get(i);
-        condition.getParent().addBefore(myElementFactory.createStatementFromText("myResult = true;", condition), condition);
-      }
-
-      LOG.assertTrue(!returnStatements.isEmpty());
-      final PsiReturnStatement returnStatement = returnStatements.get(returnStatements.size() - 1);
-      returnStatement.getParent().addBefore(myElementFactory.createStatementFromText("myResult = false;", returnStatement), returnStatement);
-    }
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());

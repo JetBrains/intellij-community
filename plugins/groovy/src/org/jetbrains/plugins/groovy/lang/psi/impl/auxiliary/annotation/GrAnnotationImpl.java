@@ -95,7 +95,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return null;
   }
 
-  public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
+  public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 

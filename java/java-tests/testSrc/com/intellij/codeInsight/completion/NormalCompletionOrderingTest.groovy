@@ -463,4 +463,11 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'add', 'addAll'
   }
 
+  public void testDontPreselectLastChosenWithUnrelatedPrefix() {
+    invokeCompletion(getTestName(false) + ".java")
+    myFixture.type(';\nmycl')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'myClass', 'myExtendsClause'
+  }
+
 }

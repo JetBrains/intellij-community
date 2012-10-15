@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.impl.DomApplicationComponent;
 import com.intellij.util.xml.impl.DomManagerImpl;
 
 /**
@@ -32,6 +33,12 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
         myCallRegistry.putActual(event);
       }
     }, myProject);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    DomApplicationComponent.getInstance().clearCachesInTests();
+    super.tearDown();
   }
 
   protected DomManagerImpl getDomManager() {

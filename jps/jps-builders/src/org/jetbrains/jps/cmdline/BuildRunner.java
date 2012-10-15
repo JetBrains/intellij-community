@@ -11,9 +11,12 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -55,17 +58,18 @@ public class BuildRunner {
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
+    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(jpsModel);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
-    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataStorageRoot, ignoredFileIndex);
-    BuildTargetsState targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
+    BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetIndex, jpsModel, index, dataPaths, ignoredFileIndex);
+    BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
     try {
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
@@ -82,9 +86,9 @@ public class BuildRunner {
       }
       myForceCleanCaches = true;
       FileUtil.delete(dataStorageRoot);
-      targetsState = new BuildTargetsState(dataStorageRoot, jpsModel, buildRootIndex);
+      targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataStorageRoot, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
+      dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
       // second attempt succeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }

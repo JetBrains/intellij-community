@@ -1,105 +1,77 @@
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 
 /**
- *
- *
  * @author Eugene Zhuravlev
- *         Date: 10/7/11
+ *         Date: 10/11/12
  */
-public final class SourceToOutputMappingImpl extends AbstractStateStorage<String, Collection<String>> implements SourceToOutputMapping {
+public class SourceToOutputMappingImpl implements SourceToOutputMapping {
+  private final OneToManyPathsMapping myMapping;
 
   public SourceToOutputMappingImpl(File storePath) throws IOException {
-    super(storePath, new PathStringDescriptor(), new StringCollectionExternalizer());
+    myMapping = new OneToManyPathsMapping(storePath);
   }
 
   @Override
   public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
-    super.update(FileUtil.toSystemIndependentName(srcPath), normalizePaths(outputs));
+    myMapping.update(srcPath, outputs);
   }
 
   @Override
   public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    super.update(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
+    myMapping.update(srcPath, outputPath);
   }
 
   @Override
   public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    super.appendData(FileUtil.toSystemIndependentName(srcPath), Collections.singleton(FileUtil.toSystemIndependentName(outputPath)));
-  }
-
-  @Override
-  public void appendData(@NotNull String srcPath, @NotNull Collection<String> data) throws IOException {
-    super.appendData(FileUtil.toSystemIndependentName(srcPath), normalizePaths(data));
+    myMapping.appendData(srcPath, outputPath);
   }
 
   @Override
   public void remove(@NotNull String srcPath) throws IOException {
-    super.remove(FileUtil.toSystemIndependentName(srcPath));
+    myMapping.remove(srcPath);
   }
 
-  @Nullable
   @Override
-  public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
-    return super.getState(FileUtil.toSystemIndependentName(srcPath));
+  public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
+    myMapping.removeData(sourcePath, outputPath);
   }
 
   @NotNull
   @Override
   public Collection<String> getSources() throws IOException {
-    return getKeys();
+    return myMapping.getKeys();
   }
 
-  private static Collection<String> normalizePaths(Collection<String> outputs) {
-    Collection<String> normalized = new ArrayList<String>(outputs.size());
-    for (String out : outputs) {
-      normalized.add(FileUtil.toSystemIndependentName(out));
-    }
-    return normalized;
-  }
-
+  @Nullable
   @Override
-  public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
-    final Collection<String> outputPaths = getOutputs(FileUtil.toSystemIndependentName(sourcePath));
-    if (outputPaths != null) {
-      outputPaths.remove(FileUtil.toSystemIndependentName(outputPath));
-      if (outputPaths.isEmpty()) {
-        remove(sourcePath);
-      }
-      else {
-        setOutputs(sourcePath, outputPaths);
-      }
-    }
+  public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
+    return myMapping.getState(srcPath);
   }
 
-  protected static class StringCollectionExternalizer implements DataExternalizer<Collection<String>> {
+  @NotNull
+  @Override
+  public Iterator<String> getSourcesIterator() throws IOException {
+    return myMapping.getKeysIterator();
+  }
 
-    public void save(DataOutput out, Collection<String> value) throws IOException {
-      for (String str : value) {
-        IOUtil.writeString(str, out);
-      }
-    }
+  public void flush(boolean memoryCachesOnly) {
+    myMapping.flush(memoryCachesOnly);
+  }
 
-    public Collection<String> read(DataInput in) throws IOException {
-      final List<String> result = new ArrayList<String>();
-      final DataInputStream stream = (DataInputStream)in;
-      while (stream.available() > 0) {
-        final String str = IOUtil.readString(stream);
-        result.add(str);
-      }
-      return result;
-    }
+  public void close() throws IOException {
+    myMapping.close();
+  }
+
+  public void clean() throws IOException {
+    myMapping.clean();
   }
 }

@@ -162,6 +162,33 @@ public class UIUtil {
   public static final Insets PANEL_REGULAR_INSETS = new Insets(8, 12, 8, 12);
   public static final Insets PANEL_SMALL_INSETS = new Insets(5, 8, 5, 8);
 
+
+  public static final Border DEBUG_MARKER_BORDER = new Border() {
+    private Insets empty = new Insets(0, 0, 0, 0);
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return empty;
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Graphics g2 = g.create();
+      try {
+        g2.setColor(Color.RED);
+        drawDottedRectangle(g2, x, y, x + width - 1, y + height - 1);
+      }
+      finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
+    }
+  };
+
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 

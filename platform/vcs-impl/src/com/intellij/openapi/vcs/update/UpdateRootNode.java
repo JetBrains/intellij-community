@@ -58,6 +58,7 @@ public class UpdateRootNode extends GroupTreeNode {
     return group;
   }
 
+  @Override
   public boolean getSupportsDeletion() {
     return false;
   }

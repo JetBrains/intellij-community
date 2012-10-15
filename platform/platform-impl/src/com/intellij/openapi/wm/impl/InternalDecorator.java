@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -79,7 +78,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Catches all event from tool window and modifies decorator's appearance.
    */
   private final ToolWindowHandler myToolWindowHandler;
-  private final WeakKeymapManagerListener myWeakKeymapManagerListener;
+  private final MyKeymapManagerListener myWeakKeymapManagerListener;
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls private static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
@@ -115,6 +114,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         return isFocused();
       }
       
+      @Override
       protected void hideToolWindow() {
         fireHidden();
       }
@@ -132,8 +132,8 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     MyKeymapManagerListener keymapManagerListener = new MyKeymapManagerListener();
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    myWeakKeymapManagerListener = new WeakKeymapManagerListener(keymapManager, keymapManagerListener);
-    keymapManager.addKeymapManagerListener(myWeakKeymapManagerListener);
+    myWeakKeymapManagerListener = keymapManagerListener;
+    keymapManager.addWeakListener(keymapManagerListener);
 
     init();
 
@@ -204,6 +204,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToolWindow.getContentUI().setType(myInfo.getContentUiType());
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (PlatformDataKeys.TOOL_WINDOW.equals(key)) {
       sink.put(PlatformDataKeys.TOOL_WINDOW, myToolWindow);
@@ -221,7 +222,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   final void dispose() {
     removeAll();
     myToolWindow.removePropertyChangeListener(myToolWindowHandler);
-    KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(myWeakKeymapManagerListener);
+    KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
     
     Disposer.dispose(myHeader);
     myHeader = null;
@@ -322,6 +323,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     // Add listeners
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
       }
@@ -340,6 +342,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       myWindow = window;
     }
 
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(UIUtil.getPanelBackground());
       doPaintBorder(c, g, x, y, width, height);
@@ -373,6 +376,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
              myWindow.getAnchor() == ToolWindowAnchor.TOP;
     }
 
+    @Override
     public Insets getBorderInsets(final Component c) {
       UISettings settings = UISettings.getInstance();
 
@@ -434,6 +438,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       return false;
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return false;
     }
@@ -542,6 +547,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     return myHeader.getPreferredSize().height;
   }
 
+  @Override
   protected final void processComponentEvent(final ComponentEvent e) {
     super.processComponentEvent(e);
     if (ComponentEvent.COMPONENT_RESIZED == e.getID()) {
@@ -581,6 +587,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       myAnchor = anchor;
     }
 
+    @Override
     public final void actionPerformed(final AnActionEvent e) {
       fireAnchorChanged(myAnchor);
     }
@@ -591,10 +598,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_PINNED_MODE_ACTION_ID));
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return !myInfo.isAutoHide();
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       fireAutoHideChanged(!myInfo.isAutoHide());
     }
@@ -605,10 +614,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_DOCK_MODE_ACTION_ID));
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return myInfo.isDocked();
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       if (myInfo.isDocked()) {
         fireTypeChanged(ToolWindowType.SLIDING);
@@ -624,10 +635,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_FLOATING_MODE_ACTION_ID));
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return myInfo.isFloating();
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       if (myInfo.isFloating()) {
         fireTypeChanged(myInfo.getInternalType());
@@ -643,10 +656,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_SIDE_MODE_ACTION_ID));
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return myInfo.isSplit();
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       fireSideStatusChanged(flag);
     }                                
@@ -665,10 +680,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
+    @Override
     public final void actionPerformed(final AnActionEvent e) {
       fireHidden();
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(myInfo.isVisible());
@@ -702,6 +719,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       setBorder(new DividerBorder());
     }
 
+    @Override
     protected final void processMouseMotionEvent(final MouseEvent e) {
       super.processMouseMotionEvent(e);
       if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
@@ -745,6 +763,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       }
     }
 
+    @Override
     protected final void processMouseEvent(final MouseEvent e) {
       super.processMouseEvent(e);
       final ToolWindowAnchor anchor = myInfo.getAnchor();
@@ -776,6 +795,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     private final class DividerBorder implements Border {
+      @Override
       public final void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         final boolean isVertical = anchor == ToolWindowAnchor.TOP || anchor == ToolWindowAnchor.BOTTOM;
@@ -809,6 +829,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         }
       }
 
+      @Override
       public final Insets getBorderInsets(final Component c) {
         if (c instanceof MyDivider) {
           return new Insets(1, 1, 1, 1);
@@ -816,6 +837,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         return new Insets(0, 0, 0, 0);
       }
 
+      @Override
       public final boolean isBorderOpaque() {
         return true;
       }
@@ -826,6 +848,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Updates tooltips.
    */
   private final class MyKeymapManagerListener implements KeymapManagerListener {
+    @Override
     public final void activeKeymapChanged(final Keymap keymap) {
       if (myHeader != null) {
         myHeader.updateTooltips();
@@ -837,6 +860,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Synchronizes decorator with IdeToolWindow changes.
    */
   private final class ToolWindowHandler implements PropertyChangeListener {
+    @Override
     public final void propertyChange(final PropertyChangeEvent e) {
       final String name = e.getPropertyName();
       if (ToolWindowEx.PROP_TITLE.equals(name)) {
@@ -848,6 +872,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
   }
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("toolWindowTitle", myToolWindow.getTitle());
 

@@ -145,3 +145,8 @@ class Outer<E> {
     class Inner {
     }
 }
+class Outer1<E> {
+    final Inner[] i = new Inner[10];
+    static class Inner {
+    }
+}

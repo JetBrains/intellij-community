@@ -18,6 +18,7 @@ package com.siyeh.ig.imports;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -34,8 +35,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StaticImportInspection extends BaseInspection {
 
@@ -139,27 +142,22 @@ public class StaticImportInspection extends BaseInspection {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiClass aClass = target.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
       final String qualifiedName = aClass.getQualifiedName();
       final String text = reference.getText();
       final String referenceText = qualifiedName + '.' + text;
       if (reference instanceof PsiReferenceExpression) {
-        try {
-          final PsiExpression newReference = factory.createExpressionFromText(referenceText, reference);
-          reference.replace(newReference);
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
+        final PsiExpression newReference = factory.createExpressionFromText(referenceText, reference);
+        final PsiElement insertedElement = reference.replace(newReference);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
       else {
         final PsiJavaCodeReferenceElement referenceElement =
           factory.createReferenceElementByFQClassName(referenceText, reference.getResolveScope());
-        try {
-          reference.replace(referenceElement);
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
+        final PsiElement insertedElement = reference.replace(referenceElement);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
     }
 
@@ -204,7 +202,7 @@ public class StaticImportInspection extends BaseInspection {
         final PsiMember member = (PsiMember)target;
         for (JavaResolveResult importTarget : importTargets) {
           final PsiElement targetElement = importTarget.getElement();
-          if (targetElement instanceof PsiMethod) {
+          if (targetElement instanceof PsiMethod || targetElement instanceof PsiField) {
             if (member.equals(targetElement)) {
               addReference(reference);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,13 @@ public class RedundantImportInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "redundant.import.display.name");
+    return InspectionGadgetsBundle.message("redundant.import.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "redundant.import.problem.descriptor");
+    return InspectionGadgetsBundle.message("redundant.import.problem.descriptor");
   }
 
   @Override
@@ -73,51 +71,42 @@ public class RedundantImportInspection extends BaseInspection {
       checkStaticImports(importList, javaFile);
     }
 
-    private void checkStaticImports(PsiImportList importList,
-                                    PsiJavaFile javaFile) {
-      final PsiImportStaticStatement[] importStaticStatements =
-        importList.getImportStaticStatements();
-      final Set<String> staticImports =
-        new HashSet<String>(importStaticStatements.length);
-      for (PsiImportStaticStatement importStaticStatement :
-        importStaticStatements) {
-        final String referenceName =
-          importStaticStatement.getReferenceName();
-        final PsiClass targetClass =
-          importStaticStatement.resolveTargetClass();
+    private void checkStaticImports(PsiImportList importList, PsiJavaFile javaFile) {
+      final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+      final Set<String> onDemandStaticImports = new HashSet();
+      final Set<String> singleMemberStaticImports = new HashSet();
+      for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        final PsiClass targetClass = importStaticStatement.resolveTargetClass();
         if (targetClass == null) {
           continue;
         }
         final String qualifiedName = targetClass.getQualifiedName();
+        final String referenceName = importStaticStatement.getReferenceName();
         if (referenceName == null) {
-          if (staticImports.contains(qualifiedName)) {
+          if (onDemandStaticImports.contains(qualifiedName)) {
             registerError(importStaticStatement);
             continue;
           }
-          staticImports.add(qualifiedName);
+          onDemandStaticImports.add(qualifiedName);
         }
         else {
-          final String qualifiedReferenceName =
-            qualifiedName + '.' + referenceName;
-          if (staticImports.contains(qualifiedReferenceName)) {
+          final String qualifiedReferenceName = qualifiedName + '.' + referenceName;
+          if (singleMemberStaticImports.contains(qualifiedReferenceName)) {
             registerError(importStaticStatement);
             continue;
           }
-          if (staticImports.contains(qualifiedName)) {
-            if (!ImportUtils.hasOnDemandImportConflict(
-              qualifiedReferenceName, javaFile)) {
+          if (onDemandStaticImports.contains(qualifiedName)) {
+            if (!ImportUtils.hasOnDemandImportConflict(qualifiedReferenceName, javaFile)) {
               registerError(importStaticStatement);
             }
           }
-          staticImports.add(qualifiedReferenceName);
+          singleMemberStaticImports.add(qualifiedReferenceName);
         }
       }
     }
 
-    private void checkNonStaticImports(PsiImportList importList,
-                                       PsiJavaFile javaFile) {
-      final PsiImportStatement[] importStatements =
-        importList.getImportStatements();
+    private void checkNonStaticImports(PsiImportList importList, PsiJavaFile javaFile) {
+      final PsiImportStatement[] importStatements = importList.getImportStatements();
       final Set<String> onDemandImports = new HashSet();
       final Set<String> singleClassImports = new HashSet();
       for (final PsiImportStatement importStatement : importStatements) {
@@ -157,10 +146,8 @@ public class RedundantImportInspection extends BaseInspection {
             continue;
           }
           if (onDemandImports.contains(contextName) &&
-              !ImportUtils.hasOnDemandImportConflict(qualifiedName,
-                                                     javaFile) &&
-              !ImportUtils.hasDefaultImportConflict(qualifiedName,
-                                                    javaFile)) {
+              !ImportUtils.hasOnDemandImportConflict(qualifiedName, javaFile) &&
+              !ImportUtils.hasDefaultImportConflict(qualifiedName, javaFile)) {
             registerError(importStatement);
           }
           singleClassImports.add(qualifiedName);

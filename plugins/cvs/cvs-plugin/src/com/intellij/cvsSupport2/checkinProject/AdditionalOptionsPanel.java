@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +17,46 @@ package com.intellij.cvsSupport2.checkinProject;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagNameFieldOwner;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.CvsFieldValidator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFieldOwner {
 
   private JPanel myPanel;
-  private JTextField myTagName;
+  private TextFieldWithBrowseButton myTagName;
   private JCheckBox myTag;
   private JLabel myErrorLabel;
+  private JCheckBox myOverrideExisting;
 
   private final CvsConfiguration myConfiguration;
   private boolean myIsCorrect = true;
   private String myErrorMessage;
-  private JCheckBox myOverrideExisting;
 
-  public AdditionalOptionsPanel(CvsConfiguration configuration) {
+  public AdditionalOptionsPanel(CvsConfiguration configuration, Collection<FilePath> files, Project project) {
     myConfiguration = configuration;
+    TagsHelper.addChooseBranchAction(myTagName, files, project);
     myTag.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateEnable();
       }
     });
-    CvsFieldValidator.installOn(this, myTagName, myErrorLabel, new AbstractButton[]{myTag});
+    CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel, new AbstractButton[]{myTag});
   }
 
   private void updateEnable() {
-    boolean tag = myTag.isSelected();
-    myTagName.setEditable(tag);
+    final boolean tag = myTag.isSelected();
+    myTagName.setEnabled(tag);
     myOverrideExisting.setEnabled(tag);
   }
 

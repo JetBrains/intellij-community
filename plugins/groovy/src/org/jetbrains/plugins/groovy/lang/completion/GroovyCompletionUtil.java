@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.originInfo.OriginInfoProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -356,6 +357,12 @@ public class GroovyCompletionUtil {
       }
       builder = builder.withTailText(tailText, true);
     }
+
+    String originInfo = OriginInfoProvider.getOriginInfo(element);
+    if (originInfo != null) {
+      builder = builder.appendTailText(" " + originInfo, true);
+    }
+
     return builder;
   }
 
@@ -522,7 +529,7 @@ public class GroovyCompletionUtil {
                substituted instanceof PsiArrayType ||
                InheritanceUtil.isInheritor(substituted, CommonClassNames.JAVA_LANG_ITERABLE));
     }
-    if (GdkMethodUtil.WITH.equals(name)) return false;
+    if (GdkMethodUtil.isWithName(name)) return false;
 
     return true;
   }

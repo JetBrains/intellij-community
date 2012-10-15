@@ -79,14 +79,14 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      ChangeSignatureUtil.invokeChangeSignatureOn(method, project);
+      ChangeSignatureUtil.invokeChangeSignatureOn(newMethod, project);
       return;
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     if (!(method instanceof GrMethod)) return; //todo
-    final GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, (GrMethod)method);
+    final GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, new GrMethodDescriptor((GrMethod)method), true, null);
     dialog.show();
   }
 

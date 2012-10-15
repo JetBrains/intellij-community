@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,10 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -42,9 +38,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -57,27 +50,18 @@ import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
-import org.zmlx.hg4idea.ui.HgChangesetStatus;
-import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
-  public static final Topic<HgUpdater> BRANCH_TOPIC =
-    new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
-
-  public static final Topic<HgUpdater> REMOTE_TOPIC =
-    new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
-
-  private static final Icon INCOMING_ICON = IconUtil.getMoveDownIcon();
-  private static final Icon OUTGOING_ICON = IconUtil.getMoveUpIcon();
+  public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
+  public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
+  public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -97,11 +81,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
-  private final HgCurrentBranchStatus hgCurrentBranchStatus = new HgCurrentBranchStatus();
-  private final HgChangesetStatus incomingChangesStatus = new HgChangesetStatus(INCOMING_ICON, "Incoming");
-  private final HgChangesetStatus outgoingChangesStatus = new HgChangesetStatus(OUTGOING_ICON, "Outgoing");
   private MessageBusConnection messageBusConnection;
-  private ScheduledFuture<?> changesUpdaterScheduledFuture;
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
@@ -113,9 +93,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private File myPromptHooksExtensionFile;
   private CommitExecutor myCommitAndPushExecutor;
 
-  public HgVcs(Project project,
-    HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
-    ProjectLevelVcsManager vcsManager) {
+  private HgStatusWidget myStatusWidget;
+
+  public HgVcs(Project project, HgGlobalSettings globalSettings, HgProjectSettings projectSettings, ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
@@ -128,7 +108,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
     integrateEnvironment = new HgIntegrateEnvironment(project);
-    commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
+    commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }
@@ -200,8 +180,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return null;
-//    return commitedChangesProvider;
+    return commitedChangesProvider;
   }
 
   @Override
@@ -241,7 +220,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return HgRootsHandler.getInstance(myProject);
   }
 
-    @Override
+  @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return HgUtil.getNearestHgRoot(dir) != null;
   }
@@ -249,12 +228,14 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
    */
-  public @NotNull File getPromptHooksExtensionFile() {
+  @NotNull
+  public File getPromptHooksExtensionFile() {
     if (myPromptHooksExtensionFile == null) {
       // check that hooks are available
       myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
       if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
-        LOG.error("prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
+        LOG.error(
+          "prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
       }
     }
     return myPromptHooksExtensionFile;
@@ -262,44 +243,26 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
+    super.activate();
+
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getExecutableValidator().checkExecutableAndNotifyIfNeeded();
     }
 
     // status bar
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      statusBar.addWidget(hgCurrentBranchStatus, myProject);
-      statusBar.addWidget(incomingChangesStatus, myProject);
-      statusBar.addWidget(outgoingChangesStatus, myProject);
-    }
+    myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
+    myStatusWidget.activate();
 
     // updaters and listeners
-    final HgRemoteStatusUpdater remoteUpdater = new HgRemoteStatusUpdater(this, incomingChangesStatus, outgoingChangesStatus, projectSettings);
-    int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
-      new Runnable() {
-        public void run() {
-          remoteUpdater.update(myProject);
-        }
-      }, checkIntervalSeconds, checkIntervalSeconds, TimeUnit.SECONDS);
-
     messageBusConnection = myProject.getMessageBus().connect();
-    messageBusConnection.subscribe(REMOTE_TOPIC, remoteUpdater);
-    messageBusConnection.subscribe(BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus));
-    messageBusConnection.subscribe(
-      FileEditorManagerListener.FILE_EDITOR_MANAGER,
-      new FileEditorManagerAdapter() {
-        @Override
-        public void selectionChanged(FileEditorManagerEvent event) {
-          Project project = event.getManager().getProject();
-          project.getMessageBus()
-            .syncPublisher(BRANCH_TOPIC)
-            .update(project);
-        }
+    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        Project project = event.getManager().getProject();
+        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project);
       }
-    );
+    });
 
     myVFSListener = new HgVFSListener(myProject, this);
 
@@ -313,35 +276,40 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         }
       });
     }
+
+    // Force a branch topic update
+    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject);
   }
 
   @Override
   public void deactivate() {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (null != myStatusWidget) {
+      myStatusWidget.deactivate();
+      myStatusWidget = null;
+    }
+
     if (messageBusConnection != null) {
       messageBusConnection.disconnect();
-    }
-    if (changesUpdaterScheduledFuture != null) {
-      changesUpdaterScheduledFuture.cancel(true);
-    }
-    if (statusBar != null) {
-      //statusBar.removeCustomIndicationComponent(incomingChangesStatus);
-      //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
-      //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
     }
 
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
+
+    super.deactivate();
   }
 
   @Nullable
   public static HgVcs getInstance(Project project) {
-    if (project == null || project.isDisposed()) { return null; }
+    if (project == null || project.isDisposed()) {
+      return null;
+    }
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (vcsManager == null) { return null; }
-    return (HgVcs) vcsManager.findVcsByName(VCS_NAME);
+    if (vcsManager == null) {
+      return null;
+    }
+    return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
   }
 
   private static String ourTestHgExecutablePath; // path to hg in test mode
@@ -392,10 +360,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
+    return Collections.singletonList(myCommitAndPushExecutor);
   }
 
   public static VcsKey getKey() {
     return ourKey;
   }
+
 }

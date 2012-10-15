@@ -28,7 +28,7 @@ public class AndroidBuilderService extends BuilderService {
 
   @NotNull
   @Override
-  public List<? extends TargetBuilder<?>> createBuilders() {
+  public List<? extends TargetBuilder<?,?>> createBuilders() {
     return Arrays.asList(new AndroidDexBuilder(),
                          new AndroidPackagingBuilder());
   }

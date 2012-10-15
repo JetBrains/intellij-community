@@ -144,6 +144,7 @@ public class IElementType {
   public static IElementType find(short idx) {
     synchronized (ourRegistry) {
       if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.
+      if (idx >= ourRegistry.size() + FIRST_TOKEN_INDEX) return null;
       return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
     }
   }

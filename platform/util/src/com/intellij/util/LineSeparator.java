@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,5 +53,13 @@ public enum LineSeparator {
 
   public static boolean knownAndDifferent(@Nullable LineSeparator separator1, @Nullable LineSeparator separator2) {
     return separator1 != null && separator2 != null && !separator1.equals(separator2);
+  }
+
+  @NotNull
+  public static LineSeparator getSystemLineSeparator() {
+    if (SystemInfo.isWindows) {
+      return CRLF;
+    }
+    return LF;
   }
 }

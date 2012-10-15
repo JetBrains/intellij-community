@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.junit.Before;
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,7 +40,7 @@ import java.io.File;
  * Time: 7:15 PM
  */
 public class SvnBusyOnAddTest extends TestCase {
-  public static final String filename = "test.txt";
+  public static final String filename = "abc/test.txt";
 
   private File myWorkingCopyRoot;
 
@@ -63,6 +65,7 @@ public class SvnBusyOnAddTest extends TestCase {
   public void testRefusedAdd ()throws Exception {
     SVNWCDb db = new SVNWCDb();
     final File ioFile = new File(myWorkingCopyRoot, filename);
+    ioFile.getParentFile().mkdirs();
     ioFile.createNewFile();
     try {
       db.open(ISVNWCDb.SVNWCDbOpenMode.ReadWrite, new DefaultSVNOptions(), true, true);
@@ -92,11 +95,74 @@ public class SvnBusyOnAddTest extends TestCase {
       Assert.assertTrue(failed);
 
       SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
-      readClient.doStatus(ioFile, false);
+      //readClient.doStatus(ioFile, false);
+      readClient.doStatus(myWorkingCopyRoot, false);
     }
     finally {
       ioFile.delete();
       db.close();
+    }
+  }
+
+  public void testStatusDoesNotLockForWrite() throws Exception {
+    final File ioFile = new File(myWorkingCopyRoot, filename);
+    ioFile.getParentFile().mkdirs();
+
+    SVNWCClient client11 = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+    client11.doAdd(ioFile.getParentFile(), true, false, true, true);
+
+    ioFile.createNewFile();
+    try {
+      final SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+      final Semaphore semaphore = new Semaphore();
+      final Semaphore semaphoreMain = new Semaphore();
+      final Semaphore semaphoreWokeUp = new Semaphore();
+
+      final AtomicReference<Boolean> wasUp = new AtomicReference<Boolean>(false);
+      final ISVNStatusHandler handler = new ISVNStatusHandler() {
+        @Override
+        public void handleStatus(SVNStatus status) throws SVNException {
+          semaphore.waitFor();
+          wasUp.set(true);
+        }
+      };
+
+      semaphore.down();
+      semaphoreMain.down();
+      semaphoreWokeUp.down();
+
+      final SVNException[] exception = new SVNException[1];
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            semaphoreMain.up();
+            readClient.doStatus(myWorkingCopyRoot, true, false, true, false, handler);
+            semaphoreWokeUp.up();
+          }
+          catch (SVNException e) {
+            exception[0] = e;
+          }
+        }
+      }).start();
+
+      semaphoreMain.waitFor();
+      try {
+        Thread.sleep(5);
+      } catch (InterruptedException e) {
+        //
+      }
+      SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+      client.doAdd(ioFile, true, false, true, true);
+      semaphore.up();
+      semaphoreWokeUp.waitFor();
+
+      Assert.assertEquals(true, wasUp.get().booleanValue());
+      if (exception[0] != null) {
+        throw exception[0];
+      }
+    } finally {
+      ioFile.delete();
     }
   }
 

@@ -760,7 +760,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             anchorElementHere = myAnchorElementIfOne;
           }
           assignStatement = createAssignment(myField, initializer, anchorElementHere, myParentClass);
-          if (!IntroduceVariableBase.isLoopOrIf(anchorElementHere.getParent())) {
+          if (!RefactoringUtil.isLoopOrIf(anchorElementHere.getParent())) {
             anchorElementHere.getParent().addBefore(assignStatement, getNormalizedAnchor(anchorElementHere));
           }
         }
@@ -821,8 +821,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
         }
 
-        if (anchorElementHere != null && IntroduceVariableBase.isLoopOrIf(anchorElementHere.getParent())) {
-          IntroduceVariableBase.putStatementInLoopBody(assignStatement, anchorElementHere.getParent(), anchorElementHere);
+        if (anchorElementHere != null && RefactoringUtil.isLoopOrIf(anchorElementHere.getParent())) {
+          RefactoringUtil.putStatementInLoopBody(assignStatement, anchorElementHere.getParent(), anchorElementHere);
         }
 
 

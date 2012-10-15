@@ -32,6 +32,7 @@ import java.util.List;
 public class AndroidOSProcessHandler extends BaseOSProcessHandler {
   @NonNls private static final String IGNORING = "ignoring";
   @NonNls private static final String SKIPPING = "skipping";
+  @NonNls private static final String DEBUGGABLE_ERROR = "androidmanifest.xml already defines debuggable";
 
   private final List<String> myInfoMessages = new ArrayList<String>();
   private final List<String> myErrorMessages = new ArrayList<String>();
@@ -54,7 +55,7 @@ public class AndroidOSProcessHandler extends BaseOSProcessHandler {
         myInfoMessages.add(line);
       }
       else if (outputType == ProcessOutputTypes.STDERR) {
-        if (l.contains(IGNORING) || l.contains(SKIPPING)) {
+        if (l.contains(IGNORING) || l.contains(SKIPPING) || l.contains(DEBUGGABLE_ERROR)) {
           myInfoMessages.add(line);
         }
         else {

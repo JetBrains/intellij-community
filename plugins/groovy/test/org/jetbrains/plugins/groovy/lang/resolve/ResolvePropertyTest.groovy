@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.resolve
-
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
 public class ResolvePropertyTest extends GroovyResolveTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/property/";
-  }
+  final String basePath = TestUtils.testDataPath + "resolve/property/"
 
   public void testParameter1() throws Exception {
     doTest("parameter1/A.groovy");
@@ -147,9 +140,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testUndefinedVar1() throws Exception {
     PsiReference ref = configureByFile("undefinedVar1/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrReferenceExpression);
-    GrTopStatement statement = ((GroovyFileBase) resolved.getContainingFile()).getTopStatements()[2];
-    assertTrue(resolved.equals(((GrAssignmentExpression) statement).getLValue()));
+    assertInstanceOf(resolved, GrLightLocalVariable);
   }
 
   public void testRecursive1() throws Exception {
@@ -319,7 +310,7 @@ print ba<caret>r
   private void doUndefinedVarTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrReferenceExpression);
+    assertInstanceOf(resolved, GrLightLocalVariable);
   }
 
   public void testBooleanProperty() throws Exception {
@@ -877,5 +868,31 @@ print othe<caret>r
 ''')
 
     assertInstanceOf(ref.resolve(), GrAccessorMethod)
+  }
+
+  void testPrefLocalVarToScriptName() {
+    myFixture.addFileToProject('foo.groovy', 'print 2')
+
+    def ref = configureByText('''\
+class Bar {
+    public float FOO = 1.23f
+    public float ZZZ = 5.78f
+    public float pi = 3.14f
+    public float xxx = 6f
+
+    void doSmth() {}
+}
+
+class User {
+    public static void main(String[] args) {
+        Bar foo = new Bar()
+        foo.bar()
+        println foo.F<caret>OO * foo.ZZZ * foo.pi * foo.xxx
+        foo.doSmth()
+    }
+}
+''')
+
+    assertInstanceOf(ref.resolve(), GrField)
   }
 }

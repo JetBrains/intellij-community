@@ -261,8 +261,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   public PsiType getNominalType() {
     if (getParent() instanceof GrThrowStatement) return super.getNominalType();
     
-    LOG.assertTrue(PsiUtil.isLValue(this), "it is assumed that nominal type is invoked only for assignment lhs");
-
     GroovyResolveResult[] candidates = multiResolve(true);
     if (candidates.length == 1) {
       return extractLastParameterType(candidates[0]);

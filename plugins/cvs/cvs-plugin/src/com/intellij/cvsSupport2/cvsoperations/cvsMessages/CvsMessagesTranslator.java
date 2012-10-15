@@ -60,7 +60,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern(new String[]{"cvs*: ", "*", " already exists, with version number *"}, 2),
     new CvsMessagePattern(new String[]{"cvs*: cannot commit with sticky date for file `", "*", "'"}, 2),
     new CvsMessagePattern(new String[]{"cvs*: nothing known about `", "*", "'"}, 2),
-    new CvsMessagePattern("cvs*: sticky tag `" + "*" + "' for file `" + "*" + "' is not a branch"),
+    new CvsMessagePattern("cvs*: sticky tag `*' for file `*' is not a branch"),
     new CvsMessagePattern("cvs*: ERROR: cannot mkdir * -- not added: No such file or directory"),
     new CvsMessagePattern(new String[]{"cvs: nothing known about ", "*"}, 2),
     new CvsMessagePattern("Root * must be an absolute pathname"),
@@ -68,6 +68,8 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("cvs* tag: nothing known about *"),
     new CvsMessagePattern("cvs* tag: cannot*"),
     new CvsMessagePattern("cvs* tag:* failed*"),
+    new CvsMessagePattern("cvs* tag: Not removing branch tag `*' from `*,v'."),
+    new CvsMessagePattern("cvs tag: *: Not moving branch tag `*' from * to *."),
     new CvsMessagePattern(new String[]{"cvs*: failed to create lock directory for `", "*", "' (*/#cvs.lock): No such file or directory"}, 2)
   };
 
@@ -76,6 +78,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("cvs server: cannot make path to *: Permission denied"),
     new CvsMessagePattern("cvs server: cannot find module `*' - ignored"),
     new CvsMessagePattern("W * : * already exists on version * : NOT MOVING tag to version *"),
+    new CvsMessagePattern("W * : * already exists on branch * : NOT MOVING tag to branch *"),
     new CvsMessagePattern(new String[]{"cvs server: ", "*", " added independently by second party"}, 2),
     new CvsMessagePattern("cvs server: failed to create lock directory for `*' (*#cvs.lock): No such file or directory"),
     new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'"),
@@ -143,14 +146,11 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
       myListener.addFileMessage(message, myCvsFileSystem);
       return;
     }
-
     if (isMessage(message)) {
       lastMessage = MessageType.MESSAGE;
       myListener.addMessage(message);
       return;
     }
-
-    if (!error) return;
 
     final CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {

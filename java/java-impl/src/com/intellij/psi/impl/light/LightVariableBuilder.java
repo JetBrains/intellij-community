@@ -1,7 +1,8 @@
 package com.intellij.psi.impl.light;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -10,24 +11,26 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author peter
  */
-public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable, NavigationItem {
+public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable, NavigationItem, OriginInfoAwareElement {
   private final String myName;
   private final PsiType myType;
   private volatile LightModifierList myModifierList;
   private volatile Icon myBaseIcon = PlatformIcons.VARIABLE_ICON;
+  private String myOriginInfo;
 
   public LightVariableBuilder(@NotNull String name, @NotNull String type, @NotNull PsiElement navigationElement) {
     this(name, JavaPsiFacade.getElementFactory(navigationElement.getProject()).createTypeFromText(type, navigationElement), navigationElement);
   }
 
   public LightVariableBuilder(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
-    this(navigationElement.getManager(), name, type, StdLanguages.JAVA);
+    this(navigationElement.getManager(), name, type, JavaLanguage.INSTANCE);
     setNavigationElement(navigationElement);
   }
   
@@ -123,5 +126,15 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   public T setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
     return (T)this;
+  }
+
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    return myOriginInfo;
+  }
+
+  public void setOriginInfo(@Nullable String originInfo) {
+    myOriginInfo = originInfo;
   }
 }

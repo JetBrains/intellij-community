@@ -247,22 +247,23 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myTasks.get(id);
   }
 
+  @NotNull
   @Override
-  public List<Task> getIssues(String query) {
+  public List<Task> getIssues(@Nullable final String query) {
     return getIssues(query, true);
   }
 
   @Override
-  public List<Task> getIssues(String query, int max, long since, boolean forceRequest) {
+  public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
+    return getIssues(query, 50, 0, forceRequest);
+  }
+
+  @Override
+  public List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest) {
     List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest);
     if (tasks == null) return getCachedIssues();
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return tasks;
-  }
-
-  @Override
-  public List<Task> getIssues(String query, boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest);
   }
 
   @Override
@@ -272,7 +273,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Nullable
   @Override
-  public Task updateIssue(String id) {
+  public Task updateIssue(@NotNull String id) {
     for (TaskRepository repository : getAllRepositories()) {
       if (repository.extractId(id) == null) {
         continue;
@@ -310,11 +311,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public LocalTaskImpl createLocalTask(String summary) {
+  public LocalTaskImpl createLocalTask(@NotNull String summary) {
     return createTask(LOCAL_TASK_ID_FORMAT.format(myConfig.localTasksCounter++), summary);
   }
 
-  private static LocalTaskImpl createTask(String id, String summary) {
+  private static LocalTaskImpl createTask(@NotNull String id, @NotNull String summary) {
     LocalTaskImpl task = new LocalTaskImpl(id, summary);
     Date date = new Date();
     task.setCreated(date);
@@ -711,7 +712,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  private void doUpdate(Runnable onComplete) {
+  private void doUpdate(@Nullable Runnable onComplete) {
     try {
       List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
       if (issues == null) return;
@@ -753,9 +754,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        Task[] tasks = repository.getIssues(request, max, since);
+        final List<Task> tasks = repository.getIssues(request, max, since);
         myBadRepositories.remove(repository);
-        if (issues == null) issues = new ArrayList<Task>(tasks.length);
+        if (issues == null) issues = new ArrayList<Task>(tasks.size());
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
@@ -822,14 +823,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
     String comment = changeList.getComment();
-    LocalTaskImpl task = createLocalTask(StringUtil.isEmpty(comment) ? changeList.getName() : comment);
+    LocalTaskImpl task = createLocalTask(comment == null || comment.isEmpty() ? changeList.getName() : comment);
     task.getChangeLists().add(new ChangeListInfo(changeList));
     task.setAssociatedChangelistId(id);
   }
 
   @NotNull
   @Override
-  public List<ChangeListInfo> getOpenChangelists(Task task) {
+  public List<ChangeListInfo> getOpenChangelists(@NotNull Task task) {
     if (task instanceof LocalTaskImpl) {
       List<ChangeListInfo> changeLists = ((LocalTaskImpl)task).getChangeLists();
       for (Iterator<ChangeListInfo> it = changeLists.iterator(); it.hasNext();) {
@@ -867,8 +868,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public int taskHistoryLength = 50;
 
     public boolean updateEnabled = true;
-    public int updateInterval = 5;
-    public int updateIssuesCount = 50;
+    public int updateInterval = 20;
+    public int updateIssuesCount = 100;
 
     public boolean clearContext = true;
     public boolean createChangelist = true;

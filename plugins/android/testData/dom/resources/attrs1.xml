@@ -2,6 +2,6 @@
 
 <resources>
      <declare-styleable name="LabelView">
-        <attr name="text" format="s<caret>"/>
+        <attr name="text" format="st<caret>"/>
     </declare-styleable>
 </resources>

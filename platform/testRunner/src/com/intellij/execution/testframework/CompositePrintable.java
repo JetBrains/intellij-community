@@ -261,7 +261,10 @@ public class CompositePrintable implements Printable, Disposable {
       @Override
       public void print(String text, ConsoleViewContentType contentType) {
         try {
-          IOUtil.writeString(contentType.toString() + text, getFileWriter());
+          final DataOutputStream writer = getFileWriter();
+          if (writer != null) {
+            IOUtil.writeString(contentType.toString() + text, writer);
+          }
         }
         catch (FileNotFoundException e) {
           LOG.info(e);
@@ -276,11 +279,13 @@ public class CompositePrintable implements Printable, Disposable {
         if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
-            DataOutputStream fileWriter = getFileWriter();
-            IOUtil.writeString(HYPERLINK, fileWriter);
-            IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
-            IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
-            IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
+            final DataOutputStream fileWriter = getFileWriter();
+            if (fileWriter != null) {
+              IOUtil.writeString(HYPERLINK, fileWriter);
+              IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
+              IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
+              IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
+            }
           }
           catch (FileNotFoundException e) {
             LOG.info(e);

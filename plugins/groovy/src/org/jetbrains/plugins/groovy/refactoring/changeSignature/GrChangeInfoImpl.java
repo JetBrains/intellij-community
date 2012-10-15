@@ -99,8 +99,8 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
 
     GrParameter[] params = method.getParameters();
     final int oldParameterCount = this.method.getParameters().length;
-    myOldParameterNames=new String[oldParameterCount];
-    myOldParameterTypes=new String[oldParameterCount];
+    myOldParameterNames = new String[oldParameterCount];
+    myOldParameterTypes = new String[oldParameterCount];
 
     for (int i = 0; i < oldParameterCount; i++) {
       GrParameter param = params[i];
@@ -156,7 +156,8 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     if (myIsNameChanged) {
       if (StringUtil.isJavaIdentifier(newName)) {
         myNewNameIdentifier = JavaPsiFacade.getElementFactory(getMethod().getProject()).createIdentifier(newName);
-      } else {
+      }
+      else {
         myNewNameIdentifier = getMethod().getNameIdentifier();
       }
     }

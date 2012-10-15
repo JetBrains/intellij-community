@@ -1245,7 +1245,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
 
       if (myEditor.getComponent().getRootPane() == null) {
-        LOG.error("Null root pane");
+        return;
       }
 
       updateScrollbarVisibility();

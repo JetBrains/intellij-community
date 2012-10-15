@@ -103,7 +103,6 @@ public class AstBufferUtil {
     public void visitComposite(CompositeElement composite) {
       if (composite instanceof LazyParseableElement) {
         LazyParseableElement lpe = (LazyParseableElement)composite;
-        assert buffer != null;
         int lpeResult = lpe.copyTo(buffer, end);
         if (lpeResult >= 0) {
           end = lpeResult;

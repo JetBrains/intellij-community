@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,9 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
       myCombo.setSelectedItem(tags.getSelection());
     }
     else {
-      LOG.error("value " + LogUtil.objectAndClass(value) + ", at " + row + ":" + column + ", in " + table.getModel());
+      if (value != null) {
+        LOG.error("value " + LogUtil.objectAndClass(value) + ", at " + row + ":" + column + ", in " + table.getModel());
+      }
       myCombo.removeAllItems();
       myCombo.setSelectedIndex(-1);
     }

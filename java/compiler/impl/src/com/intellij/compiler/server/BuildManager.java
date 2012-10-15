@@ -137,7 +137,7 @@ public class BuildManager implements ApplicationComponent{
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
   private final Executor myPooledThreadExecutor = new Executor() {
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NotNull Runnable command) {
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
@@ -478,7 +478,7 @@ public class BuildManager implements ApplicationComponent{
             globals = buildGlobalSettings();
             myGlobals = globals;
           }
-          CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges = null;
+          CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
           synchronized (myProjectDataMap) {
             ProjectData data = myProjectDataMap.get(projectPath);
@@ -506,16 +506,25 @@ public class BuildManager implements ApplicationComponent{
                      CmdlineProtoUtil.createForceCompileRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
           }
 
-          myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
+          myMessageDispatcher.registerBuildMessageHandler(sessionId, new BuilderMessageHandlerWrapper(handler) {
+            @Override
+            public void sessionTerminated(UUID sessionId) {
+              try {
+                super.sessionTerminated(sessionId);
+              }
+              finally {
+                future.setDone();
+              }
+            }
+          }, params);
 
           try {
             projectTaskQueue.submit(new Runnable() {
               @Override
               public void run() {
+                ExecutionException execFailure = null;
                 try {
                   if (project.isDisposed()) {
-                    myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-                    handler.sessionTerminated(sessionId);
                     return;
                   }
                   myBuildsInProgress.put(projectPath, future);
@@ -528,14 +537,6 @@ public class BuildManager implements ApplicationComponent{
                   };
                   final StringBuilder stdErrOutput = new StringBuilder();
                   processHandler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void processTerminated(ProcessEvent event) {
-                      final BuilderMessageHandler handler = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-                      if (handler != null) {
-                        handler.sessionTerminated(sessionId);
-                      }
-                    }
-
                     @Override
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
                       // re-translate builder's output to idea.log
@@ -561,30 +562,39 @@ public class BuildManager implements ApplicationComponent{
                       else {
                         msg.append("unknown error");
                       }
-                      future.getMessageHandler().handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
+                      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(msg.toString(), null));
                     }
                   }
                   else {
-                    future.getMessageHandler().handleFailure(sessionId, CmdlineProtoUtil.createFailure("Disconnected from build process", null));
+                    handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure("Disconnected from build process", null));
                   }
                 }
                 catch (ExecutionException e) {
-                  myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-                  handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-                  handler.sessionTerminated(sessionId);
+                  execFailure = e;
                 }
                 finally {
                   myBuildsInProgress.remove(projectPath);
-                  future.setDone();
+                  if (myMessageDispatcher.getAssociatedChannel(sessionId) == null) {
+                    // either the connection has never been established (process not started or execution failed), or no messages were sent from the launched process.
+                    // in this case the session cannot be unregistered by the message dispatcher
+                    final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+                    if (unregistered != null) {
+                      if (execFailure != null) {
+                        unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(execFailure.getMessage(), execFailure));
+                      }
+                      unregistered.sessionTerminated(sessionId);
+                    }
+                  }
                 }
               }
             });
           }
           catch (Throwable e) {
-            myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-            handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
-            handler.sessionTerminated(sessionId);
-            future.setDone();
+            final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+            if (unregistered != null) {
+              unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
+              unregistered.sessionTerminated(sessionId);
+            }
           }
         }
       });
@@ -761,21 +771,12 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + host);
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
-    final String lang = System.getProperty("user.language");
-    if (lang != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.language=" + lang);
-    }
-    final String country = System.getProperty("user.country");
-    if (country != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.country=" + country);
-    }
-    //noinspection HardCodedStringLiteral
-    final String region = System.getProperty("user.region");
-    if (region != null) {
-      //noinspection HardCodedStringLiteral
-      cmdLine.addParameter("-Duser.region=" + region);
+    String[] propertyNames = {"user.language", "user.country", "user.region"};
+    for (String name : propertyNames) {
+      final String value = System.getProperty(name);
+      if (value != null) {
+        cmdLine.addParameter("-D" + name + "=" + value);
+      }
     }
 
     cmdLine.addParameter("-classpath");
@@ -912,6 +913,34 @@ public class BuildManager implements ApplicationComponent{
       builder.append(FileUtil.toCanonicalPath(file.getPath()));
     }
     return builder.toString();
+  }
+
+  private static class BuilderMessageHandlerWrapper implements BuilderMessageHandler {
+    private final DefaultMessageHandler myHandler;
+
+    public BuilderMessageHandlerWrapper(DefaultMessageHandler handler) {
+      myHandler = handler;
+    }
+
+    @Override
+    public void buildStarted(UUID sessionId) {
+      myHandler.buildStarted(sessionId);
+    }
+
+    @Override
+    public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
+      myHandler.handleBuildMessage(channel, sessionId, msg);
+    }
+
+    @Override
+    public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+      myHandler.handleFailure(sessionId, failure);
+    }
+
+    @Override
+    public void sessionTerminated(UUID sessionId) {
+      myHandler.sessionTerminated(sessionId);
+    }
   }
 
   private class ProjectWatcher extends ProjectManagerAdapter {

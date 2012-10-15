@@ -2,7 +2,7 @@ package org.jetbrains.jps.cmdline;
 
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;

@@ -121,8 +121,8 @@ public class PasswordSafeImpl extends PasswordSafe {
   public void removePassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
-      provider().removePassword(project, requester, key);
     }
+    provider().removePassword(project, requester, key);
   }
 
   /**
@@ -131,8 +131,8 @@ public class PasswordSafeImpl extends PasswordSafe {
   public void storePassword(@Nullable Project project, Class requester, String key, String value) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().storePassword(project, requester, key, value);
-      provider().storePassword(project, requester, key, value);
     }
+    provider().storePassword(project, requester, key, value);
   }
 
   /**

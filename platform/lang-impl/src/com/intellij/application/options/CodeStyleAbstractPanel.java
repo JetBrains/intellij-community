@@ -172,7 +172,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void updateEditor(boolean useDefaultSample) {
-    if (!myShouldUpdatePreview || !myEditor.getComponent().isShowing()) {
+    if (!myShouldUpdatePreview || (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getComponent().isShowing())) {
       return;
     }
 
@@ -474,12 +474,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   public void onSomethingChanged() {
     setSomethingChanged(true);
     if (myEditor != null) {
-      UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
-        @Override
-        public void run() {
-          addUpdatePreviewRequest();
-        }
-      });
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        updateEditor(true);
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
+          @Override
+          public void run() {
+            addUpdatePreviewRequest();
+          }
+        });
+      }
     }
   }
 

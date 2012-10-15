@@ -62,7 +62,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setBackground(isSelected ? bg : fileBgColor == null ? list.getBackground() : fileBgColor);
     panel.setForeground(isSelected ? fg : list.getForeground());
 
-    if (usage == null) {
+    if (usage == null || usageNode instanceof ShowUsagesAction.StringNode) {
       panel.setLayout(new BorderLayout());
       if (column == 0) {
         panel.add(new JLabel("<html><body><b>" + value + "</b></body></html>", SwingConstants.CENTER));

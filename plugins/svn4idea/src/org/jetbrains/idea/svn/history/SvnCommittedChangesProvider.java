@@ -568,6 +568,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return new SvnRepositoryLocation(FileUtil.toSystemIndependentName(url));
   }
 
+  @Override
+  public boolean supportsIncomingChanges() {
+    return true;
+  }
+
   private static class RenameContext {
     @NotNull
     private String myCurrentPath;

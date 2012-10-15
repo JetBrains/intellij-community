@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends BaseInspection {
@@ -34,15 +33,13 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "confusing.octal.escape.sequence.display.name");
+    return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "confusing.octal.escape.sequence.problem.descriptor");
+    return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.problem.descriptor");
   }
 
   @Override
@@ -50,30 +47,20 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
     return new ConfusingOctalEscapeVisitor();
   }
 
-  private static class ConfusingOctalEscapeVisitor
-    extends BaseInspectionVisitor {
+  private static class ConfusingOctalEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
-      if (!TypeUtils.expressionHasType(expression,
-                                       CommonClassNames.JAVA_LANG_STRING)) {
+      if (!ExpressionUtils.hasStringType(expression)) {
         return;
       }
       final String text = expression.getText();
-      if (!containsConfusingOctalEscape(text)) {
-        return;
-      }
-      registerError(expression);
-    }
-
-    private static boolean containsConfusingOctalEscape(String text) {
       int escapeStart = -1;
       while (true) {
         escapeStart = text.indexOf((int)'\\', escapeStart + 1);
         if (escapeStart < 0) {
-          return false;
+          return;
         }
         if (escapeStart > 0 && text.charAt(escapeStart - 1) == '\\') {
           continue;
@@ -89,21 +76,20 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
           continue;
         }
         escapeStart = nextChar - 1;
-        int digitPosition = escapeStart + 1;
-        while (digitPosition < textLength &&
-               Character.isDigit(text.charAt(digitPosition))) {
-          digitPosition++;
-        }
-        if (digitPosition > escapeStart + 1) {
-          final String escapeString = text.substring(escapeStart + 1,
-                                                     digitPosition);
-          if (escapeString.length() > 3) {
-            return true;
+        int length = 1;
+        while (escapeStart + length < textLength) {
+          final char c = text.charAt(escapeStart + length);
+          if (!Character.isDigit(c)) {
+            break;
           }
-          if (escapeString.indexOf((int)'8') > 0 ||
-              escapeString.indexOf((int)'9') > 0) {
-            return true;
+          if (c == (int)'8' || c == (int)'9') {
+            registerErrorAtOffset(expression, escapeStart, length);
+            break;
+          } else if (length > 3) {
+            registerErrorAtOffset(expression, escapeStart, length);
+            break;
           }
+          length++;
         }
       }
     }

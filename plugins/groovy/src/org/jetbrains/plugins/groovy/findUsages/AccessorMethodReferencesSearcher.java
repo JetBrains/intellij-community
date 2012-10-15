@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 
 /**
  * author ven
@@ -47,7 +47,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
 
     final String propertyName;
     if (MixinMemberContributor.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
-      final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false);
+      final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false, null);
       propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
     }
     else {

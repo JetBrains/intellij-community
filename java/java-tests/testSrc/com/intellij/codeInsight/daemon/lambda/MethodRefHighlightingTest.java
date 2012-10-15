@@ -81,6 +81,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVarargs1() throws Exception {
+    doTest();
+  }
+
   public void testConstructorRefInnerFromSuper() throws Exception {
     doTest();
   }
@@ -91,6 +95,42 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testRawQualifier() throws Exception {
     doTest();
+  }
+
+  public void testCyclicInference() throws Exception {
+    doTest();
+  }
+
+  public void testAccessModifiers() throws Exception {
+    doTest();
+  }
+  
+  public void testDefaultConstructor() throws Exception {
+    doTest();
+  }
+
+  public void testWildcards() throws Exception {
+    doTest();
+  }
+
+  public void testVarargsInReceiverPosition() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromMethodReference() throws Exception {
+    doTest();
+  }
+
+  public void testAssignability1() throws Exception {
+    doTest();
+  }
+
+  public void testTypeArgumentsOnMethodRefs() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromReturnType() throws Exception {
+    doTest(true);
   }
 
   public void testReturnTypeSpecific() throws Exception {

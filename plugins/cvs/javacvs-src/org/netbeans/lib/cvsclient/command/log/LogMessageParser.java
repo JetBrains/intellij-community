@@ -87,8 +87,7 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   // Setup ==================================================================
 
-  public LogMessageParser(IEventSender eventSender,
-                          ICvsFileSystem cvsFileSystem) {
+  public LogMessageParser(IEventSender eventSender, ICvsFileSystem cvsFileSystem) {
     BugLog.getInstance().assertNotNull(eventSender);
     BugLog.getInstance().assertNotNull(cvsFileSystem);
 
@@ -101,15 +100,12 @@ final public class LogMessageParser extends AbstractMessageParser {
   // Implemented ============================================================
 
   protected void outputDone() {
-
     if (addingDescription) {
       addingDescription = false;
-      logInfo.setDescription(getMessageFromBuffer());
     }
     if (processingRevision) {
-      logInfo.addRevision(revision);
       revision.setMessage(getMessageFromBuffer());
-
+      logInfo.addRevision(revision);
       revision = null;
       processingRevision = false;
 
@@ -118,7 +114,6 @@ final public class LogMessageParser extends AbstractMessageParser {
       eventSender.notifyFileInfoListeners(logInfo);
       logInfo = null;
     }
-
     logMessageBuffer = null;
   }
 
@@ -143,8 +138,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     return logMessageString.startsWith(FINAL_SPLIT) || logMessageString.startsWith(FINAL_SPLIT_WITH_TAB);
   }
 
-  public void parseLine(String line,
-                        boolean isErrorMessage) {
+  public void parseLine(String line, boolean isErrorMessage) {
     if (isErrorMessage) return;
     if (processingRevision) {
       if (line.startsWith(RCS_FILE)) {

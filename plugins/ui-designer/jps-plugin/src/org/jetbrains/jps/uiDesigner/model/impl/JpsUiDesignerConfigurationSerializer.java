@@ -22,6 +22,9 @@ public class JpsUiDesignerConfigurationSerializer extends JpsProjectExtensionSer
   @Override
   public void loadExtension(@NotNull JpsProject element, @NotNull Element componentTag) {
     JpsUiDesignerConfigurationImpl.UiDesignerConfigurationState state = XmlSerializer.deserialize(componentTag, JpsUiDesignerConfigurationImpl.UiDesignerConfigurationState.class);
+    if (state == null) {
+      state = new JpsUiDesignerConfigurationImpl.UiDesignerConfigurationState();
+    }
     JpsUiDesignerExtensionService.getInstance().setUiDesignerConfiguration(element, new JpsUiDesignerConfigurationImpl(state));
   }
 

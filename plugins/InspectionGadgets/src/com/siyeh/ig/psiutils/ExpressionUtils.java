@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -461,5 +462,17 @@ public class ExpressionUtils {
     final String callName = methodExpression.getReferenceName();
     return PsiKeyword.THIS.equals(callName) ||
            PsiKeyword.SUPER.equals(callName);
+  }
+
+  public static boolean hasType(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
+    if (expression == null) {
+      return false;
+    }
+    final PsiType type = expression.getType();
+    return TypeUtils.typeEquals(typeName, type);
+  }
+
+  public static boolean hasStringType(@Nullable PsiExpression expression) {
+    return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
   }
 }

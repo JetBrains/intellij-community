@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -24,6 +23,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -56,7 +56,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class BuildArtifactAction extends AnAction {
+public class BuildArtifactAction extends DumbAwareAction {
   public BuildArtifactAction() {
     super("Build Artifacts...", "Select and build artifacts configured in the project", null);
   }

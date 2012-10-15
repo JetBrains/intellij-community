@@ -42,10 +42,11 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaProcessor");
+  private static Logger LOG = Logger.getInstance(ConvertToJavaProcessor.class);
+
   private GroovyFile[] myFiles;
 
-  protected ConvertToJavaProcessor(Project project, GroovyFile[] files) {
+  protected ConvertToJavaProcessor(Project project, GroovyFile... files) {
     super(project);
     myFiles = files;
   }
@@ -70,7 +71,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    return new UsageInfo[0];
+    return UsageInfo.EMPTY_ARRAY;
   }
 
   //private static String

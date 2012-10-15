@@ -17,36 +17,50 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class TokenSetTest {
-  private IElementType T1, T2, T3, T4, T5, T6;
+  @Parameterized.Parameters
+  public static List<Object[]> data() {
+    return Collections.nCopies(10, ArrayUtil.EMPTY_OBJECT_ARRAY);
+     	}
+
+  private static IElementType T1, T2, T3, T4, T5, T6;
   private TokenSet S1, S12, S3, S34, S5;
 
-  @Before
-  public void setUp() {
+  @BeforeClass
+  public static void setUp() {
     T1 = new IElementType("T1", Language.ANY);
     T2 = new IElementType("T2", Language.ANY);
-    S1 = TokenSet.create(T1);
-    S12 = TokenSet.create(T1, T2);
     fakeElements(1, 128);
     T3 = new IElementType("T3", Language.ANY);
     T4 = new IElementType("T4", Language.ANY);
-    S3 = TokenSet.create(T3);
-    S34 = TokenSet.create(T3, T4);
     fakeElements(201, 204);
     T5 = new IElementType("T5", Language.ANY);
     T6 = new IElementType("T6", Language.ANY);
+  }
+
+  @Before
+  public void isetup() {
+    S1 = TokenSet.create(T1);
+    S12 = TokenSet.create(T1, T2);
+    S3 = TokenSet.create(T3);
+    S34 = TokenSet.create(T3, T4);
     S5 = TokenSet.create(T5);
+
   }
 
   @Test
@@ -92,9 +106,9 @@ public class TokenSetTest {
   @SuppressWarnings("deprecation")
   @Test
   public void not() throws Exception {
-    check(TokenSet.not(S12));
-    check(TokenSet.not(S34), T1, T2);
-    check(TokenSet.not(S5), T1, T2, T3, T4, T6);
+    checkNot(TokenSet.not(S12), T1, T2);
+    checkNot(TokenSet.not(S34), T3, T4);
+    checkNot(TokenSet.not(S5), T5);
   }
 
   private static void fakeElements(int from, int to) {
@@ -103,7 +117,7 @@ public class TokenSetTest {
     }
   }
 
-  private void check(TokenSet set, IElementType... elements) {
+  private static void check(@NotNull TokenSet set, @NotNull IElementType... elements) {
     final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
     for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
       if (expected.contains(t)) {
@@ -114,6 +128,19 @@ public class TokenSetTest {
       }
     }
   }
+
+  private static void checkNot(@NotNull TokenSet set, @NotNull IElementType... elements) {
+    final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
+    for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
+      if (!expected.contains(t)) {
+        assertTrue("missed: " + t, set.contains(t));
+      }
+      else {
+        assertFalse("unexpected: " + t, set.contains(t));
+      }
+    }
+  }
+
 
   @Test
   public void performance() throws Exception {

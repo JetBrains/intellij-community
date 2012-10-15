@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -432,7 +433,7 @@ public class ExpressionGenerator extends Generator {
         writeAssignmentWithSetter(((GrReferenceExpression)realLValue).getQualifier(), (PsiMethod)resolved, expression);
         return;
       }
-      else if (resolved == null || resolved instanceof GrReferenceExpression) {
+      else if (resolved == null || resolved instanceof GrLightLocalVariable) {
         //write unresolved reference assignment via setter GroovyObject.setProperty(String name, Object value)
         final GrExpression qualifier = ((GrReferenceExpression)realLValue).getQualifier();
         final PsiType type = qualifier != null ? qualifier.getType() : factory.createExpressionFromText("this", expression).getType();
@@ -889,7 +890,7 @@ public class ExpressionGenerator extends Generator {
     //all refs in script that are not resolved are saved in 'binding' of the script
     if (qualifier == null &&
         (resolved == null ||
-         resolved instanceof GrReferenceExpression ||
+         resolved instanceof GrLightLocalVariable ||
          resolved instanceof LightElement && !(resolved instanceof ClosureSyntheticParameter)) &&
         (referenceExpression.getParent() instanceof GrIndexProperty || !(referenceExpression.getParent() instanceof GrCall)) &&
         PsiUtil.getContextClass(referenceExpression) instanceof GroovyScriptClass) {
@@ -941,7 +942,7 @@ public class ExpressionGenerator extends Generator {
         builder.append('.');
       }
 
-      if (resolved instanceof PsiNamedElement && !(resolved instanceof GrReferenceExpression)) {
+      if (resolved instanceof PsiNamedElement && !(resolved instanceof GrLightLocalVariable)) {
         final String refName = ((PsiNamedElement)resolved).getName();
 
         if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {
@@ -950,6 +951,9 @@ public class ExpressionGenerator extends Generator {
           if (!PsiUtil.isAccessedForWriting(referenceExpression)) {
             builder.append(".get()");
           }
+        }
+        else if (resolved instanceof PsiClass) {
+          writeType(builder, referenceExpression.getType(), referenceExpression);
         }
         else {
           builder.append(refName);

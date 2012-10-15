@@ -27,10 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.Notificator;
+import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -71,26 +68,32 @@ public final class GitPusher {
   private static final String INDICATOR_TEXT = "Pushing";
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
-  private final @NotNull Project myProject;
-  private final @NotNull GitRepositoryManager myRepositoryManager;
-  private final @NotNull ProgressIndicator myProgressIndicator;
-  private final @NotNull Collection<GitRepository> myRepositories;
-  private final @NotNull GitVcsSettings mySettings;
-  private final @NotNull GitPushSettings myPushSettings;
-  private final @NotNull Git myGit;
+  @NotNull private final Project myProject;
+  @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final ProgressIndicator myProgressIndicator;
+  @NotNull private final Collection<GitRepository> myRepositories;
+  @NotNull private final GitVcsSettings mySettings;
+  @NotNull private final GitPushSettings myPushSettings;
+  @NotNull private final Git myGit;
+  @NotNull private final PlatformFacade myPlatformFacade;
 
-  public static void showPushDialogAndPerformPush(@NotNull final Project project) {
+  public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull PlatformFacade facade) {
     final GitPushDialog dialog = new GitPushDialog(project);
     dialog.show();
     if (dialog.isOK()) {
-      Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          new GitPusher(project, indicator).push(dialog.getPushInfo());
-        }
-      };
-      GitVcs.runInBackground(task);
+      runPushInBackground(project, facade, dialog);
     }
+  }
+
+  private static void runPushInBackground(@NotNull final Project project, @NotNull final PlatformFacade facade,
+                                          @NotNull final GitPushDialog dialog) {
+    Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        new GitPusher(project, facade, indicator).push(dialog.getPushInfo());
+      }
+    };
+    GitVcs.runInBackground(task);
   }
 
   // holds settings chosen in GitRejectedPushUpdate dialog to reuse if the next push is rejected again.
@@ -121,8 +124,9 @@ public final class GitPusher {
     }
   }
 
-  public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  public GitPusher(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull ProgressIndicator indicator) {
     myProject = project;
+    myPlatformFacade = facade;
     myProgressIndicator = indicator;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositories = myRepositoryManager.getRepositories();
@@ -551,8 +555,8 @@ public final class GitPusher {
   
   private boolean update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
-    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<GitRepository>(rootsToUpdate),
-                                                UpdatedFiles.create()).update(um);
+    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
+                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create()).update(um);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
     }

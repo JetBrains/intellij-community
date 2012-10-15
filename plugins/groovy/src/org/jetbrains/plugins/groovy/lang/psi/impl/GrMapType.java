@@ -43,23 +43,11 @@ public class GrMapType extends GrLiteralClassType {
   private final List<Pair<PsiType, PsiType>> myOtherEntries;
   private final String myJavaClassName;
 
-  public GrMapType(GlobalSearchScope scope) {
-    this(JavaPsiFacade.getInstance(scope.getProject()), scope, Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType, PsiType>>emptyList(), LanguageLevel.JDK_1_5);
-  }
-
-  public GrMapType(JavaPsiFacade facade,
-                   GlobalSearchScope scope,
-                   Map<String, PsiType> stringEntries,
-                   List<Pair<PsiType, PsiType>> otherEntries) {
-    this(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
-  }
-
-
-  public GrMapType(JavaPsiFacade facade,
-                   GlobalSearchScope scope,
-                   Map<String, PsiType> stringEntries,
-                   List<Pair<PsiType, PsiType>> otherEntries,
-                   LanguageLevel languageLevel) {
+  private GrMapType(JavaPsiFacade facade,
+                    GlobalSearchScope scope,
+                    Map<String, PsiType> stringEntries,
+                    List<Pair<PsiType, PsiType>> otherEntries,
+                    LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
     myStringEntries = stringEntries;
     myOtherEntries = otherEntries;
@@ -73,19 +61,23 @@ public class GrMapType extends GrLiteralClassType {
     myJavaClassName = myFacade.findClass(JAVA_UTIL_LINKED_HASH_MAP, myScope) != null ? JAVA_UTIL_LINKED_HASH_MAP : JAVA_UTIL_MAP;
 
     myStringEntries = new HashMap<String, PsiType>();
-    myOtherEntries=new ArrayList<Pair<PsiType, PsiType>>();
+    myOtherEntries = new ArrayList<Pair<PsiType, PsiType>>();
 
     for (GrNamedArgument arg : args) {
       GrArgumentLabel label = arg.getLabel();
       if (label == null) continue;
+
       GrExpression expression = arg.getExpression();
       if (expression == null || expression.getType() == null) continue;
 
-      if (label.getName() != null) {
-        myStringEntries.put(label.getName(), expression.getType());
+      String labelName = label.getName();
+      GrExpression labelExpression = label.getExpression();
+
+      if (labelName != null) {
+        myStringEntries.put(labelName, expression.getType());
       }
-      else if (label.getExpression() != null) {
-        PsiType type = label.getExpression().getType();
+      else if (labelExpression != null) {
+        PsiType type = labelExpression.getType();
         myOtherEntries.add(new Pair<PsiType, PsiType>(type, expression.getType()));
       }
     }
@@ -215,6 +207,20 @@ public class GrMapType extends GrLiteralClassType {
     other.addAll(l.myOtherEntries);
     other.addAll(r.myOtherEntries);
 
-    return new GrMapType(l.myFacade, scope, strings, other);
+    return create(l.myFacade, scope, strings, other);
+  }
+
+  public static GrMapType create(JavaPsiFacade facade,
+                                 GlobalSearchScope scope,
+                                 Map<String, PsiType> stringEntries,
+                                 List<Pair<PsiType, PsiType>> otherEntries) {
+    return new GrMapType(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
+  }
+
+  public static GrMapType create(GlobalSearchScope scope) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
+    List<Pair<PsiType, PsiType>> otherEntries = Collections.emptyList();
+    Map<String, PsiType> stringEntries = Collections.emptyMap();
+    return new GrMapType(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 }

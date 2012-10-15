@@ -78,6 +78,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
 
     setContainingClass(myProperty.getContainingClass());
     setMethodKind("AccessorMethod");
+    setOriginInfo("synthetic accessor for '"+myProperty.getName()+"'");
   }
 
   @Nullable
@@ -124,7 +125,6 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   public static GrAccessorMethod createSetterMethod(GrField field) {
     if (field.isProperty() && !field.hasModifierProperty(PsiModifier.FINAL)) {
       String fieldName = field.getName();
-      assert fieldName != null;
 
       String name = GroovyPropertyUtils.getSetterName(fieldName);
       final GrAccessorMethod setter = new GrAccessorMethodImpl(field, true, name);
@@ -140,7 +140,6 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   public static GrAccessorMethod[] createGetterMethods(GrField field) {
     if (field.isProperty()) {
       String fieldName = field.getName();
-      assert fieldName != null;
 
       final PsiClass clazz = field.getContainingClass();
       GrAccessorMethod getter1 = new GrAccessorMethodImpl(field, false, GroovyPropertyUtils.getGetterNameNonBoolean(fieldName));

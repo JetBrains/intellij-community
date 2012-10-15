@@ -54,7 +54,10 @@ public class JUnit3Framework extends JavaTestFramework {
   }
 
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    return JUnitUtil.isJUnit3TestClass(clazz);
+    if (JUnitUtil.isJUnit3TestClass(clazz)) {
+      return true;
+    }
+    return JUnitUtil.findSuiteMethod(clazz) != null;
   }
 
   @Override

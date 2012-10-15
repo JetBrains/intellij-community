@@ -52,13 +52,13 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
 
   public TextFieldWithAutoCompletion() {
     // For UI designer
-    this(null, null, false);
+    this(null, null, false, null);
   }
 
   public TextFieldWithAutoCompletion(final Project project,
                                      @Nullable final TextFieldWithAutoCompletionListProvider<T> provider,
-                                     final boolean showAutocompletionIsAvailableHint) {
-    super(PlainTextLanguage.INSTANCE, project, "");
+                                     final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
+    super(PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
 
     myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
 
@@ -70,8 +70,9 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
   public static TextFieldWithAutoCompletion<String> create(final Project project,
                                                            @NotNull final Collection<String> items,
                                                            @Nullable final Icon icon,
-                                                           final boolean showAutocompletionIsAvailableHint) {
-    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint);
+                                                           final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
+    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint,
+                                                   text);
   }
 
   @Override

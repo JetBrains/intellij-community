@@ -24,6 +24,7 @@ import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +45,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -57,17 +61,18 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -82,13 +87,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   static final NullUsage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
   private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;
 
-  private static final Comparator<Object> USAGE_NODE_COMPARATOR = new Comparator<Object>() {
+  private static final Comparator<UsageNode> USAGE_NODE_COMPARATOR = new Comparator<UsageNode>() {
     @Override
-    public int compare(Object c1, Object c2) {
-      if (!(c1 instanceof UsageNode)) return 1;
-      if (!(c2 instanceof UsageNode)) return -1;
-      Usage o1 = ((UsageNode)c1).getUsage();
-      Usage o2 = ((UsageNode)c2).getUsage();
+    public int compare(UsageNode c1, UsageNode c2) {
+      if (c1 instanceof StringNode) return 1;
+      if (c2 instanceof StringNode) return -1;
+      Usage o1 = c1.getUsage();
+      Usage o2 = c2.getUsage();
       if (o1 == MORE_USAGES_SEPARATOR) return 1;
       if (o2 == MORE_USAGES_SEPARATOR) return -1;
 
@@ -193,7 +198,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @NotNull
   private static FindUsagesOptions getDefaultOptions(@NotNull FindUsagesHandler handler) {
-    return handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+    FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+    // by default, scope in FindUsagesOptions is copied from the FindSettings, but we need a default one
+    options.searchScope = getMaximalScope(handler);
+    return options;
   }
 
   private void showElementUsages(@NotNull final FindUsagesHandler handler,
@@ -201,6 +209,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                  @NotNull final RelativePoint popupPosition,
                                  final int maxUsages,
                                  @NotNull final FindUsagesOptions options) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
     final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
@@ -229,8 +238,24 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     final MyTable table = new MyTable();
     final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
+    boolean hadMoreSeparator = visibleNodes.remove(MORE_USAGES_SEPARATOR_NODE);
+    if (hadMoreSeparator) {
+      usages.add(MORE_USAGES_SEPARATOR);
+      visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
+    }
+
+    addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
+
+    TableScrollingUtil.installActions(table);
+
+    final List<UsageNode> data = collectData(usages, visibleNodes, usageView, presentation);
+    setTableModel(table, usageView, data);
+
+    SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(table);
+    speedSearch.setComparator(new SpeedSearchComparator(false));
+
     final JBPopup popup = createUsagePopup(usages, descriptor, visibleNodes, handler, editor, popupPosition,
-                                           maxUsages, usageView, options, table, presentation, processIcon);
+                                           maxUsages, usageView, options, table, presentation, processIcon, hadMoreSeparator);
 
     Disposer.register(popup, usageView);
 
@@ -248,10 +273,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       public boolean value(Object o) {
         return popup.isDisposed();
       }
-    }, 1000, new Runnable() {
+    }, 100, new Runnable() {
       @Override
       public void run() {
-        rebuildPopup(usageView, usages, table, popup, presentation, popupPosition, !processIcon.isDisposed());
+        List<Usage> copy;
+        synchronized (usages) {
+          copy = new ArrayList<Usage>(usages);
+        }
+        rebuildPopup(usageView, copy, table, popup, presentation, popupPosition, !processIcon.isDisposed());
       }
     });
 
@@ -281,7 +310,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
               usages.add(MORE_USAGES_SEPARATOR);
               continueSearch = false;
             }
-            pingEDT.ping();
+            boolean invoked = pingEDT.ping();
+
             return continueSearch;
           }
         }
@@ -349,6 +379,49 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     });
   }
 
+  @NotNull
+  private static UsageNode createStringNode(@NotNull final Object string) {
+    return new StringNode(string);
+  }
+
+  private static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
+    private MyModel(@NotNull List<UsageNode> data, int cols) {
+      super(cols(cols), data, 0);
+    }
+
+    @NotNull
+    private static ColumnInfo[] cols(int cols) {
+      ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
+        @Nullable
+        @Override
+        public UsageNode valueOf(UsageNode node) {
+          return node;
+        }
+      };
+      List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
+      return list.toArray(new ColumnInfo[list.size()]);
+    }
+
+    @Override
+    public void addToModel(int idx, Object element) {
+      UsageNode node = element instanceof UsageNode ? (UsageNode)element : createStringNode(element);
+
+      if (idx < getRowCount()) {
+        insertRow(idx, node);
+      }
+      else {
+        addRow(node);
+      }
+    }
+
+    @Override
+    public void removeRangeFromModel(int start, int end) {
+      for (int i=end-1; i>=start; i--) {
+        removeRow(i);
+      }
+    }
+  }
+
   private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
     if (!popup.isDisposed() && !popup.isVisible()) {
       popup.show(popupPosition);
@@ -383,7 +456,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                          @NotNull final Runnable cancelAction,
                                          final int maxUsages,
                                          @NotNull final FindUsagesOptions options) {
-    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text+"&nbsp;"));
+    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text + "&nbsp;"));
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, cancelAction);
 
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -474,24 +547,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final FindUsagesOptions options,
                                    @NotNull final JTable table,
                                    @NotNull final UsageViewPresentation presentation,
-                                   @NotNull final AsyncProcessIcon processIcon) {
-    final String title = presentation.getTabText();
-    boolean hadMoreSeparator = visibleNodes.remove(MORE_USAGES_SEPARATOR_NODE);
-
-    final Project project = handler.getProject();
-
-    if (hadMoreSeparator) {
-      usages.add(MORE_USAGES_SEPARATOR);
-      visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
-    }
-    List<UsageNode> outNodes = new ArrayList<UsageNode>();
-    addUsageNodes(usageView.getRoot(), usageView, outNodes);
-    int filtered = filtered(usages, usageView);
-
-    TableScrollingUtil.installActions(table);
-    final Vector<Object> data = new Vector<Object>();
-    setTableModel(table, visibleNodes, usageView, data, filtered, presentation);
-
+                                   @NotNull final AsyncProcessIcon processIcon,
+                                   boolean hadMoreSeparator) {
     table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
     table.setShowGrid(false);
     table.setShowVerticalLines(false);
@@ -500,7 +557,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     table.setIntercellSpacing(new Dimension(0, 0));
 
-    final Runnable navigateRunnable = new Runnable() {
+    PopupChooserBuilder builder = new PopupChooserBuilder(table);
+    final String title = presentation.getTabText();
+    if (title != null) {
+      String result = getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1, true);
+      builder.setTitle(result);
+      builder.setAdText(getSecondInvocationTitle(options, handler));
+    }
+
+    builder.setMovable(true).setResizable(true);
+    builder.setItemChoosenCallback(new Runnable() {
       @Override
       public void run() {
         int[] selected = table.getSelectedRows();
@@ -516,54 +582,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           }
         }
       }
-    };
-
-    SpeedSearchBase<JTable> speedSearch = new SpeedSearchBase<JTable>(table) {
-      @Override
-      protected int getSelectedIndex() {
-        return table.getSelectedRow();
-      }
-
-      @Override
-      protected int convertIndexToModel(int viewIndex) {
-        return table.convertRowIndexToModel(viewIndex);
-      }
-
-      @NotNull
-      @Override
-      protected Object[] getAllElements() {
-        return ArrayUtil.toObjectArray(data);
-      }
-
-      @Override
-      protected String getElementText(@NotNull Object element) {
-        if (!(element instanceof UsageNode)) return element.toString();
-        UsageNode node = (UsageNode)element;
-        GroupNode group = (GroupNode)node.getParent();
-        Usage usage = node.getUsage();
-        if (usage == MORE_USAGES_SEPARATOR) return "";
-        return usage.getPresentation().getPlainText() + group.toString();
-      }
-
-      @Override
-      protected void selectElement(Object element, String selectedText) {
-        int i = data.indexOf(element);
-        if (i == -1) return;
-        final int viewRow = table.convertRowIndexToView(i);
-        table.getSelectionModel().setSelectionInterval(viewRow, viewRow);
-      }
-    };
-    speedSearch.setComparator(new SpeedSearchComparator(false));
-
-    PopupChooserBuilder builder = new PopupChooserBuilder(table);
-    if (title != null) {
-      String result = getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1, true);
-      builder.setTitle(result);
-      builder.setAdText(getSecondInvocationTitle(options, handler));
-    }
-
-    builder.setMovable(true).setResizable(true);
-    builder.setItemChoosenCallback(navigateRunnable);
+    });
     final JBPopup[] popup = new JBPopup[1];
 
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
@@ -619,7 +638,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       public void actionPerformed(AnActionEvent e) {
         hideHints();
         popup[0].cancel();
-        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(usageView.getProject())).getFindUsagesManager();
         FindUsagesManager.SearchData data = new FindUsagesManager.SearchData();
         data.myOptions = options;
         List<SmartPsiElementPointer<PsiElement>> plist = descriptor.getAllElementPointers();
@@ -745,53 +764,57 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return true;
   }
 
-  private static int setTableModel(@NotNull JTable table,
-                                   @NotNull Collection<UsageNode> visibleNodes,
-                                   @NotNull UsageViewImpl usageView,
-                                   @NotNull final Vector<Object> data,
-                                   int filtered,
-                                   @NotNull UsageViewPresentation presentation) {
+  @NotNull
+  private static MyModel setTableModel(@NotNull JTable table,
+                                       @NotNull UsageViewImpl usageView,
+                                       @NotNull final List<UsageNode> data) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    final int columnCount = calcColumnCount(data);
+    MyModel model = table.getModel() instanceof MyModel ? (MyModel)table.getModel() : null;
+    if (model == null || model.getColumnCount() != columnCount) {
+      model = new MyModel(data, columnCount);
+      table.setModel(model);
+
+      ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView);
+      for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
+        TableColumn column = table.getColumnModel().getColumn(i);
+        column.setCellRenderer(renderer);
+      }
+    }
+    return model;
+  }
+
+  private static int calcColumnCount(@NotNull List<UsageNode> data) {
+    return data.isEmpty() || data.get(0) instanceof StringNode ? 1 : 3;
+  }
+
+  @NotNull
+  private static List<UsageNode> collectData(@NotNull List<Usage> usages,
+                                             @NotNull Collection<UsageNode> visibleNodes,
+                                             @NotNull UsageViewImpl usageView,
+                                             @NotNull UsageViewPresentation presentation) {
+    @NotNull List<UsageNode> data = new ArrayList<UsageNode>();
+    int filtered = filtered(usages, usageView);
     if (filtered != 0) {
-      data.add(UsageViewBundle.message("usages.were.filtered.out", filtered));
+      data.add(createStringNode(UsageViewBundle.message("usages.were.filtered.out", filtered)));
     }
     data.addAll(visibleNodes);
     if (data.isEmpty()) {
       String progressText = UsageViewManagerImpl.getProgressTitle(presentation);
-      data.add(progressText);
+      data.add(createStringNode(progressText));
     }
     Collections.sort(data, USAGE_NODE_COMPARATOR);
-    AbstractTableModel model = new AbstractTableModel() {
-      @Override
-      public int getRowCount() {
-        return data.size();
-      }
+    return data;
+  }
 
-      @Override
-      public int getColumnCount() {
-        return !data.isEmpty() && data.get(0) instanceof UsageNode ? 3 : 1;
-      }
-
-      @Override
-      public Object getValueAt(int rowIndex, int columnIndex) {
-        return data.get(rowIndex);
-      }
-    };
-    table.setModel(model);
-
-    ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView);
-    for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
-      TableColumn column = table.getColumnModel().getColumn(i);
-      column.setCellRenderer(renderer);
-    }
-
+  private static int calcMaxWidth(JTable table) {
     int colsNum = table.getColumnModel().getColumnCount();
 
     int totalWidth = 0;
     for (int col = 0; col < colsNum -1; col++) {
       TableColumn column = table.getColumnModel().getColumn(col);
       int preferred = column.getPreferredWidth();
-      int width = Math.max(preferred, calcMaxWidth(table, col));
+      int width = Math.max(preferred, columnMaxWidth(table, col));
       totalWidth += width;
       column.setMinWidth(width);
       column.setMaxWidth(width);
@@ -799,12 +822,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       column.setPreferredWidth(width);
     }
 
-    totalWidth += calcMaxWidth(table, colsNum - 1);
+    totalWidth += columnMaxWidth(table, colsNum - 1);
 
     return totalWidth;
   }
 
-  private static int calcMaxWidth(@NotNull JTable table, int col) {
+  private static int columnMaxWidth(@NotNull JTable table, int col) {
     TableColumn column = table.getColumnModel().getColumn(col);
     int width = 0;
     for (int row = 0; row < table.getRowCount(); row++) {
@@ -829,7 +852,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (popup.isDisposed()) return;
 
     final List<UsageNode> nodes = new ArrayList<UsageNode>();
-    int filtered;
     String fullTitle;
     synchronized (usages) {
       // open up popup as soon as several usages 've been found
@@ -841,7 +863,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       if (shouldShowMoreSeparator) {
         nodes.add(MORE_USAGES_SEPARATOR_NODE);
       }
-      filtered = filtered(usages, usageView);
 
       String title = presentation.getTabText();
       fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0), findUsagesInProgress);
@@ -849,12 +870,58 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     ((AbstractPopup)popup).setCaption(fullTitle);
 
+
+    List<UsageNode> data = collectData(usages, nodes, usageView, presentation);
+    MyModel tableModel = setTableModel(table, usageView, data);
+    List<UsageNode> existingData = tableModel.getItems();
+
+    int row = table.getSelectedRow();
+
+    int newSelection = updateModel(tableModel, existingData, data, row == -1 ? 0 : row);
+    if (newSelection < 0 || newSelection >= tableModel.getRowCount()) {
+      TableScrollingUtil.ensureSelectionExists(table);
+      newSelection = table.getSelectedRow();
+    }
+    else {
+      table.getSelectionModel().setSelectionInterval(newSelection, newSelection);
+    }
+    TableScrollingUtil.ensureIndexIsVisible(table, newSelection, 0);
+
+    setSizeAndDimensions(table, popup, popupPosition, data);
+  }
+
+  // returns new selection
+  private static int updateModel(@NotNull MyModel tableModel, @NotNull List<UsageNode> listOld, @NotNull List<UsageNode> listNew, int oldSelection) {
+    UsageNode[] oa = listOld.toArray(new UsageNode[listOld.size()]);
+    UsageNode[] na = listNew.toArray(new UsageNode[listNew.size()]);
+    List<ModelDiff.Cmd> cmds = ModelDiff.createDiffCmds(tableModel, oa, na);
+    int selection = oldSelection;
+    if (cmds != null) {
+      for (ModelDiff.Cmd cmd : cmds) {
+        selection = cmd.translateSelection(selection);
+        cmd.apply();
+      }
+    }
+    return selection;
+  }
+
+  private final TransferToEDTQueue<ModelDiff.Cmd> myEDTQueue = new TransferToEDTQueue<ModelDiff.Cmd>("update table", new Processor<ModelDiff.Cmd>() {
+    @Override
+    public boolean process(ModelDiff.Cmd cmd) {
+      cmd.apply();
+      return true;
+    }
+  }, Condition.FALSE, 100);
+
+  private void setSizeAndDimensions(@NotNull JTable table,
+                                    @NotNull JBPopup popup,
+                                    @NotNull RelativePoint popupPosition,
+                                    @NotNull List<UsageNode> data) {
     JComponent content = popup.getContent();
     Window window = SwingUtilities.windowForComponent(content);
     Dimension d = window.getSize();
 
-    Vector<Object> data = new Vector<Object>();
-    int width = setTableModel(table, nodes, usageView, data, filtered, presentation);
+    int width = calcMaxWidth(table);
     width = (int)Math.max(d.getWidth(), width);
     Dimension headerSize = ((AbstractPopup)popup).getHeaderPreferredSize();
     width = Math.max((int)headerSize.getWidth(), width);
@@ -910,7 +977,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private void appendMoreUsages(Editor editor, @NotNull RelativePoint popupPosition, @NotNull FindUsagesHandler handler, int maxUsages) {
-    showElementUsages(handler,  editor, popupPosition, maxUsages+USAGES_PAGE_SIZE, getDefaultOptions(handler));
+    showElementUsages(handler, editor, popupPosition, maxUsages+USAGES_PAGE_SIZE, getDefaultOptions(handler));
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {
@@ -1003,6 +1070,67 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       }
       return null;
+    }
+  }
+
+  static class StringNode extends UsageNode {
+    private final Object myString;
+
+    public StringNode(Object string) {
+      super(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+      myString = string;
+    }
+
+    @Override
+    public String toString() {
+      return myString.toString();
+    }
+  }
+
+  private static class MySpeedSearch extends SpeedSearchBase<JTable> {
+    public MySpeedSearch(@NotNull MyTable table) {
+      super(table);
+    }
+
+    @Override
+    protected int getSelectedIndex() {
+      return getTable().getSelectedRow();
+    }
+
+    @Override
+    protected int convertIndexToModel(int viewIndex) {
+      return getTable().convertRowIndexToModel(viewIndex);
+    }
+
+    @NotNull
+    @Override
+    protected Object[] getAllElements() {
+      return ((MyModel)getTable().getModel()).getItems().toArray();
+    }
+
+    @Override
+    protected String getElementText(@NotNull Object element) {
+      if (!(element instanceof UsageNode)) return element.toString();
+      UsageNode node = (UsageNode)element;
+      if (node instanceof StringNode) return "";
+      Usage usage = node.getUsage();
+      if (usage == MORE_USAGES_SEPARATOR) return "";
+      GroupNode group = (GroupNode)node.getParent();
+      return usage.getPresentation().getPlainText() + group;
+    }
+
+    @Override
+    protected void selectElement(Object element, String selectedText) {
+      List<UsageNode> data = ((MyModel)getTable().getModel()).getItems();
+      int i = data.indexOf(element);
+      if (i == -1) return;
+      final int viewRow = getTable().convertRowIndexToView(i);
+      getTable().getSelectionModel().setSelectionInterval(viewRow, viewRow);
+      TableUtil.scrollSelectionToVisible(getTable());
+    }
+
+    private MyTable getTable() {
+      return (MyTable)myComponent;
     }
   }
 }

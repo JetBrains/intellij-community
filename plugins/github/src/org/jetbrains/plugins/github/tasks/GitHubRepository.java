@@ -78,8 +78,8 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    return ArrayUtil.toObjectArray(getIssues(query), Task.class);
+  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
+    return getIssues(query);
   }
 
   @Override
@@ -88,7 +88,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private List<Task> getIssues(String query) throws Exception {
+  private List<Task> getIssues(@Nullable String query) throws Exception {
     String path;
     boolean noQuery = StringUtil.isEmpty(query);
     if (!noQuery) {
@@ -319,6 +319,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return matcher.find() ? matcher.group(1) : null;
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id;

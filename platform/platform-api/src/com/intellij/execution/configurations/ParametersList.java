@@ -22,8 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -254,64 +254,27 @@ public class ParametersList implements Cloneable {
   }
 
   /**
-   * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parse(String)}.</p>
-   * <p/>
-   * <p>
-   * <strong>Conversion rules:</strong>
-   * <ul>
-   * <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
-   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
-   * <li>parameters are separated by single whitespace.</li>
-   * </ul>
-   * </p>
-   * <p/>
-   * <p><strong>Examples:</strong></p>
-   * <p>
-   * <code>['a', 'b'] => 'a  b'</code><br/>
-   * <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
-   * </p>
-   *
-   * @param parameters a list of parameters to join.
-   * @return a string with parameters.
+   * @see ParametersListUtil#join(java.util.List)
    */
   @NotNull
   public static String join(@NotNull final List<String> parameters) {
-    return ParametersTokenizer.encode(parameters);
-  }
-
-  @NotNull
-  public static String join(final String... parameters) {
-    return ParametersTokenizer.encode(Arrays.asList(parameters));
+    return ParametersListUtil.join(parameters);
   }
 
   /**
-   * <p>Converts single parameter string (as created by {@link #join(java.util.List)}) into list of parameters.</p>
-   * <p/>
-   * <p>
-   * <strong>Conversion rules:</strong>
-   * <ul>
-   * <li>starting/whitespaces are trimmed;</li>
-   * <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
-   * <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
-   * <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
-   * </ul>
-   * </p>
-   * <p/>
-   * <p><strong>Examples:</strong></p>
-   * <p>
-   * <code>' a  b ' => ['a', 'b']</code><br/>
-   * <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
-   * <code>'a " " b' => ['a', ' ', 'b']</code><br/>
-   * <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
-   * </p>
-   *
-   * @param string parameter string to split.
-   * @return array of parameters.
+   * @see ParametersListUtil#join(java.util.List)
+   */
+  @NotNull
+  public static String join(final String... parameters) {
+    return ParametersListUtil.join(parameters);
+  }
+
+  /**
+   * @see ParametersListUtil#parseToArray(String)
    */
   @NotNull
   public static String[] parse(@NotNull final String string) {
-    final List<String> params = ParametersTokenizer.decode(string);
-    return ArrayUtil.toStringArray(params);
+    return ParametersListUtil.parseToArray(string);
   }
 
   public String expandMacros(String text) {
@@ -356,84 +319,4 @@ public class ParametersList implements Cloneable {
     return myParameters.toString();
   }
 
-  private static class ParametersTokenizer {
-    private ParametersTokenizer() {
-    }
-
-    @NotNull
-    public static String encode(@NotNull final List<String> parameters) {
-      final StringBuilder buffer = new StringBuilder();
-      for (final String parameter : parameters) {
-        if (buffer.length() > 0) {
-          buffer.append(' ');
-        }
-        buffer.append(encode(parameter));
-      }
-      return buffer.toString();
-    }
-
-    @NotNull
-    public static String encode(@NotNull String parameter) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append(parameter);
-        StringUtil.escapeQuotes(builder);
-        if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
-          StringUtil.quote(builder);
-        }
-        return builder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
-    }
-
-    @NotNull
-    public static List<String> decode(@NotNull String parameterString) {
-      parameterString = parameterString.trim();
-
-      final ArrayList<String> params = ContainerUtil.newArrayList();
-      final StringBuilder token = new StringBuilder(128);
-      boolean inQuotes = false;
-      boolean escapedQuote = false;
-      boolean nonEmpty = false;
-
-      for (int i = 0; i < parameterString.length(); i++) {
-        final char ch = parameterString.charAt(i);
-
-        if (ch == '\"') {
-          if (!escapedQuote) {
-            inQuotes = !inQuotes;
-            nonEmpty = true;
-            continue;
-          }
-          escapedQuote = false;
-        }
-        else if (Character.isWhitespace(ch)) {
-          if (!inQuotes) {
-            if (token.length() > 0 || nonEmpty) {
-              params.add(token.toString());
-              token.setLength(0);
-              nonEmpty = false;
-            }
-            continue;
-          }
-        }
-        else if (ch == '\\') {
-          if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
-            escapedQuote = true;
-            continue;
-          }
-        }
-
-        token.append(ch);
-      }
-
-      if (token.length() > 0 || nonEmpty) {
-        params.add(token.toString());
-      }
-
-      return params;
-    }
-  }
 }

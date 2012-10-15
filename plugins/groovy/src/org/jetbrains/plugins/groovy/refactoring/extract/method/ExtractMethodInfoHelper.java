@@ -16,12 +16,12 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
@@ -35,10 +35,10 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
   private boolean mySpecifyType = true;
   private String myVisibility;
   private String myName;
-  private final GrMemberOwner myOwner;
+  private final PsiClass myOwner;
   private boolean myForceReturn;
 
-  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name, GrMemberOwner owner, boolean forceReturn) {
+  public ExtractMethodInfoHelper(InitialInfo initialInfo, String name, PsiClass owner, boolean forceReturn) {
     super(initialInfo);
     myOwner = owner;
     myForceReturn = forceReturn;
@@ -78,7 +78,7 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
   }
 
   @NotNull
-  public GrMemberOwner getOwner() {
+  public PsiClass getOwner() {
     return myOwner;
   }
 

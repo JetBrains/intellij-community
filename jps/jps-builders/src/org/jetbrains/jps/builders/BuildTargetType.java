@@ -15,7 +15,7 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
     myTypeId = typeId;
   }
 
-  public String getTypeId() {
+  public final String getTypeId() {
     return myTypeId;
   }
 

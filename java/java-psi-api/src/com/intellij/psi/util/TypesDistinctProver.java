@@ -94,9 +94,7 @@ public class TypesDistinctProver {
         final PsiType substitutedType2 = substitutor2.substitute(parameter);
         if (substitutedType1 == null && substitutedType2 == null) return false;
         if (substitutedType1 == null || substitutedType2 == null) {
-          for (PsiClassType type : parameter.getExtendsListTypes()) {
-            if (!TypeConversionUtil.isAssignable(type, substitutedType1 != null ? substitutedType1 : substitutedType2, false)) return true;
-          }
+          return true;
         } else {
           if (provablyDistinct(substitutedType1, substitutedType2, level + 1)) return true;
           if (substitutedType1 instanceof PsiWildcardType && !((PsiWildcardType)substitutedType1).isBounded()) return true;

@@ -5,6 +5,7 @@ import org.jetbrains.jps.builders.AdditionalRootsProviderService;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 
 import java.io.File;
@@ -22,9 +23,9 @@ public class AndroidAdditionalRootProviderService extends AdditionalRootsProvide
 
   @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> getAdditionalRoots(@NotNull BuildTarget<JavaSourceRootDescriptor> target, File dataStorageRoot) {
+  public List<JavaSourceRootDescriptor> getAdditionalRoots(@NotNull BuildTarget<JavaSourceRootDescriptor> target, BuildDataPaths dataPaths) {
     ModuleBuildTarget buildTarget = (ModuleBuildTarget)target;
-    final File generatedSourcesRoot = AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), dataStorageRoot);
+    final File generatedSourcesRoot = AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), dataPaths);
     final List<JavaSourceRootDescriptor> result = new ArrayList<JavaSourceRootDescriptor>();
 
     addRoot(result, buildTarget, new File(generatedSourcesRoot, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME));

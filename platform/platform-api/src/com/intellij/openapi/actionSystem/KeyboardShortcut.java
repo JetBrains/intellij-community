@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -30,7 +31,7 @@ public final class KeyboardShortcut extends Shortcut {
   /**
    * @throws IllegalArgumentException if <code>firstKeyStroke</code> is <code>null</code>
    */
-  public KeyboardShortcut(@NotNull KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
+  public KeyboardShortcut(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke) {
     myFirstKeyStroke = firstKeyStroke;
     mySecondKeyStroke = secondKeyStroke;
   }

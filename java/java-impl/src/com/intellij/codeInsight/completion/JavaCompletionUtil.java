@@ -36,29 +36,24 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
@@ -92,7 +87,7 @@ public class JavaCompletionUtil {
       return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
     }
   });
-  private static final PsiElementPattern.Capture<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
+  private static final ElementPattern<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
       PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
@@ -211,39 +206,18 @@ public class JavaCompletionUtil {
     return originalSubstitutor;
   }
 
-  public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){
-    int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+  public static void initOffsets(final PsiFile file, final OffsetMap offsetMap) {
+    int offset = Math.max(offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET),
+                          offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
 
-    PsiElement element = file.findElementAt(selectionEndOffset);
-    if (element == null) return;
-
-    if (LEFT_PAREN.accepts(element)) {
-      selectionEndOffset--;
-      element = file.findElementAt(selectionEndOffset);
-      if (element == null) return;
-    }
-
-    final PsiReference reference = file.findReferenceAt(selectionEndOffset);
-    if(reference != null) {
-      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
-                          reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
-
-      element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-    }
-    else if (isWord(element)){
-      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
-
-      element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-      if (element == null) return;
-    }
-
+    PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace &&
-        ( !element.textContains('\n') ||
-          CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-        )
-       ){
+        (!element.textContains('\n') ||
+         CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+        )) {
       element = file.findElementAt(element.getTextRange().getEndOffset());
     }
+    if (element == null) return;
 
     if (LEFT_PAREN.accepts(element)) {
       offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset());
@@ -253,37 +227,7 @@ public class JavaCompletionUtil {
         offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset());
       }
 
-
       offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
-    }
-
-  }
-
-  static boolean isWord(PsiElement element) {
-    if (element instanceof PsiIdentifier || element instanceof PsiKeyword) {
-      return true;
-    }
-    else if (element instanceof PsiJavaToken) {
-      final String text = element.getText();
-      if (PsiKeyword.TRUE.equals(text)) return true;
-      if (PsiKeyword.FALSE.equals(text)) return true;
-      if (PsiKeyword.NULL.equals(text)) return true;
-      return false;
-    }
-    else if (element instanceof PsiDocToken) {
-      IElementType tokenType = ((PsiDocToken)element).getTokenType();
-      return tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || tokenType == JavaDocTokenType.DOC_TAG_NAME;
-    }
-    else if (element instanceof XmlToken) {
-      IElementType tokenType = ((XmlToken)element).getTokenType();
-      return tokenType == XmlTokenType.XML_TAG_NAME ||
-             tokenType == XmlTokenType.XML_NAME ||
-             tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-             // html data chars contains whitespaces
-             (tokenType == XmlTokenType.XML_DATA_CHARACTERS && !(element.getParent() instanceof HtmlTag));
-    }
-    else {
-      return false;
     }
   }
 
@@ -380,7 +324,8 @@ public class JavaCompletionUtil {
   }
 
   public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
-                                                        final boolean checkAccess, boolean filterStaticAfterInstance, final PrefixMatcher matcher, CompletionParameters parameters) {
+                                                        JavaCompletionProcessor.Options options,
+                                                        final PrefixMatcher matcher, CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final Condition<String> nameCondition = new Condition<String>() {
       public boolean value(String s) {
@@ -391,7 +336,7 @@ public class JavaCompletionUtil {
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
 
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, checkInitialized, filterStaticAfterInstance, nameCondition);
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options.withInitialized(checkInitialized), nameCondition);
     final PsiType plainQualifier = processor.getQualifierType();
     PsiType qualifierType = plainQualifier;
 
@@ -520,6 +465,7 @@ public class JavaCompletionUtil {
             document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
 
             CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), castTypeItem);
+            PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(document);
             context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
           }
         }
@@ -847,7 +793,9 @@ public class JavaCompletionUtil {
 
         boolean insertAdditionalSemicolon = true;
         final PsiReferenceExpression referenceExpression = PsiTreeUtil.getTopmostParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiReferenceExpression.class);
-        if (referenceExpression != null) {
+        if (referenceExpression instanceof PsiMethodReferenceExpression && LambdaUtil.insertSemicolon(referenceExpression.getParent())) {
+          insertAdditionalSemicolon = false;
+        } else if (referenceExpression != null) {
           PsiElement parent = referenceExpression.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();

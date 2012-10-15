@@ -3,11 +3,13 @@ package org.jetbrains.jps.incremental;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -18,6 +20,7 @@ import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,6 +41,17 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
     myTargetType = targetType;
     myModuleName = module.getName();
     myModule = module;
+  }
+
+  @Nullable
+  public File getOutputDir() {
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
+  }
+
+  @Nullable
+  @Override
+  public File getOutputDir(BuildDataPaths paths) {
+    return getOutputDir();
   }
 
   @NotNull
@@ -79,12 +93,23 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
 
   @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex) {
+  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model,
+                                                               ModuleExcludeIndex index,
+                                                               IgnoredFileIndex ignoredFileIndex,
+                                                               BuildDataPaths dataPaths) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
+
+    roots:
     for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
-      final File root = JpsPathUtil.urlToFile(sourceRoot.getUrl());
-      roots.add(new JavaSourceRootDescriptor(root, this, false, false, sourceRoot.getProperties().getData().getPackagePrefix()));
+      for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
+        if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
+          continue roots;
+        }
+      }
+      String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
+      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix));
     }
     return roots;
   }

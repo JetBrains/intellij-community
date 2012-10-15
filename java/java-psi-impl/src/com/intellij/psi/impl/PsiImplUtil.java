@@ -85,7 +85,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiAnnotation annotation, @Nullable @NonNls String attributeName) {
     final PsiAnnotationMemberValue value = findDeclaredAttributeValue(annotation, attributeName);
     if (value != null) return value;
 
@@ -554,9 +554,22 @@ public class PsiImplUtil {
     return result;
   }
 
-  public static boolean isVarArgs(PsiMethod method) {
+  public static boolean isVarArgs(@NotNull PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
+  }
+
+  public static boolean isExtensionMethod(@NotNull PsiMethod method) {
+    return findExtensionMethodMarker(method) != null;
+  }
+
+  @Nullable
+  public static PsiJavaToken findExtensionMethodMarker(@Nullable PsiMethod method) {
+    if (method == null) return null;
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) return null;
+    final PsiElement previous = PsiTreeUtil.skipSiblingsBackward(body, PsiComment.class, PsiWhiteSpace.class);
+    return previous instanceof PsiJavaToken && PsiUtil.isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD) ? (PsiJavaToken)previous : null;
   }
 
   public static PsiElement handleMirror(PsiElement element) {

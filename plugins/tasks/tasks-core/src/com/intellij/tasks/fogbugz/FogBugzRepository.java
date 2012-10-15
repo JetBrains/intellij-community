@@ -64,11 +64,11 @@ public class FogBugzRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, final long since) throws Exception {
+  public List<Task> getIssues(@Nullable String query, int max, final long since) throws Exception {
     return getCases(StringUtil.notNullize(query));
   }
 
-  private Task[] getCases(String q) throws Exception {
+  private List<Task> getCases(String q) throws Exception {
     HttpClient client = login(getLoginMethod());
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
     method.addParameter("token", token);
@@ -83,7 +83,7 @@ public class FogBugzRepository extends BaseRepositoryImpl {
     XPath path = XPath.newInstance("/response/cases/case");
     final XPath commentPath = XPath.newInstance("events/event");
     @SuppressWarnings("unchecked") final List<Element> nodes = (List<Element>)path.selectNodes(document);
-    List<Task> tasks = ContainerUtil.mapNotNull(nodes, new NotNullFunction<Element, Task>() {
+    return ContainerUtil.mapNotNull(nodes, new NotNullFunction<Element, Task>() {
       @NotNull
       @Override
       public Task fun(Element element) {
@@ -91,7 +91,6 @@ public class FogBugzRepository extends BaseRepositoryImpl {
 
       }
     });
-    return tasks.toArray(new Task[tasks.size()]);
   }
 
   private static TaskType getType(Element element) {
@@ -195,15 +194,15 @@ public class FogBugzRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(String id) throws Exception {
-    Task[] tasks = getCases(id);
-    switch (tasks.length) {
+    List<Task> tasks = getCases(id);
+    switch (tasks.size()) {
       case 0:
         return null;
       case 1:
-        return tasks[0];
+        return tasks.get(0);
       default:
-        LOG.warn("Expected unique case for case id: " + id + ", got " + tasks.length + " instead. Using the first one.");
-        return tasks[0];
+        LOG.warn("Expected unique case for case id: " + id + ", got " + tasks.size() + " instead. Using the first one.");
+        return tasks.get(0);
     }
   }
 

@@ -60,7 +60,7 @@ class GitCrlfProblemsDetectorTest {
 
     git ("init")
 
-    GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myProject)
+    GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
   }
 

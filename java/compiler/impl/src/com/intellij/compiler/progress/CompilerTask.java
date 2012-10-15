@@ -79,6 +79,7 @@ public class CompilerTask extends Task.Backgroundable {
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
   private final boolean myHeadlessMode;
+  private final boolean myForceAsyncExecution;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
   private boolean myMessagesAutoActivated = false;
@@ -88,10 +89,11 @@ public class CompilerTask extends Task.Backgroundable {
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
 
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode) {
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync) {
     super(project, contentName);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
+    myForceAsyncExecution = forceAsync;
   }
 
   public void setContentIdKey(Key<Key<?>> contentIdKey) {
@@ -465,7 +467,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   public boolean isHeadless() {
-    return myHeadlessMode;
+    return myHeadlessMode && !myForceAsyncExecution;
   }
 
   private boolean isHeadlessMode() {

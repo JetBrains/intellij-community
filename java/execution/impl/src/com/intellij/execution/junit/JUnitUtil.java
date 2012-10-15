@@ -239,6 +239,15 @@ public class JUnitUtil {
     return testMethod;
   }
 
+  @Nullable
+  public static PsiMethod findSuiteMethod(PsiClass clazz) {
+    final PsiMethod[] suiteMethods = clazz.findMethodsByName(SUITE_METHOD_NAME, false);
+    for (PsiMethod method : suiteMethods) {
+      if (isSuiteMethod(method)) return method;
+    }
+    return null;
+  }
+
   public static class  TestMethodFilter implements Condition<PsiMethod> {
     private final PsiClass myClass;
 

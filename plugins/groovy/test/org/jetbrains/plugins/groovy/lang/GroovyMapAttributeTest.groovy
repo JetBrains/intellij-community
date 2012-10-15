@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang
-
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
-import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.completion.GrCompletionWithLibraryTest
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author Sergey Evdokimov
  */
@@ -239,7 +236,6 @@ class Aaa {
   }
 
   public void testConstructorInJavaClass() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     myFixture.addFileToProject("Ccc.java", """
 public class Ccc {
   private String sss1
@@ -255,10 +251,8 @@ public class Ccc {
 
     myFixture.configureByText("a.groovy", "new Ccc(ss<caret>)")
 
-    def res = myFixture.completeBasic()
-
-    assertNotNull res
-    assertSize 4, res
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'sss1', 'sss2', 'sss3', 'sss4'
   }
 
   public void testRenameProperty() {

@@ -17,18 +17,17 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.lang.StdLanguages;
 
 class InlineMethodHandler extends JavaInlineActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
@@ -82,6 +81,11 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
+    if (reference instanceof PsiMethodReferenceExpression) {
+      CommonRefactoringUtil.showErrorHint(project, editor, REFACTORING_NAME + " cannot be applied to method references", REFACTORING_NAME, HelpID.INLINE_METHOD);
+      return;
+    }
+    
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);

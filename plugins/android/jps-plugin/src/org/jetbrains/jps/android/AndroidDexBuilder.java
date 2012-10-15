@@ -33,6 +33,9 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
@@ -53,7 +56,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> {
+public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidProjectBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
@@ -66,7 +69,10 @@ public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> 
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+  public void build(@NotNull AndroidProjectBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.DEX && AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
@@ -83,7 +89,7 @@ public class AndroidDexBuilder extends TargetBuilder<AndroidProjectBuildTarget> 
   }
 
   private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
-    final File root = context.getProjectDescriptor().dataManager.getDataStorageRoot();
+    final File root = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
 
     AndroidFileSetStorage dexStateStorage = null;
     AndroidFileSetStorage proguardStateStorage = null;

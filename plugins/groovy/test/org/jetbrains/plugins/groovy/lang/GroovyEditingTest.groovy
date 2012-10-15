@@ -60,4 +60,24 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('"')
     myFixture.checkResult('"""<caret>"""')
   }
+
+  public void "test pair brace after doc with mismatch"() {
+    myFixture.configureByText 'a.groovy', '''
+class Foo {
+  /**
+   * @param o  closure to run in {@code ant.zip{ .. }} context
+   */
+  void getProject( Object o ) <caret>
+}
+'''
+    myFixture.type('{')
+    myFixture.checkResult '''
+class Foo {
+  /**
+   * @param o  closure to run in {@code ant.zip{ .. }} context
+   */
+  void getProject( Object o ) {<caret>}
+}
+'''
+  }
 }

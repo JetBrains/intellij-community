@@ -15,41 +15,27 @@
  */
 package git4idea.branch;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
-import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -62,25 +48,27 @@ abstract class GitBranchOperation {
   private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
+  @NotNull protected final PlatformFacade myFacade;
   @NotNull protected final Git myGit;
+  @NotNull protected final GitBranchUiHandler myUiHandler;
   @NotNull private final Collection<GitRepository> myRepositories;
-  @NotNull private final String myCurrentBranchOrRev;
-  @NotNull private final ProgressIndicator myIndicator;
+  @NotNull protected final String myCurrentBranchOrRev;
   private final GitVcsSettings mySettings;
 
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
-  protected GitBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
-                               @NotNull String currentBranchOrRev, @NotNull ProgressIndicator indicator) {
+  protected GitBranchOperation(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git,
+                               @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<GitRepository> repositories) {
     myProject = project;
+    myFacade = facade;
     myGit = git;
+    myUiHandler = uiHandler;
     myRepositories = repositories;
-    myCurrentBranchOrRev = currentBranchOrRev;
-    myIndicator = indicator;
+    myCurrentBranchOrRev = GitBranchUtil.getCurrentBranchOrRev(repositories);
     mySuccessfulRepositories = new ArrayList<GitRepository>();
     myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
-    mySettings = GitVcsSettings.getInstance(myProject);
+    mySettings = myFacade.getSettings(myProject);
   }
 
   protected abstract void execute();
@@ -166,20 +154,15 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess(@NotNull String message) {
-    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION);
+    myUiHandler.notifySuccess(message);
   }
 
   protected final void notifySuccess() {
     notifySuccess(getSuccessMessage());
   }
 
-  protected static void saveAllDocuments() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+  protected final void saveAllDocuments() {
+    myFacade.saveAllDocuments();
   }
 
   /**
@@ -195,43 +178,10 @@ abstract class GitBranchOperation {
   }
 
   protected void showFatalErrorDialogWithRollback(@NotNull final String title, @NotNull final String message) {
-    final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        StringBuilder description = new StringBuilder("<html>");
-        if (!StringUtil.isEmptyOrSpaces(message)) {
-          description.append(message).append("<br/>");
-        }
-        description.append(getRollbackProposal()).append("</html>");
-        ok.set(Messages.OK ==
-               MessageManager.showYesNoDialog(myProject, description.toString(), title, "Rollback", "Don't rollback", Messages.getErrorIcon()));
-      }
-    });
-    if (ok.get()) {
+    boolean rollback = myUiHandler.notifyErrorWithRollbackProposal(title, message, getRollbackProposal());
+    if (rollback) {
       rollback();
     }
-  }
-
-  @NotNull
-  private String unmergedFilesErrorTitle() {
-    return unmergedFilesErrorTitle(getOperationName());
-  }
-
-  @NotNull
-  private static String unmergedFilesErrorTitle(String operationName) {
-    return "Can't " + operationName + " because of unmerged files";
-  }
-
-  @NotNull
-  private String unmergedFilesErrorNotificationDescription() {
-    return unmergedFilesErrorNotificationDescription(getOperationName());
-  }
-
-  @NotNull
-  private static String unmergedFilesErrorNotificationDescription(String operationName) {
-    return "You have to <a href='resolve'>resolve</a> all merge conflicts before " + operationName + ".<br/>" +
-    "After resolving conflicts you also probably would want to commit your files to the current branch.";
   }
 
   protected void showFatalNotification(@NotNull String title, @NotNull String message) {
@@ -239,12 +189,12 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
+    myUiHandler.notifyError(title, message);
   }
 
   @NotNull
   protected ProgressIndicator getIndicator() {
-    return myIndicator;
+    return myUiHandler.getProgressIndicator();
   }
 
   /**
@@ -280,38 +230,14 @@ abstract class GitBranchOperation {
   }
 
   private void showUnmergedFilesDialogWithRollback() {
-    final AtomicBoolean ok = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        String description = "<html>You have to resolve all merge conflicts before " + getOperationName() + ".<br/>" +
-                             getRollbackProposal() + "</html>";
-        // suppressing: this message looks ugly if capitalized by words
-        //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(),
-                                                             "Rollback", "Don't rollback", Messages.getErrorIcon()));
-      }
-    });
-    if (ok.get()) {
+    boolean ok = myUiHandler.showUnmergedFilesMessageWithRollback(getOperationName(), getRollbackProposal());
+    if (ok) {
       rollback();
     }
   }
 
   private void showUnmergedFilesNotification() {
-    String title = unmergedFilesErrorTitle();
-    String description = unmergedFilesErrorNotificationDescription();
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
-                                                      new NotificationListener() {
-      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-          GitConflictResolver.Params params = new GitConflictResolver.Params().
-                setMergeDescription("The following files have unresolved conflicts. You need to resolve them before " +
-                                    getOperationName() + ".").
-                setErrorNotificationTitle("Unresolved files remain.");
-          new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), GitUtil.getRootsFromRepositories(
-            getRepositories()), params).merge();
-        }
-      }
-    });
+    myUiHandler.showUnmergedFilesNotification(getOperationName(), getRepositories());
   }
 
   /**
@@ -344,25 +270,12 @@ abstract class GitBranchOperation {
   }
 
   private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
-                                                             untrackedFiles, getOperationName(), null);
+    myUiHandler.showUntrackedFilesNotification(getOperationName(), untrackedFiles);
   }
 
   private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't " + getOperationName();
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(getOperationName(), false);
-
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
-                                                              stripHtml(description, true));
-    dialog.setTitle(title);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ServiceManager.getService(myProject, PlatformFacade.class).showDialog(dialog);
-      }
-    });
-
-    if (dialog.isOK()) {
+    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), untrackedFiles);
+    if (ok) {
       rollback();
     }
   }
@@ -373,15 +286,13 @@ abstract class GitBranchOperation {
    * local changes.
    */
   @NotNull
-  static Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Project project,
-                                                                                   @NotNull Collection<GitRepository> repositories,
-                                                                                   @NotNull String currentBranch,
-                                                                                   @NotNull String otherBranch) {
+  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<GitRepository> repositories,
+                                                                            @NotNull String currentBranch, @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<GitRepository, List<Change>>();
     for (GitRepository repository : repositories) {
       try {
-        Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(currentBranch, otherBranch, project, repository.getRoot());
-        List<Change> changesInRepo = GitUtil.convertPathsToChanges(repository, diff, false);
+        Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myGit, repository, currentBranch, otherBranch);
+        List<Change> changesInRepo = convertPathsToChanges(repository, diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);
         }
@@ -393,24 +304,6 @@ abstract class GitBranchOperation {
       }
     }
     return changes;
-  }
-
-  private class UntrackedFilesDialog extends SelectFilesDialog {
-
-    public UntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> originalFiles, @NotNull String prompt) {
-      super(project, originalFiles, prompt, null, false, false, false);
-      setOKButtonText("Rollback");
-      setCancelButtonText("Don't rollback");
-    }
-
-    @Override
-    protected JComponent createSouthPanel() {
-      JComponent buttons = super.createSouthPanel();
-      JPanel panel = new JPanel(new VerticalFlowLayout());
-      panel.add(new JBLabel("<html>" + getRollbackProposal() + "</html>"));
-      panel.add(buttons);
-      return panel;
-    }
   }
 
   /**
@@ -430,11 +323,11 @@ abstract class GitBranchOperation {
     String currentBranch, String nextBranch) {
 
     // get changes overwritten by checkout from the error message captured from Git
-    List<Change> affectedChanges = GitUtil.convertPathsToChanges(currentRepository, localChangesOverwrittenBy.getRelativeFilePaths(), true);
+    List<Change> affectedChanges = convertPathsToChanges(currentRepository, localChangesOverwrittenBy.getRelativeFilePaths(), true);
     // get all other conflicting changes
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
     Map<GitRepository, List<Change>> conflictingChangesInRepositories =
-      collectLocalChangesConflictingWithBranch(myProject, getRemainingRepositoriesExceptGiven(currentRepository), currentBranch, nextBranch);
+      collectLocalChangesConflictingWithBranch(getRemainingRepositoriesExceptGiven(currentRepository), currentBranch, nextBranch);
 
     Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
     List<GitRepository> allConflictingRepositories = new ArrayList<GitRepository>(otherProblematicRepositories);
@@ -444,6 +337,35 @@ abstract class GitBranchOperation {
     }
 
     return Pair.create(allConflictingRepositories, affectedChanges);
+  }
+
+  /**
+   * Given the list of paths converts them to the list of {@link com.intellij.openapi.vcs.changes.Change Changes} found in the {@link com.intellij.openapi.vcs.changes.ChangeListManager},
+   * i.e. this works only for local changes.
+   * Paths can be absolute or relative to the repository.
+   * If a path is not in the local changes, it is ignored.
+   */
+  @NotNull
+  private List<Change> convertPathsToChanges(@NotNull GitRepository repository,
+                                             @NotNull Collection<String> affectedPaths, boolean relativePaths) {
+    List<Change> affectedChanges = new ArrayList<Change>();
+    for (String path : affectedPaths) {
+      VirtualFile file;
+      if (relativePaths) {
+        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
+      }
+      else {
+        file = myFacade.getVirtualFileByPath(path);
+      }
+
+      if (file != null) {
+        Change change = myFacade.getChangeListManager(myProject).getChange(file);
+        if (change != null) {
+          affectedChanges.add(change);
+        }
+      }
+    }
+    return affectedChanges;
   }
 
 }

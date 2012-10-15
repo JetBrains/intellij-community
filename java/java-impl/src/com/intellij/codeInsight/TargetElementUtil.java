@@ -111,6 +111,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
             PsiMethod constructor = ((PsiNewExpression)parent).resolveConstructor();
             if (constructor != null) {
               refElement = constructor;
+            } else if (refElement instanceof PsiClass && ((PsiClass)refElement).getConstructors().length > 0) {
+              return null;
             }
           }
         }
@@ -194,10 +196,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
-    if (parent instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression callExpr = (PsiMethodCallExpression)parent;
+    if (parent instanceof PsiCallExpression) {
+      PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
-      PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
+      PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()
+                                                                            : callExpr instanceof PsiNewExpression ? ((PsiNewExpression)callExpr).getQualifier() : null;
       if (qualifier == null) {
         allowStatics = true;
       }

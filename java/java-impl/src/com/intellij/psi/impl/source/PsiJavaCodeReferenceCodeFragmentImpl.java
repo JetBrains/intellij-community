@@ -17,11 +17,13 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -32,17 +34,18 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
 
   public PsiJavaCodeReferenceCodeFragmentImpl(final Project project,
                                               final boolean isPhysical,
-                                              final @NonNls String name,
+                                              @NonNls final String name,
                                               final CharSequence text,
-                                              boolean isClassesAccepted) {
-    super(project, Constants.REFERENCE_TEXT, isPhysical, name, text);
+                                              boolean isClassesAccepted,
+                                              @Nullable PsiElement context) {
+    super(project, JavaElementType.REFERENCE_TEXT, isPhysical, name, text, context);
     myIsClassesAccepted = isClassesAccepted;
   }
 
   @Override
   public PsiJavaCodeReferenceElement getReferenceElement() {
     final CompositeElement treeElement = calcTreeElement();
-    LOG.assertTrue (treeElement.getFirstChildNode().getElementType() == ElementType.JAVA_CODE_REFERENCE);
+    LOG.assertTrue (treeElement.getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
     return (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(treeElement.getFirstChildNode());
   }
 

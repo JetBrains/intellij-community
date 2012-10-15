@@ -43,6 +43,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -225,22 +226,21 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Nullable
-  private VirtualFile findPresentableFileForMessage(final String url) {
-    if (url == null) {
+  private VirtualFile findPresentableFileForMessage(@Nullable final String url) {
+    final VirtualFile file = findFileByUrl(url);
+    if (file == null) {
       return null;
     }
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
-        final VirtualFile file = fileManager.findFileByUrl(url);
-        if (file != null) {
+        if (file.isValid()) {
           for (final Map.Entry<VirtualFile, Pair<SourceGeneratingCompiler, Module>> entry : myOutputRootToSourceGeneratorMap.entrySet()) {
             final VirtualFile root = entry.getKey();
-            if (VfsUtil.isAncestor(root, file, false)) {
+            if (VfsUtilCore.isAncestor(root, file, false)) {
               final Pair<SourceGeneratingCompiler, Module> pair = entry.getValue();
               final VirtualFile presentableFile = pair.getFirst().getPresentableFile(CompileContextImpl.this, pair.getSecond(), root, file);
-              return presentableFile != null? presentableFile : file;
+              return presentableFile != null ? presentableFile : file;
             }
           }
         }
@@ -248,8 +248,25 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       }
     });
   }
-  
+
+  @Nullable 
+  private static VirtualFile findFileByUrl(@Nullable String url) {
+    if (url == null) {
+      return null;
+    }
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file == null) {
+      // groovy stubs may be placed in completely random directories which aren't refreshed automatically 
+      return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+    }
+    return file;
+  }
+
   public void addMessage(CompilerMessage msg) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info("addMessage: " + msg + " this=" + this);
+    }
+
     Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
     if (messages == null) {
       messages = new LinkedHashSet<CompilerMessage>();

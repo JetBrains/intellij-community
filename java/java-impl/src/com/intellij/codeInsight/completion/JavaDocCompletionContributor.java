@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -75,7 +76,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         if (ref instanceof PsiJavaReference) {
           result.stopHere();
 
-          final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, false, false, false, null);
+          final JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, JavaCompletionProcessor.Options.CHECK_NOTHING, Condition.TRUE);
           ((PsiJavaReference) ref).processVariants(processor);
 
           for (final CompletionElement _item : processor.getResults()) {

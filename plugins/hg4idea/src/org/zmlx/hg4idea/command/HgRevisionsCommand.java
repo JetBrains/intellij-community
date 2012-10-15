@@ -35,9 +35,11 @@ abstract class HgRevisionsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgRevisionsCommand.class.getName());
 
-  private static final String[] SHORT_TEMPLATE_ITEMS = { "{rev}","{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}" };
+  private static final String[] SHORT_TEMPLATE_ITEMS =
+    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}"};
   private static final String[] LONG_TEMPLATE_ITEMS =
-    { "{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}", "{file_dels}", "{file_copies}" };
+    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
+      "{file_dels}", "{file_copies}"};
 
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -61,9 +63,7 @@ abstract class HgRevisionsCommand {
   }
 
   @Nullable
-  protected abstract HgCommandResult execute(
-    HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile
-  );
+  protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile);
 
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
     if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
@@ -73,13 +73,11 @@ abstract class HgRevisionsCommand {
     HgCommandExecutor hgCommandExecutor = new HgCommandExecutor(project);
 
     String template = HgChangesetUtil.makeTemplate(includeFiles ? LONG_TEMPLATE_ITEMS : SHORT_TEMPLATE_ITEMS);
-    int itemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
+    int expectedItemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    HgCommandResult result = execute(
-      hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile
-    );
+    HgCommandResult result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile);
 
     final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     if (result == null) {
@@ -91,8 +89,15 @@ abstract class HgRevisionsCommand {
     for (String line : changeSets) {
       try {
         String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
-        if (attributes.length != itemCount) {
+        // At least in the case of the long template, it's OK that we don't have everything...for example, if there were no
+        //  deleted or copied files, then we won't get any attribtes for them...
+        int numAttributes = attributes.length;
+        if (!includeFiles && (numAttributes != expectedItemCount)) {
           LOG.debug("Wrong format. Skipping line " + line);
+          continue;
+        }
+        else if (includeFiles && (numAttributes < FILES_ADDED_INDEX)) {
+          LOG.debug("Wrong format for long template. Skipping line " + line);
           continue;
         }
 
@@ -105,7 +110,8 @@ abstract class HgRevisionsCommand {
           Long revision = Long.valueOf(revisionString);
           HgRevisionNumber parentRevision = HgRevisionNumber.getLocalInstance(String.valueOf(revision - 1));
           parents.add(parentRevision);
-        } else {
+        }
+        else {
           //hg returns parents in the format 'rev:node rev:node ' (note the trailing space)
           String[] parentStrings = parentsString.trim().split(" ");
           for (String parentString : parentStrings) {
@@ -113,47 +119,50 @@ abstract class HgRevisionsCommand {
             parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
           }
         }
-        final HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(
-          revisionString,
-          changeset,
-          parents
-        );
+        final HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(revisionString, changeset, parents);
 
         Date revisionDate = DATE_FORMAT.parse(attributes[DATE_INDEX]);
         String author = attributes[AUTHOR_INDEX];
         String branchName = attributes[BRANCH_INDEX];
         String commitMessage = attributes[MESSAGE_INDEX];
 
-        Set<String> filesAdded;
-        Set<String> filesModified;
-        Set<String> filesDeleted;
-        Map<String, String> copies;
-        if (FILES_ADDED_INDEX < itemCount) {
-          filesAdded = parseFileList(attributes[FILES_ADDED_INDEX]);
-          filesModified = parseFileList(attributes[FILES_MODIFIED_INDEX]);
-          filesDeleted = parseFileList(attributes[FILES_DELETED_INDEX]);
+        Set<String> filesAdded = Collections.emptySet();
+        Set<String> filesModified = Collections.emptySet();
+        Set<String> filesDeleted = Collections.emptySet();
+        Map<String, String> copies = Collections.emptyMap();
 
-          copies = parseCopiesFileList(attributes[FILES_COPIED_INDEX]);
-          // Only keep renames, i.e. copies where the source file is also deleted.
-          Iterator<String> keys = copies.keySet().iterator();
-          while (keys.hasNext()) {
-            String s = keys.next();
-            if (!filesDeleted.contains(s)) {
-              keys.remove();
+        if (numAttributes > FILES_ADDED_INDEX) {
+          filesAdded = parseFileList(attributes[FILES_ADDED_INDEX]);
+
+          if (numAttributes > FILES_MODIFIED_INDEX) {
+            filesModified = parseFileList(attributes[FILES_MODIFIED_INDEX]);
+
+            if (numAttributes > FILES_DELETED_INDEX) {
+              filesDeleted = parseFileList(attributes[FILES_DELETED_INDEX]);
+
+              if (numAttributes > FILES_COPIED_INDEX) {
+                copies = parseCopiesFileList(attributes[FILES_COPIED_INDEX]);
+                // Only keep renames, i.e. copies where the source file is also deleted.
+                Iterator<String> keys = copies.keySet().iterator();
+                while (keys.hasNext()) {
+                  String s = keys.next();
+                  if (!filesDeleted.contains(s)) {
+                    keys.remove();
+                  }
+                }
+              }
             }
           }
-        } else {
-          filesAdded = Collections.emptySet();
-          filesModified = Collections.emptySet();
-          filesDeleted = Collections.emptySet();
-          copies = Collections.emptyMap();
         }
 
-        revisions.add(new HgFileRevision(project, hgFile, vcsRevisionNumber,
-          branchName, revisionDate, author, commitMessage, filesModified, filesAdded, filesDeleted, copies));
-      } catch (NumberFormatException e) {
+        revisions.add(
+          new HgFileRevision(project, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified, filesAdded,
+                             filesDeleted, copies));
+      }
+      catch (NumberFormatException e) {
         LOG.warn("Error parsing rev in line " + line);
-      } catch (ParseException e) {
+      }
+      catch (ParseException e) {
         LOG.warn("Error parsing date in line " + line);
       }
     }
@@ -163,7 +172,8 @@ abstract class HgRevisionsCommand {
   private Set<String> parseFileList(String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptySet();
-    } else {
+    }
+    else {
       return new HashSet<String>(Arrays.asList(fileListString.split(" ")));
     }
   }
@@ -171,7 +181,8 @@ abstract class HgRevisionsCommand {
   private Map<String, String> parseCopiesFileList(String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
-    } else {
+    }
+    else {
       Map<String, String> copies = new HashMap<String, String>();
 
       String[] filesList = fileListString.split("\\)");

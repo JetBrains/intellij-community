@@ -77,7 +77,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
     String url = "/projects/" + myProjectId + "/tickets.xml";
     url += "?q=" + encodeUrl("state:open sort:updated ");
     if (!StringUtil.isEmpty(query)) {
@@ -107,7 +107,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
       result.addAll(taskList);
       page++;
     }
-    return result.toArray(new Task[result.size()]);
+    return result;
   }
 
   @Nullable
@@ -254,6 +254,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     method.addRequestHeader("X-LighthouseToken", myAPIKey);
   }
 
+  @Nullable
   @Override
   public Task findTask(String id) throws Exception {
     final String[] split = id.split("\\-");

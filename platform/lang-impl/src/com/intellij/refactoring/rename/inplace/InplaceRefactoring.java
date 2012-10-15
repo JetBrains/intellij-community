@@ -16,7 +16,6 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -36,7 +35,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -311,24 +313,13 @@ public abstract class InplaceRefactoring {
   }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
-
-    final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-
-    final boolean previousUpdate;
-    if (daemonCodeAnalyzer != null) {
-      previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
-      daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
-    }
-    else {
-      previousUpdate = false;
-    }
+    final Disposable disposable = Disposer.newDisposable();
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(disposable);
 
     final MyTemplateListener templateListener = new MyTemplateListener() {
       @Override
       protected void restoreDaemonUpdateState() {
-        if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
-        }
+        Disposer.dispose(disposable);
       }
     };
 
@@ -696,20 +687,21 @@ public abstract class InplaceRefactoring {
         releaseIfNotRestart();
       }
     });
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    topLevelEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<Balloon>(topLevelEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
-        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
+        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(topLevelEditor)) {
           return myTarget;
         }
-        final RelativePoint target = popupFactory.guessBestPopupLocation(myEditor);
+        final RelativePoint target = popupFactory.guessBestPopupLocation(topLevelEditor);
         if (target == null) return myTarget;
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
-        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
-          y -= myEditor.getLineHeight();
+        if (target.getPoint().getY() > topLevelEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= topLevelEditor.getLineHeight();
         }
         myTarget = new RelativePoint(new Point(screenPoint.x, y));
         return myTarget;

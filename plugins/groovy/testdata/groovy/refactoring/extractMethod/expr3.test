@@ -4,8 +4,8 @@ jjj = <begin>iii + 1<end>
 -----
 iii = null
 
-jjj = <caret>testMethod()
+jjj = testMethod(iii)
 
-private testMethod() {
+private testMethod(iii) {
     iii + 1
 }

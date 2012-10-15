@@ -322,7 +322,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     private final CodeStyleSettingsProvider myProvider;
     private final CodeStyleSettingsPanelFactory myFactory;
 
-    public CodeStyleConfigurableWrapper(CodeStyleSettingsProvider provider, CodeStyleSettingsPanelFactory factory) {
+    public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider, @NotNull CodeStyleSettingsPanelFactory factory) {
       myProvider = provider;
       myFactory = factory;
       myInitialResetInvoked = false;
@@ -376,6 +376,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     }
 
     @Override
+    public String toString() {
+      return myProvider.getClass().getName();
+    }
+
+    @Override
     public void reset() {
       if (!myInitialResetInvoked) {
         try {
@@ -388,6 +393,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       else {
         revert();
       }
+
 
     }
 

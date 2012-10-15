@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 public class MavenProjectsTree {
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".5";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".6";
 
   private final Object myStateLock = new Object();
   private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();

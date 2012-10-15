@@ -23,11 +23,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +39,10 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class GrReferenceHighlighter extends TextEditorHighlightingPass {
-  @NotNull private final GroovyFile myFile;
+  @NotNull private final GroovyFileBase myFile;
   @Nullable private List<HighlightInfo> myInfos = null;
 
-  protected GrReferenceHighlighter(@Nullable Document document, @NotNull GroovyFile file) {
+  public GrReferenceHighlighter(@Nullable Document document, @NotNull GroovyFileBase file) {
     super(file.getProject(), document);
     myFile = file;
   }
@@ -47,14 +50,30 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     myInfos = new ArrayList<HighlightInfo>();
-    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+    myFile.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (element instanceof GrReferenceElement) {
-          visit((GrReferenceElement)element);
+      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+        super.visitReferenceExpression(referenceExpression);
+
+        visit(referenceExpression);
+        HighlightInfo info = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
+        if (info != null) {
+          myInfos.add(info);
         }
       }
+
+      @Override
+      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        super.visitCodeReferenceElement(refElement);
+
+        visit(refElement);
+
+        HighlightInfo info = GrUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
+        if (info != null) {
+          myInfos.add(info);
+        }
+      }
+
       private void visit(GrReferenceElement element) {
         final PsiElement resolved = element.resolve();
         final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved);

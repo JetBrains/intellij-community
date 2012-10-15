@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.impl.light.LightMirrorMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
 
 import java.util.*;
 
@@ -288,8 +288,8 @@ public class StubGenerator implements ClassItemGenerator {
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiMethod method : typeDefinition.getMethods()) {
-      if (method instanceof LightMirrorMethod) {
-        PsiMethod prototype = ((LightMirrorMethod)method).getPrototype();
+      if (method instanceof DelegatedMethod) {
+        PsiMethod prototype = ((DelegatedMethod)method).getPrototype();
         PsiClass aClass = prototype.getContainingClass();
         if (prototype.hasModifierProperty(PsiModifier.FINAL) && aClass != null && typeDefinition.isInheritor(aClass, true)) {
           continue; //skip final super methods
@@ -394,7 +394,8 @@ public class StubGenerator implements ClassItemGenerator {
   private static String getVariableInitializer(GrVariable variable, PsiType declaredType) {
     if (declaredType instanceof PsiPrimitiveType) {
       Object eval = GroovyConstantExpressionEvaluator.evaluate(variable.getInitializerGroovy());
-      if (eval instanceof Float) {
+      if (eval instanceof Float ||
+          PsiType.FLOAT.equals(TypesUtil.unboxPrimitiveTypeWrapper(variable.getType())) && eval instanceof Number) {
         return eval.toString() + "f";
       }
       else if (eval instanceof Character) {

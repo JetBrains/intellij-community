@@ -44,7 +44,7 @@ public class HtmlLanguageLevelForm {
 
   public HtmlLanguageLevelForm(Project project) {
     final String[] urls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
-    myDoctypeTextField = TextFieldWithAutoCompletion.create(project, Arrays.asList(urls), null, true);
+    myDoctypeTextField = TextFieldWithAutoCompletion.create(project, Arrays.asList(urls), null, true, null);
     myOtherDoctypeWrapper.add(myDoctypeTextField);
     ActionListener listener = new ActionListener() {
       @Override

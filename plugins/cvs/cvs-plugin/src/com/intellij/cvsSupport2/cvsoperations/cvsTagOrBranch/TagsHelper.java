@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
@@ -57,7 +60,7 @@ public class TagsHelper {
     try {
       final CvsCommandOperation operation = tagsProvider.getOperation();
       if (operation == null) return null;
-      BranchesProvider branchesProvider = getBranchesProvider(operation, project);
+      final BranchesProvider branchesProvider = getBranchesProvider(operation, project);
       return chooseFrom(branchesProvider.getAllBranches(), branchesProvider.getAllRevisions());
     }
     catch (VcsException e) {
@@ -81,26 +84,22 @@ public class TagsHelper {
     field.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(files, project);
+        final String branchName = chooseBranch(files, project);
         if (branchName != null) field.setText(branchName);
       }
     });
   }
 
   public static Collection<String> getAllBranches(List<LogInformation> log) {
-    HashSet<String> branches = new HashSet<String>();
-
+    final HashSet<String> branches = new HashSet<String>();
     for (final LogInformation logInformation : log) {
       collectBranches(logInformation, branches);
     }
-
     return branches;
-
   }
 
-  private static void collectBranches(LogInformation logInformation,
-                                      HashSet<String> branches) {
-    List<SymbolicName> allSymbolicNames = logInformation.getAllSymbolicNames();
+  private static void collectBranches(LogInformation logInformation, HashSet<String> branches) {
+    final List<SymbolicName> allSymbolicNames = logInformation.getAllSymbolicNames();
     for (final SymbolicName symbolicName : allSymbolicNames) {
       branches.add(symbolicName.getName());
     }
@@ -114,21 +113,34 @@ public class TagsHelper {
 
   private static BranchesProvider getBranchesProvider(CvsOperation operation, Project project) throws VcsException {
     LOG.assertTrue(operation instanceof BranchesProvider);
-    CvsOperationExecutor executor = new CvsOperationExecutor(true, project,
-                                                             new ModalityContextImpl(ModalityState.defaultModalityState()
-                                                             ));
-    CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true);
+    final CvsOperationExecutor executor =
+      new CvsOperationExecutor(true, project, new ModalityContextImpl(ModalityState.defaultModalityState()));
+    final CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
-    CvsResult executionResult = executor.getResult();
+    final CvsResult executionResult = executor.getResult();
     if (executionResult.hasErrors()) throw executionResult.composeError();
     return (BranchesProvider)operation;
   }
 
-  private static Collection<String> collectAllBranches(Collection<FilePath> files,
-                                                       Project project) throws VcsException {
-    ArrayList<String> result = new ArrayList<String>();
+  public static Collection<FilePath> findVcsRoots(FilePath[] files, Project project) {
+    if (files.length == 0) {
+      return Collections.emptyList();
+    }
+    final Collection<FilePath> roots = new HashSet<FilePath>();
+    final Set<VirtualFile> seen = new HashSet<VirtualFile>();
+    for(FilePath filePath : files) {
+      final VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(filePath);
+      if (root == null || !seen.add(root)) {
+        continue;
+      }
+      roots.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(root));
+    }
+    return roots;
+  }
+
+  private static Collection<String> collectAllBranches(Collection<FilePath> files, Project project) throws VcsException {
     if (files.isEmpty()) {
-      return result;
+      return Collections.emptyList();
     }
     return getBranchesProvider(new LogOperation(files), project).getAllBranches();
   }
@@ -141,8 +153,7 @@ public class TagsHelper {
   @Nullable
   private static String chooseFrom(Collection<String> tags, Collection<CvsRevisionNumber> revisions) {
     if (tags == null) return null;
-    Collection<String> revisionsNames = collectSortedRevisionsNames(revisions);
-
+    final Collection<String> revisionsNames = collectSortedRevisionsNames(revisions);
     if (tags.isEmpty() && revisionsNames.isEmpty()) {
       Messages.showMessageDialog(CvsBundle.message("message.no.tags.found"), CvsBundle.message("operation.name.select.tag"),
                                  Messages.getInformationIcon());
@@ -153,19 +164,18 @@ public class TagsHelper {
     if (selectTagDialog.isOK()) {
       return selectTagDialog.getTag();
     }
-
     return null;
   }
 
   private static Collection<String> collectSortedTags(Collection<String> tags) {
-    ArrayList<String> result = new ArrayList<String>(tags);
+    final ArrayList<String> result = new ArrayList<String>(tags);
     Collections.sort(result);
     return result;
   }
 
   private static Collection<String> collectSortedRevisionsNames(Collection<CvsRevisionNumber> revisions) {
     if (revisions == null) return new ArrayList<String>();
-    ArrayList<CvsRevisionNumber> list = new ArrayList<CvsRevisionNumber>(revisions);
+    final ArrayList<CvsRevisionNumber> list = new ArrayList<CvsRevisionNumber>(revisions);
     Collections.sort(list, new Comparator<CvsRevisionNumber>() {
       @Override
       public int compare(CvsRevisionNumber o, CvsRevisionNumber o1) {
@@ -173,7 +183,7 @@ public class TagsHelper {
       }
 
     });
-    ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<String>();
     for (final CvsRevisionNumber aList : list) {
       result.add(aList.toString());
     }
@@ -181,13 +191,10 @@ public class TagsHelper {
   }
 
   public static Collection<CvsRevisionNumber> getAllRevisions(List<LogInformation> logs) {
-    ArrayList<CvsRevisionNumber> result = new ArrayList<CvsRevisionNumber>();
+    final ArrayList<CvsRevisionNumber> result = new ArrayList<CvsRevisionNumber>();
     for (final LogInformation log : logs) {
       collectRevisions(log, result);
     }
-
     return result;
   }
-
-
 }

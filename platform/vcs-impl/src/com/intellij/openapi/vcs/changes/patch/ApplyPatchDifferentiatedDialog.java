@@ -54,7 +54,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -166,8 +166,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     } : EmptyRunnable.getInstance();
 
-    myChangeListChooser = new ChangeListChooserPanel(project, new Consumer<String>() {
-      public void consume(final String errorMessage) {
+    myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
+      public void consume(final @Nullable String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage);
       }

@@ -66,4 +66,10 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   Pair<T, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException;
 
   RepositoryLocation getForNonLocal(final VirtualFile file);
+
+  /**
+   * Return true if this committed changes provider can be used to show the incoming changes.
+   * If false is returned, the "Incoming" tab won't be shown in the Changes toolwindow.
+   */
+  boolean supportsIncomingChanges();
 }

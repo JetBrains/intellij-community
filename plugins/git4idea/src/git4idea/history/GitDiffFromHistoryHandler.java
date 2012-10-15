@@ -195,7 +195,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
                                                              null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
     changesBrowser.setChangesToDisplay(diff);
     dialogBuilder.setCenterPanel(changesBrowser);
-    dialogBuilder.show();
+    dialogBuilder.showNotModal();
   }
 
   private void showDiffForMergeCommit(@NotNull final AnActionEvent event, @NotNull final FilePath filePath,

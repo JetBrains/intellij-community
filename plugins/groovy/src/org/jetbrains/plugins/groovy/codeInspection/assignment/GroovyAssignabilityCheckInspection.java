@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -77,8 +78,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -325,9 +326,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       PsiType varType = variable.getType();
 
+      PsiElement parent = variable.getParent();
       //check tuple assignment:  def (int x, int y) = foo()
-      if (variable.getParent() instanceof GrTupleDeclaration) {
-        GrTupleDeclaration tuple = (GrTupleDeclaration)variable.getParent();
+      if (parent instanceof GrTupleDeclaration) {
+        GrTupleDeclaration tuple = (GrTupleDeclaration)parent;
         GrExpression initializer = tuple.getInitializerGroovy();
         if (initializer == null) return;
         if (!(initializer instanceof GrListOrMap)) {
@@ -337,6 +339,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           checkAssignability(varType, valueType, tuple, variable.getNameIdentifierGroovy());
           return;
         }
+      }
+      else if (parent instanceof GrForInClause) {
+        PsiType iteratedType = PsiUtil.extractIteratedType((GrForInClause)parent);
+        if (iteratedType == null) return;
+
+        GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
+        checkAssignability(varType, iteratedType, iteratedExpression, variable.getNameIdentifierGroovy());
+        return;
       }
 
       GrExpression initializer = variable.getInitializerGroovy();

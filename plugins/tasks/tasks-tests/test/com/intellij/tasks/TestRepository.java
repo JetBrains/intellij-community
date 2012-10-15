@@ -5,6 +5,8 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
 * @author Dmitry Avdeev
 */
@@ -29,10 +31,11 @@ class TestRepository extends BaseRepository {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    return myTasks;
+  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
+    return ContainerUtil.newArrayList(myTasks);
   }
 
+  @Nullable
   @Override
   public Task findTask(final String id) throws Exception {
     return ContainerUtil.find(myTasks, new Condition<Task>() {

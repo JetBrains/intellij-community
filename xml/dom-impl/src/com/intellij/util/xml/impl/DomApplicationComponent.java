@@ -29,6 +29,7 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -155,10 +156,6 @@ public class DomApplicationComponent {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
-  public final void clearImplementations() {
-    myCachedImplementationClasses.clear();
-  }
-
   public TypeChooserManager getTypeChooserManager() {
     return myTypeChooserManager;
   }
@@ -175,4 +172,10 @@ public class DomApplicationComponent {
     return myVisitorDescriptions.get(aClass);
   }
 
+  @TestOnly
+  public void clearCachesInTests() {
+    myInvocationCaches.clear();
+    myGenericInfos.clear();
+    myCachedImplementationClasses.clear();
+  }
 }

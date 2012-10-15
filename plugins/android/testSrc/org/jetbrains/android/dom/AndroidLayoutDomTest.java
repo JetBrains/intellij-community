@@ -3,7 +3,6 @@ package org.jetbrains.android.dom;
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +32,6 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, SdkConstants.FN_ANDROID_MANIFEST_XML);
   }
 
@@ -63,7 +61,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testCommonPrefixIdea63531() throws Throwable {
-    toTestCompletion("commonPrefixIdea63531.xml", "commonPrefixIdea63531_after.xml");
+    VirtualFile file = copyFileToProject("commonPrefixIdea63531.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile(testFolder + '/' + "commonPrefixIdea63531_after.xml");
   }
 
   public void testHighlighting() throws Throwable {
@@ -220,7 +221,11 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testTagNameCompletion1() throws Throwable {
-    toTestCompletion("tn1.xml", "tn1_after.xml");
+    VirtualFile file = copyFileToProject("tn1.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + "tn1_after.xml");
   }
 
   public void testFlagCompletion() throws Throwable {
@@ -278,7 +283,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testTagNameCompletion3() throws Throwable {
-    doTestCompletionVariants("tn3.xml", "View", "ViewAnimator", "ViewFlipper", "ViewStub", "ViewSwitcher");
+    doTestCompletionVariants("tn3.xml", "AdapterViewFlipper", "AppWidgetHostView", "AutoCompleteTextView", "CalendarView",
+                             "CheckedTextView", "ExpandableListView", "GridView", "HorizontalScrollView", "ImageView", "KeyboardView",
+                             "ListView", "MultiAutoCompleteTextView", "ScrollView", "SearchView", "StackView", "SurfaceView", "TextView",
+                             "TextureView", "VideoView", "View", "ViewAnimator", "ViewFlipper", "ViewStub", "ViewSwitcher");
   }
 
   /*public void testTagNameCompletion4() throws Throwable {
@@ -375,7 +383,8 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testTextViewRootTag_IDEA_62889() throws Throwable {
-    doTestCompletionVariants("textViewRootTag.xml", "TextView", "TextureView");
+    doTestCompletionVariants("textViewRootTag.xml", "AutoCompleteTextView", "CheckedTextView", "MultiAutoCompleteTextView", "TextView",
+                             "TextureView");
   }
 
   public void testRequestFocus() throws Throwable {

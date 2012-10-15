@@ -62,10 +62,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
   private JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
-  private JLabel myComment;
+  private JBLabel myComment;
   private JPanel myEditorPanel;
+  protected JBCheckBox myLoginAnonymouslyJBCheckBox;
 
   private boolean myApplying;
+  protected Project myProject;
   protected final T myRepository;
   private final Consumer<T> myChangeListener;
   private final Document myDocument;
@@ -73,6 +75,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JComponent myAnchor;
 
   public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
+    myProject = project;
     myRepository = repository;
     myChangeListener = changeListener;
 
@@ -98,6 +101,15 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUseHTTPAuthentication.setSelected(repository.isUseHttpAuthentication());
     myUseHTTPAuthentication.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
 
+    myLoginAnonymouslyJBCheckBox.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.LOGIN_ANONYMOUSLY));
+    myLoginAnonymouslyJBCheckBox.setSelected(repository.isLoginAnonymously());
+    myLoginAnonymouslyJBCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
+      }
+    });
+
     myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
     myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
@@ -105,12 +117,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myComment.setText("Available placeholders: " + repository.getComment());
 
     installListener(myAddCommitMessage);
-    myDocument.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-        doApply();
-      }
-    });
+    installListener(myDocument);
 
     installListener(myURLText);
     installListener(myUserNameText);
@@ -119,6 +126,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myShareURL);
     installListener(myUseProxy);
     installListener(myUseHTTPAuthentication);
+    installListener(myLoginAnonymouslyJBCheckBox);
 
     enableButtons();
 
@@ -128,6 +136,14 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     }
 
     setAnchor(myUseProxy);
+    loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
+  }
+
+  protected void loginAnonymouslyChanged(boolean enabled) {
+    myUsernameLabel.setEnabled(enabled);
+    myUserNameText.setEnabled(enabled);
+    myPasswordLabel.setEnabled(enabled);
+    myPasswordText.setEnabled(enabled);
   }
 
   @Nullable
@@ -175,6 +191,15 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     });
   }
 
+  protected void installListener(final Document document) {
+    document.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        doApply();
+      }
+    });
+  }
+
   protected void doApply() {
     if (!myApplying) {
       try {
@@ -210,6 +235,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setShared(myShareURL.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHTTPAuthentication.isSelected());
+    myRepository.setLoginAnonymously(myLoginAnonymouslyJBCheckBox.isSelected());
 
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());
     myRepository.setCommitMessageFormat(myDocument.getText());

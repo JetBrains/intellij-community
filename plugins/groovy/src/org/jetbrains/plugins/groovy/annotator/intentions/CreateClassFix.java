@@ -16,9 +16,12 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -30,19 +33,22 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
-import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 
@@ -124,8 +130,8 @@ public abstract class CreateClassFix {
 
       GrMethod method = GroovyPsiElementFactory.getInstance(project).createConstructorFromText(name, paramTypes, paramNames, "{\n}");
 
-      method = targetClass.addMemberDeclaration(method, null);
-      final PsiNameIdentifierOwner context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class);
+      method = (GrMethod)targetClass.addBefore(method, null);
+      final PsiElement context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class, PsiFile.class);
       IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, new TypeConstraint[0], true, context);
     }
     finally {
@@ -135,22 +141,98 @@ public abstract class CreateClassFix {
 
   public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
-        final String qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
+
+        PsiElement qualifier = myRefElement.getQualifier();
+
+        if (qualifier == null) {
+          createTopLevelClass(project, file, groovyFile);
+        }
+        else {
+          createInnerClass(project, editor, qualifier);
+        }
+      }
+
+      private void createInnerClass(Project project, final Editor editor, PsiElement qualifier) {
+        PsiElement resolved = null;
+        if (qualifier instanceof GrCodeReferenceElement) {
+          resolved = ((GrCodeReferenceElement)qualifier).resolve();
+        }
+        else if (qualifier instanceof GrExpression) {
+          PsiType type = ((GrExpression)qualifier).getType();
+          if (type instanceof PsiClassType) {
+            resolved = ((PsiClassType)type).resolve();
+          }
+        }
+
+
+        JVMElementFactory factory = JVMElementFactories.getFactory(resolved.getLanguage(), project);
+        if (factory == null) return;
+
+        String name = myRefElement.getReferenceName();
+        PsiClass template = createTemplate(factory, name);
+
+        if (template == null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (editor != null && editor.getComponent().isDisplayable()) {
+                HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
+              }
+            }
+          });
+          return;
+        }
+
+
+        AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(CreateClassFix.class);
+        try {
+          if (!(resolved instanceof PsiClass)) return;
+          CodeInsightUtilBase.preparePsiElementForWrite(resolved);
+
+          PsiClass added = (PsiClass)resolved.add(template);
+          PsiModifierList modifierList = added.getModifierList();
+          if (modifierList != null) {
+            modifierList.setModifierProperty(PsiModifier.STATIC, true);
+          }
+          putCursor(project, added.getContainingFile(), added);
+        }
+        finally {
+          lock.finish();
+        }
+      }
+
+      @Nullable
+      private PsiClass createTemplate(JVMElementFactory factory, String name) {
+        switch (getType()) {
+          case ENUM:
+            return factory.createEnum(name);
+          case CLASS:
+            return factory.createClass(name);
+          case INTERFACE:
+            return factory.createInterface(name);
+          case ANNOTATION:
+            return factory.createAnnotationType(name);
+          default:
+            return null;
+        }
+      }
+
+      private void createTopLevelClass(Project project, PsiFile file, GroovyFileBase groovyFile) {
+        final String pack = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
+        assert name != null;
         final Module module = findModuleForPsiElement(file);
-        PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
+        PsiDirectory targetDirectory = getTargetDirectory(project, pack, name, module, getText());
         if (targetDirectory == null) return;
 
-
         String templateName = getTemplateName(getType());
-        assert name != null;
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
         if (targetClass != null) {
-          addImportForClass(groovyFile, qualifier, targetClass);
+          addImportForClass(groovyFile, pack, targetClass);
           putCursor(project, targetClass.getContainingFile(), targetClass);
         }
       }

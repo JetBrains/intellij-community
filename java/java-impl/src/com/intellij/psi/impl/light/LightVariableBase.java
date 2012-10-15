@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,18 +26,20 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author ven
  */
-public abstract class LightVariableBase extends LightElement implements PsiVariable {
+public abstract class LightVariableBase extends LightElement implements PsiVariable, OriginInfoAwareElement {
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
   protected PsiType myType;
   protected final PsiModifierList myModifierList;
   protected boolean myWritable;
+  private String myOriginInfo = null;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
     this(manager, nameIdentifier, JavaLanguage.INSTANCE, type, writable, scope);
@@ -153,5 +156,15 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   @Override
   public PsiType getTypeNoResolve() {
     return getType();
+  }
+
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    return myOriginInfo;
+  }
+
+  public void setOriginInfo(String originInfo) {
+    myOriginInfo = originInfo;
   }
 }

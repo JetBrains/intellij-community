@@ -73,7 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
@@ -721,8 +721,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
       final PsiElement nextChild = anchor.getNextSibling();
       if (nextChild == null) {
-        add(element);
-        return element;
+        return add(element);
       }
 
       if (body == null) throw new IncorrectOperationException("Class must have body");
@@ -735,8 +734,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     if (anchor == null) {
-      add(element);
-      return element;
+      return add(element);
     }
 
     final GrTypeDefinitionBody body = getBody();
@@ -784,7 +782,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       }
     }
     else {
-      body.add(psiElement);
+      psiElement = body.add(psiElement);
     }
 
     return psiElement;

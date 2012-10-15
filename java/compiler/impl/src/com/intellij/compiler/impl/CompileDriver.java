@@ -213,7 +213,7 @@ public class CompileDriver {
     }
     scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true);
+    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
 
     checkCachesVersion(compileContext, ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp());
@@ -443,12 +443,13 @@ public class CompileDriver {
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+
       @Override
       public void buildStarted(UUID sessionId) {
       }
 
       @Override
-      public void sessionTerminated(UUID sessionId) {
+      public void sessionTerminated(final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
           final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
           view.clearProgress();
@@ -471,9 +472,10 @@ public class CompileDriver {
       protected void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
         final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
         //System.out.println(compilerMessage.getText());
+        final String messageText = message.getText();
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
-          indicator.setText(message.getText());
+          indicator.setText(messageText);
           if (message.hasDone()) {
             indicator.setFraction(message.getDone());
           }
@@ -489,9 +491,7 @@ public class CompileDriver {
           final long line = message.hasLine() ? message.getLine() : -1;
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-          compileContext.addMessage(
-            category, message.getText(), srcUrl, (int)line, (int)column
-          );
+          compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
         }
       }
 
@@ -549,7 +549,7 @@ public class CompileDriver {
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode());
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true);
 
     StatusBar.Info.set("", myProject, "Compiler");
     if (useExtProcessBuild && BuildManager.getInstance().rescanRequired(myProject)) {
@@ -2168,7 +2168,7 @@ public class CompileDriver {
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
     final CompilerTask progressManagerTask =
-      new CompilerTask(myProject, contentName, false);
+      new CompilerTask(myProject, contentName, false, false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();

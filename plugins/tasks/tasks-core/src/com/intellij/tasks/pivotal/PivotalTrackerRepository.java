@@ -82,19 +82,18 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+  public List<Task> getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     @SuppressWarnings({"unchecked"}) List<Object> children = getStories(query, max);
-    List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
+
+    return ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
       public Task fun(Object o) {
         return createIssue((Element)o);
       }
     });
-
-    return taskList.toArray(new Task[taskList.size()]);
   }
 
   @SuppressWarnings({"unchecked"})
-  private List<Object> getStories(final String query, final int max) throws Exception {
+  private List<Object> getStories(@Nullable final String query, final int max) throws Exception {
     String url = API_URL + "/projects/" + myProjectId + "/stories";
     url += "?filter=" + encodeUrl("state:started,unstarted,unscheduled,rejected");
     if (!StringUtil.isEmpty(query)) {
@@ -259,6 +258,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return method;
   }
 
+  @Nullable
   @Override
   public Task findTask(final String id) throws Exception {
     final String realId = getRealId(id);
@@ -317,6 +317,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return name + (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : "");
   }
 
+  @Nullable
   @Override
   public String getTaskComment(final Task task) {
     if (isShouldFormatCommitMessage()) {

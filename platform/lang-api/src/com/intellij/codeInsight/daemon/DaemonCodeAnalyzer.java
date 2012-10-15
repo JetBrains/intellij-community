@@ -17,11 +17,13 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzer getInstance(Project project) {
@@ -34,14 +36,15 @@ public abstract class DaemonCodeAnalyzer {
   public abstract void updateVisibleHighlighters(@NotNull Editor editor);
 
   public abstract void setUpdateByTimerEnabled(boolean value);
+  public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
 
-  public abstract boolean isHighlightingAvailable(PsiFile file);
+  public abstract boolean isHighlightingAvailable(@Nullable PsiFile file);
 
   public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
   public abstract void resetImportHintsEnabledForProject(); 
   public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
   public abstract boolean isImportHintsEnabled(@NotNull PsiFile file);
-  public abstract boolean isAutohintsAvailable(PsiFile file);
+  public abstract boolean isAutohintsAvailable(@Nullable PsiFile file);
 
   /**
    * Force rehighlighting for all files

@@ -19,11 +19,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorPicker;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -31,6 +31,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -66,6 +67,20 @@ public class ShowUIDefaultsAction extends AnAction {
         init();
       }
 
+      public JBTable myTable;
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myTable;
+      }
+
+      @Nullable
+      @Override
+      protected String getDimensionServiceKey() {
+        return "UI.Defaults.Dialog";
+      }
+
       @Override
       protected JComponent createCenterPanel() {
         final JBTable table = new JBTable(new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
@@ -76,7 +91,7 @@ public class ShowUIDefaultsAction extends AnAction {
         }) {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
-            if (isCellEditable(row, column)) {
+            if (isCellEditable(row, column) && e instanceof MouseEvent) {
               final Object color = getValueAt(row, column);
               final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true, null);
               if (newColor != null) {
@@ -107,16 +122,20 @@ public class ShowUIDefaultsAction extends AnAction {
               panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {
-              //final Icon icon = (Icon)value;
-              //if (icon.getIconHeight() <= 20) {
-              //  //label.setIcon(icon);
-              //}
-              //label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
+              try {
+                final Icon icon = (Icon)value;
+                if (icon.getIconHeight() <= 20) {
+                  label.setIcon(icon);
+                }
+                label.setText(String.format("(%dx%d) %s)",icon.getIconWidth(), icon.getIconHeight(), label.getText()));
+              }
+              catch (Throwable e1) {//
+              }
               return panel;
             } else if (value instanceof Border) {
               try {
                 final Insets i = ((Border)value).getBorderInsets(null);
-                label.setText(String.format("border[%d, %d, %d, %d] %s", i.top, i.left, i.bottom, i.right, label.getText()));
+                label.setText(String.format("[%d, %d, %d, %d] %s", i.top, i.left, i.bottom, i.right, label.getText()));
                 return panel;
               } catch (Exception ignore) {}
             }
@@ -124,10 +143,18 @@ public class ShowUIDefaultsAction extends AnAction {
           }
         });
         final JBScrollPane pane = new JBScrollPane(table);
-        new TableSpeedSearch(table);
+        new TableSpeedSearch(table, new PairFunction<Object, Cell, String>() {
+          @Nullable
+          @Override
+          public String fun(Object o, Cell cell) {
+            return cell.column == 1 ? null : String.valueOf(o);
+          }
+        });
         table.setShowGrid(false);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(pane, BorderLayout.CENTER);
+        myTable = table;
+        TableUtil.ensureSelectionExists(myTable);
         return panel;
       }
     }.show();

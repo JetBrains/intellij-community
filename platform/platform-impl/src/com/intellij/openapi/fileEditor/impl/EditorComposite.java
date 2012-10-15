@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -226,7 +225,7 @@ public abstract class EditorComposite implements Disposable {
   }
 
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
-    if (!myFileEditorManager.isInsideChange() && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
+    if ((!EventQueue.isDispatchThread() || !myFileEditorManager.isInsideChange()) && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
       myFileEditorManager.notifyPublisher(new Runnable() {
         @Override
         public void run() {

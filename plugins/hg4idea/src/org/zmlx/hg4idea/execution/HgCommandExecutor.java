@@ -13,9 +13,9 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -28,7 +28,6 @@ import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -52,7 +51,7 @@ import java.util.List;
  * </p>
  */
 public final class HgCommandExecutor {
-  
+
   private static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
   private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "ui.merge=internal:merge");
 
@@ -100,6 +99,12 @@ public final class HgCommandExecutor {
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
                                                 @Nullable final List<String> arguments) {
+    return executeInCurrentThread(repo, operation, arguments, null);
+  }
+
+  @Nullable
+  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
+                                                @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
     //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); disabled for release
     if (myProject == null || myProject.isDisposed() || myVcs == null) {
       return null;
@@ -114,11 +119,11 @@ public final class HgCommandExecutor {
 
     WarningReceiver warningReceiver = new WarningReceiver();
     PassReceiver passReceiver = new PassReceiver(myProject);
-    
-    SocketServer promptServer = new SocketServer(new PromptReceiver());
+
+    SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
     SocketServer warningServer = new SocketServer(warningReceiver);
     SocketServer passServer = new SocketServer(passReceiver);
-    
+
     try {
       int promptPort = promptServer.start();
       int warningPort = warningServer.start();
@@ -258,37 +263,46 @@ public final class HgCommandExecutor {
   }
 
   private static class PromptReceiver extends SocketServer.Protocol {
+    @Nullable HgPromptHandler myHandler;
+
+    public PromptReceiver(@Nullable HgPromptHandler handler) {
+      myHandler = handler;
+    }
 
     public boolean handleConnection(Socket socket) throws IOException {
       DataInputStream dataInput = new DataInputStream(socket.getInputStream());
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       final String message = new String(readDataBlock(dataInput));
       int numOfChoices = dataInput.readInt();
-      final Choice[] choices = new Choice[numOfChoices];
+      final HgPromptChoice[] choices = new HgPromptChoice[numOfChoices];
       for (int i = 0; i < numOfChoices; i++) {
         String choice = new String(readDataBlock(dataInput));
-        choices[i] = new Choice(choice);
+        choices[i] = new HgPromptChoice(i, choice);
       }
       int defaultChoiceInt = dataInput.readInt();
-      final Choice defaultChoice = choices[defaultChoiceInt];
-
+      final HgPromptChoice defaultChoice = choices[defaultChoiceInt];
+      if (myHandler != null && myHandler.shouldHandle(message)) {
+        int chosen = myHandler.promptUser(message, choices, defaultChoice).getChosenIndex();
+        sendChoiceToHg(out, chosen);
+        return true;
+      }
       final int[] index = new int[]{-1};
       try {
         EventQueue.invokeAndWait(new Runnable() {
           public void run() {
-            Window parent = ApplicationManager.getApplication().getComponent(Window.class);
-            index[0] = JOptionPane
-              .showOptionDialog(parent, message, "hg4idea", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices,
-                                defaultChoice);
+            String[] choicePresentationArray = new String[choices.length];
+            for (int i = 0; i < choices.length; ++i) {
+              choicePresentationArray[i] = choices[i].toString();
+            }
+            index[0] = Messages
+              .showChooseDialog(message, "hg4idea",
+                                choicePresentationArray,
+                                defaultChoice.toString(), Messages.getQuestionIcon());
           }
         });
-        
+
         int chosen = index[0];
-        if (chosen == JOptionPane.CLOSED_OPTION) {
-          out.writeInt(-1);
-        } else {
-          out.writeInt(chosen);
-        }
+        sendChoiceToHg(out, chosen);
         return true;
       }
       catch (InterruptedException e) {
@@ -301,43 +315,16 @@ public final class HgCommandExecutor {
       }
     }
 
-    private static class Choice{
-      private final String fullString;
-      private final String representation;
-      private final String choiceChar;
-
-      private Choice(String fullString) {
-        this.fullString = fullString;
-        this.representation = fullString.replaceAll("&", "");
-        int index = fullString.indexOf("&");
-        this.choiceChar = "" + fullString.charAt(index + 1);
-        
+    private static void sendChoiceToHg(@NotNull DataOutputStream outStream, int choice) throws IOException {
+      if (choice == HgPromptChoice.CLOSED_OPTION) {
+        outStream.writeInt(-1);
       }
-
-      @Override
-      public String toString() {
-        return representation;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Choice choice = (Choice) o;
-
-        if (!fullString.equals(choice.fullString)) return false;
-
-        return true;
-      }
-
-      @Override
-      public int hashCode() {
-        return fullString.hashCode();
+      else {
+        outStream.writeInt(choice);
       }
     }
   }
-  
+
   private static class PassReceiver extends SocketServer.Protocol{
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;

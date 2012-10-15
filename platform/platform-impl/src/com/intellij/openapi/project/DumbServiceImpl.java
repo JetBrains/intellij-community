@@ -40,6 +40,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -179,14 +180,30 @@ public class DumbServiceImpl extends DumbService {
         if (!wasDumb) {
           // always change dumb status inside write action.
           // This will ensure all active read actions are completed before the app goes dumb
+          final Ref<Boolean> startFailure = new Ref<Boolean>(Boolean.FALSE);
           application.runWriteAction(new Runnable() {
             public void run() {
               myDumb = true;
-              myPublisher.enteredDumbMode();
-
-              updateRunnable.run();
+              try {
+                myPublisher.enteredDumbMode();
+              }
+              catch (Throwable e) {
+                LOG.error(e);
+              }
+              finally {
+                try {
+                  updateRunnable.run();
+                }
+                catch (Throwable e) {
+                  startFailure.set(Boolean.TRUE);
+                  LOG.error("Failed to start background index update task", e);
+                }
+              }
             }
           });
+          if (startFailure.get()) {
+            updateFinished();
+          }
         }
         else {
           myUpdatesQueue.addLast(updateRunnable);
@@ -197,23 +214,27 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateFinished() {
     myDumb = false;
-    if (!myProject.isDisposed()) {
-      myPublisher.exitDumbMode();
-      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+    try {
+      if (!myProject.isDisposed()) {
+        myPublisher.exitDumbMode();
+        FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
+      }
     }
-    while (true) {
-      final Runnable runnable;
-      synchronized (myRunWhenSmartQueue) {
-        if (myRunWhenSmartQueue.isEmpty()) {
-          break;
+    finally {
+      while (true) {
+        final Runnable runnable;
+        synchronized (myRunWhenSmartQueue) {
+          if (myRunWhenSmartQueue.isEmpty()) {
+            break;
+          }
+          runnable = myRunWhenSmartQueue.pullFirst();
         }
-        runnable = myRunWhenSmartQueue.pullFirst();
-      }
-      try {
-        runnable.run();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+        try {
+          runnable.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -271,19 +292,14 @@ public class DumbServiceImpl extends DumbService {
     private volatile int myTotalItems;
     private double myCurrentBaseTotal;
 
-    public IndexUpdateRunnable(CacheUpdateRunner action) {
+    public IndexUpdateRunnable(@NotNull CacheUpdateRunner action) {
       myAction = action;
       myTotalItems = 0;
       myCurrentBaseTotal = 0;
     }
 
     public void run() {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
-        private final BlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new LinkedBlockingQueue<Ref<CacheUpdateRunner>>();
 
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -331,6 +347,10 @@ public class DumbServiceImpl extends DumbService {
             shutdownTracker.registerStopperThread(self);
             runAction(proxy, myAction);
           }
+          catch (RuntimeException e) {
+            LOG.error(e);
+            throw e;
+          }
           finally {
             shutdownTracker.unregisterStopperThread(self);
             HeavyProcessLatch.INSTANCE.processFinished();
@@ -338,12 +358,12 @@ public class DumbServiceImpl extends DumbService {
         }
 
         private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
-          do {
-            int count = 0;
+          while (updateRunner != null) {
             try {
+              indicator.checkCanceled();
               indicator.setIndeterminate(true);
               indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-              count = updateRunner.queryNeededFiles(indicator);
+              int count = updateRunner.queryNeededFiles(indicator);
 
               myCurrentBaseTotal = count;
               myTotalItems += count;
@@ -354,64 +374,57 @@ public class DumbServiceImpl extends DumbService {
                 updateRunner.processFiles(indicator, true);
               }
               updateRunner.updatingDone();
-            }
-            finally {
               myProcessedItems += count;
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Scheduling checkNextUpdateFromQueue");
-              }
-              UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
-                public void run() {
-                  checkNextUpdateFromQueue();
-                }
-              });
-
-              // try to obtain the next action or terminate if no actions left
-              Ref<CacheUpdateRunner> ref = null;
-              do {
-                try {
-                  ref = myActionQueue.poll(500, TimeUnit.MILLISECONDS);
-                }
-                catch (InterruptedException e) {
-                  LOG.info(e);
-                }
-                updateRunner = ref != null? ref.get() : null;
-                if (myProject.isDisposed()) {
-                  // just terminate the progress task
-                  break;
-                }
-              }
-              while (ref == null);
             }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable unexpected) {
+              LOG.error(unexpected);
+            }
+            updateRunner = getNextUpdateRunner();
           }
-          while (updateRunner != null);
         }
 
-        private void checkNextUpdateFromQueue() {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Inside checkNextUpdateFromQueue");
+        @Nullable 
+        private CacheUpdateRunner getNextUpdateRunner() {
+          final BlockingQueue<Ref<CacheUpdateRunner>> actionQueue = new LinkedBlockingQueue<Ref<CacheUpdateRunner>>();
+          UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+            public void run() {
+              IndexUpdateRunnable nextRunnable = getNextUpdateFromQueue();
+              try {
+                actionQueue.offer(nextRunnable == null ? NULL_ACTION : new Ref<CacheUpdateRunner>(nextRunnable.myAction));
+              }
+              finally {
+                if (nextRunnable == null) {
+                  updateFinished();
+                }
+              }
+            }
+          });
+
+          // try to obtain the next action or terminate if no actions left
+          while (!myProject.isDisposed()) {
+            try {
+              Ref<CacheUpdateRunner> ref = actionQueue.poll(500L, TimeUnit.MILLISECONDS);
+              if (ref != null) {
+                return ref.get();
+              }
+            }
+            catch (InterruptedException e) {
+              LOG.info(e);
+            }
           }
-          IndexUpdateRunnable nextUpdateRunnable = null;
+          return null;
+        }
+
+        @Nullable 
+        private IndexUpdateRunnable getNextUpdateFromQueue() {
           try {
-            nextUpdateRunnable = myUpdatesQueue.isEmpty()? null : myUpdatesQueue.pullFirst();
-            if (nextUpdateRunnable == null) {
-              // really terminate the task
-              myActionQueue.offer(NULL_ACTION);
-            }
-            else {
-              //run next dumb action
-              // run next action under already existing progress indicator
-              myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction));
-            }
+            return myUpdatesQueue.isEmpty()? null : myUpdatesQueue.pullFirst();
           }
           catch (Throwable e) {
-            myActionQueue.offer(NULL_ACTION);
             LOG.info(e);
-          }
-          finally {
-            if (nextUpdateRunnable == null) {
-              updateFinished();
-            }
+            return null;
           }
         }
       });

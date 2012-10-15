@@ -61,7 +61,7 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   @NotNull
   public abstract Collection<DClassElement> getAllContainingClasses();
 
-  public abstract void replaceClassName(final DClassElement oldClassElement, String newClassName);
+  public abstract void replaceClassName(@Nullable final DClassElement oldClassElement, String newClassName);
 
   public abstract void addProperty(DynamicElementSettings settings);
 
@@ -70,10 +70,10 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   public abstract void removeClassElement(DClassElement classElement);
 
   @Nullable
-  public abstract DPropertyElement findConcreteDynamicProperty(final String conatainingClassName, final String propertyName);
+  public abstract DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName);
 
   @NotNull
-  public abstract Collection<DPropertyElement> findDynamicPropertiesOfClass(final String conatainingClassName);
+  public abstract Collection<DPropertyElement> findDynamicPropertiesOfClass(final String containingClassName);
 
   @Nullable
   public abstract String getPropertyType(String className, String propertyName);
@@ -85,7 +85,7 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   public abstract String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);
 
   @Nullable
-  public abstract DMethodElement findConcreteDynamicMethod(final String conatainingClassName, final String name, final String[] types);
+  public abstract DMethodElement findConcreteDynamicMethod(final String containingClassName, final String name, final String[] types);
 
   public abstract void removeItemElement(DItemElement element);
 

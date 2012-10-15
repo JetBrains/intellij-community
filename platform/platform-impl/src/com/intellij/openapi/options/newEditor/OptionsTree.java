@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -257,17 +258,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return path;
   }
 
-  @Nullable
-  public Configurable getParentFor(final Configurable configurable) {
-    final List<Configurable> path = getPathToRoot(configurable);
-    if (path.size() > 1) {
-      return path.get(1);
-    }
-    else {
-      return null;
-    }
-  }
-
   public SimpleNode findNodeFor(final Configurable toSelect) {
     return myConfigurable2Node.get(toSelect);
   }
@@ -277,6 +267,19 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     for (Configurable configurable : myConfigurable2Node.keySet()) {
       if (configurableClass.isInstance(configurable)) {
         return configurableClass.cast(configurable);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public SearchableConfigurable findConfigurableById(@NotNull String configurableId) {
+    for (Configurable configurable : myConfigurable2Node.keySet()) {
+      if (configurable instanceof SearchableConfigurable) {
+        SearchableConfigurable searchableConfigurable = (SearchableConfigurable) configurable;
+        if (configurableId.equals(searchableConfigurable.getId())) {
+          return searchableConfigurable;
+        }
       }
     }
     return null;

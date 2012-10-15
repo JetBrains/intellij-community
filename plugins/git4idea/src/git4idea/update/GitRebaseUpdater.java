@@ -70,8 +70,8 @@ public class GitRebaseUpdater extends GitUpdater {
     rebaseHandler.addParameters(remoteBranch);
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rebaseHandler.addLineListener(rebaseConflictDetector);
-    GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector = new GitMessageWithFilesDetector(GitMessageWithFilesDetector.Event.UNTRACKED_FILES_OVERWRITTEN_BY, myRoot);
-    rebaseHandler.addLineListener(untrackedWouldBeOverwrittenDetector);
+    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
+    rebaseHandler.addLineListener(untrackedFilesDetector);
 
     GitTask rebaseTask = new GitTask(myProject, rebaseHandler, "Rebasing");
     rebaseTask.setProgressIndicator(myProgressIndicator);
@@ -97,7 +97,7 @@ public class GitRebaseUpdater extends GitUpdater {
     });
 
     if (failure.get()) {
-      updateResult.set(handleRebaseFailure(rebaseHandler, rebaseConflictDetector, untrackedWouldBeOverwrittenDetector));
+      updateResult.set(handleRebaseFailure(rebaseHandler, rebaseConflictDetector, untrackedFilesDetector));
     }
     return updateResult.get();
   }

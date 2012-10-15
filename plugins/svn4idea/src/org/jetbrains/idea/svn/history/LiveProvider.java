@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class LiveProvider implements BunchProvider {
@@ -54,6 +55,14 @@ public class LiveProvider implements BunchProvider {
 
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
                                              final boolean includeYoungest, final boolean includeOldest) throws SVNException {
+    return getEarliestBunchInIntervalImpl(earliestRevision, oldestRevision, desirableSize, includeYoungest, includeOldest, earliestRevision);
+  }
+
+  private Fragment getEarliestBunchInIntervalImpl(long earliestRevision,
+                                                  final long oldestRevision,
+                                                  final int desirableSize,
+                                                  final boolean includeYoungest,
+                                                  final boolean includeOldest, final long earliestToTake) throws SVNException {
     if ((myEarliestRevisionWasAccessed) || ((oldestRevision == myYoungestRevision) && ((! includeYoungest) || (! includeOldest)))) {
       return null;
     }
@@ -101,7 +110,9 @@ public class LiveProvider implements BunchProvider {
           myEarliestRevisionWasAccessed = true;
           return null;
         }
-        return getEarliestBunchInInterval(existent, oldestRevision, includeYoungest ? desirableSize : (desirableSize + 1), true, includeOldest);
+        return getEarliestBunchInIntervalImpl(existent, oldestRevision, includeYoungest ? desirableSize : (desirableSize + 1), true,
+                                              includeOldest,
+                                              Math.min(existent, earliestRevision));
       }
       throw e;
     }
@@ -110,6 +121,12 @@ public class LiveProvider implements BunchProvider {
     if (list.isEmpty()) {
       myEarliestRevisionWasAccessed = (oldestRevision == 0);
       return null;
+    }
+    if (earliestToTake > 0) {
+      for (Iterator<CommittedChangeList> iterator = list.iterator(); iterator.hasNext(); ) {
+        final CommittedChangeList changeList = iterator.next();
+        if (changeList.getNumber() > earliestToTake) iterator.remove();
+      }
     }
     myEarliestRevisionWasAccessed = (oldestRevision == 0) && ((list.size() + ((! includeOldest) ? 1 : 0) + ((! includeYoungest) ? 1 : 0)) < desirableSize);
     return new Fragment(Origin.LIVE, list, true, true, null);

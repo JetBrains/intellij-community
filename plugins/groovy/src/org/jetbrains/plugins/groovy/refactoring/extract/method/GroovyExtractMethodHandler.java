@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -152,7 +151,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private static void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
-    final GrMemberOwner owner = PsiUtil.getMemberOwner(initialInfo.getStatements()[0]);
+    final PsiClass owner = PsiUtil.getContextClass(initialInfo.getStatements()[0]);
     LOG.assertTrue(owner!=null);
 
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
@@ -180,10 +179,10 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }, REFACTORING_NAME, null);
   }
 
-  private static void createMethod(ExtractMethodInfoHelper helper, GrMemberOwner owner) {
+  private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {
     final GrMethod method = ExtractUtil.createMethod(helper);
     PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getStatements()[0]);
-    GrMethod newMethod = owner.addMemberDeclaration(method, anchor);
+    GrMethod newMethod = (GrMethod)owner.addBefore(method, anchor);
     renameParameterOccurrences(newMethod, helper);
     GrReferenceAdjuster.shortenReferences(newMethod);
     PsiElement prev = newMethod.getPrevSibling();
@@ -194,7 +193,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, GrMemberOwner owner) {
+  private static ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, "testMethod", owner, true);
       final PsiType type = helper.getOutputType();
@@ -217,7 +216,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static PsiElement calculateAnchorToInsertBefore(GrMemberOwner owner, PsiElement startElement) {
+  private static PsiElement calculateAnchorToInsertBefore(PsiClass owner, PsiElement startElement) {
     while (startElement != null && !isEnclosingDefinition(owner, startElement)) {
       if (startElement.getParent() instanceof GroovyFile) {
         return startElement.getNextSibling();
@@ -231,7 +230,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     return startElement == null ? null : startElement.getNextSibling();
   }
 
-  private static boolean isEnclosingDefinition(GrMemberOwner owner, PsiElement startElement) {
+  private static boolean isEnclosingDefinition(PsiClass owner, PsiElement startElement) {
     if (owner instanceof GrTypeDefinition) {
       GrTypeDefinition definition = (GrTypeDefinition) owner;
       return startElement.getParent() == definition.getBody();

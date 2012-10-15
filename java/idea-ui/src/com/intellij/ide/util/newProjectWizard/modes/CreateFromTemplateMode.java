@@ -15,10 +15,9 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -54,13 +53,15 @@ public class CreateFromTemplateMode extends WizardMode {
   @Nullable
   @Override
   protected StepSequence createSteps(WizardContext context, @NotNull ModulesProvider modulesProvider) {
-    mySelectTemplateStep = new SelectTemplateStep(context);
-    return new StepSequence(mySelectTemplateStep, new ProjectNameStep(context, this));
+    StepSequence sequence = new StepSequence();
+    mySelectTemplateStep = new SelectTemplateStep(context, sequence);
+    sequence.addCommonStep(mySelectTemplateStep);
+    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence);
   }
 
   @Nullable
   @Override
-  public ProjectBuilder getModuleBuilder() {
+  public ModuleBuilder getModuleBuilder() {
     final ProjectTemplate template = mySelectTemplateStep.getSelectedTemplate();
     if (template == null) {
       return null;

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
@@ -396,7 +397,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (reference instanceof PsiJavaReference) {
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
 
-      return JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
+      ElementFilter checkClass = new ElementFilter() {
         public boolean isAcceptable(Object element, PsiElement context) {
           return filter.isAcceptable(element, context);
         }
@@ -413,7 +414,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           }
           return false;
         }
-      }, true, parameters.getInvocationCount() <= 1, matcher, parameters);
+      };
+      JavaCompletionProcessor.Options options =
+        JavaCompletionProcessor.Options.DEFAULT_OPTIONS.withFilterStaticAfterInstance(parameters.getInvocationCount() <= 1);
+      return JavaCompletionUtil.processJavaReference(element, javaReference, checkClass, options, matcher, parameters);
     }
 
     return Collections.emptySet();

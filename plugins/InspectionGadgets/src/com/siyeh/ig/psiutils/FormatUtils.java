@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,26 +28,23 @@ public class FormatUtils {
    * @noinspection StaticCollection
    */
   @NonNls
-  public static final Set<String> formatMethodNames =
-    new HashSet<String>(2);
+  public static final Set<String> formatMethodNames = new HashSet<String>(2);
   /**
    * @noinspection StaticCollection
    */
-  public static final Set<String> formatClassNames =
-    new HashSet<String>(4);
+  public static final Set<String> formatClassNames = new HashSet<String>(4);
 
   static {
-    FormatUtils.formatMethodNames.add("format");
-    FormatUtils.formatMethodNames.add("printf");
+    formatMethodNames.add("format");
+    formatMethodNames.add("printf");
 
-    FormatUtils.formatClassNames.add("java.io.PrintWriter");
-    FormatUtils.formatClassNames.add("java.io.PrintStream");
-    FormatUtils.formatClassNames.add("java.util.Formatter");
-    FormatUtils.formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
+    formatClassNames.add("java.io.PrintWriter");
+    formatClassNames.add("java.io.PrintStream");
+    formatClassNames.add("java.util.Formatter");
+    formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
   }
 
-  private FormatUtils() {
-  }
+  private FormatUtils() {}
 
   public static boolean isFormatCall(
     PsiMethodCallExpression expression) {
@@ -66,5 +64,26 @@ public class FormatUtils {
     }
     final String className = containingClass.getQualifiedName();
     return formatClassNames.contains(className);
+  }
+
+  @Nullable
+  public static PsiExpression getFormatArgument(PsiExpressionList argumentList) {
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length == 0) {
+      return null;
+    }
+    final PsiExpression firstArgument = arguments[0];
+    final PsiType type = firstArgument.getType();
+    if (type == null) {
+      return null;
+    }
+    final int formatArgumentIndex;
+    if ("java.util.Locale".equals(type.getCanonicalText()) && arguments.length > 1) {
+      formatArgumentIndex = 1;
+    }
+    else {
+      formatArgumentIndex = 0;
+    }
+    return arguments[formatArgumentIndex];
   }
 }

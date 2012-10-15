@@ -445,64 +445,56 @@ public class ImportUtils {
     return false;
   }
 
-  public static void addStaticImport(
-    @NotNull String qualifierClass, @NotNull String memberName,
-    @NotNull PsiElement context)
+  public static boolean addStaticImport(@NotNull String qualifierClass, @NotNull String memberName, @NotNull PsiElement context)
     throws IncorrectOperationException {
-    final PsiClass containingClass =
-      PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    if (!nameCanBeStaticallyImported(qualifierClass, memberName, context)) {
+      return false;
+    }
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
-      return;
+      return true;
     }
     final PsiFile psiFile = context.getContainingFile();
     if (!(psiFile instanceof PsiJavaFile)) {
-      return;
+      return false;
     }
     final PsiJavaFile javaFile = (PsiJavaFile)psiFile;
     final PsiImportList importList = javaFile.getImportList();
     if (importList == null) {
-      return;
+      return false;
     }
-    final PsiImportStatementBase existingImportStatement =
-      importList.findSingleImportStatement(memberName);
+    final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
     if (existingImportStatement != null) {
-      return;
+      return false;
     }
-    final PsiImportStaticStatement onDemandImportStatement =
-      findOnDemandImportStaticStatement(importList, qualifierClass);
-    if (onDemandImportStatement != null &&
-        !hasOnDemandImportStaticConflict(qualifierClass, memberName,
-                                         context)) {
-      return;
+    final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, qualifierClass);
+    if (onDemandImportStatement != null && !hasOnDemandImportStaticConflict(qualifierClass, memberName, context)) {
+      return true;
     }
     final Project project = context.getProject();
     final GlobalSearchScope scope = context.getResolveScope();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass aClass = psiFacade.findClass(qualifierClass, scope);
     if (aClass == null) {
-      return;
+      return false;
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) {
-      return;
+      return false;
     }
-    final List<PsiImportStaticStatement> imports =
-      getMatchingImports(importList, qualifiedName);
-    final CodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project);
+    final List<PsiImportStaticStatement> imports = getMatchingImports(importList, qualifiedName);
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-    if (imports.size() <
-        codeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-      importList.add(elementFactory.createImportStaticStatement(aClass,
-                                                                memberName));
+    if (imports.size() < codeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+      importList.add(elementFactory.createImportStaticStatement(aClass, memberName));
     }
     else {
       for (PsiImportStaticStatement importStatement : imports) {
         importStatement.delete();
       }
-      importList.add(
-        elementFactory.createImportStaticStatement(aClass, "*"));
+      importList.add(elementFactory.createImportStaticStatement(aClass, "*"));
     }
+    return true;
   }
 
   private static PsiImportStaticStatement findOnDemandImportStaticStatement(

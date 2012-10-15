@@ -12,13 +12,17 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -32,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -90,7 +95,10 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     while (true) {
       final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
       if (typeDefinition == null) return null;
-      if (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null) return typeDefinition;
+      if (!typeDefinition.isAnonymous() &&
+          (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null)) {
+        return typeDefinition;
+      }
       place = typeDefinition;
     }
   }
@@ -106,6 +114,23 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     final PsiClass targetClass = settings.getTargetClass();
 
     if (targetClass == null) return null;
+
+    String fieldName = settings.getName();
+    String errorString = check(targetClass, fieldName, context);
+    if (errorString != null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(errorString);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), context.getProject());
+      return null;
+    }
+
+    PsiField oldField = targetClass.findFieldByName(fieldName, true);
+    if (oldField != null) {
+      String message = RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName());
+      int answer = Messages.showYesNoDialog(context.getProject(), message, getRefactoringName(), Messages.getWarningIcon());
+      if (answer != 0) {
+        return null;
+      }
+    }
 
     final GrVariableDeclaration declaration = createField(context, settings);
     if (targetClass.isInterface()) {
@@ -136,6 +161,30 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     }
     return (GrField)added.getVariables()[0];
   }
+
+  @Nullable
+  private static String check(PsiClass targetClass, final String fieldName, GrIntroduceContext context) {
+    if (targetClass != null && !GroovyFileType.GROOVY_LANGUAGE.equals(targetClass.getLanguage())) {
+      return GroovyRefactoringBundle.message("class.language.is.not.groovy");
+    }
+
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
+
+    if (fieldName == null || fieldName.isEmpty()) {
+      return RefactoringBundle.message("no.field.name.specified");
+    }
+
+    else if (!facade.getNameHelper().isIdentifier(fieldName)) {
+      return RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
+    }
+
+    if (targetClass instanceof GroovyScriptClass) {
+      return GroovyRefactoringBundle.message("target.class.must.not.be.script");
+    }
+
+    return null;
+  }
+
 
   private static void replaceOccurrence(GrField field, PsiElement occurrence, boolean escalateVisibility) {
     final PsiElement replaced;

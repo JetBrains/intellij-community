@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
@@ -46,7 +45,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
     if (!isWritable(project, element)) {
       return;
     }
@@ -57,16 +56,16 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     processIntention(editor, matchingElement);
   }
 
-  protected abstract void processIntention(@NotNull PsiElement element) throws IncorrectOperationException;
-  protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected abstract void processIntention(@NotNull PsiElement element);
+  
+  protected void processIntention(Editor editor, @NotNull PsiElement element) {
     processIntention(element);
   }
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
-  protected static void replaceExpression(@NotNull String newExpression, @NotNull PsiExpression expression)
-    throws IncorrectOperationException {
+  protected static void replaceExpression(@NotNull String newExpression, @NotNull PsiExpression expression){
     final Project project = expression.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression newCall = factory.createExpressionFromText(newExpression, expression);
@@ -75,8 +74,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression)
-    throws IncorrectOperationException {
+  protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression){
     final Project project = expression.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiExpression expressionToReplace = expression;
@@ -109,8 +107,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression)
-    throws IncorrectOperationException {
+  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -135,8 +132,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceStatement(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement)
-    throws IncorrectOperationException {
+  protected static void replaceStatement(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement) {
     final Project project = statement.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
@@ -145,8 +141,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     codeStyleManager.reformat(insertedElement);
   }
 
-  protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement)
-    throws IncorrectOperationException {
+  protected static void replaceStatementAndShorten(@NonNls @NotNull String newStatementText, @NonNls @NotNull PsiStatement statement) {
     final Project project = statement.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -156,6 +151,14 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     final PsiElement shortenedElement = javaCodeStyleManager.shortenClassReferences(insertedElement);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(shortenedElement);
+  }
+
+  protected static void addStatementBefore(String newStatementText, PsiReturnStatement anchor) {
+    final Project project = anchor.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, anchor);
+    final PsiElement addedStatement = anchor.getParent().addBefore(newStatement, anchor);
+    CodeStyleManager.getInstance(project).reformat(addedStatement);
   }
 
   @Nullable

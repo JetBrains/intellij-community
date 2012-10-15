@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class LightMethodBuilder extends LightElement implements PsiMethod {
+public class LightMethodBuilder extends LightElement implements PsiMethod, OriginInfoAwareElement {
   private final String myName;
   private Computable<PsiType> myReturnType;
   private final PsiModifierList myModifierList;
@@ -52,6 +53,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private PsiClass myContainingClass;
   private boolean myConstructor;
   private String myMethodKind = "LightMethodBuilder";
+  private String myOriginInfo = null;
 
   public LightMethodBuilder(PsiClass constructedClass, Language language) {
     this(constructedClass.getManager(), language, constructedClass.getName());
@@ -266,6 +268,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   @Override
+  public boolean isExtensionMethod() {
+    return false;
+  }
+
+  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
@@ -435,4 +442,15 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     ((LightTypeParameterListBuilder)myTypeParameterList).addParameter(new LightTypeParameter(parameter));
     return this;
   }
+
+  @Nullable
+  @Override
+  public String getOriginInfo() {
+    return myOriginInfo;
+  }
+
+  public void setOriginInfo(@Nullable String originInfo) {
+    myOriginInfo = originInfo;
+  }
+
 }

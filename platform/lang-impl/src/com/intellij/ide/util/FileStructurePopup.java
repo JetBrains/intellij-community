@@ -108,7 +108,6 @@ public class FileStructurePopup implements Disposable {
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
-  private final boolean myDaemonUpdateEnabled;
   private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
   private final TreeExpander myTreeExpander;
 
@@ -122,13 +121,7 @@ public class FileStructurePopup implements Disposable {
     myEditor = editor;
 
     //Stop code analyzer to speedup EDT
-    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    if (analyzer != null) {
-      myDaemonUpdateEnabled = ((DaemonCodeAnalyzerImpl)analyzer).isUpdateByTimerEnabled();
-      analyzer.setUpdateByTimerEnabled(false);
-    } else {
-      myDaemonUpdateEnabled = false;
-    }
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt);
     myBaseTreeModel = structureViewModel;
@@ -463,10 +456,6 @@ public class FileStructurePopup implements Disposable {
   }
 
   public void dispose() {
-    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    if (analyzer != null) {
-      analyzer.setUpdateByTimerEnabled(myDaemonUpdateEnabled);
-    }
   }
 
   protected static String getDimensionServiceKey() {

@@ -7,8 +7,10 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -28,7 +30,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
+public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   public static final String BUILDER_NAME = "artifacts";
 
   public IncArtifactBuilder() {
@@ -36,7 +38,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
   }
 
   @Override
-  public void build(@NotNull ArtifactBuildTarget target, @NotNull CompileContext context) throws ProjectBuildException {
+  public void build(@NotNull ArtifactBuildTarget target,
+                    @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
     if (StringUtil.isEmpty(artifact.getOutputPath())) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
@@ -59,7 +63,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
       final Collection<String> deletedFiles = pd.fsState.getAndClearDeletedPaths(target);
       final Map<BuildRootDescriptor, Set<File>> filesToRecompile = pd.fsState.getSourcesToRecompile(context, target);
       if (deletedFiles.isEmpty() && filesToRecompile.isEmpty()) {
-        state.markUpToDate(context);
         return;
       }
 
@@ -139,10 +142,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
       context.checkCanceled();
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping);
-      final boolean processed = builder.buildJars();
-      if (processed && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-        state.markUpToDate(context);
-      }
+      builder.buildJars();
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -215,7 +215,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactBuildTarget> {
           Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
           for (ArtifactRootDescriptor descriptor : descriptors) {
             try {
-              fsState.markDirty(null, file, descriptor, null);
+              fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage());
             }
             catch (IOException ignored) {
             }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -50,13 +51,18 @@ public class GrTypeComboBox extends ComboBox {
     return new GrTypeComboBox(type, null, true, null, null, false);
   }
 
-  public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression) {
+  public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression) {
     return createTypeComboBoxFromExpression(expression, false);
   }
 
-  public static GrTypeComboBox createTypeComboBoxFromExpression(GrExpression expression, boolean selectDef) {
+  public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression, boolean selectDef) {
     PsiType type = expression.getType();
-
+    if (expression instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+      if (resolved instanceof PsiClass) {
+        type = TypesUtil.createJavaLangClassType(type, expression.getProject(), expression.getResolveScope());
+      }
+    }
     if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
       LOG.assertTrue(expression instanceof GrNewExpression);
       PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond(expression);

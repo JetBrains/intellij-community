@@ -88,7 +88,7 @@ public class OpenTaskDialog extends DialogWrapper {
         mySelectedTask = task;
         taskChanged();
       }
-    }, false);
+    }, false, null);
     myEditorPanel.add(myTaskName);
     myTaskName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -311,7 +311,7 @@ public class OpenTaskDialog extends DialogWrapper {
     @NotNull
     @Override
     public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
-      return new TaskSearchSupport(myProject).getItems(prefix, cached, parameters.isAutoPopup());
+      return TaskSearchSupport.getItems(TaskManager.getManager(myProject), prefix, cached, parameters.isAutoPopup());
     }
 
     @Override

@@ -61,14 +61,14 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
 
   @Nullable
   public Channel getConnectedChannel(final UUID sessionId) {
+    final Channel channel = getAssociatedChannel(sessionId);
+    return channel != null && channel.isConnected()? channel : null;
+  }
+
+  @Nullable
+  public Channel getAssociatedChannel(final UUID sessionId) {
     final SessionData data = myMessageHandlers.get(sessionId);
-    if (data != null) {
-      final Channel channel = data.channel;
-      if (channel != null && channel.isConnected()) {
-        return channel;
-      }
-    }
-    return null;
+    return data != null? data.channel : null;
   }
 
 

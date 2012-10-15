@@ -57,6 +57,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {
     super(tree);
     myToStringConvertor = toStringConvertor;
+    setComparator(new SpeedSearchComparator(false, true));
   }
 
   public TreeSpeedSearch(JTree tree) {
@@ -69,6 +70,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
     super(tree);
+    setComparator(new SpeedSearchComparator(false, true));
     myToStringConvertor = toString;
     myCanExpand = canExpand;
   }

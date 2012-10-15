@@ -191,7 +191,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, @Nullable String description, @Nullable String toolTip) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
@@ -199,8 +199,8 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description,
-                                                  String toolTip,
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, @Nullable String description,
+                                                  @Nullable String toolTip,
                                                   boolean isEndOfLine,
                                                   @Nullable TextAttributes forcedAttributes) {
     LOG.assertTrue(element != null || ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1, "Custom type demands element to detect its text attributes");
@@ -215,7 +215,7 @@ public class HighlightInfo implements Segment {
     return highlightInfo;
   }
   @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, @Nullable String description, @Nullable String toolTip) {
     return createHighlightInfo(type, element, start, end, description, toolTip, false, null);
   }
 
@@ -279,7 +279,7 @@ public class HighlightInfo implements Segment {
     this.isFileLevelAnnotation = isFileLevelAnnotation;
   }
 
-  private static boolean calcNeedUpdateOnTyping(Boolean needsUpdateOnTyping, HighlightInfoType type) {
+  private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
     if (needsUpdateOnTyping != null) return needsUpdateOnTyping.booleanValue();
 
     if (type == HighlightInfoType.TODO) return false;
@@ -417,7 +417,7 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  private static void appendFixes(TextRange fixedRange, HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
+  private static void appendFixes(@Nullable TextRange fixedRange, HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         QuickFixAction.registerQuickFixAction(info, fixedRange != null ? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix,
@@ -435,11 +435,12 @@ public class HighlightInfo implements Segment {
   }
 
   public static HighlightInfoType convertSeverity(final HighlightSeverity severity) {
-    return severity == HighlightSeverity.ERROR
-           ? HighlightInfoType.ERROR
-           : severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-             : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO
-                                                  : severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING : HighlightInfoType.INFORMATION;
+    return severity == HighlightSeverity.ERROR? HighlightInfoType.ERROR :
+           severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
+           severity == HighlightSeverity.INFO ? HighlightInfoType.INFO :
+           severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING :
+           severity ==HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING ? HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER :
+           HighlightInfoType.INFORMATION;
   }
 
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
@@ -450,10 +451,10 @@ public class HighlightInfo implements Segment {
   }
 
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
-    return severity == HighlightSeverity.ERROR? ProblemHighlightType.ERROR :
+    return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
-             severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
-             severity == HighlightSeverity.WEAK_WARNING? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
+           severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
+           severity == HighlightSeverity.WEAK_WARNING ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
   }
 
 
@@ -497,7 +498,7 @@ public class HighlightInfo implements Segment {
       this(action, options, displayName, icon, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, @Nullable HighlightDisplayKey key) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon, @Nullable HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -565,6 +566,7 @@ public class HighlightInfo implements Segment {
       return options;
     }
 
+    @Nullable
     public String getDisplayName() {
       return myDisplayName;
     }
@@ -575,6 +577,7 @@ public class HighlightInfo implements Segment {
       return "descriptor: " + (text.isEmpty() ? getAction().getClass() : text);
     }
 
+    @Nullable
     public Icon getIcon() {
       return myIcon;
     }

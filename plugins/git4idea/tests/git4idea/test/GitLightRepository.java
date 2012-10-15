@@ -33,7 +33,10 @@ import java.util.Collection;
  * Stores information about commits and branches in memory.
  *
  * @author Kirill Likhodedov
+ *
+ * @deprecated Use the standard GitRepository instance returned from {@link GitRepositoryImpl.getLightInstance()}
  */
+@Deprecated
 public class GitLightRepository implements GitRepository {
 
   public static class Commit {

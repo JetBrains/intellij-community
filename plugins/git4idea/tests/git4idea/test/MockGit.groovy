@@ -34,7 +34,10 @@ import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 /**
  * 
  * @author Kirill Likhodedov
+ *
+ * @deprecated Use {@link GitTestImpl} - prefer fair Git to the simulation.
  */
+@Deprecated
 class MockGit implements Git {
 
   public static final GitCommandResult FAKE_SUCCESS_RESULT = new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
@@ -89,6 +92,11 @@ class MockGit implements Git {
   @NotNull
   @Override
   GitCommandResult config(@NotNull GitRepository repository, String... params) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  GitCommandResult diff(GitRepository repository, List<String> parameters, String range) {
     throw new UnsupportedOperationException()
   }
 
@@ -197,6 +205,23 @@ class MockGit implements Git {
   @Override
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes, @NotNull Collection<VirtualFile> files) {
 
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message) {
+    throw new UnsupportedOperationException()
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult stashPop(@NotNull GitRepository repository, GitLineHandlerListener... listeners) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  List<GitCommit> history(GitRepository repository, String range) {
+    throw new UnsupportedOperationException()
   }
 
   private void produceOutput(String output, GitLineHandlerListener... listeners) {

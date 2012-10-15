@@ -41,6 +41,7 @@ public class CreateChangelistAction extends BaseTaskAction {
       presentation.setText("Create changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
       presentation.setEnabled(true);
     }
+    super.update(event);
   }
 
   @Override

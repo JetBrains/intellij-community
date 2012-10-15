@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
@@ -26,7 +27,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -274,27 +274,33 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     }
 
-    final AnAction arrow = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          if (!myCreateModuleCb.isSelected()) return;
-          int i = myTypesList.getSelectedIndex();
-          if (code == KeyEvent.VK_DOWN) {
-            if (++i == myTypesList.getModel().getSize()) return;
+
+    if (mode instanceof CreateFromTemplateMode) {
+      replaceModuleTypeOptions(new JPanel());
+      myHeader.setVisible(false);
+    }
+    else {
+      final AnAction arrow = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (e.getInputEvent() instanceof KeyEvent) {
+            final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+            if (!myCreateModuleCb.isSelected()) return;
+            int i = myTypesList.getSelectedIndex();
+            if (code == KeyEvent.VK_DOWN) {
+              if (++i == myTypesList.getModel().getSize()) return;
+            }
+            else if (code == KeyEvent.VK_UP) {
+              if (--i == -1) return;
+            }
+            myTypesList.setSelectedIndex(i);
           }
-          else if (code == KeyEvent.VK_UP) {
-            if (--i == -1) return;
-          }
-          myTypesList.setSelectedIndex(i);
         }
-      }
-    };
-    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
-    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNamePathComponent.getNameComponent());
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myModuleName);
+      };
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN);
+      arrow.registerCustomShortcutSet(shortcutSet, myNamePathComponent.getNameComponent());
+      arrow.registerCustomShortcutSet(shortcutSet, myModuleName);
+    }
   }
 
   private Dimension calcTypeListPreferredSize(final List<ModuleBuilder> allModuleTypes) {
@@ -350,17 +356,23 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public void updateStep() {
     super.updateStep();
-    if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(getSelectedBuilderId());
-    } else {
-      mySequence.setType(null);
+    if (myHeader.isVisible()) {
+      if (myCreateModuleCb.isSelected()) {
+        mySequence.setType(getSelectedBuilderId());
+      } else {
+        mySequence.setType(null);
+      }
     }
   }
 
   public void updateDataModel() {
-    if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(getSelectedBuilderId());
-      super.updateDataModel();
+
+    if (myHeader.isVisible()) {
+      mySequence.setType(myCreateModuleCb.isSelected() ? getSelectedBuilderId() : null);
+    }
+    super.updateDataModel();
+
+    if (myHeader.isVisible() && myCreateModuleCb.isSelected()) {
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
       final String moduleName = getModuleName();
@@ -368,9 +380,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       builder.setModuleFilePath(
         FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       builder.setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
-    } else {
-      mySequence.setType(null);
-      super.updateDataModel();
     }
   }
 

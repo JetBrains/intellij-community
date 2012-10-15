@@ -1,6 +1,8 @@
 package org.jetbrains.jps.util;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Set;
@@ -34,6 +36,23 @@ public class JpsPathUtil {
       url = url.substring("jar://".length());
       if (url.endsWith("!/")) {
         url = url.substring(0, url.length() - "!/".length());
+      }
+    }
+    return url;
+  }
+
+  //todo[nik] copied from VfsUtil
+  @NotNull
+  public static String fixURLforIDEA(@NotNull String url ) {
+    int idx = url.indexOf(":/");
+    if( idx >= 0 && idx+2 < url.length() && url.charAt(idx+2) != '/' ) {
+      String prefix = url.substring(0, idx);
+      String suffix = url.substring(idx+2);
+
+      if (SystemInfoRt.isWindows) {
+        url = prefix+"://"+suffix;
+      } else {
+        url = prefix+":///"+suffix;
       }
     }
     return url;

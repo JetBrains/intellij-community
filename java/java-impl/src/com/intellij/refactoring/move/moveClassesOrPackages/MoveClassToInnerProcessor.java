@@ -144,7 +144,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
           newClass = handler.moveClass(classToMove, myTargetClass);
           if (newClass != null) break;
         }
-        LOG.assertTrue(newClass != null, "There is no appropriate MoveClassToInnerHandler!");
+        LOG.assertTrue(newClass != null, "There is no appropriate MoveClassToInnerHandler for " + myTargetClass + "; " + classToMove);
         oldToNewElementsMapping.put(classToMove, newClass);
       }
 

@@ -3,7 +3,7 @@ def foo(Set<String> zzz) {
   while (xxx) {
     def sub = xxx - xxx.iterator().next()
     xxx = bar(sub, zzz)
-    <warning descr="Can not resolve symbol 'doo'">doo</warning>()
+    <warning descr="Cannot resolve symbol 'doo'">doo</warning>()
   }
 }
 

@@ -386,6 +386,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     for (int i = 0; i < files.length; i++) {
       if (progress != null) progress.checkCanceled();
       final PsiFile psiFile = files[i];
+      if (psiFile instanceof PsiBinaryFile) continue;
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override

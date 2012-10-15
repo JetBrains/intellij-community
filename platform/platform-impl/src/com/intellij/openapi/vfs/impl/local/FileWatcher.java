@@ -374,7 +374,6 @@ public class FileWatcher {
 
   private class WatchForChangesThread extends Thread {
     public WatchForChangesThread() {
-      //noinspection HardCodedStringLiteral
       super("WatchForChangesThread");
     }
 

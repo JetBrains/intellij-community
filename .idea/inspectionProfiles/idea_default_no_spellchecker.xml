@@ -15,7 +15,7 @@
       <option name="m_checkForeachParameters" value="false" />
     </inspection_tool>
     <inspection_tool class="AssignmentToStaticFieldFromInstanceMethod" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="AssignmentUsedAsCondition" enabled="false" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AutoBoxing" enabled="true" level="WARNING" enabled_by_default="false">
@@ -64,7 +64,7 @@
     <inspection_tool class="ConflictingAnnotations" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConfusingOctalEscape" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ConstantConditionalExpression" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="ConstantConditionalExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConstantConditions" enabled="true" level="WARNING" enabled_by_default="true">
@@ -76,7 +76,7 @@
       <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="false" />
     </inspection_tool>
     <inspection_tool class="ConstantIfStatement" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="ConstantIfStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConstraintValidatorCreator" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -288,7 +288,7 @@
       <option name="m_maxLength" value="64" />
     </inspection_tool>
     <inspection_tool class="JavaDoc" enabled="true" level="WARNING" enabled_by_default="false">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false">
+      <scope name="Tests" level="WARNING" enabled="false">
         <option name="TOP_LEVEL_CLASS_OPTIONS">
           <value>
             <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
@@ -412,7 +412,7 @@
       <option name="myAdditionalJavadocTags" value="" />
     </inspection_tool>
     <inspection_tool class="JavadocReference" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="ERROR" enabled="false" />
+      <scope name="Tests" level="ERROR" enabled="false" />
       <scope name="idea openapi" level="WARNING" enabled="true" />
       <scope name="runtime.classes" level="ERROR" enabled="true" />
     </inspection_tool>
@@ -469,7 +469,7 @@
     <inspection_tool class="NonJaxWsWebServices" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NonSerializableServiceParameters" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="NonStaticFinalLogger" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false">
+      <scope name="Tests" level="WARNING" enabled="false">
         <option name="loggerClassName" value="java.util.logging.Logger" />
       </scope>
       <option name="loggerClassName" value="java.util.logging.Logger" />
@@ -668,7 +668,7 @@
     <inspection_tool class="SimplifiableConditionalExpression" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SimplifiableIfStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="ERROR" enabled="false" />
+      <scope name="Tests" level="ERROR" enabled="false" />
     </inspection_tool>
     <inspection_tool class="SingletonInjectsScoped" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SocketResource" enabled="true" level="WARNING" enabled_by_default="true">
@@ -727,7 +727,7 @@
     <inspection_tool class="SwitchStatementWithConfusingDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SynchronizeOnThis" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SystemOutErr" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="TeardownCallsSuperTeardown" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="TeardownIsPublicVoidNoArg" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -740,13 +740,13 @@
     <inspection_tool class="TextLabelInSwitchStatement" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ThisExpressionReferencesGlobalObjectJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ThreadDumpStack" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="ThreadRun" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ThreadStartInConstruction" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ThrowFromFinallyBlockJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ThrowablePrintStackTrace" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false" />
+      <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="TrivialConditionalJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialIf" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -756,7 +756,7 @@
     <inspection_tool class="UninstantiableImplementedByClass" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UninstantiableProvidedByClass" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessarilyQualifiedStaticUsage" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false">
+      <scope name="Tests" level="WARNING" enabled="false">
         <option name="m_ignoreStaticFieldAccesses" value="false" />
         <option name="m_ignoreStaticMethodCalls" value="false" />
         <option name="m_ignoreStaticAccessFromStaticContext" value="false" />
@@ -769,7 +769,7 @@
     <inspection_tool class="UnnecessaryContinueJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryEnumModifier" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="IDEA Test Sources" level="WARNING" enabled="false">
+      <scope name="Tests" level="WARNING" enabled="false">
         <option name="m_ignoreJavadoc" value="false" />
       </scope>
       <option name="m_ignoreJavadoc" value="true" />

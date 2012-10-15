@@ -54,13 +54,15 @@ public class AddReturnTypeFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    GrMethod method = findMethod(editor, file);
+    if (editor == null) return false;
+    int offset = editor.getCaretModel().getOffset();
+    GrMethod method = findMethod(file, offset);
+    if (method == null && offset > 0) method = findMethod(file, offset - 1);
     return method != null && !method.isConstructor();
   }
 
   @Nullable
-  private static GrMethod findMethod(Editor editor, PsiFile file) {
-    final int offset = editor.getCaretModel().getOffset();
+  private static GrMethod findMethod(PsiFile file, final int offset) {
     final PsiElement at = file.findElementAt(offset);
     if (at == null) return null;
 
@@ -93,7 +95,7 @@ public class AddReturnTypeFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final GrMethod method = findMethod(editor, file);
+    final GrMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
 
     PsiType type = method.getInferredReturnType();

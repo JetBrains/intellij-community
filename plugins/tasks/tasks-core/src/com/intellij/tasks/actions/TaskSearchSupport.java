@@ -16,7 +16,6 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.Task;
@@ -34,13 +33,10 @@ import java.util.StringTokenizer;
  * @author Dmitry Avdeev
  */
 public class TaskSearchSupport {
-  private final TaskManagerImpl myManager;
-
-  public TaskSearchSupport(final Project project) {
-    myManager = (TaskManagerImpl)TaskManager.getManager(project);
+  private TaskSearchSupport() {
   }
 
-  public List<Task> getLocalAndCachedTasks(String pattern) {
+  public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern) {
     List<Task> tasks = new ArrayList<Task>();
     ContainerUtil.addAll(tasks, myManager.getLocalTasks());
     ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
@@ -63,15 +59,18 @@ public class TaskSearchSupport {
     });
   }
 
-  public List<Task> getRepositoryTasks(String pattern, int max, long since, boolean forceRequest) {
+  public static List<Task> getRepositoriesTasks(final TaskManager myManager, String pattern, int max, long since, boolean forceRequest) {
     List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }
 
-  public List<Task> getItems(String pattern, boolean cached, boolean autopopup) {
+  public static List<Task> getItems(final TaskManager myManager,
+                                    String pattern,
+                                    boolean cached,
+                                    boolean autopopup) {
     final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(getTasks(pattern, cached, autopopup), new NullableFunction<Task, Task>() {
+    return ContainerUtil.mapNotNull(getTasks(pattern, cached, autopopup, myManager), new NullableFunction<Task, Task>() {
       public Task fun(Task task) {
         return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
       }
@@ -89,10 +88,10 @@ public class TaskSearchSupport {
       builder.append("* ");
     }
 
-    return NameUtil.buildMatcher(builder.toString(), 0, true, true, pattern.toLowerCase().equals(pattern));
+    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private List<Task> getTasks(String pattern, boolean cached, boolean autopopup) {
+  private static List<Task> getTasks(String pattern, boolean cached, boolean autopopup, final TaskManager myManager) {
     return cached ? myManager.getCachedIssues() : myManager.getIssues(pattern, !autopopup);
   }
 }

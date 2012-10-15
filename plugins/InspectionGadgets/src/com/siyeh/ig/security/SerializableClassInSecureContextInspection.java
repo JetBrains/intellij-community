@@ -15,30 +15,43 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class SerializableClassInSecureContextInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreThrowable = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serializable.class.in.secure.context.display.name");
+    return InspectionGadgetsBundle.message("serializable.class.in.secure.context.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "serializable.class.in.secure.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("serializable.class.in.secure.context.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("ignore.classes.extending.throwable.option"), this, "ignoreThrowable");
   }
 
   @Override
@@ -46,24 +59,30 @@ public class SerializableClassInSecureContextInspection extends BaseInspection {
     return new SerializableClassInSecureContextVisitor();
   }
 
-  private static class SerializableClassInSecureContextVisitor extends BaseInspectionVisitor {
+  private class SerializableClassInSecureContextVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter || !SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
+      final PsiMethod[] methods = aClass.findMethodsByName("writeObject", true);
       for (final PsiMethod method : methods) {
-        if (SerializationUtils.isWriteObject(method)) {
-          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-            return;
-          }
+        if (!SerializationUtils.isWriteObject(method)) {
+          continue;
         }
+        if (ControlFlowUtils.methodAlwaysThrowsException((PsiMethod)method.getNavigationElement())) {
+          return;
+        }
+        else {
+          break;
+        }
+      }
+      if (ignoreThrowable && InheritanceUtil.isInheritor(aClass, false, "java.lang.Throwable")) {
+        return;
       }
       registerClassError(aClass);
     }

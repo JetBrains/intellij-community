@@ -162,7 +162,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    final File dataStorageRoot = dataManager.getDataStorageRoot();
+    final File dataStorageRoot = dataManager.getDataPaths().getDataStorageRoot();
 
     final AndroidAptStateStorage aptStorage = new AndroidAptStateStorage(dataStorageRoot);
     try {

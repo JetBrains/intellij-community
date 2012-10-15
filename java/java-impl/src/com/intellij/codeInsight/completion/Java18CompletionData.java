@@ -42,7 +42,9 @@ public class Java18CompletionData extends Java15CompletionData {
       }
 
       if (AFTER_DOUBLE_COLON.accepts(position)) {
-        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), TailType.SEMICOLON));
+        final PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
+        final TailType tailType = parent != null && !LambdaUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tailType));
         return;
       }
     }

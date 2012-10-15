@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryRetu
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -56,6 +56,11 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   private void doTest(InspectionProfileEntry... tools) {
     myFixture.enableInspections(tools);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".groovy");
+  }
+
+  private void doRefTest(InspectionProfileEntry... tools) {
+    myFixture.enableInspections(*tools, new GrUnresolvedAccessInspection())
+    myFixture.testHighlighting(true, true, true, getTestName(false) + '.groovy')
   }
 
   public void testCircularInheritance() {
@@ -96,7 +101,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   }
 
   public void testSuperClassNotExists() {
-    doTest();
+    doTest(new GrUnresolvedAccessInspection());
   }
   public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
@@ -131,14 +136,14 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testSingleAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
   public void testUnusedAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
 
-  public void testUnresolvedLhsAssignment() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUnresolvedLhsAssignment() { doTest(new GrUnresolvedAccessInspection()); }
 
   public void testUnresolvedMethodCallWithTwoDeclarations() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testUnresolvedAccess() { doTest(new GroovyUnresolvedAccessInspection()); }
-  public void testBooleanProperties() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUnresolvedAccess() { doTest(new GrUnresolvedAccessInspection()); }
+  public void testBooleanProperties() { doTest(new GrUnresolvedAccessInspection()); }
   public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()); }
 
   public void testUnassigned1() { doTest(new UnassignedVariableAccessInspection()); }
@@ -151,7 +156,7 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
   public void testDefinitionUsedInClosure() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInClosure2() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
   public void testDefinitionUsedInSwitchCase() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection())}
+  public void testUnusedDefinitionForMethodMissing() {doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())}
   public void testDuplicateInnerClass() {doTest();}
 
   public void testThisInStaticContext() {doTest();}
@@ -352,8 +357,8 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
     doTest(new UnassignedVariableAccessInspection());
   }
 
-  public void testTestMarkupStubs() {
-    doTest();
+  public void _testTestMarkupStubs() {
+    doRefTest()
   }
 
   public void testResultOfAssignmentUsed() {
@@ -374,7 +379,7 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
   }
 
   public void testSuppressions() {
-    doTest(new GroovyUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
+    doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
   }
 
   public void testUsageInInjection() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
@@ -456,11 +461,11 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
   }
 
   public void testPassingCollectionSubtractionIntoGenericMethod() {
-    doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
+    doTest(new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection());
   }
 
-  public void testBuilderMembersAreNotUnresolved() {
-    doTest(new GroovyUnresolvedAccessInspection());
+  public void _testBuilderMembersAreNotUnresolved() {
+    doRefTest();
   }
 
   public void testImplicitEnumCoercion() {
@@ -559,7 +564,7 @@ class Bar {{
   void testConstructorTypeArgs(){doTest()}
 
   void testIncorrectEscaping() {doTest()}
-  void testExtendingOwnInner() {doTest()}
+  void testExtendingOwnInner() {doTest(new GrUnresolvedAccessInspection())}
 
   void testRegexInCommandArg() {doTest()}
   void testOctalInspection() {
@@ -675,6 +680,21 @@ List<?> list2
 
   public void testUnusedParameter() {
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+  }
+
+  public void testSuppressUnusedMethod() {
+    myFixture.configureByText('_.groovy', '''\
+class <warning descr="Class Foo is unused">Foo</warning> {
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    static def foo(int x) {
+        print 2
+    }
+
+    static def <warning descr="Method bar is unused">bar</warning>() {}
+}
+''')
+    myFixture.enableInspections(new UnusedDeclarationInspection(), new GroovyUnusedDeclarationInspection())
+    myFixture.testHighlighting(true, false, true)
   }
 
   public void testAliasInParameterType() {
@@ -950,20 +970,21 @@ public @interface CompileStatic {
 }''')
 
     myFixture.configureByText('_.groovy', '''\
-<info descr="null">import</info> <info descr="null">groovy.transform.CompileStatic</info>
+import groovy.transform.CompileStatic
 
-<info descr="null">class</info> A {
+class A {
 
-<info descr="null">def</info> <info descr="null">foo</info>() {
-<info descr="null">print</info> <info descr="null">abc</info>
+def foo() {
+print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 }
 
-<info descr="null">@CompileStatic</info>
-<info descr="null">def</info> bar() {
-<info descr="null">print</info> <error descr="Cannot resolve symbol 'abc'">abc</error>
+@CompileStatic
+def bar() {
+print <error descr="Cannot resolve symbol 'abc'">abc</error>
 }
 }
 ''')
+    myFixture.enableInspections(new GrUnresolvedAccessInspection())
     myFixture.testHighlighting(true, false, false)
   }
 
@@ -1029,10 +1050,10 @@ static def foo() {
   print <error descr="Cannot resolve symbol 'abc'">abc</error>
 
   def cl = {
-     print cde
+     print <warning descr="Cannot resolve symbol 'cde'">cde</warning>
   }
 }
-''')
+''', GrUnresolvedAccessInspection)
   }
 
   void testMissingReturnInBinaryOr() {
@@ -1130,7 +1151,7 @@ test() {
     cl()
     var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
 }
-""")
+""", GrUnresolvedAccessInspection)
   }
 
   void testReassignedVarInClosureInspection() {
@@ -1488,22 +1509,22 @@ private int getObjects() {
 
   void testPackageDefinition() {
     myFixture.addFileToProject('abc/foo.groovy', '''\
-<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+<warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
 
 print 2
 ''')
     myFixture.addFileToProject('cde/bar.groovy', '//empty file')
-
+    myFixture.enableInspections(new GrPackageInspection())
     myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
   }
 
   void testPackageDefinition2() {
     myFixture.addFileToProject('abc/foo.groovy', '''\
-<warning descr="Package name 'cde' does not corresponding to the file path 'abc'">package cde</warning>
+<warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
 
 print 2
 ''')
-
+    myFixture.enableInspections(new GrPackageInspection())
     myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
   }
 
@@ -1515,5 +1536,29 @@ class A {
 
 A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
 ''')
+  }
+
+  void testFallthroughInSwitch() {
+    testHighlighting('''\
+def f(String foo, int mode) {
+    switch (mode) {
+        case 0: foo = foo.reverse()
+        case 1: return foo
+    }
+}
+
+def f2(String foo, int mode) {
+    switch (mode) {
+        case 0: <warning descr="Assignment is not used">foo</warning> = foo.reverse()
+        case 1: return 2
+    }
+}
+''', UnusedDefInspection)
+  }
+
+  void testForInAssignability() {
+    testHighlighting('''\
+for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+''', GroovyAssignabilityCheckInspection)
   }
 }

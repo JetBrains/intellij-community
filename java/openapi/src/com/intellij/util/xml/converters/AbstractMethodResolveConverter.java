@@ -73,7 +73,9 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @NotNull
   protected final ParentType getParent(final ConvertContext context) {
-    return context.getInvocationElement().getParentOfType(myDomMethodClass, true);
+    ParentType parent = context.getInvocationElement().getParentOfType(myDomMethodClass, true);
+    assert parent != null: "Can't get parent of type " + myDomMethodClass + " for " + context.getInvocationElement();
+    return parent;
   }
 
   public boolean isReferenceTo(@NotNull final PsiElement element, final String stringValue, final PsiMethod resolveResult,

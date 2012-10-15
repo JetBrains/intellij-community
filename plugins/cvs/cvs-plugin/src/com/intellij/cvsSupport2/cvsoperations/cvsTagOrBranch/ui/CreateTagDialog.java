@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,8 @@ import com.intellij.cvsSupport2.ui.experts.importToCvs.CvsFieldValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * author: lesya
@@ -43,36 +36,21 @@ public class CreateTagDialog extends CvsTagDialog {
   private JLabel myTagOrBranchLabel;
   private JLabel myErrorLabel;
 
-  public CreateTagDialog(final Collection<FilePath> files, final Project project, boolean isTag) {
-
-    myTagOrBranchLabel.setText(isTag ? CvsBundle.message("label.tag.name") : CvsBundle.message("label.branch.name"));
-    mySwitchToThisTag.setText(
-      isTag ? CvsBundle.message("checkbox.switch.to.this.tag") : CvsBundle.message("checkbox.switch.to.this.branch"));
-
-    myTagName.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(collectVcsRoots(project, files), project);
-        if (branchName != null)
-          myTagName.setText(branchName);        
-      }
-    });
-
-    setTitle((isTag ? CvsBundle.message("operation.name.create.tag") : CvsBundle.message("operation.name.create.branch")));
-
+  public CreateTagDialog(FilePath[] files, Project project, boolean isTag) {
+    if (isTag) {
+      myTagOrBranchLabel.setText(CvsBundle.message("label.tag.name"));
+      mySwitchToThisTag.setText(CvsBundle.message("checkbox.switch.to.this.tag"));
+      myOverrideExisting.setText(CvsBundle.message("checkbox.create.tag.override.existing"));
+    }
+    else {
+      myTagOrBranchLabel.setText(CvsBundle.message("label.branch.name"));
+      mySwitchToThisTag.setText(CvsBundle.message("checkbox.switch.to.this.branch"));
+      myOverrideExisting.setText(CvsBundle.message("checkbox.create.tag.override.existing.branch"));
+    }
+    TagsHelper.addChooseBranchAction(myTagName, TagsHelper.findVcsRoots(files, project), project);
+    setTitle(isTag ? CvsBundle.message("operation.name.create.tag") : CvsBundle.message("operation.name.create.branch"));
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     init();
-  }
-
-  public static Collection<FilePath> collectVcsRoots(final Project project, final Collection<FilePath> files) {
-    Collection<FilePath> result = new HashSet<FilePath>();
-    for(FilePath filePath: files) {
-      final VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(filePath);
-      if (root != null) {
-        result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(root));
-      }
-    }
-    return result;
   }
 
   public String getTagName() {
@@ -106,5 +84,4 @@ public class CreateTagDialog extends CvsTagDialog {
   public boolean tagFieldIsActive() {
     return true;
   }
-
 }

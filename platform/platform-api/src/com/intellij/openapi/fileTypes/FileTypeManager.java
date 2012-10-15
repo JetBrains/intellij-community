@@ -88,7 +88,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
    *
    * @param extension The extension for which the file type is requested, not including the leading '.'.
-   * @return The file type instance.
+   * @return The file type instance, or {@link UnknownFileType#INSTANCE} if corresponding file type not found
    */
   @NotNull
   public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);

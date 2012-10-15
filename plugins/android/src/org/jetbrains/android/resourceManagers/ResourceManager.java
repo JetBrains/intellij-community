@@ -79,8 +79,16 @@ public abstract class ResourceManager {
     return processFileResources(resourceType, processor, true);
   }
 
-  public boolean processFileResources(@Nullable String resourceType, @NotNull FileResourceProcessor processor, boolean publicOnly) {
-    for (VirtualFile resSubdir : getResourceSubdirs(resourceType)) {
+  public boolean processFileResources(@Nullable String resourceType, @NotNull FileResourceProcessor processor,
+                                      boolean withDependencies) {
+    return processFileResources(resourceType, processor, withDependencies, true);
+  }
+
+  public boolean processFileResources(@Nullable String resourceType, @NotNull FileResourceProcessor processor,
+                                      boolean withDependencies, boolean publicOnly) {
+    final VirtualFile[] resDirs = withDependencies ? getAllResourceDirs() : new VirtualFile[]{getResourceDir()};
+
+    for (VirtualFile resSubdir : AndroidResourceUtil.getResourceSubdirs(resourceType, resDirs)) {
       final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
 
       if (resType != null) {
@@ -118,9 +126,18 @@ public abstract class ResourceManager {
   }
 
   @NotNull
+  public List<PsiFile> findResourceFiles(@NotNull final String resType,
+                                         @Nullable final String resName,
+                                         final boolean distinguishDelimetersInName,
+                                         @NotNull String... extensions) {
+    return findResourceFiles(resType, resName, distinguishDelimetersInName, true, extensions);
+  }
+
+  @NotNull
   public List<PsiFile> findResourceFiles(@NotNull final String resType1,
                                          @Nullable final String resName1,
                                          final boolean distinguishDelimetersInName,
+                                         final boolean withDependencies,
                                          @NotNull final String... extensions) {
     final List<PsiFile> result = new ArrayList<PsiFile>();
     final Set<String> extensionSet = new HashSet<String>();
@@ -145,7 +162,7 @@ public abstract class ResourceManager {
         }
         return true;
       }
-    });
+    }, withDependencies);
     return result;
   }
 
@@ -381,22 +398,14 @@ public abstract class ResourceManager {
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final Map<VirtualFile, Set<String>> file2ids = new HashMap<VirtualFile, Set<String>>();
 
-    for (String key : index.getAllKeys(AndroidIdIndex.INDEX_ID, project)) {
-      if (!AndroidIdIndex.MARKER.equals(key)) {
-        if (index.getValues(AndroidIdIndex.INDEX_ID, key, scope).size() > 0) {
-
-          for (VirtualFile file : index.getContainingFiles(AndroidIdIndex.INDEX_ID, key, scope)) {
-            Set<String> ids = file2ids.get(file);
-
-            if (ids == null) {
-              ids = new HashSet<String>();
-              file2ids.put(file, ids);
-            }
-            ids.add(key);
-          }
-        }
+    index.processValues(AndroidIdIndex.INDEX_ID, AndroidIdIndex.MARKER, null, new FileBasedIndex.ValueProcessor<Set<String>>() {
+      @Override
+      public boolean process(VirtualFile file, Set<String> value) {
+        file2ids.put(file, value);
+        return true;
       }
-    }
+    }, scope);
+
     final Set<String> result = new HashSet<String>();
 
     for (VirtualFile resSubdir : getResourceSubdirsToSearchIds()) {

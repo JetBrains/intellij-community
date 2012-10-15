@@ -189,7 +189,11 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     if (peer == null) {
       throw new ConfigurationException("Peer should be not-null for " + myCurrentGenerator.getName());
     }
-    return peer.validate() == null;
+    ValidationInfo validate = peer.validate();
+    if (validate != null) {
+      throw new ConfigurationException(validate.message);
+    }
+    return true;
   }
 
   @SuppressWarnings("unchecked")

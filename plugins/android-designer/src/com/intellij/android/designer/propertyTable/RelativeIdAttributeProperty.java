@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent;
 import com.intellij.android.designer.propertyTable.editors.ComponentEditor;
@@ -28,7 +29,7 @@ import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -69,9 +70,7 @@ public class RelativeIdAttributeProperty extends AttributeProperty {
     return new ComponentEditor(createRenderer()) {
       @Override
       protected List<RadComponent> getComponents(RadComponent component) {
-        List<RadComponent> components = new ArrayList<RadComponent>(component.getParent().getChildren());
-        components.remove(component);
-        return components;
+        return RelativeLayoutOperation.getSnapComponents(component.getParent(), Arrays.asList(component));
       }
     };
   }

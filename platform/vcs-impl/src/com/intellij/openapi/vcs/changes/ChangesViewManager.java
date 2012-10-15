@@ -258,7 +258,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(createToolbarComponent(group), BorderLayout.WEST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
+    toolbar.setTargetComponent(myView);
+    JComponent toolbarComponent = toolbar.getComponent();
+    toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
 
     DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
     final Expander expander = new Expander();
@@ -276,7 +279,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myToggleDetailsAction = new ToggleDetailsAction();
     visualActionsGroup.add(myToggleDetailsAction);
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
-    toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
+    toolbarPanel.add(
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 
 
     DefaultActionGroup menuGroup = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewPopupMenu");
@@ -344,11 +348,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @JdkConstants.InputEventMask
   private static int ctrlMask() {
     return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
-  }
-
-  private static JComponent createToolbarComponent(final DefaultActionGroup group) {
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
-    return actionToolbar.getComponent();
   }
 
   public void updateProgressComponent(final Factory<JComponent> progress) {
@@ -583,7 +582,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private class ToggleDetailsAction extends ToggleAction implements DumbAware {
     private ToggleDetailsAction() {
-      super("Change Details", "Change Details", AllIcons.Vcs.Volute);
+      super("Preview Diff", null, AllIcons.Actions.Preview);
     }
 
     @Override

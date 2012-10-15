@@ -55,6 +55,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,12 +115,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        documentCommitThread.disable("Write action started: "+ action);
+        documentCommitThread.disable("Write action started: " + action);
       }
 
       @Override
       public void writeActionFinished(Object action) {
-        documentCommitThread.enable("Write action finished: "+action);
+        documentCommitThread.enable("Write action finished: " + action);
       }
     }, myProject);
     documentCommitThread.enable("project open");
@@ -140,7 +141,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   @Override
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   @Override
   public void disposeComponent() {
@@ -150,7 +152,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Nullable
   public PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if(userData != null) return userData;
+    if (userData != null) return userData;
 
     PsiFile psiFile = getCachedPsiFile(document);
     if (psiFile != null) return psiFile;
@@ -160,7 +162,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-      LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" + virtualFile + ";\n myProject=" + myProject+";\n projects returned: "+projects);
+      LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" +
+                                                                         virtualFile +
+                                                                         ";\n myProject=" +
+                                                                         myProject +
+                                                                         ";\n projects returned: " +
+                                                                         projects);
     }
 
     psiFile = getPsiFile(virtualFile);
@@ -174,10 +181,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
+
   @Override
   public PsiFile getCachedPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if(userData != null) return userData;
+    if (userData != null) return userData;
 
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
@@ -233,7 +241,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   @Override
   public Document getCachedDocument(@NotNull PsiFile file) {
-    if(!file.isPhysical()) return null;
+    if (!file.isPhysical()) return null;
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
@@ -263,7 +271,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
-  private static final Object PERFORM_ALWAYS_KEY = new Object(){
+  private static final Object PERFORM_ALWAYS_KEY = new Object() {
     @Override
     @NonNls
     public String toString() {
@@ -271,8 +279,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   };
 
-  /** Schedules action to be executed when all documents are committed.
-   *  @return true if action has been run immediately, or false if action was scheduled for execution later.
+  /**
+   * Schedules action to be executed when all documents are committed.
+   *
+   * @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
   @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
@@ -303,11 +313,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   /**
    * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.
-   *  @param key the (unique) id of the action.
-   *  @param action The action to be executed after automatic commit.
-   *                This action will overwrite any action which was registered under this key earlier.
-   *                The action will be executed in EDT.
-   *  @return true if action has been run immediately, or false if action was scheduled for execution later.
+   *
+   * @param key    the (unique) id of the action.
+   * @param action The action to be executed after automatic commit.
+   *               This action will overwrite any action which was registered under this key earlier.
+   *               The action will be executed in EDT.
+   * @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
   public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -405,7 +416,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         @Override
         public void visitElement(PsiElement element) {
           if (!element.isValid()) {
-            LOG.error("Commit to '"+psiFile.getVirtualFile()+"' lead to invalid element: "+element+ "; Reason: '"+reason+"'");
+            LOG.error("Commit to '" + psiFile.getVirtualFile() + "' lead to invalid element: " + element + "; Reason: '" + reason + "'");
           }
         }
       });
@@ -427,7 +438,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         finally {
           myIsCommitInProgress = false;
         }
-        assert !myUncommittedDocuments.contains(document) : "Document :"+ document;
+        assert !myUncommittedDocuments.contains(document) : "Document :" + document;
       }
     });
   }
@@ -452,7 +463,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
       for (Object key : keys) {
         Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
-        myDocumentCommitThread.log("Running after commit runnable: ",null, false, key, action);
+        myDocumentCommitThread.log("Running after commit runnable: ", null, false, key, action);
         action.run();
       }
     }
@@ -485,12 +496,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Override
   public void commitAndRunReadAction(@NotNull final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    if (SwingUtilities.isEventDispatchThread()){
+    if (SwingUtilities.isEventDispatchThread()) {
       commitAllDocuments();
       runnable.run();
     }
-    else{
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise.");
+    else {
+      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(),
+                     "Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise.");
 
       final Semaphore s1 = new Semaphore();
       final Semaphore s2 = new Semaphore();
@@ -500,11 +512,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         new Runnable() {
           @Override
           public void run() {
-            if (myUncommittedDocuments.isEmpty()){
+            if (myUncommittedDocuments.isEmpty()) {
               runnable.run();
               committed[0] = true;
             }
-            else{
+            else {
               s1.down();
               s2.down();
               final Runnable commitRunnable = new Runnable() {
@@ -527,7 +539,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       );
 
-      if (!committed[0]){
+      if (!committed[0]) {
         s1.waitFor();
         application.runReadAction(
           new Runnable() {
@@ -563,7 +575,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (doc instanceof DocumentWindow) doc = ((DocumentWindow)doc).getDelegate();
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    if(viewProvider != null) component.doPostponedFormatting(viewProvider);
+    if (viewProvider != null) component.doPostponedFormatting(viewProvider);
   }
 
   private void fireDocumentCreated(@NotNull Document document, PsiFile file) {
@@ -606,6 +618,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
+
   void clearTreeHardRef(@NotNull Document document) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
   }
@@ -636,14 +649,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         continue;
       }
 
-      if (file instanceof PsiFileImpl){
+      if (file instanceof PsiFileImpl) {
         myIsCommitInProgress = true;
-        try{
+        try {
           PsiFileImpl psiFile = (PsiFileImpl)file;
           // tree should be initialized and be kept until commit
           document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, psiFile.calcTreeElement());
         }
-        finally{
+        finally {
           myIsCommitInProgress = false;
         }
       }
@@ -674,7 +687,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       if (textBlock.isLocked()) continue;
 
       textBlock.documentChanged(event);
-      assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
+      assert file instanceof PsiFileImpl || "mock.file".equals(file.getName()) && ApplicationManager.getApplication().isUnitTestMode() :
+        event +
+        "; file=" +
+        file +
+        "; allFiles=" +
+        files +
+        "; viewProvider=" +
+        viewProvider;
 
       commitNecessary = true;
     }
@@ -694,14 +714,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
 
-    if (commitNecessary && fromRefresh){
+    if (commitNecessary && fromRefresh) {
       commitDocument(document);
     }
     // avoid documents piling up during batch processing
     if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         try {
-          LOG.error("Too many uncommitted documents for "+myProject + ":\n"+myUncommittedDocuments);
+          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
         }
         finally {
           clearUncommitedDocuments();
@@ -711,9 +731,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  private boolean isRelevant(FileViewProvider viewProvider) {
+  private boolean isRelevant(@NotNull FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
-    return !virtualFile.getFileType().isBinary() && viewProvider.getManager() == myPsiManager && !myPsiManager.getProject().isDisposed() && !myProject.isDefault();
+    return !virtualFile.getFileType().isBinary() &&
+           viewProvider.getManager() == myPsiManager &&
+           !myPsiManager.getProject().isDisposed();
   }
 
   public static boolean checkConsistency(PsiFile psiFile, Document document) {
@@ -732,16 +754,16 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     @NonNls String error = "File '" + psiFile.getName() + "' text mismatch after reparse. " +
                            "File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
     int i = 0;
-    for(; i < documentLength; i++){
-      if (i >= fileText.length){
+    for (; i < documentLength; i++) {
+      if (i >= fileText.length) {
         error += "editorText.length > psiText.length i=" + i + "\n";
         break;
       }
-      if (i >= editorText.length()){
+      if (i >= editorText.length()) {
         error += "editorText.length > psiText.length i=" + i + "\n";
         break;
       }
-      if (editorText.charAt(i) != fileText[i]){
+      if (editorText.charAt(i) != fileText[i]) {
         error += "first unequal char i=" + i + "\n";
         break;
       }
@@ -765,15 +787,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (document instanceof DocumentWindow) {
       error += "doc: '" + document.getText() + "'\n";
-      error += "psi: '" +  psiFile.getText() + "'\n";
+      error += "psi: '" + psiFile.getText() + "'\n";
       error += "ast: '" + psiFile.getNode().getText() + "'\n";
-      error += psiFile.getLanguage()+"\n";
+      error += psiFile.getLanguage() + "\n";
       PsiElement context = InjectedLanguageManager.getInstance(psiFile.getProject()).getInjectionHost(psiFile);
       if (context != null) {
-        error += "context: " + context +"; text: '" + context.getText() + "'\n";
+        error += "context: " + context + "; text: '" + context.getText() + "'\n";
         error += "context file: " + context.getContainingFile() + "\n";
       }
-      error += "document window ranges: " + Arrays.asList(((DocumentWindow)document).getHostRanges())+"\n";
+      error += "document window ranges: " + Arrays.asList(((DocumentWindow)document).getHostRanges()) + "\n";
     }
     LOG.error(error);
     //document.replaceString(0, documentLength, psiFile.getText());
@@ -795,12 +817,16 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Override
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    commitAllDocuments();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        commitAllDocuments();
+      }
+    });
   }
 
   @NonNls
   @Override
   public String toString() {
-    return super.toString() + " for the project "+myProject + ".";
+    return super.toString() + " for the project " + myProject + ".";
   }
 }

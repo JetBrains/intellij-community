@@ -5,9 +5,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -49,7 +47,7 @@ public class GotoTaskAction extends GotoActionBase {
     myInAction = getClass();
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
       @NotNull
       @Override
       public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
@@ -62,7 +60,7 @@ public class GotoTaskAction extends GotoActionBase {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
-        List<Task> cachedTasks = new TaskSearchSupport(project).getLocalAndCachedTasks(pattern);
+        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern);
         List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
@@ -85,29 +83,25 @@ public class GotoTaskAction extends GotoActionBase {
           if (!consumer.process(element)) return false;
         }
 
-        //int i = 0;
-        //while (true) {
-          List<Task> tasks = new TaskSearchSupport(project).getRepositoryTasks(pattern, ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT, 0, true);
-          if (tasks.size() == 0) return true;
-          tasks.removeAll(cachedTasks);
-          taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
-            @Override
-            public TaskPsiElement fun(Task task) {
-              return new TaskPsiElement(PsiManager.getInstance(project), task);
-            }
-          });
-
-          if (!cachedTasksFound && taskPsiElements.size() != 0) {
-            cancelled.checkCanceled();
-            if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        List<Task> tasks =
+          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true);
+        tasks.removeAll(cachedTasks);
+        taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
+          @Override
+          public TaskPsiElement fun(Task task) {
+            return new TaskPsiElement(PsiManager.getInstance(project), task);
           }
+        });
 
-          for (Object element : taskPsiElements) {
-            cancelled.checkCanceled();
-            if (!consumer.process(element)) return false;
-          }
-          //i += ChooseByNameBase.MAXIMUM_LIST_SIZE_LIMIT;
-        //}
+        if (!cachedTasksFound && taskPsiElements.size() != 0) {
+          cancelled.checkCanceled();
+          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+        }
+
+        for (Object element : taskPsiElements) {
+          cancelled.checkCanceled();
+          if (!consumer.process(element)) return false;
+        }
         return true;
       }
     }, "", false, 0);
@@ -127,6 +121,16 @@ public class GotoTaskAction extends GotoActionBase {
         shiftPressed.set(false);
       }
     });
+
+    final DefaultActionGroup group = new DefaultActionGroup(new ConfigureServersAction() {
+      @Override
+      protected void serversChanged() {
+        popup.rebuildList(true);
+      }
+    });
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    popup.setToolArea(actionToolbar.getComponent());
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override

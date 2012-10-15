@@ -60,6 +60,7 @@ closable
 closeable
 cmdline
 codebase
+codeinsight
 codesign
 commandline
 conf
@@ -329,6 +330,9 @@ pycharm
 readme
 readonly
 readwrite
+rebase
+rebased
+rebasing
 rect
 redistributions
 refactor
@@ -364,6 +368,7 @@ runtime
 rvalue
 rvalues
 savepoint
+scala
 schemas
 scriptlet
 scriptlets

@@ -60,6 +60,9 @@ public class JpsAndroidModuleProperties {
   @Tag(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME)
   public boolean myIncludeSystemProguardCfgPath = true;
 
+  @Tag(AndroidCommonUtils.INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME)
+  public boolean myIncludeAssetsFromLibraries = false;
+
   @Tag("resOverlayFolders")
   @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
   public List<String> RES_OVERLAY_FOLDERS = new ArrayList<String>();

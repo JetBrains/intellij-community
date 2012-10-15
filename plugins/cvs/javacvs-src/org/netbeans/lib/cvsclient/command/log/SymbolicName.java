@@ -34,11 +34,11 @@ public final class SymbolicName {
 	}
 
 	public void setName(String symName) {
-		name = symName;
+		name = symName.intern();
 	}
 
 	public void setRevision(String rev) {
-		revision = rev;
+		revision = rev.intern();
 	}
 
 	public String getRevision() {

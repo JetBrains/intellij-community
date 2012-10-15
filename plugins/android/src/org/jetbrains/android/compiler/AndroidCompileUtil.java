@@ -407,7 +407,7 @@ public class AndroidCompileUtil {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
-        CompilerTask task = new CompilerTask(project, "Android auto-generation", true);
+        CompilerTask task = new CompilerTask(project, "Android auto-generation", true, false);
         CompileScope scope = new ModuleCompileScope(module, false);
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }

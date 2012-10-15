@@ -44,6 +44,8 @@ public interface JpsAndroidModuleExtension extends JpsElement {
 
   boolean isPackTestCode();
 
+  boolean isIncludeAssetsFromLibraries();
+
   boolean isRunProcessResourcesMavenTask();
 
   boolean isRunProguard();

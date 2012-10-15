@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
@@ -61,6 +62,10 @@ public class GrSetStrongTypeIntention extends Intention {
       variables = ((GrVariableDeclaration)parent.getParent()).getVariables();
       elementToBuildTemplate = parent.getParent();
     }
+    else if (parent instanceof GrVariable && parent.getParent() instanceof GrForInClause) {
+      variables = new GrVariable[]{(GrVariable)parent};
+      elementToBuildTemplate = parent.getParent().getParent();
+    }
     else if (parent instanceof GrVariableDeclaration) {
       variables = ((GrVariableDeclaration)parent).getVariables();
       elementToBuildTemplate = parent;
@@ -74,12 +79,18 @@ public class GrSetStrongTypeIntention extends Intention {
     }
 
     ArrayList<TypeConstraint> types = new ArrayList<TypeConstraint>();
-    for (GrVariable variable : variables) {
-      GrExpression initializer = variable.getInitializerGroovy();
-      if (initializer != null) {
-        PsiType type = initializer.getType();
-        if (type != null) {
-          types.add(SupertypeConstraint.create(type));
+
+    if (parent.getParent() instanceof GrForInClause) {
+      types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));
+    }
+    else {
+      for (GrVariable variable : variables) {
+        GrExpression initializer = variable.getInitializerGroovy();
+        if (initializer != null) {
+          PsiType type = initializer.getType();
+          if (type != null) {
+            types.add(SupertypeConstraint.create(type));
+          }
         }
       }
     }
@@ -172,6 +183,9 @@ public class GrSetStrongTypeIntention extends Intention {
           for (GrVariable variable : variables) {
             if (isVarDeclaredWithInitializer(variable)) return true;
           }
+        }
+        else if (pparent instanceof GrForInClause) {
+          return PsiUtil.extractIteratedType((GrForInClause)pparent) != null;
         }
         else {
           return isVarDeclaredWithInitializer((GrVariable)parent);

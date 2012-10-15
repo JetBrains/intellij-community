@@ -144,7 +144,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testInferUnchecked () throws Exception {
-    checkResolvesTo(CommonClassNames.JAVA_LANG_OBJECT);
+    checkResolvesTo(CommonClassNames.JAVA_LANG_STRING);
   }
 
   public void testInferNotNull () throws Exception {

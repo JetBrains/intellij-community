@@ -803,8 +803,7 @@ public class RefactoringUtil {
   }
 
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
-    final boolean isExtension = PsiUtil.isExtensionMethod(method);
-    if (!isExtension) {
+    if (!method.isExtensionMethod()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
         body.delete();
@@ -964,6 +963,84 @@ public class RefactoringUtil {
       }
     }
     return false;
+  }
+
+  public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)
+    throws IncorrectOperationException {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(container.getProject()).getElementFactory();
+    if(isLoopOrIf(container)) {
+      PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
+      PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
+      PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory
+        .createStatementFromText("{}", null);
+      blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(container.getProject()).reformat(blockStatement);
+      final PsiElement prevSibling = loopBody.getPrevSibling();
+      if(prevSibling instanceof PsiWhiteSpace) {
+        final PsiElement pprev = prevSibling.getPrevSibling();
+        if (!(pprev instanceof PsiComment) || !((PsiComment)pprev).getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
+          prevSibling.delete();
+        }
+      }
+      blockStatement = (PsiBlockStatement) loopBody.replace(blockStatement);
+      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      declaration = (PsiStatement) codeBlock.add(declaration);
+      JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
+      if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
+    } else if (container instanceof PsiLambdaExpression) {
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
+      final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
+      LOG.assertTrue(lambdaExpressionBody != null);
+
+      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory
+        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression);
+      PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
+      LOG.assertTrue(newBody != null);
+      newBody.add(declaration);
+
+      final PsiStatement lastBodyStatement;
+      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
+        lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
+        ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
+      }
+      else {
+        lastBodyStatement = elementFactory.createStatementFromText("return a;", lambdaExpression);
+        final PsiExpression returnValue = ((PsiReturnStatement)lastBodyStatement).getReturnValue();
+        LOG.assertTrue(returnValue != null);
+        returnValue.replace(lambdaExpressionBody);
+      }
+      newBody.add(lastBodyStatement);
+
+      final PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
+      newBody = (PsiCodeBlock)copy.getBody();
+      LOG.assertTrue(newBody != null);
+      declaration = newBody.getStatements()[0];
+      declaration = (PsiStatement)JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
+    }
+    return declaration;
+  }
+
+  @Nullable
+  private static PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
+    if(container instanceof PsiLoopStatement) {
+      return ((PsiLoopStatement) container).getBody();
+    }
+    else if (container instanceof PsiIfStatement) {
+      final PsiStatement thenBranch = ((PsiIfStatement)container).getThenBranch();
+      if (thenBranch != null && PsiTreeUtil.isAncestor(thenBranch, anchorStatement, false)) {
+        return thenBranch;
+      }
+      final PsiStatement elseBranch = ((PsiIfStatement)container).getElseBranch();
+      if (elseBranch != null && PsiTreeUtil.isAncestor(elseBranch, anchorStatement, false)) {
+        return elseBranch;
+      }
+      LOG.assertTrue(false);
+    }
+    LOG.assertTrue(false);
+    return null;
+  }
+
+  public static boolean isLoopOrIf(PsiElement element) {
+    return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
   }
 
   public interface ImplicitConstructorUsageVisitor {

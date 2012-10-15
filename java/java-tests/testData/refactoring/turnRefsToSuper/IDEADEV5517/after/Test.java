@@ -2,17 +2,17 @@ interface Int<T> {
     void method(T x);
 }
 
-class Sub implements Int<Xint> {
-    public void method(Xint x) {
+class Sub implements Int<XInt> {
+    public void method(XInt x) {
         x.inInt();
     }
 }
 
-interface Xint {
+interface XInt {
     void inInt();
 }
 
-class Xyz implements Xint {
+class Xyz implements XInt {
     public void inInt() {
     }
 

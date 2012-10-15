@@ -62,8 +62,6 @@ public class LanguageTextField extends EditorTextField {
     myProject = project;
 
     setEnabled(language != null);
-
-    ShiftTabAction.attachTo(this);
   }
 
   public interface DocumentCreator {

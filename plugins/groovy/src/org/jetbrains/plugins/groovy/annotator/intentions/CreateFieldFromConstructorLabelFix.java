@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 
@@ -38,7 +38,7 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
   private final CreateFieldFix myFix;
   private final GrNamedArgument myNamedArgument;
 
-  public CreateFieldFromConstructorLabelFix(GrMemberOwner targetClass, GrNamedArgument namedArgument) {
+  public CreateFieldFromConstructorLabelFix(GrTypeDefinition targetClass, GrNamedArgument namedArgument) {
     myFix = new CreateFieldFix(targetClass);
     myNamedArgument = namedArgument;
   }

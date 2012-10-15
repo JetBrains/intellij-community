@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a constructor #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>45</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a constructor #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>49</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>62</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>72</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryReturn.java</file>
+    <line>84</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'return' statement</problem_class>
+    <description>&lt;code&gt;return&lt;/code&gt; is unnecessary as the last statement in a 'void' method #loc</description>
+  </problem>
+
+</problems>

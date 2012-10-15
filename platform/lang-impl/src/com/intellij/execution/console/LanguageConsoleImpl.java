@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -38,6 +40,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -57,6 +60,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
@@ -432,12 +436,23 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
+    return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
+  }
+
+  public String addToHistory(final TextRange textRange, final EditorEx editor, final boolean preserveMarkup) {
+    return addToHistoryInner(textRange, editor, false, preserveMarkup);
+  }
+
+  protected String addToHistoryInner(final TextRange textRange,
+                                     final EditorEx editor,
+                                     final boolean erase,
+                                     final boolean preserveMarkup) {
     final Ref<String> ref = Ref.create("");
     final Runnable action = new Runnable() {
       public void run() {
-        ref.set(addTextRangeToHistory(textRange, myConsoleEditor, preserveMarkup));
+        ref.set(addTextRangeToHistory(textRange, editor, preserveMarkup));
         if (erase) {
-          myConsoleEditor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+          editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
       }
     };
@@ -475,13 +490,27 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     markupModel.addRangeHighlighter(history.getTextLength() - StringUtil.length(myPrompt), history.getTextLength(), HighlighterLayer.SYNTAX,
                                     ConsoleViewContentType.USER_INPUT.getAttributes(),
                                     HighlighterTargetArea.EXACT_RANGE);
-
-    final String text = consoleEditor.getDocument().getText(textRange);
+    final int localStartOffset = textRange.getStartOffset();
+    String text;
+    EditorHighlighter highlighter;
+    if (consoleEditor instanceof com.intellij.injected.editor.EditorWindow) {
+      com.intellij.injected.editor.EditorWindow editorWindow = (com.intellij.injected.editor.EditorWindow)consoleEditor;
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      PsiFile file = editorWindow.getInjectedFile();
+      highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), scheme, getProject());
+      String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
+      highlighter.setText(fullText);
+      text = textRange.substring(fullText);
+    }
+    else {
+      text = consoleEditor.getDocument().getText(textRange);
+      highlighter = consoleEditor.getHighlighter();
+    }
     //offset can be changed after text trimming after insert due to buffer constraints
     appendToHistoryDocument(history, text);
     int offset = history.getTextLength() - text.length();
-    final int localStartOffset = textRange.getStartOffset();
-    final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(localStartOffset);
+
+    final HighlighterIterator iterator = highlighter.createIterator(localStartOffset);
     final int localEndOffset = textRange.getEndOffset();
     while (!iterator.atEnd()) {
       final int itStart = iterator.getStart();

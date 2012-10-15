@@ -26,12 +26,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
  * @author Max Medvedev
@@ -47,7 +48,6 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
                                     PsiSubstitutor substitutor) {
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
-
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
 
@@ -84,6 +84,12 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
 
   @Override
   public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
-    return (PsiField)targetClass.add(field);
+    if (targetClass instanceof GroovyScriptClass) {
+      PsiElement added = targetClass.getContainingFile().add(field.getParent());
+      return (PsiField)((GrVariableDeclaration)added).getVariables()[0];
+    }
+    else {
+      return (PsiField)targetClass.add(field);
+    }
   }
 }

@@ -35,6 +35,7 @@ public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
   public void update(AnActionEvent event) {
     Task activeTask = getActiveTask(event);
     event.getPresentation().setEnabled(activeTask != null && hasTexts(activeTask));
+    super.update(event);
   }
 
   public static boolean hasTexts(Task activeTask) {

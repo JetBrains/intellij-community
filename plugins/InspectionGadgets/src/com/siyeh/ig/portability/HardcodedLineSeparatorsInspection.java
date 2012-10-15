@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,16 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class HardcodedLineSeparatorsInspection extends BaseInspection {
+
+  private static final Pattern newlines = Pattern.compile("\\\\n|\\\\r|\\\\0{0,1}12|\\\\0{0,1}15");
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "hardcoded.line.separator.display.name");
+    return InspectionGadgetsBundle.message("hardcoded.line.separator.display.name");
   }
 
   @NotNull
@@ -38,48 +42,29 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "hardcoded.line.separator.problem.descriptor");
+    return InspectionGadgetsBundle.message("hardcoded.line.separator.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new HardcodedLineSeparatorsVisitor();
   }
 
-  private static class HardcodedLineSeparatorsVisitor
-    extends BaseInspectionVisitor {
-
-    private static final char NEW_LINE_CHAR = '\n';
-    private static final char RETURN_CHAR = '\r';
+  private static class HardcodedLineSeparatorsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (type == null) {
+      if (type == null || !TypeUtils.isJavaLangString(type) && !type.equals(PsiType.CHAR)) {
         return;
       }
-      if (TypeUtils.isJavaLangString(type)) {
-        final String value = (String)expression.getValue();
-        if (value == null) {
-          return;
-        }
-        if (value.indexOf(NEW_LINE_CHAR) >= 0 ||
-            value.indexOf(RETURN_CHAR) >= 0) {
-          registerError(expression);
-        }
-      }
-      else if (type.equals(PsiType.CHAR)) {
-        final Character value = (Character)expression.getValue();
-        if (value == null) {
-          return;
-        }
-        final char unboxedValue = value.charValue();
-        if (unboxedValue == NEW_LINE_CHAR
-            || unboxedValue == RETURN_CHAR) {
-          registerError(expression);
-        }
+      final String text = expression.getText();
+      final Matcher matcher = newlines.matcher(text);
+      int end = 0;
+      while (matcher.find(end)) {
+        final int start = matcher.start();
+        end = matcher.end();
+        registerErrorAtOffset(expression, start, end - start);
       }
     }
   }

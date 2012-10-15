@@ -35,6 +35,9 @@ public abstract class PsiFileFactory {
   }
 
   /**
+   * Please use {@link #createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence)},
+   * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
+   *
    * Creates a file from the specified text.
    *
    * @param name the name of the file to create (the extension of the name determines the file type).
@@ -42,6 +45,7 @@ public abstract class PsiFileFactory {
    * @return the created file.
    * @throws com.intellij.util.IncorrectOperationException if the file type with specified extension is binary.
    */
+  @Deprecated
   @NotNull
   public abstract PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text);
 

@@ -227,7 +227,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               }
             });
           }
-          if (!processCommentInjections(variable) && areThereInjectionsWithName(variable.getName(), false)) {
+          if (!processCommentInjections(variable)) {
+            myShouldStop = true;
+          }
+          else if (areThereInjectionsWithName(variable.getName(), false)) {
             process(variable, null, -1);
           }
           return false;
@@ -290,15 +293,18 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
         }
         if (language != null) {
-          final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
-          //if (prefix != null) injection.setPrefix(prefix);
-          //if (suffix != null) injection.setSuffix(suffix);
-          injection.setInjectedLanguageId(language.getID());
-          processInjectionWithContext(myUnparsable, injection, false);
-          return true;
+          return processCommentInjectionInner(owner, prev, language);
         }
-
       }
+      return true;
+    }
+
+    protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, Language language) {
+      final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+      //if (prefix != null) injection.setPrefix(prefix);
+      //if (suffix != null) injection.setSuffix(suffix);
+      injection.setInjectedLanguageId(language.getID());
+      processInjectionWithContext(myUnparsable, injection, false);
       return false;
     }
 
@@ -316,7 +322,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
 
-    protected boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
+    private boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
       final String checkName;
       if (annoElement instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
@@ -330,17 +336,21 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiAnnotation[] annotations =
         AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true);
       if (annotations.length > 0) {
-        final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-        final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
-        final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-        final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
-        if (prefix != null) injection.setPrefix(prefix);
-        if (suffix != null) injection.setSuffix(suffix);
-        if (id != null) injection.setInjectedLanguageId(id);
-        processInjectionWithContext(myUnparsable, injection, false);
-        return false;
+        return processAnnotationInjectionInner(annoElement, annotations);
       }
       return true;
+    }
+
+    protected boolean processAnnotationInjectionInner(PsiModifierListOwner owner, PsiAnnotation[] annotations) {
+      final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
+      final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
+      final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
+      final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+      if (prefix != null) injection.setPrefix(prefix);
+      if (suffix != null) injection.setSuffix(suffix);
+      if (id != null) injection.setInjectedLanguageId(id);
+      processInjectionWithContext(myUnparsable, injection, false);
+      return false;
     }
 
     protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {

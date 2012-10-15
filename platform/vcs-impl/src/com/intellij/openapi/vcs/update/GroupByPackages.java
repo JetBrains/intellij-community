@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.*;
 
@@ -22,22 +25,18 @@ import java.util.*;
  * author: lesya
  */
 public class GroupByPackages {
-
-  private final Map<File, Collection<File>> myParentToChildrenMap
-      = new HashMap<File, Collection<File>>();
+  private final Map<File, Collection<File>> myParentToChildrenMap = new HashMap<File, Collection<File>>();
   private final Collection<File> myRoots = new HashSet<File>();
 
-  public GroupByPackages(Collection<File> fiels) {
-    for (Iterator each = fiels.iterator(); each.hasNext();) {
-      process((File)each.next());
+  public GroupByPackages(@NotNull Collection<File> files) {
+    for (File file : files) {
+      process(file);
     }
-
     splitRoots();
   }
 
   private void splitRoots() {
-    for (Iterator each = new ArrayList(myRoots).iterator(); each.hasNext();) {
-      File oldRoot = (File)each.next();
+    for (File oldRoot : new ArrayList<File>(myRoots)) {
       File newRoot = splitRoot(oldRoot);
       if (!oldRoot.equals(newRoot)) replaceRoot(oldRoot, newRoot);
     }
@@ -48,39 +47,38 @@ public class GroupByPackages {
     myRoots.add(newRoot);
   }
 
-  private File splitRoot(File oldRoot) {
-    Collection<File> children = getChildren(oldRoot);
-    if (children == null) return oldRoot;
-    if (children.size() == 1)
-      return splitRoot(children.iterator().next());
-    else {
-      return oldRoot;
+  private File splitRoot(@NotNull File oldRoot) {
+    List<File> children = getChildren(oldRoot);
+    if (children.size() == 1) {
+      return splitRoot(children.get(0));
     }
-
+    return oldRoot;
   }
 
-  private void process(File file) {
+  private void process(@NotNull final File file) {
+    File f;
     File parent = file.getParentFile();
-    if (parent == null) {
-      myRoots.add(file);
-      return;
+    for (f = file; parent != null; f = parent, parent = parent.getParentFile()) {
+      Collection<File> files = myParentToChildrenMap.get(parent);
+      if (files == null) {
+        myParentToChildrenMap.put(parent, files = new HashSet<File>());
+      }
+      files.add(f);
     }
-
-    if (!myParentToChildrenMap.containsKey(parent)) myParentToChildrenMap.put(parent, new HashSet<File>());
-    myParentToChildrenMap.get(parent).add(file);
-
-    process(parent);
+    myRoots.add(f);
   }
 
+  @NotNull
   public List<File> getRoots() {
     return new ArrayList<File>(myRoots);
   }
 
+  @NotNull
   public List<File> getChildren(File file) {
     Collection<File> collection = myParentToChildrenMap.get(file);
-    if (collection == null)
-      return new ArrayList<File>();
-    else
-      return new ArrayList<File>(collection);
+    if (collection == null) {
+      return ContainerUtil.emptyList();
+    }
+    return new ArrayList<File>(collection);
   }
 }

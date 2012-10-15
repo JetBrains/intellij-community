@@ -34,10 +34,11 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
 
   public PsiTypeCodeFragmentImpl(final Project project,
                                  final boolean isPhysical,
-                                 final @NonNls String name,
+                                 @NonNls final String name,
                                  final CharSequence text,
-                                 final int flags) {
-    super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text);
+                                 final int flags,
+                                 PsiElement context) {
+    super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text, context);
 
     myAllowEllipsis = isSet(flags, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     myAllowDisjunction = isSet(flags, JavaCodeFragmentFactory.ALLOW_DISJUNCTION);

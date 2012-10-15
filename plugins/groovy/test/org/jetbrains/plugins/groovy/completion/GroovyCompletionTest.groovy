@@ -694,7 +694,7 @@ format(<caret>)"""
     myFixture.configureByText "a.groovy", "import java.lang.<caret>"
     myFixture.completeBasic()
     myFixture.type '*\n'
-    myFixture.checkResult "import java.lang.*<caret>"
+    myFixture.checkResult "import java.lang.*\n<caret>"
   }
 
   public void testNoDotsInImport() {
@@ -1565,5 +1565,9 @@ import static Foo.foo as barrr
 
 setBarrr(<caret>)
 ''')
+  }
+
+  void testParenthesesAfterDot() {
+    myFixture.testCompletionTyping(getTestName(false) + '.groovy', '\t', getTestName(false) + '_after.groovy')
   }
 }

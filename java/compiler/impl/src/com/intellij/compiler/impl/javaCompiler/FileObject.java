@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,7 +27,7 @@ import java.io.IOException;
  * @author cdr
  */
 public class FileObject {
-  private static final byte[] NOT_LOADED = new byte[0];
+  private static final byte[] NOT_LOADED = ArrayUtil.EMPTY_BYTE_ARRAY;
 
   private final File myFile;
   private final byte[] myContent;

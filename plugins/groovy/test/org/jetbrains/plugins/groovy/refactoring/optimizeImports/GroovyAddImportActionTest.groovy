@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 /**
  * @author peter
  */
@@ -31,6 +32,8 @@ public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }
 '''
+    myFixture.enableInspections(new GrUnresolvedAccessInspection())
+
     importClass()
     myFixture.checkResult '''import bar.Log
 

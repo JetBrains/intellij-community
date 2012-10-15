@@ -20,6 +20,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.StringReader;
@@ -53,13 +54,13 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     myDefaultSearch = other.getDefaultSearch();
   }
 
-  public Task[] getIssues(String request, int max, long since) throws Exception {
+  public List<Task> getIssues(@Nullable String request, int max, long since) throws Exception {
 
     String query = getDefaultSearch();
     if (request != null) {
       query += " " + request;
     }
-    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&after" + since;
+    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&updatedAfter" + since;
     HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
 
@@ -88,14 +89,14 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     @SuppressWarnings({"unchecked"})
     List<Object> children = element.getChildren("issue");
 
-    List<Task> taskList = ContainerUtil.mapNotNull(children, new Function<Object, Task>() {
+    return ContainerUtil.mapNotNull(children, new Function<Object, Task>() {
       public Task fun(Object o) {
         return createIssue((Element)o);
       }
     });
-    return taskList.toArray(new Task[taskList.size()]);
   }
 
+  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
     PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
@@ -133,6 +134,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     return client;
   }
 
+  @Nullable
   public Task findTask(String id) throws Exception {
     HttpMethod method = doREST("/rest/issue/byid/" + id, false);
     InputStream stream = method.getResponseBodyAsStream();

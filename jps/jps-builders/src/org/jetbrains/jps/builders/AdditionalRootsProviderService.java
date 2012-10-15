@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 
 import java.io.File;
 import java.util.Collection;
@@ -22,7 +23,7 @@ public abstract class AdditionalRootsProviderService<R extends BuildRootDescript
   }
 
   @NotNull
-  public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, File dataStorageRoot) {
+  public List<R> getAdditionalRoots(@NotNull BuildTarget<R> target, BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 }

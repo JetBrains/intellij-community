@@ -140,8 +140,8 @@ public class FileContentQueue {
   }
 
   @Nullable
-  public FileContent take(@NotNull ProgressIndicator indicator) {
-    FileContent content = doTake();
+  public FileContent take(@NotNull ProgressIndicator indicator) throws ProcessCanceledException{
+    final FileContent content = doTake();
     if (content != null) {
       final long length = content.getLength();
       while (true) {
@@ -153,14 +153,14 @@ public class FileContentQueue {
           throw e;
         }
         synchronized (this) {
-          boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+          final boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
           if (requestingLargeSize) {
             myLargeSizeRequested = true;
           }
           try {
-            if (myLargeSizeRequested && !requestingLargeSize ||
-                myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
+            if (myLargeSizeRequested && !requestingLargeSize || myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length)) {
               wait(300L);
+            }
             else {
               myTakenSize += length;
               if (requestingLargeSize) {
@@ -170,7 +170,6 @@ public class FileContentQueue {
             }
           }
           catch (InterruptedException ignore) {
-
           }
         }
       }

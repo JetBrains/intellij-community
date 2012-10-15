@@ -26,24 +26,24 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.search.Query;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -62,7 +62,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
+@State(
+  name = "MavenVersion",
+  storages = {@Storage(
+    file = StoragePathMacros.APP_CONFIG + "/mavenVersion.xml")})
+public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<Element> {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
   private final RemoteProcessSupport<Object, MavenServer, Object> mySupport;
@@ -73,6 +77,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
   private boolean myDownloadListenerExported;
 
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+
+  private boolean useMaven2 = true;
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -168,7 +174,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
-        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder().first);
+        params.getClassPath().addAllFiles(collectClassPathAndLibsFolder());
 
         params.setMainClass(MAIN_CLASS);
 
@@ -222,7 +228,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
           }
         }
 
-        //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
+        String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
+        if (mavenEmbedderDebugPort != null) {
+          params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
+        }
 
         return params;
       }
@@ -251,43 +260,68 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     };
   }
 
-  public static Pair<List<File>, File> collectClassPathAndLibsFolder() {
+  public static File getMavenLibDirectory() {
+    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    if (pluginFileOrDir.isDirectory()) {
+      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+      return new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3/lib");
+    }
+
+    return new File(pluginFileOrDir.getParentFile(), "maven3");
+  }
+
+  public static List<File> collectClassPathAndLibsFolder() {
     File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
 
-    File libDir;
-    List<File> classpath = new SmartList<File>();
+    List<File> classpath = new ArrayList<File>();
+
+    String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(pluginFileOrDir.getParent(), "maven-server-api"));
+      classpath.add(new File(root, "maven-server-api"));
 
-      if (Boolean.getBoolean("idea.use.maven3")) {
-        classpath.add(new File(pluginFileOrDir.getParent(), "maven3-server-impl"));
-        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
+      File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
-        File maven3ServerRoot = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib/maven3");
-
-        libDir = new File(maven3ServerRoot, "lib");
-
-        classpath.add(new File(maven3ServerRoot, "boot/plexus-classworlds-2.4.jar"));
+      if (getInstance().isUseMaven2()) {
+        classpath.add(new File(root, "maven2-server-impl"));
+        addDir(classpath, new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib"));
       }
       else {
-        classpath.add(new File(pluginFileOrDir.getParent(), "maven2-server-impl"));
-        File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-        libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib");
+        classpath.add(new File(root, "maven3-server-impl"));
+
+        File maven3Module_Lib = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven3-server-impl/lib");
+        addDir(classpath, maven3Module_Lib);
+
+        File maven3Home = new File(maven3Module_Lib, "maven3");
+
+        addDir(classpath, new File(maven3Home, "lib"));
+
+        classpath.add(new File(maven3Home, "boot/plexus-classworlds-2.4.jar"));
       }
     }
     else {
-      libDir = pluginFileOrDir.getParentFile();
-    }
-    MavenLog.LOG.assertTrue(libDir.exists() && libDir.isDirectory(), "Maven server libraries dir not found: " + libDir);
+      classpath.add(new File(root, "maven-server-api.jar"));
 
-    File[] files = libDir.listFiles();
-    for (File jar : files) {
-      if (jar.isFile() && jar.getName().endsWith(".jar") && !jar.equals(pluginFileOrDir)) {
+      if (getInstance().isUseMaven2()) {
+        classpath.add(new File(root, "maven2-server-impl.jar"));
+
+        addDir(classpath, new File(root, "maven2"));
+      }
+      else {
+        classpath.add(new File(root, "maven3-server-impl.jar"));
+        addDir(classpath, new File(root, "maven3"));
+      }
+    }
+
+    return classpath;
+  }
+
+  private static void addDir(List<File> classpath, File dir) {
+    for (File jar : dir.listFiles()) {
+      if (jar.isFile() && jar.getName().endsWith(".jar")) {
         classpath.add(jar);
       }
     }
-    return Pair.create(classpath, libDir);
   }
 
   public MavenEmbedderWrapper createEmbedder(final Project project, final boolean alwaysOnline) {
@@ -397,6 +431,31 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
     catch (RemoteException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public boolean isUseMaven2() {
+    return useMaven2;
+  }
+
+  public void setUseMaven2(boolean useMaven2) {
+    if (this.useMaven2 != useMaven2) {
+      this.useMaven2 = useMaven2;
+      shutdown(false);
+    }
+  }
+
+  @Nullable
+  @Override
+  public Element getState() {
+    final Element element = new Element("maven-version");
+    element.setAttribute("version", useMaven2 ? "2" : "3");
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    String version = state.getAttributeValue("version");
+    useMaven2 = !"3".equals(version);
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {

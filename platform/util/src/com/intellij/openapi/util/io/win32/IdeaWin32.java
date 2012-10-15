@@ -16,7 +16,6 @@
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +32,7 @@ import java.io.FileNotFoundException;
  */
 public class IdeaWin32 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");
-
-  private static final String PATH_PREFIX = "\\\\?\\";
-  private static final int PREFIX_SIZE = PATH_PREFIX.length();
-  private static final int MAX_PATH = 260;
+  private static final boolean DEBUG_ENABLED = LOG.isDebugEnabled();
 
   private static final IdeaWin32 ourInstance;
 
@@ -96,36 +92,48 @@ public class IdeaWin32 {
   private static native void initIDs();
 
   @Nullable
-  public FileInfo getInfo(@NotNull final String path) {
-    LogUtil.debug(LOG, "getInfo(%s)", path);
-    return getInfo0(path(path));
-  }
-
-  @Nullable
-  public String resolveSymLink(@NotNull final String path) {
-    final String result = resolveSymLink0(path(path));
-    return result != null && result.startsWith(PATH_PREFIX) ? result.substring(PREFIX_SIZE) : result;
-  }
-
-  @Nullable
-  public FileInfo[] listChildren(@NotNull final String path) {
-    LogUtil.debug(LOG, "list(%s)", path);
-    return listChildren0(path(path));
-  }
-
-  private static String path(final String path) {
-    final int length = path.length();
-    if (length > 0 && path.charAt(length - 1) == '\\' || length >= MAX_PATH) {
-      final StringBuilder sb = new StringBuilder(path);
-      while (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\\') {
-        sb.deleteCharAt(sb.length() - 1);
-      }
-      if (sb.length() >= MAX_PATH) {
-        sb.insert(0, PATH_PREFIX);
-      }
-      return sb.toString();
+  public FileInfo getInfo(@NotNull String path) {
+    path = path.replace('/', '\\');
+    if (DEBUG_ENABLED) {
+      long t = System.nanoTime();
+      final FileInfo result = getInfo0(path);
+      t = (System.nanoTime() - t) / 1000;
+      LOG.debug("getInfo(" + path + "): " + t + " mks");
+      return result;
     }
-    return path;
+    else {
+      return getInfo0(path);
+    }
+  }
+
+  @Nullable
+  public String resolveSymLink(@NotNull String path) {
+    path = path.replace('/', '\\');
+    if (DEBUG_ENABLED) {
+      long t = System.nanoTime();
+      final String result = resolveSymLink0(path);
+      t = (System.nanoTime() - t) / 1000;
+      LOG.debug("resolveSymLink(" + path + "): " + t + " mks");
+      return result;
+    }
+    else {
+      return resolveSymLink0(path);
+    }
+  }
+
+  @Nullable
+  public FileInfo[] listChildren(@NotNull String path) {
+    path = path.replace('/', '\\');
+    if (DEBUG_ENABLED) {
+      long t = System.nanoTime();
+      FileInfo[] children = listChildren0(path);
+      t = (System.nanoTime() - t) / 1000;
+      LOG.debug("list(" + path + "): " + children.length + " children, " + t + " mks");
+      return children;
+    }
+    else {
+      return listChildren0(path);
+    }
   }
 
   private native FileInfo getInfo0(String path);

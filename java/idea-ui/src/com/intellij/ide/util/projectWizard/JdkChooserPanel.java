@@ -110,13 +110,13 @@ public class JdkChooserPanel extends JPanel {
     editor.show();
     if (editor.isOK()) {
       Sdk selectedJdk = editor.getSelectedJdk();
-      updateList(selectedJdk, null);
+      updateList(selectedJdk, null, null);
     }
   }
 
-  public void updateList(final Sdk selectedJdk, final SdkType type) {
+  public void updateList(final Sdk selectedJdk, final SdkType type, final @Nullable Sdk[] globalSdks) {
     final int[] selectedIndices = myList.getSelectedIndices();
-    fillList(type);
+    fillList(type, globalSdks);
     // restore selection
     if (selectedJdk != null) {
       TIntArrayList list = new TIntArrayList();
@@ -150,11 +150,11 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  public void fillList(final SdkType type) {
+  public void fillList(final SdkType type, final @Nullable Sdk[] globalSdks) {
     myListModel.clear();
     final Sdk[] jdks;
     if (myProject == null || myProject.isDefault()) {
-      final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
+      final Sdk[] allJdks = globalSdks != null ? globalSdks : ProjectJdkTable.getInstance().getAllJdks();
       jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
     }
     else {
@@ -212,7 +212,7 @@ public class JdkChooserPanel extends JPanel {
 
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
-    jdkChooserPanel.fillList(null);
+    jdkChooserPanel.fillList(null, null);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
     if (title != null) {
       dialog.setTitle(title);

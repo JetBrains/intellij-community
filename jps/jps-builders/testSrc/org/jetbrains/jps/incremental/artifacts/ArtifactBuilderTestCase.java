@@ -19,16 +19,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.BuildLoggingManager;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.CompileScopeImpl;
-import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -36,10 +32,14 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
@@ -98,22 +98,16 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
   }
 
-  protected void buildArtifacts(JpsArtifact... artifact) {
-    doBuild(false, artifact).assertSuccessful();
+  protected void buildArtifacts(JpsArtifact... artifacts) {
+    doBuild(CompileScopeTestBuilder.make().allModules().artifacts(artifacts)).assertSuccessful();
   }
 
-  private BuildResult doBuild(boolean force, JpsArtifact... artifacts) {
+  protected BuildResult doBuild(CompileScopeTestBuilder scope) {
     BuildResult result;
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new ProjectBuilderLoggerImpl()));
     try {
       myArtifactBuilderLogger.clear();
-      List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>();
-      for (JpsArtifact artifact : artifacts) {
-        targets.add(new ArtifactBuildTarget(artifact));
-      }
-      final CompileScope scope = new CompileScopeImpl(force, JavaModuleBuildTargetType.ALL_TYPES, targets,
-                                                      Collections.<BuildTarget<?>, Set<File>>emptyMap());
-      result = doBuild(descriptor, scope, !force, false, false);
+      result = doBuild(descriptor, scope);
     }
     finally {
       descriptor.release();
@@ -132,7 +126,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertBuildFailed(JpsArtifact a) {
-    doBuild(false, a).assertFailed();
+    doBuild(CompileScopeTestBuilder.make().allModules().artifact(a)).assertFailed();
   }
 
   protected void assertCopied(String... filePaths) {

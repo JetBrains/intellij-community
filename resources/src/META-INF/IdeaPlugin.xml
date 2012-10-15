@@ -540,6 +540,12 @@
     <localInspection language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
+    <localInspection language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
+    <localInspection language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethReferenceInspection" />
     <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Lambda code block can be replaced with expression"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />

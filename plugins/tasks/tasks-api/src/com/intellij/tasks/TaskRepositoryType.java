@@ -36,6 +36,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
   protected static final int NO_FEATURES = 0;
 
   public static final int BASIC_HTTP_AUTHORIZATION = 0x0001;
+  public static final int LOGIN_ANONYMOUSLY = 0x0002;
 
   @NotNull
   public abstract String getName();

@@ -21,6 +21,7 @@ import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -30,6 +31,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -189,6 +192,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "Injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
@@ -196,5 +200,17 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
 
   public void setPatchingLeaves(boolean patchingLeaves) {
     myPatchingLeaves = patchingLeaves;
+  }
+
+  @NotNull
+  public RangeMarker[] getCachedMarkers() {
+    List<RangeMarker> markers = new SmartList<RangeMarker>();
+    for (PsiLanguageInjectionHost.Shred shred : myDocumentWindow.getShreds()) {
+      RangeMarker marker = (RangeMarker)shred.getHostRangeMarker();
+      if (marker != null) {
+        markers.add(marker);
+      }
+    }
+    return markers.toArray(new RangeMarker[markers.size()]);
   }
 }

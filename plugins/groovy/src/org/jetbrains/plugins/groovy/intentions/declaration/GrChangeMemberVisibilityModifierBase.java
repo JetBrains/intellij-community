@@ -53,7 +53,7 @@ public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
         return parent instanceof GrMember &&
                parent instanceof GrNamedElement &&
                (((GrNamedElement)parent).getNameIdentifierGroovy() == element || ((GrNamedElement)parent).getModifierList() == element) &&
-               !((GrMember)parent).getModifierList().hasExplicitModifier(myModifier);
+               ((GrMember)parent).getModifierList() != null && !((GrMember)parent).getModifierList().hasExplicitModifier(myModifier);
       }
     };
   }

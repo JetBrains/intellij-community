@@ -30,11 +30,7 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgContentRevision;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
 
 import java.io.DataInput;
@@ -43,25 +39,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class HgCachingCommitedChangesProvider
-  implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
+public class HgCachingCommitedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
   private final Project project;
+  private final HgVcs myVcs;
 
-  public HgCachingCommitedChangesProvider(Project project) {
+  public HgCachingCommitedChangesProvider(Project project, HgVcs vcs) {
     this.project = project;
+    myVcs = vcs;
   }
 
   public int getFormatVersion() {
     return 0;
   }
 
-  public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation,
-    DataInput dataInput) throws IOException {
-    HgRevisionNumber revision = HgRevisionNumber.getInstance(
-      dataInput.readUTF(),
-      dataInput.readUTF()
-    );
+  public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
+    HgRevisionNumber revision = HgRevisionNumber.getInstance(dataInput.readUTF(), dataInput.readUTF());
     String committerName = dataInput.readUTF();
     String comment = dataInput.readUTF();
     Date commitDate = new Date(dataInput.readLong());
@@ -72,24 +65,19 @@ public class HgCachingCommitedChangesProvider
       HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
       changes.add(new Change(beforeRevision, afterRevision));
     }
-    return new HgCommitedChangeList(
-      revision, comment,
-      committerName,
-      commitDate,
-      changes);
+    return new HgCommittedChangeList(myVcs, revision, comment, committerName, commitDate, changes);
   }
 
-  public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList)
-    throws IOException {
-    HgCommitedChangeList changeList = (HgCommitedChangeList) committedChangeList;
+  public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
+    HgCommittedChangeList changeList = (HgCommittedChangeList)committedChangeList;
     writeRevisionNumber(dataOutput, changeList.getRevision());
     dataOutput.writeUTF(changeList.getCommitterName());
     dataOutput.writeUTF(changeList.getComment());
     dataOutput.writeLong(changeList.getCommitDate().getTime());
     dataOutput.writeInt(changeList.getChanges().size());
     for (Change change : changeList.getChanges()) {
-      writeRevision(dataOutput, (HgContentRevision) change.getBeforeRevision());
-      writeRevision(dataOutput, (HgContentRevision) change.getAfterRevision());
+      writeRevision(dataOutput, (HgContentRevision)change.getBeforeRevision());
+      writeRevision(dataOutput, (HgContentRevision)change.getAfterRevision());
     }
   }
 
@@ -98,13 +86,10 @@ public class HgCachingCommitedChangesProvider
     HgRevisionNumber revisionNumber = readRevisionNumber(dataInput);
 
     if (!StringUtil.isEmpty(revisionPath)) {
-      VirtualFile root = ((HgRepositoryLocation) repositoryLocation).getRoot();
-      return new HgContentRevision(
-        project,
-        new HgFile(root, new File(revisionPath)),
-        revisionNumber
-      );
-    } else {
+      VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
+      return new HgContentRevision(project, new HgFile(root, new File(revisionPath)), revisionNumber);
+    }
+    else {
       return null;
     }
   }
@@ -113,7 +98,8 @@ public class HgCachingCommitedChangesProvider
     if (revision == null) {
       dataOutput.writeUTF("");
       writeRevisionNumber(dataOutput, HgRevisionNumber.getInstance("", ""));
-    } else {
+    }
+    else {
       dataOutput.writeUTF(revision.getFile().getIOFile().toString());
       writeRevisionNumber(dataOutput, revision.getRevisionNumber());
     }
@@ -134,8 +120,7 @@ public class HgCachingCommitedChangesProvider
     return true;
   }
 
-  public Collection<FilePath> getIncomingFiles(RepositoryLocation repositoryLocation)
-    throws VcsException {
+  public Collection<FilePath> getIncomingFiles(RepositoryLocation repositoryLocation) throws VcsException {
     return null;
   }
 
@@ -149,8 +134,9 @@ public class HgCachingCommitedChangesProvider
   }
 
   public boolean isChangeLocallyAvailable(FilePath filePath,
-    @Nullable VcsRevisionNumber localRevision,
-    VcsRevisionNumber changeRevision, CommittedChangeList committedChangeList) {
+                                          @Nullable VcsRevisionNumber localRevision,
+                                          VcsRevisionNumber changeRevision,
+                                          CommittedChangeList committedChangeList) {
     return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
@@ -158,7 +144,10 @@ public class HgCachingCommitedChangesProvider
     return false;
   }
 
-  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings, RepositoryLocation repositoryLocation, int i, AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
+  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
+                                   RepositoryLocation repositoryLocation,
+                                   int i,
+                                   AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
     throw new UnsupportedOperationException();  //TODO implement method
   }
 
@@ -188,8 +177,9 @@ public class HgCachingCommitedChangesProvider
   }
 
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-    RepositoryLocation repositoryLocation, int maxCount) throws VcsException {
-    VirtualFile root = ((HgRepositoryLocation) repositoryLocation).getRoot();
+                                                       RepositoryLocation repositoryLocation,
+                                                       int maxCount) throws VcsException {
+    VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
 
@@ -198,7 +188,6 @@ public class HgCachingCommitedChangesProvider
     hgLogCommand.setLogFile(false);
 
     List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be zero
-    List<HgRevisionNumber> incomingRevisions = new HgIncomingCommand(project).execute(root);
 
     Collections.reverse(localRevisions);
 
@@ -215,15 +204,12 @@ public class HgCachingCommitedChangesProvider
       for (String file : revision.getDeletedFiles()) {
         changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
       }
-      for (Map.Entry<String,String> copiedFile : revision.getCopiedFiles().entrySet()) {
+      for (Map.Entry<String, String> copiedFile : revision.getCopiedFiles().entrySet()) {
         changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
 
-      result.add(new HgCommitedChangeList(
-        vcsRevisionNumber, revision.getCommitMessage(),
-        revision.getAuthor(),
-        revision.getRevisionDate(),
-        changes));
+      result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
+                                          changes));
 
     }
     Collections.reverse(result);
@@ -231,40 +217,24 @@ public class HgCachingCommitedChangesProvider
   }
 
   private Change createChange(VirtualFile root,
-    String fileBefore,
-    HgRevisionNumber revisionBefore,
-    String fileAfter,
-    HgRevisionNumber revisionAfter,
-    FileStatus aStatus ) {
-    
-    HgContentRevision beforeRevision = fileBefore == null ? null : new HgContentRevision(
-      project,
-      new HgFile(root, new File(root.getPath(), fileBefore)),
-      revisionBefore
-    );
-    HgContentRevision afterRevision = fileAfter == null ? null : new HgContentRevision(
-      project,
-      new HgFile(root, new File(root.getPath(), fileAfter)),
-      revisionAfter
-    );
-    return new Change(
-      beforeRevision,
-      afterRevision,
-      aStatus
-    );
+                              String fileBefore,
+                              HgRevisionNumber revisionBefore,
+                              String fileAfter,
+                              HgRevisionNumber revisionAfter,
+                              FileStatus aStatus) {
+
+    HgContentRevision beforeRevision =
+      fileBefore == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
+    HgContentRevision afterRevision =
+      fileAfter == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+    return new Change(beforeRevision, afterRevision, aStatus);
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[] {
-      ChangeListColumn.NUMBER,
-      ChangeListColumn.DATE,
-      ChangeListColumn.DESCRIPTION,
-      ChangeListColumn.NAME
-    };
+    return new ChangeListColumn[]{ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
-  public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager,
-    RepositoryLocation repositoryLocation) {
+  public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
     return null;
   }
 
@@ -291,5 +261,10 @@ public class HgCachingCommitedChangesProvider
   @Override
   public RepositoryLocation getForNonLocal(VirtualFile file) {
     return null;
+  }
+
+  @Override
+  public boolean supportsIncomingChanges() {
+    return false;
   }
 }

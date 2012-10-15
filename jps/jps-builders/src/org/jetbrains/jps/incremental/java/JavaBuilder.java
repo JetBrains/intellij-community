@@ -38,13 +38,14 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
+import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
@@ -215,31 +216,32 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         // form should be considered dirty if the class it is bound to is dirty
-        final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+        final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
         for (File srcFile : filesToCompile) {
           final String srcPath = srcFile.getPath();
-          final String formPath = sourceToFormMap.getState(srcPath);
-          if (formPath == null) {
-            continue;
-          }
-          final File formFile = new File(formPath);
-          if (!excludes.isExcluded(formFile)) {
-            if (formFile.exists()) {
-              FSOperations.markDirty(context, formFile);
-              formsToCompile.add(formFile);
+          final Collection<String> boundForms = sourceToFormMap.getState(srcPath);
+          if (boundForms != null) {
+            for (String formPath : boundForms) {
+              final File formFile = new File(formPath);
+              if (!excludes.isExcluded(formFile)) {
+                if (formFile.exists()) {
+                  FSOperations.markDirty(context, formFile);
+                  formsToCompile.add(formFile);
+                }
+              }
             }
             sourceToFormMap.remove(srcPath);
           }
         }
       }
 
-      final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+      final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled() && context.isMake()) {
         if (filesToCompile.size() > 0) {
-          logFiles(filesToCompile, logger, "Compiling files:");
+          logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
         }
         if (!formsToCompile.isEmpty()) {
-          logFiles(formsToCompile, logger, "Compiling forms:");
+          logger.logCompiledFiles(formsToCompile, FORMS_BUILDER_NAME, "Compiling forms:");
         }
       }
 
@@ -258,20 +260,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new ProjectBuildException(message, e);
     }
-  }
-
-  private static void logFiles(Set<File> files, JavaBuilderLogger logger, final String description) throws IOException {
-    logger.log(description);
-    final String[] buffer = new String[files.size()];
-    int i = 0;
-    for (final File f : files) {
-      buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
-    }
-    Arrays.sort(buffer);
-    for (final String s : buffer) {
-      logger.log(s);
-    }
-    logger.log("End of files");
   }
 
   @Override
@@ -368,11 +356,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
                 JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
                   pd.getProject());
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput() && !chunk.containsTests()) {
-                  for (JpsModule module : chunk.getModules()) {
-                    final File outputDir = paths.getModuleOutputDir(module, false);
-                    if (outputDir != null) {
-                      CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
+                  for (ModuleBuildTarget target : chunk.getTargets()) {
+                    if (!target.isTests()) {
+                      final File outputDir = target.getOutputDir();
+                      if (outputDir != null) {
+                        CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                      }
                     }
                   }
                 }
@@ -888,7 +878,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
+      final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
@@ -948,7 +938,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                       OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
-    final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+    final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+    final Set<File> touchedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
@@ -1034,14 +1025,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
         else {
           final File sourceFile = outputClassFile.getSourceFile();
           if (sourceFile != null) {
-            sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
+            if (touchedFiles.add(sourceFile)) { // clear data once before updating
+              sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
+            }
+            else {
+              sourceToFormMap.appendData(sourceFile.getPath(), formFile.getPath());
+            }
           }
         }
       }
       catch (Exception e) {
         success = false;
-        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(),
-                                                   formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
       }
       finally {
         if (!success) {
@@ -1130,8 +1125,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final JavaFileObject source = diagnostic.getSource();
       final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
+      String message = diagnostic.getMessage(Locale.US);
+      if (Utils.IS_TEST_MODE) {
+        LOG.info(message);
+      }
       myContext.processMessage(
-        new CompilerMessage(BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath, diagnostic.getStartPosition(),
+        new CompilerMessage(BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
                             diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
                             diagnostic.getColumnNumber()));
     }

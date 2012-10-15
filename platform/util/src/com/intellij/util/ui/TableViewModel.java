@@ -15,10 +15,13 @@
  */
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
 
 public abstract class TableViewModel<Item> extends AbstractTableModel implements SortableColumnModel {
-  public abstract void setItems(List<Item> items);
+  public abstract void setItems(@NotNull List<Item> items);
+  @NotNull
   public abstract List<Item> getItems();
 }

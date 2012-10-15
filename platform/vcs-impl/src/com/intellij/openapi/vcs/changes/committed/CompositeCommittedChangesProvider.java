@@ -167,6 +167,11 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public boolean supportsIncomingChanges() {
+    return true;
+  }
+
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
     private final Map<AbstractVcs, ChangeBrowserSettings> myMap;
     private final Set<AbstractVcs> myEnabledVcs = new HashSet<AbstractVcs>();

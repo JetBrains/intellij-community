@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author max
@@ -34,8 +34,8 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
   }
 
   private static String[] parseUrls(String classpathFilePath) {
-    final List<String> roots = new ArrayList<String>();
-    final File file = new File(classpathFilePath);
+    Collection<String> roots = new LinkedHashSet<String>();
+    File file = new File(classpathFilePath);
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));
       try {

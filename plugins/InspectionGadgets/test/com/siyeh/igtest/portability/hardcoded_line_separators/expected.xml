@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>HardcodedLineSeparators.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hardcoded line separator</problem_class>
+    <description>Hardcoded line separator &lt;code&gt;\n&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>HardcodedLineSeparators.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hardcoded line separator</problem_class>
+    <description>Hardcoded line separator &lt;code&gt;\r&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>HardcodedLineSeparators.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hardcoded line separator</problem_class>
+    <description>Hardcoded line separator &lt;code&gt;\15&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>HardcodedLineSeparators.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hardcoded line separator</problem_class>
+    <description>Hardcoded line separator &lt;code&gt;\12&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

@@ -26,18 +26,11 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
-    if (JspPsiUtil.isInJspFile(element)) {
-      final PsiExpression thenExpression = conditionalExpression.getThenExpression();
-      if (thenExpression == null) {
-        return false;
-      }
-      final PsiExpression elseExpression = conditionalExpression.getElseExpression();
-      if (elseExpression == null) {
-        return false;
-      }
-    }
     final PsiElement parent = conditionalExpression.getParent();
     if (parent instanceof PsiExpressionStatement) {
+      return false;
+    }
+    if (JspPsiUtil.isInJspFile(element)) {
       return false;
     }
     final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);

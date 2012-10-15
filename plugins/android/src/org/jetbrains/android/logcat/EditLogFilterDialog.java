@@ -77,7 +77,7 @@ class EditLogFilterDialog extends DialogWrapper {
         setItems(Arrays.asList(myUsedTags));
         return super.getItems(prefix, cached, parameters);
       }
-    }, true);
+    }, true, null);
 
     myTagFieldWrapper.add(myTagField);
     myLogTagLabel.setLabelFor(myTagField);
@@ -97,7 +97,7 @@ class EditLogFilterDialog extends DialogWrapper {
         final int pid2 = Integer.parseInt(item2);
         return Comparing.compare(pid1, pid2);
       }
-    }, true);
+    }, true, null);
     myPidFieldWrapper.add(myPidField);
 
     myLogLevelCombo.setModel(new EnumComboBoxModel<Log.LogLevel>(Log.LogLevel.class));

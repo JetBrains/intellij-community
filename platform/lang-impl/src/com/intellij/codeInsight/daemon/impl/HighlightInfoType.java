@@ -116,7 +116,7 @@ public interface HighlightInfoType {
 
     @Override
     @NotNull
-    public HighlightSeverity getSeverity(PsiElement psiElement) {
+    public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
       return mySeverity;
     }
 

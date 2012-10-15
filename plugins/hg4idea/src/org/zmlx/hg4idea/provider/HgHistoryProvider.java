@@ -22,11 +22,12 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgCopyHistoryRevisionNumberAction;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -44,12 +45,12 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   }
 
   public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
-    JComponent forShortcutRegistration) {
+                                                          JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
   }
 
   public AnAction[] getAdditionalActions(Runnable runnable) {
-    return new AnAction[0];
+    return new AnAction[]{new HgCopyHistoryRevisionNumberAction()};
   }
 
   public boolean isDateOmittable() {

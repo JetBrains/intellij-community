@@ -128,22 +128,4 @@ class Bar extends Base {
 }
 ''')
   }
-
-  void testInstanceRefInsideClosure() {
-    doTest('''\
-class Base {
-    void var() {}
-
-    static foo() {}
-}
-
-class Bar extends Base {
-    void <warning descr="Method may be static (have instance references inside closure)">b</warning>() {
-        def cl = {
-            super.var()
-        }
-    }
-}
-''')
-  }
 }

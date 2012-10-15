@@ -220,8 +220,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
 
     setAnchor(mySearchForTestsLabel);
-    myAlternativeJREPanel.setAnchor(myModule.getLabel());
-    myCommonJavaParameters.setAnchor(myModule.getLabel());
+    myModule.setAnchor(myAlternativeJREPanel.getCbEnabled());
+    myCommonJavaParameters.setAnchor(myAlternativeJREPanel.getCbEnabled());
   }
 
   public void applyEditorTo(final JUnitConfiguration configuration) {

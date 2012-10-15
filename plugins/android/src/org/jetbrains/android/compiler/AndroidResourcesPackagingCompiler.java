@@ -102,11 +102,13 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     if (assetsDir != null) {
       result.add(FileUtil.toSystemDependentName(assetsDir.getPath()));
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
-      final VirtualFile depAssetsDir = AndroidRootUtil.getAssetsDir(depFacet);
+    if (facet.getConfiguration().isIncludeAssetsFromLibraries()) {
+      for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+        final VirtualFile depAssetsDir = AndroidRootUtil.getAssetsDir(depFacet);
 
-      if (depAssetsDir != null) {
-        result.add(FileUtil.toSystemDependentName(depAssetsDir.getPath()));
+        if (depAssetsDir != null) {
+          result.add(FileUtil.toSystemDependentName(depAssetsDir.getPath()));
+        }
       }
     }
   }

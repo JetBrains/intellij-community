@@ -24,6 +24,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,13 +34,21 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @see  #createOn(javax.swing.JTree)
+ * @see #createOn(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
+ *
+ * @see #applyTo(javax.swing.JTree)
+ * @see #applyTo(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
+ */
 public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
+  @NonNls private static final String SELECTED = "SELECTED";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
   @NonNls private static final String USER_OBJECT = "USER_OBJECT";
   @NonNls public static final String CALLBACK = "Callback";
 
-  static class PathElement implements JDOMExternalizable {
+  static class PathElement {
     public String myItemId;
     public String myItemType;
 
@@ -73,13 +82,11 @@ public class TreeState implements JDOMExternalizable {
       return myUserObject != null && myUserObject.equals(object);
     }
 
-    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
       myUserObject = element.getAttributeValue(USER_OBJECT);
     }
 
-    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
       if (myUserObject instanceof String){
@@ -104,11 +111,16 @@ public class TreeState implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    myExpandedPaths.clear();
-    final List paths = element.getChildren(PATH);
+    readExternal(element, myExpandedPaths, PATH);
+    readExternal(element, mySelectedPaths, SELECTED);
+  }
+
+  private static void readExternal(Element element, List<List<PathElement>> list, String name) throws InvalidDataException {
+    list.clear();
+    final List paths = element.getChildren(name);
     for (final Object path : paths) {
       Element xmlPathElement = (Element)path;
-      myExpandedPaths.add(readPath(xmlPathElement));
+      list.add(readPath(xmlPathElement));
     }
   }
 
@@ -128,10 +140,19 @@ public class TreeState implements JDOMExternalizable {
     return new TreeState(createExpandedPaths(tree, treeNode), createSelectedPaths(tree, treeNode));
   }
 
+  public static TreeState createOn(@NotNull JTree tree) {
+    return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
+  }
+
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    for (List<PathElement> path : myExpandedPaths) {
-      final Element pathElement = new Element(PATH);
+    writeExternal(element, myExpandedPaths, PATH);
+    writeExternal(element, mySelectedPaths, SELECTED);
+  }
+
+  private static void writeExternal(Element element, List<List<PathElement>> list, String name) throws WriteExternalException {
+    for (List<PathElement> path : list) {
+      final Element pathElement = new Element(name);
       writeExternal(pathElement, path);
       element.addContent(pathElement);
     }
@@ -144,11 +165,6 @@ public class TreeState implements JDOMExternalizable {
       pathXmlElement.addContent(pathXmlElementElement);
     }
   }
-
-  public static TreeState createOn(@NotNull JTree tree) {
-    return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
-  }
-
 
   private static List<List<PathElement>> createPaths(final JTree tree) {
     final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
@@ -241,24 +257,10 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(JTree tree) {
-    applyExpanded(getFacade(tree), tree.getModel().getRoot());
+    applyTo(tree, (DefaultMutableTreeNode)tree.getModel().getRoot());
   }
 
-  private void applyExpanded(final TreeFacade tree, final Object root) {
-    tree.getIntialized().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        tree.batch(new Progressive() {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            _applyExpanded(tree, root, indicator);
-          }
-        });
-      }
-    });
-  }
-
-  private void _applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
+  private void applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
     indicator.checkCanceled();
 
     if (!(root instanceof DefaultMutableTreeNode)) {
@@ -274,13 +276,28 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
-    applyExpanded(getFacade(tree), node);
+    final TreeFacade facade = getFacade(tree);
+    ActionCallback callback = facade.getInitialized().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        facade.batch(new Progressive() {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            applyExpanded(facade, node, indicator);
+          }
+        });
+      }
+    });
     if (tree.getSelectionCount() == 0) {
-      applySelected(tree, node);
+      callback.doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          applySelected(tree, node);
+        }
+      });
     }
   }
 
-  // todo
   private void applySelected(final JTree tree, final DefaultMutableTreeNode node) {
     TreeUtil.unselect(tree, node);
     List<TreePath> selectionPaths = new ArrayList<TreePath>();
@@ -296,6 +313,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
 
+  @Nullable
   private static DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
 
     for (int j = 0; j < parent.getChildCount(); j++) {
@@ -321,6 +339,7 @@ public class TreeState implements JDOMExternalizable {
       if (index >= parent.getChildCount()) {
         index = parent.getChildCount()-1;
       }
+      index = Math.max(0, index);
       final TreeNode child = parent.getChildAt(index);
       if (child instanceof DefaultMutableTreeNode) {
         return (DefaultMutableTreeNode) child;
@@ -328,7 +347,6 @@ public class TreeState implements JDOMExternalizable {
     }
 
     return null;
-
   }
 
   private static boolean applyTo(final int positionInPath,
@@ -396,7 +414,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   interface TreeFacade {
-    ActionCallback getIntialized();
+    ActionCallback getInitialized();
     ActionCallback expand(DefaultMutableTreeNode node);
 
     void batch(Progressive progressive);
@@ -422,7 +440,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     @Override
-    public ActionCallback getIntialized() {
+    public ActionCallback getInitialized() {
       final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
       if (ref != null) {
         final ActionCallback callback = ref.get();
@@ -446,7 +464,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     @Override
-    public ActionCallback getIntialized() {
+    public ActionCallback getInitialized() {
       return myBuilder.getReady(this);
     }
 

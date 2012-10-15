@@ -16,7 +16,9 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
@@ -86,8 +88,13 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     else {
       return new Filter<PsiClass>() {
         @Override
-        public boolean isAccepted(PsiClass element) {
-          return classFilter.isAccepted(element);
+        public boolean isAccepted(final PsiClass element) {
+          return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            @Override
+            public Boolean compute() {
+              return classFilter.isAccepted(element);
+            }
+          });
         }
       };
     }

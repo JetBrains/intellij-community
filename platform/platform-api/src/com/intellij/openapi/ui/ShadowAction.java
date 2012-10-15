@@ -30,20 +30,20 @@ import javax.swing.*;
 
 public final class ShadowAction implements Disposable {
 
-  private AnAction myAction;
+  private final AnAction myAction;
   private AnAction myCopyFromAction;
-  private JComponent myComponent;
+  private final JComponent myComponent;
 
-  private KeymapManagerListener myKeymapManagerListener;
+  private final KeymapManagerListener myKeymapManagerListener;
 
   private ShortcutSet myShortcutSet;
   private String myActionId;
 
-  private Keymap.Listener myKeymapListener;
+  private final Keymap.Listener myKeymapListener;
   private Keymap myKeymap;
 
   private Presentation myPresentation;
-  private UiNotifyConnector myUiNotify;
+  private final UiNotifyConnector myUiNotify;
 
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, Presentation presentation) {
     this(action, copyFromAction, component);
@@ -60,6 +60,7 @@ public final class ShadowAction implements Disposable {
     myAction.getTemplatePresentation().copyFrom(copyFromAction.getTemplatePresentation());
 
     myKeymapListener = new Keymap.Listener() {
+      @Override
       public void onShortcutChanged(final String actionId) {
         if (myActionId == null || actionId.equals(myActionId)) {
           rebound();
@@ -68,16 +69,19 @@ public final class ShadowAction implements Disposable {
     };
 
     myKeymapManagerListener = new KeymapManagerListener() {
+      @Override
       public void activeKeymapChanged(final Keymap keymap) {
         rebound();
       }
     };
 
     myUiNotify = new UiNotifyConnector(myComponent, new Activatable() {
+      @Override
       public void showNotify() {
         _connect();
       }
 
+      @Override
       public void hideNotify() {
         disconnect();
       }
@@ -140,14 +144,15 @@ public final class ShadowAction implements Disposable {
   }
 
 
+  @Override
   public void dispose() {
     unregisterAll();
     myUiNotify.dispose();
     disconnect();
   }
 
-  private static @Nullable
-  KeymapManager getKeymapManager() {
+  @Nullable
+  private static KeymapManager getKeymapManager() {
     if (ApplicationManager.getApplication().isDisposed()) return null;
     return KeymapManager.getInstance();
   }

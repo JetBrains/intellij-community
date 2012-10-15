@@ -210,33 +210,32 @@ public abstract class PlatformIdTableBuilding {
     @Override
     @NotNull
     public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
-      final CharSequence chars = inputData.getContentAsText();
-
+      String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
 
       final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
-      if (indexPatterns.length > 0) {
-        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
-        for (IndexPattern indexPattern : indexPatterns) {
-          Pattern pattern = indexPattern.getPattern();
-          if (pattern != null) {
-            Matcher matcher = pattern.matcher(chars);
-            while (matcher.find()) {
-              if (matcher.start() != matcher.end()) {
-                occurrenceConsumer.incTodoOccurrence(indexPattern);
-              }
+      if (indexPatterns.length <= 0) {
+        return Collections.emptyMap();
+      }
+      OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
+      for (IndexPattern indexPattern : indexPatterns) {
+        Pattern pattern = indexPattern.getPattern();
+        if (pattern != null) {
+          Matcher matcher = pattern.matcher(chars);
+          while (matcher.find()) {
+            if (matcher.start() != matcher.end()) {
+              occurrenceConsumer.incTodoOccurrence(indexPattern);
             }
           }
         }
-        Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
-        for (IndexPattern indexPattern : indexPatterns) {
-          final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
-          if (count > 0) {
-            map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
-          }
-        }
-        return map;
       }
-      return Collections.emptyMap();
+      Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+      for (IndexPattern indexPattern : indexPatterns) {
+        final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
+        if (count > 0) {
+          map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
+        }
+      }
+      return map;
     }
 
   }

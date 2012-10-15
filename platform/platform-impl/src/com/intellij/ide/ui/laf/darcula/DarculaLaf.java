@@ -21,7 +21,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
@@ -104,8 +105,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   static void initIdeaDefaults(UIDefaults defaults) {
-    loadDefaults(defaults, null); //load defaults
-    loadDefaults(defaults, SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux"); // load OS customization
+    loadDefaults(defaults);
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
       "ctrl C", "copy",
       "ctrl V", "paste",
@@ -158,42 +158,72 @@ public final class DarculaLaf extends BasicLookAndFeel {
     }));
   }
 
-  private static void loadDefaults(UIDefaults defaults, @Nullable String postfix) {
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static void loadDefaults(UIDefaults defaults) {
+    final Properties properties = new Properties();
+    final String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
     try {
-      final Properties properties = new Properties();
-      final String secondPart = postfix == null ? "" : "_" + postfix;
-      final String name = "darcula" + secondPart + ".properties";
-      final InputStream stream = DarculaLaf.class.getResourceAsStream(name);
+      InputStream stream = DarculaLaf.class.getResourceAsStream("darcula.properties");
       properties.load(stream);
+      stream.close();
+
+      stream = DarculaLaf.class.getResourceAsStream("darcula_" + osSuffix + ".properties");
+      properties.load(stream);
+      stream.close();
+
+      HashMap<String, Object> darculaGlobalSettings = new HashMap<String, Object>();
+      final String prefix = "darcula.";
       for (String key : properties.stringPropertyNames()) {
-        final String value = properties.getProperty(key);
-        if (key.endsWith("Insets")) {
-          final List<String> numbers = StringUtil.split(value, ",");
-          defaults.put(key, new InsetsUIResource(Integer.parseInt(numbers.get(0)),
-                                                 Integer.parseInt(numbers.get(1)),
-                                                 Integer.parseInt(numbers.get(2)),
-                                                 Integer.parseInt(numbers.get(3))));
-        } else if (key.endsWith(".border")) {
-          try {
-            defaults.put(key, Class.forName(value).newInstance());
-          } catch (Exception e) {log(e);}
-        } else {
-          final Color color = ColorUtil.fromHex(value, null);
-          final Integer invVal = getInteger(value);
-          Icon icon = value != null && value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
-          if (color != null) {
-            defaults.put(key, new ColorUIResource(color));
-          } else if (invVal != null) {
-            defaults.put(key, invVal);
-          } else if (icon != null) {
-            defaults.put(key, new IconUIResource(icon));
-          } else {
-            defaults.put(key, value);
+        if (key.startsWith(prefix)) {
+          darculaGlobalSettings.put(key.substring(prefix.length()), parseValue(key, properties.getProperty(key)));
+        }
+      }
+
+      for (Object key : defaults.keySet()) {
+        if (key instanceof String && ((String)key).contains(".")) {
+          final String s = (String)key;
+          final String darculaKey = s.substring(s.lastIndexOf('.') + 1);
+          if (darculaGlobalSettings.containsKey(darculaKey)) {
+            defaults.put(key, darculaGlobalSettings.get(darculaKey));
           }
         }
       }
+
+      for (String key : properties.stringPropertyNames()) {
+        final String value = properties.getProperty(key);
+        defaults.put(key, parseValue(key, value));
+      }
     }
     catch (IOException e) {log(e);}
+  }
+
+  private static Object parseValue(String key, @NotNull String value) {
+    if (key.endsWith("Insets")) {
+      final List<String> numbers = StringUtil.split(value, ",");
+      return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
+                                             Integer.parseInt(numbers.get(1)),
+                                             Integer.parseInt(numbers.get(2)),
+                                             Integer.parseInt(numbers.get(3)));
+    } else if (key.endsWith(".border")) {
+      try {
+        return Class.forName(value).newInstance();
+      } catch (Exception e) {log(e);}
+    } else {
+      final Color color = ColorUtil.fromHex(value, null);
+      final Integer invVal = getInteger(value);
+      final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+      if (color != null) {
+        return  new ColorUIResource(color);
+      } else if (invVal != null) {
+        return invVal;
+      } else if (icon != null) {
+        return new IconUIResource(icon);
+      } else if (boolVal != null) {
+        return boolVal;
+      }
+    }
+    return value;
   }
 
   private static Integer getInteger(String value) {

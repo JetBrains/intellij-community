@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ClassResolverProcessor");
   private static final String[] DEFAULT_PACKAGES = new String[]{CommonClassNames.DEFAULT_PACKAGE};
   private final String myClassName;
   private final PsiElement myPlace;
@@ -58,6 +60,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         }
       }
       else if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
+        LOG.assertTrue(qualifierExpression.isValid());
         final PsiElement resolve = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
         if (resolve instanceof PsiClass) {
           myAccessClass = (PsiClass)resolve;

@@ -281,7 +281,16 @@ public class MvcModuleStructureUtil {
       }
     }
 
-    structure.setupFacets(actions, rootsToFacetSetup);
+    List<Runnable> facetActions = new ArrayList<Runnable>();
+    structure.setupFacets(facetActions, rootsToFacetSetup);
+    for (final Runnable action : facetActions) {
+      actions.add(new Consumer<ModifiableRootModel>() {
+        @Override
+        public void consume(ModifiableRootModel model) {
+          action.run();
+        }
+      });
+    }
 
     return actions;
   }
@@ -411,7 +420,13 @@ public class MvcModuleStructureUtil {
   }
 
   public static boolean hasModulesWithSupport(Project project, final MvcFramework framework) {
-    return !getAllModulesWithSupport(project, framework).isEmpty();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (framework.hasSupport(module)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static List<Module> getAllModulesWithSupport(Project project, MvcFramework framework) {

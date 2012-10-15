@@ -19,12 +19,19 @@ import com.intellij.ide.fileTemplates.impl.UrlUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -34,38 +41,89 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
+  public static final String CUSTOM_GROUP = "Custom";
   private static final String ZIP = ".zip";
+
+  private final NotNullLazyValue<MultiMap<String, URL>> myGroups = new NotNullLazyValue<MultiMap<String, URL>>() {
+    @NotNull
+    @Override
+    protected MultiMap<String, URL> compute() {
+      MultiMap<String, URL> map = new MultiMap<String, URL>();
+      IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+      Set<URL> urls = new HashSet<URL>();
+      for (IdeaPluginDescriptor plugin : plugins) {
+        try {
+          Enumeration<URL> resources = plugin.getPluginClassLoader().getResources("resources/projectTemplates");
+          urls.addAll(Collections.list(resources));
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+
+      URL configURL = getCustomTemplatesURL();
+      ContainerUtil.addIfNotNull(urls, configURL);
+
+      for (URL url : urls) {
+        try {
+          List<String> children = UrlUtil.getChildrenRelativePaths(url);
+          if (configURL == url && !children.isEmpty()) {
+            map.putValue(CUSTOM_GROUP, url);
+            continue;
+          }
+
+          for (String child : children) {
+            int index = child.indexOf('/');
+            if (index != -1) {
+              child = child.substring(0, index);
+            }
+            map.putValue(child.replace('_', ' '), new URL(url.toExternalForm() + "/" + child));
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return map;
+    }
+  };
+
+  private static URL getCustomTemplatesURL() {
+    String path = getCustomTemplatesPath();
+    try {
+      return new File(path).toURI().toURL();
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static String getCustomTemplatesPath() {
+    return PathManager.getConfigPath() + "/projectTemplates";
+  }
 
   @NotNull
   @Override
   public String[] getGroups() {
-    return new String[] {"Standard"};
+    myGroups.drop();
+    Set<String> groups = myGroups.getValue().keySet();
+    return ArrayUtil.toStringArray(groups);
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
 
-    IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
-    Set<URL> urls = new HashSet<URL>();
-    for (IdeaPluginDescriptor plugin : plugins) {
-      try {
-        Enumeration<URL> resources = plugin.getPluginClassLoader().getResources("resources/projectTemplates");
-        urls.addAll(Collections.list(resources));
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
+    Collection<URL> urls = myGroups.getValue().get(group);
     List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
     for (URL url : urls) {
       try {
-        final List<String> children = UrlUtil.getChildrenRelativePaths(url);
+        List<String> children = UrlUtil.getChildrenRelativePaths(url);
         for (String child : children) {
           if (child.endsWith(ZIP)) {
-            final URL templateUrl = new URL(url.toExternalForm() + "/" + child);
-            templates.add(new ArchivedProjectTemplate(child.substring(0, child.length() - ZIP.length()), templateUrl, context));
+            URL templateUrl = new URL(url.toExternalForm() + "/" + child);
+            String name = child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
+            templates.add(new ArchivedProjectTemplate(name, templateUrl, context));
           }
         }
       }

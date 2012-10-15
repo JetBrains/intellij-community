@@ -278,10 +278,22 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   public void setupCopyFromMenu(JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
-      JMenu langs = new JMenu("Language"); //TODO<rv>: Move to resource bundle
+      JMenu langs = new JMenu("Language") {
+        @Override
+        public void paint(Graphics g) {
+          GraphicsUtil.setupAntialiasing(g);
+          super.paint(g);
+        }
+      }; //TODO<rv>: Move to resource bundle
       copyMenu.add(langs);
       fillLanguages(langs);
-      JMenu predefined = new JMenu("Predefined Style"); //TODO<rv>: Move to resource bundle
+      JMenu predefined = new JMenu("Predefined Style") {
+        @Override
+        public void paint(Graphics g) {
+          GraphicsUtil.setupAntialiasing(g);
+          super.paint(g);
+        }
+      }; //TODO<rv>: Move to resource bundle
       copyMenu.add(predefined);
       fillPredefined(predefined);
     }
@@ -298,7 +310,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
-          JMenuItem langItem = new JMenuItem(langName);
+          JMenuItem langItem = new JMenuItem(langName) {
+            @Override
+            public void paint(Graphics g) {
+              GraphicsUtil.setupAntialiasing(g);
+              super.paint(g);
+            }
+          };
           langItem.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -321,7 +339,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillPredefined(JMenuItem parentMenu) {
     for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
-      JMenuItem predefinedItem = new JMenuItem(predefinedCodeStyle.getName());
+      JMenuItem predefinedItem = new JMenuItem(predefinedCodeStyle.getName()) {
+        @Override
+        public void paint(Graphics g) {
+          GraphicsUtil.setupAntialiasing(g);
+          super.paint(g);
+        }
+      };
       parentMenu.add(predefinedItem);
       predefinedItem.addActionListener(new ActionListener() {
         @Override
@@ -519,7 +543,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   //========================================================================================================================================
   
-  private class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
+  protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
 
     private final IndentOptionsEditor myEditor;
     private final LanguageCodeStyleSettingsProvider myProvider;

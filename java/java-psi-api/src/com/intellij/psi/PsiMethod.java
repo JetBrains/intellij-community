@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.psi;
 
+import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,9 +95,16 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   /**
    * Checks if the method accepts a variable number of arguments.
    *
-   * @return true if the method is varargs, false otherwise
+   * @return true if the method is varargs, false otherwise.
    */
   boolean isVarArgs();
+
+  /**
+   * Checks if the method is a Java 8 extension method.
+   *
+   * @return true if the method is an extension method, false otherwise.
+   */
+  boolean isExtensionMethod();
 
   /**
    * Returns the signature of this method, using the specified substitutor to specify

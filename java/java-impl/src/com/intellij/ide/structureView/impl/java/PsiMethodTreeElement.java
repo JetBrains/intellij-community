@@ -17,7 +17,6 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
-import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -29,8 +28,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,8 +37,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement, LocationPresentation {
-  private String myLocation;
+import static com.intellij.psi.util.PsiFormatUtilBase.*;
+
+public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
 
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
     super(isInherited, method);
@@ -67,33 +67,34 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited(), new HashSet<PsiClass>(Arrays.asList(aClass.getSupers()))));
         }
-
       }
     });
     return result;
   }
 
   public String getPresentableText() {
-    return StringUtil.replace(PsiFormatUtil.formatMethod(
-      getElement(),
-      PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
-                            PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_PARAMETERS,
-      PsiFormatUtilBase.SHOW_TYPE
-    ), ":", ": ");
+    String method = PsiFormatUtil.formatMethod(getElement(),
+                                               PsiSubstitutor.EMPTY,
+                                               SHOW_NAME | SHOW_TYPE | TYPE_AFTER | SHOW_PARAMETERS,
+                                               SHOW_TYPE);
+    return StringUtil.replace(method, ":", ": ");
   }
 
 
   @Override
   public String getLocationString() {
     if (!Registry.is("show.method.base.class.in.java.file.structure")) return null;
+    final PsiMethod method = getElement();
     if (myLocation == null) {
-      final PsiMethod method = getElement();
+      if (isInherited()) {
+        return super.getLocationString();
+      } else {
       try {
         final MethodSignatureBackedByPsiMethod baseMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
         if (baseMethod != null && !method.isEquivalentTo(baseMethod.getMethod())) {
           PsiMethod base = baseMethod.getMethod();
           PsiClass baseClass = base.getContainingClass();
-          if (baseClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) {
+          if (baseClass != null /*&& !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())*/) {
             if (baseClass.getMethods().length > 1) {
               myLocation = baseClass.getName();
             }
@@ -104,14 +105,16 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
         //some searchers (EJB) require indices. What shall we do?
       }
 
-      if (myLocation == null) {
+      if (StringUtil.isEmpty(myLocation)) {
         myLocation = "";
+      } else {
+        char upArrow = '\u2191';
+        myLocation = UIUtil.getLabelFont().canDisplay(upArrow) ? upArrow + myLocation : myLocation;
+      }
       }
     }
     return StringUtil.isEmpty(myLocation) ? null : myLocation;
   }
-
-
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
@@ -139,7 +142,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
   @Override
   public String getLocationPrefix() {
-    return " \u2191";
+    return " ";
   }
 
   @Override

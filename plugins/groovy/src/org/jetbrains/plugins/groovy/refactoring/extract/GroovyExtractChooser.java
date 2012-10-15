@@ -19,10 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -39,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
@@ -96,7 +92,7 @@ public class GroovyExtractChooser {
     }
 
     GrStatement statement0 = statements[0];
-    GrMemberOwner owner = PsiUtil.getMemberOwner(statement0);
+    PsiClass owner = PsiUtil.getContextClass(statement0);
     GrStatementOwner declarationOwner = getDeclarationOwner(statement0);
     if (owner == null || declarationOwner == null && !ExtractUtil.isSingleExpression(statements)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
@@ -108,7 +104,7 @@ public class GroovyExtractChooser {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
-    if (ExtractUtil.isSingleExpression(statements) && GrIntroduceHandlerBase.expressionIsIncorrect((GrExpression)statement0)) {
+    if (ExtractUtil.isSingleExpression(statements) && GrIntroduceHandlerBase.expressionIsIncorrect((GrExpression)statement0, true)) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.block.should.represent.an.expression"));
     }
 

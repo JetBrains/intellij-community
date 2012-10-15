@@ -50,9 +50,11 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @NotNull private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  @NotNull private final PlatformFacade myPlatformFacade;
 
   public GitRepositoryManagerImpl(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     super(project);
+    myPlatformFacade = platformFacade;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myVcs = platformFacade.getVcs(myProject);
   }
@@ -227,7 +229,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
-    GitRepository repository = GitRepositoryImpl.getFullInstance(root, myProject, this);
+    GitRepository repository = GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
     for (GitRepositoryChangeListener listener : myListeners) {
       repository.addListener(listener);
     }

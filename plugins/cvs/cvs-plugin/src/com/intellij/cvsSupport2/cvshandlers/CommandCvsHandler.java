@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +71,7 @@ import java.util.*;
  * @author lesya
  */
 public class CommandCvsHandler extends CvsHandler {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
 
   protected final CvsOperation myCvsOperation;
@@ -161,16 +162,25 @@ public class CommandCvsHandler extends CvsHandler {
     return new UpdateHandler(files, updateSettings, project, updatedFiles);
   }
 
-  public static CvsHandler createBranchOrTagHandler(FilePath[] selectedFiles, String branchName,
-                                                    boolean switchToThisAction, boolean overrideExisting,
-                                                    boolean isTag, boolean makeNewFilesReadOnly, Project project) {
+  public static CvsHandler createTagHandler(FilePath[] selectedFiles, String tagName, boolean switchToThisTag,
+                                            boolean overrideExisting, boolean makeNewFilesReadOnly, Project project) {
     final CompositeOperation operation = new CompositeOperation();
-    operation.addOperation(new BranchOperation(selectedFiles, branchName, overrideExisting, isTag));
-    if (switchToThisAction) {
+    operation.addOperation(new TagOperation(selectedFiles, tagName, false, overrideExisting));
+    if (switchToThisTag) {
+      operation.addOperation(new UpdateOperation(selectedFiles, tagName, makeNewFilesReadOnly, project));
+    }
+    return new CommandCvsHandler(CvsBundle.message("operation.name.create.tag"), operation,
+                                 FileSetToBeUpdated.selectedFiles(selectedFiles));
+  }
+
+  public static CvsHandler createBranchHandler(FilePath[] selectedFiles, String branchName, boolean switchToThisBranch,
+                                               boolean overrideExisting, boolean makeNewFilesReadOnly, Project project) {
+    final CompositeOperation operation = new CompositeOperation();
+    operation.addOperation(new BranchOperation(selectedFiles, branchName, overrideExisting));
+    if (switchToThisBranch) {
       operation.addOperation(new UpdateOperation(selectedFiles, branchName, makeNewFilesReadOnly, project));
     }
-    return new CommandCvsHandler(isTag ? CvsBundle.message("operation.name.create.tag")
-                                       : CvsBundle.message("operation.name.create.branch"), operation,
+    return new CommandCvsHandler(CvsBundle.message("operation.name.create.branch"), operation,
                                  FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
@@ -204,7 +214,8 @@ public class CommandCvsHandler extends CvsHandler {
     final CommandCvsHandler result = new CommandCvsHandler(title, operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
 
     if (tagFilesAfterCommit) {
-      result.addOperation(new TagOperation(selectedFiles, tagName, CvsConfiguration.getInstance(project).OVERRIDE_EXISTING_TAG_FOR_PROJECT));
+      result.addOperation(new TagOperation(selectedFiles, tagName, false,
+                                           CvsConfiguration.getInstance(project).OVERRIDE_EXISTING_TAG_FOR_PROJECT));
     }
 
     return result;
@@ -225,7 +236,7 @@ public class CommandCvsHandler extends CvsHandler {
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.add"), operation,
-                                 FileSetToBeUpdated.selectedFiles(VfsUtil.toVirtualFileArray(addedFiles)),
+                                 FileSetToBeUpdated.selectedFiles(VfsUtilCore.toVirtualFileArray(addedFiles)),
                                  VcsConfiguration.getInstance(project).getAddRemoveOption());
   }
 
@@ -246,13 +257,13 @@ public class CommandCvsHandler extends CvsHandler {
       final VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
       if (cvsAdminDirectory != null) result.add(cvsAdminDirectory);
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   public static CvsHandler createRestoreFileHandler(final VirtualFile parent,
                                                     String name,
                                                     boolean makeNewFilesReadOnly) {
-    final File ioFile = new File(VfsUtil.virtualToIoFile(parent), name);
+    final File ioFile = new File(VfsUtilCore.virtualToIoFile(parent), name);
 
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
 
@@ -267,7 +278,7 @@ public class CommandCvsHandler extends CvsHandler {
       @Override
       public void run() {
         final List<VcsException> errors = cvsHandler.getErrors();
-        if (errors != null && (! errors.isEmpty())) return;
+        if (errors != null && !errors.isEmpty()) return;
         
         if (entry != null) {
           entry.setRevision(revision);
@@ -299,7 +310,7 @@ public class CommandCvsHandler extends CvsHandler {
     return new CommandCvsHandler(CvsBundle.message("operation.name.unedit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
-  public static CvsHandler createRemoveTagAction(VirtualFile[] selectedFiles, String tagName) {
+  public static CvsHandler createRemoveTagAction(FilePath[] selectedFiles, String tagName) {
     return new CommandCvsHandler(CvsBundle.message("action.name.delete.tag"), new TagOperation(selectedFiles, tagName, true, false),
                                  FileSetToBeUpdated.EMPTY);
   }
@@ -434,9 +445,8 @@ public class CommandCvsHandler extends CvsHandler {
                                                                                           null);
       compositeOperation.addOperation(checkoutFileOperation);
     }
-
-    return new CommandCvsHandler(CvsBundle.message("action.name.get.file.from.repository"), compositeOperation, FileSetToBeUpdated.allFiles(), true);
-
+    return new CommandCvsHandler(CvsBundle.message("action.name.get.file.from.repository"),
+                                 compositeOperation, FileSetToBeUpdated.allFiles(), true);
   }
 
   private static String getAlternativeCheckoutPath(CvsLightweightFile cvsLightweightFile, File workingDirectory) {

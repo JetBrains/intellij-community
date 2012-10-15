@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.tag.TagCommand;
 
@@ -27,30 +26,22 @@ import org.netbeans.lib.cvsclient.command.tag.TagCommand;
  * author: lesya
  */
 public class TagOperation extends CvsOperationOnFiles{
+
   private final String myTag;
   private final boolean myRemoveTag;
   private final boolean myOverrideExisting;
 
-  public TagOperation(VirtualFile[] files, String tag, boolean removeTag, boolean overrideExisting) {
-    for (VirtualFile file : files) {
-      addFile(file);
-    }
-    myRemoveTag = removeTag;
-    myTag = tag;
-    myOverrideExisting = overrideExisting;
-  }
-
-  public TagOperation(FilePath[] files, String tag, boolean overrideExisting) {
+  public TagOperation(FilePath[] files, String tag, boolean removeTag, boolean overrideExisting) {
     for (FilePath file : files) {
       addFile(file.getIOFile());
     }
-    myRemoveTag = false;
     myTag = tag;
+    myRemoveTag = removeTag;
     myOverrideExisting = overrideExisting;
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    TagCommand tagCommand = new TagCommand();
+    final TagCommand tagCommand = new TagCommand();
     addFilesToCommand(root, tagCommand);
     tagCommand.setTag(myTag);
     tagCommand.setDeleteTag(myRemoveTag);

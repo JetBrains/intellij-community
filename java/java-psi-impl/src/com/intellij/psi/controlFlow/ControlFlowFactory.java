@@ -74,7 +74,7 @@ public class ControlFlowFactory {
     private final long modificationCount;
     private final ControlFlow controlFlow;
 
-    private ControlFlowContext(boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy, long modificationCount, ControlFlow controlFlow) {
+    private ControlFlowContext(boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy, long modificationCount, @NotNull ControlFlow controlFlow) {
       this.evaluateConstantIfCondition = evaluateConstantIfCondition;
       this.policy = policy;
       this.modificationCount = modificationCount;
@@ -97,7 +97,7 @@ public class ControlFlowFactory {
       return result;
     }
 
-    public boolean isFor(final ControlFlowPolicy policy, final boolean evaluateConstantIfCondition, long modificationCount) {
+    public boolean isFor(@NotNull ControlFlowPolicy policy, final boolean evaluateConstantIfCondition, long modificationCount) {
       if (modificationCount != this.modificationCount) return false;
       if (!policy.equals(this.policy)) return false;
 
@@ -107,23 +107,26 @@ public class ControlFlowFactory {
       return evaluateConstantIfCondition == this.evaluateConstantIfCondition;
     }
 
-    private boolean isFor(final ControlFlowContext that) {
+    private boolean isFor(@NotNull ControlFlowContext that) {
       return isFor(that.policy, that.evaluateConstantIfCondition, that.modificationCount);
     }
   }
 
+  @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
     return getControlFlow(element, policy, true, true);
   }
 
+  @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     return getControlFlow(element, policy, true, evaluateConstantIfCondition);
   }
 
+  @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element,
-                                           @NotNull ControlFlowPolicy policy,
-                                           boolean enableShortCircuit,
-                                           boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+                                    @NotNull ControlFlowPolicy policy,
+                                    boolean enableShortCircuit,
+                                    boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     CopyOnWriteArrayList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     for (ControlFlowContext context : cached) {
@@ -135,13 +138,18 @@ public class ControlFlowFactory {
     return controlFlow;
   }
 
-  private static ControlFlowContext createContext(final boolean evaluateConstantIfCondition, final ControlFlowPolicy policy,
-                                                  final ControlFlow controlFlow,
+  @NotNull
+  private static ControlFlowContext createContext(final boolean evaluateConstantIfCondition,
+                                                  @NotNull ControlFlowPolicy policy,
+                                                  @NotNull ControlFlow controlFlow,
                                                   final long modificationCount) {
     return new ControlFlowContext(evaluateConstantIfCondition, policy, modificationCount,controlFlow);
   }
 
-  private void registerControlFlow(@NotNull PsiElement element, @NotNull ControlFlow flow, boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy) {
+  private void registerControlFlow(@NotNull PsiElement element,
+                                   @NotNull ControlFlow flow,
+                                   boolean evaluateConstantIfCondition,
+                                   @NotNull ControlFlowPolicy policy) {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     ControlFlowContext controlFlowContext = createContext(evaluateConstantIfCondition, policy, flow, modificationCount);
 
@@ -150,7 +158,7 @@ public class ControlFlowFactory {
   }
 
   @NotNull
-  private CopyOnWriteArrayList<ControlFlowContext> getOrCreateCachedFlowsForElement(final PsiElement element) {
+  private CopyOnWriteArrayList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     Reference<CopyOnWriteArrayList<ControlFlowContext>> cachedRef = cachedFlows.get(element);
     CopyOnWriteArrayList<ControlFlowContext> cached = cachedRef == null ? null : cachedRef.get();
     if (cached == null) {

@@ -173,6 +173,14 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     if (docUrl instanceof String) {
       method.putUserData(DOCUMENTATION_URL, (String)docUrl);
     }
+
+    Object qName = prop.get("containingClass");
+    if (qName instanceof String) {
+      PsiClass foundClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(((String)qName), place.getResolveScope());
+      if (foundClass != null) {
+        method.setContainingClass(foundClass);
+      }
+    }
     return method;
   }
 

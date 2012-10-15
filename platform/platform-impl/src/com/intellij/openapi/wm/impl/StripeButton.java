@@ -81,6 +81,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
    * excepting firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
    * doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
+  @Override
   public void setMnemonic(final int mnemonic) {
     throw new UnsupportedOperationException("use setMnemonic2(int)");
   }
@@ -119,9 +120,10 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     setRolloverEnabled(true);
     setOpaque(false);
 
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 
     addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseDragged(final MouseEvent e) {
         processDrag(e);
       }
@@ -155,12 +157,12 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (!component.isVisible()) continue;
       Rectangle r = component.getBounds();
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-        if (first && (max > r.y) || (!first && max < r.y)) {
+        if (first && max > r.y || !first && max < r.y) {
           max = r.y;
           c = component;
         }
       } else {
-        if (first && (max > r.x) || (!first && max < r.x)) {
+        if (first && max > r.x || !first && max < r.x) {
           max = r.x;
           c = component;
         }
@@ -249,6 +251,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     return root.getLayeredPane();
   }
 
+  @Override
   protected void processMouseEvent(final MouseEvent e) {
     if (e.isPopupTrigger() && e.getComponent().isShowing()) {
       super.processMouseEvent(e);
@@ -276,6 +279,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     super.processMouseEvent(e);
   }
 
+  @Override
   public void actionPerformed(final ActionEvent e) {
     if (myPressedWhenSelected) {
       myDecorator.fireHidden();
@@ -301,6 +305,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     popupMenu.getComponent().show(component, x, y);
   }
 
+  @Override
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
     Font font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
@@ -322,7 +327,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     if (UISettings.getInstance().SHOW_TOOL_WINDOW_NUMBERS) {
       final int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
       if (mnemonic != -1) {
-        text = ((char)mnemonic) + ": " + text;
+        text = (char)mnemonic + ": " + text;
         setMnemonic2(mnemonic);
       }
       else {
@@ -345,12 +350,14 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private final class MyPopupHandler extends PopupHandler {
+    @Override
     public void invokePopup(final Component component, final int x, final int y) {
       showPopup(component, x, y);
     }
   }
 
   private final class MyPropertyChangeListener implements PropertyChangeListener {
+    @Override
     public void propertyChange(final PropertyChangeEvent e) {
       final String name = e.getPropertyName();
       if (ToolWindowEx.PROP_AVAILABLE.equals(name)) {

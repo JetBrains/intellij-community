@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,144 +17,91 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.util.ui.EditableModel;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.changeSignature.ParameterTableModelBase;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellEditor;
 
-import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
-import java.util.List;
+import javax.swing.table.TableCellEditor;
 
 /**
- * @author Maxim.Medvedev
+ * @author Max Medvedev
  */
-public class GrParameterTableModel extends AbstractTableModel implements EditableModel {
-  private static final int COLUMN_COUNT = 5;
-
-  private final List<GrTableParameterInfo> infos;
-  private final GrMethod myMethod;
-  private final Project myProject;
-
-  public GrParameterTableModel(GrMethod method, Project project) {
-    myMethod = method;
-    final GrParameter[] parameters = myMethod.getParameters();
-    infos = new ArrayList<GrTableParameterInfo>(parameters.length);
-    for (int i = 0; i < parameters.length; i++) {
-      GrParameter parameter = parameters[i];
-      infos.add(new GrTableParameterInfo(parameter, i));
-    }
-    myProject = project;
+public class GrParameterTableModel extends ParameterTableModelBase<GrParameterInfo, GrParameterTableModelItem>{
+  public GrParameterTableModel(final PsiElement typeContext, PsiElement defaultValueContext, final GrChangeSignatureDialog dialog) {
+    this(typeContext, defaultValueContext,
+         new GrTypeColumn(typeContext.getProject()),
+         new NameColumn<GrParameterInfo, GrParameterTableModelItem>(typeContext.getProject(), "Name"),
+         new GrInitializerColumn(typeContext.getProject()),
+         new GrDefaultValueColumn(typeContext.getProject()),
+         new AnyVarColumn<GrParameterInfo, GrParameterTableModelItem>() {
+           @Override
+           public boolean isCellEditable(GrParameterTableModelItem item) {
+             boolean isGenerateDelegate = dialog.isGenerateDelegate();
+             return !isGenerateDelegate && super.isCellEditable(item);
+           }
+         });
   }
 
-  public void addRow() {
-    addRow(new GrTableParameterInfo(myProject, myMethod));
+  private GrParameterTableModel(PsiElement typeContext, PsiElement defaultValueContext, ColumnInfo... columnInfos) {
+    super(typeContext, defaultValueContext, columnInfos);
   }
 
-  public void addRow(GrTableParameterInfo info) {
-    final int row = infos.size();
-    infos.add(info);
-    fireTableRowsInserted(row, row);
-  }
-
-  public void removeRow(int index) {
-    infos.remove(index);
-    fireTableRowsDeleted(index, index);
-  }
-
-  public void exchangeRows(int index1, int index2) {
-    final GrTableParameterInfo info = infos.get(index1);
-    infos.set(index1, infos.get(index2));
-    infos.set(index2, info);
-    fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
-  }
 
   @Override
-  public boolean canExchangeRows(int oldIndex, int newIndex) {
-    return true;
+  protected GrParameterTableModelItem createRowItem(@Nullable GrParameterInfo parameterInfo) {
+    return GrParameterTableModelItem.create(parameterInfo, myTypeContext.getProject(), myDefaultValueContext);
   }
 
-  public int getRowCount() {
-    return infos.size();
-  }
+  private static class GrTypeColumn extends TypeColumn<GrParameterInfo, GrParameterTableModelItem> {
 
-  public int getColumnCount() {
-    return COLUMN_COUNT;
-  }
+    public GrTypeColumn(Project project) {
+      super(project, GroovyFileType.GROOVY_FILE_TYPE, "Type");
+    }
 
-  @Nullable
-  public Object getValueAt(int rowIndex, int columnIndex) {
-    if (rowIndex < 0 || rowIndex >= infos.size()) return null;
-    final GrTableParameterInfo info = infos.get(rowIndex);
-    switch (columnIndex) {
-      case 0:
-        return info.getTypeFragment();
-      case 1:
-        return info.getNameFragment();
-      case 2:
-        return info.getDefaultInitializerFragment();
-      case 3:
-        return info.getDefaultValueFragment();
-      case 4:
-        return info.isUseAnyVar();
-      default:
-        throw new IllegalArgumentException();
+    @Override
+    public TableCellEditor doCreateEditor(GrParameterTableModelItem o) {
+      return new JavaCodeFragmentTableCellEditor(myProject);
     }
   }
 
-  @Override
-  public void setValueAt(Object value, int rowIndex, int columnIndex) {
-    if (rowIndex < 0 || rowIndex >= infos.size()) return;
-    if (columnIndex < 0 || columnIndex >= COLUMN_COUNT) return;
-    if (columnIndex==4) infos.get(rowIndex).setUseAnyVar(((Boolean)value).booleanValue());
-    fireTableCellUpdated(rowIndex, columnIndex);
-  }
+  private static class GrDefaultValueColumn extends DefaultValueColumn<GrParameterInfo, GrParameterTableModelItem> {
+    private final Project myProject;
 
+    public GrDefaultValueColumn(Project project) {
+      super(project, GroovyFileType.GROOVY_FILE_TYPE);
+      myProject = project;
+    }
 
-  @Override
-  public String getColumnName(int column) {
-    switch (column) {
-      case 0:
-        return GroovyRefactoringBundle.message("column.name.type");
-      case 1:
-        return GroovyRefactoringBundle.message("column.name.name");
-      case 2:
-        return GroovyRefactoringBundle.message("column.name.default.initializer");
-      case 3:
-        return GroovyRefactoringBundle.message("column.name.default.value");
-      case 4:
-        return GroovyRefactoringBundle.message("column.name.use.any.var");
-      default:
-        throw new IllegalArgumentException();
+    @Override
+    public TableCellEditor doCreateEditor(GrParameterTableModelItem item) {
+      return new GrCodeFragmentTableCellEditor(myProject);
     }
   }
 
-  @Override
-  public Class<?> getColumnClass(int columnIndex) {
-    switch (columnIndex) {
-      case 0:
-        return PsiCodeFragment.class;
-      case 1:
-      case 2:
-      case 3:
-        return GroovyCodeFragment.class;
-      case 4:
-        return Boolean.class;
-      default:
-        throw new IllegalArgumentException();
+  private static class GrInitializerColumn extends GrDefaultValueColumn {
+    public GrInitializerColumn(Project project) {
+      super(project);
     }
-  }
 
-  @Override
-  public boolean isCellEditable(int rowIndex, int columnIndex) {
-    if (columnIndex < 3) return true;
-    GrTableParameterInfo info = infos.get(rowIndex);
-    return info.getOldIndex() < 0;
-  }
+    @Override
+    public String getName() {
+      return "Default initializer";
+    }
 
-  public List<GrTableParameterInfo> getParameterInfos() {
-    return infos;
+    @Override
+    public boolean isCellEditable(GrParameterTableModelItem item) {
+      return true;
+    }
+
+    @Override
+    public PsiCodeFragment valueOf(GrParameterTableModelItem item) {
+      return item.initializerCodeFragment;
+    }
+
+
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -51,15 +50,12 @@ import javax.swing.*;
 public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myOnlyPrivateOrFinal = false;
   public boolean myIgnoreEmptyMethods = true;
-  public boolean myIgnoreInstanceRefsInClosure = true;
 
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.only.private.or.final.option"), "myOnlyPrivateOrFinal");
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.ignore.empty.method.option"), "myIgnoreEmptyMethods");
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("method.may.be.static.ignore.instance.refs.in.closure.option"),
-                             "myIgnoreInstanceRefsInClosure");
     return optionsPanel;
   }
 
@@ -78,18 +74,6 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             break;
           case mayBeStaticButHaveInstanceRefsInClosure:
-            if (myIgnoreInstanceRefsInClosure) {
-              fixes = new LocalQuickFix[]{new GrModifierLocalFix(method, PsiModifier.STATIC, false, true) {
-                @NotNull
-                @Override
-                public String getName() {
-                  return super.getName() + " " + GroovyInspectionBundle.message("have.instance.refs.in.closure");
-                }
-              }};
-              registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static") + " " +
-                                                              GroovyInspectionBundle.message("have.instance.refs.in.closure"), fixes,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-            }
             break;
           case mayNotBeStatic:
             break;

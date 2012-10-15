@@ -599,7 +599,7 @@ public class ResolveUtil {
       if (!(clParent instanceof GrMethodCall)) continue;
       final GrExpression expression = ((GrMethodCall)clParent).getInvokedExpression();
       if (expression instanceof GrReferenceExpression &&
-          GdkMethodUtil.WITH.equals(((GrReferenceExpression)expression).getReferenceName()) &&
+          GdkMethodUtil.isWithName(((GrReferenceExpression)expression).getReferenceName()) &&
           ((GrReferenceExpression)expression).resolve() instanceof GrGdkMethod) {
         final GrExpression withQualifier = ((GrReferenceExpression)expression).getQualifierExpression();
         if (withQualifier != null) {
@@ -760,5 +760,18 @@ public class ResolveUtil {
     final PsiElement element = result.getElement();
     if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) return (PsiClass)element;
     return null;
+  }
+
+  @NotNull
+  public static String inferExpectedPackageName(PsiElement place) {
+    PsiFile file = place.getContainingFile();
+    PsiDirectory psiDirectory = file.getContainingDirectory();
+    if (psiDirectory != null && file instanceof GroovyFile) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+      if (aPackage != null) {
+        return aPackage.getQualifiedName();
+      }
+    }
+    return "";
   }
 }

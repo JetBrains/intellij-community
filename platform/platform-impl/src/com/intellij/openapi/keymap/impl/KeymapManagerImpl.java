@@ -44,11 +44,10 @@ import java.util.*;
   roamingType = RoamingType.PER_PLATFORM,
   storages = {
     @Storage(
-        file = StoragePathMacros.APP_CONFIG + "/keymap.xml"
+      file = StoragePathMacros.APP_CONFIG + "/keymap.xml"
     )}
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
@@ -65,21 +64,24 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(
-        "$ROOT_CONFIG$/keymaps",
-        new BaseSchemeProcessor<KeymapImpl>(){
-          public KeymapImpl readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
-            return readKeymap(schemeContent);
-          }
+      "$ROOT_CONFIG$/keymaps",
+      new BaseSchemeProcessor<KeymapImpl>() {
+        @Override
+        public KeymapImpl readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+          return readKeymap(schemeContent);
+        }
 
-          public Document writeScheme(final KeymapImpl scheme) throws WriteExternalException {
-            return new Document(scheme.writeExternal());
-          }
+        @Override
+        public Document writeScheme(final KeymapImpl scheme) throws WriteExternalException {
+          return new Document(scheme.writeExternal());
+        }
 
-          public boolean shouldBeSaved(final KeymapImpl scheme) {
-            return scheme.canModify();
-          }
-        },
-        RoamingType.PER_USER);
+        @Override
+        public boolean shouldBeSaved(final KeymapImpl scheme) {
+          return scheme.canModify();
+        }
+      },
+      RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
     for (Keymap keymap : keymaps) {
@@ -93,16 +95,19 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     ourKeymapManagerInitialized = true;
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{new File(PathManager.getOptionsPath()+File.separatorChar+"keymap.xml"),getKeymapDirectory(true)};
+    return new File[]{new File(PathManager.getOptionsPath() + File.separatorChar + "keymap.xml"), getKeymapDirectory(true)};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return KeyMapBundle.message("key.maps.name");
   }
 
+  @Override
   public Keymap[] getAllKeymaps() {
     List<Keymap> answer = new ArrayList<Keymap>();
     for (Keymap keymap : mySchemesManager.getAllSchemes()) {
@@ -118,32 +123,39 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return keymaps.toArray(new Keymap[keymaps.size()]);
   }
 
+  @Override
   @Nullable
   public Keymap getKeymap(String name) {
-    return mySchemesManager.findSchemeByName( name);
+    return mySchemesManager.findSchemeByName(name);
   }
 
+  @Override
   public Keymap getActiveKeymap() {
     return mySchemesManager.getCurrentScheme();
   }
 
+  @Override
   public void setActiveKeymap(Keymap activeKeymap) {
     mySchemesManager.setCurrentSchemeName(activeKeymap == null ? null : activeKeymap.getName());
     fireActiveKeymapChanged();
   }
 
+  @Override
   public void bindShortcuts(String sourceActionId, String targetActionId) {
     myBoundShortcuts.put(targetActionId, sourceActionId);
   }
 
+  @Override
   public Set<String> getBoundActions() {
     return myBoundShortcuts.keySet();
   }
 
+  @Override
   public String getActionBinding(String actionId) {
     return myBoundShortcuts.get(actionId);
   }
 
+  @Override
   public SchemesManager<Keymap, KeymapImpl> getSchemesManager() {
     return mySchemesManager;
   }
@@ -170,6 +182,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return "keymap";
   }
 
+  @Override
   public Element getState() {
     Element result = new Element("component");
     try {
@@ -181,6 +194,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return result;
   }
 
+  @Override
   public void loadState(final Element state) {
     try {
       readExternal(state);
@@ -190,7 +204,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException{
+  public void readExternal(Element element) throws InvalidDataException {
     Element child = element.getChild(ACTIVE_KEYMAP);
     if (child != null) {
       myActiveKeymapName = child.getAttributeValue(NAME_ATTRIBUTE);
@@ -204,7 +218,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
+  public void writeExternal(Element element) throws WriteExternalException {
     if (mySchemesManager.getCurrentScheme() != null) {
       Element e = new Element(ACTIVE_KEYMAP);
       Keymap currentScheme = mySchemesManager.getCurrentScheme();
@@ -215,11 +229,11 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  private void load(){
+  private void load() {
     mySchemesManager.loadSchemes();
   }
 
-  private KeymapImpl readKeymap(Document document) throws JDOMException,InvalidDataException, IOException{
+  private KeymapImpl readKeymap(Document document) throws JDOMException, InvalidDataException, IOException {
     if (document == null) throw new InvalidDataException();
     Element root = document.getRootElement();
     if (root == null || !KEYMAP.equals(root.getName())) {
@@ -251,20 +265,53 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     }
   }
 
-  public void addKeymapManagerListener(KeymapManagerListener listener) {
+  @Override
+  public void addKeymapManagerListener(@NotNull KeymapManagerListener listener) {
+    pollQueue();
     myListeners.add(listener);
   }
 
-  public void removeKeymapManagerListener(KeymapManagerListener listener) {
+  private void pollQueue() {
+    // assume it is safe to remove elements during iteration, as is the case with the COWAL
+    for (KeymapManagerListener listener : myListeners) {
+      if (listener instanceof WeakKeymapManagerListener && ((WeakKeymapManagerListener)listener).isDead()) {
+        myListeners.remove(listener);
+      }
+    }
+  }
+
+  @Override
+  public void removeKeymapManagerListener(@NotNull KeymapManagerListener listener) {
+    pollQueue();
     myListeners.remove(listener);
   }
 
+  @Override
+  public void addWeakListener(@NotNull KeymapManagerListener listener) {
+    addKeymapManagerListener(new WeakKeymapManagerListener(this, listener));
+  }
+
+  @Override
+  public void removeWeakListener(@NotNull KeymapManagerListener listenerToRemove) {
+    // assume it is safe to remove elements during iteration, as is the case with the COWAL
+    for (KeymapManagerListener listener : myListeners) {
+      if (listener instanceof WeakKeymapManagerListener && ((WeakKeymapManagerListener)listener).isWrapped(listenerToRemove)) {
+        myListeners.remove(listener);
+      }
+    }
+  }
+
+  @Override
   @NotNull
   public String getComponentName() {
     return "KeymapManager";
   }
 
-  public void initComponent() {}
+  @Override
+  public void initComponent() {
+  }
 
-  public void disposeComponent() {}
+  @Override
+  public void disposeComponent() {
+  }
 }

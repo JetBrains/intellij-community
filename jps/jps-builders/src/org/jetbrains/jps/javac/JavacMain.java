@@ -129,6 +129,9 @@ public class JavacMain {
     catch(IllegalArgumentException e) {
       outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
+    catch (CompilationCanceledException ignored) {
+      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
+    }
     finally {
       fileManager.close();
     }

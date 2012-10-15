@@ -116,3 +116,36 @@ class NonStaticInner2 {
      I1 i1 = NonStaticInner2.Inner :: new;
   }
 }
+
+class NonStaticInner3 {
+    class Foo {
+        Foo(Integer i) {}
+        Foo() {}
+    }
+
+    interface I1<X> {
+        X m(int i);
+    }
+
+    interface I2<X> {
+        X m();
+    }
+    
+    interface I3<X> {
+        X m(NonStaticInner3 rec, int i);
+    }
+
+    interface I4<X> {
+        X m(NonStaticInner3 rec);
+    }
+
+    {
+        I1<Foo> b1 = Foo::new;
+        I2<Foo> b2 = Foo::new;
+    }
+
+    {
+        I3<Foo> b1 = Foo::new;
+        I4<Foo> b2 = Foo::new;
+    }
+}

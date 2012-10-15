@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,39 +23,21 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collection;
 
 /**
  * author: lesya
  */
 public class DeleteTagDialog extends CvsTagDialog {
+
   private TextFieldWithBrowseButton myTagName;
   private JPanel myPanel;
-  private final Collection<FilePath> myFiles;
-  private final Project myProject;
   private JLabel myErrorLabel;
 
-  public DeleteTagDialog(Collection<FilePath> files, Project project) {
-    myFiles = files;
-    myProject = project;
-    myTagName.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        selectTag();
-      }
-    });
+  public DeleteTagDialog(FilePath[] files, Project project) {
+    TagsHelper.addChooseBranchAction(myTagName, TagsHelper.findVcsRoots(files, project), project);
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
-
     setTitle(CvsBundle.message("action.name.delete.tag"));
     init();
-  }
-
-  private void selectTag() {
-    String branchName = TagsHelper.chooseBranch(CreateTagDialog.collectVcsRoots(myProject, myFiles), myProject);
-    if (branchName != null)
-      myTagName.setText(branchName);            
   }
 
   public String getTagName() {
@@ -81,5 +63,4 @@ public class DeleteTagDialog extends CvsTagDialog {
   public boolean tagFieldIsActive() {
     return true;
   }
-
 }
