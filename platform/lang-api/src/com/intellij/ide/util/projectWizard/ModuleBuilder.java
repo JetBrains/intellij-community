@@ -79,12 +79,15 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myName;
   }
 
+  @Nullable
   public String getBuilderId() {
-    return getModuleType().getId();
+    ModuleType moduleType = getModuleType();
+    return moduleType == null ? null : moduleType.getId();
   }
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return getModuleType().createWizardSteps(wizardContext, this, modulesProvider);
+    ModuleType moduleType = getModuleType();
+    return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
 
   public void setName(String name) {
