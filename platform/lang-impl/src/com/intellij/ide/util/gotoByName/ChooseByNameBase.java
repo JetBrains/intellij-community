@@ -1069,8 +1069,8 @@ public abstract class ChooseByNameBase {
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      if (start < size()) {
-        removeRange(start, Math.min(end, size()));
+      if (start < size() && size() != 0) {
+        removeRange(start, Math.min(end, size()-1));
       }
     }
   }
