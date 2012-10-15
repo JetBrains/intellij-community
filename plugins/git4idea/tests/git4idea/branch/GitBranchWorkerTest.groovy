@@ -34,8 +34,10 @@ import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.history.browser.GitCommit
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryImpl
-import git4idea.test.*
+import git4idea.test.GitExecutor
+import git4idea.test.GitLightTest
+import git4idea.test.GitMockVirtualFile
+import git4idea.test.GitScenarios
 import org.jetbrains.annotations.NotNull
 import org.junit.After
 import org.junit.Before
@@ -67,35 +69,15 @@ class GitBranchWorkerTest extends GitLightTest {
     def community = mkdir("community")
     def contrib = mkdir("contrib")
 
-    [ myRootDir, community, contrib ].each { initRepo(it) }
-
     myUltimate = createRepository(myRootDir)
     myCommunity = createRepository(community)
     myContrib = createRepository(contrib)
+    myRepositories = [ myUltimate, myCommunity, myContrib ]
 
     cd(myRootDir)
     touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
-
-    myRepositories = [ myUltimate, myCommunity, myContrib ]
-    myRepositories.each { ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(it) }
-  }
-
-  private GitRepository createRepository(String rootDir) {
-    // TODO this smells hacky
-    // the constructor and notifyListeners() should probably be private
-    // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
-    new GitRepositoryImpl(new GitMockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
-      @Override
-      protected void notifyListeners() {
-      }
-
-      @Override
-      String getPresentableUrl() {
-        return rootDir;
-      }
-    }
   }
 
   @After

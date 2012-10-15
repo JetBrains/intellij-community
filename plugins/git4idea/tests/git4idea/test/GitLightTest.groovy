@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.PlatformFacade
 import git4idea.commands.Git
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryImpl
 import org.junit.After
 import org.junit.Before
 
@@ -51,23 +53,48 @@ class GitLightTest {
   }
 
   @After
-  public void tearDown() {
+  protected void tearDown() {
     FileUtil.delete(new File(myRootDir))
     Disposer.dispose(myProject)
   }
 
-  public void setupUsername() {
-    git("config user.name $USER_NAME")
-    git("config user.email $USER_EMAIL")
+  protected GitRepository createRepository(String rootDir) {
+    // TODO this smells hacky
+    // the constructor and notifyListeners() should probably be private
+    // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
+    GitRepository repository = new GitRepositoryImpl(new GitMockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
+      @Override
+      protected void notifyListeners() {
+      }
+
+      @Override
+      String getPresentableUrl() {
+        return rootDir;
+      }
+    }
+
+    registerRepository(repository)
+    initRepo(rootDir)
+
+    return repository
   }
 
-  public void initRepo(String repoRoot) {
+  private void registerRepository(GitRepositoryImpl repository) {
+    ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
+  }
+
+  private void initRepo(String repoRoot) {
     cd repoRoot
     git("init")
     setupUsername();
     touch("file.txt")
     git("add file.txt")
     git("commit -m initial")
+  }
+
+  private void setupUsername() {
+    git("config user.name $USER_NAME")
+    git("config user.email $USER_EMAIL")
   }
 
 }
