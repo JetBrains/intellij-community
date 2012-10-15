@@ -266,6 +266,9 @@ class JavaChangeSignatureUsageSearcher {
         else if (element instanceof XmlElement) {
           result.add(new MoveRenameUsageInfo(reference, method));
         }
+        else if (element instanceof PsiMethodReferenceExpression) {
+          result.add(new UsageInfo(reference));
+        }
       }
     }
 
