@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeFilter implements Filter, FilterMixin {
-  private final List<Filter> myFilters = new ArrayList<Filter>();
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
+
+  private final List<Filter> myFilters = new ArrayList<Filter>();
   private boolean myIsAnyHeavy;
   private final DumbService myDumbService;
 
@@ -47,7 +48,7 @@ public class CompositeFilter implements Filter, FilterMixin {
         long t0 = System.currentTimeMillis();
         final Result info = filter.applyFilter(line, entireLength);
         t0 = (System.currentTimeMillis() - t0);
-        if (t0 > 1000) LOG.error("applyFilter " + filter.getClass().getSimpleName() + " took" + t0 + "ms on '''" + line + "'''");
+        LOG.assertTrue(t0 < 100, filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         if (info != null) {
           return info;
         }
