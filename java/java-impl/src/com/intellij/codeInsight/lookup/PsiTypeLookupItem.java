@@ -267,10 +267,15 @@ public class PsiTypeLookupItem extends LookupItem {
     if (aClass.getQualifiedName() == null) return;
     PsiFile file = context.getFile();
 
-    int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
+    int startOffset = context.getStartOffset();
+    int tail = context.getTailOffset();
+    int newTail = JavaCompletionUtil.insertClassReference(aClass, file, startOffset, tail);
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {
       LOG.error(LogMessageEx.createEvent("Invalid offset after insertion ",
                                          "offset=" + newTail + "\n" +
+                                         "start=" + startOffset + "\n" +
+                                         "tail=" + tail + "\n" +
+                                         "file.length=" + file.getTextLength() + "\n" +
                                          "document=" + context.getDocument() + "\n" +
                                          DebugUtil.currentStackTrace(),
                                          new Attachment(context.getDocument())));
