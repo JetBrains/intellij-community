@@ -40,7 +40,7 @@ public final class BreakpointDefaults {
   }
 
   public void setSuspendPolicy(String suspendPolicy) {
-    if (DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy) || DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy) || DebuggerSettings.SUSPEND_ALL.equals( suspendPolicy)) {
+    if (DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy) || DebuggerSettings.SUSPEND_ALL.equals( suspendPolicy)) {
       mySuspendPolicy = suspendPolicy;
     }
   }
