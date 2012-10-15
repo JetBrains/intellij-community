@@ -470,7 +470,18 @@ public class TypeConversionUtil {
                        || ltypeRank == BOOL_RANK && rtypeRank == BOOL_RANK;
       }
       else {
-        if (isPrimitiveAndNotNull(ltype) || isPrimitiveAndNotNull(rtype)) return false;
+        if (isPrimitiveAndNotNull(ltype)) {
+          if (rtype instanceof PsiClassType && ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+            return areTypesConvertible(ltype, rtype);
+          }
+          return false;
+        }
+        if (isPrimitiveAndNotNull(rtype)) {
+          if (ltype instanceof PsiClassType && ((PsiClassType)ltype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+            return areTypesConvertible(rtype, ltype);
+          }
+          return false;
+        }
         isApplicable = areTypesConvertible(ltype, rtype) || areTypesConvertible(rtype, ltype);
       }
     }
