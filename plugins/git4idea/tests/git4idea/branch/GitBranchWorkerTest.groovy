@@ -65,16 +65,16 @@ class GitBranchWorkerTest extends GitLightTest {
   public void setUp() {
     super.setUp();
 
-    cd(myRootDir)
+    cd(myProjectRoot)
     def community = mkdir("community")
     def contrib = mkdir("contrib")
 
-    myUltimate = createRepository(myRootDir)
+    myUltimate = createRepository(myProjectRoot)
     myCommunity = createRepository(community)
     myContrib = createRepository(contrib)
     myRepositories = [ myUltimate, myCommunity, myContrib ]
 
-    cd(myRootDir)
+    cd(myProjectRoot)
     touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
@@ -306,7 +306,7 @@ class GitBranchWorkerTest extends GitLightTest {
 
   Change toChange(String relPath) {
     // we don't care about the before revision
-    new Change(null, CurrentContentRevision.create(new FilePathImpl(new GitMockVirtualFile(myRootDir + "/" + relPath))))
+    new Change(null, CurrentContentRevision.create(new FilePathImpl(new GitMockVirtualFile(myProjectRoot + "/" + relPath))))
   }
 
   @Test

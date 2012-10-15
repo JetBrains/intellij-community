@@ -36,29 +36,44 @@ import org.junit.Before
 @Mixin(GitExecutor)
 class GitLightTest {
 
-  public static final String USER_NAME = "John Doe";
-  public static final String USER_EMAIL = "John.Doe@example.com";
+  private static final String USER_NAME = "John Doe";
+  private static final String USER_EMAIL = "John.Doe@example.com";
 
-  protected String myRootDir
+  /**
+   * The file system root of test files.
+   * Automatically deleted on {@link #tearDown()}.
+   * Tests should create new files only inside this directory.
+   */
+  protected String myTestRoot
+
+  /**
+   * The file system root of the project. All project should locate inside this directory.
+   */
+  protected String myProjectRoot
+
   protected GitMockProject myProject
   protected PlatformFacade myPlatformFacade
   protected Git myGit
 
   @Before
   protected void setUp() {
-    myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new GitMockProject(myRootDir)
+    myTestRoot = FileUtil.createTempDirectory("", "").getPath()
+    cd myTestRoot
+    myProjectRoot = mkdir ("project")
+    myProject = new GitMockProject(myProjectRoot)
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
   }
 
   @After
   protected void tearDown() {
-    FileUtil.delete(new File(myRootDir))
+    FileUtil.delete(new File(myTestRoot))
     Disposer.dispose(myProject)
   }
 
   protected GitRepository createRepository(String rootDir) {
+    initRepo(rootDir)
+
     // TODO this smells hacky
     // the constructor and notifyListeners() should probably be private
     // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
@@ -74,7 +89,6 @@ class GitLightTest {
     }
 
     registerRepository(repository)
-    initRepo(rootDir)
 
     return repository
   }
