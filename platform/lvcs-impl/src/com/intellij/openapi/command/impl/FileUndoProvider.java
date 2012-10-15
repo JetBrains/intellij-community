@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.FileContentUtil;
 
 import java.io.IOException;
 
@@ -143,7 +144,8 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   private boolean shouldNotProcess(VirtualFileEvent e) {
-    return isProjectClosed() || !LocalHistory.getInstance().isUnderControl(e.getFile()) || !myIsInsideCommand;
+    return isProjectClosed() || !LocalHistory.getInstance().isUnderControl(e.getFile()) || !myIsInsideCommand
+      || FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor());
   }
 
   private boolean isProjectClosed() {
