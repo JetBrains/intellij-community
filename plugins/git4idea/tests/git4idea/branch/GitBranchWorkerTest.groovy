@@ -306,7 +306,7 @@ class GitBranchWorkerTest {
   }
 
   @Test
-  public void "merge with local changes overwritten by checkout should show smart checkout dialog"() {
+  public void "merge with local changes overwritten by merge should show smart merge dialog"() {
     test_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("merge");
   }
 
