@@ -885,8 +885,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
 
       for (UsageInfo usageInfo : usagesSet) {
+        final PsiElement element = usageInfo.getElement();
         if (usageInfo instanceof OverriderUsageInfo) {
-          final PsiMethod method = (PsiMethod)usageInfo.getElement();
+          final PsiMethod method = (PsiMethod)element;
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
@@ -895,6 +896,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
           }
+        } else if (element instanceof PsiMethodReferenceExpression) {
+          conflictDescriptions.putValue(element, "Changed method is used in method reference");
         }
       }
 
