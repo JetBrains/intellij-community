@@ -26,6 +26,7 @@ import com.intellij.psi.PsiMethod;
  * @author yole
  */
 public class JavaGotoTargetRendererProvider implements GotoTargetRendererProvider {
+  @Override
   public PsiElementListCellRenderer getRenderer(final PsiElement element, GotoTargetHandler.GotoData gotoData) {
     if (element instanceof PsiMethod) {
       return new MethodCellRenderer(gotoData.hasDifferentNames());

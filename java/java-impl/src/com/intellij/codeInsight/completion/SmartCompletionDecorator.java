@@ -47,6 +47,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     myExpectedTypeInfos = expectedTypeInfos;
   }
 
+  @Override
   protected TailType computeTailType(InsertionContext context) {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       return TailType.NONE;
@@ -126,14 +127,17 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
     final Set<PsiTypeParameter> set = new THashSet<PsiTypeParameter>(Arrays.asList(typeParameters));
     final PsiTypeVisitor<Boolean> typeParamSearcher = new PsiTypeVisitor<Boolean>() {
+      @Override
       public Boolean visitType(final PsiType type) {
         return true;
       }
 
+      @Override
       public Boolean visitArrayType(final PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
+      @Override
       public Boolean visitClassType(final PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiTypeParameter && set.contains(aClass)) return false;
@@ -145,6 +149,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
         return true;
       }
 
+      @Override
       public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         return bound == null || bound.accept(this).booleanValue();

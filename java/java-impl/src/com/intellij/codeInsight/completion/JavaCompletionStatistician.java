@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
  */
 public class JavaCompletionStatistician extends CompletionStatistician{
 
+  @Override
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     final Object o = element.getObject();
 
@@ -39,6 +40,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     if (infos != null && infos.length > 0) {
       final boolean primitivesOnly = ContainerUtil.and(infos, new Condition<ExpectedTypeInfo>() {
+        @Override
         public boolean value(final ExpectedTypeInfo info) {
           return info.getType() instanceof PsiPrimitiveType;
         }

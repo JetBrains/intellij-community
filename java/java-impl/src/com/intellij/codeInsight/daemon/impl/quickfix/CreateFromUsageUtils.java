@@ -37,6 +37,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -308,7 +309,7 @@ public class CreateFromUsageUtils {
 
     final PsiManager manager = referenceElement.getManager();
     final PsiFile sourceFile = referenceElement.getContainingFile();
-    final Module module = ModuleUtil.findModuleForPsiElement(sourceFile);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(sourceFile);
     PsiPackage aPackage = findTargetPackage(qualifierElement, manager, sourceFile);
     if (aPackage == null) return null;
     final PsiDirectory targetDirectory;
@@ -852,7 +853,7 @@ public class CreateFromUsageUtils {
                                           final boolean staticAccess,
                                           final boolean addObjectInheritors) {
     final Project project = file.getProject();
-    final Module moduleForFile = ModuleUtil.findModuleForPsiElement(file);
+    final Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
     if (moduleForFile == null) return;
 
     final GlobalSearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {

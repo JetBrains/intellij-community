@@ -29,10 +29,12 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
+  @Override
   public String getName() {
     return "suggestFirstVariableName";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.first.variable.name");
   }

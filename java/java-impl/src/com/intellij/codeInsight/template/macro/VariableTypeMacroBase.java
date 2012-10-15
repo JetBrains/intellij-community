@@ -32,6 +32,7 @@ public abstract class VariableTypeMacroBase extends Macro {
   @Nullable
   protected abstract PsiElement[] getVariables(Expression[] params, final ExpressionContext context);
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
@@ -42,12 +43,14 @@ public abstract class VariableTypeMacroBase extends Macro {
     return set.toArray(new LookupElement[set.size()]);
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new JavaPsiElementResult(vars[0]);
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";

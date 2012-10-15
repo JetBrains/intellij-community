@@ -26,6 +26,7 @@ public class JavaSynchronizedUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.synchronized"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiSynchronizedStatement;
   }

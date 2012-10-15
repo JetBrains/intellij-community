@@ -27,19 +27,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CastToLeftSideTypeMacro extends Macro {
+  @Override
   public String getName() {
     return "castToLeftSideType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.cast.to.left.side.type");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "(A)";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     int offset = context.getStartOffset();
     Project project = context.getProject();

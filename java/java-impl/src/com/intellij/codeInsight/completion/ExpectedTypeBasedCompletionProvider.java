@@ -29,6 +29,7 @@ import java.util.Collection;
 */
 public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+  @Override
   public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final PsiElement position = params.getPosition();
     if (position.getParent() instanceof PsiLiteralExpression) return;

@@ -23,19 +23,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SuggestIndexNameMacro extends Macro {
+  @Override
   public String getName() {
     return "suggestIndexName";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.index.name");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 

@@ -31,10 +31,12 @@ import java.awt.*;
  * @author yole
  */
 public class JavaPreviewHintProvider implements PreviewHintProvider {
+  @Override
   public boolean isSupportedFile(PsiFile file) {
     return file instanceof PsiJavaFile;
   }
 
+  @Override
   public JComponent getPreviewComponent(@NotNull PsiElement element) {
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
 

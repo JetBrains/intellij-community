@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -95,9 +96,9 @@ class RecursionWeigher extends LookupElementWeigher {
     }
 
     if (PsiJavaPatterns.psiElement().inside(
-        PsiJavaPatterns.or(
-            PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
-            PsiJavaPatterns.psiElement(PsiVariable.class))).
+      StandardPatterns.or(
+        PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
+        PsiJavaPatterns.psiElement(PsiVariable.class))).
         andNot(PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
       return new AndFilter(new ExcludeSillyAssignment(),
                                                    new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));

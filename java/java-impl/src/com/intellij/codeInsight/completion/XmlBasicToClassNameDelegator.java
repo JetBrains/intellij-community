@@ -46,6 +46,7 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
     if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
         parameters.isExtendedCompletion()) {
       CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
+        @Override
         public void consume(final CompletionResult completionResult) {
           LookupElement lookupElement = completionResult.getLookupElement();
           JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);

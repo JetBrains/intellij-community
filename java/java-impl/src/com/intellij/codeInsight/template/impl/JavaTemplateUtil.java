@@ -136,6 +136,7 @@ public class JavaTemplateUtil {
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) parent;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               ref.bindToElement(aClass);

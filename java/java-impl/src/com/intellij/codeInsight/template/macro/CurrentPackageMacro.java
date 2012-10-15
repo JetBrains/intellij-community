@@ -32,14 +32,17 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use Options | File Templates.
  */
 class CurrentPackageMacro extends Macro {
+  @Override
   public String getName() {
     return "currentPackage";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.current.package");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     Project project = context.getProject();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
@@ -47,6 +50,7 @@ class CurrentPackageMacro extends Macro {
     return new TextResult (((PsiJavaFile)file).getPackageName());
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }

@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -162,7 +163,7 @@ public class HighlightClassUtil {
       numOfClassesToFind = 1;
     }
     PsiManager manager = aClass.getManager();
-    Module module = ModuleUtil.findModuleForPsiElement(aClass);
+    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return null;
 
     PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));

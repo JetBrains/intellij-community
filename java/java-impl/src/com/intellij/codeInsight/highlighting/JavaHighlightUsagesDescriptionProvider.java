@@ -18,6 +18,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.lang.LangBundle;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,14 +41,14 @@ public class JavaHighlightUsagesDescriptionProvider implements ElementDescriptio
     }
     else if (element instanceof PsiMethod) {
       elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
-                                                                     PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                               PsiFormatUtil.SHOW_TYPE);
+                                               PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS |
+                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
+                                               PsiFormatUtilBase.SHOW_TYPE);
       elementName = LangBundle.message("java.terms.method") + " " + elementName;
     }
     else if (element instanceof PsiVariable) {
       elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
                                                  PsiSubstitutor.EMPTY);
       if (element instanceof PsiField) {
         elementName = LangBundle.message("java.terms.field") + " " + elementName;

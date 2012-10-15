@@ -25,6 +25,7 @@ public class JavaWhileUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.while"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiWhileStatementImpl // Don't use "e instanceof PsiWhileStatement" because JspWhileStatement intanceof PsiWhileStatement,
                                               // but we doesn't support unwrap JspWhileStatement.

@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
+  @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (PsiType.BOOLEAN != type) return false;
@@ -38,6 +39,7 @@ class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
     return true;
   }
 
+  @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -59,6 +61,7 @@ class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
     return new TextRange(range.getStartOffset(), range.getStartOffset());
   }
 
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.if.expression.template");
   }

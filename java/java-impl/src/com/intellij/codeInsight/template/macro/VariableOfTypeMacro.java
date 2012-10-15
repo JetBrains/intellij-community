@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,25 +35,30 @@ import java.util.Set;
 
 public class VariableOfTypeMacro extends Macro {
 
+  @Override
   public String getName() {
     return "variableOfType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.variable.of.type");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new JavaPsiElementResult(vars[0]);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
@@ -100,7 +106,7 @@ public class VariableOfTypeMacro extends Macro {
 
     PsiExpression[] expressions = MacroUtil.getStandardExpressionsOfType(place, type);
     ContainerUtil.addAll(array, expressions);
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   @Override

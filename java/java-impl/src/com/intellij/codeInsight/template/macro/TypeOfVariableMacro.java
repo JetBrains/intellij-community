@@ -24,19 +24,23 @@ import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeOfVariableMacro extends Macro {
+  @Override
   public String getName() {
     return "typeOfVariable";
   }
 
+  @Override
   public String getPresentableName() {
     return "typeOfVariable(VAR)";
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "A";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
 
@@ -59,6 +63,7 @@ public class TypeOfVariableMacro extends Macro {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }

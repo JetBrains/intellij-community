@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -69,7 +70,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     return isLanguageLevelAcceptable(project, module, myLevel);
   }
 
@@ -81,7 +82,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
     if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();

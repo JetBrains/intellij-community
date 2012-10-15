@@ -24,10 +24,12 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 
 public class GenerateSuperMethodCallAction extends BaseCodeInsightAction {
+  @Override
   protected CodeInsightActionHandler getHandler() {
     return new GenerateSuperMethodCallHandler();
   }
 
+  @Override
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return false;

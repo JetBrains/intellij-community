@@ -24,19 +24,23 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class MethodReturnTypeMacro extends Macro {
+  @Override
   public String getName() {
     return "methodReturnType";
   }
 
+  @Override
   public String getPresentableName() {
     return "methodReturnType()";
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull final Expression[] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){

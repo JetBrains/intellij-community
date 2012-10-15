@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
      else{
        final PsiFile fileCopy = (PsiFile)file.copy();
        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+         @Override
          public void run() {
            BlockSupport blockSupport = BlockSupport.getInstance(project);
            try{

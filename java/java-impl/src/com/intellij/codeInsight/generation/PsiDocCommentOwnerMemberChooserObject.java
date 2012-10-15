@@ -32,6 +32,7 @@ public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChoos
     return (PsiDocCommentOwner)getPsiElement();
   }
 
+  @Override
   protected SimpleTextAttributes getTextAttributes(final JTree tree) {
     return new SimpleTextAttributes(
         getPsiDocCommentOwner().isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,

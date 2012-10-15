@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -172,7 +173,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
 
         public PsiElement[] getVariants () {
-          return PsiUtilBase.toPsiElementArray(myResult);
+          return PsiUtilCore.toPsiElementArray(myResult);
         }
       }
 

@@ -36,10 +36,12 @@ public abstract class TemplateGenerationInfo extends GenerationInfoBase implemen
 
   protected abstract PsiTypeElement getTemplateElement(PsiMethod method);
 
+  @Override
   public PsiMethod getPsiMember() {
     return myElement.getElement();
   }
 
+  @Override
   public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     setElement((PsiMethod)GenerateMembersUtil.insert(aClass, myElement.getElement(), anchor, before));
   }

@@ -37,6 +37,7 @@ public class ExpressionLookupItem extends LookupItem<PsiExpression> implements T
     }
   }
 
+  @Override
   public PsiType getType() {
     return getObject().getType();
   }

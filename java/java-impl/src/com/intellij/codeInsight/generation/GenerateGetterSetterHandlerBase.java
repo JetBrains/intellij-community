@@ -40,6 +40,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   static {
     GenerateAccessorProviderRegistrar.registerProvider(new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
+      @Override
       @NotNull
       public Collection<EncapsulatableClassMember> fun(PsiClass s) {
         if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
@@ -72,6 +73,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return chooseMembers(allMembers, false, false, project, editor);
   }
 
+  @Override
   protected abstract String getNothingFoundMessage();
   protected abstract String getNothingAcceptedMessage();
 
@@ -80,6 +82,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return allMembers != null && allMembers.length != 0;
   }
 
+  @Override
   @Nullable
   protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);
@@ -87,6 +90,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       return null;
     }
     final List<EncapsulatableClassMember> members = ContainerUtil.findAll(list, new Condition<EncapsulatableClassMember>() {
+      @Override
       public boolean value(EncapsulatableClassMember member) {
         try {
           return generateMemberPrototypes(aClass, member).length > 0;

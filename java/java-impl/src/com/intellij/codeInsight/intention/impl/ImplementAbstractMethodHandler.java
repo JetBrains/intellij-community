@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
@@ -92,7 +93,7 @@ public class ImplementAbstractMethodHandler {
                   }
                 }
               }
-              result[0] = PsiUtilBase.toPsiElementArray(enumConstants);
+              result[0] = PsiUtilCore.toPsiElementArray(enumConstants);
             }
           }
         });

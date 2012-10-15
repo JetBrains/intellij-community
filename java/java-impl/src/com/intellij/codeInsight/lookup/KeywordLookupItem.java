@@ -48,6 +48,7 @@ public class KeywordLookupItem extends LookupItem<PsiKeyword> implements TypedLo
     presentation.setItemTextBold(true);
   }
 
+  @Override
   public PsiType getType() {
     return FilterUtil.getKeywordItemType(myPosition, getLookupString());
   }

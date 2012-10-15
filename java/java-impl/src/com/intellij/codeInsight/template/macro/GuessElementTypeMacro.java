@@ -33,25 +33,30 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class GuessElementTypeMacro extends Macro {
+  @Override
   public String getName() {
     return "guessElementType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.guess.element.type.of.container");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "A";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;

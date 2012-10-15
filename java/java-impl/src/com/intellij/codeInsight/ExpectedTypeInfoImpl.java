@@ -35,12 +35,14 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private final int dimCount;
 
+  @Override
   public int getKind() {
     return kind;
   }
 
   public int kind;
 
+  @Override
   public TailType getTailType() {
     return myTailType;
   }
@@ -82,6 +84,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.defaultType = defaultType;
   }
 
+  @Override
   public PsiMethod getCalledMethod() {
     return myCalledMethod;
   }
@@ -90,6 +93,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     myCalledMethod = calledMethod;
   }
 
+  @Override
   @NotNull
   public PsiType getType () {
     PsiType t = type;
@@ -99,6 +103,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return t;
   }
 
+  @Override
   @NotNull
   public PsiType getDefaultType () {
     PsiType t = defaultType;
@@ -108,6 +113,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return t;
   }
 
+  @Override
   public boolean isInsertExplicitTypeParams() {
     return myInsertExplicitTypeParams;
   }
@@ -141,6 +147,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return result;
   }
 
+  @Override
   public boolean equals(ExpectedTypeInfo obj) {
     return equals((Object)obj);
   }
@@ -150,6 +157,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "' dims='" + dimCount+ "']";
   }
 
+  @Override
   public ExpectedTypeInfo[] intersect(ExpectedTypeInfo info) {
     ExpectedTypeInfoImpl info1 = (ExpectedTypeInfoImpl)info;
     LOG.assertTrue(!(type instanceof PsiArrayType) && !(info1.type instanceof PsiArrayType));
@@ -205,6 +213,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return ExpectedTypeInfo.EMPTY_ARRAY;
   }
 
+  @Override
   public boolean isArrayTypeInfo () {
     return dimCount > 0;
   }

@@ -31,6 +31,7 @@ public class DefaultProblemFileHighlightFilter implements Condition<VirtualFile>
     myProject = project;
   }
 
+  @Override
   public boolean value(final VirtualFile file) {
     return FileIndexUtil.isJavaSourceFile(myProject, file)
       && !CompilerManager.getInstance(myProject).isExcludedFromCompilation(file);

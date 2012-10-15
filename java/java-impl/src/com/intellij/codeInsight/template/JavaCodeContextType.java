@@ -40,6 +40,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     super(id, presentableName, baseContextType);
   }
 
+  @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);

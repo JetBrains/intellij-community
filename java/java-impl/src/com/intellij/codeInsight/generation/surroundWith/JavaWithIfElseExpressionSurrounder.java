@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurrounder{
 
+  @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -51,6 +52,7 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
     return new TextRange(range.getStartOffset(), range.getStartOffset());
   }
 
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.ifelse.expression.template");
   }

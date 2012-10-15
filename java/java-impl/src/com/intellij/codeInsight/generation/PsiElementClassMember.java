@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 
 /**
  * @author peter
@@ -38,6 +39,7 @@ public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extend
     mySubstitutor = substitutor;
   }
 
+  @Override
   public T getElement() {
     return myPsiMember;
   }
@@ -50,9 +52,10 @@ public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extend
     mySubstitutor = substitutor;
   }
 
+  @Override
   public MemberChooserObject getParentNodeDelegate() {
     final PsiClass psiClass = getContainingClass();
-    final String text = PsiFormatUtil.formatClass(psiClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME);
+    final String text = PsiFormatUtil.formatClass(psiClass, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
     return new PsiDocCommentOwnerMemberChooserObject(psiClass, text, psiClass.getIcon(0));
   }
 

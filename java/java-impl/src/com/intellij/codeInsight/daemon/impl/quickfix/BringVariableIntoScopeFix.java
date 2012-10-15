@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +48,8 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   public String getText() {
     PsiLocalVariable variable = myOutOfScopeVariable;
 
-    String varText = variable == null ? "" : PsiFormatUtil.formatVariable(variable, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
+    String varText = variable == null ? "" : PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_NAME |
+                                                                                    PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
     return QuickFixBundle.message("bring.variable.to.scope.text", varText);
   }
 

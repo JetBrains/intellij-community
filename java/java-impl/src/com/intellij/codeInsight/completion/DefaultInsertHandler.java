@@ -39,6 +39,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
   };
 
+  @Override
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
 

@@ -55,6 +55,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     myInheritors = inheritors;
   }
 
+  @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
     final PsiElement context = parameters.getPosition();
 
@@ -144,6 +145,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     final List<PsiClassType> typeList = Collections.singletonList((PsiClassType)TypeConversionUtil.typeParameterErasure(
       referencedClass.getTypeParameters()[parameterIndex]));
     JavaInheritorsGetter.processInheritors(parameters, typeList, resultSet.getPrefixMatcher(), new Consumer<PsiType>() {
+      @Override
       public void consume(final PsiType type) {
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
         if (psiClass == null) return;

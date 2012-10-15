@@ -44,6 +44,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     mySmart = smart;
   }
 
+  @Override
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
 
@@ -210,8 +211,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     editor.getSelectionModel().removeSelection();
 
     return new Runnable() {
+      @Override
       public void run(){
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             final PsiAnonymousClass aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
@@ -224,6 +227,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
             }
             else{
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
                 public void run() {
                   try{
                     List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);

@@ -29,14 +29,17 @@ public class TextExpression extends Expression {
 
   public TextExpression(String string) { myString = string; }
 
+  @Override
   public Result calculateResult(ExpressionContext expressionContext) {
     return new TextResult(myString);
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext expressionContext) {
     return calculateResult(expressionContext);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext expressionContext) {
     return LookupElement.EMPTY_ARRAY;
   }

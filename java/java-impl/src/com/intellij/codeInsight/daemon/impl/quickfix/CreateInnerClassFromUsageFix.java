@@ -173,7 +173,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       LOG.assertTrue(extendsList != null);
       extendsList.add(superClass);
     }
-    CreateClassFromNewFix.setupGenericParameters(created, ref);
+    CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
     created = (PsiClass)aClass.add(created);
     ref.bindToElement(created);

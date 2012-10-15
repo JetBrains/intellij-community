@@ -44,10 +44,12 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return super.getAllAccepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
+  @Override
   public int getDefinitionSearchFlags() {
     return super.getDefinitionSearchFlags() | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
+  @Override
   public int getReferenceSearchFlags() {
     return super.getReferenceSearchFlags() | NEW_AS_CONSTRUCTOR;
   }
@@ -74,6 +76,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
+  @Override
   protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement) &&
            !isEnumConstantReference(element, referenceOrReferencedElement);
@@ -86,6 +89,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
            ((PsiMethod)referenceOrReferencedElement).isConstructor();
   }
 
+  @Override
   @Nullable
   protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
     PsiElement refElement = super.getReferenceOrReferencedElement(file, editor, flags, offset);
@@ -135,6 +139,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
 
+  @Override
   protected PsiElement getNamedElement(final PsiElement element) {
     PsiElement parent = element.getParent();
     if (element instanceof PsiIdentifier) {
@@ -194,6 +199,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
+  @Override
   public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
     if (parent instanceof PsiCallExpression) {
@@ -228,6 +234,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return super.getTargetCandidates(reference);
   }
 
+  @Override
   public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
     if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;

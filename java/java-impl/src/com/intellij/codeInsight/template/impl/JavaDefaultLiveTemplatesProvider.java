@@ -29,6 +29,7 @@ public class JavaDefaultLiveTemplatesProvider implements DefaultLiveTemplatesPro
     "/liveTemplates/surround"
   };
 
+  @Override
   public String[] getDefaultLiveTemplateFiles() {
     return DEFAULT_TEMPLATES;
   }

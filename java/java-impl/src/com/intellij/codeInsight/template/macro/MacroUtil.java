@@ -160,6 +160,7 @@ public class MacroUtil {
 
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
+      @Override
       public boolean execute(@NotNull PsiElement pe, ResolveState state) {
         if (pe instanceof PsiVariable) {
           //exclude variables that are initialized in 'place'
