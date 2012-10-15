@@ -600,13 +600,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     final PsiFile file = getPsiFile();
-    if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
+    boolean writableOk = file == null || WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file));
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
 
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+    if (!writableOk) {
+      doHide(false, true);
+      fireItemSelected(null, completionChar);
       return;
     }
 
