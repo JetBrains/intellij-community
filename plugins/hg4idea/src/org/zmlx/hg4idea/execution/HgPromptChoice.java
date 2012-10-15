@@ -19,7 +19,6 @@ package org.zmlx.hg4idea.execution;
 public class HgPromptChoice {
   private final String fullString;
   private final String representation;
-  private final String choiceChar;
   private final int chosenIndex;
   public static final int CLOSED_OPTION = -1;
   public static final HgPromptChoice ABORT = new HgPromptChoice(-1, "AbortChoice");
@@ -32,8 +31,6 @@ public class HgPromptChoice {
   HgPromptChoice(int chosenIndex, String fullString) {
     this.fullString = fullString;
     this.representation = fullString.replaceAll("&", "");
-    int index = fullString.indexOf("&");
-    this.choiceChar = String.valueOf(fullString.charAt(index + 1));
     this.chosenIndex = chosenIndex;
   }
 

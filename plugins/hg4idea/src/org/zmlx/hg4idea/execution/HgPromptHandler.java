@@ -16,9 +16,11 @@
 package org.zmlx.hg4idea.execution;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * HgPromptHandler is used by {@link HgCommandExecutor}, when you want to change the behavior of standart commands execution in the Mercurial.
+ * HgPromptHandler is used by {@link HgCommandExecutor}, when you want to change the behavior of
+ * standard commands execution in the Mercurial.
  *
  * @author Nadya Zabrodina
  */
@@ -27,21 +29,20 @@ public interface HgPromptHandler {
   /**
    * Checks you need to change the default behavior.
    *
-   * @param message standart output message from Mercurial
+   * @param message standard output message from Mercurial
    * @return
    */
-  boolean shouldHandle(String message);
+  boolean shouldHandle(@Nullable String message);
 
   /**
-   * Change default behavior in commands execution.
-   *
+   * Change default behavior in commands execution. Execute only if shouldHandle method return true.
    *
    * @param message       standard output message from Mercurial
    * @param choices       possible choices
    * @param defaultChoice
    * @return
    */
-  HgPromptChoice promptUser(final String message,
+  HgPromptChoice promptUser(@NotNull final String message,
                             @NotNull final HgPromptChoice[] choices,
                             @NotNull final HgPromptChoice defaultChoice);
 }
