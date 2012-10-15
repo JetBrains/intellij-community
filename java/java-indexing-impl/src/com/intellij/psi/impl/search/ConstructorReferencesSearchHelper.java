@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -8,6 +9,7 @@ import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 
@@ -72,6 +74,24 @@ public class ConstructorReferencesSearchHelper {
     };
 
     ReferencesSearch.searchOptimized(aClass, searchScope, ignoreAccessScope, collector, true, processor1);
+    if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
+      ReferencesSearch.search(aClass).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference reference) {
+          final PsiElement element = reference.getElement();
+          if (element != null) {
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiMethodReferenceExpression &&
+                ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+              if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+                processor.process(reference);
+              }
+            }
+          }
+          return true;
+        }
+      });
+    }
 
     final boolean constructorCanBeCalledImplicitly = constructor.getParameterList().getParametersCount() == 0;
     // search usages like "this(..)"
