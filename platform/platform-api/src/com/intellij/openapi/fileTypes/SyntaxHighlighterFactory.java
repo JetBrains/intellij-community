@@ -28,13 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class SyntaxHighlighterFactory {
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
-  private static final NotNullLazyValue<SyntaxHighlighterProvider> PROVIDER = new NotNullLazyValue<SyntaxHighlighterProvider>() {
-    @NotNull
-    @Override
-    protected SyntaxHighlighterProvider compute() {
-      return new FileTypeExtensionFactory<SyntaxHighlighterProvider>(SyntaxHighlighterProvider.class, "com.intellij.syntaxHighlighter").get();
-    }
-  };
 
   /**
    * Returns syntax highlighter for the given language.
@@ -58,7 +51,7 @@ public abstract class SyntaxHighlighterFactory {
    */
   @Nullable
   public static SyntaxHighlighter getSyntaxHighlighter(final FileType fileType, final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
-    return PROVIDER.getValue().create(fileType, project, virtualFile);
+    return SyntaxHighlighter.PROVIDER.create(fileType, project, virtualFile);
   }
 
   /**
