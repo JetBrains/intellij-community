@@ -20,15 +20,15 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlTagTextUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -77,7 +77,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
 
   @NotNull
   public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
-    final XmlTag tagFromText = createTagFromText("<a>" + XmlTagTextUtil.getCDATAQuote(s) + "</a>");
+    final XmlTag tagFromText = createTagFromText("<a>" + XmlTagUtil.getCDATAQuote(s) + "</a>");
     final XmlText[] textElements = tagFromText.getValue().getTextElements();
     if (textElements.length == 0) return (XmlText)ASTFactory.composite(XmlElementType.XML_TEXT);
     return textElements[0];
