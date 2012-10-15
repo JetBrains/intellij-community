@@ -147,7 +147,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
   }
 
-  RootModelImpl getRootModel() {
+  public RootModelImpl getRootModel() {
     return myRootModel;
   }
 
