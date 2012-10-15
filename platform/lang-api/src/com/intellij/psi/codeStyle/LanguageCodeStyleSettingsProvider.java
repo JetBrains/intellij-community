@@ -109,9 +109,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
-   * @return Array of predefined code styles (empty array by default).
+   * @deprecated use PredefinedCodeStyle extension point instead
    */
   @NotNull
+  @Deprecated
   public PredefinedCodeStyle[] getPredefinedCodeStyles() {
     return PredefinedCodeStyle.EMPTY_ARRAY;
   }
