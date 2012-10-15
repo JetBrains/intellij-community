@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.model.DomModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class DomModelImpl<T extends DomElement> {
+public class DomModelImpl<T extends DomElement> implements DomModel<T> {
 
   protected final DomFileElement<T> myMergedModel;
   protected final Set<XmlFile> myConfigFiles;
