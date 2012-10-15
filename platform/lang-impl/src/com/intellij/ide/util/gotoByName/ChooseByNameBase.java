@@ -863,9 +863,6 @@ public abstract class ChooseByNameBase {
       @Override
       public void dispose() {
         cancelCalcElementsThread();
-        if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
-        }
       }
     });
     myTextPopup.show(layeredPane);
