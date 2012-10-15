@@ -1,13 +1,11 @@
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -19,6 +17,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,20 +110,10 @@ public class FSOperations {
     return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively().exportedOnly().getModules();
   }
 
-  public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor processor) throws IOException {
-    //noinspection unchecked
-    processFilesToRecompile(context, chunk, Condition.TRUE, processor);
-  }
-
-  public static void processFilesToRecompile(final CompileContext context,
-                                             final ModuleChunk chunk,
-                                             final Condition<JpsModule> moduleFilter,
-                                             final FileProcessor processor) throws IOException {
+  public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
     final BuildFSState fsState = context.getProjectDescriptor().fsState;
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (moduleFilter.value(target.getModule())) {
-        fsState.processFilesToRecompile(context, target, processor);
-      }
+      fsState.processFilesToRecompile(context, target, processor);
     }
   }
 
