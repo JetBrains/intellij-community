@@ -240,12 +240,14 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     Collections.sort(params, new FieldParameterComparator(parameterList));
     
     int i = 0;
+    final HashMap<PsiField, String> usedFields = new HashMap<PsiField, String>();
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
       if (param instanceof PsiParameter) {
         newParamInfos[i++] = new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)param), param.getName(), paramType, param.getName());
       } else {
-        final String uniqueParameterName = getUniqueParameterName(parameters, param);
+        final String uniqueParameterName = getUniqueParameterName(parameters, param, usedFields);
+        usedFields.put((PsiField)param, uniqueParameterName);
         newParamInfos[i++] = new ParameterInfoImpl(-1, uniqueParameterName, paramType, uniqueParameterName);
       }
     }
@@ -265,7 +267,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return doCreate(project, editor, parameters, constructorPointer, resultParams, fields);
+        return doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields);
       }
     });
   }
@@ -279,7 +281,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     }, ", ") + "){}";
   }
 
-  private static String getUniqueParameterName(PsiParameter[] parameters, PsiVariable variable) {
+  private static String getUniqueParameterName(PsiParameter[] parameters, PsiVariable variable, HashMap<PsiField, String> usedNames) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(variable.getProject());
     final SuggestedNameInfo nameInfo = styleManager
       .suggestVariableName(VariableKind.PARAMETER, 
@@ -288,7 +290,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     String newName = nameInfo.names[0];
     int n = 1;
     while (true) {
-      if (isUnique(parameters, newName)) {
+      if (isUnique(parameters, newName, usedNames)) {
         break;
       }
       newName = nameInfo.names[0] + n++;
@@ -296,7 +298,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     return newName;
   }
 
-  private static boolean isUnique(PsiParameter[] params, String newName) {
+  private static boolean isUnique(PsiParameter[] params, String newName, HashMap<PsiField, String> usedNames) {
+    if (usedNames.containsValue(newName)) return false;
     for (PsiParameter parameter : params) {
       if (Comparing.strEqual(parameter.getName(), newName)) {
         return false;
@@ -306,7 +309,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static boolean doCreate(Project project, Editor editor, PsiParameter[] parameters, SmartPsiElementPointer constructorPointer,
-                                  ParameterInfoImpl[] parameterInfos, PsiField[] fields) {
+                                  ParameterInfoImpl[] parameterInfos, HashMap<PsiField, String> fields) {
     PsiMethod constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
@@ -316,16 +319,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
 
-      for (PsiField field : fields) {
-        final String defaultParamName = styleManager
-          .suggestVariableName(VariableKind.PARAMETER, styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD), null,
-                               field.getType()).names[0];
+      for (PsiField field : fields.keySet()) {
+        final String defaultParamName = fields.get(field);
         PsiParameter parameter = findParamByName(defaultParamName, newParameters);
         if (parameter == null) {
-          parameter = fields.length == 1 ? findParamByName(ChangeMethodSignatureFromUsageFix.getNewParameterNameByOldIndex(-1, parameterInfos), newParameters) : null;
-          if (parameter == null) {
-            continue;
-          }
+          continue;
         }
         notNull(project, field, parameter);
         AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
