@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
@@ -44,7 +46,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     assert language instanceof XMLLanguage:"Tag can be created only for xml language";
     FileType type = language.getAssociatedFileType();
     if (type == null) type = StdFileTypes.XML;
-    final XmlDocument document = createXmlDocument(text, "dummy."+ type.getDefaultExtension());
+    final XmlDocument document = createXmlDocument(text, "dummy."+ type.getDefaultExtension(), type);
     final XmlTag tag = document.getRootTag();
     if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
     return tag;
@@ -66,7 +68,8 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
       quoteChar = '"';
       value = StringUtil.replace(value, "\"", "&quot;");
     }
-    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml");
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml",
+                                                   XmlFileType.INSTANCE);
     XmlTag tag = document.getRootTag();
     assert tag != null;
     return tag.getAttributes()[0];
@@ -82,14 +85,14 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
 
   @NotNull
   public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
-    final XmlDocument document = createXmlDocument(text, "dummy.xhtml");
+    final XmlDocument document = createXmlDocument(text, "dummy.xhtml", XHtmlFileType.INSTANCE);
     final XmlTag tag = document.getRootTag();
     assert tag != null;
     return tag;
   }
 
-  private XmlDocument createXmlDocument(@NonNls final String text, @NonNls final String fileName) {
-    final XmlDocument document = ((XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText(fileName, text)).getDocument();
+  private XmlDocument createXmlDocument(@NonNls final String text, @NonNls final String fileName, FileType fileType) {
+    final XmlDocument document = ((XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text)).getDocument();
     assert document != null;
     return document;
   }
