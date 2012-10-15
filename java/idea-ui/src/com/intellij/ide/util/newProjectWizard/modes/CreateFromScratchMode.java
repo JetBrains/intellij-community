@@ -53,18 +53,30 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    final StepSequence sequence = new StepSequence();
-    sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, this));
+    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
+      myBuildersMap.put(builder.getBuilderId(), builder);
+    }
+    myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
+    return createSequence(context, modulesProvider, this);
+  }
+
+  static StepSequence createSequence(WizardContext context,
+                                     ModulesProvider modulesProvider,
+                                     WizardMode mode,
+                                     ModuleWizardStep... firstSteps) {
+    final StepSequence sequence = new StepSequence(firstSteps);
+    sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
     for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
       addModuleBuilder(builder, context, modulesProvider, sequence);
     }
-    myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
     return sequence;
   }
 
-  private void addModuleBuilder(ModuleBuilder builder, WizardContext context, ModulesProvider modulesProvider, StepSequence myStepSequence) {
+  private static void addModuleBuilder(ModuleBuilder builder,
+                                       WizardContext context,
+                                       ModulesProvider modulesProvider,
+                                       StepSequence myStepSequence) {
     final String id = builder.getBuilderId();
-    myBuildersMap.put(id, builder);
     for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
       myStepSequence.addSpecificStep(id, step);
     }
