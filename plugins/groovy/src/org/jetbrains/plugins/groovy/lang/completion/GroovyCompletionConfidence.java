@@ -108,6 +108,10 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
       return ThreeState.YES;
     }
 
+    if (psiElement().afterLeaf("def").accepts(contextElement)) {
+      return ThreeState.YES;
+    }
+
     return ThreeState.UNSURE;
   }
 }

@@ -289,6 +289,12 @@ foo(new <caret>)
     assert !lookup.focused
   }
 
+  public void testNoAutopopupAfterDef() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.groovy', 'def <caret>'
+    type 'a'
+    assert !lookup
+  }
 
 
 }
