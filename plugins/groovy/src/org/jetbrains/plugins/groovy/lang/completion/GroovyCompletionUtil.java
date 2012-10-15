@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -564,5 +565,16 @@ public class GroovyCompletionUtil {
     }
 
     return Collections.emptyList();
+  }
+
+  static boolean isNewStatementInScript(PsiElement context) {
+    final PsiElement leaf = getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null && isNewStatement(context, false)) {
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        return true;
+      }
+    }
+    return false;
   }
 }

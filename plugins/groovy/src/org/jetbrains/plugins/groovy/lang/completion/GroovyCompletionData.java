@@ -606,7 +606,9 @@ public class GroovyCompletionData {
   }
 
   private static boolean suggestModifiers(PsiElement context) {
-    if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context)) {
+    if (GroovyCompletionUtil.asSimpleVariable(context) ||
+        GroovyCompletionUtil.asTypedMethod(context) ||
+        GroovyCompletionUtil.isNewStatementInScript(context)) {
       return true;
     }
     if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false) &&
@@ -640,13 +642,6 @@ public class GroovyCompletionData {
     if (context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement)) {
       return true;
     }
-    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
-    if (leaf != null && GroovyCompletionUtil.isNewStatement(context, false)) {
-      PsiElement parent = leaf.getParent();
-      if (parent instanceof GroovyFile) {
-        return true;
-      }
-    }
     return contextParent instanceof GrExpression &&
            contextParent.getParent() instanceof GrApplicationStatement &&
            contextParent.getParent().getParent() instanceof GroovyFile &&
@@ -656,7 +651,8 @@ public class GroovyCompletionData {
   public static boolean suggestFinalDef(PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
         GroovyCompletionUtil.asTypedMethod(context) ||
-        GroovyCompletionUtil.asVariableInBlock(context)) {
+        GroovyCompletionUtil.asVariableInBlock(context) ||
+        GroovyCompletionUtil.isNewStatementInScript(context)) {
       return true;
     }
     if ((context.getParent() instanceof GrParameter &&
