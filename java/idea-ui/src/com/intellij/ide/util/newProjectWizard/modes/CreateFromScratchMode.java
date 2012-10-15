@@ -57,14 +57,13 @@ public class CreateFromScratchMode extends WizardMode {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
-    return createSequence(context, modulesProvider, this);
+    return addSteps(context, modulesProvider, this, new StepSequence());
   }
 
-  static StepSequence createSequence(WizardContext context,
-                                     ModulesProvider modulesProvider,
-                                     WizardMode mode,
-                                     ModuleWizardStep... firstSteps) {
-    final StepSequence sequence = new StepSequence(firstSteps);
+  static StepSequence addSteps(WizardContext context,
+                               ModulesProvider modulesProvider,
+                               WizardMode mode,
+                               StepSequence sequence) {
     sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
     for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
       addModuleBuilder(builder, context, modulesProvider, sequence);

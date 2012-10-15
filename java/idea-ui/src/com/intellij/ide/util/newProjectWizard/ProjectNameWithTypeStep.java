@@ -356,17 +356,23 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public void updateStep() {
     super.updateStep();
-    if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(getSelectedBuilderId());
-    } else {
-      mySequence.setType(null);
+    if (myHeader.isVisible()) {
+      if (myCreateModuleCb.isSelected()) {
+        mySequence.setType(getSelectedBuilderId());
+      } else {
+        mySequence.setType(null);
+      }
     }
   }
 
   public void updateDataModel() {
-    if (myCreateModuleCb.isSelected()) {
-      mySequence.setType(getSelectedBuilderId());
-      super.updateDataModel();
+
+    if (myHeader.isVisible()) {
+      mySequence.setType(myCreateModuleCb.isSelected() ? getSelectedBuilderId() : null);
+    }
+    super.updateDataModel();
+
+    if (myHeader.isVisible() && myCreateModuleCb.isSelected()) {
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
       final String moduleName = getModuleName();
@@ -374,9 +380,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       builder.setModuleFilePath(
         FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       builder.setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
-    } else {
-      mySequence.setType(null);
-      super.updateDataModel();
     }
   }
 
