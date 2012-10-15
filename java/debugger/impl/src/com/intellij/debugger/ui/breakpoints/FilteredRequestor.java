@@ -48,6 +48,7 @@ import java.util.List;
 public abstract class FilteredRequestor implements LocatableEventRequestor, JDOMExternalizable {
 
   public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
+  public boolean  SUSPEND = true;
 
   public boolean COUNT_FILTER_ENABLED     = false;
   public int COUNT_FILTER = 0;
@@ -82,7 +83,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   }
 
   public String getSuspendPolicy() {
-    return SUSPEND_POLICY;
+    return SUSPEND? SUSPEND_POLICY : DebuggerSettings.SUSPEND_NONE;
   }
 
   /**
@@ -122,6 +123,10 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
+    if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) { // compatibility with older format
+      SUSPEND = false;
+      SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
+    }
     String condition = JDOMExternalizerUtil.readField(parentNode, CONDITION_OPTION_NAME);
     if (condition != null) {
       setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));

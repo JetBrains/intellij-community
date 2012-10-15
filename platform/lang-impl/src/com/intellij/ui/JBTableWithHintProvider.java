@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.table.JBTable;
 
@@ -26,7 +25,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
-import java.util.Collection;
 
 public abstract class JBTableWithHintProvider extends JBTable {
   private JBPopup myHint;
@@ -46,9 +44,10 @@ public abstract class JBTableWithHintProvider extends JBTable {
         if (getClientProperty(PopupChooserBuilder.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
 
           final int selected = ((ListSelectionModel)e.getSource()).getLeadSelectionIndex();
-          if (selected == -1) return;
+          int rowCount = getRowCount();
+          if (selected == -1 || rowCount == 0) return;
 
-          final PsiElement element = getPsiElementForHint(getValueAt(selected, 0));
+          PsiElement element = getPsiElementForHint(getValueAt(Math.min(selected, rowCount -1), 0));
           if (element != null && element.isValid()) {
             updateHint(element);
           }

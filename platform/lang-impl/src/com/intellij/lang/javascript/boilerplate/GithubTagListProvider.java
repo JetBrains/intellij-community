@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +63,13 @@ public class GithubTagListProvider {
           File cacheFile = getCacheFile();
           try {
             DownloadUtil.downloadAtomically(indicator, url, cacheFile, myUserName, myRepositoryName);
-            ImmutableSet<GithubTagInfo> infos = readTagsFromFile(cacheFile);
+            final ImmutableSet<GithubTagInfo> infos = readTagsFromFile(cacheFile);
             peer.setErrorMessage(null);
-            peer.updateTagList(infos);
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                peer.updateTagList(infos);
+              }
+            });
           }
           catch (IOException e) {
             peer.setErrorMessage("Can not fetch tag list from '" + url + "'!");

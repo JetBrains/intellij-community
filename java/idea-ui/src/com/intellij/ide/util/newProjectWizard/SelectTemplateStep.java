@@ -76,13 +76,16 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private JPanel myDescriptionPanel;
 
   private final WizardContext myContext;
+  private final StepSequence mySequence;
+
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myBuilder;
   private MinusculeMatcher[] myMatchers;
 
-  public SelectTemplateStep(WizardContext context) {
+  public SelectTemplateStep(WizardContext context, StepSequence sequence) {
 
     myContext = context;
+    mySequence = sequence;
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
@@ -242,6 +245,12 @@ public class SelectTemplateStep extends ModuleWizardStep {
   @Override
   public void updateStep() {
     myBuilder.queueUpdate();
+    setModuleType();
+  }
+
+  private void setModuleType() {
+    ProjectTemplate template = getSelectedTemplate();
+    mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
   }
 
   @Override
@@ -342,6 +351,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
+    setModuleType();
   }
 
   @Override

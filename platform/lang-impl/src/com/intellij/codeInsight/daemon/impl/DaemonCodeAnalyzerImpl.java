@@ -381,9 +381,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private int myDisableCount = 0;
   @Override
-  public void disableUpdateByTimer(Disposable parentDisposable) {
+  public void disableUpdateByTimer(@NotNull Disposable parentDisposable) {
     setUpdateByTimerEnabled(false);
     myDisableCount++;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {

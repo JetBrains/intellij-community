@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +40,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -64,8 +62,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -110,7 +106,7 @@ public abstract class ChooseByNameBase {
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
-  private DefaultListModel myListModel;
+  private MyListModel<Object> myListModel;
   private List<Pair<String, Integer>> myHistory;
   private List<Pair<String, Integer>> myFuture;
 
@@ -610,7 +606,7 @@ public abstract class ChooseByNameBase {
       }
     });
 
-    myListModel = new DefaultListModel();
+    myListModel = new MyListModel<Object>();
     myList = new JBList(myListModel);
     myList.setFocusable(false);
     myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
@@ -804,6 +800,7 @@ public abstract class ChooseByNameBase {
       }
     }
     myNames[index] = myModel.getNames(checkboxState);
+    assert myNames[index] != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
 
     if (window != null) {
       window.setCursor(Cursor.getDefaultCursor());
@@ -862,6 +859,12 @@ public abstract class ChooseByNameBase {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }
 
+    Disposer.register(myTextPopup, new Disposable() {
+      @Override
+      public void dispose() {
+        cancelCalcElementsThread();
+      }
+    });
     myTextPopup.show(layeredPane);
   }
 
@@ -949,8 +952,10 @@ public abstract class ChooseByNameBase {
               ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
             }
 
-            myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
-            ApplicationManager.getApplication().executeOnPooledThread(myCalcElementsThread);
+            CalcElementsThread calcElementsThread =
+              new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
+            myCalcElementsThread = calcElementsThread;
+            ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
           }
         };
 
@@ -969,8 +974,9 @@ public abstract class ChooseByNameBase {
   }
 
   private void cancelCalcElementsThread() {
-    if (myCalcElementsThread != null) {
-      myCalcElementsThread.cancel();
+    CalcElementsThread calcElementsThread = myCalcElementsThread;
+    if (calcElementsThread != null) {
+      calcElementsThread.cancel();
       myCalcElementsThread = null;
     }
   }
@@ -989,45 +995,14 @@ public abstract class ChooseByNameBase {
 
     Object[] oldElements = myListModel.toArray();
     Object[] newElements = elements.toArray();
-    Diff.Change change = null;
-    try {
-      change = Diff.buildChanges(oldElements, newElements);
-    }
-    catch (FilesTooBigForDiffException e) {
-      // should not occur
-    }
-
-    if (change == null) {
+    List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
+    if (commands == null) {
       myListUpdater.doPostponedOkIfNeeded();
-      return; // Nothing changed
-    }
-
-    List<Cmd> commands = new ArrayList<Cmd>();
-    int inserted = 0;
-    int deleted = 0;
-    while (change != null) {
-      if (change.deleted > 0) {
-        final int start = change.line0 + inserted - deleted;
-        commands.add(new RemoveCmd(start, start + change.deleted - 1));
-      }
-
-      if (change.inserted > 0) {
-        for (int i = 0; i < change.inserted; i++) {
-          commands.add(new InsertCmd(change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
-        }
-      }
-
-      deleted += change.deleted;
-      inserted += change.inserted;
-      change = change.link;
+      return;
     }
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
-    if (!commands.isEmpty()) {
-      showList();
-      myListUpdater.appendToModel(commands, pos);
-    }
-    else {
+    if (commands.isEmpty()) {
       if (pos <= 0) {
         pos = detectBestStatisticalPosition();
       }
@@ -1036,6 +1011,10 @@ public abstract class ChooseByNameBase {
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
       updateDocPosition();
+    }
+    else {
+      showList();
+      myListUpdater.appendToModel(commands, pos);
     }
   }
 
@@ -1077,41 +1056,21 @@ public abstract class ChooseByNameBase {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + myTextField.getText();
   }
 
-  private interface Cmd {
-    void apply();
-  }
-
-  private class RemoveCmd implements Cmd {
-    private final int start;
-    private final int end;
-
-    private RemoveCmd(final int start, final int end) {
-      this.start = start;
-      this.end = end;
-    }
-
+  private static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
     @Override
-    public void apply() {
-      myListModel.removeRange(start, end);
-    }
-  }
-
-  private class InsertCmd implements Cmd {
-    private final int idx;
-    private final Object element;
-
-    private InsertCmd(final int idx, final Object element) {
-      this.idx = idx;
-      this.element = element;
-    }
-
-    @Override
-    public void apply() {
-      if (idx < myListModel.size()) {
-        myListModel.add(idx, element);
+    public void addToModel(int idx, T element) {
+      if (idx < size()) {
+        add(idx, element);
       }
       else {
-        myListModel.addElement(element);
+        addElement(element);
+      }
+    }
+
+    @Override
+    public void removeRangeFromModel(int start, int end) {
+      if (start < size()) {
+        removeRange(start, Math.min(end, size()));
       }
     }
   }
@@ -1120,14 +1079,14 @@ public abstract class ChooseByNameBase {
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private static final int DELAY = 10;
     private static final int MAX_BLOCKING_TIME = 30;
-    private final List<Cmd> myCommands = Collections.synchronizedList(new ArrayList<Cmd>());
+    private final List<ModelDiff.Cmd> myCommands = Collections.synchronizedList(new ArrayList<ModelDiff.Cmd>());
 
     public void cancelAll() {
       myCommands.clear();
       myAlarm.cancelAllRequests();
     }
 
-    public void appendToModel(final List<Cmd> commands, final int selectionPos) {
+    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, final int selectionPos) {
       myAlarm.cancelAllRequests();
       myCommands.addAll(commands);
 
@@ -1142,7 +1101,7 @@ public abstract class ChooseByNameBase {
           }
           final long startTime = System.currentTimeMillis();
           while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
-            final Cmd cmd = myCommands.remove(0);
+            final ModelDiff.Cmd cmd = myCommands.remove(0);
             cmd.apply();
           }
 

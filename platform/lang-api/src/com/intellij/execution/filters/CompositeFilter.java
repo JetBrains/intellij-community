@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import java.util.List;
 
 public class CompositeFilter implements Filter, FilterMixin {
   private final List<Filter> myFilters = new ArrayList<Filter>();
+  private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
   private boolean myIsAnyHeavy;
   private final DumbService myDumbService;
 
@@ -42,7 +44,10 @@ public class CompositeFilter implements Filter, FilterMixin {
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
+        long t0 = System.currentTimeMillis();
         final Result info = filter.applyFilter(line, entireLength);
+        t0 = (System.currentTimeMillis() - t0);
+        if (t0 > 1000) LOG.error("applyFilter " + filter.getClass().getSimpleName() + " took" + t0 + "ms on '''" + line + "'''");
         if (info != null) {
           return info;
         }

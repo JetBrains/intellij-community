@@ -257,24 +257,10 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(JTree tree) {
-    applyExpanded(getFacade(tree), tree.getModel().getRoot());
+    applyTo(tree, (DefaultMutableTreeNode)tree.getModel().getRoot());
   }
 
-  private void applyExpanded(final TreeFacade tree, final Object root) {
-    tree.getInitialized().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        tree.batch(new Progressive() {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            _applyExpanded(tree, root, indicator);
-          }
-        });
-      }
-    });
-  }
-
-  private void _applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
+  private void applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
     indicator.checkCanceled();
 
     if (!(root instanceof DefaultMutableTreeNode)) {
@@ -290,9 +276,20 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
-    applyExpanded(getFacade(tree), node);
+    final TreeFacade facade = getFacade(tree);
+    ActionCallback callback = facade.getInitialized().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        facade.batch(new Progressive() {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            applyExpanded(facade, node, indicator);
+          }
+        });
+      }
+    });
     if (tree.getSelectionCount() == 0) {
-      getFacade(tree).getInitialized().doWhenDone(new Runnable() {
+      callback.doWhenDone(new Runnable() {
         @Override
         public void run() {
           applySelected(tree, node);
@@ -301,7 +298,6 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  // todo
   private void applySelected(final JTree tree, final DefaultMutableTreeNode node) {
     TreeUtil.unselect(tree, node);
     List<TreePath> selectionPaths = new ArrayList<TreePath>();
