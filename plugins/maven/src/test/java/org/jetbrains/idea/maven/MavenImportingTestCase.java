@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.execution.*;
@@ -49,6 +50,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -522,6 +524,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
 
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -531,10 +535,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
             //assertFalse(aborted);
             //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
             //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
+            semaphore.up();
           }
         });
       }
     });
+    while (!semaphore.waitFor(100)) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
   }
 
   private static String collectMessages(CompileContext compileContext, CompilerMessageCategory messageType) {
