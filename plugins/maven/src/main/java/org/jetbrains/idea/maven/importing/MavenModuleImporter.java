@@ -19,15 +19,13 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -41,14 +39,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class MavenModuleImporter {
 
@@ -352,7 +355,7 @@ public class MavenModuleImporter {
           defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
           defaultMavenProfile.setEnabled(true);
           defaultMavenProfile.setObtainProcessorsFromClasspath(true);
-          defaultMavenProfile.setGeneratedSourcesDirectoryName("target/generated-sources/annotations");
+          defaultMavenProfile.setGeneratedSourcesDirectoryName("target/generated-sources/annotations", false);
           compilerConfiguration.addModuleProcessorProfile(defaultMavenProfile);
         }
 
@@ -375,7 +378,7 @@ public class MavenModuleImporter {
           compilerConfiguration.addModuleProcessorProfile(moduleProfile);
         }
 
-        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory);
+        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
 
         moduleProfile.clearProcessorOptions();
         for (Map.Entry<String, String> entry : options.entrySet()) {

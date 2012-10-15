@@ -45,7 +45,10 @@ public class AnnotationProcessorProfileSerializer {
     profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null);
+    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null, false);
+
+    final Element srcTestOutput = element.getChild("sourceTestOutputDir");
+    profile.setGeneratedSourcesDirectoryName(srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null, true);
 
     profile.clearProcessorOptions();
     for (Object optionElement : element.getChildren(OPTION)) {
@@ -94,9 +97,13 @@ public class AnnotationProcessorProfileSerializer {
     element.setAttribute(NAME, profile.getName());
     element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
 
-    final String srcDirName = profile.getGeneratedSourcesDirectoryName();
+    final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (srcDirName != null) {
       addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
+    }
+    final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
+    if (testSrcDirName != null) {
+      addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
     }
 
     final Map<String, String> options = profile.getProcessorOptions();

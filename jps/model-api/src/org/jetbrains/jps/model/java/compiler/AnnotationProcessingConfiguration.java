@@ -32,7 +32,7 @@ public interface AnnotationProcessingConfiguration {
   String getProcessorPath();
 
   @Nullable
-  String getGeneratedSourcesDirectoryName();
+  String getGeneratedSourcesDirectoryName(boolean forTests);
 
   @NotNull
   Set<String> getProcessors();

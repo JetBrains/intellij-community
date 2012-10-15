@@ -22,7 +22,7 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
 
   void setObtainProcessorsFromClasspath(boolean value);
 
-  void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName);
+  void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName, boolean forTests);
 
   @NotNull
   Set<String> getModuleNames();

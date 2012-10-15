@@ -216,7 +216,7 @@ public class CompilerPaths {
   public static String getAnnotationProcessorsGenerationPath(Module module) {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(module.getProject());
 
-    final String sourceDirName = config.getAnnotationProcessingConfiguration(module).getGeneratedSourcesDirectoryName();
+    final String sourceDirName = config.getAnnotationProcessingConfiguration(module).getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.isEmpty(sourceDirName)) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {

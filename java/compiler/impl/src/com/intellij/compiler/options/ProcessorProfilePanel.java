@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.options;
 
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,7 +54,8 @@ public class ProcessorProfilePanel extends JPanel {
   private JRadioButton myRbClasspath;
   private JRadioButton myRbProcessorsPath;
   private TextFieldWithBrowseButton myProcessorPathField;
-  private JTextField myGeneratedSourcesDirNameField;
+  private JTextField myGeneratedProductionDirField;
+  private JTextField myGeneratedTestsDirField;
   private ProcessorTableModel myProcessorsModel;
   private JCheckBox myCbEnableProcessing;
   private JBTable myProcessorTable;
@@ -109,8 +110,8 @@ public class ProcessorProfilePanel extends JPanel {
     myOptionsPanel = createTablePanel(myOptionsTable);
     optionsTablePanel.add(myOptionsPanel, BorderLayout.CENTER);
 
-    myGeneratedSourcesDirNameField = new JTextField();
-
+    myGeneratedProductionDirField = new JTextField();
+    myGeneratedTestsDirField = new JTextField();
 
     final JLabel warning = new JLabel("<html>WARNING!<br>" +
                                               /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
@@ -133,17 +134,22 @@ public class ProcessorProfilePanel extends JPanel {
     add(noteMessage,
         new GridBagConstraints(0, 3, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
 
-    add(new JLabel("Directory name:"),
+    add(new JLabel("Production sources directory:"),
         new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
-    add(myGeneratedSourcesDirNameField,
+    add(myGeneratedProductionDirField,
         new GridBagConstraints(1, 4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
 
+    add(new JLabel("Test sources directory:"),
+        new GridBagConstraints(0, 5, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    add(myGeneratedTestsDirField,
+        new GridBagConstraints(1, 5, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+
     add(processorTablePanel,
-        new GridBagConstraints(0, 5, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
-    add(optionsTablePanel,
         new GridBagConstraints(0, 6, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
+    add(optionsTablePanel,
+        new GridBagConstraints(0, 7, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
     add(warning,
-        new GridBagConstraints(0, 7, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+        new GridBagConstraints(0, 8, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
 
     myRbClasspath.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
@@ -175,8 +181,10 @@ public class ProcessorProfilePanel extends JPanel {
     (config.isObtainProcessorsFromClasspath()? myRbClasspath : myRbProcessorsPath).setSelected(true);
     myProcessorPathField.setText(FileUtil.toSystemDependentName(config.getProcessorPath()));
 
-    final String srcDirName = config.getGeneratedSourcesDirectoryName();
-    myGeneratedSourcesDirNameField.setText(srcDirName != null? srcDirName.trim() : "");
+    final String productionDirName = config.getGeneratedSourcesDirectoryName(false);
+    myGeneratedProductionDirField.setText(productionDirName != null? productionDirName.trim() : "");
+    final String testsDirName = config.getGeneratedSourcesDirectoryName(true);
+    myGeneratedTestsDirField.setText(testsDirName != null? testsDirName.trim() : "");
     myProcessorsModel.setProcessors(config.getProcessors());
     myOptionsModel.setOptions(config.getProcessorOptions());
 
@@ -187,9 +195,11 @@ public class ProcessorProfilePanel extends JPanel {
     profile.setEnabled(myCbEnableProcessing.isSelected());
     profile.setObtainProcessorsFromClasspath(myRbClasspath.isSelected());
     profile.setProcessorPath(myProcessorPathField.getText().trim());
-    final String dirName = myGeneratedSourcesDirNameField.getText().trim();
 
-    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(dirName)? null : dirName);
+    final String productionDir = myGeneratedProductionDirField.getText().trim();
+    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(productionDir)? null : productionDir, false);
+    final String testsDir = myGeneratedTestsDirField.getText().trim();
+    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(testsDir)? null : testsDir, true);
 
     profile.clearProcessors();
     for (String processor : myProcessorsModel.getProcessors()) {
@@ -228,7 +238,8 @@ public class ProcessorProfilePanel extends JPanel {
     myProcessorPathField.setEnabled(enabled && useProcessorpath);
     updateTable(myProcessorPanel, myProcessorTable, enabled);
     updateTable(myOptionsPanel, myOptionsTable, enabled);
-    myGeneratedSourcesDirNameField.setEnabled(enabled);
+    myGeneratedProductionDirField.setEnabled(enabled);
+    myGeneratedTestsDirField.setEnabled(enabled);
   }
 
   private static void updateTable(final JPanel tablePanel, final JBTable table, boolean enabled) {

@@ -33,7 +33,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   private final Set<String> myProcessors = new HashSet<String>(); // empty list means all discovered
   private final Map<String, String> myProcessorOptions = new HashMap<String, String>(); // key=value map of options
   @Nullable
-  private String myGeneratedSourcesDirectoryName = null; // null means 'auto'
+  private String myGeneratedProductionDirectoryName = null; // null means 'auto'
+  private String myGeneratedTestsDirectoryName = null; // null means 'auto'
   private final Set<String> myModuleNames = new HashSet<String>();
 
   public ProcessorConfigProfileImpl(String name) {
@@ -54,7 +55,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     myProcessors.addAll(other.getProcessors());
     myProcessorOptions.clear();
     myProcessorOptions.putAll(other.getProcessorOptions());
-    myGeneratedSourcesDirectoryName = other.getGeneratedSourcesDirectoryName();
+    myGeneratedProductionDirectoryName = other.getGeneratedSourcesDirectoryName(false);
+    myGeneratedTestsDirectoryName = other.getGeneratedSourcesDirectoryName(true);
     myModuleNames.clear();
     myModuleNames.addAll(other.getModuleNames());
   }
@@ -102,13 +104,18 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @Override
   @Nullable
-  public String getGeneratedSourcesDirectoryName() {
-    return myGeneratedSourcesDirectoryName;
+  public String getGeneratedSourcesDirectoryName(boolean forTests) {
+    return forTests? myGeneratedTestsDirectoryName : myGeneratedProductionDirectoryName;
   }
 
   @Override
-  public void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName) {
-    myGeneratedSourcesDirectoryName = generatedSourcesDirectoryName;
+  public void setGeneratedSourcesDirectoryName(@Nullable String name, boolean forTests) {
+    if (forTests) {
+      myGeneratedTestsDirectoryName = name;
+    }
+    else {
+      myGeneratedProductionDirectoryName = name;
+    }
   }
 
   @Override
@@ -194,9 +201,14 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
     if (myEnabled != profile.myEnabled) return false;
     if (myObtainProcessorsFromClasspath != profile.myObtainProcessorsFromClasspath) return false;
-    if (myGeneratedSourcesDirectoryName != null
-        ? !myGeneratedSourcesDirectoryName.equals(profile.myGeneratedSourcesDirectoryName)
-        : profile.myGeneratedSourcesDirectoryName != null) {
+    if (myGeneratedProductionDirectoryName != null
+        ? !myGeneratedProductionDirectoryName.equals(profile.myGeneratedProductionDirectoryName)
+        : profile.myGeneratedProductionDirectoryName != null) {
+      return false;
+    }
+    if (myGeneratedTestsDirectoryName != null
+        ? !myGeneratedTestsDirectoryName.equals(profile.myGeneratedTestsDirectoryName)
+        : profile.myGeneratedTestsDirectoryName != null) {
       return false;
     }
     if (!myModuleNames.equals(profile.myModuleNames)) return false;
@@ -216,7 +228,8 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     result = 31 * result + (myProcessorPath != null ? myProcessorPath.hashCode() : 0);
     result = 31 * result + myProcessors.hashCode();
     result = 31 * result + myProcessorOptions.hashCode();
-    result = 31 * result + (myGeneratedSourcesDirectoryName != null ? myGeneratedSourcesDirectoryName.hashCode() : 0);
+    result = 31 * result + (myGeneratedProductionDirectoryName != null ? myGeneratedProductionDirectoryName.hashCode() : 0);
+    result = 31 * result + (myGeneratedTestsDirectoryName != null ? myGeneratedTestsDirectoryName.hashCode() : 0);
     result = 31 * result + myModuleNames.hashCode();
     return result;
   }

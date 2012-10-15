@@ -759,7 +759,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       final ProcessorConfigProfile profile = new ProcessorConfigProfileImpl(myDefaultProcessorsProfile);
       profile.setName("Profile" + (++profileIndex));
       profile.setEnabled(isEnabled);
-      profile.setGeneratedSourcesDirectoryName(dirName);
+      profile.setGeneratedSourcesDirectoryName(dirName, false);
       for (String moduleName : entry.getValue()) {
         profile.addModuleName(moduleName);
       }

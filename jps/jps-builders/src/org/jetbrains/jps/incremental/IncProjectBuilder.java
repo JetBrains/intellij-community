@@ -363,12 +363,14 @@ public class IncProjectBuilder {
       }
     }
 
-    final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
+    final Set<File> annotationOutputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY); // separate collection because no root intersection checks needed for annotation generated sources
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (ModuleBuildTarget target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
         if (profile.isEnabled()) {
-          File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName());
+          final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(
+            target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName(target.isTests())
+          );
           if (annotationOut != null) {
             annotationOutputs.add(annotationOut);
           }
