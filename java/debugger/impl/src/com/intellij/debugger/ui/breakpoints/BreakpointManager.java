@@ -34,7 +34,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.openapi.application.ApplicationManager;
@@ -318,7 +317,7 @@ public class BreakpointManager implements JDOMExternalizable {
                     String text = selection != null ? selection : DebuggerBundle.message("breakpoint.log.message",
                                                                                                breakpoint.getDisplayName());
                     breakpoint.setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text));
-                    breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
+                    breakpoint.SUSPEND = false;
 
                     DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
                       .createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);

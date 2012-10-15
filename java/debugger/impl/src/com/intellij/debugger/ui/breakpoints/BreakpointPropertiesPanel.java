@@ -51,7 +51,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointChooser;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointNoneItem;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,9 +100,9 @@ public abstract class BreakpointPropertiesPanel {
   private JPanel mySpecialBoxPanel;
   private PsiClass myBreakpointPsiClass;
 
-  private JRadioButton mySuspendThreadRadio;
-  private JRadioButton mySuspendAllRadio;
-  private JBCheckBox mySuspendJBCheckBox;
+  private JRadioButton myRbSuspendThread;
+  private JRadioButton myRbSuspendAll;
+  private JBCheckBox myCbSuspend;
   private JButton myMakeDefaultButton;
 
   private JRadioButton myDisableAgainRadio;
@@ -119,8 +118,7 @@ public abstract class BreakpointPropertiesPanel {
   private JBCheckBox myConditionCheckbox;
 
   ButtonGroup mySuspendPolicyGroup;
-  @NonNls public static final String CONTROL_LOG_MESSAGE = "logMessage";
-  private static final int MAX_COMBO_WIDTH = 300;
+  public static final String CONTROL_LOG_MESSAGE = "logMessage";
   private final FixedSizeButton myConditionMagnifierButton;
   private boolean myMoreOptionsVisible = true;
   private Breakpoint myBreakpoint;
@@ -152,10 +150,6 @@ public abstract class BreakpointPropertiesPanel {
         }
       }
     };
-  }
-
-  public DetailView getDetailView() {
-    return myDetailView;
   }
 
   public interface Delegate {
@@ -233,8 +227,8 @@ public abstract class BreakpointPropertiesPanel {
     myCompact = compact;
 
     mySuspendPolicyGroup = new ButtonGroup();
-    mySuspendPolicyGroup.add(mySuspendAllRadio);
-    mySuspendPolicyGroup.add(mySuspendThreadRadio);
+    mySuspendPolicyGroup.add(myRbSuspendAll);
+    mySuspendPolicyGroup.add(myRbSuspendThread);
 
     updateSuspendPolicyRbFont();
     final ItemListener suspendPolicyChangeListener = new ItemListener() {
@@ -244,17 +238,18 @@ public abstract class BreakpointPropertiesPanel {
       }
     };
 
-    mySuspendJBCheckBox.addActionListener(new ActionListener() {
+    myCbSuspend.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
-        mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+        final boolean enabled = myCbSuspend.isSelected();
+        myRbSuspendAll.setEnabled(enabled);
+        myRbSuspendThread.setEnabled(enabled);
       }
     });
 
 
-    mySuspendAllRadio.addItemListener(suspendPolicyChangeListener);
-    mySuspendThreadRadio.addItemListener(suspendPolicyChangeListener);
+    myRbSuspendAll.addItemListener(suspendPolicyChangeListener);
+    myRbSuspendThread.addItemListener(suspendPolicyChangeListener);
     myConditionCheckbox.addItemListener(suspendPolicyChangeListener);
 
     myMakeDefaultButton.addActionListener(new ActionListener() {
@@ -264,10 +259,10 @@ public abstract class BreakpointPropertiesPanel {
         breakpointManager.setBreakpointDefaults(breakpointCategory, new BreakpointDefaults(suspendPolicy, myConditionCheckbox.isSelected()));
         updateSuspendPolicyRbFont();
         if (DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy)) {
-          mySuspendThreadRadio.requestFocus();
+          myRbSuspendThread.requestFocus();
         }
         else {
-          mySuspendAllRadio.requestFocus();
+          myRbSuspendAll.requestFocus();
         }
         myMakeDefaultButton.setEnabled(false);
       }
@@ -380,7 +375,7 @@ public abstract class BreakpointPropertiesPanel {
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myConditionCheckbox, myConditionCombo);
 
-    IJSwingUtilities.adjustComponentsOnMac(mySuspendJBCheckBox);
+    IJSwingUtilities.adjustComponentsOnMac(myCbSuspend);
     IJSwingUtilities.adjustComponentsOnMac(myLogExpressionCheckBox);
     IJSwingUtilities.adjustComponentsOnMac(myLogMessageCheckBox);
   }
@@ -415,19 +410,12 @@ public abstract class BreakpointPropertiesPanel {
           return;
         }
       }
-      getBreakpointManager(myProject).addBreakpointRule(new EnableBreakpointRule(getBreakpointManager(myProject),
-                                                                                 masterBreakpoint,
-                                                                                 myBreakpoint,
-                                                                                 selected));
+      getBreakpointManager(myProject).addBreakpointRule(new EnableBreakpointRule(getBreakpointManager(myProject), masterBreakpoint, myBreakpoint, selected));
     }
-
   }
 
   private String getSelectedSuspendPolicy() {
-    if (!mySuspendJBCheckBox.isSelected()) {
-      return DebuggerSettings.SUSPEND_NONE;
-    }
-    if (mySuspendThreadRadio.isSelected()) {
+    if (myRbSuspendThread.isSelected()) {
       return DebuggerSettings.SUSPEND_THREAD;
     }
     return DebuggerSettings.SUSPEND_ALL;
@@ -436,11 +424,11 @@ public abstract class BreakpointPropertiesPanel {
   private void updateSuspendPolicyRbFont() {
     final String defPolicy = getBreakpointManager(myProject).getBreakpointDefaults(myBreakpointCategory).getSuspendPolicy();
     
-    final Font font = mySuspendAllRadio.getFont().deriveFont(Font.PLAIN);
+    final Font font = myRbSuspendAll.getFont().deriveFont(Font.PLAIN);
     final Font boldFont = font.deriveFont(Font.BOLD);
     
-    mySuspendAllRadio.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
-    mySuspendThreadRadio.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
+    myRbSuspendAll.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
+    myRbSuspendThread.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
   }
 
   protected ClassFilter createClassConditionFilter() {
@@ -491,32 +479,32 @@ public abstract class BreakpointPropertiesPanel {
 
     myConditionCombo.setContext(context);
 
-    mySuspendJBCheckBox.setSelected(!breakpoint.SUSPEND_POLICY.equals(DebuggerSettings.SUSPEND_NONE));
-    mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
-    mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+    myCbSuspend.setSelected(breakpoint.SUSPEND);
+    myRbSuspendThread.setEnabled(myCbSuspend.isSelected());
+    myRbSuspendAll.setEnabled(myCbSuspend.isSelected());
 
-    if(DebuggerSettings.SUSPEND_NONE.equals(breakpoint.SUSPEND_POLICY)) {
+    if(!breakpoint.SUSPEND) {
       actionsPanelVisible = true;
     }
-    else if(DebuggerSettings.SUSPEND_THREAD.equals(breakpoint.SUSPEND_POLICY)){
-      mySuspendPolicyGroup.setSelected(mySuspendThreadRadio.getModel(), true);
+    if(DebuggerSettings.SUSPEND_THREAD.equals(breakpoint.SUSPEND_POLICY)){
+      myRbSuspendThread.setSelected(true);
     }
     else {
-      mySuspendPolicyGroup.setSelected(mySuspendAllRadio.getModel(), true);
+      myRbSuspendAll.setSelected(true);
     }
 
-    mySuspendJBCheckBox.addActionListener(new ActionListener() {
+    myCbSuspend.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
         if (!myActionsPanel.isVisible()) {
-          if (!mySuspendJBCheckBox.isSelected()) {
+          if (!myCbSuspend.isSelected()) {
             if (myDelegate != null) {
               myDelegate.showActionsPanel();
             }
           }
         }
-        mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
-        mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+        myRbSuspendThread.setEnabled(myCbSuspend.isSelected());
+        myRbSuspendAll.setEnabled(myCbSuspend.isSelected());
       }
     });
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
@@ -635,6 +623,7 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
+    breakpoint.SUSPEND = myCbSuspend.isSelected();
     breakpoint.SUSPEND_POLICY = getSelectedSuspendPolicy();
     reloadInstanceFilters();
     reloadClassFilters();
@@ -652,10 +641,6 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.updateUI(afterUpdate);
   }
 
-  private static String concatWith(List<String> s, String concator) {
-    return StringUtil.join(s, concator);
-  }
-
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
     String result = "";
     int i = 1;
@@ -665,7 +650,8 @@ public abstract class BreakpointPropertiesPanel {
       if(iterator.hasNext()){
         if(i % N == 0){
           result += NthConcator;
-        } else {
+        }
+        else {
           result += concator;
         }
       }
@@ -681,8 +667,7 @@ public abstract class BreakpointPropertiesPanel {
       }
     }
     if (updateText) {
-      String editorText = concatWith(filters, " ");
-      myInstanceFiltersField.setText(editorText);
+      myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }
 
     String tipText = concatWithEx(filters, " ", (int)Math.sqrt(myInstanceFilters.length) + 1, "\n");
@@ -695,9 +680,12 @@ public abstract class BreakpointPropertiesPanel {
     ArrayList<InstanceFilter> idxs = new ArrayList<InstanceFilter>();
     int startNumber = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
-      if(i < filtersText.length() && Character.isDigit(filtersText.charAt(i))){
-        if(startNumber == -1) startNumber = i;
-      } else {
+      if(i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
+        if(startNumber == -1) {
+          startNumber = i;
+        }
+      }
+      else {
         if(startNumber >=0) {
           idxs.add(InstanceFilter.create(filtersText.substring(startNumber, i)));
           startNumber = -1;
@@ -705,7 +693,9 @@ public abstract class BreakpointPropertiesPanel {
       }
     }
     for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (!instanceFilter.isEnabled()) idxs.add(instanceFilter);
+      if (!instanceFilter.isEnabled()) {
+        idxs.add(instanceFilter);
+      }
     }
     myInstanceFilters = idxs.toArray(new InstanceFilter[idxs.size()]);
   }
@@ -724,18 +714,21 @@ public abstract class BreakpointPropertiesPanel {
       }
     }
     if (updateText) {
-      String editorText = concatWith(filters, " ");
-      if(!filters.isEmpty()) editorText += " ";
-      editorText += concatWith(excludeFilters, " ");
+      String editorText = StringUtil.join(filters, " ");
+      if(!filters.isEmpty()) {
+        editorText += " ";
+      }
+      editorText += StringUtil.join(excludeFilters, " ");
       myClassFiltersField.setText(editorText);
     }
 
     int width = (int)Math.sqrt(myClassExclusionFilters.length + myClassFilters.length) + 1;
     String tipText = concatWithEx(filters, " ", width, "\n");
-    if(!filters.isEmpty()) tipText += "\n";
+    if(!filters.isEmpty()) {
+      tipText += "\n";
+    }
     tipText += concatWithEx(excludeFilters, " ", width, "\n");
     myClassFiltersField.getTextField().setToolTipText(tipText);
-
   }
 
   private void reloadClassFilters() {
@@ -746,12 +739,16 @@ public abstract class BreakpointPropertiesPanel {
     int startFilter = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
       if(i < filtersText.length() && !Character.isWhitespace(filtersText.charAt(i))){
-        if(startFilter == -1) startFilter = i;
-      } else {
+        if(startFilter == -1) {
+          startFilter = i;
+        }
+      }
+      else {
         if(startFilter >=0) {
-          if(filtersText.charAt(startFilter) == '-'){
+          if(filtersText.charAt(startFilter) == '-') {
             exclusionFilters.add(new com.intellij.ui.classFilter.ClassFilter(filtersText.substring(startFilter + 1, i)));
-          } else {
+          }
+          else {
             classFilters.add(new com.intellij.ui.classFilter.ClassFilter(filtersText.substring(startFilter, i)));
           }
           startFilter = -1;
@@ -759,10 +756,14 @@ public abstract class BreakpointPropertiesPanel {
       }
     }
     for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassFilters) {
-      if (!classFilter.isEnabled()) classFilters.add(classFilter);
+      if (!classFilter.isEnabled()) {
+        classFilters.add(classFilter);
+      }
     }
     for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassExclusionFilters) {
-      if (!classFilter.isEnabled()) exclusionFilters.add(classFilter);
+      if (!classFilter.isEnabled()) {
+        exclusionFilters.add(classFilter);
+      }
     }
     myClassFilters          = classFilters    .toArray(new com.intellij.ui.classFilter.ClassFilter[classFilters    .size()]);
     myClassExclusionFilters = exclusionFilters.toArray(new com.intellij.ui.classFilter.ClassFilter[exclusionFilters.size()]);
@@ -809,7 +810,7 @@ public abstract class BreakpointPropertiesPanel {
     return myPanel;
   }
 
-  private BreakpointManager getBreakpointManager(Project project) {
+  private static BreakpointManager getBreakpointManager(Project project) {
     return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
   }
 
@@ -841,8 +842,7 @@ public abstract class BreakpointPropertiesPanel {
         @Nullable
         protected JComponent createCenterPanel() {
           final JPanel panel = new JPanel(new BorderLayout());
-          myEditor = new DebuggerStatementEditor(myProject, myTargetEditor.getContext(), myTargetEditor.getRecentsId(),
-                                                 DefaultCodeFragmentFactory.getInstance());
+          myEditor = new DebuggerStatementEditor(myProject, myTargetEditor.getContext(), myTargetEditor.getRecentsId(), DefaultCodeFragmentFactory.getInstance());
           myEditor.setPreferredSize(new Dimension(400, 150));
           myEditor.setText(myTargetEditor.getText());
           panel.add(myEditor, BorderLayout.CENTER);
