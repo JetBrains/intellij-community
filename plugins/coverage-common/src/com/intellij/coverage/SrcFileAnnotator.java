@@ -241,7 +241,7 @@ public class SrcFileAnnotator implements Disposable {
     final TIntIntHashMap oldToNewLineMapping;
 
     //do not show coverage info over cls
-    if (projectFileIndex.isInLibraryClasses(file)) {
+    if (engine.isInLibraryClasses(myProject, file)) {
       return;
     }
     // if in libraries content
