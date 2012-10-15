@@ -847,14 +847,6 @@ public class ListUtils {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testSecondInvocationToFillCommonPrefix() throws Throwable {
-    configure()
-    type('a');
-    complete();
-    assertStringItems("fai1", "fai2", "fai3");
-    checkResult()
-  }
-
   public void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
     configure()
     assertStringItems("_bar", "_goo");
