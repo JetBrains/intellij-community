@@ -47,7 +47,7 @@ public class CompositeFilter implements Filter, FilterMixin {
         long t0 = System.currentTimeMillis();
         final Result info = filter.applyFilter(line, entireLength);
         t0 = (System.currentTimeMillis() - t0);
-        if (t0 < 100) LOG.error("applyFilter " + filter.getClass().getSimpleName() + " took" + t0 + "ms on '''" + line + "'''");
+        if (t0 > 1000) LOG.error("applyFilter " + filter.getClass().getSimpleName() + " took" + t0 + "ms on '''" + line + "'''");
         if (info != null) {
           return info;
         }
