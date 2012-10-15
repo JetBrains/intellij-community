@@ -525,8 +525,12 @@ class GitBranchWorkerTest extends GitLightTest {
   @Test
   public void "delete branch merged to head but unmerged to upstream should show dialog"() {
     // inspired by IDEA-83604
+    // for the sake of simplicity we deal with a single myCommunity repository for remote operations
+    prepareRemoteRepoAndBranch(myCommunity)
+    cd myCommunity
+    git("checkout -b feature");
+    git("push -u origin feature")
 
-    prepareRemoteRepoAndBranch("feature")
     // create a commit and merge it to master, but not to feature's upstream
     touch("feature.txt", "feature content")
     git("add feature.txt")
@@ -542,25 +546,6 @@ class GitBranchWorkerTest extends GitLightTest {
     brancher.deleteBranch("feature", [myCommunity])
 
     assertTrue "'Branch is not fully merged' dialog was not shown", dialogShown
-  }
-
-  // for the sake of simplicity we deal with a single myCommunity repository for remote operations
-  private void prepareRemoteRepoAndBranch(String branch) {
-    // prepare parent repository
-    // create it under ultimate not to bother with removing it after the test (tearDown will clean automatically)
-    cd myUltimate
-    git("clone --bare $myCommunity parent.git")
-
-    // initialize feature branch and push to make origin/feature, set up tracking
-    cd myCommunity
-    git("checkout -b $branch");
-    git("remote add origin ${myUltimate.root.path}/parent.git");
-    git("push -u origin $branch")
-  }
-
-  @Test
-  void "delete remote branch without problems"() {
-
   }
 
   @Test

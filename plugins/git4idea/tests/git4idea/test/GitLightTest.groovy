@@ -93,6 +93,18 @@ class GitLightTest {
     return repository
   }
 
+  /**
+   * Clones the given source repository into a bare parent.git and adds the remote origin.
+   */
+  protected void prepareRemoteRepoAndBranch(GitRepository source) {
+    cd myTestRoot
+    git("clone --bare $source parent.git")
+
+    // initialize feature branch and push to make origin/feature, set up tracking
+    cd source
+    git("remote add origin ${myTestRoot}/parent.git");
+  }
+
   private void registerRepository(GitRepositoryImpl repository) {
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
   }
