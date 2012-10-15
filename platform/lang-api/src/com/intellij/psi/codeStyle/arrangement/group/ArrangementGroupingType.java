@@ -24,8 +24,10 @@ package com.intellij.psi.codeStyle.arrangement.group;
 public enum ArrangementGroupingType {
   
   GETTERS_AND_SETTERS,
-  
+
   OVERRIDDEN_METHODS,
 
-  DEPENDENT_METHODS
+  DEPENDENT_METHODS,
+
+  GROUP_PROPERTY_FIELD_WITH_GETTER_SETTER
 }
