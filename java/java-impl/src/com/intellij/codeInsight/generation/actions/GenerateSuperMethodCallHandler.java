@@ -36,7 +36,9 @@ import java.util.List;
 public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallHandler");
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiMethod method = canInsertSuper(project, editor, file);
     try {
       PsiMethod template = (PsiMethod)method.copy();
@@ -60,6 +62,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

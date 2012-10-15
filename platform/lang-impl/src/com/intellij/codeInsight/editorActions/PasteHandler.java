@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -64,7 +65,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   @Override
   public void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> transferableProvider) {
-    if (editor.isViewer()) return;
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     final Document document = editor.getDocument();
 
     if (!FileDocumentManager.getInstance().requestWriting(document, PlatformDataKeys.PROJECT.getData(dataContext))) {

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -72,7 +73,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder) {
+  public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     if (file instanceof PsiCompiledElement) {
       HintManager.getInstance().showErrorHint(editor, "Can't modify decompiled code");
       return;

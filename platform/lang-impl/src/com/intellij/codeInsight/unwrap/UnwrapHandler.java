@@ -57,6 +57,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     List<AnAction> options = collectOptions(project, editor, file);
     selectOption(options, editor, file);
   }

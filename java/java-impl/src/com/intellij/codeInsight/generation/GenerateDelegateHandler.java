@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,6 +59,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
