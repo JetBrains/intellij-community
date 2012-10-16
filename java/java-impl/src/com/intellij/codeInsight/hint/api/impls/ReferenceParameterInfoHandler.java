@@ -29,18 +29,22 @@ import java.util.Arrays;
  * @author Maxim.Mossienko
  */
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
+  @Override
   public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
     return null;
   }
 
+  @Override
   public Object[] getParametersForDocumentation(final PsiTypeParameter p, final ParameterInfoContext context) {
     return new Object[] {p};
   }
 
+  @Override
   public boolean couldShowInLookup() {
     return false;
   }
 
+  @Override
   public PsiReferenceParameterList findElementForParameterInfo(final CreateParameterInfoContext context) {
     final PsiReferenceParameterList referenceParameterList =
       ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
@@ -61,14 +65,17 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     return null;
   }
 
+  @Override
   public void showParameterInfo(@NotNull final PsiReferenceParameterList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
+  @Override
   public PsiReferenceParameterList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
   }
 
+  @Override
   public void updateParameterInfo(@NotNull final PsiReferenceParameterList o, final UpdateParameterInfoContext context) {
     int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
@@ -76,15 +83,18 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index]:null);
   }
 
+  @Override
   @NotNull
   public String getParameterCloseChars() {
     return ",>";
   }
 
+  @Override
   public boolean tracksParameterIndex() {
     return true;
   }
 
+  @Override
   public void updateUI(PsiTypeParameter o, ParameterInfoUIContext context) {
     updateTypeParameter(o, context);
   }
@@ -97,6 +107,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     buffer.append(StringUtil.join(
       Arrays.asList(typeParameter.getSuperTypes()),
       new Function<PsiClassType, String>() {
+        @Override
         public String fun(final PsiClassType t) {
           return t.getPresentableText();
         }

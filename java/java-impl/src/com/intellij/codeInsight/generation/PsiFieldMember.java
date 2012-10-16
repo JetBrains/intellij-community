@@ -18,13 +18,14 @@ package com.intellij.codeInsight.generation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class PsiFieldMember extends PsiElementClassMember<PsiField> implements EncapsulatableClassMember {
-  private static final int FIELD_OPTIONS = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER;
+  private static final int FIELD_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
 
   public PsiFieldMember(final PsiField field) {
     super(field, PsiFormatUtil.formatVariable(field, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
@@ -34,6 +35,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
     super(psiMember, substitutor, PsiFormatUtil.formatVariable(psiMember, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
+  @Override
   @Nullable
   public PsiGenerationInfo generateGetter() {
     PsiField field = getElement();
@@ -47,6 +49,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
     return existing == null ? template : null;
   }
 
+  @Override
   @Nullable
   public PsiGenerationInfo generateSetter() {
     PsiField field = getElement();

@@ -498,7 +498,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return new InplaceButton("Options..." + shortcutText, AllIcons.General.IdeOptions, new ActionListener() {
+    return new InplaceButton("Options..." + shortcutText, AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {

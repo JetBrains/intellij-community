@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -23,10 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ui.UIUtil;
@@ -103,8 +102,38 @@ public class ExceptionWorker {
 
       final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
       final int highlightEndOffset = textStartOffset + rparenthIndex;
-      VirtualFile virtualFile = myFile.getVirtualFile();
-      final OpenFileHyperlinkInfo linkInfo = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+
+      HyperlinkInfo linkInfo = new HyperlinkInfo() {
+        @Override
+        public void navigate(Project project) {
+          VirtualFile currentVirtualFile = null;
+
+          AccessToken accessToken = ReadAction.start();
+
+          try {
+            if (!virtualFile.isValid()) return;
+
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+            if (psiFile != null) {
+              PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
+              if (navigationElement instanceof PsiFile) {
+                currentVirtualFile = ((PsiFile)navigationElement).getVirtualFile();
+              }
+            }
+
+            if (currentVirtualFile == null) {
+              currentVirtualFile = virtualFile;
+            }
+          }
+          finally {
+            accessToken.finish();
+          }
+
+          new OpenFileHyperlinkInfo(myProject, currentVirtualFile, lineNumber - 1).navigate(project);
+        }
+      };
+
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
         Color color = UIUtil.getInactiveTextColor();

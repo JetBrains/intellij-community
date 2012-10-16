@@ -35,25 +35,30 @@ import java.util.Set;
 
 public class ExpectedTypeMacro extends Macro {
 
+  @Override
   public String getName() {
     return "expectedType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.expected.type");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "A";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;
@@ -77,6 +82,7 @@ public class ExpectedTypeMacro extends Macro {
     final PsiFile fileCopy = (PsiFile)file.copy();
     
     new WriteCommandAction(project) {
+      @Override
       protected void run(com.intellij.openapi.application.Result result) throws Throwable {
         final BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
         blockSupport.reparseRange(fileCopy, offset, offset, CompletionUtil.DUMMY_IDENTIFIER);
@@ -85,7 +91,7 @@ public class ExpectedTypeMacro extends Macro {
     PsiElement element = fileCopy.findElementAt(offset);
 
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiExpression) {
-      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(project).getExpectedTypes((PsiExpression)element.getParent(), true);
+      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes((PsiExpression)element.getParent(), true);
       if (infos.length > 0){
         types = new PsiType[infos.length];
         for(int i = 0; i < infos.length; i++) {

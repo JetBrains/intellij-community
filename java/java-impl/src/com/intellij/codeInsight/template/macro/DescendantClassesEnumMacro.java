@@ -33,14 +33,17 @@ import java.util.List;
 import java.util.Set;
 
 public class DescendantClassesEnumMacro extends Macro {
+  @Override
   public String getName() {
     return "descendantClassesEnum";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.descendant.classes.enum");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
@@ -78,6 +81,7 @@ public class DescendantClassesEnumMacro extends Macro {
       final List<PsiClass> classes = new ArrayList<PsiClass>();
 
       ClassInheritorsSearch.search(myBaseClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+          @Override
           public boolean execute(@NotNull PsiClass element) {
             if (isAllowAbstract || !isAbstractOrInterface(element)) {
               classes.add(element);
@@ -93,6 +97,7 @@ public class DescendantClassesEnumMacro extends Macro {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
@@ -101,6 +106,7 @@ public class DescendantClassesEnumMacro extends Macro {
     return results[0];
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;

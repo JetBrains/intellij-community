@@ -32,6 +32,7 @@ import java.util.Set;
  */
 public class JavaAwareCompletionData extends CompletionData{
 
+  @Override
   protected void addLookupItem(Set<LookupElement> set, final TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
     if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
       set.add((LookupElement)completion);
@@ -65,6 +66,7 @@ public class JavaAwareCompletionData extends CompletionData{
     set.add(ret);
   }
 
+  @Override
   protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
                                   final CompletionVariant variant, final Object comp, final TailType tailType) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();

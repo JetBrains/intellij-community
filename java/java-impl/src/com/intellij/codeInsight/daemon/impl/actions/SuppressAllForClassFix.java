@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,9 +74,10 @@ public class SuppressAllForClassFix extends SuppressFix {
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
-        final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
-          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" +
+          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" +
+                                                                                                             SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" +
                                                                                                              SuppressionUtil.ALL + "\")", container));
           return;
         }

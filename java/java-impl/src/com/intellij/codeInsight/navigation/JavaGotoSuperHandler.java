@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaGotoSuperHandler implements CodeInsightActionHandler {
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
 
@@ -73,6 +74,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
     return FindSuperElementsHelper.findSuperElements(parent);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

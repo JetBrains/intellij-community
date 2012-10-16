@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
 public class MethodDeclarationRangeHandler implements DeclarationRangeHandler {
+  @Override
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {
     PsiMethod method = (PsiMethod)container;

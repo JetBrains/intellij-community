@@ -610,7 +610,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
-      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Sync);
+      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh);
     }
 
     public final void actionPerformed(final AnActionEvent e) {

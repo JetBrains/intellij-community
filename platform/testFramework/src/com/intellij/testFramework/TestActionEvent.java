@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,5 +30,9 @@ public class TestActionEvent extends AnActionEvent {
   public TestActionEvent(@NotNull DataContext dataContext,
                          @NotNull AnAction action) {
     super(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+  }
+
+  public TestActionEvent(@NotNull AnAction action) {
+    this(DataManager.getInstance().getDataContext(), action);
   }
 }

@@ -19,6 +19,7 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
@@ -360,6 +361,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<String> getLookupElementStrings();
 
   void finishLookup();
+
+  Lookup getLookup();
 
   @NotNull
   PsiElement getElementAtCaret();

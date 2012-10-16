@@ -50,6 +50,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     super(CodeInsightBundle.message("generate.constructor.fields.chooser.title"));
   }
 
+  @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<ClassMember>();
@@ -67,6 +68,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return array.toArray(new ClassMember[array.size()]);
   }
 
+  @Override
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass){
@@ -94,6 +96,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         else{
           final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
           PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, new Function<PsiMethod, PsiMethodMember>() {
+            @Override
             public PsiMethodMember fun(final PsiMethod s) {
               return new PsiMethodMember(s, substitutor);
             }
@@ -160,6 +163,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return preselection;
   }
 
+  @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     List<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
@@ -311,6 +315,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return modifier;
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     LOG.assertTrue(false);
     return null;

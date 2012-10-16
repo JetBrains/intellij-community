@@ -34,10 +34,7 @@ import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Consumer;
@@ -149,7 +146,7 @@ public class CodeInsightUtil {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   @Nullable
@@ -223,6 +220,7 @@ public class CodeInsightUtil {
 
   public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
     return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, new Comparator<PsiElement>() {
+      @Override
       public int compare(PsiElement o1, PsiElement o2) {
         if (o1 instanceof PsiParameter && o2 instanceof PsiParameter && ((PsiParameter)o1).getDeclarationScope() instanceof PsiMethod) {
           return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
@@ -267,6 +265,7 @@ public class CodeInsightUtil {
     if (!(psiType instanceof PsiClassType)) return;
 
     final Condition<String> shortNameCondition = new Condition<String>() {
+      @Override
       public boolean value(String s) {
         return matcher.prefixMatches(s);
       }
@@ -275,6 +274,7 @@ public class CodeInsightUtil {
     final PsiClassType baseType = (PsiClassType)psiType;
     final PsiClassType.ClassResolveResult baseResult =
       ApplicationManager.getApplication().runReadAction(new Computable<PsiClassType.ClassResolveResult>() {
+        @Override
         public PsiClassType.ClassResolveResult compute() {
           return JavaCompletionUtil.originalize(baseType).resolveGenerics();
         }
@@ -284,6 +284,7 @@ public class CodeInsightUtil {
     if(baseClass == null) return;
 
     final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
       public GlobalSearchScope compute() {
         return context.getResolveScope();
       }
@@ -305,6 +306,7 @@ public class CodeInsightUtil {
       final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
         new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
       final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
+        @Override
         public boolean value(final PsiClass psiClass) {
           return !(psiClass instanceof PsiTypeParameter);
         }
@@ -323,10 +325,12 @@ public class CodeInsightUtil {
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
 
     return new Processor<PsiClass>() {
+      @Override
       public boolean process(final PsiClass inheritor) {
         ProgressManager.checkCanceled();
 
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
           public Boolean compute() {
             if (!context.isValid() || !inheritor.isValid() || !facade.getResolveHelper().isAccessible(inheritor, context, null))
               return true;

@@ -225,11 +225,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement resolved = referenceExpression.resolve();
         if (!(resolved instanceof PsiClass)) return;
 
-        if (CompletionService.getCompletionService().getAdvertisementText() == null && parameters.getInvocationCount() > 0 &&
+        if (parameters.getInvocationCount() > 0 &&
             CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
           if (shortcut != null) {
-            CompletionService.getCompletionService().setAdvertisementText("Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods");
+            result.addLookupAdvertisement("Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods");
           }
         }
 
@@ -317,7 +317,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             if (parameters.getInvocationCount() >= 2) {
               addAllClasses(parameters, result, inheritors);
             } else {
-              JavaCompletionContributor.advertiseSecondCompletion(position.getProject());
+              JavaCompletionContributor.advertiseSecondCompletion(position.getProject(), result);
             }
           }
         }
@@ -536,10 +536,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static void showInfo() {
-    if (StringUtil.isEmpty(CompletionService.getCompletionService().getAdvertisementText())) {
-      CompletionService.getCompletionService()
-        .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
-    }
+    CompletionService.getCompletionService()
+      .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
   }
 
   private static boolean checkForIterator(PsiMethod method) {

@@ -36,10 +36,12 @@ import java.util.Set;
 class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   @NonNls private static final String TYPE_TEMPLATE_VARIABLE = "type";
 
+  @Override
   public boolean isApplicable(PsiExpression expr) {
     return true;
   }
 
+  @Override
   public TextRange surroundExpression(final Project project, final Editor editor, PsiExpression expr) throws IncorrectOperationException {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
@@ -77,14 +79,17 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 
     Expression expr = new Expression() {
+      @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         return lookupItems.length > 1 ? lookupItems : null;
       }
 
+      @Override
       public Result calculateResult(ExpressionContext context) {
         return result;
       }
 
+      @Override
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
@@ -97,6 +102,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     return template;
   }
 
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.cast.template");
   }

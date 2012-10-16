@@ -441,7 +441,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class MyRefresh extends AnAction {
     private MyRefresh() {
       super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
-            SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Sync);
+            SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Refresh);
     }
 
     @Override

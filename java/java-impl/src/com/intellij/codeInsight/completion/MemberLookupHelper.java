@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -63,8 +64,8 @@ public class MemberLookupHelper {
                           ? "(...)"
                           : myMember instanceof PsiMethod
                             ? PsiFormatUtil.formatMethod((PsiMethod)myMember, substitutor,
-                                                         PsiFormatUtil.SHOW_PARAMETERS,
-                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
+                                                         PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE)
                             : "";
     presentation.clearTail();
     presentation.appendTailText(params, false);

@@ -17,12 +17,15 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ModelDiff {
-  public static List<Cmd> createDiffCmds(Model<Object> listModel, Object[] oldElements, Object[] newElements) {
+  @Nullable
+  public static List<Cmd> createDiffCmds(@NotNull Model<Object> listModel, @NotNull Object[] oldElements, @NotNull Object[] newElements) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(oldElements, newElements);
@@ -41,12 +44,12 @@ public class ModelDiff {
     while (change != null) {
       if (change.deleted > 0) {
         final int start = change.line0 + inserted - deleted;
-        commands.add(new RemoveCmd(listModel, start, start + change.deleted - 1));
+        commands.add(new RemoveCmd<Object>(listModel, start, start + change.deleted - 1));
       }
 
       if (change.inserted > 0) {
         for (int i = 0; i < change.inserted; i++) {
-          commands.add(new InsertCmd(listModel, change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
+          commands.add(new InsertCmd<Object>(listModel, change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
         }
       }
 
@@ -72,7 +75,7 @@ public class ModelDiff {
     private final int start;
     private final int end;
 
-    private RemoveCmd(Model<T> model, final int start, final int end) {
+    private RemoveCmd(@NotNull Model<T> model, final int start, final int end) {
       myListModel = model;
       this.start = start;
       this.end = end;
@@ -80,7 +83,8 @@ public class ModelDiff {
 
     @Override
     public void apply() {
-      myListModel.removeRangeFromModel(start, end+1);
+      //System.out.println("removing: "+this);
+      myListModel.removeRangeFromModel(start, end);
     }
 
     @Override
@@ -92,7 +96,7 @@ public class ModelDiff {
 
     @Override
     public String toString() {
-      return "-["+start+", "+end+")";
+      return "-["+start+", "+end+"]";
     }
   }
 
@@ -101,7 +105,7 @@ public class ModelDiff {
     private final int idx;
     private final T element;
 
-    private InsertCmd(Model<T> model, final int idx, T element) {
+    private InsertCmd(@NotNull Model<T> model, final int idx, @NotNull T element) {
       myListModel = model;
       this.idx = idx;
       this.element = element;
@@ -109,6 +113,7 @@ public class ModelDiff {
 
     @Override
     public void apply() {
+      //System.out.println("Adding: "+this+"-> "+element);
       myListModel.addToModel(idx, element);
     }
 

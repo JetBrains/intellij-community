@@ -88,7 +88,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myAdditionalContentPanel.add(myModulePanel,
                                  new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
                                                         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    myHeader.setVisible(myWizardContext.isCreatingNewProject());
+    myHeader.setVisible(myWizardContext.isCreatingNewProject() && !isCreateFromTemplateMode());
     myCreateModuleCb.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         UIUtil.setEnabled(myInternalPanel, myCreateModuleCb.isSelected(), true);
@@ -275,9 +275,8 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     }
 
 
-    if (mode instanceof CreateFromTemplateMode) {
+    if (isCreateFromTemplateMode()) {
       replaceModuleTypeOptions(new JPanel());
-      myHeader.setVisible(false);
     }
     else {
       final AnAction arrow = new AnAction() {
@@ -301,6 +300,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       arrow.registerCustomShortcutSet(shortcutSet, myNamePathComponent.getNameComponent());
       arrow.registerCustomShortcutSet(shortcutSet, myModuleName);
     }
+  }
+
+  private boolean isCreateFromTemplateMode() {
+    return myMode instanceof CreateFromTemplateMode;
   }
 
   private Dimension calcTypeListPreferredSize(final List<ModuleBuilder> allModuleTypes) {
@@ -356,7 +359,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public void updateStep() {
     super.updateStep();
-    if (myHeader.isVisible()) {
+    if (!isCreateFromTemplateMode()) {
       if (myCreateModuleCb.isSelected()) {
         mySequence.setType(getSelectedBuilderId());
       } else {
@@ -367,12 +370,12 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public void updateDataModel() {
 
-    if (myHeader.isVisible()) {
+    if (!isCreateFromTemplateMode()) {
       mySequence.setType(myCreateModuleCb.isSelected() ? getSelectedBuilderId() : null);
     }
     super.updateDataModel();
 
-    if (myHeader.isVisible() && myCreateModuleCb.isSelected()) {
+    if (!isCreateFromTemplateMode() && myCreateModuleCb.isSelected()) {
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
       final String moduleName = getModuleName();

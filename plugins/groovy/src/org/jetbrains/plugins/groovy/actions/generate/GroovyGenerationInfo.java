@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -92,12 +91,6 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
       if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
         return null;
       }
-    }
-
-    while (element != null &&
-           element.getPrevSibling() != null &&
-           TokenSets.WHITE_SPACES_SET.contains(element.getPrevSibling().getNode().getElementType())) {
-      element = element.getPrevSibling();
     }
 
     return element;

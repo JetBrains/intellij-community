@@ -82,7 +82,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
     };
 
-    if (chooser.getAllContents().size() > 0) {
+    if (!chooser.getAllContents().isEmpty()) {
       chooser.show();
     }
     else {
@@ -99,9 +99,10 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
 
       if (editor != null) {
-          if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
-            return;
-          }
+        if (editor.isViewer()) return;
+        if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
+          return;
+        }
 
         final AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);
         AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),

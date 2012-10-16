@@ -47,7 +47,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
@@ -485,7 +488,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private AnAction showSettings() {
-    return new AnAction("Options...", "show find usages settings dialog", PlatformIcons.SHOW_SETTINGS_ICON) {
+    return new AnAction("Options...", "show find usages settings dialog", AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut();
         if (shortcut != null) {

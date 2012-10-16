@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClassInitializer;
 
 public class ClassInitializerDeclarationRangeHandler implements DeclarationRangeHandler {
+  @Override
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {
     PsiClassInitializer initializer = (PsiClassInitializer)container;

@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
  */
 public class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
 
+  @Override
   protected boolean isAvailable(PsiParameter psiParameter) {
     final PsiType type = getSubstitutedType(psiParameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
@@ -40,6 +41,7 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
     return FieldFromParameterUtils.getSubstitutedType(parameter);
   }
 
+  @Override
   protected void performRefactoring(Project project,
                                     PsiClass targetClass,
                                     PsiMethod method,

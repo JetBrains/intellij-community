@@ -90,6 +90,10 @@ public class MavenArtifactSearchPanel extends JPanel {
     add(mySearchField, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myResultList);
     pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Don't remove this line.
+                                                                                    // Without VERTICAL_SCROLLBAR_ALWAYS policy our custom layout
+                                                                                    // works incorrectly, see http://youtrack.jetbrains.com/issue/IDEA-72986
+
     add(pane, BorderLayout.CENTER);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {

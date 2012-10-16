@@ -43,6 +43,7 @@ public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
     new JavaWithBlockSurrounder()
   };
 
+  @Override
   @NotNull
   public Surrounder[] getSurrounders() {
     return SURROUNDERS;
@@ -53,6 +54,7 @@ public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);

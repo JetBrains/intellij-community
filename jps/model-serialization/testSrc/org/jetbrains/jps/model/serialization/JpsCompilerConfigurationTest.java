@@ -1,12 +1,12 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
   public void testLoadFromIpr() {
@@ -29,7 +29,7 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertEquals(FileUtil.toSystemDependentName(JpsPathUtil.urlToPath(getUrl("src"))), defaultProfile.getProcessorPath());
     assertEquals("b", defaultProfile.getProcessorOptions().get("a"));
     assertEquals("d", defaultProfile.getProcessorOptions().get("c"));
-    assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName());
+    assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName(false));
     JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
     assertFalse(isExcluded(excludes, "src/nonrec/x/Y.java"));
     assertTrue(isExcluded(excludes, "src/nonrec/Y.java"));

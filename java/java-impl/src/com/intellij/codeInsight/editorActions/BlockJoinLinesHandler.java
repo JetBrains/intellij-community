@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
@@ -39,15 +40,15 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
     final PsiElement parentStatement = codeBlock.getParent().getParent();
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
-    if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-          parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
+    if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
+          parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE !=
+                                                          CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
           (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
-          codeStyleSettings.FOR_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
+          codeStyleSettings.FOR_BRACE_FORCE != CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
                                                                                      parentStatement instanceof PsiDoWhileStatement &&
                                                                                      codeStyleSettings
                                                                                        .DOWHILE_BRACE_FORCE !=
-                                                                                                            CodeStyleSettings
-                                                                                                              .FORCE_BRACES_ALWAYS)) {
+                                                                                     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS)) {
       return -1;
     }
     PsiElement foundStatement = null;

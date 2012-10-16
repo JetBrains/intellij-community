@@ -182,13 +182,13 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-      if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
-        Messages.showMessageDialog(myProject, PsiBundle.message("cannot.modify.a.read.only.file", file.getName()),
-        CodeInsightBundle.message("error.dialog.readonly.file.title"),
-        Messages.getErrorIcon()
+    if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
+      Messages.showMessageDialog(myProject, PsiBundle.message("cannot.modify.a.read.only.file", file.getName()),
+                                 CodeInsightBundle.message("error.dialog.readonly.file.title"),
+                                 Messages.getErrorIcon()
       );
       return;
-      }
+    }
 
     final Runnable[] resultRunnable = new Runnable[1];
     Runnable readAction = new Runnable() {

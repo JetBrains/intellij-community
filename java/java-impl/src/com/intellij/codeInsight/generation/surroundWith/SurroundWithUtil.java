@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class SurroundWithUtil {
         }
         array.add(statement);
       }
-      return PsiUtilBase.toPsiElementArray(array);
+      return PsiUtilCore.toPsiElementArray(array);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

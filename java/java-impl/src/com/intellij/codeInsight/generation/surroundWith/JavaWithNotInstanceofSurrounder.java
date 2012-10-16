@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
+  @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (type == null) return false;
@@ -33,6 +34,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
     return !(type instanceof PsiPrimitiveType);
   }
 
+  @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -52,6 +54,7 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
     return new TextRange(range.getStartOffset(), range.getStartOffset());
   }
 
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.not.instanceof.template");
   }

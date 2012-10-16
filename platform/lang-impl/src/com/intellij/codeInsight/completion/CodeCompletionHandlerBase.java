@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
@@ -127,6 +128,8 @@ public class CodeCompletionHandlerBase {
     }
 
     final Document document = editor.getDocument();
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;
     }

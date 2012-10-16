@@ -45,11 +45,13 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
     myAnnotations = annotations;
   }
 
+  @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     return ClassMember.EMPTY_ARRAY;
   }
 
 
+  @Override
   @NotNull
   public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
@@ -84,10 +86,12 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
     }
   }
 
+  @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }

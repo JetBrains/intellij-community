@@ -39,11 +39,13 @@ import java.util.Set;
  */
 public class AnnotatedMacro extends Macro {
 
+  @Override
   @NonNls
   public String getName() {
     return "annotated";
   }
 
+  @Override
   public String getPresentableName() {
     return "annotated(\"annotation qname\")";
   }
@@ -64,6 +66,7 @@ public class AnnotatedMacro extends Macro {
     return null;
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] expressions, ExpressionContext expressionContext) {
     final Query<PsiMember> psiMembers = findAnnotated(expressionContext, expressions);
 
@@ -77,10 +80,12 @@ public class AnnotatedMacro extends Macro {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] expressions, ExpressionContext expressionContext) {
     return calculateResult(expressions, expressionContext);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     final Query<PsiMember> query = findAnnotated(context, params);
 

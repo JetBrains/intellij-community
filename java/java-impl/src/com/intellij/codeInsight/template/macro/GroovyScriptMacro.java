@@ -35,14 +35,17 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class GroovyScriptMacro extends Macro {
+  @Override
   public String getName() {
     return "groovyScript";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.groovy.script");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     Object o = runIt(params, context);
@@ -87,10 +90,12 @@ public class GroovyScriptMacro extends Macro {
     }
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     Object o = runIt(params, context);
     if (o != null) {

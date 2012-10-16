@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class JavaStatementsSurrounder implements Surrounder {
+  @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     return true;
   }
 
+  @Override
   @Nullable public TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
                                               @NotNull PsiElement[] elements) throws IncorrectOperationException {

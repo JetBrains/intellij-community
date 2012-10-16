@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
@@ -69,6 +70,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     myProject = project;
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
     myEditor = editor;

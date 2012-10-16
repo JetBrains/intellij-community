@@ -159,6 +159,7 @@ public class ReferenceExpressionCompletionContributor {
             }
             if (!psiElement().afterLeaf(".").accepts(element)) {
               BasicExpressionCompletionContributor.processDataflowExpressionTypes(element, null, TRUE_MATCHER, new Consumer<LookupElement>() {
+                @Override
                 public void consume(LookupElement baseItem) {
                   addSecondCompletionVariants(element, reference, baseItem, parameters, result);
                 }
@@ -177,6 +178,7 @@ public class ReferenceExpressionCompletionContributor {
 
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
+        @Override
         public boolean isAcceptable(Object o, PsiElement context) {
           if (o instanceof CandidateInfo) {
             final CandidateInfo info = (CandidateInfo)o;
@@ -197,6 +199,7 @@ public class ReferenceExpressionCompletionContributor {
           return false;
         }
 
+        @Override
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
@@ -311,6 +314,7 @@ public class ReferenceExpressionCompletionContributor {
       item.addLookupStrings(prefix);
       item.setIcon(object.getIcon(Iconable.ICON_FLAG_VISIBILITY));
       item.setInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
           final Editor editor = context.getEditor();
@@ -358,6 +362,7 @@ public class ReferenceExpressionCompletionContributor {
     item.addLookupStrings(prefix, presentable, "asList(" + prefix + ")");
     item.setIcon(PlatformIcons.METHOD_ICON);
     item.setInsertHandler(new InsertHandler<LookupElement>() {
+      @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST);
 
@@ -544,6 +549,7 @@ public class ReferenceExpressionCompletionContributor {
     item.addLookupStrings(presentableString);
     item.setIcon(PlatformIcons.METHOD_ICON);
     item.setInsertHandler(new InsertHandler<LookupItem>(){
+      @Override
       public void handleInsert(InsertionContext context, LookupItem item) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);
 

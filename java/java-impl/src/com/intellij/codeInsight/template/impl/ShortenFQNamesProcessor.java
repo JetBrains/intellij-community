@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 public class ShortenFQNamesProcessor implements TemplateOptionalProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor");
 
+  @Override
   public void processText(final Project project, final Template template, final Document document, final RangeMarker templateRange,
                           final Editor editor) {
     if (!template.isToShortenLongNames()) return;
@@ -48,14 +49,17 @@ public class ShortenFQNamesProcessor implements TemplateOptionalProcessor {
     }
   }
 
+  @Override
   public String getOptionName() {
     return CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names");
   }
 
+  @Override
   public boolean isEnabled(final Template template) {
     return template.isToShortenLongNames();
   }
 
+  @Override
   public void setEnabled(final Template template, final boolean value) {
     template.setToShortenLongNames(value);
   }

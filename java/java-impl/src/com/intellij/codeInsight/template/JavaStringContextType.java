@@ -31,6 +31,7 @@ public class JavaStringContextType extends TemplateContextType {
     super("JAVA_STRING", "String", JavaCodeContextType.Generic.class);
   }
 
+  @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
       PsiElement element = file.findElementAt(offset);

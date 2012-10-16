@@ -1445,6 +1445,10 @@
                      key="public.method.without.logging.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.PublicMethodWithoutLoggingInspection"/>
+    <localInspection language="JAVA" shortName="StringConcatenationArgumentToLogCall" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="string.concatenation.argument.to.log.call.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection"/>
 
     <!--group.names.code.maturity.issues-->
     <localInspection language="JAVA" shortName="SuppressionAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"

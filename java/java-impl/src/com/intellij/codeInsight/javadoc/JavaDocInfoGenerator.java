@@ -35,6 +35,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -75,10 +76,12 @@ public class JavaDocInfoGenerator {
   }
 
   private static final InheritDocProvider<PsiDocTag> ourEmptyProvider = new InheritDocProvider<PsiDocTag>() {
+    @Override
     public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
       return null;
     }
 
+    @Override
     public PsiClass getElement() {
       return null;
     }
@@ -90,6 +93,7 @@ public class JavaDocInfoGenerator {
                                                               final boolean dropFirst)
   {
     return new InheritDocProvider<PsiElement[]>() {
+      @Override
       public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = i.getInheritDoc();
 
@@ -112,6 +116,7 @@ public class JavaDocInfoGenerator {
         return new Pair<PsiElement[], InheritDocProvider<PsiElement[]>>(elements, mapProvider(pair.second, dropFirst));
       }
 
+      @Override
       public PsiClass getElement() {
         return i.getElement();
       }
@@ -124,6 +129,7 @@ public class JavaDocInfoGenerator {
 
   private static DocTagLocator<PsiDocTag> parameterLocator(final String name) {
     return new DocTagLocator<PsiDocTag>() {
+      @Override
       public PsiDocTag find(PsiDocComment comment) {
         if (comment == null) {
           return null;
@@ -150,6 +156,7 @@ public class JavaDocInfoGenerator {
 
   private static DocTagLocator<PsiDocTag> exceptionLocator(final String name) {
     return new DocTagLocator<PsiDocTag>() {
+      @Override
       public PsiDocTag find(PsiDocComment comment) {
         if (comment == null) {
           return null;
@@ -262,7 +269,7 @@ public class JavaDocInfoGenerator {
 
     buffer.append("<PRE>");
     generateAnnotations(buffer, aClass);
-    String modifiers = PsiFormatUtil.formatModifiers(aClass, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(aClass, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
       buffer.append(" ");
@@ -368,10 +375,12 @@ public class JavaDocInfoGenerator {
     final PsiDocTag tag = locator.find(getDocComment(psiClass));
     if (tag != null) {
       return new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, new InheritDocProvider<PsiDocTag>() {
+        @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
           return findInHierarchy(psiClass, locator);
         }
 
+        @Override
         public PsiClass getElement() {
           return psiClass;
         }
@@ -416,7 +425,7 @@ public class JavaDocInfoGenerator {
 
     buffer.append("<PRE>");
     generateAnnotations(buffer, field);
-    String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
       buffer.append(" ");
@@ -445,7 +454,7 @@ public class JavaDocInfoGenerator {
     generatePrologue(buffer);
 
     buffer.append("<PRE>");
-    String modifiers = PsiFormatUtil.formatModifiers(variable, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(variable, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
       buffer.append(" ");
@@ -619,7 +628,7 @@ public class JavaDocInfoGenerator {
     generatePrologue(buffer);
 
     buffer.append("<PRE>");
-    String modifiers = PsiFormatUtil.formatModifiers(parameter, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(parameter, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
       buffer.append(" ");
@@ -669,7 +678,7 @@ public class JavaDocInfoGenerator {
     buffer.append("<PRE>");
     int indent = 0;
     generateAnnotations(buffer, method);
-    String modifiers = PsiFormatUtil.formatModifiers(method, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    String modifiers = PsiFormatUtil.formatModifiers(method, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (modifiers.length() > 0) {
       buffer.append(modifiers);
       buffer.append("&nbsp;");
@@ -879,6 +888,7 @@ public class JavaDocInfoGenerator {
 
   private void generateMethodDescription(@NonNls StringBuilder buffer, final PsiMethod method, final PsiDocComment comment) {
     final DocTagLocator<PsiElement[]> descriptionLocator = new DocTagLocator<PsiElement[]>() {
+      @Override
       public PsiElement[] find(PsiDocComment comment) {
         if (comment == null) {
           return null;
@@ -897,10 +907,12 @@ public class JavaDocInfoGenerator {
         generateValue
           (buffer, comment.getDescriptionElements(),
            new InheritDocProvider<PsiElement[]>() {
+             @Override
              public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
                return findInheritDocTag(method, descriptionLocator);
              }
 
+             @Override
              public PsiClass getElement() {
                return method.getContainingClass();
              }
@@ -1232,10 +1244,12 @@ public class JavaDocInfoGenerator {
           new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>
             (localTag,
              new InheritDocProvider<PsiDocTag>() {
+               @Override
                public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
                  return findInheritDocTag(method, parameterLocator(paramName));
                }
 
+               @Override
                public PsiClass getElement() {
                  return method.getContainingClass();
                }
@@ -1276,11 +1290,13 @@ public class JavaDocInfoGenerator {
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair =
       tag == null ? null : new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag,
                                                                               new InheritDocProvider<PsiDocTag>(){
+                                                                                @Override
                                                                                 public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
                                                                                   return findInheritDocTag(method, new ReturnTagLocator());
 
                                                                                 }
 
+                                                                                @Override
                                                                                 public PsiClass getElement() {
                                                                                   return method.getContainingClass();
                                                                                 }
@@ -1678,10 +1694,12 @@ public class JavaDocInfoGenerator {
           return new Pair<T, InheritDocProvider<T>>
             (tag,
              new InheritDocProvider<T>() {
+               @Override
                public Pair<T, InheritDocProvider<T>> getInheritDoc() {
                  return findInheritDocTag(overriden, loc);
                }
 
+               @Override
                public PsiClass getElement() {
                  return aSuper;
                }
@@ -1760,6 +1778,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static class ReturnTagLocator implements DocTagLocator<PsiDocTag> {
+    @Override
     public PsiDocTag find(PsiDocComment comment) {
       if (comment == null) {
         return null;

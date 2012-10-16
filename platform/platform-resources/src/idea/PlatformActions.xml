@@ -144,7 +144,7 @@
         </group>
         <separator/>
         <group id="FileMainSettingsGroup">
-          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.IdeOptions"/>
+          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
              <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
              <group id="FileSettingsGroup"/>
@@ -157,7 +157,7 @@
           <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
         </group>
         <separator/>
-        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Sync"/>
+        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         
         <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
@@ -488,7 +488,7 @@
         icon="AllIcons.Actions.Delete"/>
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
-        icon="AllIcons.Actions.Sync"/>
+        icon="AllIcons.Actions.Refresh"/>
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
         icon="AllIcons.Actions.ShowHiddens"/>

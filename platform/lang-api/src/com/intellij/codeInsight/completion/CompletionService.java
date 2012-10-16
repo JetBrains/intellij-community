@@ -58,6 +58,7 @@ public abstract class CompletionService {
   /**
    * Set lookup advertisement text (at the bottom) at any time. Will do nothing if no completion process is in progress.
    * @param text
+   * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   public abstract void setAdvertisementText(@Nullable String text);
 

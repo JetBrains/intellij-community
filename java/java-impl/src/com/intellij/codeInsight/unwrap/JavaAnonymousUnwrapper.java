@@ -27,6 +27,7 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.anonymous"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiAnonymousClass
            && ((PsiAnonymousClass)e).getMethods().length <= 1;

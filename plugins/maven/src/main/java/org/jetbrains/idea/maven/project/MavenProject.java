@@ -357,7 +357,7 @@ public class MavenProject {
 
   @NotNull
   public String getAnnotationProcessorDirectory(boolean testSources) {
-    String def = getGeneratedSourcesDirectory(false) + (testSources ? "/test-annotations" : "/annotations");
+    String def = getGeneratedSourcesDirectory(testSources) + (testSources ? "/test-annotations" : "/annotations");
     return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(),
                                               testSources ? "generatedTestSourcesDirectory" : "generatedSourcesDirectory",
                                               def);

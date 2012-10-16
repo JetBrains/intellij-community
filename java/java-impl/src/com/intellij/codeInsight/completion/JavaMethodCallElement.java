@@ -55,6 +55,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
   }
 
+  @Override
   public PsiType getType() {
     return getSubstitutor().substitute(getInferenceSubstitutor().substitute(getObject().getReturnType()));
   }

@@ -62,7 +62,7 @@ public class ProfilesComboBox extends JComboBox {
         if (value instanceof Profile) {
           final Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? AllIcons.General.ApplicationSettings : AllIcons.General.ProjectSettings);
+          setIcon(profile.isLocal() ? AllIcons.General.Settings : AllIcons.General.ProjectSettings);
         }
         else if (value instanceof String) {
           setText((String)value);

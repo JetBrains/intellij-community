@@ -25,14 +25,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class QualifiedClassNameMacro extends Macro {
 
+  @Override
   public String getName() {
     return "qualifiedClassName";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.qualified.class.name");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){

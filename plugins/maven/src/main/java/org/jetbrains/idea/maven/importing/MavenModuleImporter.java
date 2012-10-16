@@ -19,15 +19,13 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -41,14 +39,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class MavenModuleImporter {
 
@@ -57,6 +60,8 @@ public class MavenModuleImporter {
   public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
 
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
+  public static final String DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations";
+  public static final String DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations";
 
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
@@ -334,16 +339,24 @@ public class MavenModuleImporter {
     ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
 
     if (shouldEnableAnnotationProcessors()) {
-      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory();
+      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
       if (annotationProcessorDirectory == null) {
-        annotationProcessorDirectory = "target/generated-sources/annotations";
+        annotationProcessorDirectory = DEFAULT_ANNOTATION_PATH_OUTPUT;
+      }
+
+      String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
+      if (testAnnotationProcessorDirectory == null) {
+        testAnnotationProcessorDirectory = DEFAULT_TEST_ANNOTATION_OUTPUT;
       }
 
       Map<String, String> options = myMavenProject.getAnnotationProcessorOptions();
 
       List<String> processors = myMavenProject.getDeclaredAnnotationProcessors();
 
-      if (processors == null && options.isEmpty() && "target/generated-sources/annotations".equals(annotationProcessorDirectory.replace('\\', '/'))) {
+      if (processors == null
+          && options.isEmpty()
+          && DEFAULT_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
+          && DEFAULT_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'))) {
         if (moduleProfile != null) {
           compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
         }
@@ -352,7 +365,8 @@ public class MavenModuleImporter {
           defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
           defaultMavenProfile.setEnabled(true);
           defaultMavenProfile.setObtainProcessorsFromClasspath(true);
-          defaultMavenProfile.setGeneratedSourcesDirectoryName("target/generated-sources/annotations");
+          defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_ANNOTATION_PATH_OUTPUT, false);
+          defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_TEST_ANNOTATION_OUTPUT, true);
           compilerConfiguration.addModuleProcessorProfile(defaultMavenProfile);
         }
 
@@ -375,7 +389,8 @@ public class MavenModuleImporter {
           compilerConfiguration.addModuleProcessorProfile(moduleProfile);
         }
 
-        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory);
+        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
+        moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
 
         moduleProfile.clearProcessorOptions();
         for (Map.Entry<String, String> entry : options.entrySet()) {
@@ -407,8 +422,8 @@ public class MavenModuleImporter {
   }
 
   @Nullable
-  private String getRelativeAnnotationProcessorDirectory() {
-    String absoluteAnnotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(false);
+  private String getRelativeAnnotationProcessorDirectory(boolean isTest) {
+    String absoluteAnnotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
     String absoluteProjectDirectory = myMavenProject.getDirectory();
 
     return FileUtil.getRelativePath(new File(absoluteProjectDirectory), new File(absoluteAnnotationProcessorDirectory));

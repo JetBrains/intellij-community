@@ -600,13 +600,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     final PsiFile file = getPsiFile();
-    if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
+    boolean writableOk = file == null || WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file));
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
 
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+    if (!writableOk) {
+      doHide(false, true);
+      fireItemSelected(null, completionChar);
       return;
     }
 
@@ -1158,6 +1159,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   @Override
+  public List<String> getAdvertisements() {
+    return myAdComponent.getAdvertisements();
+  }
+
+  @Override
   public void hide(){
     hideLookup(true);
   }
@@ -1289,7 +1295,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void addAdvertisement(@NotNull final String text) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         if (!myDisposed) {
@@ -1300,7 +1306,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           }
         }
       }
-    }, myModalityState);
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, myModalityState);
+    }
   }
 
   public boolean isLookupDisposed() {

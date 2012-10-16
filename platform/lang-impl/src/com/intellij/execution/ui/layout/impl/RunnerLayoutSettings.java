@@ -18,6 +18,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.components.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,7 +35,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
 
   private final Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<String, RunnerLayout>();
 
-  public RunnerLayout getLayout(String id) {
+  public RunnerLayout getLayout(@NotNull String id) {
     RunnerLayout layout = myRunnerId2Settings.get(id);
     if (layout == null) {
       layout = new RunnerLayout(id);
@@ -44,6 +45,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
     return layout;
   }
 
+  @Override
   public Element getState() {
     final Element runners = new Element("runners");
     for (String eachID : myRunnerId2Settings.keySet()) {
@@ -56,6 +58,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
     return runners;
   }
 
+  @Override
   public void loadState(final Element state) {
     final List runners = state.getChildren("runner");
     for (Object each : runners) {

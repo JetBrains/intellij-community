@@ -53,7 +53,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
     final Object object = item.getObject();
     if (!(object instanceof PsiClass)) return Result.ACCEPT;
 
-    if (StatisticsManager.getInstance().getUseCount(CompletionService.STATISTICS_KEY, item, location) > 1) return Result.ACCEPT;
+    if (StatisticsManager.getInstance().getUseCount(StatisticsWeigher.getBaseStatisticsInfo(item, location)) > 1) return Result.ACCEPT;
 
     PsiClass psiClass = (PsiClass)object;
 

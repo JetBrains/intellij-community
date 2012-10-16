@@ -1,4 +1,4 @@
-def foo() {
+def <warning descr="Method foo is unused">foo</warning>() {
   String foo = 'used';
   try {
     thrower()

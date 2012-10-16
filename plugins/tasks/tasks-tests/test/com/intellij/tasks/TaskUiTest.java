@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.tasks.actions.SwitchTaskCombo;
@@ -66,7 +65,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
   }
 
   private static Presentation doTest(AnAction action) {
-    TestActionEvent event = new TestActionEvent(DataManager.getInstance().getDataContext(), action);
+    TestActionEvent event = new TestActionEvent(action);
     action.update(event);
     return event.getPresentation();
   }

@@ -98,7 +98,7 @@ public abstract class StaticMemberProcessor {
   }
 
   private void showHint(boolean shouldImport) {
-    if (!myHintShown && !shouldImport && CompletionService.getCompletionService().getAdvertisementText() == null) {
+    if (!myHintShown && !shouldImport) {
       final String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (shortcut != null) {
         CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);

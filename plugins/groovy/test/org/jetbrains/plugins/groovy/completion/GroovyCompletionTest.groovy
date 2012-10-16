@@ -984,6 +984,8 @@ println "abcd"
 
   public void testIfParenthesis() { checkCompletion 'int iff; if<caret>', '(', "int iff; if (<caret>)" }
 
+  public void testMakingDefFromAssignment() { checkCompletion 'int defInt; de<caret>foo = 2', 'f ', "int defInt; def <caret>foo = 2" }
+
   public void testEnumPropertyType() {
     checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>>', "enum Foo {a,b; static List<StringBuilder<caret>>"
   }

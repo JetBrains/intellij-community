@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
+  @Override
   public final void execute(final Editor editor, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
@@ -34,6 +35,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     }
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
+      @Override
       public void run() {
         final Document doc = editor.getDocument();
         final SelectionModel selectionModel = editor.getSelectionModel();

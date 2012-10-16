@@ -28,14 +28,17 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class RightSideTypeMacro extends Macro {
+  @Override
   public String getName() {
     return "rightSideType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.right.side.type");
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     int offset = context.getStartOffset();
     Project project = context.getProject();

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"); 
 
+  @Override
   @Nullable
   public PsiElement getGotoDeclarationTarget(final PsiElement elementAt, Editor editor) {
     if (elementAt instanceof PsiKeyword) {

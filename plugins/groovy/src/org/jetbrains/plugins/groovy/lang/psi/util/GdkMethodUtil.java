@@ -108,10 +108,11 @@ public class GdkMethodUtil {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
-          if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
-          final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+          PsiMethod method = (PsiMethod)element;
+          if (!method.hasModifierProperty(PsiModifier.STATIC)) return true;
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return true;
-          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false, categoryClass.getName()), state);
+          return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), state);
         }
         return true;
       }
@@ -176,5 +177,13 @@ public class GdkMethodUtil {
 
   public static boolean isWithName(String name) {
     return WITH.equals(name) || IDENTITY.equals(name);
+  }
+
+  @Nullable
+  public static String generateOriginInfo(PsiMethod method) {
+    PsiClass cc = method.getContainingClass();
+    if (cc == null) return null;
+    //'\u2191'
+    return "via " + cc.getName();
   }
 }

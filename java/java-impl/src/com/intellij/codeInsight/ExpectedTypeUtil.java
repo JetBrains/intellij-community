@@ -141,6 +141,7 @@ public class ExpectedTypeUtil {
       myOccurrenceClasses = occurrenceClasses;
     }
 
+    @Override
     public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
       List<PsiField> fields = new ArrayList<PsiField>();
       for (PsiClass aClass : myOccurrenceClasses) {
@@ -150,6 +151,7 @@ public class ExpectedTypeUtil {
       return fields.toArray(new PsiField[fields.size()]);
     }
 
+    @Override
     public PsiMethod[] findDeclaredMethods(final PsiManager manager, String name) {
       List<PsiMethod> methods = new ArrayList<PsiMethod>();
       for (PsiClass aClass : myOccurrenceClasses) {

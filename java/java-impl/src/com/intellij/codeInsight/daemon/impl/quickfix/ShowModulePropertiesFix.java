@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.PsiElement;
@@ -37,7 +38,7 @@ public class ShowModulePropertiesFix implements IntentionAction {
   }
 
   public ShowModulePropertiesFix(PsiElement context) {
-    Module module = ModuleUtil.findModuleForPsiElement(context);
+    Module module = ModuleUtilCore.findModuleForPsiElement(context);
     myModuleName = module != null ? module.getName() : null;
   }
 

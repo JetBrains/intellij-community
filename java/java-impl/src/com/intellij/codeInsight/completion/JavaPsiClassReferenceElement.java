@@ -159,6 +159,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     }
     if (substitutor == null && !diamond && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
+        @Override
         public String fun(PsiTypeParameter psiTypeParameter) {
           return psiTypeParameter.getName();
         }

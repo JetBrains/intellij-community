@@ -27,6 +27,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class SuperMethodReturnFix implements IntentionAction {
   public String getText() {
     String name = PsiFormatUtil.formatMethod(
             mySuperMethod,
-            PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+            PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
             0
     );
     return QuickFixBundle.message("fix.super.method.return.type.text",

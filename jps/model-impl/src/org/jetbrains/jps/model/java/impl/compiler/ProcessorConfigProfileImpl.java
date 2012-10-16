@@ -26,14 +26,17 @@ import java.util.*;
  *         Date: 5/25/12
  */
 public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile {
+
   private String myName = "";
   private boolean myEnabled = false;
   private boolean myObtainProcessorsFromClasspath = true;
   private String myProcessorPath = "";
   private final Set<String> myProcessors = new HashSet<String>(); // empty list means all discovered
   private final Map<String, String> myProcessorOptions = new HashMap<String, String>(); // key=value map of options
-  @Nullable
-  private String myGeneratedSourcesDirectoryName = null; // null means 'auto'
+  private String myGeneratedProductionDirectoryName = DEFAULT_PRODUCTION_DIR_NAME;
+  private String myGeneratedTestsDirectoryName = DEFAULT_TESTS_DIR_NAME;
+  private boolean myOutputRelativeToContentRoot = false;
+
   private final Set<String> myModuleNames = new HashSet<String>();
 
   public ProcessorConfigProfileImpl(String name) {
@@ -54,7 +57,9 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     myProcessors.addAll(other.getProcessors());
     myProcessorOptions.clear();
     myProcessorOptions.putAll(other.getProcessorOptions());
-    myGeneratedSourcesDirectoryName = other.getGeneratedSourcesDirectoryName();
+    myGeneratedProductionDirectoryName = other.getGeneratedSourcesDirectoryName(false);
+    myGeneratedTestsDirectoryName = other.getGeneratedSourcesDirectoryName(true);
+    myOutputRelativeToContentRoot = other.isOutputRelativeToContentRoot();
     myModuleNames.clear();
     myModuleNames.addAll(other.getModuleNames());
   }
@@ -101,14 +106,29 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   }
 
   @Override
-  @Nullable
-  public String getGeneratedSourcesDirectoryName() {
-    return myGeneratedSourcesDirectoryName;
+  @NotNull
+  public String getGeneratedSourcesDirectoryName(boolean forTests) {
+    return forTests? myGeneratedTestsDirectoryName : myGeneratedProductionDirectoryName;
   }
 
   @Override
-  public void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName) {
-    myGeneratedSourcesDirectoryName = generatedSourcesDirectoryName;
+  public void setGeneratedSourcesDirectoryName(@Nullable String name, boolean forTests) {
+    if (forTests) {
+      myGeneratedTestsDirectoryName = name != null? name.trim() : DEFAULT_TESTS_DIR_NAME;
+    }
+    else {
+      myGeneratedProductionDirectoryName = name != null? name.trim() : DEFAULT_PRODUCTION_DIR_NAME;
+    }
+  }
+
+  @Override
+  public boolean isOutputRelativeToContentRoot() {
+    return myOutputRelativeToContentRoot;
+  }
+
+  @Override
+  public void setOutputRelativeToContentRoot(boolean relativeToContent) {
+    myOutputRelativeToContentRoot = relativeToContent;
   }
 
   @Override
@@ -194,11 +214,17 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
     if (myEnabled != profile.myEnabled) return false;
     if (myObtainProcessorsFromClasspath != profile.myObtainProcessorsFromClasspath) return false;
-    if (myGeneratedSourcesDirectoryName != null
-        ? !myGeneratedSourcesDirectoryName.equals(profile.myGeneratedSourcesDirectoryName)
-        : profile.myGeneratedSourcesDirectoryName != null) {
+    if (myGeneratedProductionDirectoryName != null
+        ? !myGeneratedProductionDirectoryName.equals(profile.myGeneratedProductionDirectoryName)
+        : profile.myGeneratedProductionDirectoryName != null) {
       return false;
     }
+    if (myGeneratedTestsDirectoryName != null
+        ? !myGeneratedTestsDirectoryName.equals(profile.myGeneratedTestsDirectoryName)
+        : profile.myGeneratedTestsDirectoryName != null) {
+      return false;
+    }
+    if (myOutputRelativeToContentRoot != profile.myOutputRelativeToContentRoot)return false;
     if (!myModuleNames.equals(profile.myModuleNames)) return false;
     if (!myProcessorOptions.equals(profile.myProcessorOptions)) return false;
     if (myProcessorPath != null ? !myProcessorPath.equals(profile.myProcessorPath) : profile.myProcessorPath != null) return false;
@@ -216,7 +242,9 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     result = 31 * result + (myProcessorPath != null ? myProcessorPath.hashCode() : 0);
     result = 31 * result + myProcessors.hashCode();
     result = 31 * result + myProcessorOptions.hashCode();
-    result = 31 * result + (myGeneratedSourcesDirectoryName != null ? myGeneratedSourcesDirectoryName.hashCode() : 0);
+    result = 31 * result + (myGeneratedProductionDirectoryName != null ? myGeneratedProductionDirectoryName.hashCode() : 0);
+    result = 31 * result + (myGeneratedTestsDirectoryName != null ? myGeneratedTestsDirectoryName.hashCode() : 0);
+    result = 31 * result + (myOutputRelativeToContentRoot ? 1 : 0);
     result = 31 * result + myModuleNames.hashCode();
     return result;
   }

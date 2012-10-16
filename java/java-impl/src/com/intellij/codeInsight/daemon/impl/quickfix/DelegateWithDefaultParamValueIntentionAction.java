@@ -102,6 +102,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
     }
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         
         final PsiMethod prototype = (PsiMethod)method.getContainingClass().addBefore(methodPrototype, method);

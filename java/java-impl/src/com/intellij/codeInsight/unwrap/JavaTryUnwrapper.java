@@ -25,6 +25,7 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.try"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiTryStatement;
   }

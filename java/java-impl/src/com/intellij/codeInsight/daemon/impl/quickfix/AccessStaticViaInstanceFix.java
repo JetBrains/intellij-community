@@ -31,10 +31,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +117,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
       final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor == null)
         return false;
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilBase.toPsiElementArray(sideEffects), attributes, true,
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilCore.toPsiElementArray(sideEffects), attributes, true,
                                                                     null);
       try {
         hasSideEffects = PsiUtil.isStatement(factory.createStatementFromText(qualifierExpression.getText(), qualifierExpression));

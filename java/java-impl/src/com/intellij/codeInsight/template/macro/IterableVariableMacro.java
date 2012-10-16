@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +37,17 @@ import java.util.List;
 public class IterableVariableMacro extends VariableTypeMacroBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.IterableVariableMacro");
 
+  @Override
   public String getName() {
     return "iterableVariable";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.iterable.variable");
   }
 
+  @Override
   @Nullable
   protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
@@ -82,6 +86,6 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
         }
       }
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 }

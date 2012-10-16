@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -53,7 +54,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     myChooserTitle = chooserTitle;
   }
 
+  @Override
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
@@ -67,6 +70,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       if (members == null) return;
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           doGenerate(project, editor, aClass, members);
         }
@@ -150,11 +154,14 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     TemplateManager.getInstance(myProject).startTemplate(editor, template, new TemplateEditingAdapter() {
+      @Override
       public void templateFinished(Template template, boolean brokenOff) {
         if (index + 1 < templates.size()){
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               new WriteCommandAction(myProject) {
+                @Override
                 protected void run(Result result) throws Throwable {
                   runTemplates(myProject, editor, templates, index + 1);
                 }
@@ -238,6 +245,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   protected abstract GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException;
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

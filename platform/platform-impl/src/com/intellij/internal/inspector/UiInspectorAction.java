@@ -132,7 +132,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       bar.addSeparator();
 
-      bar.add(new AbstractAction("Refresh", AllIcons.Actions.Sync) {
+      bar.add(new AbstractAction("Refresh", AllIcons.Actions.Refresh) {
         public void actionPerformed(ActionEvent e) {
           getCurrentTable().refresh();
         }

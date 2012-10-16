@@ -720,8 +720,8 @@ public class BuildManager implements ApplicationComponent{
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
-    cmdLine.addParameter("-XX:MaxPermSize=150m");
-    cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
+    //cmdLine.addParameter("-XX:MaxPermSize=150m");
+    //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     final int heapSize = config.COMPILER_PROCESS_HEAP_SIZE;
     final int xms = heapSize / 2;
     if (xms > 32) {

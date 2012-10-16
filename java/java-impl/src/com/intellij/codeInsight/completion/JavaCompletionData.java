@@ -599,6 +599,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   }
 
   private static void addPrimitiveTypes(CompletionResultSet result, PsiElement position) {
+    if (AFTER_DOT.accepts(position)) {
+      return;
+    }
+
     boolean inCast = psiElement()
       .afterLeaf(psiElement().withText("(").withParent(psiElement(PsiParenthesizedExpression.class, PsiTypeCastExpression.class)))
       .accepts(position);
@@ -606,22 +610,26 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     boolean typeFragment = position.getContainingFile() instanceof PsiTypeCodeFragment && PsiTreeUtil.prevVisibleLeaf(position) == null;
     boolean declaration = DECLARATION_START.accepts(position);
     boolean expressionPosition = isExpressionPosition(position);
+    boolean inGenerics = PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class) != null;
     if (START_FOR.accepts(position) ||
-        isInsideParameterList(position) && !AFTER_DOT.accepts(position) ||
+        isInsideParameterList(position) ||
+        inGenerics ||
         VARIABLE_AFTER_FINAL.accepts(position) ||
         inCast ||
         declaration ||
         typeFragment ||
         expressionPosition ||
         isStatementPosition(position)) {
+      boolean needSpace = !inCast && !typeFragment && !expressionPosition && !inGenerics;
       for (String primitiveType : PRIMITIVE_TYPES) {
         LookupElement keyword = createKeyword(position, primitiveType);
-        result.addElement(inCast || typeFragment || expressionPosition ? keyword : new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        result.addElement(needSpace ? new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD) : keyword);
       }
     }
     if (declaration) {
       result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.VOID), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    } else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
+    }
+    else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.addElement(createKeyword(position, PsiKeyword.VOID));
     }
   }

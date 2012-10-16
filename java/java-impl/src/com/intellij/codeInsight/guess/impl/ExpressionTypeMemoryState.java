@@ -34,10 +34,12 @@ import java.util.Map;
 public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState");
   public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
+    @Override
     public int computeHashCode(PsiExpression object) {
       return object.getNode().getElementType().hashCode();
     }
 
+    @Override
     public boolean equals(PsiExpression o1, PsiExpression o2) {
       if (CodeInsightUtil.areExpressionsEquivalent(o1, o2)) {
         if (computeHashCode(o1) != computeHashCode(o2)) {

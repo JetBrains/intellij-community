@@ -241,7 +241,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
-      e.getPresentation().setIcon(AllIcons.Actions.Sync);
+      e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myFile != null);
     }
 

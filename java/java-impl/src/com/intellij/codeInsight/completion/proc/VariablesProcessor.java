@@ -59,11 +59,13 @@ public class VariablesProcessor
     myResultList = lst;
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
   /** Always return true since we wanna get all vars in scope */
+  @Override
   public boolean execute(@NotNull PsiElement pe, ResolveState state){
     if(pe instanceof PsiVariable){
       final PsiVariable pvar = (PsiVariable)pe;
@@ -78,6 +80,7 @@ public class VariablesProcessor
     return true;
   }
 
+  @Override
   public final void handleEvent(Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC)
       myStaticScopeFlag = true;

@@ -369,6 +369,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     class Change implements Runnable {
       private String[] result;
 
+      @Override
       public void run() {
         final List<String> propertyHandlers = new ArrayList<String>();
         final PsiField[] fields = psiClass.getFields();

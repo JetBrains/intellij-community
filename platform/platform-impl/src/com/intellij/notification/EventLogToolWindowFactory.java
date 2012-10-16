@@ -95,7 +95,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     private final Project myProject;
 
     public EditNotificationSettings(Project project) {
-      super("Settings", "Edit notification settings", AllIcons.Actions.ShowSettings);
+      super("Settings", "Edit notification settings", AllIcons.General.Settings);
       myProject = project;
     }
 

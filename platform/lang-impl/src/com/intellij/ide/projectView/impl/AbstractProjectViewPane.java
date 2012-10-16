@@ -370,7 +370,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       Object element = getElementFromTreeNode(lastPathComponent);
-      if (element != null) {
+      if (element instanceof Object[]) {
+        Collections.addAll(list, (Object[])element);
+      }
+      else if (element != null) {
         list.add(element);
       }
     }

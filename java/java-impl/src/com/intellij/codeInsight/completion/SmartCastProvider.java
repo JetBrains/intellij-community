@@ -30,6 +30,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
     PlatformPatterns.psiElement().withText("(").withParent(
       PsiTypeCastExpression.class));
 
+  @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
     for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       final PsiElement originalPosition = parameters.getOriginalPosition();

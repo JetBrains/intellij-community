@@ -29,18 +29,22 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
+  @Override
   public @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }
 
+  @Override
   public Object[] getParametersForDocumentation(final PsiAnnotationMethod p, final ParameterInfoContext context) {
     return new Object[] {p};
   }
 
+  @Override
   public boolean couldShowInLookup() {
     return false;
   }
 
+  @Override
   public PsiAnnotationParameterList findElementForParameterInfo(final CreateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
 
@@ -72,15 +76,18 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     return null;
   }
 
+  @Override
   public void showParameterInfo(@NotNull final PsiAnnotationParameterList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
+  @Override
   public PsiAnnotationParameterList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
     return annotation != null ? annotation.getParameterList() : null;
   }
 
+  @Override
   public void updateParameterInfo(@NotNull final PsiAnnotationParameterList o, final UpdateParameterInfoContext context) {
     CharSequence chars = context.getEditor().getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, context.getEditor().getCaretModel().getOffset(), " \t");
@@ -90,14 +97,17 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), offset1));
   }
 
+  @Override
   public String getParameterCloseChars() {
     return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
   }
 
+  @Override
   public boolean tracksParameterIndex() {
     return true;
   }
 
+  @Override
   public void updateUI(final PsiAnnotationMethod p, final ParameterInfoUIContext context) {
     @NonNls StringBuffer buffer = new StringBuffer();
     int highlightStartOffset;

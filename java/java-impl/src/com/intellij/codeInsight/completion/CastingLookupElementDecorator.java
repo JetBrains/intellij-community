@@ -45,6 +45,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
     myCastItem = PsiTypeLookupItem.createLookupItem(castType, (PsiElement)delegate.getObject());
   }
 
+  @Override
   public PsiType getType() {
     return myCastType;
   }
@@ -54,6 +55,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
     return "(" + myCastItem.getLookupString() + ")" + getDelegate().getLookupString();
   }
 
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     getDelegate().renderElement(presentation);
     final String castType = getItemText(presentation, getCastItem());

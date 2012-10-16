@@ -26,10 +26,12 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
 class JavaWithNotSurrounder extends JavaExpressionSurrounder{
+  @Override
   public boolean isApplicable(PsiExpression expr) {
     return PsiType.BOOLEAN.equals(expr.getType());
   }
 
+  @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -43,6 +45,7 @@ class JavaWithNotSurrounder extends JavaExpressionSurrounder{
     return new TextRange(offset, offset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.not.template");
   }

@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
  * @author yole
  */
 public class JavaTemplateLookupSelectionHandler implements TemplateLookupSelectionHandler {
+  @Override
   public void itemSelected(final LookupElement item,
                            final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
     JavaTemplateUtil.updateTypeBindings(item.getObject(), psiFile, document, segmentStart, segmentEnd);

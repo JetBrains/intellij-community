@@ -25,6 +25,7 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
     super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (original instanceof EncapsulatableClassMember) {
       final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;

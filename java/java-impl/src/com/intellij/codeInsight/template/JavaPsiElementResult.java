@@ -45,6 +45,7 @@ public class JavaPsiElementResult extends PsiElementResult {
     return super.toString();
   }
 
+  @Override
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
     JavaTemplateUtil.updateTypeBindings(getElement(), psiFile, document, segmentStart, segmentEnd);
   }

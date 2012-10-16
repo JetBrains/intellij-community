@@ -751,9 +751,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
       }
 
-      final File srcOutput = context.getProjectPaths()
-        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.containsTests(),
-                                                         profile.getGeneratedSourcesDirectoryName());
+      final File srcOutput = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(
+        chunk.getModules().iterator().next(), chunk.containsTests(), profile
+      );
       if (srcOutput != null) {
         srcOutput.mkdirs();
         options.add("-s");

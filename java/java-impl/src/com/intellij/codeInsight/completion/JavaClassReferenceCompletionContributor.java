@@ -15,11 +15,15 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,32 +35,38 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());
     if (reference != null && reference.getExtendClassNames() != null) {
-      final PsiReference[] references = reference.getJavaClassReferenceSet().getReferences();
-      final PsiReference last = references[references.length - 1];
-      context.setReplacementOffset(last.getRangeInElement().getEndOffset() + last.getElement().getTextRange().getStartOffset());
+      JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
+      context.setReplacementOffset(set.getRangeInElement().getEndOffset() + set.getElement().getTextRange().getStartOffset());
     }
   }
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
-    if (parameters.getCompletionType() == CompletionType.SMART) {
-      return;
-    }
-
     PsiElement position = parameters.getPosition();
     JavaClassReference reference = findJavaClassReference(position.getContainingFile(), parameters.getOffset());
     if (reference == null) {
       return;
     }
 
+    String[] extendClassNames = reference.getExtendClassNames();
+    PsiElement context = reference.getCompletionContext();
+    if (extendClassNames != null && context instanceof PsiPackage) {
+      if (parameters.getCompletionType() == CompletionType.SMART) {
+        JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
+        int setStart = set.getRangeInElement().getStartOffset() + set.getElement().getTextRange().getStartOffset();
+        String fullPrefix = parameters.getPosition().getContainingFile().getText().substring(setStart, parameters.getOffset());
+        reference.processSubclassVariants((PsiPackage)context, extendClassNames, result.withPrefixMatcher(fullPrefix));
+        return;
+      }
+      result.addLookupAdvertisement("Press " + getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION) + " to see inheritors of " +
+                                    StringUtil.join(extendClassNames, ", "));
+    }
+
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result);
     }
     else {
-      CompletionData data = CompletionUtil.getCompletionDataByElement(position, parameters.getOriginalFile());
-      if (data != null) {
-        LegacyCompletionContributor.completeReference(parameters, result, data);
-      }
+      LegacyCompletionContributor.completeReference(parameters, result);
     }
     result.stopHere();
   }

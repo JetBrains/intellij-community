@@ -29,6 +29,7 @@ public class GenerateConstructorAction extends BaseGenerateAction {
     super(new GenerateConstructorHandler());
   }
 
+  @Override
   protected boolean isValidForClass(final PsiClass targetClass) {
     return super.isValidForClass(targetClass) && !(targetClass instanceof PsiAnonymousClass);
   }

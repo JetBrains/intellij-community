@@ -22,6 +22,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogConsoleListener;
 import com.intellij.facet.ProjectFacetManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +39,6 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
-import icons.AndroidIcons;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -457,7 +457,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private class MyRestartAction extends AnAction {
     public MyRestartAction() {
       super(AndroidBundle.message("android.restart.logcat.action.text"), AndroidBundle.message("android.restart.logcat.action.description"),
-            AndroidIcons.RestartLogcat);
+            AllIcons.Actions.Restart);
     }
 
     @Override

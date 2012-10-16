@@ -52,7 +52,6 @@ public class JetgroovyIcons {
     public static final Icon Domain_class = load("/icons/mvc/domain_class.png"); // 16x16
     public static final Icon Groovy_mvc_plugin = load("/icons/mvc/groovy_mvc_plugin.png"); // 16x16
     public static final Icon ModelsNode = load("/icons/mvc/modelsNode.png"); // 16x16
-    public static final Icon Refresh = load("/icons/mvc/refresh.png"); // 16x16
     public static final Icon Service = load("/icons/mvc/service.png"); // 16x16
 
   }

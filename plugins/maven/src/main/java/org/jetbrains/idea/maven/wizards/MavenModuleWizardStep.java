@@ -17,7 +17,9 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,6 +58,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
   private final MavenModuleBuilder myBuilder;
+  private final WizardContext myContext;
   private MavenProject myAggregator;
   private MavenProject myParent;
 
@@ -91,9 +94,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private boolean skipUpdateUI;
 
-  public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
+  public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder, WizardContext context) {
     myProjectOrNull = project;
     myBuilder = builder;
+    myContext = context;
 
     initComponents();
     loadSettings();
@@ -273,7 +277,25 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   @Override
+  public boolean validate() throws ConfigurationException {
+    if (StringUtil.isEmptyOrSpaces(myGroupIdField.getText())) {
+      throw new ConfigurationException("Please, specify groupId");
+    }
+
+    if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
+      throw new ConfigurationException("Please, specify artifactId");
+    }
+
+    if (StringUtil.isEmptyOrSpaces(myVersionField.getText())) {
+      throw new ConfigurationException("Please, specify version");
+    }
+
+    return true;
+  }
+
+  @Override
   public void updateStep() {
+
     if (skipUpdateUI) return;
 
     if (isMavenizedProject()) {
@@ -459,6 +481,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
+    myContext.setProjectBuilder(myBuilder);
     myBuilder.setAggregatorProject(myAggregator);
     myBuilder.setParentProject(myParent);
 
