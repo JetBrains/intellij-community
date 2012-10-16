@@ -29,18 +29,14 @@ abstract class AbstractCollectionBinding implements Binding {
 
   private final Class myElementType;
   private final String myTagName;
-  @Nullable protected Accessor myAccessor;
-  private AbstractCollection myAnnotation = null;
-  private boolean myUsingOptionBinding = false;
+  @Nullable protected final Accessor myAccessor;
+  private final AbstractCollection myAnnotation;
 
   public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
     myElementType = elementType;
     myTagName = tagName;
     myAccessor = accessor;
-
-    if (accessor != null) {
-      myAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), AbstractCollection.class);
-    }
+    myAnnotation = accessor == null ? null : XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), AbstractCollection.class);
   }
 
   public void init() {
@@ -51,10 +47,10 @@ abstract class AbstractCollectionBinding implements Binding {
         }
 
         if (myAnnotation.elementTag().equals(Constants.OPTION)) {
-          getElementBindings();
-
-          if (myUsingOptionBinding) {
-            throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
+          for (Binding binding : getElementBindings().values()) {
+            if (binding instanceof TagBindingWrapper) {
+              throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
+            }
           }
         }
       }
@@ -66,7 +62,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
   }
 
-  private Map<Class, Binding> getElementBindings() {
+  private synchronized Map<Class, Binding> getElementBindings() {
     if (myElementBindings == null) {
       myElementBindings = new HashMap<Class, Binding>();
 
@@ -91,15 +87,8 @@ abstract class AbstractCollectionBinding implements Binding {
   }
 
   private Binding getBinding(final Class type) {
-    Binding binding;
-    binding = XmlSerializerImpl.getBinding(type);
-
-    if (!binding.getBoundNodeType().isAssignableFrom(Element.class)) {
-      binding = createElementTagWrapper(binding);
-      myUsingOptionBinding = true;
-    }
-
-    return binding;
+    Binding binding = XmlSerializerImpl.getBinding(type);
+    return binding.getBoundNodeType().isAssignableFrom(Element.class) ? binding : createElementTagWrapper(binding);
   }
 
   private Binding createElementTagWrapper(final Binding elementBinding) {
