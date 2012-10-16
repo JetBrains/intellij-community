@@ -15,6 +15,7 @@
  */
 package git4idea.rebase;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
@@ -22,11 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
 import git4idea.GitTag;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
+import git4idea.repo.GitRepository;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
 
@@ -41,6 +44,9 @@ import java.util.List;
  * The dialog that allows initiating git rebase activity
  */
 public class GitRebaseDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance(GitRebaseDialog.class);
+
   /**
    * Git root selector
    */
@@ -318,10 +324,16 @@ public class GitRebaseDialog extends DialogWrapper {
       myRemoteBranches.clear();
       myTags.clear();
       final VirtualFile root = gitRoot();
-      GitBranch.list(myProject, root, true, false, myLocalBranches, null);
-      GitBranch.list(myProject, root, false, true, myRemoteBranches, null);
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+      if (repository != null) {
+        myLocalBranches.addAll(repository.getBranches().getLocalBranches());
+        myRemoteBranches.addAll(repository.getBranches().getRemoteBranches());
+        myCurrentBranch = repository.getCurrentBranch();
+      }
+      else {
+        LOG.error("Repository is null for root " + root);
+      }
       GitTag.list(myProject, root, myTags);
-      myCurrentBranch = GitBranch.current(myProject, root);
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git branch -a");

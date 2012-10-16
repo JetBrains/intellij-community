@@ -15,8 +15,13 @@
  */
 package git4idea.branch;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -87,4 +92,33 @@ public class GitBranchUtil {
       return GitBranchUiUtil.getBranchNameOrRev(repository);
     }
   }
+
+  @NotNull
+  public static Collection<String> convertBranchesToNames(@NotNull Collection<GitBranch> branches) {
+    return Collections2.transform(branches, new Function<GitBranch, String>() {
+      @Override
+      public String apply(@Nullable GitBranch input) {
+        assert input != null;
+        return input.getName();
+      }
+    });
+  }
+
+  /**
+   * Returns the current branch in the given repository, or null if either repository is not on the branch, or in case of error.
+   * @deprecated Use {@link git4idea.repo.GitRepository#getCurrentBranch()}
+   */
+  @Deprecated
+  @Nullable
+  public static GitBranch getCurrentBranch(@NotNull Project project, @NotNull VirtualFile root) {
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      return repository.getCurrentBranch();
+    }
+    else {
+      LOG.error("Repository is null for root " + root);
+    }
+    return null;
+  }
+
 }

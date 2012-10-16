@@ -26,6 +26,7 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
@@ -98,7 +99,7 @@ public abstract class GitUpdater {
                                                        @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
                                                        @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
     try {
-      final GitBranch branchName = GitBranch.current(project, root);
+      final GitBranch branchName = GitBranchUtil.getCurrentBranch(project, root);
       final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
       if (rebase != null && rebase.equalsIgnoreCase("true")) {
         return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);

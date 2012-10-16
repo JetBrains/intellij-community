@@ -38,6 +38,7 @@ import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
 import git4idea.GitFileRevision;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
@@ -78,7 +79,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       return null;
     }
     try {
-      GitBranch c = GitBranch.current(myProject, gitRoot);
+      GitBranch c = GitBranchUtil.getCurrentBranch(myProject, gitRoot);
       if (c == null) {
         return null;
       }
