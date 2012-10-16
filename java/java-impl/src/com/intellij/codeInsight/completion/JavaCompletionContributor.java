@@ -265,13 +265,13 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       });
     } else {
-      advertiseSecondCompletion(parameters.getPosition().getProject());
+      advertiseSecondCompletion(parameters.getPosition().getProject(), result);
     }
   }
 
-  public static void advertiseSecondCompletion(Project project) {
+  public static void advertiseSecondCompletion(Project project, CompletionResultSet result) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
-      CompletionService.getCompletionService().setAdvertisementText("Press " + getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
+      result.addLookupAdvertisement("Press " + getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
     }
   }
 

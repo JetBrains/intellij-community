@@ -160,6 +160,11 @@ public class CompletionServiceImpl extends CompletionService{
       return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
     }
 
+    @Override
+    public void addLookupAdvertisement(@NotNull String text) {
+      getCompletionService().setAdvertisementText(text);
+    }
+
     @NotNull
     @Override
     public CompletionResultSet caseInsensitive() {

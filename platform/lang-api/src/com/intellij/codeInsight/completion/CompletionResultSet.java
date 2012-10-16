@@ -66,6 +66,8 @@ public abstract class CompletionResultSet {
   @NotNull
   public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
+  public abstract void addLookupAdvertisement(@NotNull String text);
+
   /**
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.

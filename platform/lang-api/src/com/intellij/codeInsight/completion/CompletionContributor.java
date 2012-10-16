@@ -75,9 +75,7 @@ import java.util.List;
  * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against prefix matcher.<p>
  *
  * Q: How do I plug into those funny texts below the items in shown lookup?<br>
- * A: Use {@link CompletionContributor#advertise(CompletionParameters)} or
- * {@link CompletionService#setAdvertisementText(String)}. Don't forget to check whether you are in correct place
- * (see {@link CompletionParameters}).<p>
+ * A: Use {@link CompletionResultSet#addLookupAdvertisement(String)} <p>
  *
  * Q: How do I change the text that gets shown when there are no suitable variants at all? <br>
  * A: Use {@link CompletionContributor#handleEmptyLookup(CompletionParameters, Editor)}.
@@ -179,7 +177,7 @@ public abstract class CompletionContributor {
 
   /**
    * @param parameters
-   * @deprecated use {@link com.intellij.codeInsight.completion.CompletionService#setAdvertisementText(String)}
+   * @deprecated use {@link com.intellij.codeInsight.completion.CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
   @Nullable
