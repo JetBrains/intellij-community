@@ -1512,7 +1512,7 @@ public class GitLogUI implements Disposable {
 
   private class MyRefreshAction extends DumbAwareAction {
     private MyRefreshAction() {
-      super("Refresh", "Refresh", AllIcons.Actions.Sync);
+      super("Refresh", "Refresh", AllIcons.Actions.Refresh);
     }
 
     @Override

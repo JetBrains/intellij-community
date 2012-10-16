@@ -124,7 +124,7 @@ public abstract class StatusText {
 
     Dimension size = myComponent.getPreferredSize();
     int x = (ownerRec.width - size.width) / 2;
-    int y = (ownerRec.height - size.height) / 2;
+    int y = (ownerRec.height - size.height) / 3;
     return new Rectangle(x, y, size.width, size.height);
   }
 

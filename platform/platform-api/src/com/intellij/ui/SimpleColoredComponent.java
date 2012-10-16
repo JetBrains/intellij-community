@@ -460,7 +460,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     if (fragment.length() > 0) {
       builder.append("<span");
       formatStyle(builder, attributes);
-      builder.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
+      builder.append('>').append(convertFragment(fragment)).append("</span>");
     }
   }
 
@@ -468,8 +468,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     if (fragment.length() > 0) {
       builder.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\"");
       formatStyle(builder, attributes);
-      builder.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
+      builder.append('>').append(convertFragment(fragment)).append("</a>");
     }
+  }
+
+  private static String convertFragment(String fragment) {
+    return StringUtil.escapeXml(fragment).replaceAll("\\\\n", "<br>");
   }
 
   private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {

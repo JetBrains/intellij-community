@@ -364,14 +364,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public RefreshAction(final RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("action.name.refresh"), SvnBundle.message("repository.browser.refresh.action"), AllIcons.Actions.Sync);
+      super(SvnBundle.message("action.name.refresh"), SvnBundle.message("repository.browser.refresh.action"), AllIcons.Actions.Refresh);
       myBrowserComponent = browserComponent;
     }
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText(SvnBundle.message("action.name.refresh"));
       e.getPresentation().setDescription(SvnBundle.message("repository.browser.refresh.action"));
-      e.getPresentation().setIcon(AllIcons.Actions.Sync);
+      e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myBrowserComponent.getSelectedNode() != null);
     }
 

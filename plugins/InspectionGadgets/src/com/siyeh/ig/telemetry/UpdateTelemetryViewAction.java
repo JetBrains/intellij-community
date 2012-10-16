@@ -31,7 +31,7 @@ class UpdateTelemetryViewAction extends AnAction {
     super(CommonBundle.message("action.refresh"),
           InspectionGadgetsBundle.message(
             "action.telemetry.refresh.description"),
-          AllIcons.Actions.Sync);
+          AllIcons.Actions.Refresh);
     this.telemetry = telemetry;
     this.telemetryDisplay = telemetryDisplay;
   }

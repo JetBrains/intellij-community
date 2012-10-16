@@ -28,7 +28,7 @@ public class RefreshRemoteFileAction extends AnAction {
   private final HttpVirtualFile myFile;
 
   public RefreshRemoteFileAction(HttpVirtualFile file) {
-    super("Reload File", "", AllIcons.Actions.Sync);
+    super("Reload File", "", AllIcons.Actions.Refresh);
     myFile = file;
   }
 

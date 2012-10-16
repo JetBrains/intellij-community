@@ -622,7 +622,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final class EditDependencyRulesAction extends AnAction {
     public EditDependencyRulesAction() {
       super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"),
-            AllIcons.General.IdeOptions);
+            AllIcons.General.Settings);
     }
 
     public void actionPerformed(AnActionEvent e) {

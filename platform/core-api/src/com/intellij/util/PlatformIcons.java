@@ -82,8 +82,8 @@ public interface PlatformIcons {
   Icon SELECT_ALL_ICON = AllIcons.Actions.Selectall;
   Icon UNSELECT_ALL_ICON = AllIcons.Actions.Unselectall;
   Icon PROPERTIES_ICON = AllIcons.Actions.Properties;
-  Icon SYNCHRONIZE_ICON = AllIcons.Actions.Sync;
-  Icon SHOW_SETTINGS_ICON = AllIcons.Actions.ShowSettings;
+  Icon SYNCHRONIZE_ICON = AllIcons.Actions.Refresh;
+  Icon SHOW_SETTINGS_ICON = AllIcons.General.Settings;
 
   Icon CHECK_ICON = AllIcons.Actions.Checked;
   Icon CHECK_ICON_SELECTED = AllIcons.Actions.Checked_selected;

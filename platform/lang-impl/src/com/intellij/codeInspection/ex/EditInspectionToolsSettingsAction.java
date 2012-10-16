@@ -113,6 +113,6 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
   }
 
   public Icon getIcon(int flags) {
-    return AllIcons.General.IdeOptions;
+    return AllIcons.General.Settings;
   }
 }

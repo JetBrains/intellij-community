@@ -322,7 +322,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void addToolbarActions(final DialogWrapper dialogWrapper) {
-      final Icon icon = AllIcons.Actions.Sync;
+      final Icon icon = AllIcons.Actions.Refresh;
       if (myBrowser.myChangesToDisplay == null) {
         myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
           @Override

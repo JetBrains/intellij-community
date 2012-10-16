@@ -303,7 +303,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         final String profileName = value.getName();
         setText(profileName);
         final SingleInspectionProfilePanel panel = getProfilePanel(value);
-        setIcon(panel != null && panel.isProfileShared() ? AllIcons.General.ProjectSettings : AllIcons.General.ApplicationSettings);
+        setIcon(panel != null && panel.isProfileShared() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
       }
     });
     myProfiles.addActionListener(new ActionListener() {

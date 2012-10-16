@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 */
 class CompilerPropertiesAction extends AnAction {
   public CompilerPropertiesAction() {
-    super(CompilerBundle.message("action.compiler.properties.text"), null, AllIcons.General.IdeOptions);
+    super(CompilerBundle.message("action.compiler.properties.text"), null, AllIcons.General.Settings);
   }
 
   public void actionPerformed(AnActionEvent e) {

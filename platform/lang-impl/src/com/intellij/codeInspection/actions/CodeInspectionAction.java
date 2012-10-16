@@ -97,7 +97,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         if (value instanceof Profile) {
           final Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? AllIcons.General.ApplicationSettings : AllIcons.General.ProjectSettings);
+          setIcon(profile.isLocal() ? AllIcons.General.Settings : AllIcons.General.ProjectSettings);
         }
       }
     });

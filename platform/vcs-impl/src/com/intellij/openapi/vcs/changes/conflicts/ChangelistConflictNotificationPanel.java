@@ -74,7 +74,7 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
 
 //    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 
-    myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.IdeOptions, new ActionListener() {
+    myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.Settings, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
         ShowSettingsUtil.getInstance().editConfigurable(myTracker.getProject(),
