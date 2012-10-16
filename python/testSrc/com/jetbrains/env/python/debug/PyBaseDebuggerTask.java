@@ -19,6 +19,7 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.PrintWriter;
@@ -242,6 +243,27 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected abstract void disposeDebugProcess() throws InterruptedException;
+
+  protected void doTest(@Nullable OutputPrinter myOutputPrinter) throws InterruptedException {
+    try {
+      testing();
+      after();
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(output(), e);
+    }
+    finally {
+      clearAllBreakpoints();
+
+      setProcessCanTerminate(true);
+
+      if (myOutputPrinter != null) {
+        myOutputPrinter.stop();
+      }
+
+      finishSession();
+    }
+  }
 
   protected static class Variable {
     private final XTestValueNode myValueNode;

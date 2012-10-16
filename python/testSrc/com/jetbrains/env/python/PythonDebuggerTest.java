@@ -17,6 +17,7 @@ import java.util.Set;
 /**
  * @author traff
  */
+
 public class PythonDebuggerTest extends PyEnvTestCase {
   public void testBreakpointStopAndEval() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {

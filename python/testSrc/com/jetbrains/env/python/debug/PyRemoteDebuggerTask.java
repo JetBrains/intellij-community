@@ -167,8 +167,11 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
         }
 
         ProcessOutput output =
-          PySdkUtil.getProcessOutput(getWorkingFolder(), new String[]{sdkHome, getScriptPath(), Integer.toString(serverSocket.getLocalPort())}, new String[]{
-            PythonEnvUtil.PYTHONUNBUFFERED + "=x", PythonEnvUtil.PYTHONPATH+"="+ PythonHelpersLocator.getHelpersRoot()}, 0);
+          PySdkUtil
+            .getProcessOutput(getWorkingFolder(), new String[]{sdkHome, getScriptPath(), Integer.toString(serverSocket.getLocalPort())},
+                              new String[]{
+                                PythonEnvUtil.PYTHONUNBUFFERED + "=x",
+                                PythonEnvUtil.PYTHONPATH + "=" + PythonHelpersLocator.getHelpersRoot()}, 0);
         checkOutput(output);
       }
     }).start();
@@ -185,26 +188,7 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
 
     waitFor(mySessionInitializedSemaphore);
 
-    try {
-      testing();
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(output(), e);
-    }
-
-    after();
-
-    clearAllBreakpoints();
-
-    setProcessCanTerminate(true);
-
-    if (myOutputPrinter != null)
-
-    {
-      myOutputPrinter.stop();
-    }
-
-    finishSession();
+    doTest(myOutputPrinter);
   }
 
   protected void checkOutput(ProcessOutput output) {
@@ -238,5 +222,4 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
       }
     }
   }
-
 }
