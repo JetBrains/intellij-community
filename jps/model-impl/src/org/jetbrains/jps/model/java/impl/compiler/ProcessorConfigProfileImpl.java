@@ -26,15 +26,17 @@ import java.util.*;
  *         Date: 5/25/12
  */
 public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile {
+
   private String myName = "";
   private boolean myEnabled = false;
   private boolean myObtainProcessorsFromClasspath = true;
   private String myProcessorPath = "";
   private final Set<String> myProcessors = new HashSet<String>(); // empty list means all discovered
   private final Map<String, String> myProcessorOptions = new HashMap<String, String>(); // key=value map of options
-  @Nullable
-  private String myGeneratedProductionDirectoryName = null; // null means 'auto'
-  private String myGeneratedTestsDirectoryName = null; // null means 'auto'
+  private String myGeneratedProductionDirectoryName = DEFAULT_PRODUCTION_DIR_NAME;
+  private String myGeneratedTestsDirectoryName = DEFAULT_TESTS_DIR_NAME;
+  private boolean myOutputRelativeToContentRoot = false;
+
   private final Set<String> myModuleNames = new HashSet<String>();
 
   public ProcessorConfigProfileImpl(String name) {
@@ -57,6 +59,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     myProcessorOptions.putAll(other.getProcessorOptions());
     myGeneratedProductionDirectoryName = other.getGeneratedSourcesDirectoryName(false);
     myGeneratedTestsDirectoryName = other.getGeneratedSourcesDirectoryName(true);
+    myOutputRelativeToContentRoot = other.isOutputRelativeToContentRoot();
     myModuleNames.clear();
     myModuleNames.addAll(other.getModuleNames());
   }
@@ -103,19 +106,32 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   }
 
   @Override
-  @Nullable
+  @NotNull
   public String getGeneratedSourcesDirectoryName(boolean forTests) {
     return forTests? myGeneratedTestsDirectoryName : myGeneratedProductionDirectoryName;
   }
 
   @Override
   public void setGeneratedSourcesDirectoryName(@Nullable String name, boolean forTests) {
+    if (name == null || name.trim().isEmpty()) {
+      name = "";
+    }
     if (forTests) {
       myGeneratedTestsDirectoryName = name;
     }
     else {
       myGeneratedProductionDirectoryName = name;
     }
+  }
+
+  @Override
+  public boolean isOutputRelativeToContentRoot() {
+    return myOutputRelativeToContentRoot;
+  }
+
+  @Override
+  public void setOutputRelativeToContentRoot(boolean relativeToContent) {
+    myOutputRelativeToContentRoot = relativeToContent;
   }
 
   @Override
@@ -211,6 +227,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
         : profile.myGeneratedTestsDirectoryName != null) {
       return false;
     }
+    if (myOutputRelativeToContentRoot != profile.myOutputRelativeToContentRoot)return false;
     if (!myModuleNames.equals(profile.myModuleNames)) return false;
     if (!myProcessorOptions.equals(profile.myProcessorOptions)) return false;
     if (myProcessorPath != null ? !myProcessorPath.equals(profile.myProcessorPath) : profile.myProcessorPath != null) return false;
@@ -230,6 +247,7 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
     result = 31 * result + myProcessorOptions.hashCode();
     result = 31 * result + (myGeneratedProductionDirectoryName != null ? myGeneratedProductionDirectoryName.hashCode() : 0);
     result = 31 * result + (myGeneratedTestsDirectoryName != null ? myGeneratedTestsDirectoryName.hashCode() : 0);
+    result = 31 * result + (myOutputRelativeToContentRoot ? 1 : 0);
     result = 31 * result + myModuleNames.hashCode();
     return result;
   }

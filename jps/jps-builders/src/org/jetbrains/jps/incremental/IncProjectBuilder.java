@@ -368,9 +368,7 @@ public class IncProjectBuilder {
       for (ModuleBuildTarget target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
         if (profile.isEnabled()) {
-          final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(
-            target.getModule(), target.isTests(), profile.getGeneratedSourcesDirectoryName(target.isTests())
-          );
+          final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile);
           if (annotationOut != null) {
             annotationOutputs.add(annotationOut);
           }
