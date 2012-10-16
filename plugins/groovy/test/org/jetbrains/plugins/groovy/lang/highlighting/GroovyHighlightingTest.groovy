@@ -789,4 +789,101 @@ class A {
 A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
 ''')
   }
+
+  void testDuplicatedVar0() {
+    testHighlighting('''\
+def a = 5
+def <error descr="Variable 'a' already defined">a</error> = 7
+''')
+  }
+
+  void testDuplicatedVarInIf() {
+    testHighlighting('''\
+def a = 5
+if (cond)
+  def <error descr="Variable 'a' already defined">a</error> = 7
+''')
+  }
+
+
+  void testDuplicatedVarInAnonymous() {
+    testHighlighting('''\
+def foo() {
+  def a = 5
+
+  new Runnable() {
+    void run() {
+      def <error descr="Variable 'a' already defined">a</error> = 7
+    }
+  }
+}
+''')
+  }
+
+  void testDuplicatedVarInClosure() {
+    testHighlighting('''\
+def foo() {
+  def a = 5
+
+  [1, 2, 3].each {
+    def <error descr="Variable 'a' already defined">a</error> = 7
+  }
+}
+''')
+  }
+
+  void testDuplicatedVarInClosureParameter() {
+    testHighlighting('''\
+def foo() {
+  def a = 5
+
+  [1, 2, 3].each {<error descr="Variable 'a' already defined">a</error> ->
+    print a
+  }
+}
+''')
+  }
+
+  void testDuplicatedVarInAnonymousParameter() {
+    testHighlighting('''\
+def a = -1
+
+def foo() {
+  def a = 5
+
+  new Object() {
+    void bar(int <error descr="Variable 'a' already defined">a</error>) {}
+  }
+}
+''')
+  }
+
+
+  void testNoDuplicateErrors() {
+    testHighlighting('''\
+class Foo {
+  def foo
+
+  def abr(def foo) {}
+}
+
+class Test {
+  def foo
+
+  def bar() {
+    def foo
+  }
+}
+
+class X {
+  def foo
+
+  def x = new Runnable() {
+    void run() {
+      def foo
+    }
+  }
+}
+''')
+  }
 }
