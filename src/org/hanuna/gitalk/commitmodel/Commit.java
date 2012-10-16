@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitmodel;
 
 import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 /**
  * @author erokhins
@@ -9,9 +9,7 @@ import com.sun.istack.internal.Nullable;
 public interface Commit {
     @NotNull
     public CommitData getData();
-    @Nullable
-    public Commit mainParent();
-    @Nullable
-    public Commit secondParent();
+    @NotNull
+    public ReadOnlyList<Commit> getParents();
     public int index();
 }

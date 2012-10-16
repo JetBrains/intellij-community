@@ -1,7 +1,10 @@
-package org.hanuna.gitalk.commitmodel;
+package org.hanuna.gitalk.commitmodel.builder;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
+import org.hanuna.gitalk.commitmodel.*;
+import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.util.*;
 
@@ -14,15 +17,18 @@ public class CommitListBuilder {
 
     public void append(@NotNull CommitData data) {
         MutableCommit commit = cache.pop(data.getHash());
-        Commit mainParent = cache.get(data.getMainParentHash());
-        Commit secondParent = cache.get(data.getSecondParentHash());
-        commit.set(data, mainParent, secondParent, commits.size());
+        List<Commit> parents = new ArrayList<Commit>(data.getParentsHash().size());
+        for (Hash hash : data.getParentsHash()) {
+            parents.add(cache.get(hash));
+        }
+        commit.set(data, new SimpleReadOnlyList<Commit>(parents), commits.size());
         commits.add(commit);
     }
 
-    public CommitList build() {
+    @NotNull
+    public ReadOnlyList<Commit> build() {
         cache.checkEmpty();
-        return new SimpleCommitList(commits);
+        return new SimpleReadOnlyList<Commit>(commits);
     }
 
     private static class MutableCommitNodeCache {
@@ -36,7 +42,7 @@ public class CommitListBuilder {
             }
             MutableCommit commit = cache.get(hash);
             if (commit == null) {
-                commit = new MutableCommit(hash);
+                commit = new MutableCommit();
                 cache.put(hash, commit);
             }
             return commit;
@@ -49,7 +55,7 @@ public class CommitListBuilder {
             }
             MutableCommit commit = cache.get(hash);
             if (commit == null) {
-                commit = new MutableCommit(hash);
+                commit = new MutableCommit();
             }
                 cache.remove(hash);
             return commit;
@@ -57,7 +63,7 @@ public class CommitListBuilder {
 
         public void checkEmpty() {
             if (!cache.isEmpty()) {
-                throw new NotFinalise(cache.keySet());
+                throw new NotFullLog(cache.keySet());
             }
         }
     }
