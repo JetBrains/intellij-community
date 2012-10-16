@@ -886,4 +886,16 @@ class X {
 }
 ''')
   }
+
+  void testPropertySelectionMayBeLValue() {
+    testHighlighting('''\
+def methodMissing(String methodName, args) {
+    def closure = {
+        callSomeOtherMethodInstead()
+    }
+    this.metaClass."$methodName" = closure
+    <error descr="Invalid value to assign to">closure()</error> = 2
+}
+''')
+  }
 }
