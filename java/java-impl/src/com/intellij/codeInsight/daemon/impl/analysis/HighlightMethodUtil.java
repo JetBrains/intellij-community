@@ -973,7 +973,7 @@ public class HighlightMethodUtil {
     PsiClass[] interfaces = aClass.getInterfaces();
     for (PsiClass aInterfaces : interfaces) {
         superClass = aInterfaces;
-        superMethod = MethodSignatureUtil.findMethodBySignature(superClass, method, true);
+        superMethod = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(aClass, superClass, method.getSignature(PsiSubstitutor.EMPTY), true);
         highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod);
         if (highlightInfo != null) return highlightInfo;
       }
