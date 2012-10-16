@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.config.GitConfigUtil;
-import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -199,20 +198,5 @@ public class GitBranch extends GitReference {
       remoteFlag = false;
     }
     return new GitBranch(branch, remoteFlag);
-  }
-
-  /**
-   * Get a merge base between the current branch and specified branch.
-   *
-   * @param project the current project
-   * @param root    the vcs root
-   * @param branch  the branch
-   * @return the common commit or null if the there is no common commit
-   * @throws VcsException the exception
-   */
-  @Nullable
-  public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
-    throws VcsException {
-    return GitHistoryUtils.getMergeBase(project, root, this.getFullName(), branch.getFullName());
   }
 }
