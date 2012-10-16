@@ -36,9 +36,7 @@ public abstract class OriginInfoProvider {
   @Nullable
   public static String getOriginInfo(@Nullable PsiElement element) {
     if (element == null) return null;
-    String info = _getOriginInfo(element);
-    if (info != null) info = "(" + info + ")";
-    return info;
+    return _getOriginInfo(element);
   }
 
   @Nullable
