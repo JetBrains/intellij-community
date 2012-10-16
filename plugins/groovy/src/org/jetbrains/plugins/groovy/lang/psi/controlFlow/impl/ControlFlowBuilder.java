@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -62,10 +64,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariabl
  * @author ven
  */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
+  private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
   private List<InstructionImpl> myInstructions;
 
   private Deque<InstructionImpl> myProcessingStack;
   private final PsiConstantEvaluationHelper myConstantEvaluator;
+  private GroovyPsiElement myScope;
 
   private static class ExceptionInfo {
     final GrCatchClause myClause;
@@ -240,6 +244,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myFinallyCount = 0;
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     myInstructionNumber = 0;
+
+    myScope = scope;
 
     startNode(null);
     if (scope instanceof GrClosableBlock) {
@@ -1090,7 +1096,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       interruptFlow();
       finishNode(finallyInstruction);
 
-      assert oldPending != null;
+      if (oldPending == null) {
+        error();
+      }
       oldPending.addAll(pendingPostCalls);
       myPending = oldPending;
     }
@@ -1102,6 +1110,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         addPendingEdge(tryBlock, catchEnd);
       }
     }
+  }
+
+  private void error() {
+    PsiFile file = myScope.getContainingFile();
+    String fileText = file != null ? file.getText() : null;
+
+    LogMessageEx.error(LOG, "broken control flow for a scope", myScope.getText(), "\n------------------\n", fileText);
   }
 
   private AfterCallInstruction addCallNode(InstructionImpl finallyInstruction, GroovyPsiElement scopeWhenAdded, InstructionImpl src) {
@@ -1130,7 +1145,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void finishNode(InstructionImpl instruction) {
     final InstructionImpl popped = myProcessingStack.pop();
-    assert instruction.equals(popped);
+    if (!instruction.equals(popped)) {
+      error();
+    }
   }
 
   public void visitField(GrField field) {
