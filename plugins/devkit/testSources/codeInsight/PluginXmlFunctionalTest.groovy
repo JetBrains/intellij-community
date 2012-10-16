@@ -197,7 +197,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
-    return Arrays.<Class<? extends LocalInspectionTool>>asList(
+    return Arrays.asList(
       //RegistrationProblemsInspection.class,
       PluginXmlDomInspection.class,
       ComponentNotRegisteredInspection.class,
