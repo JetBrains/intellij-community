@@ -150,7 +150,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
         Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
         return null;
       }
-      tracked = current.tracked(project, root);
+      tracked = GitBranchUtil.tracked(project, root, current.getName());
       if (tracked == null || !tracked.isRemote()) {
         Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
         return null;

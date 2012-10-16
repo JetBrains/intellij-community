@@ -83,7 +83,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       if (c == null) {
         return null;
       }
-      String remote = c.getTrackedRemoteName(myProject, gitRoot);
+      String remote = GitBranchUtil.getTrackedRemoteName(myProject, gitRoot, c.getName());
       if (StringUtil.isEmpty(remote)) {
         return null;
       }

@@ -177,7 +177,7 @@ public class GitPushDialog extends DialogWrapper {
         }
         String remoteName;
         try {
-          remoteName = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+          remoteName = GitBranchUtil.getTrackedRemoteName(myProject, repository.getRoot(), currentBranch.getName());
           if (remoteName == null) {
             remoteName = DEFAULT_REMOTE;
           }
@@ -225,8 +225,8 @@ public class GitPushDialog extends DialogWrapper {
       if (currentBranch == null) {
         continue;
       }
-      String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
-      String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
+      String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), currentBranch.getName());
+      String trackedBranchName = GitBranchUtil.getTrackedBranchName(repository.getProject(), repository.getRoot(), currentBranch.getName());
       GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
       GitBranch targetBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, trackedBranchName);
       if (remote == null || targetBranch == null) {

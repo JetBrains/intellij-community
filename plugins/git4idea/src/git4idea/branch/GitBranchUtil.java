@@ -19,10 +19,13 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitConfig;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchUiUtil;
@@ -31,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * @author Kirill Likhodedov
@@ -106,7 +110,7 @@ public class GitBranchUtil {
 
   /**
    * Returns the current branch in the given repository, or null if either repository is not on the branch, or in case of error.
-   * @deprecated Use {@link git4idea.repo.GitRepository#getCurrentBranch()}
+   * @deprecated Use {@link GitRepository#getCurrentBranch()}
    */
   @Deprecated
   @Nullable
@@ -121,4 +125,63 @@ public class GitBranchUtil {
     return null;
   }
 
+  /**
+   * Get tracked remote for the branch
+   */
+  @Nullable
+  public static String getTrackedRemoteName(Project project, VirtualFile root, String branchName) throws VcsException {
+    return GitConfigUtil.getValue(project, root, trackedRemoteKey(branchName));
+  }
+
+  /**
+   * Get tracked branch of the given branch
+   */
+  @Nullable
+  public static String getTrackedBranchName(Project project, VirtualFile root, String branchName) throws VcsException {
+    return GitConfigUtil.getValue(project, root, trackedBranchKey(branchName));
+  }
+
+  @NotNull
+  private static String trackedBranchKey(String branchName) {
+    return "branch." + branchName + ".merge";
+  }
+
+  @NotNull
+  private static String trackedRemoteKey(String branchName) {
+    return "branch." + branchName + ".remote";
+  }
+
+  /**
+   * Get the tracked branch for the given branch, or null if the given branch doesn't track anything.
+   * @deprecated Use {@link GitConfig#getBranchTrackInfos()}
+   */
+  @Deprecated
+  @Nullable
+  public static GitBranch tracked(Project project, VirtualFile root, String branchName) throws VcsException {
+    final HashMap<String, String> result = new HashMap<String, String>();
+    GitConfigUtil.getValues(project, root, null, result);
+    String remote = result.get(trackedRemoteKey(branchName));
+    if (remote == null) {
+      return null;
+    }
+    String branch = result.get(trackedBranchKey(branchName));
+    if (branch == null) {
+      return null;
+    }
+    if (branch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      branch = branch.substring(GitBranch.REFS_HEADS_PREFIX.length());
+    }
+    else if (branch.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+      branch = branch.substring(GitBranch.REFS_REMOTES_PREFIX.length());
+    }
+    boolean remoteFlag;
+    if (!".".equals(remote)) {
+      branch = remote + "/" + branch;
+      remoteFlag = true;
+    }
+    else {
+      remoteFlag = false;
+    }
+    return new GitBranch(branch, remoteFlag);
+  }
 }

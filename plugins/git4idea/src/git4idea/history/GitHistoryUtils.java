@@ -174,7 +174,7 @@ public class GitHistoryUtils {
   public static ItemLatestState getLastRevision(final Project project, FilePath filePath) throws VcsException {
     VirtualFile root = GitUtil.getGitRoot(filePath);
     GitBranch c = GitBranchUtil.getCurrentBranch(project, root);
-    GitBranch t = c == null ? null : c.tracked(project, root);
+    GitBranch t = c == null ? null : GitBranchUtil.tracked(project, root, c.getName());
     if (t == null) {
       return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }

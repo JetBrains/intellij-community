@@ -40,7 +40,7 @@ public class GitBranchesSearcher {
 
     GitBranch remote = myLocal;
     while (true) {
-      remote = remote.tracked(project, root);
+      remote = GitBranchUtil.tracked(project, root, remote.getName());
       if (remote == null) {
         LOG.debug("remote == null, exiting");
         return;
