@@ -291,6 +291,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
           break;
         case bottom:
           mySplitter.setProportion(tab.getBottomProportion());
+          break;
         case center:
           break;
       }
