@@ -16,6 +16,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -39,6 +40,11 @@ public class CapturingProcessAdapter extends ProcessAdapter {
     if (outputType == ProcessOutputTypes.STDERR) {
       myOutput.appendStderr(event.getText());
     }
+  }
+
+  @Override
+  public void processTerminated(@NotNull final ProcessEvent event) {
+    myOutput.setExitCode(event.getExitCode());
   }
 
   public ProcessOutput getOutput() {
