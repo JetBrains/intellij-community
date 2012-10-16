@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRowList;
+import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -10,11 +10,11 @@ import javax.swing.table.AbstractTableModel;
  * @author erokhins
  */
 public class CommitTableModel extends AbstractTableModel {
-    private final CommitRowList commitRows;
-    private final CommitList commits;
+    private final ReadOnlyList<CommitRow> commitRows;
+    private final ReadOnlyList<Commit> commits;
     private final String[] columnNames = {"Subject", "Author", "Date"};
 
-    public CommitTableModel(CommitRowList commitRows, CommitList commits) {
+    public CommitTableModel(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
         this.commitRows = commitRows;
         this.commits = commits;
     }

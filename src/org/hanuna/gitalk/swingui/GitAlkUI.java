@@ -1,7 +1,8 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRowList;
-import org.hanuna.gitalk.commitmodel.CommitList;
+import org.hanuna.gitalk.commitgraph.CommitRow;
+import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,7 +12,7 @@ import java.awt.*;
  */
 public class GitAlkUI extends JFrame {
 
-    public GitAlkUI(CommitRowList commitRows, CommitList commits) {
+    public GitAlkUI(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         JTable table = new JTable(new CommitTableModel(commitRows, commits));
         table.setDefaultRenderer(GraphCell.class, new GraphTableCellRender());
