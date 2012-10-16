@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -237,6 +238,11 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createCollection() {
         return new SmartList<V>();
+      }
+
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        return new THashMap<K, Collection<V>>();
       }
     };
   }
