@@ -4,8 +4,8 @@ import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
 import org.hanuna.gitalk.commitgraph.builder.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.commitmodel.CommitList;
 import org.hanuna.gitalk.commitmodel.Hash;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.swingui.GitAlkUI;
 
@@ -30,8 +30,9 @@ public class TestUtils {
     public static String toStr(CommitData cd) {
         StringBuilder sb = new StringBuilder();
         sb.append(toStr(cd.getHash())).append("|-");
-        sb.append(toStr(cd.getMainParentHash())).append("|-");
-        sb.append(toStr(cd.getSecondParentHash())).append("|-");
+        for (Hash hash : cd.getParentsHash()) {
+            sb.append(hash.toStrHash()).append("|-");
+        }
         sb.append(cd.getAuthor()).append("|-");
         sb.append(cd.getTimeStamp()).append("|-");
         sb.append(cd.getCommitMessage());
@@ -41,17 +42,28 @@ public class TestUtils {
     public static String toStr(Commit node) {
         StringBuilder sb = new StringBuilder();
         sb.append(node.index()).append("|-");
-        if (node.mainParent() != null) {
-            sb.append(node.mainParent().index()).append("|-");
-        } else {
-            sb.append("null|-");
-        }
-        if (node.secondParent() != null) {
-            sb.append(node.secondParent().index()).append("|-");
-        } else {
-            sb.append("null|-");
+        for (Commit commit : node.getParents()) {
+            sb.append(commit.index()).append("|-");
         }
         sb.append(toStr(node.getData()));
+        return sb.toString();
+    }
+
+    public static String toShortStr(Commit node) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(node.index()).append("|-");
+        for (Commit commit : node.getParents()) {
+            sb.append(commit.index()).append("|-");
+        }
+        sb.append(node.getData().getHash().toStrHash());
+        return sb.toString();
+    }
+
+    public static String toShortStr(ReadOnlyList<Commit> commits) {
+        StringBuilder sb = new StringBuilder();
+        for (Commit commit : commits) {
+            sb.append(toShortStr(commit)).append("\n");
+        }
         return sb.toString();
     }
 
@@ -61,7 +73,7 @@ public class TestUtils {
 
         Process p = Runtime.getRuntime().exec("git log --all --date-order --format=%h|-%p|-%an|-%ct|-%s");
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        CommitList list = GitLogParser.parseCommitLog(r);
+        ReadOnlyList<Commit> list = GitLogParser.parseCommitLog(r);
 
         CommitRowListBuilder builder = new CommitRowListBuilder(list);
         List<RowOfNode> rows = builder.buildListLineOfNode();
@@ -79,10 +91,10 @@ public class TestUtils {
         }
         System.out.println();
         for (RowOfNode line : rows) {
-            for (GraphNode node : line) {
+            for (Node node : line) {
                 System.out.print(node.getIndexCommit() + ":" + node.getIndexColor() + " ");
             }
-            System.out.println(line.getAdditionColor() + " " + line.getMainPosition());
+            System.out.println(line.getFirstAdditionColor() + " " + line.getMainPosition());
         }
         */
     }
