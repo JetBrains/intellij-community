@@ -1,6 +1,9 @@
 <idea-plugin version="2">
   <name>Android Designer</name>
   <id>com.intellij.android-designer</id>
+  <description>
+    Provides visual editing support for Android layout files.
+  </description>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>messages.AndroidDesignerBundle</resource-bundle>
