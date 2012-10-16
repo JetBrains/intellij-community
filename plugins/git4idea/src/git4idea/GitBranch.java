@@ -17,12 +17,8 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.repo.GitRepositoryFiles;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * This data class represents a Git branch
@@ -83,30 +79,6 @@ public class GitBranch extends GitReference {
     String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
     String remoteBranchName = branchName.substring(firstSlash + 1);
     return Pair.create(remoteName, remoteBranchName);
-  }
-
-  /**
-   * Checks if the branch exists in the repository.
-   * @return true if the branch exists, false otherwise.
-   * @deprecated use {@link git4idea.repo.GitRepository#getBranches()}
-   */
-  public boolean exists(VirtualFile root) {
-    final VirtualFile remoteBranch = root.findFileByRelativePath(GitRepositoryFiles.GIT_REFS_REMOTES + "/" + myName);
-    if (remoteBranch != null && remoteBranch.exists()) {
-      return true;
-    }
-    final VirtualFile packedRefs = root.findFileByRelativePath(GitRepositoryFiles.GIT_PACKED_REFS);
-    if (packedRefs != null && packedRefs.exists()) {
-      final byte[] contents;
-      try {
-        contents = packedRefs.contentsToByteArray();
-        return new String(contents).contains(myName);
-      } catch (IOException e) {
-        LOG.info("exists ", e);
-        return false;
-      }
-    }
-    return false;
   }
 
   /**
