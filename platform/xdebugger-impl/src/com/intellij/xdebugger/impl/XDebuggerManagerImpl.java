@@ -60,10 +60,11 @@ import java.util.*;
  * @author nik
  */
 @State(
-    name = XDebuggerManagerImpl.COMPONENT_NAME,
-    storages = {@Storage(
-        file = StoragePathMacros.WORKSPACE_FILE)})
-public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
+  name = XDebuggerManagerImpl.COMPONENT_NAME,
+  storages = {@Storage(
+    file = StoragePathMacros.WORKSPACE_FILE)})
+public class XDebuggerManagerImpl extends XDebuggerManager
+  implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
@@ -199,7 +200,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   }
 
   private XDebugSessionImpl startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
-                                     final XDebugSessionImpl session) throws ExecutionException {
+                                         final XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.get(contentToReuse) : null;
@@ -219,6 +220,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
       final RunContentDescriptor descriptor = sessionTab.getRunContentDescriptor();
       mySessionData.put(descriptor, session.getSessionData());
       mySessionTabs.put(descriptor, sessionTab);
+      final ProcessHandler handler = session.getDebugProcess().getProcessHandler();
 
       // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
       // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
@@ -228,7 +230,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
         public void dispose() {
           mySessionData.remove(descriptor);
           mySessionTabs.remove(descriptor);
-          mySessions.remove(session.getDebugProcess().getProcessHandler());
+          mySessions.remove(handler);
         }
       });
     }
@@ -331,5 +333,4 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
       myBreakpointManagerState = breakpointManagerState;
     }
   }
-
 }
