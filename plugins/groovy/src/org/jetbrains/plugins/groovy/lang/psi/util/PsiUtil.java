@@ -650,7 +650,7 @@ public class PsiUtil {
     return null;
   }
 
-  public static boolean mightBeLValue(GrExpression expr) {
+  public static boolean mightBeLValue(@Nullable GrExpression expr) {
     if (expr instanceof GrParenthesizedExpression) return mightBeLValue(((GrParenthesizedExpression)expr).getOperand());
 
     if (expr instanceof GrTupleExpression) return true;
@@ -785,7 +785,7 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isRawType(PsiType type, PsiSubstitutor substitutor) {
+  public static boolean isRawType(@Nullable PsiType type, @NotNull PsiSubstitutor substitutor) {
     if (type instanceof PsiClassType) {
       final PsiClass returnClass = ((PsiClassType)type).resolve();
       if (returnClass instanceof PsiTypeParameter) {
@@ -857,7 +857,7 @@ public class PsiUtil {
     return expression instanceof GrReferenceExpression && methodName.equals(expression.getText().trim());
   }
 
-  public static boolean hasEnclosingInstanceInScope(PsiClass clazz, PsiElement scope, boolean isSuperClassAccepted) {
+  public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isSuperClassAccepted) {
     PsiElement place = scope;
     while (place != null && place != clazz && !(place instanceof PsiFile)) {
       if (place instanceof PsiClass) {
@@ -1091,7 +1091,9 @@ public class PsiUtil {
   private static String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
-    final String visibilityModifier = VisibilityUtil.getVisibilityModifier(owner.getModifierList());
+    PsiModifierList modifierList = owner.getModifierList();
+    LOG.assertTrue(modifierList != null);
+    final String visibilityModifier = VisibilityUtil.getVisibilityModifier(modifierList);
     int index;
     for (index = 0; index < visibilityModifiers.length; index++) {
       String modifier = visibilityModifiers[index];

@@ -296,7 +296,7 @@ public class ArrayUtil extends ArrayUtilRt {
    * @return new array
    */
   @NotNull
-  public static <T> T[] append(@NotNull final T[] src, final T element) {
+  public static <T> T[] append(@NotNull final T[] src, @Nullable final T element) {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
@@ -323,7 +323,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
+  public static <T> T[] append(@NotNull T[] src, @Nullable final T element, @NotNull Class<T> componentType) {
     int length = src.length;
     T[] result = (T[])Array.newInstance(componentType, length + 1);
     System.arraycopy(src, 0, result, 0, length);
