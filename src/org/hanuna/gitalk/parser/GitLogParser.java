@@ -37,7 +37,7 @@ public class GitLogParser {
             Hash secondParentHash = secondParentStr == null ? null : Hash.buildHash(secondParentStr);
             return new CommitData(hash, mainParentHash, secondParentHash, author, timeStamp, message);
         } else {
-            throw new IllegalArgumentException("unexpected format of string");
+            throw new IllegalArgumentException("unexpected format of string:" + inputStr);
         }
     }
 

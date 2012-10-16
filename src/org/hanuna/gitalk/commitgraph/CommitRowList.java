@@ -5,8 +5,8 @@ import com.sun.istack.internal.NotNull;
 /**
  * @author erokhins
  */
-public interface CommitLineList {
+public interface CommitRowList {
     public int size();
     @NotNull
-    public CommitLine get(int index);
+    public CommitRow get(int index);
 }

@@ -9,9 +9,9 @@ import java.util.List;
  */
 public class SimpleCommitList implements CommitList {
     @NotNull
-    private final List<CommitNode> commits;
+    private final List<Commit> commits;
 
-    public SimpleCommitList(List<CommitNode> commits) {
+    public SimpleCommitList(List<Commit> commits) {
         this.commits = commits;
     }
 
@@ -21,7 +21,7 @@ public class SimpleCommitList implements CommitList {
     }
 
     @Override
-    public CommitNode get(int index) {
+    public Commit get(int index) {
         return commits.get(index);
     }
 }

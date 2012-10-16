@@ -3,18 +3,18 @@ package org.hanuna.gitalk.commitmodel;
 /**
  * @author erokhins
  */
-public class MutableCommitNode implements CommitNode {
+public class MutableCommit implements Commit {
     private final Hash hash;
-    private CommitNode mainParent;
-    private CommitNode secondParent;
+    private Commit mainParent;
+    private Commit secondParent;
     private CommitData data;
     private int index;
 
-    public MutableCommitNode(Hash hash) {
+    public MutableCommit(Hash hash) {
         this.hash = hash;
     }
 
-    public void set(CommitData data, CommitNode mainParent, CommitNode secondParent, int index) {
+    public void set(CommitData data, Commit mainParent, Commit secondParent, int index) {
         this.data = data;
         this.mainParent = mainParent;
         this.secondParent = secondParent;
@@ -27,12 +27,12 @@ public class MutableCommitNode implements CommitNode {
     }
 
     @Override
-    public CommitNode mainParent() {
+    public Commit mainParent() {
         return mainParent;
     }
 
     @Override
-    public CommitNode secondParent() {
+    public Commit secondParent() {
         return secondParent;
     }
 

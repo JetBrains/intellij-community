@@ -9,5 +9,5 @@ public interface CommitList {
     public int size();
 
     @NotNull
-    public CommitNode get(int index);
+    public Commit get(int index);
 }

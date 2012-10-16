@@ -9,59 +9,56 @@ import java.util.*;
  * @author erokhins
  */
 public class CommitListBuilder {
-    private final List<CommitNode> commits = new ArrayList<CommitNode>();
+    private final List<Commit> commits = new ArrayList<Commit>();
     private final MutableCommitNodeCache cache = new MutableCommitNodeCache();
 
     public void append(@NotNull CommitData data) {
-        cache.isEmpty();
-        cache.get(null);
-        MutableCommitNode commit = cache.pop(data.getHash());
-        CommitNode mainParent = cache.get(data.getMainParentHash());
-        CommitNode secondParent = cache.get(data.getSecondParentHash());
+        MutableCommit commit = cache.pop(data.getHash());
+        Commit mainParent = cache.get(data.getMainParentHash());
+        Commit secondParent = cache.get(data.getSecondParentHash());
         commit.set(data, mainParent, secondParent, commits.size());
         commits.add(commit);
     }
 
     public CommitList build() {
-        if (!cache.isEmpty()){
-            throw new NotFinalise();
-        }
+        cache.checkEmpty();
         return new SimpleCommitList(commits);
     }
 
     private static class MutableCommitNodeCache {
-        private final Map<Hash, MutableCommitNode> cache = new HashMap<Hash, MutableCommitNode>();
+        private final Map<Hash, MutableCommit> cache = new HashMap<Hash, MutableCommit>();
 
 
         @NotNull
-        public MutableCommitNode get(@Nullable Hash hash) {
+        public MutableCommit get(@Nullable Hash hash) {
             if (hash == null) {
                 return null;
             }
-            MutableCommitNode commit = cache.get(hash);
+            MutableCommit commit = cache.get(hash);
             if (commit == null) {
-                commit = new MutableCommitNode(hash);
+                commit = new MutableCommit(hash);
                 cache.put(hash, commit);
             }
             return commit;
         }
 
         @NotNull
-        public MutableCommitNode pop(@Nullable Hash hash) {
+        public MutableCommit pop(@Nullable Hash hash) {
             if (hash == null) {
                 return null;
             }
-            MutableCommitNode commit = cache.get(hash);
+            MutableCommit commit = cache.get(hash);
             if (commit == null) {
-                commit = new MutableCommitNode(hash);
-            } else {
-                cache.remove(hash);
+                commit = new MutableCommit(hash);
             }
+                cache.remove(hash);
             return commit;
         }
 
-        public boolean isEmpty() {
-            return cache.isEmpty();
+        public void checkEmpty() {
+            if (!cache.isEmpty()) {
+                throw new NotFinalise(cache.keySet());
+            }
         }
     }
 

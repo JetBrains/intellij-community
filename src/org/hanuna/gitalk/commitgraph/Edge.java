@@ -5,6 +5,6 @@ package org.hanuna.gitalk.commitgraph;
  */
 public interface Edge {
     public int to();
-    public int getIndex();
+    public int getIndexColor();
     public boolean isThick();
 }

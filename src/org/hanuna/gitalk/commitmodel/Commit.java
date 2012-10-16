@@ -6,12 +6,12 @@ import com.sun.istack.internal.Nullable;
 /**
  * @author erokhins
  */
-public interface CommitNode {
+public interface Commit {
     @NotNull
     public CommitData getData();
     @Nullable
-    public CommitNode mainParent();
+    public Commit mainParent();
     @Nullable
-    public CommitNode secondParent();
+    public Commit secondParent();
     public int index();
 }

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class MutableLineOfNode implements LineOfNode {
+public class MutableRowOfNode implements RowOfNode {
     private final List<GraphNode> nodes = new ArrayList<GraphNode>();
     private int mainPosition = -1;
     private int additionColor = -1;
@@ -40,6 +40,11 @@ public class MutableLineOfNode implements LineOfNode {
     @Override
     public int size() {
         return nodes.size();
+    }
+
+    @Override
+    public GraphNode getGraphNode(int position) {
+        return nodes.get(position);
     }
 
     @Override
