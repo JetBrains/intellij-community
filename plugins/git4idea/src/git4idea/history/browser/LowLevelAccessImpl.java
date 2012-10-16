@@ -235,7 +235,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       try {
         head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
         final String prefix = "ref: refs/heads/";
-        return head.startsWith(prefix) ? Collections.singletonList(new GitBranch(head.substring(prefix.length()), true, false)) : null;
+        return head.startsWith(prefix) ? Collections.singletonList(new GitBranch(head.substring(prefix.length()), false)) : null;
       } catch (IOException e) {
         LOG.info(e);
         return null;
@@ -255,7 +255,6 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     // and if we call with -r instead of -a, remotes/ prefix is omitted:
     // origin/HEAD -> origin/master
     final String[] split = output.split("\n");
-    String activeRemoteName = null;
     for (String b : split) {
       boolean current = b.charAt(0) == '*';
       b = b.substring(2).trim();
@@ -274,21 +273,12 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         }
         final int idx = b.indexOf("HEAD ->");
         if (idx > 0) {
-          activeRemoteName = b.substring(idx + "HEAD ->".length() + (remotePrefix == null ? 0 : remotePrefix.length()));
           continue;
         }
       }
-      final GitBranch branch = new GitBranch(b, current, isRemote);
+      final GitBranch branch = new GitBranch(b, isRemote);
       if ((isRemote && remoteWanted) || (!isRemote && localWanted)) {
         branches.add(branch);
-      }
-    }
-    if (activeRemoteName != null) {
-      for (GitBranch branch : branches) {
-        if (activeRemoteName.equals(branch.getName())) {
-          branch.setActive(true);
-          break;
-        }
       }
     }
     return branches;

@@ -38,20 +38,18 @@ public class GitBranch extends GitReference {
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
   private final boolean myRemote;
-  private boolean myActive;
   private static final Logger LOG = Logger.getInstance(GitBranch.class);
   private final String myHash;
 
-  public GitBranch(@NotNull String name, @NotNull String hash, boolean active, boolean remote) {
+  public GitBranch(@NotNull String name, @NotNull String hash, boolean remote) {
     super(name);
     myRemote = remote;
-    myActive = active;
     myHash = new String(hash.trim());
   }
   
   @Deprecated
-  public GitBranch(@NotNull String name, boolean active, boolean remote) {
-    this(name, "", active, remote);
+  public GitBranch(@NotNull String name, boolean remote) {
+    this(name, "", remote);
   }
 
   /**
@@ -59,13 +57,6 @@ public class GitBranch extends GitReference {
    */
   public boolean isRemote() {
     return myRemote;
-  }
-
-  /**
-   * @return true if the branch is active
-   */
-  public boolean isActive() {
-    return myActive;
   }
 
   @NotNull
@@ -207,7 +198,7 @@ public class GitBranch extends GitReference {
     else {
       remoteFlag = false;
     }
-    return new GitBranch(branch, false, remoteFlag);
+    return new GitBranch(branch, remoteFlag);
   }
 
   /**
@@ -223,9 +214,5 @@ public class GitBranch extends GitReference {
   public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
     throws VcsException {
     return GitHistoryUtils.getMergeBase(project, root, this.getFullName(), branch.getFullName());
-  }
-
-  public void setActive(boolean active) {
-    myActive = active;
   }
 }

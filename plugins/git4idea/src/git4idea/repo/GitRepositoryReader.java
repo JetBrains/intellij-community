@@ -124,7 +124,7 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO make this faster, because we know the branch name
-      return new GitBranch(branchName, hash == null ? "" : hash, true, false);
+      return new GitBranch(branchName, hash == null ? "" : hash, false);
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -154,7 +154,7 @@ class GitRepositoryReader {
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
-    return new GitBranch(branchName, true, false);
+    return new GitBranch(branchName, false);
   }
 
   private boolean isMergeInProgress() {
@@ -254,27 +254,10 @@ class GitRepositoryReader {
     
     // note that even the active branch may be packed. So at first we collect branches, then we find the active.
     GitBranch currentBranch = readCurrentBranch();
-    markActiveBranch(localBranches, currentBranch);
 
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
   
-  /**
-   * Sets the 'active' flag to the current branch if it is contained in the specified collection.
-   * @param branches      branches to be walked through.
-   * @param currentBranch current branch.
-   */
-  private static void markActiveBranch(@NotNull Set<GitBranch> branches, @Nullable GitBranch currentBranch) {
-    if (currentBranch == null) {
-      return;
-    }
-    for (GitBranch branch : branches) {
-      if (branch.getName().equals(currentBranch.getName())) {
-        branch.setActive(true);
-      }
-    }
-  }
-
   /**
    * @return list of branches from refs/heads. active branch is not marked as active - the caller should do this.
    */
@@ -285,7 +268,7 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false, false));
+      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false));
     }
     return branches;
   }
@@ -317,7 +300,7 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            branches.add(new GitBranch(branchName, hash == null ? "": hash, false, true));
+            branches.add(new GitBranch(branchName, hash == null ? "": hash, true));
           }
         }
         return true;
@@ -345,9 +328,9 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false, false));
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, false, true));
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, true));
           }
         }
       });
