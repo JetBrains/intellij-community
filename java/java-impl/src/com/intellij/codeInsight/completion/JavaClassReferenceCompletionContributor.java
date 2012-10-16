@@ -53,10 +53,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       JavaClassNameCompletionContributor.addAllClasses(parameters, result);
     }
     else {
-      CompletionData data = CompletionUtil.getCompletionDataByElement(position, parameters.getOriginalFile());
-      if (data != null) {
-        LegacyCompletionContributor.completeReference(parameters, result, data);
-      }
+      LegacyCompletionContributor.completeReference(parameters, result);
     }
     result.stopHere();
   }

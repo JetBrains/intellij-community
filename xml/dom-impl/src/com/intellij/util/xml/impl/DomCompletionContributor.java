@@ -43,7 +43,7 @@ public class DomCompletionContributor extends CompletionContributor{
   }
 
   private boolean domKnowsBetter(final CompletionParameters parameters, final CompletionResultSet result) {
-    final PsiElement element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, XmlAttributeValue.class);
+    final XmlAttributeValue element = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlAttributeValue.class);
     if (element == null) {
       return false;
     }
@@ -51,9 +51,15 @@ public class DomCompletionContributor extends CompletionContributor{
     if (isSchemaEnumerated(element)) {
       return false;
     }
-    final PsiReference[] references = myProvider.getReferencesByElement(element, new ProcessingContext());
-    if (references.length > 0) {
-      return LegacyCompletionContributor.completeReference(parameters, result, new XmlCompletionData());
+    final PsiElement parent = element.getParent();
+    if (parent instanceof XmlAttribute) {
+      XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+      if (descriptor != null && descriptor.getDefaultValue() != null) {
+        final PsiReference[] references = myProvider.getReferencesByElement(element, new ProcessingContext());
+        if (references.length > 0) {
+          return LegacyCompletionContributor.completeReference(parameters, result);
+        }
+      }
     }
     return false;
   }
