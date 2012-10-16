@@ -998,7 +998,7 @@ public abstract class ChooseByNameBase {
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
     if (commands == null) {
       myListUpdater.doPostponedOkIfNeeded();
-      return;
+      return; // Nothing changed
     }
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
