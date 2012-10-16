@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
+import com.sun.istack.internal.NotNull;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.ReadOnlyList;
@@ -12,10 +13,7 @@ public class MutableCommit implements Commit {
     private ReadOnlyList<Commit> parents;
     private int index;
 
-    public MutableCommit() {
-    }
-
-    public void set(CommitData data, ReadOnlyList<Commit> parents, int index) {
+    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, int index) {
         this.data = data;
         this.parents = parents;
         this.index = index;

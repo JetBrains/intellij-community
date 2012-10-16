@@ -26,10 +26,10 @@ public class GitLogParserTest {
         runTestParseCommitData("a12f|-|-author s|-132352112|- message", "a12f|-author s|-132352112|- message");
         runTestParseCommitData("a|-b c|-|-13|-message", "a|-b|-c|-|-13|-message");
         runTestParseCommitData("adf23|-adf2|-a|-1|-mes|-age", "adf23|-adf2|-a|-1|-mes|-age");
-        runTestParseCommitData("adf23|-a1 a2 a3|-a|-1|-mes|-age", "adf23|-a1|-a2|-a3|-a|-1|-mes|-age");
+        runTestParseCommitData("adf23|-a1 a2 a3|-a|-|-mes|-age", "adf23|-a1|-a2|-a3|-a|-0|-mes|-age");
     }
 
-    //Example af34|-45 64 4&45|-64&64|-4&4|-
+
     private void runLogParserTest(String in, String out) throws IOException {
         String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         String output = out.replace(" ", "|-") + "\n";

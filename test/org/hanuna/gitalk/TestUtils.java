@@ -1,6 +1,7 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
+import org.hanuna.gitalk.commitgraph.builder.Node;
 import org.hanuna.gitalk.commitgraph.builder.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
@@ -81,22 +82,22 @@ public class TestUtils {
 
         date = new Date();
         System.out.println(date.getTime() - time);
-        System.out.println(rows.size());
+        System.out.println(list.size());
 
         new GitAlkUI(builder.build(), list);
-        /*
-        for (int i = 0; i < list.size(); i++) {
-            Commit node = list.get(i);
-            System.out.println(toStr(node));
-        }
-        System.out.println();
-        for (RowOfNode line : rows) {
-            for (Node node : line) {
-                System.out.print(node.getIndexCommit() + ":" + node.getIndexColor() + " ");
+        if (1 == 0) {
+            for (int i = 0; i < list.size(); i++) {
+                Commit node = list.get(i);
+                System.out.println(toStr(node));
             }
-            System.out.println(line.getFirstAdditionColor() + " " + line.getMainPosition());
+            System.out.println();
+            for (RowOfNode line : rows) {
+                for (Node node : line) {
+                    System.out.print(node.getCommitIndex() + ":" + node.getColorIndex() + " ");
+                }
+                System.out.println(line.getStartIndexColor() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
+            }
         }
-        */
     }
 
 }

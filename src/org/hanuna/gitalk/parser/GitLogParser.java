@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class GitLogParser {
     private static final String SEPARATOR = "\\|\\-";
     private static final String regExp =
-            String.format("([a-f0-9]+)%1$s((?:[a-f0-9]+)?(?:\\s[a-f0-9]+)*)%1$s(.*?)%1$s([0-9]+)%1$s(.*)", SEPARATOR);
+            String.format("([a-f0-9]+)%1$s((?:[a-f0-9]+)?(?:\\s[a-f0-9]+)*)%1$s(.*?)%1$s([0-9]*)%1$s(.*)", SEPARATOR);
     private static final Pattern pattern = Pattern.compile(regExp);
 
     public static CommitData parseCommitData(String inputStr) {
@@ -30,7 +30,10 @@ public class GitLogParser {
             Hash hash = Hash.buildHash(matcher.group(1));
             String parents = matcher.group(2);
             String author = matcher.group(3);
-            long timeStamp = Long.parseLong(matcher.group(4));
+            long timeStamp = 0;
+            if (matcher.group(4).length() != 0) {
+                timeStamp = Long.parseLong(matcher.group(4));
+            }
             String message = matcher.group(5);
 
             String[] parentsStr = parents.split("\\s");
