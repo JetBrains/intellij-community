@@ -516,16 +516,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
     if (insertPlace.getStatements().length != 0) {
-      if (!insertPlace.getText().contains("\n")) {
-        PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
-                                                          PyFunction.class,
-                                                          "def " + function.getName() + function.getParameterList().getText()
-                                                          + ":\n" + appendBefore("\t", string.getText()) + "\n\t" + insertPlace.getText());
-        function.replace(func);
-      }
-      else {
-        insertPlace.addBefore(string, insertPlace.getStatements()[0]);
-      }
+      insertPlace.addBefore(string, insertPlace.getStatements()[0]);
     }
     PyStringLiteralExpression docstring = function.getDocStringExpression();
     if (editor != null && docstring != null) {
