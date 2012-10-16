@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -270,6 +271,23 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   public JComponent getComponent() {
     return myMainPanel;
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    if (StringUtil.isEmptyOrSpaces(myGroupIdField.getText())) {
+      throw new ConfigurationException("Please, specify groupId");
+    }
+
+    if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
+      throw new ConfigurationException("Please, specify artifactId");
+    }
+
+    if (StringUtil.isEmptyOrSpaces(myVersionField.getText())) {
+      throw new ConfigurationException("Please, specify version");
+    }
+
+    return true;
   }
 
   @Override

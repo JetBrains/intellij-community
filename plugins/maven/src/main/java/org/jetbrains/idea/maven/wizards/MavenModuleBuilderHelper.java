@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -65,7 +66,7 @@ public class MavenModuleBuilderHelper {
 
   private final String myCommandName;
 
-  public MavenModuleBuilderHelper(MavenId projectId,
+  public MavenModuleBuilderHelper(@NotNull MavenId projectId,
                                   MavenProject aggregatorProject,
                                   MavenProject parentProject,
                                   boolean inheritGroupId,

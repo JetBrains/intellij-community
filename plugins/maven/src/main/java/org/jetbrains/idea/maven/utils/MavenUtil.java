@@ -293,14 +293,14 @@ public class MavenUtil {
 
   public static void runOrApplyMavenProjectFileTemplate(Project project,
                                                         VirtualFile file,
-                                                        MavenId projectId,
+                                                        @NotNull MavenId projectId,
                                                         boolean interactive) throws IOException {
     runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive);
   }
 
   public static void runOrApplyMavenProjectFileTemplate(Project project,
                                                         VirtualFile file,
-                                                        MavenId projectId,
+                                                        @NotNull MavenId projectId,
                                                         MavenId parentId,
                                                         VirtualFile parentFile,
                                                         boolean interactive) throws IOException {
