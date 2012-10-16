@@ -255,7 +255,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  @NotNull
+  @Nullable
   public PsiElement getCompletionContext() {
     PsiElement context = getContext();
     return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
