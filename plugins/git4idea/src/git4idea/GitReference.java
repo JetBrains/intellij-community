@@ -50,8 +50,7 @@ public abstract class GitReference implements Comparable<GitReference> {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof GitReference &&
-           toString().equals(obj.toString());
+    return obj instanceof GitReference && getFullName().equals(((GitReference)obj).getFullName());
   }
 
   @Override
