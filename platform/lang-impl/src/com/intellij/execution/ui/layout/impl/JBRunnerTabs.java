@@ -207,7 +207,7 @@ public class
     if (label == null || point == null) {
       return true;
     }
-    final Rectangle bounds = label.getBounds();
+    final Rectangle bounds = label.getBounds();                                                 
     return point.y <= bounds.y + bounds.height;
   }
 
@@ -254,10 +254,8 @@ public class
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       setBorder(new EmptyBorder(5, 5, 7, 5));
-    }
+    }                                                                                            
 
     @Override
     public void setTabActionsAutoHide(boolean autoHide) {
@@ -273,11 +271,6 @@ public class
         wrapper.remove(0);
         wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
       }
-    }
-
-    @Override
-    protected int getSelectedOffset() {
-      return getNonSelectedOffset();
     }
   }
 }

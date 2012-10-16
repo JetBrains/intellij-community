@@ -355,13 +355,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight() + TabsUtil.TABS_BORDER * 2);
+    return new Dimension(size.width, TabsUtil.getTabsHeight());
   }
 
   @Override
   public Dimension getMinimumSize() {
     Dimension size = super.getMinimumSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight() + TabsUtil.TABS_BORDER * 2);
+    return new Dimension(size.width, TabsUtil.getTabsHeight());
   }
 
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {
