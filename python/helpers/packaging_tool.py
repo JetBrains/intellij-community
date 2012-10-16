@@ -1,6 +1,7 @@
 import sys
 import traceback
 import getopt
+import os
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
@@ -30,7 +31,11 @@ def error(message, retcode):
 
 
 def error_no_pip():
-    error("Python package management tool 'pip' not found", ERROR_NO_PIP)
+    tb = sys.exc_traceback
+    if tb is not None and tb.tb_next is None:
+        error("Python package management tool 'pip' not found", ERROR_NO_PIP)
+    else:
+        error(traceback.format_exc(), ERROR_EXCEPTION)
 
 
 def do_list():
@@ -69,7 +74,6 @@ def do_pyvenv(path, system_site_packages):
 
 
 def untarDirectory(name):
-    import os
     import tempfile
 
     directory_name = tempfile.mkdtemp("pycharm-management")

@@ -20,17 +20,17 @@ import java.util.List;
  * @author traff
  */
 public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements RemoteSdkAdditionalData {
-  final private RemoteSdkDataHolder myRemoteSdkDataHolder = new RemoteSdkDataHolder();
-
+  private static final String HELPERS_DIR = "pycharm_helpers";
   private final static String SKELETONS_PATH = "SKELETONS_PATH";
 
+  private final RemoteSdkDataHolder myRemoteSdkDataHolder = new RemoteSdkDataHolder(HELPERS_DIR);
   private String mySkeletonsPath;
 
   public PyRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     super(flavor);
   }
 
-  public PyRemoteSdkAdditionalData(@NotNull String interpreterPath) {
+  public PyRemoteSdkAdditionalData(@NotNull final String interpreterPath) {
     super(computeFlavor(interpreterPath));
     setInterpreterPath(interpreterPath);
   }
@@ -215,9 +215,15 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     myRemoteSdkDataHolder.setHelpersVersionChecked(helpersVersionChecked);
   }
 
+  @Override
+  public void completeInitialization() {
+  }
+
   @NotNull
   public static PyRemoteSdkAdditionalData loadRemote(Sdk sdk, @Nullable Element element) {
-    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(sdk.getHomePath());
+    final String path = sdk.getHomePath();
+    assert path != null;
+    final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(path);
     load(element, data);
 
     if (element != null) {
@@ -268,6 +274,8 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     rootElement.setAttribute(SKELETONS_PATH, StringUtil.notNullize(getSkeletonsPath()));
   }
 
+  @Nullable
+  @Override
   public Object clone() throws CloneNotSupportedException {
     try {
       final PyRemoteSdkAdditionalData copy = (PyRemoteSdkAdditionalData)super.clone();

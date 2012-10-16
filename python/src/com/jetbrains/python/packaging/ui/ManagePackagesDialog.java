@@ -96,7 +96,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myNotificationArea = new PyPackagesNotificationPanel(project);
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
-    final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Vcs.Refresh) {
+    final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myPackages.setPaintBusy(true);

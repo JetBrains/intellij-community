@@ -90,6 +90,10 @@ public class PyConsoleIndentUtil {
     boolean lastIndented = false;
     for (int i = 0; i < indentArray.length; i++) {
       if (!StringUtil.isEmpty(lines.get(i))) {
+        if (i>0 && shouldSkipNext(lines.get(i-1))) {
+          indentArray[i]-=indent;
+          continue;
+        }
         if (indentArray[i] < indent || indentArray[i] > lastIndent && !lastIndented) {
           indent = indentArray[i];
         }
@@ -123,10 +127,20 @@ public class PyConsoleIndentUtil {
   }
 
   public static boolean shouldIndent(@NotNull String line) {
+    line = stripComments(line);
+    return line.endsWith(":");
+  }
+
+  private static String stripComments(String line) {
     if (line.contains("#")) {
       line = line.substring(0, line.indexOf("#")); //strip comments
       line = line.trim();
     }
-    return line.endsWith(":");
+    return line;
+  }
+
+  public static boolean shouldSkipNext(@NotNull String line) {
+    line = stripComments(line);
+    return line.endsWith(",");
   }
 }
