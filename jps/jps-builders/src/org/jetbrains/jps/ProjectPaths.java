@@ -174,7 +174,7 @@ public class ProjectPaths {
     if (parentFile == null) {
       return null;
     }
-    return new File(parentFile, outputDir.getName() + "_" + DEFAULT_GENERATED_DIR_NAME);
+    return new File(parentFile, DEFAULT_GENERATED_DIR_NAME);
   }
 
   private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
