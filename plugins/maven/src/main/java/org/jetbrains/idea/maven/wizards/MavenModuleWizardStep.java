@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -57,6 +58,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
   private final MavenModuleBuilder myBuilder;
+  private final WizardContext myContext;
   private MavenProject myAggregator;
   private MavenProject myParent;
 
@@ -92,9 +94,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private boolean skipUpdateUI;
 
-  public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
+  public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder, WizardContext context) {
     myProjectOrNull = project;
     myBuilder = builder;
+    myContext = context;
 
     initComponents();
     loadSettings();
@@ -292,6 +295,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
+
     if (skipUpdateUI) return;
 
     if (isMavenizedProject()) {
@@ -477,6 +481,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
+    myContext.setProjectBuilder(myBuilder);
     myBuilder.setAggregatorProject(myAggregator);
     myBuilder.setParentProject(myParent);
 
