@@ -45,7 +45,6 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -789,8 +788,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public Presentation testAction(AnAction action) {
-    DataContext context = DataManager.getInstance().getDataContext();
-    TestActionEvent e = new TestActionEvent(context, action);
+    TestActionEvent e = new TestActionEvent(action);
     action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
       action.actionPerformed(e);
