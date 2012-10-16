@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -42,6 +43,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
       return wrapConfigurable(ep);
     }
   };
+  private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(ConfigurableEP<T> ep) {
@@ -80,11 +82,11 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private UnnamedConfigurable myConfigurable;
 
-  protected UnnamedConfigurable getConfigurable() {
+  public UnnamedConfigurable getConfigurable() {
     if (myConfigurable == null) {
       myConfigurable = myEp.createConfigurable();
       if (myConfigurable == null) {
-        System.out.println("oops");
+        LOG.error("Can't instantiate configurable for " + myEp);
       }
     }
     return myConfigurable;
