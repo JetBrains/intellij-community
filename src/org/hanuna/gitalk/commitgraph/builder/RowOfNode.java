@@ -25,12 +25,13 @@ package org.hanuna.gitalk.commitgraph.builder;
  *  7:0         -1
  *
  */
-public interface RowOfNode extends Iterable<GraphNode> {
+public interface RowOfNode extends Iterable<Node> {
 
     public int size();
-    public GraphNode getGraphNode(int position);
+    public Node getNode(int position);
     public int getMainPosition();
-    public int getAdditionColor();
+    public int getStartIndexColor();
+    public int getCountAdditionEdges();
     public int getPositionOfCommit(int indexCommit);
 
 }

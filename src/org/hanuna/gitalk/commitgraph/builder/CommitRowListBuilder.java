@@ -1,9 +1,10 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import com.sun.istack.internal.NotNull;
-import org.hanuna.gitalk.commitgraph.CommitRowList;
+import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitList;
+import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,70 +14,83 @@ import java.util.List;
  */
 public class CommitRowListBuilder {
     private final List<RowOfNode> rows = new ArrayList<RowOfNode>();
-    private final CommitList listOfCommits;
+    private final ReadOnlyList<Commit> commits;
     private int indexColor = 0;
 
-    public CommitRowListBuilder(@NotNull CommitList listOfCommits) {
-        this.listOfCommits = listOfCommits;
+    public CommitRowListBuilder(@NotNull ReadOnlyList<Commit> listOfCommits) {
+        this.commits = listOfCommits;
     }
 
     @NotNull
-    public CommitRowList build() {
+    public ReadOnlyList<CommitRow> build() {
         buildListLineOfNode();
-        return new CommitRowListAdapter(rows, listOfCommits);
+        return new CommitRowListAdapter(new SimpleReadOnlyList<RowOfNode>(rows), commits);
     }
 
     public List<RowOfNode> buildListLineOfNode() {
-        if (listOfCommits.size() > 0) {
+        if (commits.size() > 0) {
             firstStep();
         }
-        for (int i = 1; i < listOfCommits.size(); i++) {
-            step(i);
+        for (int i = 1; i < commits.size(); i++) {
+            step(i - 1);
         }
         return rows;
     }
 
-    private void firstStep() {
-        MutableRowOfNode firstLine = new MutableRowOfNode();
-        firstLine.add(0, indexColor);
-        indexColor++;
-        firstLine.setMainPosition(0);
-        if (listOfCommits.get(0).secondParent() != null) {
-            firstLine.setAdditionColor(indexColor);
-            indexColor++;
-        }
-        rows.add(firstLine);
+    /**
+     *
+     * @param indexCommit
+     * @return count addition Edges
+     */
+    private int setAdditionEdges(int indexCommit) {
+        Commit commit = commits.get(indexCommit);
+        int countParents = commit.getParents().size();
+        int additionEdges = (countParents == 0) ? 0 : countParents - 1;
+        indexColor += additionEdges;
+        return additionEdges;
     }
 
-    private void step(int index) {
-        RowOfNode prevRow = rows.get(index - 1);
-        MutableRowOfNode nextLine = new MutableRowOfNode();
-        for (GraphNode node : prevRow) {
-            int indexCommit = node.getIndexCommit();
-            if (indexCommit != index - 1) {
-                nextLine.add(indexCommit, node.getIndexColor());
+    private void firstStep() {
+        MutableRowOfNode firstRow = new MutableRowOfNode();
+        firstRow.add(0, indexColor);
+        indexColor++;
+        firstRow.setMainPosition(0);
+        firstRow.setStartIndexColor(indexColor);
+        firstRow.setCountAdditionEdges(setAdditionEdges(0));
+        rows.add(firstRow);
+    }
+
+
+    private void step(int indexPrevRow) {
+        RowOfNode prevRow = rows.get(indexPrevRow);
+        MutableRowOfNode nextRow = new MutableRowOfNode();
+        for (Node node : prevRow) {
+            int commitIndex = node.getCommitIndex();
+            if (commitIndex != indexPrevRow) {
+                nextRow.add(commitIndex, node.getColorIndex());
             } else {
-                Commit commit = listOfCommits.get(indexCommit);
-                if (commit.mainParent() != null) {
-                    nextLine.add(commit.mainParent().index(), node.getIndexColor());
+                ReadOnlyList<Commit> parents = commits.get(commitIndex).getParents();
+                if (parents.size() > 0) {
+                    nextRow.add(parents.get(0).index(), node.getColorIndex());
                 }
-                if (commit.secondParent() != null) {
-                    nextLine.add(commit.secondParent().index(), prevRow.getAdditionColor());
+                int startIndexColor = prevRow.getStartIndexColor();
+                for (int i = 1; i < parents.size(); i++) {
+                    Commit parent = parents.get(i);
+                    nextRow.add(parent.index(), startIndexColor + i - 1);
                 }
             }
         }
-        int p = nextLine.getPositionOfCommit(index);
+        int p = nextRow.getPositionOfCommit(indexPrevRow + 1);
         if (p == -1) {
-            nextLine.add(index, indexColor);
+            nextRow.add(indexPrevRow + 1, indexColor);
             indexColor++;
-            nextLine.setMainPosition(nextLine.size() - 1);
+            nextRow.setMainPosition(nextRow.size() - 1);
         } else {
-            nextLine.setMainPosition(p);
+            nextRow.setMainPosition(p);
         }
-        if (listOfCommits.get(index).secondParent() != null) {
-            nextLine.setAdditionColor(indexColor);
-            indexColor++;
-        }
-        rows.add(nextLine);
+        nextRow.setStartIndexColor(indexColor);
+        nextRow.setCountAdditionEdges(setAdditionEdges(indexPrevRow + 1));
+
+        rows.add(nextRow);
     }
 }

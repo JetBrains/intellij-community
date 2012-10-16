@@ -1,24 +1,25 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
-import org.hanuna.gitalk.commitgraph.CommitRowList;
 import org.hanuna.gitalk.commitgraph.Edge;
 import org.hanuna.gitalk.commitgraph.SimpleEdge;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitList;
+import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author erokhins
  */
-public class CommitRowListAdapter implements CommitRowList {
-    private final List<RowOfNode> rows;
-    private final CommitList listOfCommits;
+public class CommitRowListAdapter implements ReadOnlyList<CommitRow> {
+    private final SimpleReadOnlyList<RowOfNode> rows;
+    private final ReadOnlyList<Commit> listOfCommits;
 
-    public CommitRowListAdapter(List<RowOfNode> rows, CommitList listOfCommits) {
+    public CommitRowListAdapter(SimpleReadOnlyList<RowOfNode> rows, ReadOnlyList<Commit> listOfCommits) {
         this.rows = rows;
         this.listOfCommits = listOfCommits;
     }
@@ -29,8 +30,8 @@ public class CommitRowListAdapter implements CommitRowList {
     }
 
     @Override
-    public CommitRow get(final int lineIndex) {
-        final RowOfNode row = rows.get(lineIndex);
+    public CommitRow get(final int rowIndex) {
+        final RowOfNode row = rows.get(rowIndex);
         return new CommitRow() {
             @Override
             public int count() {
@@ -39,7 +40,7 @@ public class CommitRowListAdapter implements CommitRowList {
 
             @Override
             public int getIndexCommit(int position) {
-                return row.getGraphNode(position).getIndexCommit();
+                return row.getNode(position).getCommitIndex();
             }
 
             @Override
@@ -49,27 +50,28 @@ public class CommitRowListAdapter implements CommitRowList {
 
             @Override
             public List<Edge> getUpEdges(int position) {
-                if (lineIndex == 0) {
+                if (rowIndex == 0) {
                     return Collections.emptyList();
                 }
                 List<Edge> edges = new ArrayList<Edge>();
-                int indexCommit = getIndexCommit(position);
-                RowOfNode prevRow = rows.get(lineIndex - 1);
-                for (int i = 0; i < prevRow.size(); i++) {
-                    GraphNode node = prevRow.getGraphNode(i);
-                    if (node.getIndexCommit() == indexCommit) {
-                        edges.add(new SimpleEdge(i, node.getIndexColor()));
+                int searchCommitIndex = getIndexCommit(position);
+                RowOfNode prevRow = rows.get(rowIndex - 1);
+                for (int pos = 0; pos < prevRow.size(); pos++) {
+                    Node node = prevRow.getNode(pos);
+                    if (node.getCommitIndex() == searchCommitIndex) {
+                        edges.add(new SimpleEdge(pos, node.getColorIndex()));
                         continue;
                     }
-                    if (node.getIndexCommit() == lineIndex - 1) {
-                        Commit commit = listOfCommits.get(node.getIndexCommit());
-                        Commit mainParent = commit.mainParent();
-                        Commit secondParent = commit.secondParent();
-                        if (mainParent != null && mainParent.index() == indexCommit) {
-                            edges.add(new SimpleEdge(i, node.getIndexColor()));
+                    if (node.getCommitIndex() == rowIndex - 1) {
+                        Commit commit = listOfCommits.get(node.getCommitIndex());
+                        ReadOnlyList<Commit> parents = commit.getParents();
+                        if (parents.size() > 0 && parents.get(0).index() == searchCommitIndex) {
+                            edges.add(new SimpleEdge(pos, node.getColorIndex()));
                         }
-                        if (secondParent != null && secondParent.index() == indexCommit) {
-                            edges.add(new SimpleEdge(i, prevRow.getAdditionColor()));
+                        for (int i = 1; i < parents.size(); i++) {
+                            if (parents.get(i).index() == searchCommitIndex) {
+                                edges.add(new SimpleEdge(pos, prevRow.getStartIndexColor() + i - 1));
+                            }
                         }
                     }
                 }
@@ -78,31 +80,47 @@ public class CommitRowListAdapter implements CommitRowList {
 
             @Override
             public List<Edge> getDownEdges(int position) {
-                if (lineIndex == rows.size() - 1) {
+                if (rowIndex == rows.size() - 1) {
                     return Collections.emptyList();
                 }
                 List<Edge> edges = new ArrayList<Edge>();
-                RowOfNode nextRow = rows.get(lineIndex + 1);
-                GraphNode node = row.getGraphNode(position);
-                if (node.getIndexCommit() == lineIndex) {
-                    Commit commit = listOfCommits.get(node.getIndexCommit());
-                    Commit mainParent = commit.mainParent();
+                RowOfNode nextRow = rows.get(rowIndex + 1);
+                Node node = row.getNode(position);
+
+                if (node.getCommitIndex() == rowIndex) {
+                    Commit commit = listOfCommits.get(node.getCommitIndex());
+                    ReadOnlyList<Commit> parents = commit.getParents();
+                    if (parents.size() > 0) {
+                        int pos = nextRow.getPositionOfCommit(parents.get(0).index());
+                        edges.add(new SimpleEdge(pos, node.getColorIndex()));
+                    }
+                    for (int i = 1; i < parents.size(); i++) {
+                        int startColor = row.getStartIndexColor();
+                        int pos = nextRow.getPositionOfCommit(parents.get(i).index());
+                        edges.add(new SimpleEdge(pos, startColor + i - 1));
+                    }
+                /*    Commit mainParent = commit.mainParent();
                     Commit secondParent = commit.secondParent();
                     if (mainParent != null) {
                         int pos = nextRow.getPositionOfCommit(mainParent.index());
-                        edges.add(new SimpleEdge(pos, node.getIndexColor()));
+                        edges.add(new SimpleEdge(pos, node.getColorIndex()));
                     }
                     if (secondParent != null) {
                         int pos = nextRow.getPositionOfCommit(secondParent.index());
-                        edges.add(new SimpleEdge(pos, row.getAdditionColor()));
+                        edges.add(new SimpleEdge(pos, row.getStartIndexColor()));
                     }
+                    */
                 } else {
-                    int pos = nextRow.getPositionOfCommit(node.getIndexCommit());
-                    edges.add(new SimpleEdge(pos, node.getIndexColor()));
+                    int pos = nextRow.getPositionOfCommit(node.getCommitIndex());
+                    edges.add(new SimpleEdge(pos, node.getColorIndex()));
                 }
-
                 return edges;
             }
         };
+    }
+
+    @Override
+    public Iterator<CommitRow> iterator() {
+        return null;
     }
 }

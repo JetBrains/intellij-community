@@ -22,8 +22,4 @@ public class SimpleEdge implements Edge {
         return indexColor;
     }
 
-    @Override
-    public boolean isThick() {
-        return false;
-    }
 }
