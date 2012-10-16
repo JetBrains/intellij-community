@@ -45,7 +45,7 @@ public class JpsLibraryTableSerializer {
   private static final String PROJECT_LEVEL = "project";
   private static final String APPLICATION_LEVEL = "application";
 
-  public static void loadLibraries(Element libraryTableElement, JpsLibraryCollection result) {
+  public static void loadLibraries(@Nullable Element libraryTableElement, JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, LIBRARY_TAG)) {
       result.addLibrary(loadLibrary(libraryElement));
     }

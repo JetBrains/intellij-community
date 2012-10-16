@@ -3,6 +3,9 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -150,6 +153,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   public JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
                                                                         @NotNull JpsSdkReference<?> wrapperReference) {
     return new JpsWrappedJavaSdkReferenceImpl(sdkType, wrapperReference);
+  }
+
+  @NotNull
+  @Override
+  public JpsApplicationRunConfigurationProperties createRunConfigurationProperties(JpsApplicationRunConfigurationState state) {
+    return new JpsApplicationRunConfigurationPropertiesImpl(state);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationSerializer;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
@@ -88,6 +89,26 @@ public class JpsProjectLoader extends JpsLoaderBase {
     for (File artifactFile : listXmlFiles(new File(dir, "artifacts"))) {
       loadArtifacts(loadRootElement(artifactFile));
     }
+
+    if (hasRunConfigurationSerializers()) {
+      for (File configurationFile : listXmlFiles(new File(dir, "runConfigurations"))) {
+        JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
+      }
+      File workspaceFile = new File(dir, "workspace.xml");
+      if (workspaceFile.exists()) {
+        Element runManager = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager");
+        JpsRunConfigurationSerializer.loadRunConfigurations(myProject, runManager);
+      }
+    }
+  }
+
+  private static boolean hasRunConfigurationSerializers() {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      if (!extension.getRunConfigurationPropertiesSerializers().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -120,9 +141,13 @@ public class JpsProjectLoader extends JpsLoaderBase {
     loadModules(iprRoot, projectSdkType);
     loadProjectLibraries(JDomSerializationUtil.findComponent(iprRoot, "libraryTable"));
     loadArtifacts(JDomSerializationUtil.findComponent(iprRoot, "ArtifactManager"));
+    if (hasRunConfigurationSerializers()) {
+      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(iprRoot, "ProjectRunConfigurationManager"));
+      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(iwsRoot, "RunManager"));
+    }
   }
 
-  private void loadArtifacts(Element artifactManagerComponent) {
+  private void loadArtifacts(@Nullable Element artifactManagerComponent) {
     JpsArtifactSerializer.loadArtifacts(myProject, artifactManagerComponent);
   }
 
@@ -141,7 +166,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return sdkType;
   }
 
-  private void loadProjectLibraries(Element libraryTableElement) {
+  private void loadProjectLibraries(@Nullable Element libraryTableElement) {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
