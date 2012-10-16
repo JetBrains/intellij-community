@@ -683,6 +683,15 @@
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
 
+
+    <!-- PyDocstring -->
+    <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
+    <lang.parserDefinition language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
+
+
+
+    <lang.syntaxHighlighterFactory key="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringSyntaxHighlighterFactory"/>
+
     <!-- Mako files -->
     <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>
     <highlightErrorFilter implementation="com.jetbrains.mako.inspection.MakoErrorFilter"/>
@@ -837,6 +846,10 @@
     <!-- Mako -->
     <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
     <visitorFilter language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoVisitorFilter"/>
+
+    <!-- PyDocstring -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor"/>
+    <visitorFilter language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringVisitorFilter"/>
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>

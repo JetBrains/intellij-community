@@ -355,7 +355,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      return myHost.valueOffsetToTextOffset(offsetInDecoded);
+      int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
+      if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
+      if (offset > rangeInsideHost.getEndOffset()) offset = rangeInsideHost.getEndOffset();
+      return offset;
     }
 
     @Override

@@ -26,8 +26,8 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\n", builder.toString());
 
     assertEquals(1, escaper.getOffsetInHost(0, new TextRange(1, 5)));
-    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(1, 5)));
-    assertEquals(6, escaper.getOffsetInHost(4, new TextRange(1, 5)));
+    assertEquals(2, escaper.getOffsetInHost(1, new TextRange(1, 5)));
+    assertEquals(5, escaper.getOffsetInHost(4, new TextRange(1, 5)));
   }
 
   private PyStringLiteralExpression createLiteralFromText(final String text) {
