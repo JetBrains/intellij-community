@@ -23,9 +23,10 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,11 +38,11 @@ public class SelectFontDialog extends DialogWrapper {
   private JCheckBox myShowMonospacedCheckbox;
   private final List<String> myFontNames;
   private final String myInitialFontName;
-  private final HashMap myNameToIsMonospaced;
+  private final List<String> myMonospacedFontNames;
 
-  public SelectFontDialog(Component parent, List<String> fontNames, String initialFontName, HashMap nameToIsMonospaced) {
+  public SelectFontDialog(Component parent, List<String> fontNames, String initialFontName, List<String> monospacedFontNames) {
     super(parent, true);
-    myNameToIsMonospaced = nameToIsMonospaced;
+    myMonospacedFontNames = monospacedFontNames;
     setTitle(ApplicationBundle.message("title.select.font"));
     myFontNames = fontNames;
     myInitialFontName = initialFontName;
@@ -51,7 +52,6 @@ public class SelectFontDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     myShowMonospacedCheckbox = new JCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
     final boolean useOnlyMonospacedFonts = EditorColorsManager.getInstance().isUseOnlyMonospacedFonts();
-    myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
     myFontList = new JBList();
     new ListSpeedSearch(myFontList);
     myFontList.setModel(new DefaultListModel());
@@ -84,10 +84,11 @@ public class SelectFontDialog extends DialogWrapper {
 
     panel.add(myShowMonospacedCheckbox, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myFontList), BorderLayout.CENTER);
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
+    myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
+    myFontList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        setOKActionEnabled(myFontList.getSelectedValue() != null);
       }
     });
 
@@ -97,20 +98,15 @@ public class SelectFontDialog extends DialogWrapper {
   private void fillList(boolean onlyMonospaced) {
     DefaultListModel model = (DefaultListModel) myFontList.getModel();
     model.removeAllElements();
-    for (int i = 0; i < myFontNames.size(); i++) {
-      String fontName = myFontNames.get(i);
-      if (!onlyMonospaced || Boolean.TRUE.equals(myNameToIsMonospaced.get(fontName))) {
+    for (String fontName : myFontNames) {
+      if (!onlyMonospaced || myMonospacedFontNames.contains(fontName)) {
         model.addElement(fontName);
       }
     }
   }
 
   public void show() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        ListScrollingUtil.selectItem(myFontList, myInitialFontName);
-      }
-    });
+    ListScrollingUtil.selectItem(myFontList, myInitialFontName);
     super.show();
   }
 
