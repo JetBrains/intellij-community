@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
+import git4idea.Hash;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,7 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO make this faster, because we know the branch name
-      return new GitBranch(branchName, hash == null ? "" : hash, false);
+      return new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false);
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -154,7 +155,7 @@ class GitRepositoryReader {
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
-    return new GitBranch(branchName, false);
+    return new GitBranch(branchName, GitBranch.DUMMY_HASH, false); // TODO reuse existing hash value
   }
 
   private boolean isMergeInProgress() {
@@ -251,10 +252,6 @@ class GitRepositoryReader {
     GitBranchesCollection packedBranches = readPackedBranches();
     localBranches.addAll(packedBranches.getLocalBranches());
     remoteBranches.addAll(packedBranches.getRemoteBranches());
-    
-    // note that even the active branch may be packed. So at first we collect branches, then we find the active.
-    GitBranch currentBranch = readCurrentBranch();
-
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
   
@@ -268,7 +265,7 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false));
+      branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false));
     }
     return branches;
   }
@@ -300,7 +297,7 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            branches.add(new GitBranch(branchName, hash == null ? "": hash, true));
+            branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), true));
           }
         }
         return true;
@@ -328,9 +325,9 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false));
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), Hash.create(hash), false));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, true));
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), Hash.create(hash), true));
           }
         }
       });

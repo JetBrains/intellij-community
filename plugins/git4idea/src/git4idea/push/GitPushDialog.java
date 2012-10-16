@@ -248,7 +248,7 @@ public class GitPushDialog extends DialogWrapper {
           if (!manualBranchName.startsWith("refs/remotes/")) {
             manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
           }
-          manualBranch = new GitBranch(manualBranchName, true);
+          manualBranch = new GitBranch(manualBranchName, GitBranch.DUMMY_HASH, true);
         }
         targetBranch = manualBranch;
       }

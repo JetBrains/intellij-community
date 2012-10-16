@@ -182,6 +182,6 @@ public class GitBranchUtil {
     else {
       remoteFlag = false;
     }
-    return new GitBranch(branch, remoteFlag);
+    return new GitBranch(branch, GitBranch.DUMMY_HASH, remoteFlag);
   }
 }

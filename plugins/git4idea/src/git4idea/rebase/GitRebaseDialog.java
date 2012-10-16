@@ -358,10 +358,10 @@ public class GitRebaseDialog extends DialogWrapper {
         }
         else {
           if (remote.equals(".")) {
-            trackedBranch = new GitBranch(name, false);
+            trackedBranch = new GitBranch(name, GitBranch.DUMMY_HASH, false);
           }
           else {
-            trackedBranch = new GitBranch(remote + "/" + name, true);
+            trackedBranch = new GitBranch(remote + "/" + name, GitBranch.DUMMY_HASH, true);
           }
         }
       }

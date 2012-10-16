@@ -235,7 +235,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       try {
         head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
         final String prefix = "ref: refs/heads/";
-        return head.startsWith(prefix) ? Collections.singletonList(new GitBranch(head.substring(prefix.length()), false)) : null;
+        return head.startsWith(prefix) ?
+               Collections.singletonList(new GitBranch(head.substring(prefix.length()), GitBranch.DUMMY_HASH, false)) :
+               null;
       } catch (IOException e) {
         LOG.info(e);
         return null;
@@ -276,7 +278,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
           continue;
         }
       }
-      final GitBranch branch = new GitBranch(b, isRemote);
+      final GitBranch branch = new GitBranch(b, GitBranch.DUMMY_HASH, isRemote);
       if ((isRemote && remoteWanted) || (!isRemote && localWanted)) {
         branches.add(branch);
       }
