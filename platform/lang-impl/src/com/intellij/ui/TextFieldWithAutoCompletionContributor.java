@@ -59,17 +59,15 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
     final TextFieldWithAutoCompletionListProvider<T> provider = file.getUserData(KEY);
 
     if (provider != null) {
-      if (CompletionService.getCompletionService().getAdvertisementText() == null) {
-        String adv = provider.getAdvertisement();
-        if (adv == null) {
-          final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
-          if (shortcut != null) {
-            adv = provider.getQuickDocHotKeyAdvertisement(shortcut);
-          }
+      String adv = provider.getAdvertisement();
+      if (adv == null) {
+        final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
+        if (shortcut != null) {
+          adv = provider.getQuickDocHotKeyAdvertisement(shortcut);
         }
-        if (adv != null) {
-          CompletionService.getCompletionService().setAdvertisementText(adv);
-        }
+      }
+      if (adv != null) {
+        result.addLookupAdvertisement(adv);
       }
 
       final String prefix = provider.getPrefix(parameters);

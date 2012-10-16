@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.codeInsight;
-
-import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.usageView.UsageViewNodeTextLocation;
-import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.util.xml.DeprecatedClassUsageInspection;
-import org.jetbrains.idea.devkit.inspections.*;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-
+package org.jetbrains.idea.devkit.codeInsight
+import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiElement
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.usageView.UsageViewNodeTextLocation
+import com.intellij.usageView.UsageViewTypeLocation
+import com.intellij.util.xml.DeprecatedClassUsageInspection
+import org.jetbrains.idea.devkit.inspections.*
 /**
  * @author peter
  */
@@ -124,14 +118,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void addPluginXml(final String root, final String text) throws IOException {
-    myTempDirFixture.createFile(root +
-                                "/META-INF/plugin.xml", text);
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root));
-      }
-    }.execute();
+    myTempDirFixture.createFile(root + "/META-INF/plugin.xml", text);
+    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root)) }
   }
 
   public void testNoWordCompletionInClassPlaces() throws Throwable {
@@ -150,6 +138,27 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(false) + ".xml");
     myFixture.completeBasic();
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
+  public void testShowPackagesInActionClass() {
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }");
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }");
+    myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }");
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.completeBasic();
+    assert myFixture.lookupElementStrings == ['bar', 'goo']
+    assert myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
+  }
+
+  public void testShowAnActionInheritorsOnSmartCompletion() {
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }");
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }");
+    myFixture.addClass("package foo.goo; public class GooAction extends com.intellij.openapi.actionSystem.AnAction { }");
+    myFixture.addClass("package another.goo; public class AnotherAction extends com.intellij.openapi.actionSystem.AnAction { }");
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.complete(CompletionType.SMART);
+    assert myFixture.lookupElementStrings == ['foo.bar.BarAction', 'foo.goo.GooAction']
+    assert !myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
   }
 
   public void testDeprecatedExtensionAttribute() {
@@ -188,7 +197,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
-    return Arrays.<Class<? extends LocalInspectionTool>>asList(
+    return Arrays.asList(
       //RegistrationProblemsInspection.class,
       PluginXmlDomInspection.class,
       ComponentNotRegisteredInspection.class,

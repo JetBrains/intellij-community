@@ -18,13 +18,13 @@ package com.intellij.usages.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewSettings;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author cdr
 */
 class PreviewUsageAction extends RuleAction {
-
-  PreviewUsageAction(UsageViewImpl usageView) {
+  PreviewUsageAction(@NotNull UsageViewImpl usageView) {
     super(usageView, UsageViewBundle.message("preview.usages.action.text"), AllIcons.Actions.Preview);
   }
 

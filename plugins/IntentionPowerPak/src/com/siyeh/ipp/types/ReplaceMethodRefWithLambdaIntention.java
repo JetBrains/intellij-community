@@ -87,6 +87,8 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
         final PsiClass containingClass = ((PsiMember)resolveElement).getContainingClass();
         LOG.assertTrue(containingClass != null);
         isReceiver = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, (PsiMethod)resolveElement);
+      } else if (resolveElement instanceof PsiClass) {
+        isReceiver = LambdaUtil.isReceiverType(functionalInterfaceType, (PsiClass)resolveElement, (PsiMethod)null);
       }
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();

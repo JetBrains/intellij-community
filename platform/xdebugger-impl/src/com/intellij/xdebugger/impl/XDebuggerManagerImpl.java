@@ -220,7 +220,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       final RunContentDescriptor descriptor = sessionTab.getRunContentDescriptor();
       mySessionData.put(descriptor, session.getSessionData());
       mySessionTabs.put(descriptor, sessionTab);
-      final ProcessHandler handler = session.getDebugProcess().getProcessHandler();
 
       // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
       // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
@@ -230,7 +229,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         public void dispose() {
           mySessionData.remove(descriptor);
           mySessionTabs.remove(descriptor);
-          mySessions.remove(handler);
+          mySessions.remove(session.getDebugProcess().getProcessHandler());
         }
       });
     }

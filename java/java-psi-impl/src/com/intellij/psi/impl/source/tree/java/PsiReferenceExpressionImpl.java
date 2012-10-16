@@ -370,6 +370,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       if (resolve instanceof PsiVariable) {
         PsiType type = ((PsiVariable)resolve).getType();
         ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
+        LOG.assertTrue(ret == null || ret.isValid());
         if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
           owner = ((PsiField)resolve).getContainingClass();
         }
@@ -377,6 +378,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       else if (resolve instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)resolve;
         ret = method.getReturnType();
+        LOG.assertTrue(ret == null || ret.isValid());
         owner = method;
       }
       if (ret == null) return null;
@@ -390,7 +392,10 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         final PsiSubstitutor substitutor = result.getSubstitutor();
         if (owner == null || !PsiUtil.isRawSubstitutor(owner, substitutor)) {
           PsiType substitutedType = substitutor.substitute(ret);
-          return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
+          LOG.assertTrue(substitutedType.isValid());
+          PsiType normalized = PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
+          LOG.assertTrue(normalized.isValid());
+          return normalized;
         }
       }
 

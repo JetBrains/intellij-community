@@ -22,11 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public interface LayoutStateDefaults {
-
+  @NotNull //this
   LayoutStateDefaults initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
 
-  LayoutStateDefaults initFocusContent(@NotNull String id, final String condition);
+  @NotNull // this
+  LayoutStateDefaults initFocusContent(@NotNull String id, @NotNull String condition);
 
-  LayoutStateDefaults initFocusContent(@NotNull String id, final String condition, @NotNull final LayoutAttractionPolicy policy);
-
+  @NotNull  //this
+  LayoutStateDefaults initFocusContent(@NotNull String id, @NotNull String condition, @NotNull final LayoutAttractionPolicy policy);
 }

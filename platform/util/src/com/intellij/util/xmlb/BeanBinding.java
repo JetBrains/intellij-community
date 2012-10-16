@@ -64,7 +64,7 @@ class BeanBinding implements Binding {
     initPropertyBindings(myBeanClass);
   }
 
-  private void initPropertyBindings(Class<?> beanClass) {
+  private synchronized void initPropertyBindings(Class<?> beanClass) {
     for (Accessor accessor : getAccessors(beanClass)) {
       final Binding binding = createBindingByAccessor(accessor);
       myPropertyBindingsList.add(binding);

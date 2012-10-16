@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
@@ -361,20 +362,21 @@ public class ExtractUtil {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
+
     String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
     String returnType = typeText == null || !helper.specifyType() ? "" : typeText;
-    if (returnType.length() == 0) {
+
+    if (StringUtil.isEmptyOrSpaces(returnType) || "null".equals(returnType)) {
       if (modifier.length() == 0) {
-        typeText = "def ";
+        return "def ";
       }
       else {
-        typeText = "";
+        return "";
       }
     }
     else {
-      typeText = returnType + " ";
+      return returnType + " ";
     }
-    return typeText;
   }
 
   public static boolean isSingleExpression(GrStatement[] statements) {

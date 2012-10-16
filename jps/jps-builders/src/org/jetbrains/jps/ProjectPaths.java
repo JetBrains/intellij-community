@@ -9,6 +9,7 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -25,7 +26,6 @@ import java.util.*;
  *         Date: 9/30/11
  */
 public class ProjectPaths {
-  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
   @NotNull
   private final JpsProject myProject;
   //private final Map<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>>();
@@ -148,8 +148,9 @@ public class ProjectPaths {
   }
 
   @Nullable
-  public File getAnnotationProcessorGeneratedSourcesOutputDir(JpsModule module, final boolean forTests, String sourceDirName) {
-    if (!StringUtil.isEmpty(sourceDirName)) {
+  public File getAnnotationProcessorGeneratedSourcesOutputDir(JpsModule module, final boolean forTests, ProcessorConfigProfile profile) {
+    final String sourceDirName = profile.getGeneratedSourcesDirectoryName(forTests);
+    if (profile.isOutputRelativeToContentRoot()) {
       List<String> roots = module.getContentRootsList().getUrls();
       if (roots.isEmpty()) {
         return null;
@@ -163,18 +164,15 @@ public class ProjectPaths {
           }
         });
       }
-      return new File(JpsPathUtil.urlToFile(roots.get(0)), sourceDirName);
+      final File parent = JpsPathUtil.urlToFile(roots.get(0));
+      return StringUtil.isEmpty(sourceDirName)? parent : new File(parent, sourceDirName);
     }
 
     final File outputDir = getModuleOutputDir(module, forTests);
     if (outputDir == null) {
       return null;
     }
-    final File parentFile = outputDir.getParentFile();
-    if (parentFile == null) {
-      return null;
-    }
-    return new File(parentFile, DEFAULT_GENERATED_DIR_NAME);
+    return StringUtil.isEmpty(sourceDirName)? outputDir : new File(outputDir, sourceDirName);
   }
 
   private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}

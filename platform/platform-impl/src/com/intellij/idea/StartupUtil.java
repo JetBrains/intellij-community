@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
@@ -33,6 +34,8 @@ import org.xerial.snappy.SnappyLoader;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -200,6 +203,7 @@ public class StartupUtil {
       }
       try {
         final long t = System.currentTimeMillis();
+        loadSnappyForJRockit();
         log.info("Snappy library loaded (" + Snappy.getNativeLibraryVersion() + ") in " + (System.currentTimeMillis() - t) + " ms");
       }
       catch (Throwable t) {
@@ -220,5 +224,38 @@ public class StartupUtil {
         log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
       }
     }
+  }
+
+  // todo[r.sh] drop after migration on Java 7
+  private static void loadSnappyForJRockit() throws Exception {
+    String vmName = System.getProperty("java.vm.name");
+    if (vmName == null || !vmName.toLowerCase().contains("jrockit")) {
+      return;
+    }
+
+    byte[] bytes;
+    InputStream in = StartupUtil.class.getResourceAsStream("/org/xerial/snappy/SnappyNativeLoader.bytecode");
+    try {
+      bytes = FileUtil.loadBytes(in);
+    }
+    finally {
+      in.close();
+    }
+
+    ClassLoader classLoader = StartupUtil.class.getClassLoader();
+
+    Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+    defineClass.setAccessible(true);
+    Class<?> loaderClass = (Class<?>)defineClass.invoke(classLoader, "org.xerial.snappy.SnappyNativeLoader", bytes, 0, bytes.length);
+    loaderClass = classLoader.loadClass(loaderClass.getName());
+
+    String[] classes = {"org.xerial.snappy.SnappyNativeAPI", "org.xerial.snappy.SnappyNative", "org.xerial.snappy.SnappyErrorCode"};
+    for (String aClass : classes) {
+      classLoader.loadClass(aClass);
+    }
+
+    Method loadNativeLibrary = SnappyLoader.class.getDeclaredMethod("loadNativeLibrary", Class.class);
+    loadNativeLibrary.setAccessible(true);
+    loadNativeLibrary.invoke(null, loaderClass);
   }
 }

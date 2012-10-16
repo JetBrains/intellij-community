@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
@@ -23,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.java.JavaLanguage;
@@ -55,7 +57,10 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -225,15 +230,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   @NotNull
   public Object[] getVariants() {
-    PsiElement context = getContext();
-    if (context == null) {
-      context = JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
-    }
+    PsiElement context = getCompletionContext();
     if (context instanceof PsiPackage) {
-      final String[] extendClasses = getExtendClassNames();
-      if (extendClasses != null) {
-        return getSubclassVariants((PsiPackage)context, extendClasses);
-      }
       return processPackage((PsiPackage)context);
     }
     if (context instanceof PsiClass) {
@@ -255,6 +253,12 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Nullable
+  public PsiElement getCompletionContext() {
+    PsiElement context = getContext();
+    return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
   }
 
   public String[] getExtendClassNames() {
@@ -508,8 +512,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @NotNull
-  private Object[] getSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses) {
-    HashSet<Object> lookups = new HashSet<Object>();
+  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, CompletionResultSet result) {
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope != null) {
@@ -529,35 +532,22 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         // add itself
         if (packageScope.contains(extendClass.getContainingFile().getVirtualFile())) {
           if (isClassAccepted(extendClass, classKind, instantiatable, concrete, notInterface, notEnum)) {
-            ContainerUtil.addIfNotNull(createSubclassLookupValue(context, extendClass), lookups);
+            result.addElement(createSubclassLookupValue(extendClass, extendClassName));
           }
         }
         for (final PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true)) {
-          if (isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
-            ContainerUtil.addIfNotNull(createSubclassLookupValue(context, clazz), lookups);
+          String qname = clazz.getQualifiedName();
+          if (qname != null && isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
+            result.addElement(createSubclassLookupValue(clazz, qname));
           }
         }
       }
     }
-    return lookups.toArray();
   }
 
-  @Nullable
-  private static Object createSubclassLookupValue(@NotNull final PsiPackage context, @NotNull final PsiClass clazz) {
-    final String qname = clazz.getQualifiedName();
-    if (qname == null) return null;
-
-    String name = qname;
-    final String pack = context.getQualifiedName();
-    if (pack.length() > 0) {
-      if (name.startsWith(pack)) {
-        name = name.substring(pack.length() + 1);
-      }
-      else {
-        return null;
-      }
-    }
-    return JavaLookupElementBuilder.forClass(clazz, name, true).withLookupString(qname).withLookupString(clazz.getName());
+  @NotNull
+  private static LookupElementBuilder createSubclassLookupValue(@NotNull final PsiClass clazz, @NotNull String qname) {
+    return JavaLookupElementBuilder.forClass(clazz, qname, true).withPresentableText(StringUtil.getShortName(qname));
   }
 
   @Override

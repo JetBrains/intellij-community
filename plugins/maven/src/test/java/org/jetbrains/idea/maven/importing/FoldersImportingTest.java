@@ -995,7 +995,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/foo",
                          "target/generated-sources/annotations",
-                         "target/generated-sources/test-annotations",
+                         "target/generated-test-sources/test-annotations",
                          "target/generated-test-sources/foo");
 
     importProject("<groupId>test</groupId>" +
@@ -1012,7 +1012,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                       "src/test/java",
                       "src/test/resources",
                       "target/generated-test-sources/foo",
-                      "target/generated-sources/test-annotations");
+                      "target/generated-test-sources/test-annotations");
   }
 
   public void testCustomAnnotationProcessorSources() throws Exception {

@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -37,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
@@ -48,8 +47,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private JTextField myLineSpacingField;
   private JTextField myFontNameField;
 
-  private static ArrayList<String> myFontNamesVector;
-  private static HashMap<String, Boolean> myFontNameToIsMonospaced;
+  private static ArrayList<String> myFontNames;
+  private static ArrayList<String> myMonospacedFontNames;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private boolean myIsInSchemeChange = false;
   private String myTitle;
@@ -114,13 +113,13 @@ public class FontOptions extends JPanel implements OptionsPanel{
   }
 
   @Override
+  @Nullable
   public Runnable showOption(final String option) {
     return null;
   }
 
   @Override
   public void applyChangesToScheme() {
-
   }
 
   @Override
@@ -241,16 +240,16 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private void selectFont() {
     initFontTables();
 
-    List<String> fontNamesVector = (List<String>)myFontNamesVector.clone();
-    HashMap fontNameToIsMonospaced = (HashMap)myFontNameToIsMonospaced.clone();
+    ArrayList<String> fontNames = new ArrayList<String>(myFontNames);
+    ArrayList<String> monospacedFontNames = new ArrayList<String>(myMonospacedFontNames);
     String initialFontName = myFontNameField.getText();
-    if (!fontNamesVector.contains(EditorSettingsExternalizable.DEFAULT_FONT_NAME)) {
-      fontNamesVector.add(0, EditorSettingsExternalizable.DEFAULT_FONT_NAME);
+    if (!fontNames.contains(EditorSettingsExternalizable.DEFAULT_FONT_NAME)) {
+      fontNames.add(0, EditorSettingsExternalizable.DEFAULT_FONT_NAME);
     }
-    if (!fontNamesVector.contains(initialFontName)) {
-      fontNamesVector.add(0, initialFontName);
+    if (!fontNames.contains(initialFontName)) {
+      fontNames.add(0, initialFontName);
     }
-    SelectFontDialog selectFontDialog = new SelectFontDialog(this, fontNamesVector, initialFontName, fontNameToIsMonospaced);
+    SelectFontDialog selectFontDialog = new SelectFontDialog(this, fontNames, initialFontName, monospacedFontNames);
     selectFontDialog.show();
     if (!selectFontDialog.isOK()) {
       return;
@@ -265,9 +264,9 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   private void initFontTables() {
-    if (myFontNamesVector == null) {
-      myFontNamesVector = new ArrayList<String>();
-      myFontNameToIsMonospaced = new HashMap<String, Boolean>();
+    if (myFontNames == null) {
+      myFontNames = new ArrayList<String>();
+      myMonospacedFontNames = new ArrayList<String>();
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new InitFontsRunnable(), ApplicationBundle.message("progress.analyzing.fonts"), false, null);
     }
@@ -326,15 +325,25 @@ public class FontOptions extends JPanel implements OptionsPanel{
             }
             FontMetrics plainMetrics = getFontMetrics(plainFont);
             FontMetrics boldMetrics = getFontMetrics(boldFont);
-            myFontNamesVector.add(fontName);
+            if (plainMetrics.getDescent() < 0 ||
+                boldMetrics.getDescent() < 0 ||
+                plainMetrics.getAscent() < 0 ||
+                boldMetrics.getAscent() < 0) {
+              continue;
+            }
             int plainL = plainMetrics.charWidth('l');
             int boldL = boldMetrics.charWidth('l');
             int plainW = plainMetrics.charWidth('W');
             int boldW = boldMetrics.charWidth('W');
             int plainSpace = plainMetrics.charWidth(' ');
             int boldSpace = boldMetrics.charWidth(' ');
-            boolean isMonospaced = plainL == plainW && plainL == boldL && plainW == boldW && plainSpace == boldSpace;
-            myFontNameToIsMonospaced.put(fontName, isMonospaced);
+            if (plainL <= 0 || boldL <= 0 || plainW <= 0 || boldW <= 0 || plainSpace <= 0 || boldSpace <= 0) {
+              continue;
+            }
+            myFontNames.add(fontName);
+            if (plainL == plainW && plainL == boldL && plainW == boldW && plainSpace == boldSpace) {
+              myMonospacedFontNames.add(fontName);
+            }
           }
         }
         catch (Throwable e) {
