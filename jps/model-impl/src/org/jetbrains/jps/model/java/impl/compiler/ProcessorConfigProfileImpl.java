@@ -113,14 +113,11 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
 
   @Override
   public void setGeneratedSourcesDirectoryName(@Nullable String name, boolean forTests) {
-    if (name == null || name.trim().isEmpty()) {
-      name = "";
-    }
     if (forTests) {
-      myGeneratedTestsDirectoryName = name;
+      myGeneratedTestsDirectoryName = name != null? name.trim() : DEFAULT_TESTS_DIR_NAME;
     }
     else {
-      myGeneratedProductionDirectoryName = name;
+      myGeneratedProductionDirectoryName = name != null? name.trim() : DEFAULT_PRODUCTION_DIR_NAME;
     }
   }
 
