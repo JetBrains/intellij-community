@@ -96,13 +96,11 @@ class GitLightTest {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected void prepareRemoteRepoAndBranch(GitRepository source) {
+  protected void prepareRemoteRepo(GitRepository source, String target = "parent.git", String targetName = "origin") {
     cd myTestRoot
-    git("clone --bare $source parent.git")
-
-    // initialize feature branch and push to make origin/feature, set up tracking
+    git("clone --bare $source $target")
     cd source
-    git("remote add origin ${myTestRoot}/parent.git");
+    git("remote add $targetName $myTestRoot/$target");
   }
 
   private void registerRepository(GitRepositoryImpl repository) {

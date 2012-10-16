@@ -526,7 +526,7 @@ class GitBranchWorkerTest extends GitLightTest {
   public void "delete branch merged to head but unmerged to upstream should show dialog"() {
     // inspired by IDEA-83604
     // for the sake of simplicity we deal with a single myCommunity repository for remote operations
-    prepareRemoteRepoAndBranch(myCommunity)
+    prepareRemoteRepo(myCommunity)
     cd myCommunity
     git("checkout -b feature");
     git("push -u origin feature")
