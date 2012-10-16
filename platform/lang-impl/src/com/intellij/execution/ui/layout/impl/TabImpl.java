@@ -36,10 +36,12 @@ public class TabImpl extends AbstractTab implements Tab {
   TabImpl() {
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
 
+  @Override
   public int getDefaultIndex() {
     return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
   }
@@ -129,10 +131,12 @@ public class TabImpl extends AbstractTab implements Tab {
     myBottomDetached = bottomDetached;
   }
 
+  @Override
   public boolean isDefault() {
     return myIndex == 0;
   }
 
+  @Override
   public boolean isDetached(PlaceInGrid place) {
     switch (place) {
       case bottom:
@@ -148,6 +152,7 @@ public class TabImpl extends AbstractTab implements Tab {
     return false;
   }
 
+  @Override
   public void setDetached(PlaceInGrid place, boolean detached) {
     switch (place) {
       case bottom:
