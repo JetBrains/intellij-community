@@ -22,9 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Interface that should be implemented by the language in order to provide inline functionality and possibly
@@ -60,19 +59,19 @@ public interface InlineHandler {
    * @return <code>Settings</code> object in case refactoring should be performed or null otherwise
 
    */
-  @Nullable Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference);
+  @Nullable Settings prepareInlineElement(@NotNull PsiElement element, @Nullable Editor editor, boolean invokedOnReference);
 
   /**
    * @param element inlined element
    */
-  void removeDefinition(PsiElement element, Settings settings);
+  void removeDefinition(@NotNull PsiElement element, @NotNull Settings settings);
 
   /**
    * @param element inlined element
    * @param settings
    * @return Inliner instance to be used for inlining references in this language
    */
-  @Nullable Inliner createInliner(PsiElement element, Settings settings);
+  @Nullable Inliner createInliner(@NotNull PsiElement element, @NotNull Settings settings);
 
   interface Inliner {
     /**
@@ -82,13 +81,13 @@ public interface InlineHandler {
      * or null if no conflicts detected.
      */
     @Nullable
-    MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced);
+    MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced);
 
     /**
      * Perform actual inline of element to the point where it is referenced
      * @param usage usage of inlined element
      * @param referenced inlined element
      */
-    void inlineUsage(UsageInfo usage, PsiElement referenced);
+    void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced);
   }
 }
