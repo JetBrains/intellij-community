@@ -20,17 +20,27 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * @author Roman.Chernyatchik
  */
-public class FakeRerunAction extends AnAction implements DumbAware{
+public class FakeRerunAction extends AnAction implements DumbAware {
+  protected static final List<RestartAction> registry = new CopyOnWriteArrayList<RestartAction>();
+
   public void actionPerformed(AnActionEvent e) {
+    RestartAction action = RestartAction.findActualAction();
+    if (action != null && action.isEnabled()) {
+      action.actionPerformed(e);
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
+    RestartAction action = RestartAction.findActualAction();
+    presentation.setEnabled(action != null && action.isEnabled());
     presentation.setVisible(false);
   }
 }
