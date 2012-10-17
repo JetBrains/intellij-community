@@ -47,7 +47,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Override
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return context.isCreatingNewProject();
   }
 
   @Nullable
