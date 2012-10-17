@@ -84,7 +84,7 @@ public class ConstructorReferencesSearchHelper {
             if (parent instanceof PsiMethodReferenceExpression &&
                 ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
               if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-                processor.process(reference);
+                processor.process((PsiReference)parent);
               }
             }
           }
