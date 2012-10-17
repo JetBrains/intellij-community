@@ -67,6 +67,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
   private final RefConvertor[] myReferenceConvertors = new RefConvertor[]{
     new RefConvertor(ourHREFselector) {
+      @Override
       protected String convertReference(String root, String href) {
         if (BrowserUtil.isAbsoluteURL(href)) {
           return href;
@@ -114,6 +115,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return text;
   }
 
+  @Override
   @Nullable
    public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
      String externalDoc = super.getExternalDocInfoForElement(docURL, element);
@@ -121,6 +123,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
        if (element instanceof PsiMethod) {
          final String className = ApplicationManager.getApplication().runReadAction(
              new NullableComputable<String>() {
+               @Override
                @Nullable
                public String compute() {
                  PsiClass aClass = ((PsiMethod)element).getContainingClass();

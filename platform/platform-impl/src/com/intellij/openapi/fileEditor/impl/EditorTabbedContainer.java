@@ -642,6 +642,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myPinned = window.isFilePinned(file);
       }
 
+      @NotNull
       @Override
       public VirtualFile getKey() {
         return myFile;

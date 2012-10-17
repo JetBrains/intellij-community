@@ -45,7 +45,15 @@ public class AnnotationProcessorProfileSerializer {
     profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null);
+    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null, false);
+
+    final Element srcTestOutput = element.getChild("sourceTestOutputDir");
+    profile.setGeneratedSourcesDirectoryName(srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null, true);
+
+    final Element isRelativeToContentRoot = element.getChild("outputRelativeToContentRoot");
+    if (isRelativeToContentRoot != null) {
+      profile.setOutputRelativeToContentRoot(Boolean.parseBoolean(isRelativeToContentRoot.getAttributeValue(VALUE)));
+    }
 
     profile.clearProcessorOptions();
     for (Object optionElement : element.getChildren(OPTION)) {
@@ -94,9 +102,17 @@ public class AnnotationProcessorProfileSerializer {
     element.setAttribute(NAME, profile.getName());
     element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
 
-    final String srcDirName = profile.getGeneratedSourcesDirectoryName();
-    if (srcDirName != null) {
+    final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
       addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
+    }
+    final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
+      addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
+    }
+
+    if (profile.isOutputRelativeToContentRoot()) {
+      addChild(element, "outputRelativeToContentRoot").setAttribute(VALUE, "true");
     }
 
     final Map<String, String> options = profile.getProcessorOptions();

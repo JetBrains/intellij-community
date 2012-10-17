@@ -773,10 +773,10 @@ class GitBranchWorkerTest {
   }
 
   private static void assertContent(String expectedContent, String actual) {
+    expectedContent = StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString).trim()
+    actual = actual.trim()
     assertEquals String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
-                               substWhitespaces(expectedContent), substWhitespaces(actual)),
-                 StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString).trim(),
-                 actual.trim()
+                               substWhitespaces(expectedContent), substWhitespaces(actual)), expectedContent, actual
   }
 
   private static String substWhitespaces(String s) {

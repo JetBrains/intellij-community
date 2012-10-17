@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class FSOperations {
   public static void markDirty(CompileContext context, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirty(context, file, rd, pd.timestamps.getStorage());
@@ -39,7 +39,7 @@ public class FSOperations {
   }
 
   public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.markDirtyIfNotDeleted(context, file, rd, pd.timestamps.getStorage());
@@ -47,7 +47,7 @@ public class FSOperations {
   }
 
   public static void markDeleted(CompileContext context, File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());

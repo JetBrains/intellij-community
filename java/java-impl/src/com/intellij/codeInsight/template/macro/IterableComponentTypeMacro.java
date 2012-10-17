@@ -26,19 +26,23 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class IterableComponentTypeMacro extends Macro {
+  @Override
   public String getName() {
     return "iterableComponentType";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.iterable.component.type");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
@@ -85,6 +89,7 @@ public class IterableComponentTypeMacro extends Macro {
     return null;
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }

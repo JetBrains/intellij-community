@@ -18,6 +18,7 @@ package com.intellij.ide.wizard;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -70,7 +71,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(final String title, final Project project) {
+  public AbstractWizard(final String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<T>();
     initWizard(title);
@@ -465,7 +466,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myNextButton.setEnabled(canGoNext());
     }
 
-    if (myNextButton.isEnabled()) {
+    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
       getRootPane().setDefaultButton(myNextButton);
     }
 

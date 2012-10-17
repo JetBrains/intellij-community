@@ -12,7 +12,7 @@ import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 public class ConfigureServersAction extends BaseTaskAction {
 
   public ConfigureServersAction() {
-    super("Configure Servers...", null, AllIcons.General.IdeOptions);
+    super("Configure Servers...", null, AllIcons.General.Settings);
   }
 
   @Override

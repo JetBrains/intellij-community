@@ -61,7 +61,7 @@ class IfStatementPredicate implements PsiElementPredicate {
       }
       final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
-      return "java.lang.AssertionError".equals(qualifiedName);
+      return CommonClassNames.JAVA_LANG_ASSERTION_ERROR.equals(qualifiedName);
     }
     else if (element instanceof PsiBlockStatement) {
       final PsiBlockStatement blockStatement =

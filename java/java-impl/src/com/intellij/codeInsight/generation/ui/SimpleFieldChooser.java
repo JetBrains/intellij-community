@@ -41,6 +41,7 @@ public class SimpleFieldChooser extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final DefaultListModel model = new DefaultListModel ();
     for (PsiField member : myFields) {
@@ -68,6 +69,7 @@ public class SimpleFieldChooser extends DialogWrapper {
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       Icon icon = null;

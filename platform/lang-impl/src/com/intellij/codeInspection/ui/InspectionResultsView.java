@@ -788,7 +788,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private class EditSettingsAction extends AnAction {
     private EditSettingsAction() {
       super(InspectionsBundle.message("inspection.action.edit.settings"), InspectionsBundle.message("inspection.action.edit.settings"),
-            AllIcons.General.IdeOptions);
+            AllIcons.General.Settings);
     }
 
     public void actionPerformed(AnActionEvent e) {

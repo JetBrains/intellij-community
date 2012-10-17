@@ -167,12 +167,12 @@
   <actions>
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
             text="Reimport All Maven Projects"
-            icon="AllIcons.Actions.Sync">
+            icon="AllIcons.Actions.Refresh">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
             text="Reimport" description="Reimport selected Maven projects"
-            icon="AllIcons.Actions.Sync">
+            icon="AllIcons.Actions.Refresh">
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
@@ -270,7 +270,7 @@
     <action id="Maven.ShowSettings"
             class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
-            icon="AllIcons.Actions.ShowSettings">
+            icon="AllIcons.General.ProjectSettings">
     </action>
 
     <action id="Maven.ToggleOffline"

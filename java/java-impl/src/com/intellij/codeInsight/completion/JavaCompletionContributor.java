@@ -180,6 +180,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
+  @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
@@ -236,12 +237,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         !((PsiReferenceExpression)parent).isQualified() &&
         parameters.isExtendedCompletion() &&
         StringUtil.isNotEmpty(matcher.getPrefix())) {
-      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          result.addElement(element);
-        }
-      });
+      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
   }
@@ -264,13 +260,13 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       });
     } else {
-      advertiseSecondCompletion(parameters.getPosition().getProject());
+      advertiseSecondCompletion(parameters.getPosition().getProject(), result);
     }
   }
 
-  public static void advertiseSecondCompletion(Project project) {
+  public static void advertiseSecondCompletion(Project project, CompletionResultSet result) {
     if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.SECOND_BASIC_COMPLETION, project)) {
-      CompletionService.getCompletionService().setAdvertisementText("Press " + getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
+      result.addLookupAdvertisement("Press " + getActionShortcut(IdeActions.ACTION_CODE_COMPLETION) + " to see non-imported classes");
     }
   }
 
@@ -282,6 +278,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
+      @Override
       public void consume(final PsiReference reference, final CompletionResultSet result) {
         if (reference instanceof PsiJavaReference) {
           final ElementFilter filter = getReferenceFilter(position);
@@ -450,6 +447,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           if (Comparing.equal(apair.getName(), attrName)) continue methods;
         }
         result.addElement(new LookupItem<PsiMethod>(method, attrName).setInsertHandler(new InsertHandler<LookupElement>() {
+          @Override
           public void handleInsert(InsertionContext context, LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
@@ -460,6 +458,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
+  @Override
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
@@ -523,6 +522,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
+  @Override
   public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
@@ -537,7 +537,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         PsiExpression expression = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
         if (expression != null && expression.getParent() instanceof PsiExpressionList) {
           int lbraceOffset = expression.getParent().getTextRange().getStartOffset();
-          new ShowParameterInfoHandler().invoke(project, editor, file, lbraceOffset, null);
+          ShowParameterInfoHandler.invoke(project, editor, file, lbraceOffset, null);
         }
 
         if (expression instanceof PsiLiteralExpression) {
@@ -589,6 +589,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
   }
 
+  @Override
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final PsiFile file = context.getFile();
 

@@ -43,12 +43,17 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
       // Types.
       ArrangementEntryType.FIELD, ArrangementEntryType.CONSTRUCTOR, ArrangementEntryType.METHOD, ArrangementEntryType.CLASS,
       ArrangementEntryType.INTERFACE, ArrangementEntryType.ENUM,
+
+      ArrangementEntryType.STATIC_INIT, ArrangementEntryType.CONST, ArrangementEntryType.VAR,
+      ArrangementEntryType.PROPERTY, ArrangementEntryType.EVENT_HANDLER,
       
       // Visibility.
       ArrangementModifier.PUBLIC, ArrangementModifier.PROTECTED, ArrangementModifier.PACKAGE_PRIVATE, ArrangementModifier.PRIVATE,
       
       // Other common modifiers.
       ArrangementModifier.STATIC, ArrangementModifier.FINAL,
+
+      ArrangementModifier.OVERRIDE,
       
       // Semi-common modifiers.
       ArrangementModifier.ABSTRACT,
@@ -91,6 +96,8 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
                        ApplicationBundle.message("arrangement.settings.groups.overridden.methods"));
     GROUPING_TYPES.put(ArrangementGroupingType.DEPENDENT_METHODS,
                        ApplicationBundle.message("arrangement.settings.groups.dependent.methods"));
+    GROUPING_TYPES.put(ArrangementGroupingType.GROUP_PROPERTY_FIELD_WITH_GETTER_SETTER,
+                       ApplicationBundle.message("arrangement.settings.groups.property.field"));
     assert GROUPING_TYPES.size() == ArrangementGroupingType.values().length;
   }
 

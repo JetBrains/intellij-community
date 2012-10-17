@@ -59,6 +59,11 @@ public class JavaClassReferenceSet {
     return myProvider;
   }
 
+  public TextRange getRangeInElement() {
+    PsiReference[] references = getReferences();
+    return new TextRange(references[0].getRangeInElement().getStartOffset(), references[references.length - 1].getRangeInElement().getEndOffset());
+  }
+
   private void reparse(String str, PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
     myElement = element;
     myContext = context;

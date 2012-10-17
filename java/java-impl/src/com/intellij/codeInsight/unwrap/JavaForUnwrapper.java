@@ -24,6 +24,7 @@ public class JavaForUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.for"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiForStatement || e instanceof PsiForeachStatement;
   }

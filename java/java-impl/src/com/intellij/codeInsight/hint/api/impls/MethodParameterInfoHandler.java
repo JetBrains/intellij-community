@@ -46,6 +46,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
 
+  @Override
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements(item);
 
@@ -57,6 +58,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
+  @Override
   public Object[] getParametersForDocumentation(final Object p, final ParameterInfoContext context) {
     if (p instanceof MethodCandidateInfo) {
       return ((MethodCandidateInfo)p).getElement().getParameterList().getParameters();
@@ -67,10 +69,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean couldShowInLookup() {
     return true;
   }
 
+  @Override
   @Nullable
   public PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
@@ -105,14 +109,17 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return argumentList;
   }
 
+  @Override
   public void showParameterInfo(@NotNull final PsiExpressionList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset(), this);
   }
 
+  @Override
   public PsiExpressionList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
     return findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 
+  @Override
   public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
     if (context.getParameterOwner() != o) {
       context.removeHint();
@@ -220,24 +227,29 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
+  @Override
   public String getParameterCloseChars() {
     return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
   }
 
+  @Override
   public boolean tracksParameterIndex() {
     return true;
   }
 
+  @Override
   @NotNull
   public Class<PsiExpressionList> getArgumentListClass() {
     return PsiExpressionList.class;
   }
 
+  @Override
   @NotNull
   public IElementType getActualParametersRBraceType() {
     return JavaTokenType.RBRACE;
   }
 
+  @Override
   @NotNull
   public Set<Class> getArgumentListAllowedParentClasses() {
     return ourArgumentListAllowedParentClassesSet;
@@ -249,11 +261,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return ourStopSearch;
   }
 
+  @Override
   @NotNull
   public IElementType getActualParameterDelimiterType() {
     return JavaTokenType.COMMA;
   }
 
+  @Override
   @NotNull
   public PsiExpression[] getActualParameters(@NotNull PsiExpressionList psiExpressionList) {
     return psiExpressionList.getExpressions();
@@ -411,6 +425,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (lastSize != buffer.length()) buffer.append(" ");
   }
 
+  @Override
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;

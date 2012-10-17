@@ -19,6 +19,7 @@ package com.intellij.codeInsight.unwrap;
  * @author Konstantin Bulenkov
  */
 public class JavaUnwrapDescriptor extends UnwrapDescriptorBase {
+  @Override
   protected Unwrapper[] createUnwrappers() {
     return new Unwrapper[]{
       new JavaMethodParameterUnwrapper(),

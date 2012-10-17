@@ -30,6 +30,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
@@ -216,7 +217,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                 if (editor != null) {
                   final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
                   for (PsiClass psiClass : classes) {
-                    if (ModuleUtil.findModuleForPsiElement(psiClass) == classModule) {
+                    if (ModuleUtilCore.findModuleForPsiElement(psiClass) == classModule) {
                       targetClasses.add(psiClass);
                     }
                   }

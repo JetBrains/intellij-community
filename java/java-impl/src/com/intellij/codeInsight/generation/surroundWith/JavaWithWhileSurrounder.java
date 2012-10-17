@@ -26,10 +26,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.while.template");
   }
 
+  @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

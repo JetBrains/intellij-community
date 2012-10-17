@@ -31,28 +31,34 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class SubtypesMacro extends Macro {
+  @Override
   public String getName() {
     return "subtypes";
   }
 
+  @Override
   public String getPresentableName() {
     return "subtypes(TYPE)";
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "A";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     return params[0].calculateQuickResult(context);
   }
 
+  @Override
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return LookupElement.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);

@@ -90,7 +90,7 @@ public class ProcessOutput {
    * @return true iff exit code is zero
    */
   public boolean checkSuccess(@NotNull final Logger logger) {
-    if (getExitCode() != 0) {
+    if (getExitCode() != 0 || isTimeout()) {
       logger.info(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
       return false;
     }

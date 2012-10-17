@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -391,12 +392,16 @@ public class GrClassImplUtil {
 
   public static boolean isSameDeclaration(PsiElement place, PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
+
     if (!(element instanceof GrField)) return false;
     if (element instanceof GrScriptField) element = ((GrScriptField)element).getOriginalVariable();
+    if (element == null) return false;
+
     while (place != null) {
       if (place == element) return true;
       place = place.getParent();
       if (place instanceof GrClosableBlock) return false;
+      if (place instanceof GrEnumConstantInitializer) return false;
     }
     return false;
   }

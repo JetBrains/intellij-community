@@ -36,10 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
+  @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.runnable.template");
   }
 
+  @Override
   public TextRange surroundStatements(Project project, final Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = container.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

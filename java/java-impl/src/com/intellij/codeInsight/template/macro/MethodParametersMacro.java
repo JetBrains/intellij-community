@@ -27,19 +27,23 @@ import java.util.List;
 
 public class MethodParametersMacro extends Macro {
 
+  @Override
   public String getName() {
     return "methodParameters";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.method.parameters");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){

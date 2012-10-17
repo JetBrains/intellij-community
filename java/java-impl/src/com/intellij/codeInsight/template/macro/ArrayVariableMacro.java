@@ -24,14 +24,17 @@ import com.intellij.psi.*;
 import java.util.ArrayList;
 
 public class ArrayVariableMacro extends VariableTypeMacroBase {
+  @Override
   public String getName() {
     return "arrayVariable";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.array.variable");
   }
 
+  @Override
   protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 

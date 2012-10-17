@@ -68,6 +68,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("childrenEPName")
   public String childrenEPName;
 
+  /**
+   * Indicates that configurable has dynamically calculated children.
+   * {@link com.intellij.openapi.options.Configurable.Composite#getConfigurables()} will be called for such configurables.
+   */
+  @Attribute("dynamic")
+  public boolean dynamic;
+
   @Attribute("parentId")
   public String parentId;
 

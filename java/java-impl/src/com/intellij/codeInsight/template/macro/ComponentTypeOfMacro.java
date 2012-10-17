@@ -29,14 +29,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ComponentTypeOfMacro extends Macro {
+  @Override
   public String getName() {
     return "componentTypeOf";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.component.type.of.array");
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length != 1) return null;
     LookupElement[] lookupItems = params[0].calculateLookupItems(context);
@@ -56,6 +59,7 @@ public class ComponentTypeOfMacro extends Macro {
     return lookupItems;
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);

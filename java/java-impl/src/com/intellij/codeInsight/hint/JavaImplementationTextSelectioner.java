@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaImplementationTextSelectioner implements ImplementationTextSelectioner {
   private static final Logger LOG = Logger.getInstance("#" + JavaImplementationTextSelectioner.class.getName());
 
+  @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {
       PsiElement element = parent;
       if (element instanceof PsiDocCommentOwner) {
@@ -51,6 +52,7 @@ public class JavaImplementationTextSelectioner implements ImplementationTextSele
       }
     }
 
+    @Override
     public int getTextEndOffset(@NotNull PsiElement element) {
       return element.getTextRange().getEndOffset();
     }

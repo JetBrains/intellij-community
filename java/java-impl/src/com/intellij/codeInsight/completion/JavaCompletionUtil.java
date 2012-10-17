@@ -77,6 +77,7 @@ public class JavaCompletionUtil {
   public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
   public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
   static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
+    @Override
     @Nullable
     public ExpectedTypeInfo[] fun(final CompletionLocation location) {
       if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
@@ -154,14 +155,17 @@ public class JavaCompletionUtil {
 
     return (T)type.accept(new PsiTypeVisitor<PsiType>() {
 
+      @Override
       public PsiType visitArrayType(final PsiArrayType arrayType) {
         return new PsiArrayType(originalize(arrayType.getComponentType()));
       }
 
+      @Override
       public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType capturedWildcardType) {
         return PsiCapturedWildcardType.create(originalize(capturedWildcardType.getWildcard()), capturedWildcardType.getContext());
       }
 
+      @Override
       public PsiType visitClassType(final PsiClassType classType) {
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
@@ -173,18 +177,22 @@ public class JavaCompletionUtil {
         return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
       }
 
+      @Override
       public PsiType visitEllipsisType(final PsiEllipsisType ellipsisType) {
         return new PsiEllipsisType(originalize(ellipsisType.getComponentType()));
       }
 
+      @Override
       public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
         return primitiveType;
       }
 
+      @Override
       public PsiType visitType(final PsiType type) {
         return type;
       }
 
+      @Override
       public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         final PsiManager manager = wildcardType.getManager();
@@ -294,6 +302,7 @@ public class JavaCompletionUtil {
   public static PsiType getQualifiedMemberReferenceType(@Nullable PsiType qualifierType, @NotNull final PsiMember member) {
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
     class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+      @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element == member) {
           subst.set(state.get(PsiSubstitutor.KEY));
@@ -301,10 +310,12 @@ public class JavaCompletionUtil {
         return true;
       }
 
+      @Override
       public String getName(ResolveState state) {
         return member.getName();
       }
 
+      @Override
       public boolean shouldProcess(DeclarationKind kind) {
         return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
                member instanceof PsiField ? kind == DeclarationKind.FIELD :
@@ -328,6 +339,7 @@ public class JavaCompletionUtil {
                                                         final PrefixMatcher matcher, CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final Condition<String> nameCondition = new Condition<String>() {
+      @Override
       public boolean value(String s) {
         return matcher.prefixMatches(s);
       }
@@ -444,6 +456,7 @@ public class JavaCompletionUtil {
     }
 
     return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
+      @Override
       public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
         final Document document = context.getEditor().getDocument();
         context.commitDocument();

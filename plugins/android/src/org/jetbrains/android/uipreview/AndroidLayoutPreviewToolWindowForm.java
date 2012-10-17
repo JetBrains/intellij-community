@@ -27,6 +27,7 @@ import com.android.resources.ScreenSize;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -1320,7 +1321,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   private class MyRefreshAction extends AnAction {
     MyRefreshAction() {
-      super(AndroidBundle.message("android.layout.preview.refresh.action.text"), null, AndroidIcons.RefreshPreview);
+      super(AndroidBundle.message("android.layout.preview.refresh.action.text"), null, AllIcons.Actions.Refresh);
     }
 
     @Override

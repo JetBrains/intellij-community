@@ -22,7 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -31,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "SelectProjectTemplateSettings", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
 public class SelectTemplateSettings implements PersistentStateComponent<SelectTemplateSettings> {
 
-  static SelectTemplateSettings getInstance() {
+  private static final String STATE_ELEMENT_NAME = "treeState";
+
+  public static SelectTemplateSettings getInstance() {
     return ServiceManager.getService(SelectTemplateSettings.class);
   }
 
@@ -45,11 +47,11 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
     myTreeState = state;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public SelectTemplateSettings getState() {
     try {
-      myTreeState.writeExternal(treeState);
+      myTreeState.writeExternal(myElement = new Element(STATE_ELEMENT_NAME));
     }
     catch (WriteExternalException ignore) {
     }
@@ -59,14 +61,14 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
   @Override
   public void loadState(SelectTemplateSettings state) {
     try {
-      myTreeState.readExternal(state.treeState);
+      myTreeState.readExternal(state.myElement);
     }
     catch (InvalidDataException ignore) {
     }
   }
 
   @Tag("treeState")
-  public Element treeState = new Element("treeState");
+  public Element myElement = new Element(STATE_ELEMENT_NAME);
 
   private TreeState myTreeState = new TreeState();
 }

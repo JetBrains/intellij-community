@@ -306,7 +306,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         result.add(file);
       }
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   private void annotateExternally(@NotNull final VirtualFile root,

@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.options;
 
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,7 +54,10 @@ public class ProcessorProfilePanel extends JPanel {
   private JRadioButton myRbClasspath;
   private JRadioButton myRbProcessorsPath;
   private TextFieldWithBrowseButton myProcessorPathField;
-  private JTextField myGeneratedSourcesDirNameField;
+  private JTextField myGeneratedProductionDirField;
+  private JTextField myGeneratedTestsDirField;
+  private JRadioButton myRbRelativeToOutputRoot;
+  private JRadioButton myRbRelativeToContentRoot;
   private ProcessorTableModel myProcessorsModel;
   private JCheckBox myCbEnableProcessing;
   private JBTable myProcessorTable;
@@ -62,6 +65,12 @@ public class ProcessorProfilePanel extends JPanel {
   private JPanel myProcessorPanel;
   private JPanel myOptionsPanel;
   private OptionsTableModel myOptionsModel;
+  private JLabel myWarninglabel;
+  private JLabel myStoreGenSourcesLabel;
+  private JLabel myProductionLabel;
+  private JLabel myTestLabel;
+  private JPanel myProcessorTablePanel;
+  private JPanel myOptionsTablePanel;
 
 
   public ProcessorProfilePanel(Project project) {
@@ -70,11 +79,21 @@ public class ProcessorProfilePanel extends JPanel {
 
     myCbEnableProcessing = new JCheckBox("Enable annotation processing");
 
-    myRbClasspath = new JRadioButton("Obtain processors from project classpath");
-    myRbProcessorsPath = new JRadioButton("Processor path:");
-    ButtonGroup group = new ButtonGroup();
-    group.add(myRbClasspath);
-    group.add(myRbProcessorsPath);
+    {
+      myRbClasspath = new JRadioButton("Obtain processors from project classpath");
+      myRbProcessorsPath = new JRadioButton("Processor path:");
+      ButtonGroup group = new ButtonGroup();
+      group.add(myRbClasspath);
+      group.add(myRbProcessorsPath);
+    }
+
+    {
+      myRbRelativeToContentRoot = new JRadioButton("Module content root");
+      myRbRelativeToOutputRoot = new JRadioButton("Module output directory");
+      final ButtonGroup group = new ButtonGroup();
+      group.add(myRbRelativeToContentRoot);
+      group.add(myRbRelativeToOutputRoot);
+    }
 
     myProcessorPathField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -93,57 +112,66 @@ public class ProcessorProfilePanel extends JPanel {
       }
     });
 
-    final JPanel processorTablePanel = new JPanel(new BorderLayout());
+    myProcessorTablePanel = new JPanel(new BorderLayout());
     myProcessorsModel = new ProcessorTableModel();
-    processorTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processors", false));
+    myProcessorTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processors", false));
     myProcessorTable = new JBTable(myProcessorsModel);
     myProcessorTable.getEmptyText().setText("Compiler will run all automatically discovered processors");
     myProcessorPanel = createTablePanel(myProcessorTable);
-    processorTablePanel.add(myProcessorPanel, BorderLayout.CENTER);
+    myProcessorTablePanel.add(myProcessorPanel, BorderLayout.CENTER);
 
-    final JPanel optionsTablePanel = new JPanel(new BorderLayout());
+    myOptionsTablePanel = new JPanel(new BorderLayout());
     myOptionsModel = new OptionsTableModel();
-    optionsTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processor options", false));
+    myOptionsTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation Processor options", false));
     myOptionsTable = new JBTable(myOptionsModel);
     myOptionsTable.getEmptyText().setText("No processor-specific options configured");
     myOptionsPanel = createTablePanel(myOptionsTable);
-    optionsTablePanel.add(myOptionsPanel, BorderLayout.CENTER);
+    myOptionsTablePanel.add(myOptionsPanel, BorderLayout.CENTER);
 
-    myGeneratedSourcesDirNameField = new JTextField();
+    myGeneratedProductionDirField = new JTextField();
+    myGeneratedTestsDirField = new JTextField();
 
-
-    final JLabel warning = new JLabel("<html>WARNING!<br>" +
+    myWarninglabel = new JLabel("<html>WARNING!<br>" +
                                               /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
                                               "If option 'Clear output directory on rebuild' is enabled, " +
                                               "the entire contents of directories where generated sources are stored WILL BE CLEARED on rebuild.</html>");
-    warning.setFont(warning.getFont().deriveFont(Font.BOLD));
+    myWarninglabel.setFont(myWarninglabel.getFont().deriveFont(Font.BOLD));
 
     add(myCbEnableProcessing,
-        new GridBagConstraints(0, 0, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(myRbClasspath,
-        new GridBagConstraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
     add(myRbProcessorsPath,
-        new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     add(myProcessorPathField,
-        new GridBagConstraints(1, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0));
+        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0));
 
-    final JLabel noteMessage = new JLabel("<html>Source files generated by annotation processors will be stored under the project output directory. " +
-                                                  "To override this behaviour for this profile you may specify the directory name in the field below. " +
-                                                  "If specified, the directory will be created under corresponding module's content root.</html>");
-    add(noteMessage,
-        new GridBagConstraints(0, 3, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    myStoreGenSourcesLabel = new JLabel("Store generated sources relative to: ");
+    add(myStoreGenSourcesLabel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(15, 5, 0, 0), 0, 0));
+    add(myRbRelativeToOutputRoot,
+        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(15, 5, 0, 0), 0, 0));
+    add(myRbRelativeToContentRoot,
+        new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(15, 5, 0, 0), 0, 0));
 
-    add(new JLabel("Directory name:"),
-        new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
-    add(myGeneratedSourcesDirNameField,
-        new GridBagConstraints(1, 4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    myProductionLabel = new JLabel("Production sources directory:");
+    add(myProductionLabel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    add(myGeneratedProductionDirField,
+        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
 
-    add(processorTablePanel,
-        new GridBagConstraints(0, 5, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
-    add(optionsTablePanel,
-        new GridBagConstraints(0, 6, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
-    add(warning,
-        new GridBagConstraints(0, 7, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    myTestLabel = new JLabel("Test sources directory:");
+    add(myTestLabel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+    add(myGeneratedTestsDirField,
+        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
+
+    add(myProcessorTablePanel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
+    add(myOptionsTablePanel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0));
+    add(myWarninglabel,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 0), 0, 0));
 
     myRbClasspath.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
@@ -175,8 +203,16 @@ public class ProcessorProfilePanel extends JPanel {
     (config.isObtainProcessorsFromClasspath()? myRbClasspath : myRbProcessorsPath).setSelected(true);
     myProcessorPathField.setText(FileUtil.toSystemDependentName(config.getProcessorPath()));
 
-    final String srcDirName = config.getGeneratedSourcesDirectoryName();
-    myGeneratedSourcesDirNameField.setText(srcDirName != null? srcDirName.trim() : "");
+    final String productionDirName = config.getGeneratedSourcesDirectoryName(false);
+    myGeneratedProductionDirField.setText(productionDirName != null? productionDirName.trim() : "");
+    final String testsDirName = config.getGeneratedSourcesDirectoryName(true);
+    myGeneratedTestsDirField.setText(testsDirName != null? testsDirName.trim() : "");
+    if (config.isOutputRelativeToContentRoot()) {
+      myRbRelativeToContentRoot.setSelected(true);
+    }
+    else {
+      myRbRelativeToOutputRoot.setSelected(true);
+    }
     myProcessorsModel.setProcessors(config.getProcessors());
     myOptionsModel.setOptions(config.getProcessorOptions());
 
@@ -187,9 +223,13 @@ public class ProcessorProfilePanel extends JPanel {
     profile.setEnabled(myCbEnableProcessing.isSelected());
     profile.setObtainProcessorsFromClasspath(myRbClasspath.isSelected());
     profile.setProcessorPath(myProcessorPathField.getText().trim());
-    final String dirName = myGeneratedSourcesDirNameField.getText().trim();
 
-    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(dirName)? null : dirName);
+    final String productionDir = myGeneratedProductionDirField.getText().trim();
+    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(productionDir)? null : productionDir, false);
+    final String testsDir = myGeneratedTestsDirField.getText().trim();
+    profile.setGeneratedSourcesDirectoryName(StringUtil.isEmpty(testsDir)? null : testsDir, true);
+
+    profile.setOutputRelativeToContentRoot(myRbRelativeToContentRoot.isSelected());
 
     profile.clearProcessors();
     for (String processor : myProcessorsModel.getProcessors()) {
@@ -228,7 +268,16 @@ public class ProcessorProfilePanel extends JPanel {
     myProcessorPathField.setEnabled(enabled && useProcessorpath);
     updateTable(myProcessorPanel, myProcessorTable, enabled);
     updateTable(myOptionsPanel, myOptionsTable, enabled);
-    myGeneratedSourcesDirNameField.setEnabled(enabled);
+    myGeneratedProductionDirField.setEnabled(enabled);
+    myGeneratedTestsDirField.setEnabled(enabled);
+    myRbRelativeToOutputRoot.setEnabled(enabled);
+    myRbRelativeToContentRoot.setEnabled(enabled);
+    myWarninglabel.setEnabled(enabled);
+    myStoreGenSourcesLabel.setEnabled(enabled);
+    myProductionLabel.setEnabled(enabled);
+    myTestLabel.setEnabled(enabled);
+    myProcessorTablePanel.setEnabled(enabled);
+    myOptionsTablePanel.setEnabled(enabled);
   }
 
   private static void updateTable(final JPanel tablePanel, final JBTable table, boolean enabled) {

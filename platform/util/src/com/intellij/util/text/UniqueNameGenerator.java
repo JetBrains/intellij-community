@@ -31,7 +31,7 @@ public class UniqueNameGenerator implements Condition<String> {
 
   public UniqueNameGenerator(final Collection elements, @Nullable Function<Object, String> namer) {
     for (final Object t : elements) {
-      myExistingNames.add(namer != null ? namer.fun(t) : t.toString());
+      addExistingName(namer != null ? namer.fun(t) : t.toString());
     }
   }
 
@@ -87,8 +87,12 @@ public class UniqueNameGenerator implements Condition<String> {
 
   public String generateUniqueName(final String defaultName, final String prefix, final String suffix, final String beforeNumber, final String afterNumber) {
     final String result = generateUniqueName(defaultName, prefix, suffix, beforeNumber, afterNumber, this);
-    myExistingNames.add(result);
+    addExistingName(result);
     return result;
+  }
+
+  public void addExistingName(String result) {
+    myExistingNames.add(result);
   }
 
   public String generateUniqueName(final String defaultName) {

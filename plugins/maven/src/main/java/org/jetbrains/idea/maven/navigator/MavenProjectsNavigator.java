@@ -61,7 +61,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
-  private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
+  private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/refresh.png");
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
@@ -267,6 +267,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
         }
       }
     };
+    myTree.getEmptyText().clear();
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
   }

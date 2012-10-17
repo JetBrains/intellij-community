@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
@@ -172,7 +173,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       psiClass.getProject(), getTitle(psiClass),
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(psiClass)){
+      CreateClassKind.CLASS, true, ModuleUtilCore.findModuleForPsiElement(psiClass)){
       @Override
       protected PsiDirectory getBaseDir(String packageName) {
         return sourceDir;

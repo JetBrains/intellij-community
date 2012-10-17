@@ -69,6 +69,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
                                    CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
                                    Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+            @Override
             public Boolean compute() {
               try {
                 equalsMethod.delete();
@@ -110,6 +111,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
+  @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     Project project = aClass.getProject();
@@ -120,14 +122,17 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
   }
 
+  @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     return null;
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     return null;
   }
 
+  @Override
   protected void cleanup() {
     super.cleanup();
     myEqualsFields = null;

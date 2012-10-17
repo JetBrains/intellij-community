@@ -6,7 +6,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -14,6 +13,7 @@ import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;
@@ -50,7 +50,7 @@ public class CompilerEncodingConfiguration {
       File file = JpsPathUtil.urlToFile(fileUrl);
       if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builders, file))) continue;
 
-      final JavaSourceRootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
+      final JavaSourceRootDescriptor rootDescriptor = myRootsIndex.findJavaRootDescriptor(null, file);
       if (rootDescriptor == null) continue;
 
       final JpsModule module = rootDescriptor.target.getModule();

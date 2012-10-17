@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.converters.PathReferenceConverter;
@@ -78,10 +79,13 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                                                Collection<ResolveResult> result,
                                                boolean caseSensitive) {
             if (model == null) {
-              model = (MavenDomProjectModel)DomUtil.getFileElement(genericDomValue).getRootElement();
+              DomElement rootElement = DomUtil.getFileElement(genericDomValue).getRootElement();
+              if (rootElement instanceof MavenDomProjectModel) {
+                model = (MavenDomProjectModel)rootElement;
+              }
             }
 
-            String resolvedText = MavenPropertyResolver.resolve(text, model);
+            String resolvedText = model == null ? text : MavenPropertyResolver.resolve(text, model);
 
             if (resolvedText.equals(text)) {
               super.innerResolveInContext(resolvedText, context, result, caseSensitive);

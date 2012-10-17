@@ -811,6 +811,7 @@ public class LambdaUtil {
   @Nullable
   private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
     final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
+    if (methodParameters.length == 0) return null;
     final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
     final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
     return getFunctionalInterfaceReturnType(functionalInterfaceType);

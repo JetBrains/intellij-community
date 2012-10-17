@@ -31,25 +31,30 @@ import java.util.LinkedList;
 
 public class SuggestVariableNameMacro extends Macro {
 
+  @Override
   public String getName() {
     return "suggestVariableName";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.variable.name");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;

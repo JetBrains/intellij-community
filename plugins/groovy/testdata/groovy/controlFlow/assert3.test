@@ -1,0 +1,9 @@
+assert false
+print 2
+-----
+0(1) element: null
+1(2,3) element: ASSERT statement
+2(5) THROW. element: ASSERT statement
+3(4) READ print
+4(5) element: Call expression MAYBE_RETURN
+5() element: null

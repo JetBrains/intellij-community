@@ -113,7 +113,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       }
     });
 
-    showProgress("Load configuration");
+    showProgress("Loading configuration...");
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
@@ -253,7 +253,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @Override
       public void run() {
         if (mySession == null) {
-          showProgress("Create RenderLib");
+          showProgress("Creating RenderLib...");
         }
       }
     }, 500);

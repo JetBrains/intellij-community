@@ -24,6 +24,7 @@ public class SmartCompletionTemplateItem extends LookupItem<Template> implements
   }
 
 
+  @Override
   public PsiType getType() {
     final Template template = getObject();
     String text = template.getTemplateText();

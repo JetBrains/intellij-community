@@ -6,5 +6,6 @@
   </extensions>
   <extensions xmlns="com.intellij">
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyInjector"/>
+    <consoleFilterProvider implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyConsoleFilterProvider"/>
   </extensions>
 </idea-plugin>

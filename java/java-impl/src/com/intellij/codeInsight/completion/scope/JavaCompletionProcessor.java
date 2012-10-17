@@ -180,6 +180,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return fields;
   }
 
+  @Override
   public void handleEvent(Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStatic = true;
@@ -192,6 +193,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
     //noinspection SuspiciousMethodCalls
     if (myNonInitializedFields.contains(element)) {
@@ -281,6 +283,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     myResults.clear();
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     switch (kind) {
       case CLASS:

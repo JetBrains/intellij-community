@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHandler {
+  @Override
   public boolean isValidFor(final Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return false;
@@ -37,6 +38,7 @@ public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHan
     return aClass != null && !OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
     if (aClass == null) {
@@ -49,6 +51,7 @@ public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHan
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

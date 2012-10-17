@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -61,12 +62,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -564,5 +567,36 @@ public class GroovyCompletionUtil {
     }
 
     return Collections.emptyList();
+  }
+
+  static boolean isNewStatementInScript(PsiElement context) {
+    final PsiElement leaf = getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null && isNewStatement(context, false)) {
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isReferenceElementInNewExpr(PsiElement context) {
+    if (context.getParent() instanceof GrCodeReferenceElement) {
+      PsiElement pparent = context.getParent().getParent();
+      if (pparent instanceof GrNewExpression) return true;
+    }
+
+    return false;
+  }
+
+  static boolean isCodeReferenceElementApplicableToModifierCompletion(PsiElement context) {
+    return context.getParent() instanceof GrCodeReferenceElement &&
+           !(context.getParent().getParent() instanceof GrImportStatement) &&
+           !(context.getParent().getParent() instanceof GrPackageDefinition) &&
+           !(context.getParent().getParent() instanceof GrNewExpression);
+  }
+
+  static boolean isTypelessParameter(PsiElement context) {
+    return (context.getParent() instanceof GrParameter && ((GrParameter)context.getParent()).getTypeElementGroovy() == null);
   }
 }

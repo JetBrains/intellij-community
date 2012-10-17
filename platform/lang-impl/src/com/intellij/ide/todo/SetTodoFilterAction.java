@@ -79,7 +79,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     group.addSeparator();
     group.add(
       new AnAction(IdeBundle.message("action.todo.edit.filters"),
-                   IdeBundle.message("action.todo.edit.filters"), AllIcons.General.IdeOptions) {
+                   IdeBundle.message("action.todo.edit.filters"), AllIcons.General.Settings) {
         public void actionPerformed(AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           util.editConfigurable(project, new TodoConfigurable());

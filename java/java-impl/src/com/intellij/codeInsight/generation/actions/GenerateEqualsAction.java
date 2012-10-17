@@ -29,6 +29,7 @@ public class GenerateEqualsAction extends BaseGenerateAction {
     super(new GenerateEqualsHandler());
   }
 
+  @Override
   protected PsiClass getTargetClass(Editor editor, PsiFile file) {
     final PsiClass targetClass = super.getTargetClass(editor, file);
     if (targetClass == null || targetClass instanceof PsiAnonymousClass ||

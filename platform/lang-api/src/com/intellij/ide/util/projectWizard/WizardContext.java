@@ -59,7 +59,7 @@ public class WizardContext {
     void nextStepRequested();
   }
 
-  public WizardContext(Project project) {
+  public WizardContext(@Nullable Project project) {
     myProject = project;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
@@ -171,5 +171,17 @@ public class WizardContext {
 
   public StorageScheme getProjectStorageFormat() {
     return myProjectStorageFormat;
+  }
+
+  private boolean myTemplateMode;
+
+  /** This will be removed shortly */
+  @Deprecated
+  public boolean isTemplateMode() {
+    return myTemplateMode;
+  }
+
+  public void setTemplateMode(boolean templateMode) {
+    myTemplateMode = templateMode;
   }
 }

@@ -115,6 +115,7 @@ public class AllClassesGetter {
       }
     }
 
+    @Override
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       _handleInsert(context, item);
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
@@ -151,6 +152,7 @@ public class AllClassesGetter {
       final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
       final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
 
+      @Override
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
         if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
@@ -170,11 +172,13 @@ public class AllClassesGetter {
                                         GlobalSearchScope scope,
                                         Processor<PsiClass> processor) {
     AllClassesSearch.search(scope, project, new Condition<String>() {
+      @Override
       public boolean value(String s) {
         return prefixMatcher.isStartMatch(s);
       }
     }).forEach(processor);
     AllClassesSearch.search(scope, project, new Condition<String>() {
+      @Override
       public boolean value(String s) {
         return prefixMatcher.prefixMatches(s);
       }

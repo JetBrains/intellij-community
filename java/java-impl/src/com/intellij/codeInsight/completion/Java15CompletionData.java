@@ -26,6 +26,7 @@ import com.intellij.psi.filters.position.SuperParentFilter;
  */
 public class Java15CompletionData extends JavaCompletionData {
 
+  @Override
   protected void initVariantsInFileScope() {
     super.initVariantsInFileScope();
     //static keyword in static import
@@ -52,6 +53,7 @@ public class Java15CompletionData extends JavaCompletionData {
     }
   }
 
+  @Override
   protected void initVariantsInClassScope() {
     super.initVariantsInClassScope();
     {

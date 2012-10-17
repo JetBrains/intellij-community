@@ -906,7 +906,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String getDependencyFolder(@NotNull CompileContext context, @NotNull File sourceFile, @NotNull File genFolder) {
-    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, sourceFile);
+    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
+                                                                                                                          sourceFile);
     if (descriptor == null) {
       return null;
     }
@@ -976,7 +977,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String computePackageForFile(@NotNull CompileContext context, @NotNull File file) throws IOException {
-    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+    final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (descriptor == null) {
       return null;
     }

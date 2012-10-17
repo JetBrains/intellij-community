@@ -35,7 +35,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected void setUp() {
     super.setUp()
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(testRootDisposable);
   }
 
   @Override
@@ -135,27 +135,27 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
 
   public void testFieldSuggestedOnce1() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
-    assertNull(myFixture.getLookupElements());
+    assertNull(myFixture.lookupElements);
   }
 
   public void testFieldSuggestedOnce2() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
-    assertNull(myFixture.getLookupElements());
+    assertNull(myFixture.lookupElements);
   }
 
   public void testFieldSuggestedOnce3() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
-    assertNull(myFixture.getLookupElements());
+    assertNull(myFixture.lookupElements);
   }
 
   public void testFieldSuggestedOnce4() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
-    assertNull(myFixture.getLookupElements());
+    assertNull(myFixture.lookupElements);
   }
 
   public void testFieldSuggestedOnce5() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
-    assertNull(myFixture.getLookupElements());
+    assertNull(myFixture.lookupElements);
   }
 
   public void testFieldSuggestedInMethodCall() {
@@ -300,7 +300,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testCompletionNamedArgumentWithoutSpace() {
-    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(GroovyCodeStyleSettings.class)
+    def settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class)
     settings.SPACE_IN_NAMED_ARGUMENT = false
 
     try {
@@ -937,12 +937,12 @@ class Fopppp {
 
   public void testExcludeStringBuffer() {
     assert doContainsTest('StringBuffer', 'StringBuff<caret>f')
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
+    CodeInsightSettings.instance.EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
     try {
       assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
     }
     finally {
-      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+      CodeInsightSettings.instance.EXCLUDED_PACKAGES = new String[0]
     }
   }
 
@@ -984,6 +984,8 @@ println "abcd"
 
   public void testIfParenthesis() { checkCompletion 'int iff; if<caret>', '(', "int iff; if (<caret>)" }
 
+  public void testMakingDefFromAssignment() { checkCompletion 'int defInt; de<caret>foo = 2', 'f ', "int defInt; def <caret>foo = 2" }
+
   public void testEnumPropertyType() {
     checkSingleItemCompletion 'enum Foo {a,b; static List<StringBui<caret>>', "enum Foo {a,b; static List<StringBuilder<caret>>"
   }
@@ -1018,10 +1020,6 @@ while(true) {
     myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
     myFixture.completeBasic()
     assertEquals 'stryng', myFixture.lookupElementStrings[0]
-  }
-
-  private def caseSensitiveNone() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
   }
 
   public void testFieldVsPackage() {
@@ -1338,7 +1336,7 @@ def map = [1:2]
 print map.metc<caret>
 ''');
     myFixture.complete(CompletionType.BASIC);
-    assertEmpty myFixture.getLookupElements()
+    assertEmpty myFixture.lookupElements
   }
 
   void testAnnotationCompletion0() {
@@ -1569,5 +1567,9 @@ setBarrr(<caret>)
 
   void testParenthesesAfterDot() {
     myFixture.testCompletionTyping(getTestName(false) + '.groovy', '\t', getTestName(false) + '_after.groovy')
+  }
+
+  void testNewExprDoesntCompleteDef() {
+    doNoVariantsTest('def a = \new <caret>', 'def', 'final')
   }
 }

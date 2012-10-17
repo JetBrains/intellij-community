@@ -120,6 +120,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void testSpockTable() throws Throwable { doTest(); }
   public void testSpockTableComments() throws Throwable { doTest(); }
+  public void testSpockTableWithStringComment() throws Throwable { doTest(); }
 
   public void testElseIfs() throws Throwable {
     getGroovySettings().SPECIAL_ELSE_IF_TREATMENT = false;

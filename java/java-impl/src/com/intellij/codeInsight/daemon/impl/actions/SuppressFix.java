@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.Messages;
@@ -209,7 +210,7 @@ public class SuppressFix extends SuppressIntentionAction {
   @Nullable
   static String getID(PsiElement place, String alternativeID) {
     if (alternativeID != null) {
-      final Module module = ModuleUtil.findModuleForPsiElement(place);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(place);
       if (module != null) {
         if (!ClasspathStorage.getStorageType(module).equals(ClasspathStorage.DEFAULT_STORAGE)) {
           return alternativeID;

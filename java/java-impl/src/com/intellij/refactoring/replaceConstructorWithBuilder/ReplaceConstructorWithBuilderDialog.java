@@ -25,6 +25,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -109,13 +110,10 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
 
 
-  @Override
-  protected JComponent createNorthPanel() {
-    return createTablePanel();
-  }
-
   protected JComponent createCenterPanel() {
-
+    final Splitter splitter = new Splitter(true);
+    splitter.setFirstComponent(createTablePanel());
+    splitter.setSecondComponent(myWholePanel);
     final ActionListener enableDisableListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         setEnabled(myCreateBuilderClassRadioButton.isSelected());
@@ -140,7 +138,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     LOG.assertTrue(psiClass != null);
     myNewClassName.setText(psiClass.getName() + "Builder");
 
-    return myWholePanel;
+    return splitter;
   }
 
   private void setEnabled(final boolean createNew) {

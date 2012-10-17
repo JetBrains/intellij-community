@@ -28,6 +28,7 @@ public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
     super(description);
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return (PsiUtil.isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }

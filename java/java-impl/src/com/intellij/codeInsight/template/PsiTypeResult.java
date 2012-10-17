@@ -40,6 +40,7 @@ public class PsiTypeResult implements RecalculatableResult {
     return myTypePointer.getType();
   }
 
+  @Override
   public boolean equalsToText(String text, PsiElement context) {
     if (text.length() == 0) return false;
     final PsiType type = getType();
@@ -59,10 +60,12 @@ public class PsiTypeResult implements RecalculatableResult {
     return getType().getPresentableText();
   }
 
+  @Override
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
     JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd);
   }
 
+  @Override
   public void handleRecalc(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
     JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd);
   }

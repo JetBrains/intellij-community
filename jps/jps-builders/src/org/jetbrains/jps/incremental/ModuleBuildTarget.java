@@ -93,19 +93,16 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
 
   @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                               ModuleExcludeIndex index,
-                                                               IgnoredFileIndex ignoredFileIndex,
-                                                               BuildDataPaths dataPaths) {
+  public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 
-    roots:
+    roots_loop:
     for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
       for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
         if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
-          continue roots;
+          continue roots_loop;
         }
       }
       String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();

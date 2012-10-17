@@ -69,18 +69,19 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
                                         QuickActionProvider, DockContainer.Dialog {
+  public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
 
-  @NonNls public static final String LAYOUT = "Runner.Layout";
-  @NonNls public static final String SETTINGS = "XDebugger.Settings";
-  @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
-  @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
+  @NonNls private static final String LAYOUT = "Runner.Layout";
+  @NonNls private static final String SETTINGS = "XDebugger.Settings";
+  @NonNls private static final String VIEW_POPUP = "Runner.View.Popup";
+  @NonNls static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
-  ContentManager myManager;
-  RunnerLayout myLayoutSettings;
+  private ContentManager myManager;
+  private final RunnerLayout myLayoutSettings;
 
-  ActionManager myActionManager;
-  String mySessionName;
-  MyComponent myComponent = new MyComponent();
+  private final ActionManager myActionManager;
+  private final String mySessionName;
+  private final MyComponent myComponent = new MyComponent();
 
   private final Wrapper myToolbar = new Wrapper();
   final MyDragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
@@ -96,20 +97,19 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       return index1 - index2;
     }
   };
-  Project myProject;
+  private final Project myProject;
 
-  ActionGroup myTopActions = new DefaultActionGroup();
+  private ActionGroup myTopActions = new DefaultActionGroup();
 
-  DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
+  private final DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
-  Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<GridImpl, Wrapper>();
-  Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<GridImpl, Wrapper>();
-  Map<GridImpl, AnAction[]> myContextActions = new HashMap<GridImpl, AnAction[]>();
+  private final Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<GridImpl, Wrapper>();
+  private final Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<GridImpl, Wrapper>();
+  private final Map<GridImpl, AnAction[]> myContextActions = new HashMap<GridImpl, AnAction[]>();
 
-  boolean myUiLastStateWasRestored;
+  private boolean myUiLastStateWasRestored;
 
   private final Set<Object> myRestoreStateRequestors = new HashSet<Object>();
-  public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   private String myActionsPlace = ActionPlaces.UNKNOWN;
   private final IdeFocusManager myFocusManager;
 
@@ -132,8 +132,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
   private RunnerContentUi myOriginal;
-  private CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
-  private Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
+  private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
+  private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
     @Override
     public int compare(RunnerContentUi o1, RunnerContentUi o2) {
       return o1.myWindow - o2.myWindow;
@@ -142,12 +142,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private int myWindow;
   private boolean myDisposing;
 
-  public RunnerContentUi(Project project,
-                         RunnerLayoutUi ui,
-                         ActionManager actionManager,
-                         IdeFocusManager focusManager,
-                         RunnerLayout settings,
-                         String sessionName) {
+  public RunnerContentUi(@NotNull Project project,
+                         @NotNull RunnerLayoutUi ui,
+                         @NotNull ActionManager actionManager,
+                         @NotNull IdeFocusManager focusManager,
+                         @NotNull RunnerLayout settings,
+                         @NotNull String sessionName) {
     myProject = project;
     myRunnerUi = ui;
     myLayoutSettings = settings;
@@ -156,7 +156,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myFocusManager = focusManager;
   }
 
-  public RunnerContentUi(RunnerContentUi ui, RunnerContentUi original, int window) {
+  public RunnerContentUi(@NotNull RunnerContentUi ui, @NotNull RunnerContentUi original, int window) {
     this(ui.myProject, ui.myRunnerUi, ui.myActionManager, ui.myFocusManager, ui.myLayoutSettings, ui.mySessionName);
     myOriginal = original;
     original.myChildren.add(this);
@@ -1282,7 +1282,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     processAttraction(content.getUserData(ViewImpl.ID), myAttractions, new LayoutAttractionPolicy.Bounce(), afterInitialized, true);
   }
 
-  public void attractByCondition(String condition, boolean afterInitialized) {
+  public void attractByCondition(@NotNull String condition, boolean afterInitialized) {
     processAttraction(myLayoutSettings.getToFocus(condition), myConditionAttractions, myLayoutSettings.getAttractionPolicy(condition),
                       afterInitialized, true);
   }
@@ -1639,8 +1639,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   class DockableGrid implements DockableContent<List<Content>> {
-    final Image myImg;
-    private Presentation myPresentation;
+    private final Image myImg;
+    private final Presentation myPresentation;
     private final Dimension myPreferredSize;
     private final List<Content> myContents;
     private final int myWindow;
@@ -1653,6 +1653,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       myWindow = window;
     }
 
+    @NotNull
     @Override
     public List<Content> getKey() {
       return myContents;
@@ -1686,6 +1687,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       return myOriginal != null ? myOriginal : RunnerContentUi.this;
     }
 
+    @NotNull
     public List<Content> getContents() {
       return myContents;
     }

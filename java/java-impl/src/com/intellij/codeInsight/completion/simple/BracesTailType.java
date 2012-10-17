@@ -32,6 +32,7 @@ public abstract class BracesTailType extends TailType {
 
   protected abstract boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
+  @Override
   public int processTail(final Editor editor, int tailOffset) {
     final CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
     if (isSpaceBeforeLBrace(styleSettings, editor, tailOffset)) {

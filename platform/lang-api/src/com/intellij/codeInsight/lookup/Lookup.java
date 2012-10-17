@@ -69,4 +69,6 @@ public interface Lookup {
   PrefixMatcher itemMatcher(@NotNull LookupElement item);
 
   boolean isSelectionTouched();
+
+  List<String> getAdvertisements();
 }

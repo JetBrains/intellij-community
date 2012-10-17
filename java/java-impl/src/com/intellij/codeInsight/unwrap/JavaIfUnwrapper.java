@@ -27,6 +27,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.if"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiIfStatement && !PsiUtil.isElseBlock(e);
   }

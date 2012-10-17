@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -55,7 +57,9 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return OverrideImplementUtil.getContextClass(editor.getProject(), editor, file, false) != null && isApplicable(file, editor);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
@@ -69,6 +73,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           int offset = editor.getCaretModel().getOffset();
@@ -98,6 +103,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -271,7 +277,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       }
       chooser.show();
 
-      if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return null;
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
       myToCopyJavaDoc = chooser.isCopyJavadoc();
       final List<PsiElementClassMember> list = chooser.getSelectedElements();
@@ -303,7 +309,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 
-      if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return null;
+      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
       final List<PsiElementClassMember> selectedElements = chooser.getSelectedElements();
 

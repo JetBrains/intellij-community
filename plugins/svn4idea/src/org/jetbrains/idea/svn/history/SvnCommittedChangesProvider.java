@@ -100,6 +100,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     });
   }
 
+  @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }

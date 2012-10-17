@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -62,7 +63,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   @Nullable
-  public MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
+  public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     GrExpression expr = (GrExpression)reference.getElement();
     if (expr.getParent() instanceof GrAssignmentExpression) {
@@ -86,7 +87,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     return conflicts;
   }
 
-  public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
+  public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }
 

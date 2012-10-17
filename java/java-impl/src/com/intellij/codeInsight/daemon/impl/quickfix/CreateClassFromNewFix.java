@@ -171,7 +171,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
     if (element.getParent() instanceof PsiReferenceExpression) return;
 
-    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(element.getProject()).getExpectedTypes(element, false);
+    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(element, false);
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();

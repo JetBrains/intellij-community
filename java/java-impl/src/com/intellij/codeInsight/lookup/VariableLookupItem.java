@@ -30,6 +30,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
   }
 
+  @Override
   public PsiType getType() {
     return getSubstitutor().substitute(getObject().getType());
   }

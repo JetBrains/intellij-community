@@ -54,7 +54,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
@@ -371,9 +370,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
-      // real middle matching variants are added only with prefix of length >=2
-      addWatchedPrefix(myParameters.getOffset() - item.getPrefixMatcher().getPrefix().length(), StandardPatterns.string().withLength(2));
-
       new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this).addRequest(new Runnable() {
         @Override
         public void run() {

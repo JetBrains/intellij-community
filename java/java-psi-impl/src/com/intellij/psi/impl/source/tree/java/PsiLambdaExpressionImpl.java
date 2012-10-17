@@ -77,6 +77,10 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
         @Override
         public void visitClass(PsiClass aClass) {
         }
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
+        }
       });
     }
     return result;

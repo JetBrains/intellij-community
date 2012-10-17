@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.completion;
+package org.jetbrains.plugins.groovy.completion
 
-
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.groovy.GroovyFileType
 /**
  * @author Maxim.Medvedev
  */
@@ -94,6 +95,19 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.configureByText("a.groovy", before);
     assert !myFixture.completeBasic();
     myFixture.checkResult(after);
+  }
+
+  public void doNoVariantsTest(String before, String... excludedVariants) {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
+    myFixture.completeBasic()
+    final excluded = ContainerUtil.newHashSet(excludedVariants)
+    for (String lookup : myFixture.lookupElementStrings) {
+      assertFalse(lookup, excluded.contains(lookup))
+    }
+  }
+
+  protected static def caseSensitiveNone() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
   }
 
 }

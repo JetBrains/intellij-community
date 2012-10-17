@@ -1663,7 +1663,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private class RefreshFileHistoryAction extends AnAction implements DumbAware {
     public RefreshFileHistoryAction() {
-      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), AllIcons.Actions.Sync);
+      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), AllIcons.Actions.Refresh);
     }
 
     public void actionPerformed(AnActionEvent e) {

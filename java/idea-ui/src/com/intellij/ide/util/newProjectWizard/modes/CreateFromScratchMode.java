@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
@@ -53,31 +54,33 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    for (ModuleBuilder builder : builders) {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
-    return addSteps(context, modulesProvider, this, new StepSequence());
+    return addSteps(context, modulesProvider, this, new StepSequence(), builders);
   }
 
   static StepSequence addSteps(WizardContext context,
                                ModulesProvider modulesProvider,
                                WizardMode mode,
-                               StepSequence sequence) {
+                               StepSequence sequence, List<ModuleBuilder> builders) {
     sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
-    for (ModuleBuilder builder : ModuleBuilder.getAllBuilders()) {
-      addModuleBuilder(builder, context, modulesProvider, sequence);
+    for (ModuleBuilder builder : builders) {
+      context.setTemplateMode(mode instanceof CreateFromTemplateMode);
+      addStepsForBuilder(builder, context, modulesProvider, sequence);
     }
     return sequence;
   }
 
-  private static void addModuleBuilder(ModuleBuilder builder,
-                                       WizardContext context,
-                                       ModulesProvider modulesProvider,
-                                       StepSequence myStepSequence) {
+  private static void addStepsForBuilder(ModuleBuilder builder,
+                                         WizardContext context,
+                                         ModulesProvider modulesProvider,
+                                         StepSequence sequence) {
     final String id = builder.getBuilderId();
     for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      myStepSequence.addSpecificStep(id, step);
+      sequence.addSpecificStep(id, step);
     }
   }
 

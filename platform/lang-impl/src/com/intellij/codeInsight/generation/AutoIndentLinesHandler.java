@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,14 +34,16 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
-        return;
-      }
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
+      return;
+    }
 
     Document document = editor.getDocument();
-    int startOffset, endOffset;
+    int startOffset;
+    int endOffset;
     RangeMarker selectionEndMarker = null;
     if (editor.getSelectionModel().hasSelection()){
       startOffset = editor.getSelectionModel().getSelectionStart();

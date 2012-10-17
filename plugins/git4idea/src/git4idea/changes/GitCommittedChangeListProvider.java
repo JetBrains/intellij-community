@@ -61,6 +61,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     myProject = project;
   }
 
+  @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }

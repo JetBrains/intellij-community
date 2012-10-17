@@ -40,6 +40,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaClassNameInsertHandler");
   static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new JavaClassNameInsertHandler();
 
+  @Override
   public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
     final char c = context.getCompletionChar();
 
@@ -62,6 +63,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final Editor editor = context.getEditor();
     if (c == '#') {
       context.setLaterRunnable(new Runnable() {
+        @Override
         public void run() {
           new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor);
         }

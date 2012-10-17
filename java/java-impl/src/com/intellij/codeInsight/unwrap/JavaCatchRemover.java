@@ -26,6 +26,7 @@ public class JavaCatchRemover extends JavaUnwrapper {
     super(CodeInsightBundle.message("remove.catch"));
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiCatchSection && tryHasSeveralCatches(e);
   }

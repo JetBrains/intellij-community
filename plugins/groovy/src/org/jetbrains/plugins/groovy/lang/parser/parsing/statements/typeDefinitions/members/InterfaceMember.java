@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -31,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class InterfaceMember implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, String interfaceName, GroovyParser parser) {
+  public static boolean parse(PsiBuilder builder, @Nullable String interfaceName, GroovyParser parser) {
     //constructor
     if (ConstructorDefinition.parse(builder, interfaceName, parser)) return true;
 

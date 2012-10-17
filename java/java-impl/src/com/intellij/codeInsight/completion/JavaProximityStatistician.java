@@ -26,6 +26,7 @@ import com.intellij.psi.PsiMember;
  * @author peter
  */
 public class JavaProximityStatistician extends ProximityStatistician{
+  @Override
   public StatisticsInfo serialize(final PsiElement element, final ProximityLocation location) {
     return element instanceof PsiMember ? JavaStatisticsManager.createInfo(null, (PsiMember)element) : null;
   }

@@ -6,6 +6,8 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
+import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
@@ -95,4 +97,7 @@ public abstract class JpsJavaExtensionService {
   @NotNull
   public abstract JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
                                                                                  @NotNull JpsSdkReference<?> wrapperReference);
+
+  @NotNull
+  public abstract JpsApplicationRunConfigurationProperties createRunConfigurationProperties(JpsApplicationRunConfigurationState state);
 }

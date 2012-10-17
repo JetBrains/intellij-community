@@ -151,7 +151,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           else if (userObject instanceof String) {
             append((String) userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            setIcon(AllIcons.General.IdeOptions);
+            setIcon(AllIcons.General.Settings);
           }
           else if (userObject instanceof ConfigurationFactory) {
             append(((ConfigurationFactory)userObject).getName());
@@ -1265,7 +1265,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MyEditDefaultsAction extends AnAction {
     public MyEditDefaultsAction() {
       super(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-            "Edit default settings", AllIcons.General.IdeOptions);
+            "Edit default settings", AllIcons.General.Settings);
     }
 
     public void actionPerformed(final AnActionEvent e) {

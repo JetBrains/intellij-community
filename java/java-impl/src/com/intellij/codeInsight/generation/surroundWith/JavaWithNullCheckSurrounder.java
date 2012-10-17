@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
+  @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (type instanceof PsiPrimitiveType) return false;
@@ -39,6 +40,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     return true;
   }
 
+  @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -60,6 +62,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     return new TextRange(offset, offset);
   }
 
+  @Override
   public String getTemplateDescription() {
     return "if (expr != null) {...}";
   }

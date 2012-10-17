@@ -63,6 +63,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     myProject = project;
   }
 
+  @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }

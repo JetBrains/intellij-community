@@ -29,6 +29,7 @@ public abstract class ParenthesesTailType extends TailType {
 
   protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
+  @Override
   public int processTail(final Editor editor, int tailOffset) {
     CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {

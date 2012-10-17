@@ -26,19 +26,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNameMacro extends Macro {
 
+  @Override
   public String getName() {
     return "methodName";
   }
 
+  @Override
   public String getPresentableName() {
     return CodeInsightBundle.message("macro.methodname");
   }
 
+  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";
   }
 
+  @Override
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
+  @Override
   public String[] getAnnotations(Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
@@ -39,6 +40,7 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     return ArrayUtil.toStringArray(anns);
   }
 
+  @Override
   @NotNull
   public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);

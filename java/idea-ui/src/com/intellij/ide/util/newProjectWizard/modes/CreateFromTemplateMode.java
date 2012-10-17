@@ -47,7 +47,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Override
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return context.isCreatingNewProject();
   }
 
   @Nullable
@@ -56,7 +56,7 @@ public class CreateFromTemplateMode extends WizardMode {
     StepSequence sequence = new StepSequence();
     mySelectTemplateStep = new SelectTemplateStep(context, sequence);
     sequence.addCommonStep(mySelectTemplateStep);
-    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence);
+    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence, ModuleBuilder.getAllBuilders());
   }
 
   @Nullable

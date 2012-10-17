@@ -29,6 +29,7 @@ public interface LayoutViewOptions {
   @NotNull
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
+  @NotNull
   LayoutViewOptions setLeftToolbar(@NotNull ActionGroup leftToolbar, @NotNull String place);
 
   @NotNull
@@ -39,17 +40,23 @@ public interface LayoutViewOptions {
 
   @NotNull
   LayoutViewOptions setAttractionPolicy(@NotNull String contentId, LayoutAttractionPolicy policy);
+
+  @NotNull
   LayoutViewOptions setConditionAttractionPolicy(@NotNull String condition, LayoutAttractionPolicy policy);
 
-  boolean isToFocus(Content content, final String condition);
+  boolean isToFocus(@NotNull Content content, @NotNull String condition);
 
-  LayoutViewOptions setToFocus(@Nullable Content content, final String condition);
+  @NotNull
+  LayoutViewOptions setToFocus(@Nullable Content content, @NotNull String condition);
 
   AnAction getLayoutActions();
+  @NotNull
   AnAction[] getLayoutActionsList();
 
-  LayoutViewOptions setAdditionalFocusActions(ActionGroup group);
+  @NotNull
+  LayoutViewOptions setAdditionalFocusActions(@NotNull ActionGroup group);
 
   AnAction getSettingsActions();
+  @NotNull
   AnAction[] getSettingsActionsList();
 }

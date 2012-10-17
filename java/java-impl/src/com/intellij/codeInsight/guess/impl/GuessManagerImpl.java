@@ -78,6 +78,7 @@ public class GuessManagerImpl extends GuessManager {
     myProject = project;
   }
 
+  @Override
   public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
     HashSet<PsiType> typesSet = new HashSet<PsiType>();
 
@@ -115,6 +116,7 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
+  @Override
   public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
     LinkedHashSet<PsiType> types = new LinkedHashSet<PsiType>();
 
@@ -149,6 +151,7 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     DataFlowRunner runner = new DataFlowRunner() {
+      @Override
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());
       }
@@ -371,6 +374,7 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiType getControlFlowExpressionType(@NotNull PsiExpression expr) {
     final Map<PsiExpression, PsiType> allCasts = getAllTypeCasts(expr);

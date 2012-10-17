@@ -76,6 +76,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
   private static LookupElement createParametersLookupElement(PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
     PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
     final String lookupString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
+      @Override
       public String fun(PsiParameter psiParameter) {
         return psiParameter.getName();
       }

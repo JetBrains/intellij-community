@@ -32,12 +32,14 @@ import java.util.List;
  * @author yole
  */
 public class JavaElementLookupRenderer implements ElementLookupRenderer {
+  @Override
   public boolean handlesItem(final Object element) {
     return element instanceof PsiVariable ||
            element instanceof PsiKeyword || element instanceof PsiExpression ||
            element instanceof PsiTypeElement || element instanceof BeanPropertyElement;
   }
 
+  @Override
   public void renderElement(final LookupItem item, final Object element, final LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
 

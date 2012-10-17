@@ -66,6 +66,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
@@ -117,6 +118,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
   private static class TagChooser extends CompletionProvider<CompletionParameters> {
 
+    @Override
     protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
       List<String> ret = new ArrayList<String>();
       final PsiElement position = parameters.getPosition();
@@ -142,7 +144,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
       for (final String s : ret) {
         if (isInline) {
-          result.addElement(TailTypeDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
+          result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
         } else {
           result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
         }
@@ -156,6 +158,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   }
 
   private static class InlineInsertHandler implements InsertHandler<LookupElement> {
+    @Override
     public void handleInsert(InsertionContext context, LookupElement item) {
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();
@@ -198,6 +201,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   }
 
   private static class MethodSignatureInsertHandler implements InsertHandler<LookupItem> {
+    @Override
     public void handleInsert(InsertionContext context, LookupItem item) {
       if (!(item.getObject() instanceof PsiMethod)) {
         return;

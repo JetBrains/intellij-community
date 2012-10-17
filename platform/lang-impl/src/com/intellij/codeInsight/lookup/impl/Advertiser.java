@@ -138,4 +138,7 @@ public class Advertiser {
     return myComponent;
   }
 
+  public List<String> getAdvertisements() {
+    return myTexts;
+  }
 }

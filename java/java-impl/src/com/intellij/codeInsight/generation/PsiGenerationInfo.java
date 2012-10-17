@@ -40,10 +40,12 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
     myMergeIfExists = mergeIfExists;
   }
 
+  @Override
   public final T getPsiMember() {
     return myMember;
   }
 
+  @Override
   public void insert(@NotNull final PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
     final PsiMember existingMember;
     if (myMember instanceof PsiField) {

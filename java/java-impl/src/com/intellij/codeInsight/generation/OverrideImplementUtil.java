@@ -385,6 +385,7 @@ public class OverrideImplementUtil {
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
     List<CandidateInfo> candidateInfos = ContainerUtil.map2List(candidates, new Function<PsiMethodMember, CandidateInfo>() {
+      @Override
       public CandidateInfo fun(final PsiMethodMember s) {
         return new CandidateInfo(s.getElement(), s.getSubstitutor());
       }
@@ -408,6 +409,7 @@ public class OverrideImplementUtil {
 
   public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(final Collection<PsiMethod> methods) {
     return ContainerUtil.map2List(methods, new Function<PsiMethod, PsiGenerationInfo<PsiMethod>>() {
+      @Override
       public PsiGenerationInfo<PsiMethod> fun(final PsiMethod s) {
         return createGenerationInfo(s);
       }
@@ -496,6 +498,7 @@ public class OverrideImplementUtil {
       }
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
                                      CodeInsightBundle.message("override.implement.broken.file.template.title"));
@@ -550,6 +553,7 @@ public class OverrideImplementUtil {
 
     LOG.assertTrue(aClass.isValid());
     new WriteCommandAction(project, aClass.getContainingFile()) {
+      @Override
       protected void run(final Result result) throws Throwable {
         overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
@@ -632,6 +636,7 @@ public class OverrideImplementUtil {
 
   private static PsiMethodMember[] convertToMethodMembers(Collection<CandidateInfo> candidates) {
     return ContainerUtil.map2Array(candidates, PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
+        @Override
         public PsiMethodMember fun(final CandidateInfo s) {
           return new PsiMethodMember(s);
         }
@@ -655,11 +660,13 @@ public class OverrideImplementUtil {
       preferredFocusedComponent.getActionMap().put(
           s,
           new AbstractAction() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
               ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   final CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
                   handler.invoke(project, editor, aClass.getContainingFile());
@@ -798,6 +805,7 @@ public class OverrideImplementUtil {
 
   public static class MethodSignatureComparator implements Comparator<MethodSignature> {
     // signatures should appear in the order of declaration
+    @Override
     public int compare(MethodSignature o1, MethodSignature o2) {
       if (o1 instanceof MethodSignatureBackedByPsiMethod && o2 instanceof MethodSignatureBackedByPsiMethod) {
         PsiMethod m1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();

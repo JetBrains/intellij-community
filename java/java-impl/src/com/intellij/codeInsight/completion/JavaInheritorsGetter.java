@@ -50,6 +50,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     myConstructorInsertHandler = constructorInsertHandler;
   }
 
+  @Override
   public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
 
@@ -72,6 +73,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     addArrayTypes(parameters.getPosition(), infos, consumer);
 
     processInheritors(parameters, extractClassTypes(infos), prefixMatcher, new Consumer<PsiType>() {
+      @Override
       public void consume(final PsiType type) {
         final LookupElement element = addExpectedType(type, parameters);
         if (element != null) {

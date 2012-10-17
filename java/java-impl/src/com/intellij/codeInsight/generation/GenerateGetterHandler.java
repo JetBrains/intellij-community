@@ -25,6 +25,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     super(CodeInsightBundle.message("generate.getter.fields.chooser.title"));
   }
 
+  @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass.isInterface()) {
       return ClassMember.EMPTY_ARRAY; // TODO
@@ -32,6 +33,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     return super.chooseOriginalMembers(aClass, project);
   }
 
+  @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (original instanceof EncapsulatableClassMember) {
       final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;

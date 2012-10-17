@@ -59,10 +59,12 @@ import static com.intellij.patterns.StandardPatterns.*;
  */
 public class JavaSmartCompletionContributor extends CompletionContributor {
   private static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<ExpectedTypeInfo>() {
+    @Override
     public int computeHashCode(final ExpectedTypeInfo object) {
       return object.getType().hashCode();
     }
 
+    @Override
     public boolean equals(final ExpectedTypeInfo o1, final ExpectedTypeInfo o2) {
       return o1.getType().equals(o2.getType());
     }
@@ -116,6 +118,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, SameSignatureCallParametersProvider.IN_CALL_ARGUMENT, new SameSignatureCallParametersProvider());
 
     extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
@@ -134,6 +137,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         JavaInheritorsGetter
           .processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
+            @Override
             public void consume(PsiType type) {
               final PsiClass psiClass = PsiUtil.resolveClassInType(type);
               if (psiClass == null) return;
@@ -147,6 +151,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     });
 
     extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
         final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
@@ -189,8 +194,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     });
 
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
+      @Override
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
         Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
+          @Override
           public void consume(final LookupElement lookupElement) {
             result.addElement(decorate(lookupElement, _infos));
           }
@@ -236,6 +243,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, or(
       PsiJavaPatterns.psiElement().withParent(PsiNameValuePair.class),
       PsiJavaPatterns.psiElement().withSuperParent(2, PsiNameValuePair.class)), new CompletionProvider<CompletionParameters>() {
+      @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
         final ElementPattern<? extends PsiElement> leftNeighbor = PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("."));
@@ -256,6 +264,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement().inside(
       psiElement(PsiDocTag.class).withName(
         string().oneOf(PsiKeyword.THROWS, EXCEPTION_TAG))), new CompletionProvider<CompletionParameters>() {
+      @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
         final Set<PsiClass> throwsSet = new HashSet<PsiClass>();
@@ -277,6 +286,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       psiElement().withText("("))
       .withSuperParent(3, psiElement(PsiCatchSection.class).withParent(
         psiElement(PsiTryStatement.class).save(tryKey))), new CompletionProvider<CompletionParameters>() {
+      @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();
         if (tryBlock == null) return;
@@ -398,10 +408,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
 
       ElementFilter checkClass = new ElementFilter() {
+        @Override
         public boolean isAcceptable(Object element, PsiElement context) {
           return filter.isAcceptable(element, context);
         }
 
+        @Override
         public boolean isClassAcceptable(Class hintClass) {
           if (ReflectionCache.isAssignable(PsiClass.class, hintClass)) {
             return acceptClasses;

@@ -170,6 +170,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     return list.toArray(new PsiField[list.size()]);
   }
 
+  @Override
   protected void doNextAction() {
     if (getCurrentStep() == myEqualsStepCode && myEqualsPanel != null) {
       equalsFieldsSelected();
@@ -184,6 +185,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     updateButtons();
   }
 
+  @Override
   protected String getHelpID() {
     return "editing.altInsert.equals";
   }
@@ -266,6 +268,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     return true;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     final Component stepComponent = getCurrentStepComponent();
     if (stepComponent instanceof MemberSelectionPanel) {
@@ -277,6 +280,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private class MyTableModelListener implements TableModelListener {
+    @Override
     public void tableChanged(TableModelEvent e) {
       updateButtons();
     }
@@ -289,6 +293,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
       checkbox.setSelected(CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
       checkbox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
         }
@@ -299,10 +304,12 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myPanel.add(new JLabel(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
     }
 
+    @Override
     public JComponent getComponent() {
       return myPanel;
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
       return null;
@@ -316,10 +323,12 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myPanel = panel;
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     public JComponent getComponent() {
       return myPanel;
     }
@@ -331,6 +340,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private static class MyMemberInfoFilter implements MemberInfoBase.Filter<PsiMember> {
+    @Override
     public boolean includeMember(PsiMember element) {
       return element instanceof PsiField && !element.hasModifierProperty(PsiModifier.STATIC);
     }
@@ -339,6 +349,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   private static class EqualsMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
     MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager = new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+      @Override
       public String getTooltip(MemberInfo memberInfo) {
         if (checkForProblems(memberInfo) == OK) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
@@ -353,28 +364,34 @@ public class GenerateEqualsWizard extends AbstractWizard {
       }
     });
 
+    @Override
     public boolean isMemberEnabled(MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return false;
       final PsiType type = ((PsiField)member.getMember()).getType();
       return !GenerateEqualsHelper.isNestedArray(type);
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractEnabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       if (!(member.getMember() instanceof PsiField)) return ERROR;
       final PsiType type = ((PsiField)member.getMember()).getType();
@@ -383,9 +400,11 @@ public class GenerateEqualsWizard extends AbstractWizard {
       return OK;
     }
 
+    @Override
     public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
     }
 
+    @Override
     public String getTooltipText(MemberInfo member) {
       return myTooltipManager.getTooltip(member);
     }
@@ -393,6 +412,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   private static class HashCodeMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
     private final MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager = new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+      @Override
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
@@ -402,34 +422,42 @@ public class GenerateEqualsWizard extends AbstractWizard {
       }
     });
 
+    @Override
     public boolean isMemberEnabled(MemberInfo member) {
       final PsiMember psiMember = member.getMember();
       return psiMember instanceof PsiField;
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractEnabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 
+    @Override
     public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
     }
 
+    @Override
     public String getTooltipText(MemberInfo member) {
       return myTooltipManager.getTooltip(member);
     }

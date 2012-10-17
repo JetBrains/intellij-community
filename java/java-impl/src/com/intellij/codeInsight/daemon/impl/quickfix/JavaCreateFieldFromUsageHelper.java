@@ -62,6 +62,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     return template;
   }
 
+  @Override
   public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
     PsiMember enclosingContext = null;
     PsiClass parentClass;

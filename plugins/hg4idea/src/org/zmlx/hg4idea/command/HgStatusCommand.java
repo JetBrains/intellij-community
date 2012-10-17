@@ -127,7 +127,7 @@ public class HgStatusCommand {
     }
     if (baseRevision != null) {
       options.add("--rev");
-      options.add(baseRevision.getChangeset());
+      options.add(baseRevision.getChangeset().equals("") ? baseRevision.getRevision() : baseRevision.getChangeset());
       if (targetRevision != null) {
         options.add("--rev");
         options.add(targetRevision.getChangeset());

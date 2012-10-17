@@ -420,7 +420,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
       if (myCanChangePatchFile) {
-        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Sync) {
+        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             queueRequest();

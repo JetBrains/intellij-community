@@ -18,6 +18,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModuleBuilder moduleBuilder, ModulesProvider modulesProvider) {
+    if (wizardContext.isTemplateMode()) return ModuleWizardStep.EMPTY_ARRAY;
     WebModuleGenerationStep generationStep = new WebModuleGenerationStep(
       moduleBuilder,
       wizardContext.getStepIcon(),

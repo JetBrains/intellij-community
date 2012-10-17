@@ -72,6 +72,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     try {
       final XmlTag contextTag = getContextTag(editor, file);
       if (contextTag == null) {

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ToggleToolbarLayoutAction extends ToggleAction {
 
+  @Override
   public void update(final AnActionEvent e) {
     if (getRunnerUi(e) == null) {
       e.getPresentation().setEnabled(false);
@@ -31,11 +32,13 @@ public class ToggleToolbarLayoutAction extends ToggleAction {
     }
   }
 
+  @Override
   public boolean isSelected(final AnActionEvent e) {
     final RunnerContentUi ui = getRunnerUi(e);
-    return ui != null ? ui.isHorizontalToolbar() : false;
+    return ui != null && ui.isHorizontalToolbar();
   }
 
+  @Override
   public void setSelected(final AnActionEvent e, final boolean state) {
     getRunnerUi(e).setHorizontalToolbar(state);
   }

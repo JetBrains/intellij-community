@@ -35,6 +35,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
     return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return (e instanceof PsiExpression)
            && e.getParent() instanceof PsiExpressionList;

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -106,6 +107,7 @@ public class GenerateEqualsHelper implements Runnable {
     return id;
   }
 
+  @Override
   public void run() {
     try {
       final Collection<PsiMethod> members = generateMembers();
@@ -482,7 +484,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   private static boolean hasArraysHashCode(final PsiField field) {
     // the method was added in JDK 1.5 - check for actual method presence rather than language level
-    Module module = ModuleUtil.findModuleForPsiElement(field);
+    Module module = ModuleUtilCore.findModuleForPsiElement(field);
     if (module == null) return false;
     PsiClass arraysClass = JavaPsiFacade.getInstance(field.getProject()).findClass("java.util.Arrays", module.getModuleWithLibrariesScope());
     if (arraysClass == null) return false;
@@ -512,6 +514,7 @@ public class GenerateEqualsHelper implements Runnable {
   static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
+    @Override
     public int compare(PsiField f1, PsiField f2) {
       if (f1.getType() instanceof PsiPrimitiveType && !(f2.getType() instanceof PsiPrimitiveType)) return -1;
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;

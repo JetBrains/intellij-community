@@ -82,6 +82,7 @@ public class JavaCharFilter extends CharFilter {
     return name.length() <= 2 && Character.isLowerCase(name.charAt(0));
   }
 
+  @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (!lookup.getPsiFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return null;

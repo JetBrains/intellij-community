@@ -47,7 +47,7 @@ public interface RunnerLayoutUi  {
   Content addContent(@NotNull Content content);
 
   @NotNull
-  Content addContent(@NotNull Content content, int defaultTabId, PlaceInGrid defaultPlace, boolean defaultIsMinimized);
+  Content addContent(@NotNull Content content, int defaultTabId, @NotNull PlaceInGrid defaultPlace, boolean defaultIsMinimized);
 
   @NotNull
   Content createContent(@NotNull String contentId, @NotNull JComponent component, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent toFocus);
@@ -60,15 +60,18 @@ public interface RunnerLayoutUi  {
   @Nullable
   Content findContent(@NotNull String contentId);
 
+  @NotNull
   ActionCallback selectAndFocus(@Nullable Content content, boolean requestFocus, final boolean forced);
+  @NotNull
   ActionCallback selectAndFocus(@Nullable Content content, boolean requestFocus, final boolean forced, final boolean implicit);
 
+  @NotNull
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 
   void removeListener(@NotNull final ContentManagerListener listener);
 
   void attractBy(@NotNull String condition);
-  void clearAttractionBy(final String condition);
+  void clearAttractionBy(@NotNull String condition);
 
   void setBouncing(@NotNull Content content, final boolean activate);
 
@@ -79,6 +82,7 @@ public interface RunnerLayoutUi  {
 
   void updateActionsNow();
 
+  @NotNull
   Content[] getContents();
 
   abstract class Factory {
@@ -89,6 +93,7 @@ public interface RunnerLayoutUi  {
       return ServiceManager.getService(project, Factory.class);
     }
 
+    @NotNull
     public abstract RunnerLayoutUi create(@NotNull String runnerId, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);
   }
 

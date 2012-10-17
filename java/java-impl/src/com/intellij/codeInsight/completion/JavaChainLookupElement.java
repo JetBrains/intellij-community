@@ -187,6 +187,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return 31 * super.hashCode() + getComparableQualifier().hashCode();
   }
 
+  @Override
   public PsiType getType() {
     final Object object = getObject();
     if (object instanceof PsiMember) {

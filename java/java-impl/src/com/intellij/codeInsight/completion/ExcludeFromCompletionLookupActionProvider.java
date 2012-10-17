@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
+  @Override
   public void fillActions(LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer) {
     final Object o = element.getObject();
     if (o instanceof PsiClass) {
