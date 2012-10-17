@@ -165,9 +165,6 @@ public class GitBranchUiUtil {
       return null;
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return null;
-    }
     VirtualFile file = getSelectedFile(project);
     if (file != null) {
       return manager.getRepositoryForRoot(getVcsRootFor(project, file));
