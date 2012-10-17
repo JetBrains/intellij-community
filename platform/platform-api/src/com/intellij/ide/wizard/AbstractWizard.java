@@ -71,7 +71,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(final String title, final Project project) {
+  public AbstractWizard(final String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<T>();
     initWizard(title);

@@ -44,6 +44,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -556,6 +557,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * don't repeat wrong credentials passing (in some cases it can produce user's account blocking)
    */
   public boolean isVcsBackgroundOperationsAllowed(final VirtualFile root) {
+    return true;
+  }
+
+  public boolean allowsRemoteCalls(@NotNull final VirtualFile file) {
     return true;
   }
 

@@ -74,7 +74,7 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
     VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (vFile == null) return false;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
-    if (vcs == null || vcs.getCommittedChangesProvider() == null) {
+    if (vcs == null || vcs.getCommittedChangesProvider() == null || !vcs.allowsRemoteCalls(vFile)) {
       return false;
     }
     FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(vFile);
