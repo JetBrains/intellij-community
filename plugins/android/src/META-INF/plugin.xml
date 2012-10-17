@@ -332,6 +332,10 @@
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
+
+    <lang.formatter language="XML" implementationClass="org.jetbrains.android.formatter.AndroidXmlFormattingModelBuilder"/>
+    <codeStyleSettingsProvider implementation="org.jetbrains.android.formatter.AndroidXmlCodeStyleSettingsProvider"/>
+    <predefinedCodeStyle implementation="org.jetbrains.android.formatter.AndroidXmlPredefinedCodeStyle"/>
   </extensions>
 
   <extensionPoints>

@@ -40,9 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -357,9 +355,20 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   private PredefinedCodeStyle[] getPredefinedStyles() {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider == null) return new PredefinedCodeStyle[0];
-    return provider.getPredefinedCodeStyles();
+    final Language language = getDefaultLanguage();
+    final List<PredefinedCodeStyle> result = new ArrayList<PredefinedCodeStyle>();
+
+    for (PredefinedCodeStyle codeStyle : PredefinedCodeStyle.EP_NAME.getExtensions()) {
+      if (codeStyle.getLanguage().equals(language)) {
+        result.add(codeStyle);
+      }
+    }
+    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
+
+    if (provider != null) {
+      result.addAll(Arrays.asList(provider.getPredefinedCodeStyles()));
+    }
+    return result.toArray(new PredefinedCodeStyle[result.size()]);
   }
 
 
@@ -532,7 +541,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
-      myConfigurable.reset();
+      if (myConfigurable instanceof CodeStyleAbstractConfigurable) {
+        // when a predefined style is chosen and the configurable is wrapped in a tab,
+        // we apply it to CLONED code style settings and then pass them to this method to reset,
+        // usual reset() won't work in such case
+        ((CodeStyleAbstractConfigurable)myConfigurable).reset(settings);
+      }
+      else {
+        // todo: support   for other configurables
+        myConfigurable.reset();
+      }
     }
   }
 

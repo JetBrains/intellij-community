@@ -17,12 +17,15 @@ package com.intellij.psi.codeStyle;
 
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Rustam Vishnyakov
  */
 public abstract class PredefinedCodeStyle {
+  public static final ExtensionPointName<PredefinedCodeStyle> EP_NAME =
+    ExtensionPointName.create("com.intellij.predefinedCodeStyle");
 
   public final static PredefinedCodeStyle[] EMPTY_ARRAY = new PredefinedCodeStyle[]{};
   private final String myName;
@@ -46,9 +49,17 @@ public abstract class PredefinedCodeStyle {
   public boolean equals(Object obj) {
     if (!(obj instanceof PredefinedCodeStyle)) return false;
     PredefinedCodeStyle otherStyle = (PredefinedCodeStyle)obj;
-    return myName.equals(otherStyle.getName());
+    return myName.equals(otherStyle.getName()) &&
+           myLanguage.equals(otherStyle.getLanguage());
   }
-  
+
+  @Override
+  public int hashCode() {
+    int result = myName.hashCode();
+    result = 31 * result + myLanguage.hashCode();
+    return result;
+  }
+
   public String getName() {
     return myName;
   }
@@ -57,7 +68,8 @@ public abstract class PredefinedCodeStyle {
   public String toString() {
     return myName;
   }
-  
+
+  @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
