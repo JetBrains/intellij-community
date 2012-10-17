@@ -39,6 +39,18 @@ class DjangoTeamcityTestRunner(BaseRunner):
     BaseRunner.__init__(self, stream)
     #self.interactive = False
 
+  def build_suite(self, *args, **kwargs):
+    EXCLUDED_APPS = getattr(settings, 'TEST_EXCLUDE', [])
+    suite = super(DjangoTeamcityTestRunner, self).build_suite(*args, **kwargs)
+    if not args[0] and not getattr(settings, 'RUN_ALL_TESTS', False):
+      tests = []
+      for case in suite:
+        pkg = case.__class__.__module__.split('.')[0]
+        if pkg not in EXCLUDED_APPS:
+          tests.append(case)
+      suite._tests = tests
+    return suite
+
   def run_suite(self, suite, **kwargs):
     if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
       from django_nose.plugin import DjangoSetUpPlugin, ResultPlugin
