@@ -42,7 +42,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     this(project, null);
   }
 
-  protected SimpleNode(Project project, NodeDescriptor parentDescriptor) {
+  protected SimpleNode(Project project, @Nullable NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
     myName = "";
   }

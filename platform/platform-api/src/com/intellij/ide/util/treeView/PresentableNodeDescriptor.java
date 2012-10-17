@@ -30,7 +30,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   private PresentationData myTemplatePresentation;
   private PresentationData myUpdatedPresentation;
 
-  protected PresentableNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+  protected PresentableNodeDescriptor(Project project, @Nullable NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
   }
 

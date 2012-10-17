@@ -27,7 +27,7 @@ public abstract class CachingSimpleNode extends SimpleNode {
     super(aParent);
   }
 
-  protected CachingSimpleNode(Project aProject, NodeDescriptor aParentDescriptor) {
+  protected CachingSimpleNode(Project aProject, @Nullable NodeDescriptor aParentDescriptor) {
     super(aProject, aParentDescriptor);
   }
 
