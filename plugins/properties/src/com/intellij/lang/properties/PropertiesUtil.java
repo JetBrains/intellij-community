@@ -204,7 +204,7 @@ public class PropertiesUtil {
   }
 
   @Nullable
-  public static String getPackageQualifiedName(PsiDirectory directory) {
+  public static String getPackageQualifiedName(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 

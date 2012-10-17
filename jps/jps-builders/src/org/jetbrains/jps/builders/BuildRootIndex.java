@@ -43,7 +43,7 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> Collection<R> findAllParentDescriptors(@NotNull File file, @Nullable CompileContext context);
 
   @Nullable
-  JavaSourceRootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file);
+  JavaSourceRootDescriptor findJavaRootDescriptor(@Nullable CompileContext context, File file);
 
   @NotNull
   FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);

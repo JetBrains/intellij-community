@@ -58,12 +58,22 @@ public class XsltValidator {
         if (templateTag == null) {
             return;
         }
+        final XmlAttribute attribute = tag.getAttribute("name");
+        if (attribute == null) {
+          return;
+        }
+        final PsiElement token = XsltSupport.getAttValueToken(attribute);
+        if (token == null) {
+          return;
+        }
 
         final SearchScope scope = new LocalSearchScope(templateTag);
         final Query<PsiReference> refs = ReferencesSearch.search(variable, scope, false);
 
         if (isUnused(variable, refs)) {
             final String name = variable.getName();
+            assert name != null;
+
             final LocalQuickFix[] fixes;
             if (variable instanceof XsltParameter) {
                 fixes = new LocalQuickFix[]{ new DeleteUnusedParameterFix(name, (XsltParameter)variable) };
@@ -71,11 +81,6 @@ public class XsltValidator {
                 fixes = new LocalQuickFix[]{ new DeleteUnusedVariableFix(name, variable) };
             }
 
-            final XmlAttribute attribute = tag.getAttribute("name");
-            assert attribute != null;
-
-            final PsiElement token = XsltSupport.getAttValueToken(attribute);
-            assert token != null;
             holder.registerProblem(token, ((DeleteUnusedElementBase)fixes[0]).getType() +
                     " '" + name + "' is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes);
         }

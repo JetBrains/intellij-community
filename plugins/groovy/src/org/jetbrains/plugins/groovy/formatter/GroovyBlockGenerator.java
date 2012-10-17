@@ -33,6 +33,8 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -215,53 +217,27 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   
 
   private void calculateAlignments(List<ASTNode> children, boolean classLevel) {
-    List<AlignmentProvider.Aligner> currentGroup = null;
+    List<GrStatement> currentGroup = null;
+    boolean spock = true;
     for (ASTNode child : children) {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
-        List<LeafPsiElement> table = getSpockTable(((GrLabeledStatement)psi).getStatement());
-        if (table.isEmpty()) {
-          currentGroup = null;
-        }
-        else {
-          currentGroup = new ArrayList<AlignmentProvider.Aligner>();
-          for (LeafPsiElement expression : table) {
-            currentGroup.add(myAlignmentProvider.createAligner(expression, true, Alignment.Anchor.RIGHT));
-          }
-        }
+        alignGroup(currentGroup, spock, classLevel);
+        currentGroup = ContainerUtil.newArrayList((GrStatement)psi);
+        spock = true;
       }
-      else if (currentGroup != null && isTablePart(psi)) {
-        List<LeafPsiElement> table = getSpockTable((GrStatement)psi);
-        for (int i = 0; i < Math.min(table.size(), currentGroup.size()); i++) {
-          currentGroup.get(i).append(table.get(i));
-        }
+      else if (currentGroup != null && spock && isTablePart(psi)) {
+        currentGroup.add((GrStatement)psi);
       }
       else if (psi instanceof GrVariableDeclaration) {
-        final GrVariableDeclaration varDeclaration = (GrVariableDeclaration)psi;
-        GrVariable[] variables = varDeclaration.getVariables();
+        GrVariable[] variables = ((GrVariableDeclaration)psi).getVariables();
         if (variables.length > 0) {
-          if (!classLevel || currentGroup == null || fieldGroupEnded(psi)) {
-            currentGroup = new ArrayList<AlignmentProvider.Aligner>();
-            currentGroup.add(myAlignmentProvider.createAligner(true));
-            currentGroup.add(myAlignmentProvider.createAligner(true));
-            currentGroup.add(myAlignmentProvider.createAligner(true));
+          if (!classLevel || currentGroup == null || fieldGroupEnded(psi) || spock) {
+            alignGroup(currentGroup, spock, classLevel);
+            currentGroup = ContainerUtil.newArrayList();
+            spock = false;
           }
-
-          AlignmentProvider.Aligner varName = currentGroup.get(1);
-          for (GrVariable variable : variables) {
-            varName.append(variable.getNameIdentifierGroovy());
-          }
-
-          if (classLevel && mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-            final AlignmentProvider.Aligner typeElement = currentGroup.get(0);
-            typeElement.append(varDeclaration.getTypeElementGroovy());
-
-            ASTNode current_eq = variables[variables.length - 1].getNode().findChildByType(GroovyTokenTypes.mASSIGN);
-            final AlignmentProvider.Aligner eq = currentGroup.get(2);
-            if (current_eq != null) {
-              eq.append(current_eq.getPsi());
-            }
-          }
+          currentGroup.add((GrStatement)psi);
         }
       }
       else {
@@ -271,7 +247,66 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
             continue;
           }
         }
+        alignGroup(currentGroup, spock, classLevel);
         currentGroup = null;
+      }
+    }
+  }
+
+  private void alignGroup(@Nullable List<GrStatement> group, boolean spock, boolean classLevel) {
+    if (group == null) {
+      return;
+    }
+    if (spock) {
+      alignSpockTable(group);
+    } else {
+      alignVariableDeclarations(group, classLevel);
+    }
+  }
+
+  private void alignVariableDeclarations(List<GrStatement> group, boolean classLevel) {
+    AlignmentProvider.Aligner typeElement = myAlignmentProvider.createAligner(true);
+    AlignmentProvider.Aligner varName = myAlignmentProvider.createAligner(true);
+    AlignmentProvider.Aligner eq = myAlignmentProvider.createAligner(true);
+    for (GrStatement statement : group) {
+      GrVariableDeclaration varDeclaration = (GrVariableDeclaration) statement;
+      GrVariable[] variables = varDeclaration.getVariables();
+      for (GrVariable variable : variables) {
+        varName.append(variable.getNameIdentifierGroovy());
+      }
+
+      if (classLevel && mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
+        typeElement.append(varDeclaration.getTypeElementGroovy());
+
+        ASTNode current_eq = variables[variables.length - 1].getNode().findChildByType(GroovyTokenTypes.mASSIGN);
+        if (current_eq != null) {
+          eq.append(current_eq.getPsi());
+        }
+      }
+    }
+  }
+
+  private void alignSpockTable(List<GrStatement> group) {
+    if (group.size() < 2) {
+      return;
+    }
+    GrStatement inner = ((GrLabeledStatement)group.get(0)).getStatement();
+    boolean embedded = inner != null && isTablePart(inner);
+
+    GrStatement first = embedded ? inner : group.get(1);
+    List<AlignmentProvider.Aligner> alignments = ContainerUtil
+      .map2List(getSpockTable(first), new Function<LeafPsiElement, AlignmentProvider.Aligner>() {
+        @Override
+        public AlignmentProvider.Aligner fun(LeafPsiElement leaf) {
+          return myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT);
+        }
+      });
+
+    int second = embedded ? 1 : 2;
+    for (int i = second; i < group.size(); i++) {
+      List<LeafPsiElement> table = getSpockTable(group.get(i));
+      for (int j = 0; j < Math.min(table.size(), alignments.size()); j++) {
+        alignments.get(j).append(table.get(j));
       }
     }
   }

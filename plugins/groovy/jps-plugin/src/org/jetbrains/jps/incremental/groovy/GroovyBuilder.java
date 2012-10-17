@@ -220,7 +220,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                                         GroovycOSProcessHandler.OutputItem item, Map<ModuleBuildTarget, String> generationOutputs, String compilerOutput) throws IOException {
     if (chunk.getModules().size() > 1) {
       final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-      JavaSourceRootDescriptor descriptor = rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
+      JavaSourceRootDescriptor descriptor = rootsIndex.findJavaRootDescriptor(context, new File(item.sourcePath));
       if (descriptor != null) {
         ModuleBuildTarget srcTarget = descriptor.target;
         if (!srcTarget.equals(chunk.representativeTarget())) {
@@ -283,7 +283,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, new File(sourcePath));
+        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
+                                                                                                                                 new File(
+                                                                                                                                   sourcePath));
         if (moduleAndRoot != null) {
           final ModuleBuildTarget target = moduleAndRoot.target;
           context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, outputPath);

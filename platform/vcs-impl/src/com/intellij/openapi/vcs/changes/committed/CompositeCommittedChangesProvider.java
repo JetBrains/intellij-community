@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,6 +54,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     Collections.addAll(myBaseVcss, baseVcss);
   }
 
+  @NotNull
   public CompositeCommittedChangesProvider.CompositeChangeBrowserSettings createDefaultSettings() {
     Map<AbstractVcs, ChangeBrowserSettings> map = new HashMap<AbstractVcs, ChangeBrowserSettings>();
     for(AbstractVcs vcs: myBaseVcss) {

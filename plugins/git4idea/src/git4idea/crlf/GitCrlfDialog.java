@@ -52,7 +52,7 @@ public class GitCrlfDialog extends DialogWrapper {
 
     setOKButtonText("Fix and Commit");
     setCancelButtonText("Cancel");
-    setTitle("Line separators warning");
+    setTitle("Line Separators Warning");
     getCancelAction().putValue(DialogWrapper.FOCUSED_ACTION, true);
 
     init();
@@ -60,7 +60,7 @@ public class GitCrlfDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[] { getOKAction(), getCancelAction(), new DialogWrapperExitAction("Commit as Is", DONT_SET) };
+    return new Action[] { getOKAction(), getCancelAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET) };
   }
 
   @Override

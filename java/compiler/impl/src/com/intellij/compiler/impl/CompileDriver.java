@@ -626,6 +626,8 @@ public class CompileDriver {
             LOG.error(e); // todo
           }
           finally {
+            CompilerCacheManager.getInstance(myProject).flushCaches();
+
             final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
             CompilerUtil.logDuration(
               "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
@@ -634,8 +636,6 @@ public class CompileDriver {
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),
               duration
             );
-
-            CompilerCacheManager.getInstance(myProject).flushCaches();
 
             // refresh on output roots is required in order for the order enumerator to see all roots via VFS
             final Set<File> outputs = new HashSet<File>();
@@ -668,7 +668,6 @@ public class CompileDriver {
             doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
           }
           finally {
-            CompilerCacheManager.getInstance(myProject).flushCaches();
             FileUtil.delete(CompilerPaths.getRebuildMarkerFile(myProject));
           }
         }
@@ -737,6 +736,7 @@ public class CompileDriver {
     }
     finally {
       dropDependencyCache(compileContext);
+      CompilerCacheManager.getInstance(myProject).flushCaches();
       if (compileContext.isRebuildRequested()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

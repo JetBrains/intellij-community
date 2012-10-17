@@ -1,0 +1,15 @@
+assert x instanceof String : bar()
+return x.isEmpty()
+-----
+0(1) element: null
+1(2) element: ASSERT statement
+2(3) READ x
+3(4,6) Condition Instanceof expression
+4(5) instanceof: x instanceof String
+5(7)  Negating goto instruction, condition=3Instanceof expression
+6(9) instanceof: x instanceof String
+7(8) READ bar
+8(11) THROW. element: ASSERT statement
+9(10) READ x
+10(11) element: RETURN statement
+11() element: null

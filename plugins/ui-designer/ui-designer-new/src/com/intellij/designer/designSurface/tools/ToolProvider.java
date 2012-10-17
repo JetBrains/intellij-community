@@ -61,9 +61,15 @@ public abstract class ToolProvider {
         switch (event.getID()) {
           case MouseEvent.MOUSE_PRESSED:
             myTool.mouseDown(event, area);
+            if (event.isPopupTrigger()) {
+              myTool.mousePopup(event, area);
+            }
             break;
           case MouseEvent.MOUSE_RELEASED:
             myTool.mouseUp(event, area);
+            if (event.isPopupTrigger()) {
+              myTool.mousePopup(event, area);
+            }
             break;
           case MouseEvent.MOUSE_ENTERED:
             myTool.mouseEntered(event, area);
@@ -74,6 +80,9 @@ public abstract class ToolProvider {
           case MouseEvent.MOUSE_CLICKED:
             if (event.getClickCount() == 2) {
               myTool.mouseDoubleClick(event, area);
+            }
+            if (event.isPopupTrigger()) {
+              myTool.mousePopup(event, area);
             }
             break;
           case MouseEvent.MOUSE_MOVED:
