@@ -30,9 +30,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -97,13 +100,7 @@ public class CommandLineProcessor {
       return null;
     }
     else {
-      Project project = projects[0];
-      for (Project aProject : projects) {
-        if (ProjectRootManager.getInstance(aProject).getFileIndex().isInContent(virtualFile)) {
-          project = aProject;
-          break;
-        }
-      }
+      Project project = findBestProject(virtualFile, projects);
       if (line == -1) {
         new OpenFileDescriptor(project, virtualFile).navigate(true);
       }
@@ -112,6 +109,18 @@ public class CommandLineProcessor {
       }
       return project;
     }
+  }
+
+  @NotNull
+  private static Project findBestProject(VirtualFile virtualFile, Project[] projects) {
+    for (Project aProject : projects) {
+      if (ProjectRootManager.getInstance(aProject).getFileIndex().isInContent(virtualFile)) {
+        return aProject;
+      }
+    }
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    Project project = frame == null ? null : frame.getProject();
+    return project != null ? project : projects[0];
   }
 
   @Nullable
