@@ -93,7 +93,7 @@ public class MavenConsoleImpl extends MavenConsole {
           VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
           if (roots.length > 0) {
             String projectPath = roots[0].getPath();
-            if (projectPath.matches("[A-Z]:[\\\\/]")) {
+            if (projectPath.matches("[A-Z]:[\\\\/].+")) {
               res = super.createOpenFileHyperlink(projectPath.charAt(0) + ":" + fileName, line, column);
             }
           }
@@ -103,6 +103,8 @@ public class MavenConsoleImpl extends MavenConsole {
         return res;
       }
     });
+
+    builder.addFilter(new MavenGroovyConsoleFilter(project));
     return builder;
   }
 
