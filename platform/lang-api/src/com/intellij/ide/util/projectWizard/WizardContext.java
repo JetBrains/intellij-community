@@ -172,4 +172,16 @@ public class WizardContext {
   public StorageScheme getProjectStorageFormat() {
     return myProjectStorageFormat;
   }
+
+  private boolean myTemplateMode;
+
+  /** This will be removed shortly */
+  @Deprecated
+  public boolean isTemplateMode() {
+    return myTemplateMode;
+  }
+
+  public void setTemplateMode(boolean templateMode) {
+    myTemplateMode = templateMode;
+  }
 }
