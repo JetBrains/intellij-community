@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 tests_require = [
-    'nose'
+    'mynose'
 ]
 
 setup(name='foo',
@@ -11,7 +11,7 @@ setup(name='foo',
       ],
       install_requires=[
           'pip',
-          'Django==1.3.1',
+          'NewDjango==1.3.1',
       ],
       tests_require=tests_require)
 
