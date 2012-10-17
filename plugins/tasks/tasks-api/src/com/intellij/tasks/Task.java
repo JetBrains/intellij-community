@@ -16,6 +16,7 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,13 @@ public abstract class Task {
 
   @Override
   public final String toString() {
-    return isIssue() ? getId() : getSummary();
+    String text;
+    if (isIssue()) {
+      text = getId() + ": " + getSummary();
+    } else {
+      text = getSummary();
+    }
+    return StringUtil.first(text, 60, true);
   }
 
   public String getPresentableName() {
