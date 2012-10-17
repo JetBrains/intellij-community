@@ -58,9 +58,7 @@ class PycharmTestCommand(Command):
     TestRunner = self.get_runner()
 
     if hasattr(TestRunner, 'func_name'):
-      # Pre 1.2 test runners were just functions,
-      # and did not support the 'failfast' option.
-      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive)
+      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive, failfast=failfast)
     else:
       test_runner = TestRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
       failures = test_runner.run_tests(test_labels)

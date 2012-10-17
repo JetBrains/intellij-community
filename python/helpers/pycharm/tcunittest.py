@@ -34,9 +34,10 @@ def smart_str(s):
     return s
 
 class TeamcityTestResult(TestResult):
-  def __init__(self, stream=sys.stdout):
+  def __init__(self, stream=sys.stdout, **kwargs):
     TestResult.__init__(self)
-
+    if kwargs.has_key("failfast"):
+      self.failfast = kwargs["failfast"]
     self.output = stream
     self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
     self.messages.testMatrixEntered()
@@ -175,11 +176,11 @@ class TeamcityTestRunner:
   def __init__(self, stream=sys.stdout):
     self.stream = stream
 
-  def _makeResult(self):
-    return TeamcityTestResult(self.stream)
+  def _makeResult(self, **kwargs):
+    return TeamcityTestResult(self.stream, **kwargs)
 
-  def run(self, test):
-    result = self._makeResult()
+  def run(self, test, **kwargs):
+    result = self._makeResult(**kwargs)
     result.messages.testCount(test.countTestCases())
     test(result)
     result.endLastSuite()

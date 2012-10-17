@@ -6,7 +6,6 @@ from tcmessages import TeamcityServiceMessages
 import django
 import sys
 
-from django.test.simple import settings
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
     from django.test.utils import get_runner
@@ -40,7 +39,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
     BaseRunner.__init__(self, stream)
     #self.interactive = False
 
-  def run_suite(self, suite):
+  def run_suite(self, suite, **kwargs):
     if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
       from django_nose.plugin import DjangoSetUpPlugin, ResultPlugin
       from django_nose.runner import _get_plugins_from_settings
@@ -61,7 +60,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
       nose.core.TestProgram(argv=suite, exit=False, testRunner=TeamcityNoseRunner(config=config))
       return result_plugin.result
     else:
-      return TeamcityTestRunner.run(self, suite)
+      return TeamcityTestRunner.run(self, suite, **kwargs)
 
 
 def partition_suite(suite, classes, bins):
@@ -122,7 +121,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwa
     """
     TeamcityServiceMessages(sys.stdout).testMatrixEntered()
     if django.VERSION[1] > 1:
-      return DjangoTeamcityTestRunner().run_tests(test_labels, extra_tests=extra_tests)
+      return DjangoTeamcityTestRunner().run_tests(test_labels, extra_tests=extra_tests, **kwargs)
 
     setup_test_environment()
 
@@ -149,7 +148,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwa
     from django.db import connection
     connection.creation.create_test_db(verbosity, autoclobber=False)
 
-    result = DjangoTeamcityTestRunner().run(suite)
+    result = DjangoTeamcityTestRunner().run(suite, **kwargs)
     connection.creation.destroy_test_db(old_name, verbosity)
 
     teardown_test_environment()
