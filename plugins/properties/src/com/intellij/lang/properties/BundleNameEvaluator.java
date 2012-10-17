@@ -32,6 +32,10 @@ public interface BundleNameEvaluator {
       }
 
       final PsiDirectory directory = psiFile.getParent();
+      if (directory == null) {
+        return null;
+      }
+
       final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
 
       if (packageQualifiedName != null) {
