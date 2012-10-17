@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -72,6 +73,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
 
 
   private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector, final int paramCount) {
+    if (StringUtil.isEmpty(name)) return;
     collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {

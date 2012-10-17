@@ -62,6 +62,10 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
                                     StringUtil.join(extendClassNames, ", "));
     }
 
+    if (parameters.getCompletionType() == CompletionType.SMART) {
+      return;
+    }
+
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result);
     }

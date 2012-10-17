@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -228,15 +227,12 @@ public class CompilerPaths {
       return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(roots[0]): VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }
 
-    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
-    if (extension == null) {
+
+    final String path = getModuleOutputPath(module, false);
+    if (path == null) {
       return null;
     }
-    final String url = extension.getCompilerOutputUrl();
-    if (url == null) {
-      return null;
-    }
-    return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(url) : VirtualFileManager.extractPath(url) + "/" + sourceDirName;
+    return StringUtil.isEmpty(sourceDirName)? path : path + "/" + sourceDirName;
   }
   
   @NonNls

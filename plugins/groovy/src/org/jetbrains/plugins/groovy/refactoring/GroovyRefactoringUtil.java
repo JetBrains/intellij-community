@@ -201,7 +201,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  public static void highlightOccurrences(Project project, Editor editor, PsiElement[] elements) {
+  public static void highlightOccurrences(Project project, @Nullable Editor editor, PsiElement[] elements) {
     if (editor == null) return;
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);

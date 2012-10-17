@@ -60,11 +60,11 @@ public class Change {
   // if null, vcs's is used. intended: for property conflict case
   private Getter<MergeTexts> myMergeProvider;
 
-  public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+  public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
   }
 
-  public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision, FileStatus fileStatus) {
+  public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision, @Nullable FileStatus fileStatus) {
     assert beforeRevision != null || afterRevision != null;
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
@@ -73,7 +73,7 @@ public class Change {
     myOtherLayers = new HashMap<String, Change>(0);
   }
 
-  private static FileStatus convertStatus(ContentRevision beforeRevision, ContentRevision afterRevision) {
+  private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {
     if (beforeRevision == null) return FileStatus.ADDED;
     if (afterRevision == null) return FileStatus.DELETED;
     return FileStatus.MODIFIED;

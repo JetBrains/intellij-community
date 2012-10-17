@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.List;
  * @author yole
  */
 public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends VcsProviderMarker {
+  @NotNull
   U createDefaultSettings();
   ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
 

@@ -237,12 +237,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         !((PsiReferenceExpression)parent).isQualified() &&
         parameters.isExtendedCompletion() &&
         StringUtil.isNotEmpty(matcher.getPrefix())) {
-      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          result.addElement(element);
-        }
-      });
+      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
   }

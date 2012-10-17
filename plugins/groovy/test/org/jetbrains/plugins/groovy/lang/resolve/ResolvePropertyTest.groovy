@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
@@ -47,7 +48,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("closureOwner/A.groovy");
     PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiVariable);
-    assertEquals(((PsiVariable) resolved).getType().getCanonicalText(), "W");
+    assertEquals((resolved as PsiVariable).type.canonicalText, "W");
   }
 
   public void testLocal1() throws Exception {
@@ -117,21 +118,21 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testField3() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy").getElement();
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("field3/A.groovy").element;
     GroovyResolveResult resolveResult = ref.advancedResolve();
-    assertTrue(resolveResult.getElement() instanceof GrField);
-    assertFalse(resolveResult.isValidResult());
+    assertTrue(resolveResult.element instanceof GrField);
+    assertFalse(resolveResult.validResult);
   }
 
   public void testToGetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/A.groovy").getElement();
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("toGetter/A.groovy").element;
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod) resolved));
   }
 
   public void testToSetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/A.groovy").getElement();
+    GrReferenceElement ref = (GrReferenceElement)configureByFile("toSetter/A.groovy").element;
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
@@ -209,7 +210,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testUnderscoredField() throws Exception {
     PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
     final GrField field = assertInstanceOf(ref.resolve(), GrField.class);
-    assertFalse(ref.isReferenceTo(field.getGetters()[0]));
+    assertFalse(ref.isReferenceTo(field.getters[0]));
     assertTrue(ref.isReferenceTo(field));
   }
 
@@ -298,7 +299,7 @@ print ba<caret>r
 """
     def ref = findReference()
     def target = assertInstanceOf(ref.resolve(), PsiField)
-    assertEquals target.getName(), "foo"
+    assertEquals target.name, "foo"
   }
 
   private void doTest(String fileName) throws Exception {
@@ -322,7 +323,7 @@ print ba<caret>r
     def ref = findReference()
     def resolved = ref.resolve();
     assertNotNull resolved
-    assert ((PsiMethod) resolved).getName() == "isFoo"
+    assert ((PsiMethod)resolved).name == "isFoo"
   }
 
   public void testExplicitBooleanProperty() throws Exception {
@@ -332,7 +333,7 @@ print ba<caret>r
  print new A().f<caret>oo""");
     def ref = findReference()
     def resolved = ref.resolve();
-    assert ((PsiMethod) resolved).getName() == "isFoo"
+    assert ((PsiMethod)resolved).name == "isFoo"
   }
 
   public void testStaticFieldAndNonStaticGetter() {
@@ -353,8 +354,8 @@ print ba<caret>r
 }""")
     def ref = findReference()
     def resolved = ref.resolve();
-    assertInstanceOf resolved, GrField.class
-    assertTrue resolved.getModifierList().hasExplicitVisibilityModifiers()
+    assertInstanceOf resolved, GrField
+    assertTrue ((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testPropertyAndFieldDeclarationOutsideClass() {
@@ -405,8 +406,8 @@ class Foo extends Bar {
 print new Foo().foo""")
     def ref = findReference()
     def resolved = ref.resolve();
-    assertInstanceOf resolved, GrField.class
-    assertTrue resolved.getModifierList().hasExplicitVisibilityModifiers()
+    assertInstanceOf resolved, GrField
+    assertTrue ((resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testPropertyAndFieldDeclarationWithSuperClass3() {
@@ -442,8 +443,8 @@ class Foo extends Bar {
 print new Foo().foo""")
     def ref = findReference()
     def resolved = ref.resolve();
-    assertInstanceOf resolved, GrField.class
-    assertTrue !resolved.getModifierList().hasExplicitVisibilityModifiers()
+    assertInstanceOf resolved, GrField
+    assertTrue (!(resolved as GrField).modifierList.hasExplicitVisibilityModifiers())
   }
 
   public void testReadAccessToStaticallyImportedProperty() {
@@ -568,13 +569,13 @@ set<caret>Foo(2)
 
   public void testFieldAccessInStaticContext() {
     def ref = configureByFile("fieldAccessInStaticContext/A.groovy")
-    def resolveResult = ref.advancedResolve()
-    assertTrue !resolveResult.staticsOK
+    def resolveResult = (ref as GrReferenceExpression).advancedResolve()
+    assertFalse resolveResult.staticsOK
   }
 
   public void testFieldAccessInClosureVsStaticContext() {
     def ref = configureByFile("fieldAccessInClosureVsStaticContext/A.groovy")
-    def resolveResult = ref.advancedResolve()
+    def resolveResult = (ref as GrReferenceExpression).advancedResolve()
     assertTrue resolveResult.staticsOK
   }
 
@@ -894,5 +895,19 @@ class User {
 ''')
 
     assertInstanceOf(ref.resolve(), GrField)
+  }
+
+  void testResolveEnumConstantInsideItsInitializer() {
+    def ref = configureByText('''\
+enum MyEnum {
+    CONST {
+        void get() {
+            C<caret>ONST
+        }
+    }
+
+}
+''')
+    assertNotNull(ref)
   }
 }

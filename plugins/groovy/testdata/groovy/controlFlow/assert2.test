@@ -1,0 +1,10 @@
+assert cond() : 'abc'
+print 2
+-----
+0(1) element: null
+1(2) element: ASSERT statement
+2(3,4) READ cond
+3(6) THROW. element: ASSERT statement
+4(5) READ print
+5(6) element: Call expression MAYBE_RETURN
+6() element: null

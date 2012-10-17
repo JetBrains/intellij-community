@@ -59,8 +59,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final String textToSearch = method.getName();
     if (StringUtil.isEmpty(textToSearch)) {
-      PsiFile file = aClass.getContainingFile();
-      LOG.error("Cannot search for the method with empty name: "+method+"; class:"+aClass+"; file: "+ file+"; "+(file == null ? null : file.getVirtualFile()));
+      return;
     }
     final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(textToSearch, false);
 

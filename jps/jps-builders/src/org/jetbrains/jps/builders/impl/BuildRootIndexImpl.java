@@ -8,15 +8,22 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.java.ResourcesOnlyRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -31,30 +38,65 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptor;
+  private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
   private ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
   
   public BuildRootIndexImpl(BuildTargetIndex targetIndex, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
     myRootsByTarget = new HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>>();
-    myRootToDescriptor = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
+    myRootToDescriptors = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
     myFileFilters = new ConcurrentHashMap<BuildRootDescriptor, FileFilter>();
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
     for (BuildTargetType<?> targetType : BuilderRegistry.getInstance().getTargetTypes()) {
       for (BuildTarget<?> target : targetIndex.getAllTargets(targetType)) {
-        addRoots(dataPaths, rootsProviders, targetType, target, model, index, ignoredFileIndex);
+        addRoots(dataPaths, rootsProviders, target, model, index, ignoredFileIndex);
       }
     }
+
+    // registering resource-only roots for annotation processor's generated classes
+    Map<String, List<ModuleBuildTarget>> moduleNameToTargetsMap = null;
+
+    final JpsProject project = model.getProject();
+    final ProjectPaths paths = new ProjectPaths(project);
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    for (ProcessorConfigProfile profile : compilerConfig.getAnnotationProcessingConfigurations()) {
+      if (!profile.isEnabled()) {
+        continue;
+      }
+      for (String moduleName : profile.getModuleNames()) {
+        if (moduleNameToTargetsMap == null) {
+          moduleNameToTargetsMap = buildModuleNameToTargetsMap(targetIndex); // lazy init
+        }
+        final List<ModuleBuildTarget> targets = moduleNameToTargetsMap.get(moduleName);
+        if (targets != null) {
+          for (ModuleBuildTarget target : targets) {
+            final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile);
+            if (annotationOut != null) {
+              if (findJavaRootDescriptor(null, annotationOut) == null) {
+                // register only if the root is not under already existing roots
+                final ResourcesOnlyRootDescriptor descriptor = new ResourcesOnlyRootDescriptor(annotationOut, target, true, false, "");
+                registerDescriptor(descriptor);
+                //noinspection unchecked
+                final List<BuildRootDescriptor> descriptors = (List<BuildRootDescriptor>)myRootsByTarget.get(target);
+                assert descriptors != null;
+                descriptors.add(descriptor);
+              }
+            }
+          }
+        }
+      }
+    }
+
   }
 
   private <R extends BuildRootDescriptor> void addRoots(BuildDataPaths dataPaths, Iterable<AdditionalRootsProviderService> rootsProviders,
-                                                        BuildTargetType<?> targetType, BuildTarget<R> target,
+                                                        BuildTarget<R> target,
                                                         JpsModel model,
                                                         ModuleExcludeIndex index,
                                                         IgnoredFileIndex ignoredFileIndex) {
     List<R> descriptors = target.computeRootDescriptors(model, index, ignoredFileIndex, dataPaths);
     for (AdditionalRootsProviderService<?> provider : rootsProviders) {
-      if (provider.getTargetTypes().contains(targetType)) {
+      if (provider.getTargetTypes().contains(target.getTargetType())) {
         //noinspection unchecked
         AdditionalRootsProviderService<R> providerService = (AdditionalRootsProviderService<R>)provider;
         final List<R> additionalRoots = providerService.getAdditionalRoots(target, dataPaths);
@@ -65,14 +107,34 @@ public class BuildRootIndexImpl implements BuildRootIndex {
       }
     }
     for (BuildRootDescriptor descriptor : descriptors) {
-      List<BuildRootDescriptor> list = myRootToDescriptor.get(descriptor.getRootFile());
-      if (list == null) {
-        list = new SmartList<BuildRootDescriptor>();
-        myRootToDescriptor.put(descriptor.getRootFile(), list);
-      }
-      list.add(descriptor);
+      registerDescriptor(descriptor);
     }
     myRootsByTarget.put(target, descriptors);
+  }
+
+  private void registerDescriptor(BuildRootDescriptor descriptor) {
+    List<BuildRootDescriptor> list = myRootToDescriptors.get(descriptor.getRootFile());
+    if (list == null) {
+      list = new SmartList<BuildRootDescriptor>();
+      myRootToDescriptors.put(descriptor.getRootFile(), list);
+    }
+    list.add(descriptor);
+  }
+
+  private static Map<String, List<ModuleBuildTarget>> buildModuleNameToTargetsMap(BuildTargetIndex targetIndex) {
+    final Map<String, List<ModuleBuildTarget>> moduleNameToTargetsMap = new HashMap<String, List<ModuleBuildTarget>>();
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : targetIndex.getAllTargets(type)) {
+        final String moduleName = target.getModule().getName();
+        List<ModuleBuildTarget> targets = moduleNameToTargetsMap.get(moduleName);
+        if (targets == null) {
+          targets = new ArrayList<ModuleBuildTarget>();
+          moduleNameToTargetsMap.put(moduleName, targets);
+        }
+        targets.add(target);
+      }
+    }
+    return moduleNameToTargetsMap;
   }
 
   @NotNull
@@ -80,7 +142,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root,
                                                                     @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                     @Nullable CompileContext context) {
-    List<BuildRootDescriptor> descriptors = myRootToDescriptor.get(root);
+    List<BuildRootDescriptor> descriptors = myRootToDescriptors.get(root);
     List<R> result = new SmartList<R>();
     if (descriptors != null) {
       for (BuildRootDescriptor descriptor : descriptors) {
@@ -132,9 +194,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   }
 
   @Override
-  public <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context,
-                                                                @NotNull BuildTarget<R> target,
-                                                                @NotNull R root) {
+  public <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root) {
     Map<File, BuildRootDescriptor> rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
     if (rootToDescriptorMap == null) {
       rootToDescriptorMap = new THashMap<File, BuildRootDescriptor>(FileUtil.FILE_HASHING_STRATEGY);
@@ -223,7 +283,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
 
   @Override
   @Nullable
-  public JavaSourceRootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file) {
+  public JavaSourceRootDescriptor findJavaRootDescriptor(@Nullable CompileContext context, File file) {
     return findParentDescriptor(file, JavaModuleBuildTargetType.ALL_TYPES, context);
   }
 
