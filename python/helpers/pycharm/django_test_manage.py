@@ -15,7 +15,7 @@ if not manage_file:
 try:
   __import__(manage_file)
 except ImportError:
-  print ("There is no such manage file " + str(manage_file))
+  print ("There is no such manage file " + str(manage_file) + "\n")
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     if custom_settings:
       setup_environ(custom_settings)
   except ImportError:
-    print ("There is no such settings file " + str(settings_file))
+    print ("There is no such settings file " + str(settings_file) + "\n")
 
   try:
     subcommand = sys.argv[1]
