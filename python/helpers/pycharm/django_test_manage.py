@@ -49,6 +49,9 @@ class PycharmTestCommand(Command):
       try:
         from south.management.commands import MigrateAndSyncCommand
         management._commands['syncdb'] = MigrateAndSyncCommand()
+        from south.hacks import hacks
+        if hasattr(hacks, "patch_flush_during_test_db_creation"):
+          hacks.patch_flush_during_test_db_creation()
       except ImportError:
         management._commands['syncdb'] = 'django.core'
 
