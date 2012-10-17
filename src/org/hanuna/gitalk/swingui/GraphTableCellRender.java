@@ -50,14 +50,14 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         g.drawLine(x1, y1, x2, y2);
     }
 
-    private void paintCircle(Graphics2D g, int position, Color color) {
+    private void paintCircle(Graphics2D g2, int position, Color color) {
         int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
         int y0 = HEIGHT_CELL / 2;
-        g.setColor(color);
+        g2.setColor(color);
         int r = CIRCLE_RADIUS;
 
-        g.setStroke(new BasicStroke(3F));
-        g.drawOval(x0 - r, y0 - r, 2 * r, 2 * r);
+        g2.setStroke(new BasicStroke(3F));
+        g2.drawOval(x0 - r, y0 - r, 2 * r, 2 * r);
     }
 
     public void paint(Graphics g) {
@@ -79,7 +79,8 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
             }
         }
         int mainPos = commitRow.getMainPosition();
-        paintCircle(g2, mainPos, Color.black);
+        int colorIndex = commitRow.getMainColorIndex();
+        paintCircle(g2, mainPos, ColorGenerator.getColor(colorIndex));
     }
 
 }

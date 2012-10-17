@@ -57,7 +57,8 @@ public class CommitTableModel extends AbstractTableModel {
             case 1:
                 return commit.getData().getAuthor();
             case 2:
-                return commit.getData().getTimeStamp();
+                long timeStamp = commit.getData().getTimeStamp();
+                return DateConverter.getStringOfDate(timeStamp);
             default:
                 throw new IllegalArgumentException("columnIndex > 2");
         }

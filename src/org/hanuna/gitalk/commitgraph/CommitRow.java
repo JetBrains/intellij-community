@@ -9,6 +9,7 @@ public interface CommitRow {
     public int count();
     public int getIndexCommit(int position);
     public int getMainPosition();
+    public int getMainColorIndex();
     public List<Edge> getUpEdges(int position);
     public List<Edge> getDownEdges(int position);
 }

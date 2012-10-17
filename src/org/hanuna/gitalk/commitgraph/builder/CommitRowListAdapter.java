@@ -49,6 +49,12 @@ public class CommitRowListAdapter implements ReadOnlyList<CommitRow> {
             }
 
             @Override
+            public int getMainColorIndex() {
+                int pos = row.getMainPosition();
+                return row.getNode(pos).getColorIndex();
+            }
+
+            @Override
             public List<Edge> getUpEdges(int position) {
                 if (rowIndex == 0) {
                     return Collections.emptyList();
