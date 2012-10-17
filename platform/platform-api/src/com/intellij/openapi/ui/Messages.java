@@ -819,7 +819,7 @@ public class Messages {
   /**
    * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
-  public static void showInfoMessage(Project project, @Nls String message, @Nls String title) {
+  public static void showInfoMessage(@Nullable Project project, @Nls String message, @Nls String title) {
     if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
