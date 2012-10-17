@@ -89,20 +89,22 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
           final Location location = failedTest.getLocation(myProject);
-          final PsiElement element = location.getPsiElement();
+          if (location != null) {
+            final PsiElement element = location.getPsiElement();
 
-          if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-            String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
-            String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
-            specs.add(target);
-          }
-          else {
-            PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-            String path = location.getVirtualFile().getCanonicalPath();
-            if (pyClass != null)
-              path += "::" + pyClass.getName();
-            path += "::" + failedTest.getName();
-            specs.add(path);
+            if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
+              String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
+              String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
+              specs.add(target);
+            }
+            else {
+              PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+              String path = location.getVirtualFile().getCanonicalPath();
+              if (pyClass != null)
+                path += "::" + pyClass.getName();
+              path += "::" + failedTest.getName();
+              specs.add(path);
+            }
           }
         }
       }
