@@ -56,12 +56,14 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
             message='Error', details=err)
 
     def is_gen(self, test):
-        if hasattr(test.test, "descriptor"):
+        if hasattr(test, "test") and hasattr(test.test, "descriptor"):
             if test.test.descriptor is not None:
                 return True
         return False
 
     def getTestName(self, test):
+        if hasattr(test, "error_context"):
+          return test.error_context
         test_name_full = str(test)
         if self.is_gen(test):
             return test_name_full
