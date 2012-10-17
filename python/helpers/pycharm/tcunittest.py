@@ -83,7 +83,11 @@ class TeamcityTestResult(TestResult):
         return str(test)
       return test._testMethodName
     else:
-      return str(test)
+      test_name = str(test)
+      whitespace_index = test_name.index(" ")
+      if whitespace_index != -1:
+        test_name = test_name[:whitespace_index]
+      return test_name
 
   def getTestId(self, test):
     return test.id
