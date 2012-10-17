@@ -10,6 +10,9 @@ import java.util.Set;
  * @author nik
  */
 public interface ProcessorConfigProfile extends AnnotationProcessingConfiguration {
+  String DEFAULT_PRODUCTION_DIR_NAME = "generated";
+  String DEFAULT_TESTS_DIR_NAME = "generated_tests";
+
   void initFrom(ProcessorConfigProfile other);
 
   String getName();
@@ -49,4 +52,6 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
   String getOption(String key);
 
   void clearProcessorOptions();
+
+  void setOutputRelativeToContentRoot(boolean outputRelativeToContentRoot);
 }

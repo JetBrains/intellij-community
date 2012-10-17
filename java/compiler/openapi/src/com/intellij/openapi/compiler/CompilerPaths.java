@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
 import java.util.Arrays;
@@ -214,10 +214,9 @@ public class CompilerPaths {
 
   @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module) {
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(module.getProject());
-
-    final String sourceDirName = config.getAnnotationProcessingConfiguration(module).getGeneratedSourcesDirectoryName(false);
-    if (!StringUtil.isEmpty(sourceDirName)) {
+    final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
+    final String sourceDirName = config.getGeneratedSourcesDirectoryName(false);
+    if (config.isOutputRelativeToContentRoot()) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {
         return null;
@@ -225,18 +224,15 @@ public class CompilerPaths {
       if (roots.length > 1) {
         Arrays.sort(roots, URLS_COMPARATOR);
       }
-      return VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
+      return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(roots[0]): VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }
 
-    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
-    if (extension == null) {
+
+    final String path = getModuleOutputPath(module, false);
+    if (path == null) {
       return null;
     }
-    final String url = extension.getCompilerOutputUrl();
-    if (url == null) {
-      return null;
-    }
-    return VirtualFileManager.extractPath(url) + "/" + DEFAULT_GENERATED_DIR_NAME + "/" + module.getName().toLowerCase();
+    return StringUtil.isEmpty(sourceDirName)? path : path + "/" + sourceDirName;
   }
   
   @NonNls

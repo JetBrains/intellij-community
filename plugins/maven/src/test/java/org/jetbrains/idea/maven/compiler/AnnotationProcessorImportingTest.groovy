@@ -120,6 +120,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
       <artifactId>maven-compiler-plugin</artifactId>
       <configuration>
         <generatedSourcesDirectory>out/generated</generatedSourcesDirectory>
+
       </configuration>
     </plugin>
   </plugins>

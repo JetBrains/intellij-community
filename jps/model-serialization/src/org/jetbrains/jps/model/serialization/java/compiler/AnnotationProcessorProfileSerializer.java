@@ -50,6 +50,11 @@ public class AnnotationProcessorProfileSerializer {
     final Element srcTestOutput = element.getChild("sourceTestOutputDir");
     profile.setGeneratedSourcesDirectoryName(srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null, true);
 
+    final Element isRelativeToContentRoot = element.getChild("outputRelativeToContentRoot");
+    if (isRelativeToContentRoot != null) {
+      profile.setOutputRelativeToContentRoot(Boolean.parseBoolean(isRelativeToContentRoot.getAttributeValue(VALUE)));
+    }
+
     profile.clearProcessorOptions();
     for (Object optionElement : element.getChildren(OPTION)) {
       final Element elem = (Element)optionElement;
@@ -98,12 +103,16 @@ public class AnnotationProcessorProfileSerializer {
     element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
 
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
-    if (srcDirName != null) {
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
       addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
     }
     final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
-    if (testSrcDirName != null) {
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
       addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
+    }
+
+    if (profile.isOutputRelativeToContentRoot()) {
+      addChild(element, "outputRelativeToContentRoot").setAttribute(VALUE, "true");
     }
 
     final Map<String, String> options = profile.getProcessorOptions();

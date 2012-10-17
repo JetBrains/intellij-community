@@ -37,8 +37,9 @@ public class Diff {
     final String[] strings2 = LineTokenizer.tokenize(after, false);
     return buildChanges(strings1, strings2);
   }
-  
-  public static <T> Change buildChanges(T[] objects1, T[] objects2) throws FilesTooBigForDiffException {
+
+  @Nullable
+  public static <T> Change buildChanges(@NotNull T[] objects1, @NotNull T[] objects2) throws FilesTooBigForDiffException {
 
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
@@ -180,6 +181,7 @@ public class Diff {
       skip(startShift, startShift);
     }
 
+    @Override
     public void addChange(int first, int second) {
       Change change = new Change(myIndex1, myIndex2, first, second, null);
       if (myLastChange != null) myLastChange.link = change;
@@ -193,6 +195,7 @@ public class Diff {
       myIndex2 += second;
     }
 
+    @Override
     public void addEqual(int length) {
       skip(length, length);
     }

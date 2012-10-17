@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ package com.intellij.psi;
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
 public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
-
-
   /**
    * Returns the type corresponding to the <code>this</code> keyword in the code fragment.
    *
@@ -107,7 +105,7 @@ public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
      *
      * @param declaration the referenced declaration.
      * @param place the location of the reference to the declaration.
-     * @return the visibility of the declaraion.
+     * @return the visibility of the declaration.
      */
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
@@ -162,5 +160,4 @@ public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
      */
     boolean isHandledException(PsiClassType exceptionType);
   }
-
 }

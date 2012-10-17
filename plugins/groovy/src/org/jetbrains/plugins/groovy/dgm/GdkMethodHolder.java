@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -101,8 +102,8 @@ public class GdkMethodHolder {
 
     for (String superType : ResolveUtil.getAllSuperTypes(qualifierType, project).keySet()) {
       for (PsiMethod method : map.get(superType)) {
-        String originInfo = method.getContainingClass().getName();
-        GrGdkMethod gdk = GrGdkMethodImpl.createGdkMethod(method, myStatic, originInfo);
+        String info = GdkMethodUtil.generateOriginInfo(method);
+        GrGdkMethod gdk = GrGdkMethodImpl.createGdkMethod(method, myStatic, info);
         if (!processor.execute(gdk, state)) {
           return false;
         }

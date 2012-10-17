@@ -1879,7 +1879,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private LookupImpl getLookup() {
+  public LookupImpl getLookup() {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
   }
 

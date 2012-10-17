@@ -58,6 +58,7 @@ public class UsageTargetNode extends Node {
     return myTarget.getPresentation().getPresentableText();
   }
 
+  @NotNull
   public UsageTarget getTarget() {
     return myTarget;
   }

@@ -39,7 +39,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean MAKE_PROJECT_ON_SAVE = false;
   public boolean PARALLEL_COMPILATION = false;
   public int COMPILER_PROCESS_HEAP_SIZE = 700;
-  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
+  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-XX:MaxPermSize=150m";
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

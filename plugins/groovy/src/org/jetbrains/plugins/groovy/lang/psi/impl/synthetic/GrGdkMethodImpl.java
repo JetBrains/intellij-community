@@ -38,7 +38,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private static Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
   private final PsiMethod myMethod;
 
-  private GrGdkMethodImpl(PsiMethod method, boolean isStatic, String originInfo) {
+  private GrGdkMethodImpl(PsiMethod method, boolean isStatic, @Nullable String originInfo) {
     super(method.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     myMethod = method;
 
@@ -96,17 +96,6 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   @Override
   public int hashCode() {
     return myMethod.hashCode();
-  }
-
-  @Nullable
-  public static PsiClass inferContainingClassByFirstParameter(PsiMethod method) {
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length < 1) return null;
-
-    PsiType type = parameters[0].getType();
-    if (!(type instanceof PsiClassType)) return null;
-
-    return ((PsiClassType)type).resolve();
   }
 
   @NotNull

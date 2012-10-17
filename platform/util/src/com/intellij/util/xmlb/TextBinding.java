@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TextBinding implements Binding {
   private final Accessor myAccessor;
-  private Binding myBinding;
+  private volatile Binding myBinding;
 
   public TextBinding(final Accessor accessor) {
     myAccessor = accessor;

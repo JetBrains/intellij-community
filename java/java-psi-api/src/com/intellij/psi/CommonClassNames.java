@@ -89,4 +89,5 @@ public interface CommonClassNames {
   String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
   @NonNls String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
   @NonNls String JAVA_IO_FILE = "java.io.File";
+  String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
 }

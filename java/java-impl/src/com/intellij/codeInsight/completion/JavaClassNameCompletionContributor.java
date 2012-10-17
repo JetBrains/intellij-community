@@ -60,12 +60,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   static void addAllClasses(CompletionParameters parameters, final CompletionResultSet _result) {
     CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-    addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        _result.addElement(element);
-      }
-    });
+    addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), _result);
   }
 
   private static boolean mayContainClassName(CompletionParameters parameters) {

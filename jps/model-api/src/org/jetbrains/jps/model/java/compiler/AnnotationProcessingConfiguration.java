@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.java.compiler;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +30,10 @@ public interface AnnotationProcessingConfiguration {
   @NotNull
   String getProcessorPath();
 
-  @Nullable
+  @NotNull
   String getGeneratedSourcesDirectoryName(boolean forTests);
+
+  boolean isOutputRelativeToContentRoot();
 
   @NotNull
   Set<String> getProcessors();

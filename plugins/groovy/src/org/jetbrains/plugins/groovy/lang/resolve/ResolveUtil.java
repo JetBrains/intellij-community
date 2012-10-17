@@ -121,10 +121,9 @@ public class ResolveUtil {
 
   static void issueLevelChangeEvents(PsiScopeProcessor processor, PsiElement run) {
     processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
-    if (run instanceof GrClosableBlock && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor))) {
-      processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
-    }
-    if (run instanceof GrMethod) {
+    if (run instanceof GrClosableBlock && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor)) ||
+        run instanceof PsiClass && !(run instanceof PsiAnonymousClass) ||
+        run instanceof GrMethod && run.getParent() instanceof GroovyFile) {
       processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
     }
   }
