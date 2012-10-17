@@ -241,7 +241,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         final PsiDirectory psiDir = getManager().findDirectory(parent);
         if (psiDir == null) {
           FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-          if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
+          if (indexFacade instanceof NonCheckingFileIndexFacadeMarker
+              || !indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
             return null;
           }
         }
