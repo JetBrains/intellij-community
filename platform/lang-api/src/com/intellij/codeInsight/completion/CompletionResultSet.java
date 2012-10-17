@@ -22,7 +22,7 @@ import java.util.LinkedHashSet;
  *
  * @author peter
  */
-public abstract class CompletionResultSet {
+public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final PrefixMatcher myPrefixMatcher;
   private final Consumer<CompletionResult> myConsumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
@@ -37,6 +37,11 @@ public abstract class CompletionResultSet {
 
   protected Consumer<CompletionResult> getConsumer() {
     return myConsumer;
+  }
+
+  @Override
+  public void consume(LookupElement element) {
+    addElement(element);
   }
 
   /**

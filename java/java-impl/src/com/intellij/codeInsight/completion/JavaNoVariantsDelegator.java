@@ -90,12 +90,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
   private static void suggestCollectionUtilities(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {
     if (StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix())) {
       for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        new CollectionsUtilityMethodsProvider(position, info.getType(), info.getDefaultType(), new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            result.addElement(element);
-          }
-        }).addCompletions(true);
+        new CollectionsUtilityMethodsProvider(position, info.getType(), info.getDefaultType(), result).addCompletions(true);
       }
     }
   }
