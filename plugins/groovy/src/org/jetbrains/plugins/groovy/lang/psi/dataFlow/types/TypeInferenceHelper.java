@@ -74,42 +74,6 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  public static PsiType getInferredTypeOld(@NotNull final GrReferenceExpression refExpr) {
-    return RecursionManager.doPreventingRecursion(refExpr, true, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
-        if (scope == null) return null;
-
-        final Instruction[] flow = scope.getControlFlow();
-        ReadWriteVariableInstruction instruction = ControlFlowUtils.findRWInstruction(refExpr, flow);
-        if (instruction == null) return null;
-
-        if (instruction.isWrite()) {
-          return getInitializerType(refExpr);
-        }
-
-        final DFAType type = getInferredType(refExpr.getReferenceName(), instruction, flow, scope, new HashSet<MixinTypeInstruction>());
-        return type == null ? null : type.getResultType();
-      }
-    });
-  }
-
-  @Nullable
-  public static PsiType getInferredTypeOld(@NotNull PsiElement place, String variableName) {
-    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
-    if (scope == null) return null;
-
-    final Instruction[] flow = scope.getControlFlow();
-    Instruction instruction = ControlFlowUtils.findNearestInstruction(place, flow);
-    if (instruction == null) return null;
-
-    final DFAType type = getInferredType(variableName, instruction, flow, scope, new HashSet<MixinTypeInstruction>());
-    return type != null ? type.getResultType() : null;
-  }
-
-
-  @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
@@ -144,13 +108,10 @@ public class TypeInferenceHelper {
   @Nullable
   private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
     final Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> pair = getDefUseMaps(scope);
-
-    List<DefinitionMap> dfaResult = pair.second;
-    if (dfaResult == null) return null;
+    if (pair == null) return null;
 
     final int varIndex = pair.first.getVarIndex(varName);
-
-    final DefinitionMap allDefs = dfaResult.get(instruction.num());
+    final DefinitionMap allDefs = pair.second.get(instruction.num());
     final int[] varDefs = allDefs.getDefinitions(varIndex);
     if (varDefs == null) return null;
 
@@ -169,6 +130,7 @@ public class TypeInferenceHelper {
     return result;
   }
 
+  @Nullable
   private static Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> getDefUseMaps(final GrControlFlowOwner scope) {
     return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>>() {
       @Override
@@ -188,8 +150,10 @@ public class TypeInferenceHelper {
               }
             }
             else if (instruction instanceof ArgumentInstruction) {
-              final int varIndex = getVarIndex(((ArgumentInstruction)instruction).getVariableName());
-              m.registerDef(instruction, varIndex);
+              String variableName = ((ArgumentInstruction)instruction).getVariableName();
+              if (variableName != null) {
+                m.registerDef(instruction, getVarIndex(variableName));
+              }
             }
             else {
               super.fun(m, instruction);
@@ -199,7 +163,8 @@ public class TypeInferenceHelper {
         final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
         final DFAEngine<DefinitionMap> engine = new DFAEngine<DefinitionMap>(flow, dfaInstance, lattice);
         final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
-        return Result.create(Pair.create(dfaInstance, dfaResult), PsiModificationTracker.MODIFICATION_COUNT);
+        Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> result = dfaResult == null ? null : Pair.create(dfaInstance, dfaResult);
+        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
@@ -401,7 +366,13 @@ public class TypeInferenceHelper {
 
       TypeDfaState cache = varTypes.get().get(instruction.num());
       if (!cache.containsVariable(variableName)) {
-        Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName);
+        Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse = getDefUseMaps(scope);
+        if (defUse == null) {
+          tooComplex.add(instruction);
+          return null;
+        }
+
+        Set<Instruction> interesting = collectRequiredInstructions(instruction, variableName, defUse);
         List<TypeDfaState> dfaResult = performTypeDfa(scope, flow, interesting);
         if (dfaResult == null) {
           tooComplex.addAll(interesting);
@@ -426,9 +397,9 @@ public class TypeInferenceHelper {
       return dfaType == null ? null : dfaType.negate(instruction);
     }
 
-    private Set<Instruction> collectRequiredInstructions(Instruction instruction, String variableName) {
-      Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse = getDefUseMaps(scope);
-
+    private Set<Instruction> collectRequiredInstructions(@NotNull Instruction instruction,
+                                                         @NotNull String variableName,
+                                                         @NotNull Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse) {
       Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
       LinkedList<Pair<Instruction,String>> queue = ContainerUtil.newLinkedList();
       queue.add(Pair.create(instruction, variableName));
@@ -445,22 +416,26 @@ public class TypeInferenceHelper {
     }
 
     private Set<Pair<Instruction,String>> findDependencies(Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse,
-                                                           Instruction insn,
-                                                           String varName) {
-      int[] definitions = defUse.second.get(insn.num()).getDefinitions(defUse.first.getVarIndex(varName));
+                                                           @NotNull Instruction insn,
+                                                           @NotNull String varName) {
+      DefinitionMap definitionMap = defUse.second.get(insn.num());
+      int varIndex = defUse.first.getVarIndex(varName);
+      int[] definitions = definitionMap.getDefinitions(varIndex);
       if (definitions == null) return Collections.emptySet();
 
-      HashSet<Pair<Instruction, String>> pairs = ContainerUtil.newHashSet();
+      LinkedHashSet<Pair<Instruction, String>> pairs = ContainerUtil.newLinkedHashSet();
       for (int defIndex : definitions) {
         Instruction write = flow[defIndex];
         pairs.add(Pair.create(write, varName));
         PsiElement statement = findDependencyScope(write.getElement());
-        pairs.addAll(findAllInstructionsInside(statement));
+        if (statement != null) {
+          pairs.addAll(findAllInstructionsInside(statement));
+        }
       }
       return pairs;
     }
 
-    private List<Pair<Instruction, String>> findAllInstructionsInside(PsiElement scope) {
+    private List<Pair<Instruction, String>> findAllInstructionsInside(@NotNull PsiElement scope) {
       final List<Pair<Instruction, String>> result = ContainerUtil.newArrayList();
       scope.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
@@ -480,7 +455,7 @@ public class TypeInferenceHelper {
     }
 
     @Nullable
-    private static PsiElement findDependencyScope(PsiElement element) {
+    private static PsiElement findDependencyScope(@Nullable PsiElement element) {
       return PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement element) {
