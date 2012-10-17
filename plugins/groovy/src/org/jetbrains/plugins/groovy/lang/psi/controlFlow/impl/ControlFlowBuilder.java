@@ -385,15 +385,19 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       assertion.accept(this);
 
       InstructionImpl positiveHead = myHead;
-      interruptFlow();
 
       List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(assertStatement);
-      reduceAllNegationsIntoInstruction(assertStatement, negations);
+      if (!negations.isEmpty()) {
+        interruptFlow();
+        reduceAllNegationsIntoInstruction(assertStatement, negations);
+      }
 
       GrExpression errorMessage = assertStatement.getErrorMessage();
       if (errorMessage != null) {
         errorMessage.accept(this);
       }
+      addNode(new ThrowingInstruction(assertStatement));
+
       final PsiType type = TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, assertStatement);
       ExceptionInfo info = findCatch(type);
       if (info != null) {

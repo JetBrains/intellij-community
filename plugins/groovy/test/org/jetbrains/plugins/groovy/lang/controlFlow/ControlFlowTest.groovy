@@ -58,6 +58,9 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testMayBeStaticWithCondition() {doTest()}
   public void testAssert0() { doTest() }
   public void testAssert1() { doTest() }
+  public void testAssert2() { doTest() }
+  public void testAssert3() { doTest() }
+  public void testAssert4() { doTest() }
 
   public void doTest() {
     final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
