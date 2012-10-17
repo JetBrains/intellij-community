@@ -7,11 +7,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.util.List;
 
-import static org.hanuna.gitalk.swingui.GraphCell.CIRCLE_RADIUS;
-import static org.hanuna.gitalk.swingui.GraphCell.HEIGHT_CELL;
-import static org.hanuna.gitalk.swingui.GraphCell.WIDTH_NODE;
+import static org.hanuna.gitalk.swingui.GraphCell.*;
 
 /**
  * @author erokhins
@@ -32,50 +31,51 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         return this;
     }
 
-    private void paintUpLine(Graphics g, int from, int to, Color color) {
+    private void paintUpLine(Graphics2D g2, int from, int to, Color color) {
         int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
         int y1 = HEIGHT_CELL / 2;
         int x2 = WIDTH_NODE * to + WIDTH_NODE / 2;
         int y2 = - HEIGHT_CELL / 2;
-        g.setColor(color);
-        g.drawLine(x1, y1, x2, y2);
+        g2.setColor(color);
+        g2.drawLine(x1, y1, x2, y2);
     }
 
-    private void paintDownLine(Graphics g, int from, int to, Color color) {
+    private void paintDownLine(Graphics2D g2, int from, int to, Color color) {
         int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
         int y1 = HEIGHT_CELL / 2;
         int x2 = WIDTH_NODE * to + WIDTH_NODE / 2;
         int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
-        g.setColor(color);
-        g.drawLine(x1, y1, x2, y2);
+        g2.setColor(color);
+        g2.drawLine(x1, y1, x2, y2);
     }
+
 
     private void paintCircle(Graphics2D g2, int position, Color color) {
         int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
         int y0 = HEIGHT_CELL / 2;
-        g2.setColor(color);
         int r = CIRCLE_RADIUS;
-
-        g2.setStroke(new BasicStroke(3F));
-        g2.drawOval(x0 - r, y0 - r, 2 * r, 2 * r);
+        Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
+        g2.setColor(color);
+        g2.fill(circle);
     }
 
     public void paint(Graphics g) {
         super.paint(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setStroke(new BasicStroke(2F));
+        g2.setStroke(new BasicStroke(THICK_LINE));
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         CommitRow commitRow = data.getCommitRow();
         for (int i = 0; i < commitRow.count(); i++) {
             List<Edge> edges = commitRow.getDownEdges(i);
             for (int j = edges.size() - 1; j >= 0; j--) {
                 Edge edge = edges.get(j);
-                paintDownLine(g, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
+                paintDownLine(g2, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
             }
 
             edges = commitRow.getUpEdges(i);
             for (int j = edges.size() - 1; j >= 0; j--) {
                 Edge edge = edges.get(j);
-                paintUpLine(g, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
+                paintUpLine(g2, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
             }
         }
         int mainPos = commitRow.getMainPosition();

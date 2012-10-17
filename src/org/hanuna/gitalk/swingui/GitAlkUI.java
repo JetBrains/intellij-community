@@ -14,6 +14,7 @@ public class GitAlkUI extends JFrame {
 
     public GitAlkUI(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setTitle("GitAlk");
         JTable table = new JTable(new CommitTableModel(commitRows, commits));
         table.setDefaultRenderer(GraphCell.class, new GraphTableCellRender());
         table.setRowHeight(GraphCell.HEIGHT_CELL);
