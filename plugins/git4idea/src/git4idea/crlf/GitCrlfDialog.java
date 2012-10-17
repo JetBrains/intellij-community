@@ -52,7 +52,7 @@ public class GitCrlfDialog extends DialogWrapper {
 
     setOKButtonText("Fix and Commit");
     setCancelButtonText("Cancel");
-    setTitle("Line separators warning");
+    setTitle("Line Separators Warning");
     getCancelAction().putValue(DialogWrapper.FOCUSED_ACTION, true);
 
     init();
