@@ -541,7 +541,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
-      myConfigurable.reset();
+      if (myConfigurable instanceof CodeStyleAbstractConfigurable) {
+        // when a predefined style is chosen and the configurable is wrapped in a tab,
+        // we apply it to CLONED code style settings and then pass them to this method to reset,
+        // usual reset() won't work in such case
+        ((CodeStyleAbstractConfigurable)myConfigurable).reset(settings);
+      }
+      else {
+        // todo: support   for other configurables
+        myConfigurable.reset();
+      }
     }
   }
 
