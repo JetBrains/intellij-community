@@ -568,6 +568,15 @@ def method(List<? extends Tx> t) {
 ''', 'Tx')
   }
 
+  void testAssert() {
+    doTest('''\
+def foo(def var) {
+  assert var instanceof String
+  va<caret>r.isEmpty()
+}
+''', 'java.lang.String')
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression

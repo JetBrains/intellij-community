@@ -378,25 +378,34 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitAssertStatement(GrAssertStatement assertStatement) {
+    final InstructionImpl assertInstruction = startNode(assertStatement);
+
     final GrExpression assertion = assertStatement.getAssertion();
     if (assertion != null) {
-      myConditions.push(addNodeAndCheckPending(new ConditionInstruction(assertion)));
       assertion.accept(this);
-      final InstructionImpl assertInstruction = startNode(assertStatement);
+
+      InstructionImpl positiveHead = myHead;
+      interruptFlow();
+
+      List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(assertStatement);
+      reduceAllNegationsIntoInstruction(assertStatement, negations);
+
       GrExpression errorMessage = assertStatement.getErrorMessage();
       if (errorMessage != null) {
         errorMessage.accept(this);
       }
-      final PsiType type = TypesUtil.createTypeByFQClassName("java.lang.AssertionError", assertStatement);
+      final PsiType type = TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, assertStatement);
       ExceptionInfo info = findCatch(type);
       if (info != null) {
-        info.myThrowers.add(assertInstruction);
+        info.myThrowers.add(myHead);
       }
       else {
-        addPendingEdge(null, assertInstruction);
+        addPendingEdge(null, myHead);
       }
-      finishNode(assertInstruction);
+
+      myHead = positiveHead;
     }
+    finishNode(assertInstruction);
   }
 
   public void visitThrowStatement(GrThrowStatement throwStatement) {
@@ -525,7 +534,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return instruction;
     }
     else if (negations.size() == 1) {
-      return negations.get(0);
+      GotoInstruction instruction = negations.get(0);
+      myHead = instruction;
+      return instruction;
     }
     return null;
   }
