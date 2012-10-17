@@ -79,7 +79,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     initModuleWizard(project, null);
   }
 
-  private void initModuleWizard(final Project project, @Nullable final String defaultPath) {
+  private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
     myWizardContext = new WizardContext(project);
     if (defaultPath != null) {
       myWizardContext.setProjectFileDirectory(defaultPath);

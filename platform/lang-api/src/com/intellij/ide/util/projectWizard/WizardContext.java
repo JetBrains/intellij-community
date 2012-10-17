@@ -59,7 +59,7 @@ public class WizardContext {
     void nextStepRequested();
   }
 
-  public WizardContext(Project project) {
+  public WizardContext(@Nullable Project project) {
     myProject = project;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
