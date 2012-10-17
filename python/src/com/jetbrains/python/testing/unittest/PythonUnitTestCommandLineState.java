@@ -79,6 +79,8 @@ public class PythonUnitTestCommandLineState extends
   protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
+    if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
+      script_params.addParameter(myConfig.getParams());
     script_params.addParameter(String.valueOf(myConfig.isPureUnittest()));
   }
 }

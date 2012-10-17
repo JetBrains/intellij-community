@@ -22,6 +22,9 @@ public class PythonUnitTestRunConfiguration extends
   protected String myTitle = "Unittest";
   protected String myPluralTitle = "Unittests";
 
+  private String myParams = "";
+  private boolean useParam = false;
+
   public PythonUnitTestRunConfiguration(RunConfigurationModule module,
                                         ConfigurationFactory configurationFactory,
                                         String name) {
@@ -47,12 +50,16 @@ public class PythonUnitTestRunConfiguration extends
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myIsPureUnittest = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PUREUNITTEST"));
+    myParams = JDOMExternalizerUtil.readField(element, "PARAMS");
+    useParam = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PARAM"));
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "PUREUNITTEST", String.valueOf(myIsPureUnittest));
+    JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
+    JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
   }
 
   @Override
@@ -68,6 +75,8 @@ public class PythonUnitTestRunConfiguration extends
   public static void copyParams(PythonUnitTestRunConfigurationParams source, PythonUnitTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
     target.setPureUnittest(source.isPureUnittest());
+    target.setParams(source.getParams());
+    target.useParam(source.useParam());
   }
 
   @Override
@@ -77,5 +86,21 @@ public class PythonUnitTestRunConfiguration extends
 
   public void setPureUnittest(boolean isPureUnittest) {
     myIsPureUnittest = isPureUnittest;
+  }
+
+  public String getParams() {
+    return myParams;
+  }
+
+  public void setParams(String pattern) {
+    myParams = pattern;
+  }
+
+  public boolean useParam() {
+    return useParam;
+  }
+
+  public void useParam(boolean useParam) {
+    this.useParam = useParam;
   }
 }

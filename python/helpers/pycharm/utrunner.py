@@ -90,9 +90,14 @@ if __name__ == "__main__":
     all = unittest.TestSuite()
     pure_unittest = True
 
+  options = {}
   for arg in sys.argv[1:-1]:
     arg = arg.strip()
     if len(arg) == 0:
+      continue
+
+    if arg.startswith("--"):
+      options[arg[2:]] = True
       continue
 
     a = arg.split("::")
@@ -144,4 +149,4 @@ if __name__ == "__main__":
 
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")
-  TeamcityTestRunner().run(all)
+  TeamcityTestRunner().run(all, **options)

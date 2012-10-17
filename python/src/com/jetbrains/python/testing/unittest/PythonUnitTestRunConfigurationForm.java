@@ -44,6 +44,8 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myTestRunConfigurationForm.getAdditionalPanel().add(myIsPureUnittest);
     TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
     border.setTitle(PyBundle.message("runcfg.unittest.display_name"));
+    myTestRunConfigurationForm.setParamsVisible();
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(configuration.useParam());
 
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
@@ -61,6 +63,24 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   @Override
   public void setPureUnittest(boolean isPureUnittest) {
     myIsPureUnittest.setSelected(isPureUnittest);
+  }
+
+  public String getParams() {
+    return myTestRunConfigurationForm.getParams();
+  }
+
+  public void setParams(String params) {
+    myTestRunConfigurationForm.setParams(params);
+  }
+
+  @Override
+  public boolean useParam() {
+    return myTestRunConfigurationForm.getParamCheckBox().isSelected();
+  }
+
+  @Override
+  public void useParam(boolean useParam) {
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(useParam);
   }
 
   public JComponent getPanel() {

@@ -36,8 +36,8 @@ def smart_str(s):
 class TeamcityTestResult(TestResult):
   def __init__(self, stream=sys.stdout, **kwargs):
     TestResult.__init__(self)
-    if kwargs.has_key("failfast"):
-      self.failfast = kwargs["failfast"]
+    for arg, value in kwargs.items():
+      setattr(self, arg, value)
     self.output = stream
     self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
     self.messages.testMatrixEntered()
