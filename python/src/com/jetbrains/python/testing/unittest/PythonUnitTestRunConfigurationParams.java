@@ -9,4 +9,10 @@ public interface PythonUnitTestRunConfigurationParams{
   AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams();
   boolean isPureUnittest();
   void setPureUnittest(boolean isPureUnittest);
+
+
+  String getParams();
+  void setParams(String params);
+  boolean useParam();
+  void useParam(boolean useParam);
 }

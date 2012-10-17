@@ -15,7 +15,7 @@ if not manage_file:
 try:
   __import__(manage_file)
 except ImportError:
-  print ("There is no such manage file " + str(manage_file))
+  print ("There is no such manage file " + str(manage_file) + "\n")
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
@@ -49,6 +49,9 @@ class PycharmTestCommand(Command):
       try:
         from south.management.commands import MigrateAndSyncCommand
         management._commands['syncdb'] = MigrateAndSyncCommand()
+        from south.hacks import hacks
+        if hasattr(hacks, "patch_flush_during_test_db_creation"):
+          hacks.patch_flush_during_test_db_creation()
       except ImportError:
         management._commands['syncdb'] = 'django.core'
 
@@ -58,9 +61,7 @@ class PycharmTestCommand(Command):
     TestRunner = self.get_runner()
 
     if hasattr(TestRunner, 'func_name'):
-      # Pre 1.2 test runners were just functions,
-      # and did not support the 'failfast' option.
-      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive)
+      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive, failfast=failfast)
     else:
       test_runner = TestRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
       failures = test_runner.run_tests(test_labels)
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     if custom_settings:
       setup_environ(custom_settings)
   except ImportError:
-    print ("There is no such settings file " + str(settings_file))
+    print ("There is no such settings file " + str(settings_file) + "\n")
 
   try:
     subcommand = sys.argv[1]
