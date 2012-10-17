@@ -567,6 +567,16 @@ public class CvsUtil {
     }
   }
 
+  public static String getOriginalRevisionForFile(VirtualFile file) {
+    try {
+      return Conflicts.readFrom(getConflictsFile(CvsVfsUtil.getFileFor(file))).getOriginalRevisionFor(file.getName());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   public static void resolveConflict(VirtualFile vFile) {
     File file = CvsVfsUtil.getFileFor(vFile);
     removeConflict(file);
