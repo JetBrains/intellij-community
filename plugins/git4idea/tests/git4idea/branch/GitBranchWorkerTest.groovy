@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.LineSeparator
+import com.intellij.util.text.CharArrayUtil
 import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.config.GitVersion
@@ -773,10 +774,23 @@ class GitBranchWorkerTest {
   }
 
   private static void assertContent(String expectedContent, String actual) {
-    expectedContent = StringUtil.convertLineSeparators(expectedContent, LineSeparator.getSystemLineSeparator().separatorString).trim()
+    expectedContent = StringUtil.convertLineSeparators(expectedContent, detectLineSeparators(actual).separatorString).trim()
     actual = actual.trim()
     assertEquals String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
                                substWhitespaces(expectedContent), substWhitespaces(actual)), expectedContent, actual
+  }
+
+  private static LineSeparator detectLineSeparators(String actual) {
+    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(actual);
+    for (char c : chars) {
+      if (c == '\r') {
+        return LineSeparator.CRLF;
+      }
+      else if (c == '\n') {   // if we are here, there was no \r before
+        return LineSeparator.LF;
+      }
+    }
+    return LineSeparator.LF;
   }
 
   private static String substWhitespaces(String s) {
