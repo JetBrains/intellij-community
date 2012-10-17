@@ -67,9 +67,12 @@ if PYVERSION > [1, 4, 0]:
     items[nodeid] = name
 
   def pytest_runtest_logreport(report):
-    if report.when != "call":
-      return
     name = items[report.nodeid]
+    if report.when != "call":
+      if report.when == "setup" and report.skipped:
+        messages.testIgnored(name)
+      return
+
     if report.failed:
       messages.testFailed(name, details=report.longrepr)
     elif report.skipped:
