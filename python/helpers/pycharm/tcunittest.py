@@ -98,7 +98,7 @@ class TeamcityTestResult(TestResult):
   def addError(self, test, err):
     TestResult.addError(self, test, err)
 
-    err = self.formatErr(err)
+    err = self._exc_info_to_string(err, test)
 
     self.messages.testError(self.getTestName(test),
                             message='Error', details=err)
@@ -127,7 +127,7 @@ class TeamcityTestResult(TestResult):
       second = self._unescape(self_find_second)
     else:
       first = second = ""
-    err = self.formatErr(err)
+    err = self._exc_info_to_string(err, test)
 
     self.messages.testFailed(self.getTestName(test),
                              message='Failure', details=err, expected=first, actual=second)
