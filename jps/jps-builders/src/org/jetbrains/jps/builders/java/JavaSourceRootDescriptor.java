@@ -3,7 +3,6 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -15,7 +14,7 @@ import java.io.FileFilter;
 * @author Eugene Zhuravlev
 *         Date: 1/3/12
 */
-public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
+public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   @NotNull
   public final File root;
   @NotNull
@@ -57,7 +56,7 @@ public final class JavaSourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public BuildTarget<?> getTarget() {
+  public ModuleBuildTarget getTarget() {
     return target;
   }
 

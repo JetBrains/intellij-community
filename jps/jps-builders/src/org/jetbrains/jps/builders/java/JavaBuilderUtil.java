@@ -164,7 +164,8 @@ public class JavaBuilderUtil {
     final List<Pair<File, JpsModule>> result = new ArrayList<Pair<File, JpsModule>>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
+                                                                                                                                 file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
@@ -176,7 +177,8 @@ public class JavaBuilderUtil {
     final Set<JpsModule> chunkModules = chunk.getModules();
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, file);
+        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
+                                                                                                                                 file);
         if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
           return true;
         }
@@ -250,7 +252,7 @@ public class JavaBuilderUtil {
 
     @Override
     public boolean accept(File file) {
-      final JavaSourceRootDescriptor rd = myContext.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(myContext, file);
+      final JavaSourceRootDescriptor rd = myContext.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(myContext, file);
       if (rd == null) {
         return true;
       }
