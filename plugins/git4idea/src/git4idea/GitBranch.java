@@ -109,9 +109,9 @@ public class GitBranch extends GitReference {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (!super.equals(o)) {
+      return false;
+    }
 
     // Reusing equals from super: only the name is important:
     // branches are considered equal even if they point to different commits.
