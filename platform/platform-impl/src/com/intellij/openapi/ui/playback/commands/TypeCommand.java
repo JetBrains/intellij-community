@@ -20,6 +20,7 @@ import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public abstract class TypeCommand extends AbstractCommand {
@@ -30,17 +31,17 @@ public abstract class TypeCommand extends AbstractCommand {
     super(text, line);
     }
 
-  protected void type(Robot robot, int code, @JdkConstants.InputEventMask int modfiers) {
-    type(robot, KeyStroke.getKeyStroke(code, modfiers));
+  protected void type(Robot robot, int code, @JdkConstants.InputEventMask int modifiers) {
+    type(robot, KeyStroke.getKeyStroke(code, modifiers));
   }
 
   protected void type(Robot robot, KeyStroke keyStroke) {
     assert !SwingUtilities.isEventDispatchThread() : "Robot playback must not be in EDT";
 
-    boolean shift = (keyStroke.getModifiers() & KeyEvent.SHIFT_MASK) > 0;
-    boolean alt = (keyStroke.getModifiers() & KeyEvent.ALT_MASK) > 0;
-    boolean control = (keyStroke.getModifiers() & KeyEvent.CTRL_MASK) > 0;
-    boolean meta = (keyStroke.getModifiers() & KeyEvent.META_MASK) > 0;
+    boolean shift = (keyStroke.getModifiers() & InputEvent.SHIFT_MASK) > 0;
+    boolean alt = (keyStroke.getModifiers() & InputEvent.ALT_MASK) > 0;
+    boolean control = (keyStroke.getModifiers() & InputEvent.CTRL_MASK) > 0;
+    boolean meta = (keyStroke.getModifiers() & InputEvent.META_MASK) > 0;
 
     if (shift) {
       robot.keyPress(KeyEvent.VK_SHIFT);

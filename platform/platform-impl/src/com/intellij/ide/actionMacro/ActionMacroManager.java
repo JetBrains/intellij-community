@@ -54,6 +54,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -357,7 +358,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     registerActions();
   }
 
-  private void addRecordedMacroWithName(String macroName) {
+  private void addRecordedMacroWithName(@Nullable String macroName) {
     if (macroName != null) {
       myRecordingMacro.setName(macroName);
       myMacros.add(myRecordingMacro);
@@ -411,15 +412,17 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     myIsPlaying = true;
 
-    runner.run().doWhenDone(new Runnable() {
-      public void run() {
-        frame.getStatusBar().setInfo("Script execution finished");
-      }
-    }).doWhenProcessed(new Runnable() {
-      public void run() {
-        myIsPlaying = false;
-      }
-    });
+    runner.run()
+      .doWhenDone(new Runnable() {
+        public void run() {
+          frame.getStatusBar().setInfo("Script execution finished");
+        }
+      })
+      .doWhenProcessed(new Runnable() {
+        public void run() {
+          myIsPlaying = false;
+        }
+      });
   }
 
   public boolean isRecording() {
@@ -546,38 +549,38 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     public void postProcessKeyEvent(KeyEvent e) {
-      final boolean waiting = !IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
+      if (e.getID() != KeyEvent.KEY_PRESSED) return;
+      if (myLastActionInputEvent.contains(e)) {
+        myLastActionInputEvent.remove(e);
+        return;
+      }
+      final boolean modifierKeyIsPressed = e.getKeyCode() == KeyEvent.VK_CONTROL ||
+                                           e.getKeyCode() == KeyEvent.VK_ALT ||
+                                           e.getKeyCode() == KeyEvent.VK_META ||
+                                           e.getKeyCode() == KeyEvent.VK_SHIFT;
+      if (modifierKeyIsPressed) return;
 
+      final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
       final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && UIUtil.isReallyTypedEvent(e);
-      boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
-      boolean plainType = isChar && !hasActionModifiers;
+      final boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
+      final boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
-      boolean noModifierKeyIsPressed = e.getKeyCode() != KeyEvent.VK_CONTROL
-                                       && e.getKeyCode() != KeyEvent.VK_ALT
-                                       && e.getKeyCode() != KeyEvent.VK_META
-                                       && e.getKeyCode() != KeyEvent.VK_SHIFT;
-
-      if (e.getID() == KeyEvent.KEY_PRESSED && (plainType && !waiting) && !isEnter) {
+      if (plainType && ready && !isEnter) {
         myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       }
-      else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
-        if ((!myLastActionInputEvent.contains(e) && !waiting) || isEnter) {
-          final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
+      else if ((!plainType && ready) || isEnter) {
+        final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
 
-          final int pressed = stroke.indexOf("pressed");
-          String key = stroke.substring(pressed + "pressed".length());
-          String modifiers = stroke.substring(0, pressed);
+        final int pressed = stroke.indexOf("pressed");
+        String key = stroke.substring(pressed + "pressed".length());
+        String modifiers = stroke.substring(0, pressed);
 
-          String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
+        String shortcut = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
 
-          myRecordingMacro.appendShortcut(ready);
-          notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
-          if (!isEnter) {
-            myLastActionInputEvent.remove(e);
-          }
-        }
+        myRecordingMacro.appendShortcut(shortcut);
+        notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
       }
     }
   }

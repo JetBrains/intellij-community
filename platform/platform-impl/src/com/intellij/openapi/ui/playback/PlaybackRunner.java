@@ -270,46 +270,45 @@ public class PlaybackRunner {
     }
   }
 
-  private PlaybackCommand createCommand(String string, int line, File scriptDir) {
+  private static PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
-    String actualString = string;
 
-    if (actualString.startsWith(RegistryValueCommand.PREFIX)) {
+    if (string.startsWith(RegistryValueCommand.PREFIX)) {
       cmd = new RegistryValueCommand(string, line);
-    } else if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
+    } else if (string.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       cmd = new EmptyCommand(line);
     }
-    else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
+    else if (string.startsWith(KeyCodeTypeCommand.PREFIX)) {
       cmd = new KeyCodeTypeCommand(string, line);
     }
-    else if (actualString.startsWith(DelayCommand.PREFIX)) {
+    else if (string.startsWith(DelayCommand.PREFIX)) {
       cmd = new DelayCommand(string, line);
     }
-    else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
+    else if (string.startsWith(KeyShortcutCommand.PREFIX)) {
       cmd = new KeyShortcutCommand(string, line);
     }
-    else if (actualString.startsWith(ActionCommand.PREFIX)) {
+    else if (string.startsWith(ActionCommand.PREFIX)) {
       cmd = new ActionCommand(string, line);
     }
-    else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
+    else if (string.startsWith(ToggleActionCommand.PREFIX)) {
       cmd = new ToggleActionCommand(string, line);
     }
-    else if (actualString.startsWith(StopCommand.PREFIX)) {
+    else if (string.startsWith(StopCommand.PREFIX)) {
       cmd = new StopCommand(string, line);
     }
-    else if (actualString.startsWith(AssertFocused.PREFIX)) {
+    else if (string.startsWith(AssertFocused.PREFIX)) {
       return new AssertFocused(string, line);
     }
-    else if (actualString.startsWith(CallCommand.PREFIX)) {
+    else if (string.startsWith(CallCommand.PREFIX)) {
       cmd = new CallCommand(string, line);
     }
-    else if (actualString.startsWith(CdCommand.PREFIX)) {
+    else if (string.startsWith(CdCommand.PREFIX)) {
       cmd = new CdCommand(string, line);
     }
-    else if (actualString.startsWith(PushStage.PREFIX)) {
+    else if (string.startsWith(PushStage.PREFIX)) {
       cmd = new PushStage(string, line);
     }
-    else if (actualString.startsWith(PopStage.PREFIX)) {
+    else if (string.startsWith(PopStage.PREFIX)) {
       cmd = new PopStage(string, line);
     }
     else {
