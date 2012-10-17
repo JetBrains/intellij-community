@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package git4idea.test
+
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.mock.MockLocalFileSystem
@@ -173,7 +175,7 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Nullable
   @Override
   public VirtualFile getVirtualFileByPath(@NotNull String path) {
-    return new GitMockVirtualFile(path);
+    return new MockVirtualFile(path);
   }
 
   @NotNull

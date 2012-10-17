@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package com.intellij.dvcs.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.fileTypes.FileType
@@ -25,11 +25,13 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 /**
- * VirtualFile test implementation based on {@link java.io.File}.
+ * VirtualFile implementation for tests based on {@link java.io.File}.
+ * Not reusing {@link com.intellij.mock.MockVirtualFile}, because the latter holds everything in memory, which is fast, but requires
+ * synchronization with the real file system.
  *
  * @author Kirill Likhodedov
  */
-class GitMockVirtualFile extends VirtualFile {
+class MockVirtualFile extends VirtualFile {
 
   private static VirtualFileSystem ourFileSystem = new MockVirtualFileSystem()
 
@@ -37,7 +39,7 @@ class GitMockVirtualFile extends VirtualFile {
 
   @NotNull
   static VirtualFile fromPath(@NotNull String absolutePath) {
-    return new GitMockVirtualFile(FileUtil.toSystemIndependentName(absolutePath))
+    return new MockVirtualFile(FileUtil.toSystemIndependentName(absolutePath))
   }
 
   @NotNull
@@ -50,7 +52,7 @@ class GitMockVirtualFile extends VirtualFile {
     return fromPath(new File(basePath + "/" + relativePath).getCanonicalPath())
   }
 
-  GitMockVirtualFile(@NotNull String path) {
+  MockVirtualFile(@NotNull String path) {
     myPath = FileUtil.toSystemIndependentName(path);
   }
 
@@ -90,12 +92,12 @@ class GitMockVirtualFile extends VirtualFile {
   @Nullable
   VirtualFile getParent() {
     File parentFile = FileUtil.getParentFile(new File(path))
-    parentFile ? new GitMockVirtualFile(parentFile.path) : null;
+    parentFile ? new MockVirtualFile(parentFile.path) : null;
   }
 
   @Override
   VirtualFile[] getChildren() {
-    new File(path).list().collect { new GitMockVirtualFile("$path/$it") }
+    new File(path).list().collect { new MockVirtualFile("$path/$it") }
   }
 
   @NotNull
@@ -148,7 +150,7 @@ class GitMockVirtualFile extends VirtualFile {
   boolean equals(o) {
     if (this.is(o)) return true
     if (getClass() != o.class) return false
-    GitMockVirtualFile file = (GitMockVirtualFile)o
+    MockVirtualFile file = (MockVirtualFile)o
     if (myPath != file.myPath) return false
     return true
   }

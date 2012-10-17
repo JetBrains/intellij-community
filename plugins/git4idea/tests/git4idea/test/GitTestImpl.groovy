@@ -34,7 +34,7 @@ import java.lang.reflect.Method
 /**
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
+@Mixin(Executor)
 public class GitTestImpl implements Git {
 
   @NotNull

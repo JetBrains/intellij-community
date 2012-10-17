@@ -15,6 +15,7 @@
  */
 package git4idea.test;
 
+import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -118,13 +119,13 @@ public class GitLightRepository implements GitRepository {
   @NotNull
   @Override
   public VirtualFile getRoot() {
-    return new GitMockVirtualFile(FileUtil.getTempDirectory());
+    return new MockVirtualFile(FileUtil.getTempDirectory());
   }
 
   @NotNull
   @Override
   public VirtualFile getGitDir() {
-    return new GitMockVirtualFile(getRoot().getPath() + "/.git");
+    return new MockVirtualFile(getRoot().getPath() + "/.git");
   }
 
   @NotNull

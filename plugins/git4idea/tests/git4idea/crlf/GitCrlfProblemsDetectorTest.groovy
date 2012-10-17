@@ -15,6 +15,8 @@
  */
 package git4idea.crlf
 
+import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -34,10 +36,10 @@ import static org.junit.Assert.assertTrue
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
+@Mixin(Executor)
 class GitCrlfProblemsDetectorTest {
 
-  private GitMockProject myProject
+  private MockProject myProject
   private String myRootDir
 
   private PlatformFacade myPlatformFacade
@@ -48,7 +50,7 @@ class GitCrlfProblemsDetectorTest {
   @Before
   public void setUp() throws Exception {
     myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new GitMockProject(myRootDir)
+    myProject = new MockProject(myRootDir)
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
 
@@ -60,7 +62,7 @@ class GitCrlfProblemsDetectorTest {
 
     git ("init")
 
-    GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
+    GitRepository repository = GitRepositoryImpl.getLightInstance(new MockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
   }
 
@@ -158,7 +160,7 @@ win6 crlf=input
     assertTrue "Warning should be done, since one of the files has CRLFs and no related attributes",
            GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit,
                                           ["unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"]
-                                                  .collect { it -> GitMockVirtualFile.fromPath(it, myRootDir) as VirtualFile})
+                                                  .collect { it -> MockVirtualFile.fromPath(it, myRootDir) as VirtualFile})
                    .shouldWarn()
   }
 
@@ -185,7 +187,7 @@ win6 crlf=input
   }
 
   private VirtualFile createVirtualFile(String relPath) {
-    return new GitMockVirtualFile(createFile(relPath))
+    return new MockVirtualFile(createFile(relPath))
   }
 
   private String createFile(String relPath) {

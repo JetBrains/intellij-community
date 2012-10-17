@@ -25,7 +25,7 @@ import git4idea.repo.GitRepository
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
+@Mixin(Executor)
 class GitScenarios {
 
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();

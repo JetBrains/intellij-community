@@ -17,9 +17,9 @@ package git4idea.roots
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.test.GitMockProject
-import git4idea.test.GitMockVirtualFile
+import com.intellij.dvcs.test.MockProject
 import git4idea.test.GitTestPlatformFacade
+import com.intellij.dvcs.test.MockVirtualFile
 import org.junit.After
 /**
  * 
@@ -46,11 +46,11 @@ class AbstractGitRootTest {
    */
   Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> contentRoots = []) {
     String projectDir = createDirs(gitRoots)
-    Project project = new GitMockProject(projectDir)
+    Project project = new MockProject(projectDir)
     createProjectStructure(project, projectStructure);
     createProjectStructure(project, contentRoots);
 
-    contentRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << GitMockVirtualFile.fromPath(it, project)}
+    contentRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << MockVirtualFile.fromPath(it, project)}
 
     project
   }

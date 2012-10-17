@@ -33,7 +33,7 @@ import org.junit.Before
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
+@Mixin(Executor)
 class GitLightTest {
 
   private static final String USER_NAME = "John Doe";

@@ -15,6 +15,7 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
@@ -49,7 +50,7 @@ class GitFastTest {
     myProjectDir = FileUtil.createTempDirectory("git", null)
 
     myProject = [
-            getBaseDir: { new GitMockVirtualFile(myProjectDir) }
+            getBaseDir: { new MockVirtualFile(myProjectDir) }
     ] as Project
 
     myPlatformFacade = new GitTestPlatformFacade()

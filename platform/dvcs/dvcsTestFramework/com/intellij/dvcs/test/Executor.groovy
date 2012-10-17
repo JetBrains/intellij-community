@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package com.intellij.dvcs.test
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -25,7 +25,7 @@ import git4idea.repo.GitRepository
  *
  * @author Kirill Likhodedov
  */
-class GitExecutor {
+class Executor {
 
   private static String ourCurrentDir
 

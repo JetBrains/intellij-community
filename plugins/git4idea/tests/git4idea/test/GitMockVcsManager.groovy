@@ -15,6 +15,7 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
@@ -55,7 +56,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   @Override
   VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
-    List<VirtualFile> roots = myRoots.collect { new GitMockVirtualFile(it) }
+    List<VirtualFile> roots = myRoots.collect { new MockVirtualFile(it) }
     roots.addAll(myPlatformFacade.getProjectRootManager(myProject).getContentRoots())
     roots
   }
