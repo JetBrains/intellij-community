@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.testRunner.DjangoTestUtil;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
@@ -99,11 +100,15 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
             }
             else {
               PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+              PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
               String path = location.getVirtualFile().getCanonicalPath();
               if (pyClass != null)
                 path += "::" + pyClass.getName();
-              path += "::" + failedTest.getName();
-              specs.add(path);
+              if (pyFunction != null)
+                path += "::" + pyFunction.getName();
+
+              if (!specs.contains(path))
+                specs.add(path);
             }
           }
         }
