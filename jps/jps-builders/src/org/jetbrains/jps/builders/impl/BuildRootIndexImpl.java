@@ -72,8 +72,8 @@ public class BuildRootIndexImpl implements BuildRootIndex {
           for (ModuleBuildTarget target : targets) {
             final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile);
             if (annotationOut != null) {
-              if (findJavaRootDescriptor(null, annotationOut) == null) {
-                // register only if the root is not under already existing roots
+              if (findJavaRootDescriptor(null, annotationOut) == null && !FileUtil.filesEqual(annotationOut, target.getOutputDir())) {
+                // register only if the root is not under already existing roots and not is the same as target's output root
                 final ResourcesOnlyRootDescriptor descriptor = new ResourcesOnlyRootDescriptor(annotationOut, target, true, false, "");
                 registerDescriptor(descriptor);
                 //noinspection unchecked
