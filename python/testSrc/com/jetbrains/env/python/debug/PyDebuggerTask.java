@@ -174,8 +174,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
       myDebugProcess.stop();
 
-      KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
-      if (!h.isProcessTerminated()) {
+      waitFor(myDebugProcess.getProcessHandler());
+
+      if (!myDebugProcess.getProcessHandler().isProcessTerminated()) {
+        KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
 
         h.killProcess();
         if (!waitFor(h)) {

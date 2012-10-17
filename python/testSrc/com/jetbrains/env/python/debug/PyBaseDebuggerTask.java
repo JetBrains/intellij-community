@@ -235,6 +235,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         }
       }.execute();
 
+      waitFor(mySession.getDebugProcess().getProcessHandler()); //wait for process termination after session.stop() which is async
+
       XDebuggerTestUtil.disposeDebugSession(mySession);
       mySession = null;
       myDebugProcess = null;
