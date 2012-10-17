@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
@@ -83,14 +83,13 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
-    String name;
-    if (!mIDENT.equals(builder.getTokenType())) {
+    if (builder.getTokenType() != mIDENT) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return false;
-    } else {
-      name = builder.getTokenText();
-      builder.advanceLexer();
     }
+
+    String name = builder.getTokenText();
+    builder.advanceLexer();
 
     ParserUtils.getToken(builder, mNLS);
 
@@ -114,14 +113,13 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
-    String name;
-    if (!mIDENT.equals(builder.getTokenType())) {
+    if (builder.getTokenType() != mIDENT) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return false;
-    } else {
-      name = builder.getTokenText();
-      builder.advanceLexer();
     }
+
+    String name = builder.getTokenText();
+    builder.advanceLexer();
 
     ParserUtils.getToken(builder, mNLS);
 
@@ -129,23 +127,23 @@ public class TypeDefinition implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (kEXTENDS.equals(builder.getTokenType())) {
+    if (builder.getTokenType() == kEXTENDS) {
       ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
       ParserUtils.getToken(builder, mNLS);
     }
 
-    if (kIMPLEMENTS.equals(builder.getTokenType())) {
+    if (builder.getTokenType() == kIMPLEMENTS) {
       ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE);
     }
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (mLCURLY.equals(builder.getTokenType())) {
-      parseClassBody(builder, name, parser);
-    } else {
+    if (builder.getTokenType() != mLCURLY) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       return true;
     }
+
+    parseClassBody(builder, name, parser);
 
     return true;
   }
@@ -155,17 +153,21 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
-    String name;
-    if (!mIDENT.equals(builder.getTokenType())) {
+    if (builder.getTokenType() != mIDENT) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return false;
-    } else {
-      name = builder.getTokenText();
-      builder.advanceLexer();
     }
 
-    if (WRONGWAY.equals(ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE))) {
-      return true;
+    String name = builder.getTokenText();
+    builder.advanceLexer();
+
+    if (builder.getTokenType() == kEXTENDS) {
+      ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
+      ParserUtils.getToken(builder, mNLS);
+    }
+
+    if (builder.getTokenType() == kIMPLEMENTS) {
+      ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE);
     }
 
     Separators.parse(builder);
@@ -265,7 +267,7 @@ public class TypeDefinition implements GroovyElementTypes {
     return true;
   }
 
-  private static boolean parseEnumBlock(PsiBuilder builder, String enumName, GroovyParser parser) {
+  private static boolean parseEnumBlock(PsiBuilder builder, @Nullable String enumName, GroovyParser parser) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ebMarker = builder.mark();
 
@@ -278,7 +280,8 @@ public class TypeDefinition implements GroovyElementTypes {
 
     if (parseEnumConstantStart(builder, parser)) {
       EnumConstant.parseConstantList(builder, parser);
-    } else {
+    }
+    else {
       ClassMember.parse(builder, enumName, parser);
     }
 
@@ -305,7 +308,7 @@ public class TypeDefinition implements GroovyElementTypes {
     return result;
   }
 
-  private static boolean parseInterfaceBlock(PsiBuilder builder, String interfaceName, GroovyParser parser) {
+  private static boolean parseInterfaceBlock(PsiBuilder builder, @Nullable String interfaceName, GroovyParser parser) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ibMarker = builder.mark();
 
