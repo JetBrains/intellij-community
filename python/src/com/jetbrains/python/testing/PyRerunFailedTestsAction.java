@@ -8,7 +8,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
@@ -17,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.testRunner.DjangoTestUtil;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
@@ -89,20 +92,26 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
           final Location location = failedTest.getLocation(myProject);
-          final PsiElement element = location.getPsiElement();
+          if (location != null) {
+            final PsiElement element = location.getPsiElement();
 
-          if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-            String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
-            String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
-            specs.add(target);
-          }
-          else {
-            PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-            String path = location.getVirtualFile().getCanonicalPath();
-            if (pyClass != null)
-              path += "::" + pyClass.getName();
-            path += "::" + failedTest.getName();
-            specs.add(path);
+            if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
+              String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
+              String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
+              specs.add(target);
+            }
+            else {
+              PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+              PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+              String path = location.getVirtualFile().getCanonicalPath();
+              if (pyClass != null)
+                path += "::" + pyClass.getName();
+              if (pyFunction != null)
+                path += "::" + pyFunction.getName();
+
+              if (!specs.contains(path))
+                specs.add(path);
+            }
           }
         }
       }
@@ -124,5 +133,16 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       myState.addPredefinedEnvironmentVariables(envs,
                                                 passParentEnvs);
     }
+  }
+
+  @NotNull
+  @Override
+  protected Filter getFilter(Project project) {
+    return new Filter() {
+      public boolean shouldAccept(final AbstractTestProxy test) {
+        boolean ignored = (test.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX.getValue());
+        return !ignored && (test.isInterrupted() || test.isDefect());
+      }
+    };
   }
 }
