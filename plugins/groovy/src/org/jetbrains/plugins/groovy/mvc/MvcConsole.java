@@ -263,7 +263,7 @@ public class MvcConsole implements Disposable {
     final OSProcessHandler handler;
     try {
       Process process = commandLine.createProcess();
-      handler = new OSProcessHandler(process, "");
+      handler = new OSProcessHandler(process);
 
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
       OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());

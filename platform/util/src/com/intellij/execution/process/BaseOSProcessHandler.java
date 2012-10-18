@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,11 @@ import java.util.concurrent.*;
 
 public class BaseOSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
-  @NotNull
-  protected final Process myProcess;
-  @Nullable
-  protected final String myCommandLine;
+
+  @NotNull protected final Process myProcess;
+  @Nullable protected final String myCommandLine;
   protected final ProcessWaitFor myWaitFor;
-  @Nullable
-  private final Charset myCharset;
+  @Nullable private final Charset myCharset;
 
   public BaseOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable Charset charset) {
     myProcess = process;
@@ -169,7 +167,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
     return myProcess.getOutputStream();
   }
 
-  // todo: to remove
+  /** @deprecated internal use only (to remove in IDEA 13) */
   @Nullable
   public String getCommandLine() {
     return myCommandLine;
@@ -185,9 +183,10 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     private static ThreadPoolExecutor createServiceImpl() {
       return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+        @NotNull
         @Override
         @SuppressWarnings({"HardCodedStringLiteral"})
-        public Thread newThread(Runnable r) {
+        public Thread newThread(@NotNull Runnable r) {
           return new Thread(r, "OSProcessHandler pooled thread");
         }
       });
@@ -256,5 +255,4 @@ public class BaseOSProcessHandler extends ProcessHandler {
       notifyTextAvailable(text, myProcessOutputType);
     }
   }
-
 }

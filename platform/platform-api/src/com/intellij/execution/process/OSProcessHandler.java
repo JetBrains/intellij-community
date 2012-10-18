@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,23 @@ import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+
   private boolean myDestroyRecursively = false;
 
-  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, final Charset defaultCharset) {
-    super(process, commandLine, defaultCharset);
+  public OSProcessHandler(@NotNull final Process process) {
+    this(process, null);
   }
 
   public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
-    super(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+  }
+
+  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable final Charset charset) {
+    super(process, commandLine, charset);
+  }
+
+  protected OSProcessHandler(@NotNull final OSProcessHandler base) {
+    this(base.myProcess, base.myCommandLine);
   }
 
   @Override
@@ -48,7 +57,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     return super.executeOnPooledThread(task);
   }
 
-  protected boolean shouldDestroyProcessRecursively(){
+  protected boolean shouldDestroyProcessRecursively() {
     // Override this method if you want to kill process recursively (whole process try) by default
     // such behaviour is better than default java one, which doesn't kill children processes
     return myDestroyRecursively;
@@ -71,7 +80,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * Kill whole process tree.
+   * Kill the whole process tree.
+   *
    * @param process Process
    * @return True if process tree has been successfully killed.
    */

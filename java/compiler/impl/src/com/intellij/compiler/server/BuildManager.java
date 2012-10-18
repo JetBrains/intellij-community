@@ -530,7 +530,7 @@ public class BuildManager implements ApplicationComponent{
                   }
                   myBuildsInProgress.put(projectPath, future);
                   final Process process = launchBuildProcess(project, myListenPort, sessionId);
-                  final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+                  final OSProcessHandler processHandler = new OSProcessHandler(process) {
                     @Override
                     protected boolean shouldDestroyProcessRecursively() {
                       return true;
