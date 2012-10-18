@@ -380,7 +380,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     reference.handleElementRename(newName);
   }
 
-  public static UsageInfo2UsageAdapter[] convert(UsageInfo[] usageInfos) {
+  @NotNull
+  public static UsageInfo2UsageAdapter[] convert(@NotNull UsageInfo[] usageInfos) {
     UsageInfo2UsageAdapter[] result = new UsageInfo2UsageAdapter[usageInfos.length];
     for (int i = 0; i < result.length; i++) {
       result[i] = new UsageInfo2UsageAdapter(usageInfos[i]);
@@ -400,6 +401,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
   }
 
+  @NotNull
   private List<UsageInfo> getSelectedInfoList() {
     return myMergedUsageInfos;
   }

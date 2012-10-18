@@ -27,7 +27,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -75,7 +74,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
-  public ContentManagerImpl(ContentUI contentUI, boolean canCloseContents, Project project) {
+  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project) {
     myProject = project;
     myCanCloseContents = canCloseContents;
     myContents = new ArrayList<Content>();
@@ -87,10 +86,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, contentUI);
   }
 
+  @Override
   public boolean canCloseContents() {
     return myCanCloseContents;
   }
 
+  @Override
   public JComponent getComponent() {
     if (myComponent == null) {
       myComponent = new NonOpaquePanel(new BorderLayout());
@@ -122,6 +123,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myProviders.add(provider);
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) return ContentManagerImpl.this;
@@ -141,6 +143,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return null;
     }
 
+    @Override
     public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
       if (myUI instanceof SwitchProvider) {
         return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
@@ -148,6 +151,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return new ArrayList<SwitchTarget>();
     }
 
+    @Override
     public SwitchTarget getCurrentTarget() {
       if (myUI instanceof SwitchProvider) {
         return ((SwitchProvider)myUI).getCurrentTarget();
@@ -156,6 +160,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return null;
     }
 
+    @Override
     public JComponent getComponent() {
       if (myUI instanceof SwitchProvider) {
         return myUI.getComponent();
@@ -164,6 +169,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return this;
     }
 
+    @Override
     public boolean isCycleRoot() {
       if (myUI instanceof SwitchProvider) {
         return ((SwitchProvider)myUI).isCycleRoot();
@@ -179,20 +185,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       setPreferredSize(new Dimension(0, 0));
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
       return myContentComponent.getData(dataId);
     }
   }
 
+  @Override
   public void addContent(@NotNull Content content, final int order) {
     addContent(content, null, order);
   }
 
+  @Override
   public void addContent(@NotNull Content content) {
     addContent(content, null, -1);
   }
 
+  @Override
   public void addContent(@NotNull final Content content, final Object constraints) {
     addContent(content, constraints, -1);
   }
@@ -217,13 +227,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
+  @Override
   public boolean removeContent(@NotNull Content content, final boolean dispose) {
     return removeContent(content, true, dispose);
   }
 
+  @Override
   public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
     final ActionCallback result = new ActionCallback();
     _removeContent(content, true, dispose).doWhenDone(new Runnable() {
+      @Override
       public void run() {
         if (trackFocus) {
           Content current = getSelectedContent();
@@ -321,6 +334,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
+  @Override
   public void removeAllContents(final boolean dispose) {
     Content[] contents = getContents();
     for (Content content : contents) {
@@ -328,16 +342,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
+  @Override
   public int getContentCount() {
     return myContents.size();
   }
 
+  @Override
   @NotNull
   public Content[] getContents() {
     return myContents.toArray(new Content[myContents.size()]);
   }
 
   //TODO[anton,vova] is this method needed?
+  @Override
   public Content findContent(String displayName) {
     for (Content content : myContents) {
       if (content.getDisplayName().equals(displayName)) {
@@ -347,10 +364,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return null;
   }
 
+  @Override
   public Content getContent(int index) {
     return index >= 0 && index < myContents.size() ? myContents.get(index) : null;
   }
 
+  @Override
   public Content getContent(JComponent component) {
     Content[] contents = getContents();
     for (Content content : contents) {
@@ -361,14 +380,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return null;
   }
 
+  @Override
   public int getIndexOfContent(Content content) {
     return myContents.indexOf(content);
   }
 
+  @Override
   public String getCloseActionName() {
     return myUI.getCloseActionName();
   }
 
+  @Override
   public String getCloseAllButThisActionName() {
     return myUI.getCloseAllButThisActionName();
   }
@@ -383,10 +405,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myUI.getNextContentActionName();
   }
 
+  @Override
   public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
     return null;
   }
 
+  @Override
   public boolean canCloseAllContents() {
     if (!canCloseContents()) {
       return false;
@@ -399,6 +423,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return false;
   }
 
+  @Override
   public void addSelectedContent(@NotNull final Content content) {
     if (!checkSelectionChangeShouldBeProcessed(content, false)) return;
 
@@ -422,42 +447,51 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return result;
   }
 
+  @Override
   public void removeFromSelection(@NotNull Content content) {
     if (!isSelected(content)) return;
     mySelection.remove(content);
     fireSelectionChanged(content, ContentManagerEvent.ContentOperation.remove);
   }
 
+  @Override
   public boolean isSelected(@NotNull Content content) {
     return mySelection.contains(content);
   }
 
+  @Override
   @NotNull
   public Content[] getSelectedContents() {
     return mySelection.toArray(new Content[mySelection.size()]);
   }
 
+  @Override
   @Nullable
   public Content getSelectedContent() {
     return mySelection.isEmpty() ? null : mySelection.get(0);
   }
 
+  @Override
   public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
     setSelectedContentCB(content, requestFocus);
   }
 
+  @Override
   public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
     return setSelectedContentCB(content, requestFocus, true);
   }
 
+  @Override
   public void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus) {
     setSelectedContentCB(content, requestFocus, forcedFocus);
   }
 
+  @Override
   public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
     return setSelectedContent(content, requestFocus, forcedFocus, false);
   }
 
+  @Override
   public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
     if (isSelected(content) && requestFocus) {
       return requestFocus(content, forcedFocus);
@@ -475,6 +509,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     final Content[] old = getSelectedContents();
 
     final ActiveRunnable selection = new ActiveRunnable() {
+      @Override
       public ActionCallback run() {
         if (myDisposed || getIndexOfContent(content) == -1) return new ActionCallback.Rejected();
 
@@ -497,6 +532,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (focused || requestFocus) {
       if (enabledFocus) {
         return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(new Runnable() {
+          @Override
           public void run() {
             selection.run().notify(result);
           }
@@ -522,14 +558,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return focused;
   }
 
+  @Override
   public ActionCallback setSelectedContentCB(@NotNull Content content) {
     return setSelectedContentCB(content, false);
   }
 
+  @Override
   public void setSelectedContent(@NotNull final Content content) {
     setSelectedContentCB(content); 
   }
 
+  @Override
   public ActionCallback selectPreviousContent() {
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
@@ -543,6 +582,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return setSelectedContentCB(content, true);
   }
 
+  @Override
   public ActionCallback selectNextContent() {
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
@@ -556,10 +596,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return setSelectedContentCB(content, true);
   }
 
+  @Override
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
     myListeners.add(ContentManagerListener.class, l);
   }
 
+  @Override
   public void removeContentManagerListener(@NotNull ContentManagerListener l) {
     myListeners.remove(ContentManagerListener.class, l);
   }
@@ -601,6 +643,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
+  @Override
   public ActionCallback requestFocus(final Content content, final boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return new ActionCallback.Rejected();
@@ -608,6 +651,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
 
     return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getPreferredFocusableComponent()) {
+      @Override
       public ActionCallback run() {
         return doRequestFocus(toSelect);
       }
@@ -638,25 +682,30 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return toFocus;
   }
 
+  @Override
   public void addDataProvider(@NotNull final DataProvider provider) {
     myContentComponent.addProvider(provider);
   }
 
+  @Override
   public void propertyChange(final PropertyChangeEvent evt) {
     if (Content.PROP_COMPONENT.equals(evt.getPropertyName())) {
       myContentWithChangedComponent.add((Content)evt.getSource());
     }
   }
 
+  @Override
   @NotNull
   public ContentFactory getFactory() {
     return ServiceManager.getService(ContentFactory.class);
   }
 
+  @Override
   public void beforeTreeDispose() {
     myUI.beforeDispose();
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
 
@@ -667,10 +716,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myListeners = null;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
 
+  @Override
   public boolean isSingleSelection() {
     return myUI.isSingleSelection();
   }
