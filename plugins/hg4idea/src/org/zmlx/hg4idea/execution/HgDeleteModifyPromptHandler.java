@@ -57,7 +57,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
         "File " + filename + " is deleted remotely, but modified locally. Do you want to keep the modified version or remove the file?";
     }
     else {
-      modifiedMessage = "";
+      modifiedMessage = message;
     }
     final int[] chosen = new int[]{-1};
     try {
@@ -69,9 +69,9 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
               choicePresentationArray[i] = choices[i].toString();
             }
             chosen[0] = Messages
-              .showChooseDialog(modifiedMessage, "Delete-Modify Conflict",
-                                choicePresentationArray,
-                                defaultChoice.toString(), Messages.getQuestionIcon());
+              .showDialog(modifiedMessage, "Delete-Modify Conflict",
+                          choicePresentationArray, defaultChoice.getChosenIndex(),
+                          Messages.getQuestionIcon());
           }
         });
     }

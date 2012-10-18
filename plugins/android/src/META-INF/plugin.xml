@@ -336,6 +336,7 @@
     <lang.formatter language="XML" implementationClass="org.jetbrains.android.formatter.AndroidXmlFormattingModelBuilder"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.android.formatter.AndroidXmlCodeStyleSettingsProvider"/>
     <predefinedCodeStyle implementation="org.jetbrains.android.formatter.AndroidXmlPredefinedCodeStyle"/>
+    <editorNotificationProvider implementation="org.jetbrains.android.formatter.AndroidCodeStyleNotificationProvider"/>
   </extensions>
 
   <extensionPoints>

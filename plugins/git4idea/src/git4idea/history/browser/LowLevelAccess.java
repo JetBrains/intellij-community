@@ -19,10 +19,8 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
-import git4idea.GitBranch;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Date;
@@ -45,12 +43,6 @@ public interface LowLevelAccess {
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;
   Collection<String> getTagsWithCommit(final SHAHash hash) throws VcsException;
-
-  @Nullable
-  GitBranch loadLocalBranches(Collection<String> sink) throws VcsException;
-
-  @Nullable
-  GitBranch loadRemoteBranches(Collection<String> sink) throws VcsException;
 
   void loadAllBranches(final List<String> sink) throws VcsException;
 

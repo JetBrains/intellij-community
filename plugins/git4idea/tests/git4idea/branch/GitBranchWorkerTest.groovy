@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePathImpl
@@ -29,14 +28,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.LineSeparator
 import com.intellij.util.text.CharArrayUtil
-import git4idea.PlatformFacade
-import git4idea.commands.Git
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.history.browser.GitCommit
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryImpl
-import git4idea.test.*
+import git4idea.test.GitExecutor
+import git4idea.test.GitLightTest
+import git4idea.test.GitMockVirtualFile
+import git4idea.test.GitScenarios
 import org.jetbrains.annotations.NotNull
 import org.junit.After
 import org.junit.Before
@@ -52,13 +51,7 @@ import static groovy.util.GroovyTestCase.*
  */
 @Mixin(GitExecutor)
 @Mixin(GitScenarios)
-@Mixin(GitLightTest)
-class GitBranchWorkerTest {
-
-  private String myRootDir
-  private GitMockProject myProject
-  private PlatformFacade myPlatformFacade
-  private Git myGit
+class GitBranchWorkerTest extends GitLightTest {
 
   private GitRepository myUltimate
   private GitRepository myCommunity
@@ -68,59 +61,26 @@ class GitBranchWorkerTest {
 
   @Before
   public void setUp() {
-    myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new GitMockProject(myRootDir)
-    myPlatformFacade = new GitTestPlatformFacade()
-    myGit = new GitTestImpl()
+    super.setUp();
 
-    cd(myRootDir)
+    cd(myProjectRoot)
     def community = mkdir("community")
     def contrib = mkdir("contrib")
 
-    [ myRootDir, community, contrib ].each { initRepo(it) }
-
-    myUltimate = createRepository(myRootDir)
+    myUltimate = createRepository(myProjectRoot)
     myCommunity = createRepository(community)
     myContrib = createRepository(contrib)
+    myRepositories = [ myUltimate, myCommunity, myContrib ]
 
-    cd(myRootDir)
+    cd(myProjectRoot)
     touch(".gitignore", "community\ncontrib")
     git("add .gitignore")
     git("commit -m gitignore")
-
-    myRepositories = [ myUltimate, myCommunity, myContrib ]
-    myRepositories.each { ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(it) }
-  }
-
-  private GitRepository createRepository(String rootDir) {
-    // TODO this smells hacky
-    // the constructor and notifyListeners() should probably be private
-    // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
-    new GitRepositoryImpl(new GitMockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
-      @Override
-      protected void notifyListeners() {
-      }
-
-      @Override
-      String getPresentableUrl() {
-        return rootDir;
-      }
-    }
-  }
-
-  private void initRepo(String repoRoot) {
-    cd repoRoot
-    git("init")
-    setupUsername();
-    touch("file.txt")
-    git("add file.txt")
-    git("commit -m initial")
   }
 
   @After
   public void tearDown() {
-    FileUtil.delete(new File(myRootDir))
-    Disposer.dispose(myProject)
+    super.tearDown();
   }
 
   @Test
@@ -242,7 +202,7 @@ class GitBranchWorkerTest {
   public void "checkout with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("checkout");
   }
-  
+
   @Test
   public void "checkout with several untracked files overwritten by checkout in first repo should show notification"() {
     // note that in old Git versions only one file is listed in the error.
@@ -253,7 +213,7 @@ class GitBranchWorkerTest {
   public void "merge with untracked files overwritten by checkout in first repo should show notification"() {
     test_untracked_files_overwritten_by_in_first_repo("merge");
   }
-  
+
   def test_untracked_files_overwritten_by_in_first_repo(String operation, int untrackedFiles = 1) {
     branchWithCommit(myRepositories, "feature")
     def files = []
@@ -266,15 +226,15 @@ class GitBranchWorkerTest {
     checkoutOrMerge operation, "feature", [
             showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
     ]
-    
+
     assertTrue "Untracked files notification was not shown", notificationShown
   }
-  
+
   @Test
   public void "checkout with untracked files overwritten by checkout in second repo should show rollback proposal with file list"() {
     test_checkout_with_untracked_files_overwritten_by_in_second_repo("checkout");
   }
-  
+
   @Test
   public void "merge with untracked files overwritten by checkout in second repo should show rollback proposal with file list"() {
     test_checkout_with_untracked_files_overwritten_by_in_second_repo("merge");
@@ -317,11 +277,11 @@ class GitBranchWorkerTest {
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog: { Project p, List<Change> cs, String op, boolean force ->
-              changes = cs  
+              changes = cs
               DialogWrapper.CANCEL_EXIT_CODE
             }
     ])
-    
+
     assertNotNull "Local changes were not shown in the dialog", changes
     if (newGitVersion()) {
       assertEquals "Incorrect set of local changes was shown in the dialog",
@@ -344,7 +304,7 @@ class GitBranchWorkerTest {
 
   Change toChange(String relPath) {
     // we don't care about the before revision
-    new Change(null, CurrentContentRevision.create(new FilePathImpl(new GitMockVirtualFile(myRootDir + "/" + relPath))))
+    new Change(null, CurrentContentRevision.create(new FilePathImpl(new GitMockVirtualFile(myProjectRoot + "/" + relPath))))
   }
 
   @Test
@@ -372,7 +332,7 @@ class GitBranchWorkerTest {
                           LOCAL_CHANGES_OVERWRITTEN_BY.masterLine;
     assertContent(expectedContent, actual)
   }
-  
+
   Collection<String> agree_to_smart_operation(String operation, String expectedSuccessMessage) {
     def localChanges = prepareLocalChangesOverwrittenBy(myUltimate)
 
@@ -408,7 +368,7 @@ class GitBranchWorkerTest {
   public void "deny to smart checkout in first repo should show nothing"() {
     test_deny_to_smart_operation_in_first_repo_should_show_notification("checkout");
   }
-  
+
   @Test
   public void "deny to smart merge in first repo should show nothing"() {
     test_deny_to_smart_operation_in_first_repo_should_show_notification("merge");
@@ -426,7 +386,7 @@ class GitBranchWorkerTest {
     assertNull "Error message was not shown", errorMessage
     assertCurrentBranch("master");
   }
-  
+
   @Test
   public void "deny to smart checkout in second repo should show rollback proposal"() {
     test_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("checkout");
@@ -434,7 +394,7 @@ class GitBranchWorkerTest {
     assertCurrentBranch(myCommunity, "master")
     assertCurrentBranch(myContrib, "master")
   }
-  
+
   @Test
   public void "deny to smart merge in second repo should show rollback proposal"() {
     test_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("merge");
@@ -451,7 +411,7 @@ class GitBranchWorkerTest {
 
     assertNotNull "Rollback proposal was not shown", rollbackMsg
   }
-  
+
   @Test
   public void "rollback of 'checkout branch as new branch' should delete branches"() {
     branchWithCommit(myRepositories, "feature")
@@ -563,8 +523,12 @@ class GitBranchWorkerTest {
   @Test
   public void "delete branch merged to head but unmerged to upstream should show dialog"() {
     // inspired by IDEA-83604
+    // for the sake of simplicity we deal with a single myCommunity repository for remote operations
+    prepareRemoteRepo(myCommunity)
+    cd myCommunity
+    git("checkout -b feature");
+    git("push -u origin feature")
 
-    prepareRemoteRepoAndBranch("feature")
     // create a commit and merge it to master, but not to feature's upstream
     touch("feature.txt", "feature content")
     git("add feature.txt")
@@ -580,25 +544,6 @@ class GitBranchWorkerTest {
     brancher.deleteBranch("feature", [myCommunity])
 
     assertTrue "'Branch is not fully merged' dialog was not shown", dialogShown
-  }
-
-  // for the sake of simplicity we deal with a single myCommunity repository for remote operations
-  private void prepareRemoteRepoAndBranch(String branch) {
-    // prepare parent repository
-    // create it under ultimate not to bother with removing it after the test (tearDown will clean automatically)
-    cd myUltimate
-    git("clone --bare $myCommunity parent.git")
-
-    // initialize feature branch and push to make origin/feature, set up tracking
-    cd myCommunity
-    git("checkout -b $branch");
-    git("remote add origin ${myUltimate.root.path}/parent.git");
-    git("push -u origin $branch")
-  }
-
-  @Test
-  void "delete remote branch without problems"() {
-
   }
 
   @Test

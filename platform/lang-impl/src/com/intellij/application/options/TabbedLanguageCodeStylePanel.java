@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -482,6 +483,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
+
+      Disposer.register(this, new Disposable() {
+        @Override
+        public void dispose() {
+          myConfigurable.disposeUIResources();
+        }
+      });
     }
 
     @Override

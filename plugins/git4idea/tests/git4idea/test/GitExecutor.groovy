@@ -21,24 +21,16 @@ import com.intellij.util.ArrayUtil
 import git4idea.repo.GitRepository
 
 /**
+ * Executes various shell commands: cd, touch, mkdir, cat, echo, git.
  *
  * @author Kirill Likhodedov
  */
 class GitExecutor {
 
-  private String myCurrentDir
-
-  def shortenPath(String path) {
-    def split = path.split("/")
-    if (split.size() > 3) {
-      // split[0] is empty, because the path starts from /
-      return "/${split[1]}/.../${split[-2]}/${split[-1]}"
-    }
-    return path
-  }
+  private static String ourCurrentDir
 
   def cd(String path) {
-    myCurrentDir = path
+    ourCurrentDir = path
     println "cd ${shortenPath(path)}"
   }
 
@@ -49,7 +41,7 @@ class GitExecutor {
   String git(String command) {
     List<String> split = StringUtil.split(command, " ")
     String[] params = split.size() > 1 ? ArrayUtil.toObjectArray(split.subList(1, split.size()), String) : ArrayUtil.EMPTY_STRING_ARRAY
-    return new GitTestRunEnv(new File(myCurrentDir)).run(split.get(0), params);
+    return new GitTestRunEnv(new File(ourCurrentDir)).run(split.get(0), params);
   }
 
   String git(GitRepository repository, String command) {
@@ -58,7 +50,7 @@ class GitExecutor {
   }
 
   def touch(String fileName) {
-    File file = new File(myCurrentDir, fileName)
+    File file = new File(ourCurrentDir, fileName)
     assert !file.exists()
     file.createNewFile()
     println("touch $fileName")
@@ -71,20 +63,29 @@ class GitExecutor {
   }
 
   def echo(String fileName, String content) {
-    new File(myCurrentDir, fileName).withWriterAppend("UTF-8") { it.write(content) }
+    new File(ourCurrentDir, fileName).withWriterAppend("UTF-8") { it.write(content) }
   }
 
   def mkdir(String dirName) {
-    File file = new File(myCurrentDir, dirName)
+    File file = new File(ourCurrentDir, dirName)
     file.mkdir()
     println("mkdir $dirName")
     file.path
   }
 
   def cat(String fileName) {
-    def content = FileUtil.loadFile(new File(myCurrentDir, fileName))
+    def content = FileUtil.loadFile(new File(ourCurrentDir, fileName))
     println("cat fileName")
     content
+  }
+
+  def shortenPath(String path) {
+    def split = path.split("/")
+    if (split.size() > 3) {
+      // split[0] is empty, because the path starts from /
+      return "/${split[1]}/.../${split[-2]}/${split[-1]}"
+    }
+    return path
   }
 
 }
