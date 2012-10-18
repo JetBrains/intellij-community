@@ -16,7 +16,6 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -85,7 +84,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void switchToSplittedNodes(final AbstractTreeStructure treeStructure) {
+  public void switchToGroupedByLeavesNodes() {
     analysisInProgress = true;
     SliceLeafAnalyzer.startAnalyzeValues(getTreeStructure(), new Runnable(){
       @Override
