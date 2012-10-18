@@ -514,6 +514,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNonFoldInIfBody() throws Exception {
+    doTest();
+  }
+
   public void testComplexTypeParams() throws Exception {
     doTest();
   }
