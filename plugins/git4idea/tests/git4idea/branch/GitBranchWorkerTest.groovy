@@ -28,8 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.util.LineSeparator
 import com.intellij.util.text.CharArrayUtil
-import git4idea.PlatformFacade
-import git4idea.commands.Git
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.history.browser.GitCommit
