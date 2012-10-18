@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
 
@@ -112,7 +113,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     return result;
   }
 
-  public static Pair<java.util.List<Integer>, java.util.List<Integer>> parseKeyCodes(String keyCodesText) {
+  public static Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
     ArrayList<Integer> codes = new ArrayList<Integer>();
     ArrayList<Integer> modifiers = new ArrayList<Integer>();
 
@@ -127,14 +128,14 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       }
     }
 
-    return new Pair<java.util.List<Integer>, java.util.List<Integer>>(codes, modifiers);
+    return new Pair<List<Integer>, List<Integer>>(codes, modifiers);
   }
 
-  public static String unparseKeyCodes(Pair<java.util.List<Integer>, java.util.List<Integer>> pairs) {
-    StringBuffer result = new StringBuffer();
+  public static String unparseKeyCodes(Pair<List<Integer>, List<Integer>> pairs) {
+    StringBuilder result = new StringBuilder();
 
-    java.util.List<Integer> codes = pairs.getFirst();
-    java.util.List<Integer> modifiers = pairs.getSecond();
+    List<Integer> codes = pairs.getFirst();
+    List<Integer> modifiers = pairs.getSecond();
 
     for (int i = 0; i < codes.size(); i++) {
       Integer each = codes.get(i);

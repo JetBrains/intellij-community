@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.branch.GitBranchUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,14 +33,14 @@ public class GitBranchesSearcher {
   public GitBranchesSearcher(final Project project, final VirtualFile root, final boolean findRemote) throws VcsException {
     LOG.debug("constructing, root: " + root.getPath() + " findRemote = " + findRemote);
     final Set<GitBranch> usedBranches = new HashSet<GitBranch>();
-    myLocal = GitBranch.current(project, root);
+    myLocal = GitBranchUtil.getCurrentBranch(project, root);
     LOG.debug("local: " + myLocal);
     if (myLocal == null) return;
     usedBranches.add(myLocal);
 
     GitBranch remote = myLocal;
     while (true) {
-      remote = remote.tracked(project, root);
+      remote = GitBranchUtil.tracked(project, root, remote.getName());
       if (remote == null) {
         LOG.debug("remote == null, exiting");
         return;

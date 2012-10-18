@@ -19,9 +19,9 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 
@@ -36,7 +36,7 @@ public class SliceForwardHandler extends SliceHandler {
   @Override
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
-    Module module = ModuleUtil.findModuleForPsiElement(element);
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
     String name = module == null ? null : module.getName();
 
     Project myProject = element.getProject();

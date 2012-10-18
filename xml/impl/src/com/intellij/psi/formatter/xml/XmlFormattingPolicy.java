@@ -25,6 +25,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 
@@ -86,6 +87,10 @@ public abstract class XmlFormattingPolicy {
   public abstract WrapType getWrappingTypeForTagBegin(final XmlTag tag);
 
   public abstract boolean insertLineBreakBeforeTag(XmlTag xmlTag);
+
+  public abstract boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute);
+
+  public abstract boolean insertLineBreakAfterTagBegin(XmlTag tag);
 
   public abstract boolean removeLineBreakBeforeTag(XmlTag xmlTag);
 

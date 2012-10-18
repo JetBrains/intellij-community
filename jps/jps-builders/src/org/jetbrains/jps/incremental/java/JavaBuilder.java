@@ -358,7 +358,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         context.checkCanceled();
 
-        if (!forms.isEmpty() || addNotNullAssertions) {
+        if (diagnosticSink.getErrorCount() == 0 && (!forms.isEmpty() || addNotNullAssertions)) {
           final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
@@ -367,8 +367,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
-                  pd.getProject());
+                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.getProject());
                 if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
                   for (ModuleBuildTarget target : chunk.getTargets()) {
                     if (!target.isTests()) {

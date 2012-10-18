@@ -70,6 +70,11 @@ public class CreateFromTemplateMode extends WizardMode {
   }
 
   @Override
+  public String getShortName() {
+    return "Create from Template";
+  }
+
+  @Override
   public void onChosen(boolean enabled) {
   }
 }

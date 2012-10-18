@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +34,22 @@ public abstract class ProgressIndicatorProvider {
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
+  @Nullable
+  public static ProgressIndicator getGlobalProgressIndicator() {
+    return ourInstance != null ? ourInstance.getProgressIndicator() : null;
+  }
+
   public abstract NonCancelableSection startNonCancelableSection();
+
+  @NotNull
+  public static NonCancelableSection startNonCancelableSectionIfSupported() {
+    return ourInstance != null ? ourInstance.startNonCancelableSection() : new NonCancelableSection() {
+      @Override
+      public void done() {
+        // do nothing
+      }
+    };
+  }
 
   public static boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {

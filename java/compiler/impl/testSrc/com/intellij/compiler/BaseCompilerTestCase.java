@@ -35,6 +35,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -209,10 +210,10 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   private CompilationLog compile(final ParameterizedRunnable<CompileStatusNotification> action) {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
+    semaphore.down();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        semaphore.down();
 
         CompilerManagerImpl.testSetup();
         final CompileStatusNotification callback = new CompileStatusNotification() {
@@ -240,14 +241,18 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       }
     });
 
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     while (!semaphore.waitFor(10)) {
       if (System.currentTimeMillis() - start > 60 * 1000) {
         throw new RuntimeException("timeout");
       }
+      if (SwingUtilities.isEventDispatchThread()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
+    if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
-    UIUtil.dispatchAllInvocationEvents();
 
     return result.get();
   }

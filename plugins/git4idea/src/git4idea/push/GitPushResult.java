@@ -33,6 +33,7 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -191,14 +192,14 @@ class GitPushResult {
 
       String trackedBranchName;
       try {
-        String simpleName = currentBranch.getTrackedBranchName(myProject, repository.getRoot());
+        String simpleName = GitBranchUtil.getTrackedBranchName(myProject, repository.getRoot(), currentBranch.getName());
         if (simpleName == null) {
           continue;
         }
         if (simpleName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
           simpleName = simpleName.substring(GitBranch.REFS_HEADS_PREFIX.length());
         }
-        String remote = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+        String remote = GitBranchUtil.getTrackedRemoteName(myProject, repository.getRoot(), currentBranch.getName());
         if (remote == null) {
           continue;
         }

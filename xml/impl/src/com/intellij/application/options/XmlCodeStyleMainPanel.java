@@ -15,10 +15,10 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 
 /**
  * @author Rustam Vishnyakov
@@ -32,5 +32,11 @@ public class XmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected void initTabs(CodeStyleSettings settings) {
     addIndentOptionsTab(settings);
     addTab(new CodeStyleXmlPanel(settings));
+
+    for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+      if (provider.getLanguage() == XMLLanguage.INSTANCE && !provider.hasSettingsPage()) {
+        createTab(provider);
+      }
+    }
   }
 }

@@ -73,7 +73,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       synchronized (file.getStubLock()) {
         node = myNode;
         if (node == null) {
-          NonCancelableSection criticalSection = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
+          NonCancelableSection criticalSection = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
           try {
             if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
             FileElement treeElement = file.getTreeElement();

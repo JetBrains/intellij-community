@@ -125,25 +125,7 @@ public class CoreApplicationEnvironment {
     registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
 
-    ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
-      @Override
-      public ProgressIndicator getProgressIndicator() {
-        return new EmptyProgressIndicator();
-      }
-
-      @Override
-      protected void doCheckCanceled() throws ProcessCanceledException {
-      }
-
-      @Override
-      public NonCancelableSection startNonCancelableSection() {
-        return new NonCancelableSection() {
-          @Override
-          public void done() {
-          }
-        };
-      }
-    };
+    ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, new JobLauncher() {
       @Override
@@ -192,6 +174,28 @@ public class CoreApplicationEnvironment {
       }
     });
 
+  }
+
+  protected ProgressIndicatorProvider createProgressIndicatorProvider() {
+    return new ProgressIndicatorProvider() {
+      @Override
+      public ProgressIndicator getProgressIndicator() {
+        return new EmptyProgressIndicator();
+      }
+
+      @Override
+      protected void doCheckCanceled() throws ProcessCanceledException {
+      }
+
+      @Override
+      public NonCancelableSection startNonCancelableSection() {
+        return new NonCancelableSection() {
+          @Override
+          public void done() {
+          }
+        };
+      }
+    };
   }
 
   protected VirtualFileSystem createJarFileSystem() {

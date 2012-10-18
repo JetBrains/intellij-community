@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">untitled</string>
+    <string name="app_name1">untitled</string>
+    <string-array name="myArray">
+        <item>aba</item>
+        <item>caba</item>
+    </string-array>
+    <attr
+        name="myAttr1" format="boolean" />
+    <attr
+        name="myAttr2" format="boolean" />
+</resources>

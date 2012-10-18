@@ -1,6 +1,6 @@
 <html>
 <body>
-This inspection reports any <b>java.util.concurrent.locks.Lock</b> resource which is not acquired in front of a
+Reports any <b>java.util.concurrent.locks.Lock</b> resource which is not acquired in front of a
 <b>try</b> block and unlocked in the corresponding <b>finally</b> block. Such resources may
 be inadvertently leaked if an exception is thrown before the resource is closed.
 <!-- tooltip end -->

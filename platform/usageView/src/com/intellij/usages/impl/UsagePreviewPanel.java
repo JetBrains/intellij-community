@@ -33,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   private final Project myProject;
   private volatile boolean isDisposed = false;
 
-  public UsagePreviewPanel(final Project project) {
+  public UsagePreviewPanel(@NotNull Project project) {
     myProject = project;
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createBorder());
@@ -90,7 +91,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   }
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
-  private void highlight(final List<UsageInfo> infos, final Editor editor) {
+  private void highlight(@NotNull List<UsageInfo> infos, @NotNull Editor editor) {
     if (editor != myEditor) return; //already disposed
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -170,7 +171,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     }
   }
 
-  public void updateLayout(final List<UsageInfo> infos) {
+  public void updateLayout(@Nullable final List<UsageInfo> infos) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {

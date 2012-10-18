@@ -1,6 +1,6 @@
 <html>
 <body>
-This inspection reports any checks for oddness of the form:
+Reports any checks for oddness of the form:
 <code><pre>x % 2 == 1</pre></code>
 Such checks will fail for negative odd values, which is probably not the behaviour intended. Consider using:
 <code><pre>x % 2 != 0</pre></code> or: <code><pre>(x & 1) == 1</pre></code> instead.

@@ -100,6 +100,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   public Set<PsiElement> getElements() {
     return Collections.unmodifiableSet(myAllRenames.keySet());
   }
+  
+  public String getNewName(PsiElement element) {
+    return myAllRenames.get(element);
+  }
 
   public void addRenamerFactory(AutomaticRenamerFactory factory) {
     if (!myRenamerFactories.contains(factory)) {

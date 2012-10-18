@@ -21,7 +21,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
-import com.intellij.openapi.vcs.history.TextTransferrable;
+import com.intellij.util.ui.TextTransferrable;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 /**

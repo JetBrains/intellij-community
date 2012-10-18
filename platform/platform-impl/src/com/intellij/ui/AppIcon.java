@@ -298,15 +298,18 @@ public abstract class AppIcon {
         Shape rect = new RoundRectangle2D.Double(xInset, y, width, progressHeight, progressHeight, progressHeight);
         Shape border =
           new RoundRectangle2D.Double(xInset - 1, y - 1, width + 2, progressHeight + 2, (progressHeight + 2), (progressHeight + 2));
-        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2) * value, progressHeight - 2, (progressHeight - 2),
-                                                     (progressHeight - 2));
+        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2) * value, progressHeight - 1, (progressHeight - 2),
+                                                     (progressHeight - 1));
         AppImage appImg = createAppImage();
 
         final Color brighter = Color.GRAY.brighter().brighter();
         final Color backGround = new Color(brighter.getRed(), brighter.getGreen(), brighter.getBlue(), 85);
         appImg.myG2d.setColor(backGround);
         appImg.myG2d.fill(rect);
-        appImg.myG2d.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
+        final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
+        final GradientPaint paint = new GradientPaint(xInset + 1, y + 1, color.brighter(),
+                                                      xInset + 1, y + progressHeight - 1, color.darker().darker());
+        appImg.myG2d.setPaint(paint);
         appImg.myG2d.fill(progress);
         appImg.myG2d.setColor(Color.GRAY.darker().darker());
         appImg.myG2d.draw(rect);

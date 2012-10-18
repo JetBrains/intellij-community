@@ -230,8 +230,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Nullable
   protected static ProgressIndicator getProgressIndicator() {
-    final ProgressIndicatorProvider progressManager = ProgressIndicatorProvider.getInstance();
-    return progressManager != null ? progressManager.getProgressIndicator() : null;
+    return ProgressIndicatorProvider.getGlobalProgressIndicator();
   }
 
   protected double getPercentageOfComponentsLoaded() {

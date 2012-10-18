@@ -22,11 +22,11 @@ import com.intellij.util.PlatformIcons;
 /**
  * @author cdr
  */
-public class AnalyzeLeavesAction extends AnAction {
+class GroupByLeavesAction extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
   private static final String TEXT = "Group by leaf expression";
 
-  public AnalyzeLeavesAction(SliceTreeBuilder treeBuilder) {
+  public GroupByLeavesAction(SliceTreeBuilder treeBuilder) {
     super(TEXT, "Show original expression values that might appear in this place", PlatformIcons.XML_TAG_ICON);
     myTreeBuilder = treeBuilder;
   }
@@ -38,13 +38,11 @@ public class AnalyzeLeavesAction extends AnAction {
   }
 
   private boolean isAvailabale() {
-    if (myTreeBuilder.analysisInProgress) return false;
-    
-    return !myTreeBuilder.splitByLeafExpressions;
+    return !myTreeBuilder.analysisInProgress && !myTreeBuilder.splitByLeafExpressions;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    myTreeBuilder.switchToSplittedNodes(myTreeBuilder.getTreeStructure());
+    myTreeBuilder.switchToGroupedByLeavesNodes();
   }
 }

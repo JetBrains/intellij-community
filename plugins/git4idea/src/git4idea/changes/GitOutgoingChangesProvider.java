@@ -25,12 +25,14 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.SHAHash;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -50,7 +52,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(null, Collections.<CommittedChangeList>emptyList());
     }
-    final GitRevisionNumber base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
+    final GitRevisionNumber base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
     if (base == null) {
       return new Pair<VcsRevisionNumber, List<CommittedChangeList>>(null, Collections.<CommittedChangeList>emptyList());
     }
@@ -82,7 +84,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
       LOG.info("local or remote not found");
       return null;
     }
-    final GitRevisionNumber base = searcher.getLocal().getMergeBase(myProject, root, searcher.getRemote());
+    final GitRevisionNumber base = getMergeBase(myProject, root, searcher.getLocal(), searcher.getRemote());
     LOG.debug("found base: " + ((base == null) ? null : base.asString()));
     return base;
   }
@@ -94,7 +96,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     }
     final GitRevisionNumber base;
     try {
-      base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
+      base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
     } catch (VcsException e) {
       LOG.info(e);
       return new ArrayList<Change>(localChanges);
@@ -132,5 +134,15 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     catch (VcsException e) {
       return null;
     }
+  }
+
+  /**
+   * Get a merge base between the current branch and specified branch.
+   * @return the common commit or null if the there is no common commit
+   */
+  @Nullable
+  private static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
+                                                @NotNull GitBranch currentBranch, @NotNull GitBranch branch) throws VcsException {
+    return GitHistoryUtils.getMergeBase(project, root, currentBranch.getFullName(), branch.getFullName());
   }
 }

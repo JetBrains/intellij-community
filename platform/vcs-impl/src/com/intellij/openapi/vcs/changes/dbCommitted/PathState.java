@@ -24,6 +24,8 @@ package com.intellij.openapi.vcs.changes.dbCommitted;
 public class PathState {
   private final long myLastRevision;
   private final boolean myExistsInLastRevision;
+  // todo use it?
+  //private final long myPathId;
 
   public PathState(long lastRevision, boolean existsInLastRevision) {
     myLastRevision = lastRevision;

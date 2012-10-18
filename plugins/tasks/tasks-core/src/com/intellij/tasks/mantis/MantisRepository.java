@@ -1,6 +1,7 @@
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
@@ -12,6 +13,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.rpc.ServiceException;
@@ -19,7 +21,10 @@ import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -50,6 +55,13 @@ public class MantisRepository extends BaseRepositoryImpl {
   @Override
   public BaseRepository clone() {
     return new MantisRepository(this);
+  }
+
+  @Nullable
+  @Override
+  public String extractId(final String taskName) {
+    Matcher matcher = Pattern.compile("\\d+").matcher(taskName);
+    return matcher.find() ? matcher.group() : null;
   }
 
   @Override
@@ -123,6 +135,35 @@ public class MantisRepository extends BaseRepositoryImpl {
       public String getDescription() {
         return data.getDescription();
       }
+
+      @NotNull
+      @Override
+      public Comment[] getComments() {
+        final List<Comment> comments = ContainerUtil.map(data.getNotes(), new Function<IssueNoteData, Comment>() {
+          @Override
+          public Comment fun(final IssueNoteData data) {
+            return new Comment() {
+              @Override
+              public String getText() {
+                return data.getText();
+              }
+
+              @Nullable
+              @Override
+              public String getAuthor() {
+                return data.getReporter().getName();
+              }
+
+              @Nullable
+              @Override
+              public Date getDate() {
+                return data.getDate_submitted().getTime();
+              }
+            };
+          }
+        });
+        return comments.toArray(new Comment[comments.size()]);
+      }
     };
 
     task.setUpdated(data.getLast_updated().getTime());
@@ -184,6 +225,8 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(filters);
       myProjects.add(project);
     }
+
+
   }
 
   private synchronized MantisConnectPortType createSoap() throws ServiceException, MalformedURLException {

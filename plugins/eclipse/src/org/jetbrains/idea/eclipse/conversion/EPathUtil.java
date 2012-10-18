@@ -25,7 +25,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -170,14 +170,17 @@ public class EPathUtil {
 
   @Nullable
   public static String collapse2eclipseRelative2OtherModule(final @NotNull Project project, final @NotNull VirtualFile file) {
-    final Module module = ModuleUtil.findModuleForFile(file, project);
+    final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
       return collapse2eclipsePathRelative2Module(file, module);
-    } else if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) { //should check all modules then
-      for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-        final String path = collapse2eclipsePathRelative2Module(file, aModule);
-        if (path != null) {
-          return path;
+    } else { //should check all modules then
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (fileIndex.isIgnored(file) || fileIndex.isInLibraryClasses(file)) {
+        for (Module aModule : ModuleManager.getInstance(project).getModules()) {
+          final String path = collapse2eclipsePathRelative2Module(file, aModule);
+          if (path != null) {
+            return path;
+          }
         }
       }
     }

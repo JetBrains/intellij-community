@@ -119,7 +119,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (text.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    final ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text, caseSensitively, true);
 
@@ -344,7 +344,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (qName.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    final ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     int dotIndex = qName.lastIndexOf('.');
     int dollarIndex = qName.lastIndexOf('$');
@@ -487,7 +487,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     appendCollectorsFromQueryRequests(collectors);
 
-    ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     do {
       final MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();

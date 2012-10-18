@@ -359,6 +359,11 @@ public class SelectTemplateStep extends ModuleWizardStep {
     Disposer.dispose(myBuilder);
   }
 
+  @Override
+  public String getName() {
+    return "Template Type";
+  }
+
   private void createUIComponents() {
     mySearchField = new SearchTextField(false);
   }

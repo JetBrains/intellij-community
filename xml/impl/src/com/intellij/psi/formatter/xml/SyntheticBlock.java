@@ -18,10 +18,13 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -109,7 +112,15 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     }
 
     if (type2 == XmlElementType.XML_ATTRIBUTE) {
-      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      int minLineFeeds = 0;
+
+      if (type1 == XmlTokenType.XML_NAME) {
+        final PsiElement psi2 = node2.getPsi();
+        minLineFeeds = psi2 instanceof XmlAttribute &&
+                       myXmlFormattingPolicy.insertLineBreakBeforeFirstAttribute((XmlAttribute)psi2)
+                       ? 1 : 0;
+      }
+      return Spacing.createSpacing(1, 1, minLineFeeds, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {

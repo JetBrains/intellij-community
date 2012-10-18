@@ -467,4 +467,9 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myInternalPanel.add(component, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                                           new Insets(10, 0, 0, 0), 0, 0));
   }
+
+  @Override
+  public String getName() {
+    return "Name and Type";
+  }
 }

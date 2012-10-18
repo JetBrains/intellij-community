@@ -18,19 +18,26 @@ package com.intellij.ui.content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ContentFactoryImpl implements ContentFactory {
+  @NotNull
+  @Override
   public ContentImpl createContent(JComponent component, String displayName, boolean isLockable) {
     return new ContentImpl(component, displayName, isLockable);
   }
 
-  public ContentManagerImpl createContentManager(ContentUI contentUI, boolean canCloseContents, Project project) {
+  @NotNull
+  @Override
+  public ContentManagerImpl createContentManager(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project) {
     return new ContentManagerImpl(contentUI, canCloseContents, project);
   }
 
-  public ContentManager createContentManager(boolean canCloseContents, Project project) {
+  @NotNull
+  @Override
+  public ContentManager createContentManager(boolean canCloseContents, @NotNull Project project) {
     return createContentManager(new TabbedPaneContentUI(), canCloseContents, project);
   }
 }

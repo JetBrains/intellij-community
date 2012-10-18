@@ -1053,8 +1053,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     final MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     final MyComparator comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
 
-    final ProgressIndicatorProvider provider = ProgressIndicatorProvider.getInstance();
-    final ProgressIndicator indicator = provider != null ? provider.getProgressIndicator() : null;
+    final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator);
     return diffLog;
   }

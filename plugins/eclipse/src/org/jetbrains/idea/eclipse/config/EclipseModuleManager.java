@@ -208,6 +208,8 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   }
 
   public void loadState(Element state) {
+    clear();
+
     for (Object o : state.getChildren(LIBELEMENT)) {
       myEclipseUrls.add(((Element)o).getAttributeValue(VALUE_ATTR));
     }
@@ -231,6 +233,13 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
         mySrcPlace.put(((Element)o).getAttributeValue(VALUE_ATTR), Integer.parseInt(((Element)o).getAttributeValue(EXPECTED_POSITION)));
       }
     }
+  }
+
+  private void clear() {
+    myEclipseUrls.clear();
+    myEclipseVariablePaths.clear();
+    myUnknownCons.clear();
+    mySrcPlace.clear();
   }
 
   public void setExpectedModuleSourcePlace(int expectedModuleSourcePlace) {
