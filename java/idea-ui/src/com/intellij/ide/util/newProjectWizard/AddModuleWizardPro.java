@@ -81,6 +81,13 @@ public class AddModuleWizardPro extends AddModuleWizard {
             doPreviousAction();
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("control shift TAB"), getContentPanel(), getDisposable());
+        new AnAction(){
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myCurrentStep = mySteps.size() - 1;
+            doOKAction();
+          }
+        }.registerCustomShortcutSet(CustomShortcutSet.fromString("control shift ENTER"), getContentPanel(), getDisposable());
       }
 
       @Override
@@ -145,6 +152,7 @@ public class AddModuleWizardPro extends AddModuleWizard {
       final int ind = index;
       final ModuleWizardStep step = mySteps.get(index);
       final JRadioButton rb = new JRadioButton(step.getName(), index == myCurrentStep);
+      rb.setFocusable(false);
       rb.setUI(new WizardArrowUI(rb, index < myCurrentStep));
       myStepsPanel.add(rb);
       group.add(rb);

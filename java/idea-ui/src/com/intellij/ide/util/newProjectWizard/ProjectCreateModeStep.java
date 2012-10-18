@@ -30,6 +30,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +47,7 @@ import java.util.List;
 public class ProjectCreateModeStep extends ModuleWizardStep {
   private static final String LAST_PROJECT_CREATION_MODE = "LAST_PROJECT_CREATION_MODE";
   private final JPanel myWholePanel;
+  private JPanel myPanelWithDescription;
 
   private WizardMode myMode;
   private final List<WizardMode> myModes = new ArrayList<WizardMode>();
@@ -77,7 +79,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
 
     myWizardContext = wizardContext;
     myWholePanel = new JPanel(new GridBagLayout());
-    myWholePanel.setBorder(BorderFactory.createEtchedBorder());
+    //myWholePanel.setBorder(BorderFactory.createEtchedBorder());
 
     final Insets insets = new Insets(0, 0, 0, 5);
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
@@ -129,10 +131,24 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.insets.bottom = 5;
     myWholePanel.add(note, gc);
+    if (Registry.is("new.project.wizard")) {
+      myPanelWithDescription = new JPanel(new BorderLayout());
+      myPanelWithDescription.add(createDescription(), BorderLayout.NORTH);
+      myPanelWithDescription.add(myWholePanel, BorderLayout.CENTER);
+    }
+  }
+
+  private JComponent createDescription() {
+    return new JLabel("<html><body><center><h3>Welcome to Create New Project Wizard</h3></center>" +
+                      "Some text explaining what are we going to do on possible steps should be placed here<br><br>" +
+                      "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br><br>" +
+                      "To navigate through steps use keyboard shortcuts Control+Tab to go next step or Control+Shift+Tab to go back. Or click on a Wizard Arrow" +
+                      "</body></html>");
+
   }
 
   public JComponent getComponent() {
-    return myWholePanel;
+    return Registry.is("new.project.wizard") ? myPanelWithDescription : myWholePanel;
   }
 
   public void updateDataModel() {

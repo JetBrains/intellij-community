@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +54,9 @@ public class NewModuleAction extends AnAction implements DumbAware {
     if (virtualFile != null && virtualFile.isDirectory()) {
       defaultPath = virtualFile.getPath();
     }
-    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project), defaultPath);
+    final AddModuleWizard wizard = Registry.is("new.project.wizard")
+                                   ? new AddModuleWizardPro(project, new DefaultModulesProvider(project), defaultPath)
+                                   : new AddModuleWizard(project, new DefaultModulesProvider(project), defaultPath);
 
     wizard.show();
 
