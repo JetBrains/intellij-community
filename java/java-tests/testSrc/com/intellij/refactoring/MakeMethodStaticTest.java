@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
@@ -186,13 +185,21 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     assertFalse(MakeStaticUtil.isParameterNeeded((PsiMethod)element));
   }
 
+  public void testMethodReference() throws Exception {
+    doTest(true);
+  }
+
   public void testPreserveParametersAlignment() throws Exception {
     doTest();
   }
 
   private void doTest() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(final boolean addClassParameter) throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before" + getTestName(false) + ".java");
-    perform(false);
+    perform(addClassParameter);
     checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
   }
 

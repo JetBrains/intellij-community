@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -161,10 +162,12 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
   }
 
+  @NotNull
   public AttributesFlyweight getFlyweight() {
     return myAttrs;
   }
 
+  @NotNull
   public static TextAttributes fromFlyweight(AttributesFlyweight flyweight) {
     TextAttributes f = new TextAttributes();
     f.myAttrs = flyweight;

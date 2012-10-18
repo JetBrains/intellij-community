@@ -94,4 +94,8 @@ public class ImportMode extends WizardMode {
 
   public void onChosen(final boolean enabled) {}
 
+  @Override
+  public String getShortName() {
+    return "Import from External Model";
+  }
 }

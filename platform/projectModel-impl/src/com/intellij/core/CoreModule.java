@@ -61,10 +61,16 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
       }
     });
 
-    ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this,
+    final ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this,
                                                                         DirectoryIndex.getInstance(project),
                                                                         ProjectRootManagerImpl.getInstanceImpl(project),
                                                                         VirtualFilePointerManager.getInstance());
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        moduleRootManager.disposeComponent();
+      }
+    });
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
     myModuleScopeProvider = createModuleScopeProvider();

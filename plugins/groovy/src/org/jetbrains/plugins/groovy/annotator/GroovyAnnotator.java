@@ -1341,6 +1341,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isInterface()) {
       checkReferenceList(myHolder, extendsClause, true, GroovyBundle.message("no.class.expected.here"), null);
     }
+    else if (typeDefinition.isEnum()) {
+      myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("enums.may.not.have.extends.clause"));
+    }
     else {
       checkReferenceList(myHolder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"), new ChangeExtendsImplementsQuickFix(typeDefinition));
     }

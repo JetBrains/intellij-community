@@ -37,10 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -662,7 +659,7 @@ public class ControlFlowUtils {
     }
     else if (last instanceof ThrowingInstruction) {
       PsiElement element = last.getElement();
-      if (!(element instanceof GrThrowStatement)) return true;
+      if (!(element instanceof GrThrowStatement || element instanceof GrAssertStatement)) return true;
     }
 
     PsiElement element = last.getElement();

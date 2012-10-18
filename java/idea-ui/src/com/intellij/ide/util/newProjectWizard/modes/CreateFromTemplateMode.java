@@ -47,7 +47,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Override
   public boolean isAvailable(WizardContext context) {
-    return true;
+    return context.isCreatingNewProject();
   }
 
   @Nullable
@@ -67,6 +67,11 @@ public class CreateFromTemplateMode extends WizardMode {
       return null;
     }
     return template.createModuleBuilder();
+  }
+
+  @Override
+  public String getShortName() {
+    return "Create from Template";
   }
 
   @Override

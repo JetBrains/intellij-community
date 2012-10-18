@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCalls
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -82,7 +81,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox("Ignore casts appeared in suspicious collections method calls", "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox("Ignore casts in suspicious collections method calls", "IGNORE_SUSPICIOUS_METHOD_CALLS");
     optionsPanel.addCheckbox("Ignore casts to invoke @NotNull method which overrides @Nullable", "IGNORE_ANNOTATED_METHODS");
     return optionsPanel;
   }

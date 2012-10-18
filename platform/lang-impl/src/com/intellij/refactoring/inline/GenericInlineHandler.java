@@ -22,10 +22,12 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
@@ -47,6 +49,8 @@ import java.util.*;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class GenericInlineHandler {
+
+  private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
 
   public static boolean invoke(final PsiElement element, @Nullable Editor editor, final InlineHandler languageSpecific) {
     final PsiReference invocationReference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
@@ -128,7 +132,7 @@ public class GenericInlineHandler {
               languageSpecific.removeDefinition(element, settings);
             }
           }
-        }, RefactoringBundle.message("inline.command", subj), null);
+        }, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null);
       }
     });
     return true;
@@ -139,7 +143,10 @@ public class GenericInlineHandler {
                                                                         Collection<? extends PsiReference> allReferences) {
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
     for (PsiReference ref : allReferences) {
-      final Language language = ref.getElement().getLanguage();
+      PsiElement refElement = ref.getElement();
+      LOG.assertTrue(refElement != null, ref.getClass().getName());
+
+      final Language language = refElement.getLanguage();
       if (inliners.containsKey(language)) continue;
 
       final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);

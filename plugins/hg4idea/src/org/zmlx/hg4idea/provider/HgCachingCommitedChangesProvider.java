@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
@@ -151,6 +152,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     throw new UnsupportedOperationException();  //TODO implement method
   }
 
+  @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }

@@ -54,8 +54,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JButton myNextButton;
   private JButton myCancelButton;
   private JButton myHelpButton;
-  private JPanel myContentPanel;
-  private TallImageComponent myIcon;
+  protected JPanel myContentPanel;
+  protected TallImageComponent myIcon;
   private Component myCurrentStepComponent;
   private final Alarm myFocusAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
@@ -71,7 +71,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(final String title, final Project project) {
+  public AbstractWizard(final String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<T>();
     initWizard(title);
@@ -227,7 +227,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
-  private static class TallImageComponent extends OpaquePanel {
+  public static class TallImageComponent extends OpaquePanel {
     private Icon myIcon;
 
     private TallImageComponent(Icon icon) {
@@ -238,6 +238,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     protected void paintChildren(Graphics g) {
       if (myIcon == null) return;
 
+      paintIcon(g);
+    }
+
+    public void paintIcon(Graphics g) {
       final BufferedImage image = new BufferedImage(myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D gg = image.createGraphics();
       myIcon.paintIcon(this, gg, 0, 0);
@@ -483,6 +487,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected JButton getPreviousButton() {
     return myPreviousButton;
+  }
+
+  public JButton getCancelButton() {
+    return myCancelButton;
   }
 
   @Deprecated

@@ -43,6 +43,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -84,7 +85,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private boolean isDisposed;
   private final ToolWindow myToolWindow;
 
-  public SlicePanel(final Project project, boolean dataFlowToThis, SliceNode rootNode, boolean splitByLeafExpressions, final ToolWindow toolWindow) {
+  public SlicePanel(@NotNull final Project project,
+                    boolean dataFlowToThis,
+                    @NotNull SliceNode rootNode,
+                    boolean splitByLeafExpressions,
+                    @NotNull final ToolWindow toolWindow) {
     super(new BorderLayout());
     myToolWindow = toolWindow;
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
@@ -181,6 +186,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
   }
 
+  @NotNull
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final Tree tree = new Tree(new DefaultTreeModel(root)){
@@ -282,6 +288,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
    return null;
   }
 
+  @Nullable
   private List<UsageInfo> getSelectedUsageInfos() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
@@ -327,26 +334,31 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     return navigatables;
   }
 
+  @NotNull
   private ActionToolbar createToolbar() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyRefreshAction(myTree));
-    actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
+    if (isToShowAutoScrollButton()) {
+      actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
+    }
     actionGroup.add(new CloseAction());
-    actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.Preview) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return isPreview();
-      }
+    if (isToShowPreviewButton()) {
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.Preview) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return isPreview();
+        }
 
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setPreview(state);
-        layoutPanel();
-      }
-    });
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          setPreview(state);
+          layoutPanel();
+        }
+      });
+    }
 
     if (myBuilder.dataFlowToThis) {
-      actionGroup.add(new AnalyzeLeavesAction(myBuilder));
+      actionGroup.add(new GroupByLeavesAction(myBuilder));
       actionGroup.add(new CanItBeNullAction(myBuilder));
     }
 
@@ -355,10 +367,12 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR, actionGroup, false);
   }
 
+  public boolean isToShowAutoScrollButton() {return true;}
   public abstract boolean isAutoScroll();
 
   public abstract void setAutoScroll(boolean autoScroll);
 
+  public boolean isToShowPreviewButton() {return true;}
   public abstract boolean isPreview();
 
   public abstract void setPreview(boolean preview);

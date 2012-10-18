@@ -104,6 +104,7 @@ public class PsiPrimitiveType extends PsiType {
   @Nullable
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
+    assert type.isValid();
     if (!((PsiClassType)type).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5)) return null;
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return null;

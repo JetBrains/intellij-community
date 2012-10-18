@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.branch.GitBranchUtil;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,14 +60,9 @@ public class GithubRebaseDialog extends GitRebaseDialog {
     // Preselect remote master
     GitBranch remoteBranch = null;
     String currentLocalBranchName = null;
-    try {
-      final GitBranch currentBranch = GitBranch.current(myProject, gitRoot());
-      if (currentBranch != null) {
-        currentLocalBranchName = currentBranch.getName();
-      }
-    }
-    catch (VcsException e) {
-      // Do noting;
+    final GitBranch currentBranch = GitBranchUtil.getCurrentBranch(myProject, gitRoot());
+    if (currentBranch != null) {
+      currentLocalBranchName = currentBranch.getName();
     }
 
     if (currentLocalBranchName != null) {

@@ -20,7 +20,6 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
@@ -89,6 +88,14 @@ public class SelectionTool extends InputTool {
   }
 
   @Override
+  protected void handlePopup() {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(myArea.getPopupPlace(), myArea.getPopupActions());
+    MouseEvent event = (MouseEvent)myInputEvent;
+    popupMenu.getComponent().show(myArea.getNativeComponent(), event.getX(), event.getY());
+  }
+
+  @Override
   protected void handleDoubleClick(int button) {
     if (button == MouseEvent.BUTTON1 && myToolProvider != null && !myArea.isTree()) {
       myToolProvider.startInplaceEditing(null);
@@ -149,11 +156,6 @@ public class SelectionTool extends InputTool {
       myTracker.mouseUp(event, area);
     }
     super.mouseUp(event, area);
-    if (event.isPopupTrigger() || (SystemInfo.isMac && event.getButton() == MouseEvent.BUTTON3)) {
-      ActionManager actionManager = ActionManager.getInstance();
-      ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(area.getPopupPlace(), area.getPopupActions());
-      popupMenu.getComponent().show(area.getNativeComponent(), event.getX(), event.getY());
-    }
   }
 
   @Override
@@ -170,6 +172,15 @@ public class SelectionTool extends InputTool {
       myTracker.mouseDrag(event, area);
     }
     super.mouseDrag(event, area);
+  }
+
+
+  @Override
+  public void mousePopup(MouseEvent event, EditableArea area) throws Exception {
+    if (myTracker != null) {
+      myTracker.mousePopup(event, area);
+    }
+    super.mousePopup(event, area);
   }
 
   @Override

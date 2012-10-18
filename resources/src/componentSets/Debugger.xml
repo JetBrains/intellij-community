@@ -17,6 +17,7 @@
       <interface-class>com.intellij.debugger.DebuggerManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.DebuggerManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <loadForDefaultProject/>
     </component>
   </project-components>
 

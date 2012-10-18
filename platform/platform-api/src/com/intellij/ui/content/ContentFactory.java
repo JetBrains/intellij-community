@@ -17,15 +17,19 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface ContentFactory {
+  @NotNull
   Content createContent(JComponent component, String displayName, boolean isLockable);
 
-  ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project);
+  @NotNull
+  ContentManager createContentManager(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project);
 
-  ContentManager createContentManager(boolean canCloseContents, Project project);
+  @NotNull
+  ContentManager createContentManager(boolean canCloseContents, @NotNull Project project);
 
   class SERVICE {
     private SERVICE() {

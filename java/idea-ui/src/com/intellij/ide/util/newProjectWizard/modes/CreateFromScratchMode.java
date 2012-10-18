@@ -68,18 +68,19 @@ public class CreateFromScratchMode extends WizardMode {
                                StepSequence sequence, List<ModuleBuilder> builders) {
     sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
     for (ModuleBuilder builder : builders) {
-      addModuleBuilder(builder, context, modulesProvider, sequence);
+      context.setTemplateMode(mode instanceof CreateFromTemplateMode);
+      addStepsForBuilder(builder, context, modulesProvider, sequence);
     }
     return sequence;
   }
 
-  private static void addModuleBuilder(ModuleBuilder builder,
-                                       WizardContext context,
-                                       ModulesProvider modulesProvider,
-                                       StepSequence myStepSequence) {
+  private static void addStepsForBuilder(ModuleBuilder builder,
+                                         WizardContext context,
+                                         ModulesProvider modulesProvider,
+                                         StepSequence sequence) {
     final String id = builder.getBuilderId();
     for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      myStepSequence.addSpecificStep(id, step);
+      sequence.addSpecificStep(id, step);
     }
   }
 
@@ -93,6 +94,11 @@ public class CreateFromScratchMode extends WizardMode {
 
   public void onChosen(final boolean enabled) {
     
+  }
+
+  @Override
+  public String getShortName() {
+    return "Create from Scratch";
   }
 
   public void dispose() {

@@ -82,6 +82,9 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     }
 
     this.defaultType = defaultType;
+
+    assert type.isValid();
+    assert defaultType.isValid();
   }
 
   @Override

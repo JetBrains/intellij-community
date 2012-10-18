@@ -88,6 +88,15 @@ public class OpenFileAction extends AnAction implements DumbAware {
     FileChooser.chooseFiles(descriptor, project, userHomeDir, new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(final List<VirtualFile> files) {
+        for (VirtualFile file : files) {
+          if (!descriptor.isFileSelectable(file)) { // on Mac, it could be selected anyway
+            Messages.showInfoMessage(project,
+                                     file.getPresentableUrl() + " contains no " +
+                                     ApplicationNamesInfo.getInstance().getFullProductName() + " project",
+                                     "Cannot Open Project");
+            return;
+          }
+        }
         doOpenFile(project, files);
       }
     });

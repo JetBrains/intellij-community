@@ -56,7 +56,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private final Project myCurrentProject;
   private final ModulesProvider myModulesProvider;
   private WizardContext myWizardContext;
-  private ProjectCreateModeStep myRootStep;
+  protected ProjectCreateModeStep myRootStep;
 
 
   /**
@@ -79,7 +79,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     initModuleWizard(project, null);
   }
 
-  private void initModuleWizard(final Project project, @Nullable final String defaultPath) {
+  private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
     myWizardContext = new WizardContext(project);
     if (defaultPath != null) {
       myWizardContext.setProjectFileDirectory(defaultPath);
@@ -166,7 +166,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     super.doOKAction();
   }
 
-  private boolean commitStepData(final ModuleWizardStep step) {
+  protected boolean commitStepData(final ModuleWizardStep step) {
     try {
       if (!step.validate()) {
         return false;

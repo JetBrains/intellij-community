@@ -87,6 +87,11 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   public void updateDataModel() {
   }
 
+  @Override
+  public String getName() {
+    return "Add Frameworks";
+  }
+
   private static class FrameworkSupportModelInWizard extends FrameworkSupportModelBase {
     private final ModuleBuilder myBuilder;
 

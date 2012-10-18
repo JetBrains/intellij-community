@@ -97,15 +97,19 @@ public class SliceLeafAnalyzer {
     return filtered;
   }
 
-  private static void groupByValues(Collection<PsiElement> leaves, SliceRootNode oldRoot, final Map<SliceNode, Collection<PsiElement>> map) {
+  private static void groupByValues(@NotNull Collection<PsiElement> leaves,
+                                    @NotNull SliceRootNode oldRoot,
+                                    @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     assert oldRoot.myCachedChildren.size() == 1;
     SliceRootNode root = createTreeGroupedByValues(leaves, oldRoot, map);
 
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceUsage rootUsage = oldRootStart.getValue();
-    SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Value") );
+    String description = SliceManager.getElementDescription(null, rootUsage.getElement(), " (grouped by value)");
+    SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, description);
   }
 
+  @NotNull
   public static SliceRootNode createTreeGroupedByValues(Collection<PsiElement> leaves, SliceRootNode oldRoot, final Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
@@ -139,7 +143,7 @@ public class SliceLeafAnalyzer {
     return root;
   }
 
-  public static void startAnalyzeValues(final AbstractTreeStructure treeStructure, final Runnable finish) {
+  public static void startAnalyzeValues(@NotNull final AbstractTreeStructure treeStructure, @NotNull final Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
 
@@ -175,7 +179,6 @@ public class SliceLeafAnalyzer {
         }
       }
     });
-
   }
 
   public static Map<SliceNode, Collection<PsiElement>> createMap() {
@@ -233,8 +236,9 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root, AbstractTreeStructure treeStructure,
-                                                           final Map<SliceNode, Collection<PsiElement>> map) {
+  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
+                                                           @NotNull AbstractTreeStructure treeStructure,
+                                                           @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override

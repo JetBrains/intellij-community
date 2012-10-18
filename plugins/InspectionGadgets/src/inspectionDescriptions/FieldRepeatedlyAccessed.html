@@ -3,7 +3,7 @@
 This inspection is intended for J2ME and other highly resource constrained environments.
 Applying the results of this inspection without consideration might have negative effects on code clarity and design.
 <p>
-This inspection reports fields which are accessed three or more times by a given method,
+Reports fields which are accessed three or more times by a given method,
 or which are accessed in a loop. While such field access may be logically correct, it is often more performant
 to replace such accesses with local variables, copying the fields to a temporary local and copying back if necessary.
   <!-- tooltip end -->

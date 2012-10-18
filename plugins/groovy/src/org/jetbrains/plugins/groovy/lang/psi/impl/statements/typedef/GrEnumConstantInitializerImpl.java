@@ -34,8 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
  * @author Maxim.Medvedev
  */
 public class GrEnumConstantInitializerImpl extends GrAnonymousClassDefinitionImpl implements GrEnumConstantInitializer {
-  private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumConstantInitializerImpl");
+  private static final Logger LOG = Logger.getInstance(GrEnumConstantInitializerImpl.class);
 
   public GrEnumConstantInitializerImpl(@NotNull ASTNode node) {
     super(node);

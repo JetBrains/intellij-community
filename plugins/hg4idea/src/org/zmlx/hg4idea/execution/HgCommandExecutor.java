@@ -295,9 +295,9 @@ public final class HgCommandExecutor {
               choicePresentationArray[i] = choices[i].toString();
             }
             index[0] = Messages
-              .showChooseDialog(message, "hg4idea",
-                                choicePresentationArray,
-                                defaultChoice.toString(), Messages.getQuestionIcon());
+              .showDialog(message, "hg4idea",
+                          choicePresentationArray,
+                          defaultChoice.getChosenIndex(), Messages.getQuestionIcon());
           }
         });
 

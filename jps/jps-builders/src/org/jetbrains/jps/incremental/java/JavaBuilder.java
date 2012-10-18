@@ -36,6 +36,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.java.ResourcesOnlyRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -122,12 +123,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
       public void process(CompileContext context, OutputFileObject out) {
         final OutputFileObject.Content content = out.getContent();
         final File srcFile = out.getSourceFile();
+        boolean isTemp = false;
+        final JavaFileObject.Kind outKind = out.getKind();
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, srcFile);
+          final JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-          boolean isTemp = false;
           if (rootDescriptor != null) {
             isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
@@ -140,12 +142,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           out.setTemp(isTemp);
-          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
+          if (!isTemp && outKind == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
             final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
             if (callback != null) {
               final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
               callback.associate(outputPath, sourcePath, reader);
             }
+          }
+        }
+        if (!isTemp && outKind != JavaFileObject.Kind.CLASS && outKind != JavaFileObject.Kind.SOURCE) { // this should be a generated resource
+          try {
+            FSOperations.markDirty(context, out.getFile());
+          }
+          catch (IOException e) {
+            LOG.info(e);
           }
         }
       }
@@ -179,7 +189,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
+        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
+          if (descriptor instanceof ResourcesOnlyRootDescriptor) {
+            return true;
+          }
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -196,7 +209,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().getModuleAndRoot(context, form);
+          final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, form);
           if (descriptor == null) {
             continue;
           }
@@ -315,11 +328,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
-        final Set<File> tempRootsSourcePath = new HashSet<File>();
+        final Set<File> srcPath = new HashSet<File>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
           for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
-            tempRootsSourcePath.add(rd.root);
+            srcPath.add(rd.root);
           }
         }
 
@@ -340,12 +353,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
-          compiledOk = compileJava(context, chunk, files, classpath, platformCp, tempRootsSourcePath, diagnosticSink, outputSink);
+          compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
         }
 
         context.checkCanceled();
 
-        if (!forms.isEmpty() || addNotNullAssertions) {
+        if (diagnosticSink.getErrorCount() == 0 && (!forms.isEmpty() || addNotNullAssertions)) {
           final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
@@ -354,8 +367,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(
-                  pd.getProject());
+                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.getProject());
                 if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
                   for (ModuleBuildTarget target : chunk.getTargets()) {
                     if (!target.isTests()) {

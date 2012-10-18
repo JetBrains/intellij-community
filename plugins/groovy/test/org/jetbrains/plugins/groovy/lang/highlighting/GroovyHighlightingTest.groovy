@@ -898,4 +898,11 @@ def methodMissing(String methodName, args) {
 }
 ''')
   }
+
+  void testEnumExtendsList() {
+    testHighlighting('''\
+enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> {
+}
+''')
+  }
 }

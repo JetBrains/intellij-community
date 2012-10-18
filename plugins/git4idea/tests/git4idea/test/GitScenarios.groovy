@@ -135,7 +135,7 @@ class GitScenarios {
 
   def prepend(String fileName, String content) {
     def previousContent = cat(fileName)
-    new File(myCurrentDir, fileName).withWriter("UTF-8") { it.write(content + previousContent) }
+    new File(ourCurrentDir, fileName).withWriter("UTF-8") { it.write(content + previousContent) }
   }
 
 }

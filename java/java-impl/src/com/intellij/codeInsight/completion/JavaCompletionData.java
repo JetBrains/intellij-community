@@ -554,12 +554,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {
     for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-      new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(parameters.getInvocationCount() > 1, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          result.addElement(element);
-        }
-      });
+      new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(parameters.getInvocationCount() > 1, result);
     }
   }
 

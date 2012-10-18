@@ -279,11 +279,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
       }
       return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
-      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, myXmlFormattingPolicy.insertLineBreakAfterTagBegin(getTag()) ?  2 : 0,
+                                   true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.insertLineFeedAfter()) {
       return Spacing.createSpacing(0,0,1,true,myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
-      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(0, 0, myXmlFormattingPolicy.insertLineBreakAfterTagBegin(getTag()) ? 2 : 0,
+                                   true, myXmlFormattingPolicy.getKeepBlankLines());
     } else {
       return createDefaultSpace(true, true);
     }

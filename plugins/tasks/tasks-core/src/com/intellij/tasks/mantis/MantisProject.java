@@ -1,5 +1,6 @@
 package com.intellij.tasks.mantis;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,6 +9,7 @@ import java.util.List;
  */
 public class MantisProject {
   public final static MantisProject ALL_PROJECTS = new MantisProject(0, "All Projects");
+  public static final ArrayList<MantisFilter> EMPTY_LIST = new ArrayList<MantisFilter>();
 
   private List<MantisFilter> myFilters;
 
@@ -40,7 +42,7 @@ public class MantisProject {
   }
 
   public List<MantisFilter> getFilters() {
-    return myFilters;
+    return myFilters == null ? EMPTY_LIST : myFilters;
   }
 
   public void setFilters(final List<MantisFilter> filters) {

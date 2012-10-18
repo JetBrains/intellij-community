@@ -17,37 +17,37 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"
 
-  public void testAssignment() throws Throwable { doTest(); }
-  public void testClosure1() throws Throwable { doTest(); }
-  public void testComplexAssign() throws Throwable { doTest(); }
-  public void testFor1() throws Throwable { doTest(); }
-  public void testForeach1() throws Throwable { doTest(); }
-  public void testGrvy1497() throws Throwable { doTest(); }
-  public void testIf1() throws Throwable { doTest(); }
-  public void testMultipleAssignment() throws Throwable { doTest(); }
-  public void testNested() throws Throwable { doTest(); }
-  public void testReturn() throws Throwable { doTest(); }
-  public void testSwitch1() throws Throwable { doTest(); }
-  public void testSwitch2() throws Throwable { doTest(); }
-  public void testSwitch3() throws Throwable { doTest(); }
-  public void testSwitch4() throws Throwable { doTest(); }
-  public void testSwitch5() throws Throwable { doTest(); }
-  public void testThrow1() throws Throwable { doTest(); }
-  public void testThrowInCatch() throws Throwable { doTest(); }
-  public void testTry1() throws Throwable { doTest(); }
-  public void testTry2() throws Throwable { doTest(); }
-  public void testTry3() throws Throwable { doTest(); }
-  public void testTry4() throws Throwable { doTest(); }
-  public void testTry5() throws Throwable { doTest(); }
-  public void testTry6() throws Throwable { doTest(); }
-  public void testTry7() throws Throwable { doTest(); }
-  public void testTry8() throws Throwable { doTest(); }
-  public void testTry9() throws Throwable { doTest(); }
-  public void testTry10() throws Throwable { doTest(); }
-  public void testWhile1() throws Throwable { doTest(); }
-  public void testWhile2() throws Throwable { doTest(); }
-  public void testWhileNonConstant() throws Throwable { doTest(); }
-  public void testIfInstanceofElse() throws Throwable { doTest(); }
+  public void testAssignment() { doTest(); }
+  public void testClosure1() { doTest(); }
+  public void testComplexAssign() { doTest(); }
+  public void testFor1() { doTest(); }
+  public void testForeach1() { doTest(); }
+  public void testGrvy1497() { doTest(); }
+  public void testIf1() { doTest(); }
+  public void testMultipleAssignment() { doTest(); }
+  public void testNested() { doTest(); }
+  public void testReturn() { doTest(); }
+  public void testSwitch1() { doTest(); }
+  public void testSwitch2() { doTest(); }
+  public void testSwitch3() { doTest(); }
+  public void testSwitch4() { doTest(); }
+  public void testSwitch5() { doTest(); }
+  public void testThrow1() { doTest(); }
+  public void testThrowInCatch() { doTest(); }
+  public void testTry1() { doTest(); }
+  public void testTry2() { doTest(); }
+  public void testTry3() { doTest(); }
+  public void testTry4() { doTest(); }
+  public void testTry5() { doTest(); }
+  public void testTry6() { doTest(); }
+  public void testTry7() { doTest(); }
+  public void testTry8() { doTest(); }
+  public void testTry9() { doTest(); }
+  public void testTry10() { doTest(); }
+  public void testWhile1() { doTest(); }
+  public void testWhile2() { doTest(); }
+  public void testWhileNonConstant() { doTest(); }
+  public void testIfInstanceofElse() { doTest(); }
   public void testReturnMapFromClosure() {doTest();}
   public void testSwitchInTryWithThrows() {doTest();}
   public void testClosure() {doTest();}
@@ -56,6 +56,11 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testOrInReturn() {doTest();}
   public void testVarInString() {doTest();}
   public void testMayBeStaticWithCondition() {doTest()}
+  public void testAssert0() { doTest() }
+  public void testAssert1() { doTest() }
+  public void testAssert2() { doTest() }
+  public void testAssert3() { doTest() }
+  public void testAssert4() { doTest() }
 
   public void doTest() {
     final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
