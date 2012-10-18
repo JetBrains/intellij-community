@@ -106,6 +106,7 @@ class WizardArrowUI extends BasicButtonUI {
     textRect.x = 2;
     textRect.y-=7;
     c.setForeground(UIUtil.getListForeground(myButton.isSelected()));
+    GraphicsUtil.setupAntialiasing(g);
     paintText(g, c, textRect, myButton.getText());
   }
 }
