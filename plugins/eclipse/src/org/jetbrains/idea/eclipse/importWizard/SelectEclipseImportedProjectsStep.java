@@ -96,6 +96,11 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
     return super.validate();
   }
 
+  @Override
+  public String getName() {
+    return "Eclipse Projects to Import";
+  }
+
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import.eclipse.page2";

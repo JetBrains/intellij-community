@@ -70,7 +70,7 @@ class UsageNodeTreeBuilder {
   }
 
   @Nullable
-  UsageNode appendUsage(@NotNull Usage usage, Consumer<Runnable> edtQueue) {
+  UsageNode appendUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
     if (!isVisible(usage)) return null;
 
     GroupNode lastGroupNode = myRoot;

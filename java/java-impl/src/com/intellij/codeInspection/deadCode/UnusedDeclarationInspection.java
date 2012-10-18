@@ -270,6 +270,15 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
+  private static boolean isExternalizableNoParameterConstructor(PsiMethod method, RefClass refClass) {
+    if (!method.isConstructor()) return false;
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+    final PsiParameterList parameterList = method.getParameterList();
+    if (parameterList.getParametersCount() != 0) return false;
+    final PsiClass aClass = method.getContainingClass();
+    return aClass == null || isExternalizable(aClass, refClass);
+  }
+
   private static boolean isSerializationImplicitlyUsedField(PsiField field) {
     @NonNls final String name = field.getName();
     if (!HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
@@ -328,6 +337,15 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       return isSerializable(aClass, refClass, serializableClass);
     }
     return false;
+  }
+
+  private static boolean isExternalizable(PsiClass aClass, RefClass refClass) {
+    final GlobalSearchScope scope = aClass.getResolveScope();
+    final PsiClass externalizableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Externalizable", scope);
+    if (externalizableClass == null) {
+      return false;
+    }
+    return isSerializable(aClass, refClass, externalizableClass);
   }
 
   private static boolean isSerializable(PsiClass aClass, RefClass refClass, PsiClass serializableClass) {
@@ -600,7 +618,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   private static boolean isSerializablePatternMethod(PsiMethod psiMethod, RefClass refClass) {
     return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
-           isWriteReplaceMethod(psiMethod, refClass);
+           isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
   }
 
   private void enqueueMethodUsages(final RefMethod refMethod) {

@@ -400,4 +400,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   public String getHelpId() {
     return myHelpId;
   }
+
+  @Override
+  public String getName() {
+    return "Path to Sources";
+  }
 }

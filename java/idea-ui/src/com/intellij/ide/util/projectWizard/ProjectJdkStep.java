@@ -99,6 +99,11 @@ public class ProjectJdkStep extends ModuleWizardStep {
     return true;
   }
 
+  @Override
+  public String getName() {
+    return "Project JDK";
+  }
+
   public void disposeUIResources() {
     super.disposeUIResources();
     myProjectJdksConfigurable.disposeUIResources();

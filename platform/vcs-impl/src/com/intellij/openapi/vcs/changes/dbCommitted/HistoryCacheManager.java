@@ -78,13 +78,18 @@ public class HistoryCacheManager {
     myQueue.run(new AppendChanges(vcs, root, lists));
   }
 
+  public List<CommittedChangeList> readListsByDates(final AbstractVcs vcs, final RepositoryLocation location,
+                                                    final long lastTs, final long oldTs, final String subfolder) throws VcsException {
+    return myDbUtil.readLists(vcs, location, RevisionId.createTime(lastTs), RevisionId.createTime(oldTs), subfolder);
+  }
+
   public List<CommittedChangeList> readLists(final AbstractVcs vcs, final RepositoryLocation location, final long lastRev, final long oldRev)
     throws VcsException {
     return myDbUtil.readLists(vcs, location, lastRev, oldRev);
   }
 
   public long getLastRevision(final AbstractVcs vcs, final RepositoryLocation location) {
-    return myDbUtil.getLastRevision(vcs, location2string(location));
+    return myDbUtil.getLastRevision(vcs, location2string(location)).getNumber();
   }
 
   private String location2string(RepositoryLocation location) {
@@ -92,7 +97,7 @@ public class HistoryCacheManager {
   }
 
   public long getFirstRevision(final AbstractVcs vcs, final RepositoryLocation location) {
-    return myDbUtil.getFirstRevision(vcs, location2string(location));
+    return myDbUtil.getFirstRevision(vcs, location2string(location)).getNumber();
   }
 
   public PathState getPathState(final AbstractVcs vcs, final RepositoryLocation location, final String path) throws VcsException {

@@ -45,7 +45,7 @@ public class ProjectFileType implements InternalFileType {
   }
 
   public Icon getIcon() {
-    return AllIcons.Nodes.IdeaProject;
+    return AllIcons.Nodes.IdeaModule;
   }
 
   public boolean isBinary() {

@@ -704,7 +704,7 @@ public class GitUtil {
                remote is configured for the current branch).
 
      */
-    String remoteName = branch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
+    String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), branch.getName());
     GitRemote remote;
     if (remoteName == null) {
       remote = findOrigin(repository.getRemotes());

@@ -30,6 +30,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -54,15 +55,16 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   private TreePath myPendingChildPath;
   private FilteringTreeBuilder myBuilder;
 
-  public TreePopupImpl(JBPopup parent, TreePopupStep aStep, Object parentValue) {
+  public TreePopupImpl(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
     super(parent, aStep);
     setParentValue(parentValue);
   }
 
-  public TreePopupImpl(TreePopupStep aStep) {
+  public TreePopupImpl(@NotNull TreePopupStep aStep) {
     this(null, aStep, null);
   }
 
+  @Override
   protected JComponent createContent() {
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
@@ -83,6 +85,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     }
 
     myWizardTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           toggleExpansion(myWizardTree.getAnchorSelectionPath());
@@ -100,12 +103,14 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     myMouseListener = new MyMouseListener();
 
     registerAction("select", KeyEvent.VK_ENTER, 0, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(true, null);
       }
     });
 
     registerAction("toggleExpansion", KeyEvent.VK_SPACE, 0, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         toggleExpansion(myWizardTree.getSelectionPath());
       }
@@ -113,6 +118,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
     final Action oldExpandAction = getActionMap().get("selectChild");
     getActionMap().put("selectChild", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TreePath path = myWizardTree.getSelectionPath();
         if (path != null && 0 == myWizardTree.getModel().getChildCount(path.getLastPathComponent())) {
@@ -125,6 +131,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
     final Action oldCollapseAction = getActionMap().get("selectParent");
     getActionMap().put("selectParent", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TreePath path = myWizardTree.getSelectionPath();
         if (shouldHidePopup(path)) {
@@ -148,10 +155,12 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     return path.getPathCount() == 2;
   }
 
+  @Override
   protected ActionMap getActionMap() {
     return myWizardTree.getActionMap();
   }
 
+  @Override
   protected InputMap getInputMap() {
     return myWizardTree.getInputMap();
   }
@@ -161,6 +170,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     myWizardTree.addMouseListener(myMouseListener);
   }
 
+  @Override
   public void dispose() {
     mySavedExpanded.clear();
     final Enumeration<TreePath> expanded = myWizardTree.getExpandedDescendants(new TreePath(myWizardTree.getModel().getRoot()));
@@ -176,6 +186,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     super.dispose();
   }
 
+  @Override
   protected boolean beforeShow() {
     addListeners();
 
@@ -191,6 +202,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     return super.beforeShow();
   }
 
+  @Override
   protected void afterShow() {
     selectFirstSelectableItem();
   }
@@ -237,6 +249,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   }
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
+    @Override
     public void mouseMoved(MouseEvent e) {
       final TreePath path = getPath(e);
       if (path != null) {
@@ -262,6 +275,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private class MyMouseListener extends MouseAdapter {
 
+    @Override
     public void mousePressed(MouseEvent e) {
       final TreePath path = getPath(e);
       if (path == null) {
@@ -284,6 +298,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
       }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
     }
 
@@ -346,6 +361,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
   private class MyRenderer extends SimpleNodeRenderer {
 
+    @Override
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean shouldPaintSelected = (getTreeStep().isSelectable(value, extractUserObject(value)) && selected) || (getTreeStep().isSelectable(value, extractUserObject(value)) && hasFocus);
       final boolean shouldPaintFocus =
@@ -360,6 +376,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     return box != null && box.isWithin(mouseX);
   }
 
+  @Override
   protected void process(KeyEvent aEvent) {
     myWizardTree.processKeyEvent(aEvent);
   }
@@ -373,6 +390,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   }
 
   private class MyTree extends SimpleTree {
+    @Override
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
@@ -384,6 +402,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
       return new Dimension(pref.width + 10, pref.height);
     }
 
+    @Override
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
 
@@ -412,18 +431,22 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     return getTreeStep().getProject();
   }
 
+  @Override
   protected void onAutoSelectionTimer() {
     handleSelect(false, null);
   }
 
+  @Override
   protected JComponent getPreferredFocusableComponent() {
     return myWizardTree;
   }
 
+  @Override
   protected void onSpeedSearchPatternChanged() {
     myBuilder.refilter();
   }
 
+  @Override
   protected void onChildSelectedFor(Object value) {
     TreePath path = (TreePath) value;
     if (myWizardTree.getSelectionPath() != path) {
@@ -431,6 +454,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     }
   }
 
+  @Override
   public boolean isModalContext() {
     return true;
   }

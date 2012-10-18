@@ -89,8 +89,8 @@ public class ChunkExtractor {
         protected Map<PsiFile, ChunkExtractor> create() {
           return new FactoryMap<PsiFile, ChunkExtractor>() {
             @Override
-            protected ChunkExtractor create(PsiFile key) {
-              return new ChunkExtractor(key);
+            protected ChunkExtractor create(PsiFile psiFile) {
+              return new ChunkExtractor(psiFile);
             }
           };
         }
@@ -98,10 +98,15 @@ public class ChunkExtractor {
     }
   };
 
-  public static TextChunk[] extractChunks(@NotNull PsiFile file, UsageInfo2UsageAdapter usageAdapter) {
-    return ourExtractors.get().getValue().get(file).extractChunks(usageAdapter, file);
+  @NotNull 
+  public static TextChunk[] extractChunks(@NotNull PsiFile file, @NotNull UsageInfo2UsageAdapter usageAdapter) {
+    return getExtractor(file).extractChunks(usageAdapter, file);
   }
 
+  @NotNull
+  public static ChunkExtractor getExtractor(@NotNull PsiFile file) {
+    return ourExtractors.get().getValue().get(file);
+  }
 
   private ChunkExtractor(@NotNull PsiFile file) {
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
@@ -127,6 +132,7 @@ public class ChunkExtractor {
     return minStart == Integer.MAX_VALUE ? -1 : minStart;
   }
 
+  @NotNull 
   private TextChunk[] extractChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter, @NotNull PsiFile file) {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
@@ -135,7 +141,6 @@ public class ChunkExtractor {
     int visibleStartOffset = myDocument instanceof DocumentWindow ? ((DocumentWindow)myDocument).injectedToHost(absoluteStartOffset) : absoluteStartOffset;
 
     int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
-    //int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);
     int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
     int visibleColumnNumber = visibleStartOffset - visibleDocument.getLineStartOffset(visibleLineNumber);
     final List<TextChunk> result = new ArrayList<TextChunk>();
@@ -146,9 +151,6 @@ public class ChunkExtractor {
     if (lineStartOffset > lineEndOffset) return TextChunk.EMPTY_ARRAY;
 
     final CharSequence chars = myDocument.getCharsSequence();
-    if (myLexer.getTokenStart() > absoluteStartOffset) {
-      myLexer.start(chars);
-    }
     if (lineEndOffset - lineStartOffset > MAX_LINE_TO_SHOW) {
       lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
       lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
@@ -164,11 +166,12 @@ public class ChunkExtractor {
     return createTextChunks(usageInfo2UsageAdapter, chars, lineStartOffset, lineEndOffset, result);
   }
 
-  private TextChunk[] createTextChunks(final UsageInfo2UsageAdapter usageInfo2UsageAdapter,
-                                       final CharSequence chars,
-                                       int start,
-                                       int end,
-                                       final List<TextChunk> result) {
+  @NotNull
+  public TextChunk[] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+                                      @NotNull CharSequence chars,
+                                      int start,
+                                      int end,
+                                      @NotNull List<TextChunk> result) {
     final Lexer lexer = myLexer;
     final SyntaxHighlighter highlighter = myHighlighter;
 
@@ -177,6 +180,9 @@ public class ChunkExtractor {
     int i = StringUtil.indexOf(chars, '\n', start, end);
     if (i != -1) end = i;
 
+    if (lexer.getTokenStart() > start) {
+      lexer.start(chars);
+    }
     boolean isBeginning = true;
 
     while (lexer.getTokenType() != null) {
@@ -191,7 +197,7 @@ public class ChunkExtractor {
         if (hiStart >= hiEnd) { continue; }
 
         String text = chars.subSequence(hiStart, hiEnd).toString();
-        if (isBeginning && text.trim().length() == 0) continue;
+        if (isBeginning && text.trim().isEmpty()) continue;
         isBeginning = false;
         IElementType tokenType = lexer.getTokenType();
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
@@ -206,12 +212,12 @@ public class ChunkExtractor {
     return result.toArray(new TextChunk[result.size()]);
   }
 
-  private void processIntersectingRange(UsageInfo2UsageAdapter usageInfo2UsageAdapter,
-                                        final CharSequence chars,
+  private void processIntersectingRange(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+                                        @NotNull final CharSequence chars,
                                         int hiStart,
                                         final int hiEnd,
-                                        TextAttributesKey[] tokenHighlights,
-                                        final List<TextChunk> result) {
+                                        @NotNull TextAttributesKey[] tokenHighlights,
+                                        @NotNull final List<TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
     final int[] lastOffset = {hiStart};
     usageInfo2UsageAdapter.processRangeMarkers(new Processor<Segment>() {
@@ -235,7 +241,12 @@ public class ChunkExtractor {
     }
   }
 
-  private static void addChunk(CharSequence chars, int start, int end, TextAttributes originalAttrs, boolean bold, List<TextChunk> result) {
+  private static void addChunk(@NotNull CharSequence chars,
+                               int start,
+                               int end,
+                               @NotNull TextAttributes originalAttrs,
+                               boolean bold,
+                               @NotNull List<TextChunk> result) {
     if (start >= end) return;
 
     TextAttributes attrs = bold
@@ -250,7 +261,8 @@ public class ChunkExtractor {
            || s1 == s2 && e1 == e2;
   }
 
-  private TextAttributes convertAttributes(TextAttributesKey[] keys) {
+  @NotNull
+  private TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
     TextAttributes attrs = myColorsScheme.getAttributes(HighlighterColors.TEXT);
 
     for (TextAttributesKey key : keys) {

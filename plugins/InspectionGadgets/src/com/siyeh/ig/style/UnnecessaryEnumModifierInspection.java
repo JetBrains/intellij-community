@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,51 +28,50 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryEnumModifierInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.enum.modifier.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.enum.modifier.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiElement parent = (PsiElement)infos[1];
     if (parent instanceof PsiMethod) {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.enum.modifier.problem.descriptor");
+      return InspectionGadgetsBundle.message("unnecessary.enum.modifier.problem.descriptor");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.enum.modifier.problem.descriptor1");
+      return InspectionGadgetsBundle.message("unnecessary.enum.modifier.problem.descriptor1");
     }
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryInterfaceModifierVisitor();
+    return new UnnecessaryEnumModifierVisitor();
   }
 
+  @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new UnnecessaryEnumModifierFix((PsiElement)infos[0]);
   }
 
-  private static class UnnecessaryEnumModifierFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryEnumModifierFix extends InspectionGadgetsFix {
 
     private final String m_name;
 
     private UnnecessaryEnumModifierFix(PsiElement modifier) {
-      m_name = InspectionGadgetsBundle.message(
-        "smth.unnecessary.remove.quickfix",
-        modifier.getText());
+      m_name = InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", modifier.getText());
     }
 
+    @Override
     @NotNull
     public String getName() {
       return m_name;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierList modifierList;
       if (element instanceof PsiModifierList) {
@@ -86,24 +85,16 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
         modifierList.setModifierProperty(PsiModifier.STATIC, false);
       }
       else {
-        modifierList.setModifierProperty(PsiModifier.PRIVATE,
-                                         false);
+        modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
       }
     }
   }
 
-  private static class UnnecessaryInterfaceModifierVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryEnumModifierVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (!aClass.isEnum()) {
-        return;
-      }
-      if (!ClassUtils.isInnerClass(aClass)) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!aClass.isEnum() || !ClassUtils.isInnerClass(aClass) || !aClass.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiModifierList modifiers = aClass.getModifierList();
@@ -121,18 +112,11 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      // don't call super, to keep this from drilling in
-      if (!method.isConstructor()) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (!method.isConstructor() || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (!aClass.isEnum()) {
+      if (aClass == null || !aClass.isEnum()) {
         return;
       }
       final PsiModifierList modifiers = method.getModifierList();

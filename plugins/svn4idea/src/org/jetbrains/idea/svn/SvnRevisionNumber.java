@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.vcs.history.LongRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -22,7 +23,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 /**
  * @author alex
  */
-public class SvnRevisionNumber implements VcsRevisionNumber {
+public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber {
   @NotNull
   private final SVNRevision myRevision;
 
@@ -32,6 +33,11 @@ public class SvnRevisionNumber implements VcsRevisionNumber {
 
   public String asString() {
     return myRevision.toString();
+  }
+
+  @Override
+  public long getLongRevisionNumber() {
+    return myRevision.getNumber();
   }
 
   public int compareTo(VcsRevisionNumber vcsRevisionNumber) {

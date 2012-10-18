@@ -18,13 +18,17 @@ package com.intellij.slicer;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.ChunkExtractor;
+import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -82,11 +86,23 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
         renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRenderer.ourInvalidAttributes);
       }
       else {
-        renderer.append(element.getText(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        appendElementText((UsageInfo2UsageAdapter)usage, element, renderer);
       }
     }
     else {
       renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+  }
+
+  private static void appendElementText(@NotNull UsageInfo2UsageAdapter usage,
+                                        @NotNull final PsiElement element,
+                                        @NotNull final SliceUsageCellRenderer renderer) {
+    PsiFile file = element.getContainingFile();
+    List<TextChunk> result = new ArrayList<TextChunk>();
+    ChunkExtractor.getExtractor(element.getContainingFile()).createTextChunks(usage, file.getText(), element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset(), result);
+
+    for (TextChunk chunk : result) {
+      renderer.append(chunk.getText(), SimpleTextAttributes.fromTextAttributes(chunk.getAttributes()));
     }
   }
 }

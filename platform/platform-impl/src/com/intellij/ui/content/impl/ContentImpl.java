@@ -69,32 +69,39 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myPinnable = isPinnable;
   }
 
+  @Override
   public JComponent getComponent() {
     return myComponent;
   }
 
+  @Override
   public void setComponent(JComponent component) {
     Component oldComponent = myComponent;
     myComponent = component;
     myChangeSupport.firePropertyChange(PROP_COMPONENT, oldComponent, myComponent);
   }
 
+  @Override
   public JComponent getPreferredFocusableComponent() {
     return myFocusRequest == null ? myComponent : myFocusRequest.compute();
   }
 
+  @Override
   public void setPreferredFocusableComponent(final JComponent c) {
     setPreferredFocusedComponent(new Computable<JComponent>() {
+      @Override
       public JComponent compute() {
         return c;
       }
     });
   }
 
+  @Override
   public void setPreferredFocusedComponent(final Computable<JComponent> computable) {
     myFocusRequest = computable;
   }
 
+  @Override
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
@@ -102,6 +109,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
+  @Override
   public Icon getIcon() {
     if (myIsLocked) {
       return myIcon == null ? AllIcons.Nodes.PinToolWindow : myLayeredIcon;
@@ -111,38 +119,46 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     }
   }
 
+  @Override
   public void setDisplayName(String displayName) {
     String oldValue = myDisplayName;
     myDisplayName = displayName;
     myChangeSupport.firePropertyChange(PROP_DISPLAY_NAME, oldValue, myDisplayName);
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public void setTabName(String tabName) {
     myTabName = tabName;
   }
 
+  @Override
   public String getTabName() {
     if (myTabName != null) return myTabName;
     return myDisplayName;
   }
 
+  @Override
   public void setToolwindowTitle(String toolwindowTitle) {
     myToolwindowTitle = toolwindowTitle;
   }
 
+  @Override
   public String getToolwindowTitle() {
     if (myToolwindowTitle != null) return myToolwindowTitle;
     return myDisplayName;
   }
 
+  @Override
   public Disposable getDisposer() {
     return myDisposer;
   }
 
+  @Override
   public void setDisposer(Disposable disposer) {
     myDisposer = disposer;
   }
@@ -157,20 +173,24 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     return myShouldDisposeContent;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
 
+  @Override
   public void setDescription(String description) {
     String oldValue = myDescription;
     myDescription = description;
     myChangeSupport.firePropertyChange(PROP_DESCRIPTION, oldValue, myDescription);
   }
 
+  @Override
   public void addPropertyChangeListener(PropertyChangeListener l) {
     myChangeSupport.addPropertyChangeListener(l);
   }
 
+  @Override
   public void removePropertyChangeListener(PropertyChangeListener l) {
     myChangeSupport.removePropertyChangeListener(l);
   }
@@ -179,27 +199,33 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myManager = manager;
   }
 
+  @Override
   public ContentManager getManager() {
     return myManager;
   }
 
+  @Override
   public boolean isSelected() {
     return myManager != null && myManager.isSelected(this);
   }
 
+  @Override
   public final void release() {
     Disposer.dispose(this);
   }
 
   //TODO[anton,vova] investigate
+  @Override
   public boolean isValid() {
     return myManager != null;
   }
 
+  @Override
   public boolean isPinned() {
     return myIsLocked;
   }
 
+  @Override
   public void setPinned(boolean locked) {
     if (isPinnable()) {
       Icon oldIcon = getIcon();
@@ -209,18 +235,22 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     }
   }
 
+  @Override
   public boolean isPinnable() {
     return myPinnable;
   }
 
+  @Override
   public boolean isCloseable() {
     return myCloseable;
   }
 
+  @Override
   public void setCloseable(final boolean closeable) {
     myCloseable = closeable;
   }
 
+  @Override
   public void setActions(final ActionGroup actions, String place, @Nullable JComponent contextComponent) {
     final ActionGroup oldActions = myActions;
     myActions = actions;
@@ -229,14 +259,17 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myChangeSupport.firePropertyChange(PROP_ACTIONS, oldActions, myActions);
   }
 
+  @Override
   public JComponent getActionsContextComponent() {
     return myActionsContextComponent;
   }
 
+  @Override
   public ActionGroup getActions() {
     return myActions;
   }
 
+  @Override
   public String getPlace() {
     return myPlace;
   }
@@ -246,6 +279,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     return "Content name=" + myDisplayName;
   }
 
+  @Override
   public void dispose() {
     if (myShouldDisposeContent && myComponent instanceof Disposable) {
       Disposer.dispose((Disposable)myComponent);
@@ -262,15 +296,18 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     }
   }
 
+  @Override
   @Nullable
   public AlertIcon getAlertIcon() {
     return myAlertIcon;
   }
 
+  @Override
   public void setAlertIcon(@Nullable final AlertIcon icon) {
     myAlertIcon = icon;
   }
 
+  @Override
   public void fireAlert() {
     myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
   }
@@ -305,10 +342,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     return myBusyObject;
   }
 
+  @Override
   public void setSearchComponent(@Nullable final JComponent comp) {
     mySearchComponent = comp;
   }
 
+  @Override
   public JComponent getSearchComponent() {
     return mySearchComponent;
   }

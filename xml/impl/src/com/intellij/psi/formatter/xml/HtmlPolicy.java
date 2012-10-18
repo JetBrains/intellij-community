@@ -24,6 +24,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 
@@ -86,6 +87,16 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     if (prevNode == null) return false;
     if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode)instanceof XmlTag)) return false;
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
+  }
+
+  @Override
+  public boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute) {
+    return false;
+  }
+
+  @Override
+  public boolean insertLineBreakAfterTagBegin(XmlTag tag) {
+    return false;
   }
 
   private boolean containsWhiteSpacesOnly(final ASTNode node) {
