@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -254,7 +255,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     if (window != null) {
       for (Component component : window.getComponents()) {
         if (component instanceof JComponent
-            && UIUtil.findComponentOfType((JComponent)component, JPopupMenu.class) != null) {
+            && ((UIUtil.findComponentOfType((JComponent)component, JPopupMenu.class) != null)
+                || (UIUtil.findComponentOfType((JComponent)component, AbstractPopup.MyContentPanel.class) != null))) {
           return true;
         }
       }
