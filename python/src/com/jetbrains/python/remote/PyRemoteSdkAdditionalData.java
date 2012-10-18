@@ -300,6 +300,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     copy.setUseKeyPair(isUseKeyPair());
 
     copy.setInterpreterPath(getInterpreterPath());
+    copy.setHelpersPath(getHelpersPath());
     copy.setStorePassword(isStorePassword());
     copy.setStorePassphrase(isStorePassphrase());
     copy.setHelpersVersionChecked(isHelpersVersionChecked());
