@@ -19,6 +19,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -263,18 +264,18 @@ public class PopupChooserBuilder {
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent instanceof ListWithFilter) {
-      contentPane.add(myChooserComponent, BorderLayout.CENTER);
+      addCenterComponentToContentPane(contentPane, myChooserComponent);
     }
     else {
-      contentPane.add(myScrollPane, BorderLayout.CENTER);
+      addCenterComponentToContentPane(contentPane, myScrollPane);
     }
 
     if (mySouthComponent != null) {
-      contentPane.add(mySouthComponent, BorderLayout.SOUTH);
+      addSouthComponentToContentPane(contentPane, mySouthComponent);
     }
 
     if (myEastComponent != null) {
-      contentPane.add(myEastComponent, BorderLayout.EAST);
+      addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent);
@@ -313,6 +314,19 @@ public class PopupChooserBuilder {
     myPopup = builder.createPopup();
     return myPopup;
   }
+
+  protected void addEastComponentToContentPane(JPanel contentPane, JComponent component) {
+    contentPane.add(component, BorderLayout.EAST);
+  }
+
+  protected void addSouthComponentToContentPane(JPanel contentPane, JComponent component) {
+    contentPane.add(component, BorderLayout.SOUTH);
+  }
+
+  protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
+    contentPane.add(component, BorderLayout.CENTER);
+  }
+
 
   public PopupChooserBuilder setMinSize(final Dimension dimension) {
     myMinSize = dimension;
