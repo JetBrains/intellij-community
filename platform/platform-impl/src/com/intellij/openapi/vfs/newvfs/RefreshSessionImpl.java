@@ -94,9 +94,10 @@ public class RefreshSessionImpl extends RefreshSession {
     boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      ((LocalFileSystemImpl)LocalFileSystem.getInstance()).markSuspiciousFilesDirty(workQueue);
+      final LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      fs.markSuspiciousFilesDirty(workQueue);
+      final FileWatcher watcher = fs.getFileWatcher();
 
-      final FileWatcher watcher = FileWatcher.getInstance();
       for (VirtualFile file : workQueue) {
         final NewVirtualFile nvf = (NewVirtualFile)file;
         if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
