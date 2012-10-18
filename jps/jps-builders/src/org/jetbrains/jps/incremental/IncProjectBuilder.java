@@ -466,6 +466,7 @@ public class IncProjectBuilder {
             }
           }
           finally {
+            context.updateCompilationStartStamp();
             pd.dataManager.closeSourceToOutputStorages(groupChunks);
             pd.dataManager.flush(true);
           }
@@ -478,6 +479,7 @@ public class IncProjectBuilder {
             buildChunkIfAffected(context, scope, chunk);
           }
           finally {
+            context.updateCompilationStartStamp();
             pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk));
             pd.dataManager.flush(true);
           }
