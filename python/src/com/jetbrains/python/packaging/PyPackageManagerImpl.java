@@ -285,11 +285,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   private void installManagement(String name) throws PyExternalProcessException {
-    final File helperFile = PythonHelpersLocator.getHelperFile(name + ".tar.gz");
-
     final String helpersPath = getHelperPath(name);
 
-    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, helperFile.getParent());
+    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, null);
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
@@ -623,10 +621,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private ProcessOutput getProcessOutput(@NotNull String helperPath,
                                          @NotNull List<String> args,
                                          boolean askForSudo,
-                                         @Nullable String parentDir)
+                                         @Nullable String workingDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteSdkData) {
+    if (sdkData instanceof RemoteSdkData) { //remote interpreter
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
@@ -640,7 +638,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           }
           ProcessOutput processOutput;
           do {
-            processOutput = manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
+            processOutput = manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
             if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
               continue;
             }
@@ -663,8 +661,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (homePath == null) {
         throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
       }
-      if (parentDir == null) {
-        parentDir = new File(homePath).getParent();
+      if (workingDir == null) {
+        workingDir = new File(homePath).getParent();
       }
       final List<String> cmdline = new ArrayList<String>();
       cmdline.add(homePath);
@@ -678,7 +676,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           cmdline.add(1, helperPath);
           final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
                                                                  "Please enter your password to make changes in system packages: ",
-                                                                 parentDir);
+                                                                 workingDir);
           String message = result.getStderr();
           if (result.getExitCode() != 0) {
             final String stdout = result.getStdout();
@@ -705,7 +703,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else                 //vEnv interpreter
       {
         cmdline.add(1, helperPath);
-        return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
+        return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
       }
     }
   }

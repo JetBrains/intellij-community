@@ -50,9 +50,11 @@ public abstract class PythonRemoteInterpreterManager {
   @Nullable
   public abstract Sdk addRemoteSdk(Project project, Collection<Sdk> existingSdks);
 
+
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  RemoteSdkData data,
                                                  String[] command,
+                                                 @Nullable String workingDir,
                                                  boolean askForSudo)
     throws RemoteInterpreterException;
 
