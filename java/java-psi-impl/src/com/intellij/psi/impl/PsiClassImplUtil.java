@@ -675,6 +675,9 @@ public class PsiClassImplUtil {
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass,
                                                                state.get(PsiSubstitutor.KEY), factory, languageLevel);
+      if (aClass instanceof PsiTypeParameter && PsiUtil.isRawSubstitutor(superClass, finalSubstitutor)) {
+        finalSubstitutor = PsiSubstitutor.EMPTY;
+      }
       if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, isRaw)) {
         resolved = true;
       }
