@@ -6,6 +6,8 @@ import static java.lang.Math.*;
 import static java.lang.Integer.SIZE;
 import java.util.List;
 import java.util.ArrayList;
+import static com.siyeh.igtest.imports.unused.Constants.*;
+import com.siyeh.igtest.imports.unused.Constants.*;
 
 public class UnusedImport {
 
@@ -21,5 +23,10 @@ public class UnusedImport {
     public void add(int i) {
         list.add(i);
         Entry entry;
+    }
+
+    public void context() {
+        instanceMatMethod();
+        InstanceInnerMaterial innerMaterial = new Constants().new InstanceInnerMaterial();
     }
 }
