@@ -74,6 +74,10 @@ public abstract class WizardMode implements Disposable {
     myStepSequence = null;
   }
 
+  public String getShortName() {
+    return "";
+  }
+
   @Nullable
   public String getFootnote(final WizardContext wizardContext) {
     return null;

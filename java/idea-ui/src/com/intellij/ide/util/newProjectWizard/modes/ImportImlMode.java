@@ -121,6 +121,11 @@ public class ImportImlMode extends WizardMode {
     }
   }
 
+  @Override
+  public String getShortName() {
+    return "Import from *.iml";
+  }
+
   private static class ModuleFileChooserDescriptor extends FileChooserDescriptor {
     public ModuleFileChooserDescriptor() {
       super(true, false, false, false, false, false);

@@ -30,7 +30,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,11 +93,15 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
           setMode(mode);
         }
       });
-      new DoubleClickListener() {
+      new ClickListener() {
         @Override
-        protected boolean onDoubleClick(MouseEvent e) {
-          wizardContext.requestNextStep();
-          return true;
+        public boolean onClick(MouseEvent event, int clickCount) {
+          if (mode.getAdditionalSettings(wizardContext) == null) {
+            wizardContext.requestNextStep();
+            return true;
+          } else {
+            return false;
+          }
         }
       }.installOn(rb);
 
@@ -137,6 +141,11 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
 
   public Icon getIcon() {
     return myWizardContext.getStepIcon();
+  }
+
+  @Override
+  public String getName() {
+    return myMode.getShortName();
   }
 
   public WizardMode getMode() {

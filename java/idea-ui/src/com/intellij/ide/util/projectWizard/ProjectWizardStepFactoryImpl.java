@@ -90,6 +90,11 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         return icon;
       }
 
+      @Override
+      public String getName() {
+        return "Specify JDK";
+      }
+
       public String getHelpId() {
         return helpId;
       }

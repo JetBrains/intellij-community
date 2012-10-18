@@ -150,6 +150,11 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myNamePathComponent.getNameValue();
   }
 
+  @Override
+  public String getName() {
+    return "Name";
+  }
+
   public boolean isStepVisible() {
     final ProjectBuilder builder = myWizardContext.getProjectBuilder();
     if (builder != null && builder.isUpdate()) return false;

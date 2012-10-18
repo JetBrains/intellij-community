@@ -1026,6 +1026,10 @@ public abstract class DialogWrapper {
     return myPeer.getWindow();
   }
 
+  public JComponent getContentPanel() {
+    return (JComponent)myPeer.getContentPane();
+  }
+
   /**
    * @see javax.swing.JDialog#getRootPane
    * @return root pane

@@ -127,6 +127,11 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
+  @Override
+  public String getName() {
+    return "Choose External Model";
+  }
+
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import";
