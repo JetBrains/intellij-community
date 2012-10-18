@@ -47,6 +47,15 @@ public interface SqliteTables {
   String PREPARED_SELECT_REVISIONS = "PREPARED_SELECT_REVISIONS";
   String PREPARED_SELECT_PATH_DATA = "PREPARED_SELECT_PATH_DATA";
   String PREPARED_PATHS_2_REVS = "PREPARED_PATHS_2_REVS";
+  String PREPARED_SELECT_PATH_DATA_BATCH = "PREPARED_SELECT_PATH_DATA_BATCH";
+  String PREPARED_PATHS_2_REVS_BATCH = "PREPARED_PATHS_2_REVS_BATCH";
+  String PREPARED_INSERT_INCOMING = "PREPARED_INSERT_INCOMING";
+  String PREPARED_SELECT_INCOMING = "PREPARED_SELECT_INCOMING";
+  String PREPARED_SELECT_MIN_REVISION = "PREPARED_SELECT_MIN_REVISION";
+  String PREPARED_DATES_ONLY = "PREPARED_DATES_ONLY";
+  String PREPARED_NUMBERS_SUBFOLDER = "PREPARED_NUMBERS_SUBFOLDER";
+  String PREPARED_NUMBERS_ONLY = "PREPARED_NUMBERS_ONLY";
+  String PREPARED_DATES_SUBFOLDER = "PREPARED_DATES_SUBFOLDER";
 
   abstract class BaseTable {
     public final String ID;
@@ -74,6 +83,7 @@ public interface SqliteTables {
   Revision REVISION = new Revision();
   Paths PATHS = new Paths();
   Paths2Revs PATHS_2_REVS = new Paths2Revs();
+  IncomingPaths INCOMING_PATHS = new IncomingPaths();
 
   class KnownVcs extends BaseTable {
     public KnownVcs() {
@@ -111,7 +121,7 @@ public interface SqliteTables {
                         "DATE INTEGER NOT NULL, " +
                         "NUMBER_STR TEXT NOT NULL, " +
                         "NUMBER_INT INTEGER NOT NULL, " +
-                        "COMMENT TEXT, RAW_DATA BLOB");
+                        "COMMENT TEXT, COUNT INTEGER NOT NULL, RAW_DATA BLOB");
     }
 
     public final String ROOT_FK = "ROOT_FK";
@@ -122,6 +132,7 @@ public interface SqliteTables {
     @Indexed
     public final String NUMBER_INT = "NUMBER_INT";
     public final String COMMENT = "COMMENT";
+    public final String COUNT = "COUNT";
     public final String RAW_DATA = "RAW_DATA";
   }
 
@@ -142,6 +153,7 @@ public interface SqliteTables {
                             "REVISION_FK INTEGER NOT NULL REFERENCES REVISION(ID), " +
                             "TYPE INTEGER NOT NULL, " +
                             "COPY_PATH_ID INTEGER REFERENCES PATHS(ID), " +
+                            "VISIBLE INTEGER NOT NULL DEFAULT 1, " +
                             "DELETE_PATH_ID INTEGER REFERENCES PATHS(ID)");
     }
 
@@ -149,7 +161,16 @@ public interface SqliteTables {
     public final String REVISION_FK = "REVISION_FK";
     public final String TYPE = "TYPE";
     public final String COPY_PATH_ID = "COPY_PATH_ID";
+    public final String VISIBLE = "VISIBLE";
     public final String DELETE_PATH_ID = "DELETE_PATH_ID";
+  }
+
+  class IncomingPaths extends BaseTable {
+    public IncomingPaths() {
+      super("INCOMING_PATHS", "PR_FK INTEGER NOT NULL REFERENCES PATHS_2_REVS (ID)");
+    }
+
+    public final String PR_FK = "";
   }
 
   //SqlJetTypeAffinity

@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.dbCommitted;
+package com.intellij.openapi.vcs.history;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 10/11/12
- * Time: 5:56 PM
+ * Date: 10/12/12
+ * Time: 12:06 PM
  */
-public class PathState {
-  private final long myLastRevision;
-  private final boolean myExistsInLastRevision;
-  // todo use it?
-  //private final long myPathId;
-
-  public PathState(long lastRevision, boolean existsInLastRevision) {
-    myLastRevision = lastRevision;
-    myExistsInLastRevision = existsInLastRevision;
-  }
-
-  public long getLastRevision() {
-    return myLastRevision;
-  }
-
-  public boolean isExistsInLastRevision() {
-    return myExistsInLastRevision;
-  }
+public interface LongRevisionNumber {
+  long getLongRevisionNumber();
 }

@@ -32,8 +32,8 @@ public class KnownRepositoryLocations {
   private final Map<String, Long> myJustVcs;
   private final MultiMap<String, String> myMap;
   private final Map<Pair<String, String>, Long> myLocations;
-  private final Map<Long, Long> myLastRevision;
-  private final Map<Long, Long> myFirstRevision;
+  private final Map<Long, RevisionId> myLastRevision;
+  private final Map<Long, RevisionId> myFirstRevision;
   private final Map<String, Long> myAuthors;
 
   public KnownRepositoryLocations() {
@@ -44,8 +44,8 @@ public class KnownRepositoryLocations {
       }
     };
     myLocations = new HashMap<Pair<String, String>, Long>();
-    myLastRevision = new HashMap<Long, Long>();
-    myFirstRevision = new HashMap<Long, Long>();
+    myLastRevision = new HashMap<Long, RevisionId>();
+    myFirstRevision = new HashMap<Long, RevisionId>();
     myJustVcs = new HashMap<String, Long>();
     myAuthors = new HashMap<String, Long>();
   }
@@ -124,25 +124,25 @@ public class KnownRepositoryLocations {
     }
   }
 
-  public Long getLastRevision(final Long rootId) {
+  public RevisionId getLastRevision(final Long rootId) {
     synchronized (myMap) {
       return myLastRevision.get(rootId);
     }
   }
 
-  public void setLastRevision(final Long rootId, final long number) {
+  public void setLastRevision(final Long rootId, final RevisionId number) {
     synchronized (myMap) {
       myLastRevision.put(rootId, number);
     }
   }
 
-  public Long getFirstRevision(final Long rootId) {
+  public RevisionId getFirstRevision(final Long rootId) {
     synchronized (myMap) {
       return myFirstRevision.get(rootId);
     }
   }
 
-  public void setFirstRevision(final Long rootId, final long number) {
+  public void setFirstRevision(final Long rootId, final RevisionId number) {
     synchronized (myMap) {
       myFirstRevision.put(rootId, number);
     }
