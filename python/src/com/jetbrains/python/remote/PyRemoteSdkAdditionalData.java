@@ -61,18 +61,18 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public String getTempFilesPath() {
-    return myRemoteSdkDataHolder.getTempFilesPath();
-  }
-
-  @Override
   public String getHelpersPath() {
     return myRemoteSdkDataHolder.getHelpersPath();
   }
 
   @Override
-  public void setTempFilesPath(String tempFilesPath) {
-    myRemoteSdkDataHolder.setTempFilesPath(tempFilesPath);
+  public String getDefaultHelpersName() {
+    return myRemoteSdkDataHolder.getDefaultHelpersName();
+  }
+
+  @Override
+  public void setHelpersPath(String tempFilesPath) {
+    myRemoteSdkDataHolder.setHelpersPath(tempFilesPath);
   }
 
   @Override
@@ -231,7 +231,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
       data.setSkeletonsPath(StringUtil.nullize(element.getAttributeValue(SKELETONS_PATH)));
       String helpers_path = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
       if (helpers_path != null) {
-        data.setTempFilesPath(helpers_path);
+        data.setHelpersPath(helpers_path);
       }
     }
 
