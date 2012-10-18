@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -53,22 +54,22 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   private int myMaxRowCount = 20;
   private boolean myAutoHandleBeforeShow;
 
-  public ListPopupImpl(ListPopupStep aStep, int maxRowCount) {
+  public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
     super(aStep);
     if (maxRowCount != -1){
       myMaxRowCount = maxRowCount;
     }
   }
 
-  public ListPopupImpl(ListPopupStep aStep) {
+  public ListPopupImpl(@NotNull ListPopupStep aStep) {
     this(aStep, -1);
   }
 
-  public ListPopupImpl(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
+  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue) {
     this(aParent, aStep, parentValue, -1);
   }
 
-  public ListPopupImpl(WizardPopup aParent, ListPopupStep aStep, Object parentValue, int maxRowCount) {
+  public ListPopupImpl(WizardPopup aParent, @NotNull ListPopupStep aStep, Object parentValue, int maxRowCount) {
     super(aParent, aStep);
     setParentValue(parentValue);
     if (maxRowCount != -1){
@@ -80,6 +81,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return myListModel;
   }
 
+  @Override
   protected boolean beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
@@ -95,6 +97,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return shouldShow;
   }
 
+  @Override
   protected void afterShow() {
     tryToAutoSelect(false);
   }
@@ -202,6 +205,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return myList;
   }
 
+  @Override
   protected JComponent createContent() {
     myMouseMotionListener = new MyMouseMotionListener();
     myMouseListener = new MyMouseListener();
@@ -225,18 +229,21 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
 
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(true);
       }
     });
 
     registerAction("handleSelection2", KeyEvent.VK_RIGHT, 0, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         handleSelect(false);
       }
     });
 
     registerAction("goBack2", KeyEvent.VK_LEFT, 0, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (isClosableByLeftArrow()) {
           goBack();
@@ -258,10 +265,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return getParent() != null || myStep instanceof ClosableByLeftArrow;
   }
 
+  @Override
   protected ActionMap getActionMap() {
     return myList.getActionMap();
   }
 
+  @Override
   protected InputMap getInputMap() {
     return myList.getInputMap();
   }
@@ -270,10 +279,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return new PopupListElementRenderer(this);
   }
 
+  @Override
   public ListPopupStep<Object> getListStep() {
     return (ListPopupStep<Object>) myStep;
   }
 
+  @Override
   public void dispose() {
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
@@ -288,11 +299,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return myList.getCellBounds(i, i);
   }
 
+  @Override
   public void disposeChildren() {
     setIndexForShowingChild(-1);
     super.disposeChildren();
   }
 
+  @Override
   protected void onAutoSelectionTimer() {
     if (myList.getModel().getSize() > 0 && !myList.isSelectionEmpty() ) {
       handleSelect(false);
@@ -303,10 +316,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
+  @Override
   public void handleSelect(boolean handleFinalChoices) {
     _handleSelect(handleFinalChoices, null);
   }
 
+  @Override
   public void handleSelect(boolean handleFinalChoices, InputEvent e) {
     _handleSelect(handleFinalChoices, e);
   }
@@ -397,6 +412,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private int myLastSelectedIndex = -2;
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
@@ -445,6 +461,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
   }
 
+  @Override
   protected void process(KeyEvent aEvent) {
     myList.processKeyEvent(aEvent);
   }
@@ -462,10 +479,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       super(myListModel);
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
     }
 
+    @Override
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
@@ -479,6 +498,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       super.processMouseEvent(e);
     }
 
+    @Override
     public Object getData(String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
@@ -490,6 +510,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
+  @Override
   protected void onSpeedSearchPatternChanged() {
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
@@ -506,6 +527,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
+  @Override
   protected void onSelectByMnemonic(Object value) {
     if (myListModel.isVisible(value)) {
       myList.setSelectedValue(value, true);
@@ -514,20 +536,24 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
+  @Override
   protected JComponent getPreferredFocusableComponent() {
     return myList;
   }
 
+  @Override
   protected void onChildSelectedFor(Object value) {
     if (myList.getSelectedValue() != value) {
       myList.setSelectedValue(value, false);
     }
   }
 
+  @Override
   public void setHandleAutoSelectionBeforeShow(final boolean autoHandle) {
     myAutoHandleBeforeShow = autoHandle;
   }
 
+  @Override
   public boolean isModalContext() {
     return true;
   }
