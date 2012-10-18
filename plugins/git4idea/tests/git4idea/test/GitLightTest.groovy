@@ -15,6 +15,8 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.PlatformFacade
@@ -33,7 +35,7 @@ import org.junit.Before
  *
  * @author Kirill Likhodedov
  */
-@Mixin(Executor)
+@Mixin(GitExecutor)
 class GitLightTest {
 
   private static final String USER_NAME = "John Doe";
@@ -51,7 +53,7 @@ class GitLightTest {
    */
   protected String myProjectRoot
 
-  protected GitMockProject myProject
+  protected MockProject myProject
   protected PlatformFacade myPlatformFacade
   protected Git myGit
 
@@ -60,7 +62,7 @@ class GitLightTest {
     myTestRoot = FileUtil.createTempDirectory("", "").getPath()
     cd myTestRoot
     myProjectRoot = mkdir ("project")
-    myProject = new GitMockProject(myProjectRoot)
+    myProject = new MockProject(myProjectRoot)
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
   }
@@ -77,7 +79,7 @@ class GitLightTest {
     // TODO this smells hacky
     // the constructor and notifyListeners() should probably be private
     // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
-    GitRepository repository = new GitRepositoryImpl(new GitMockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
+    GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
       @Override
       protected void notifyListeners() {
       }

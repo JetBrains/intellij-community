@@ -25,7 +25,10 @@ import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
-import git4idea.test.*
+import git4idea.test.GitExecutor
+import git4idea.test.GitTestImpl
+import git4idea.test.GitTestPlatformFacade
+import git4idea.test.GitTestRepositoryManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +39,7 @@ import static org.junit.Assert.assertTrue
  *
  * @author Kirill Likhodedov
  */
-@Mixin(Executor)
+@Mixin(GitExecutor)
 class GitCrlfProblemsDetectorTest {
 
   private MockProject myProject
@@ -75,7 +78,7 @@ class GitCrlfProblemsDetectorTest {
     Disposer.dispose(myProject)
   }
 
-  private boolean isGlobalCommandPossible() {
+  private static boolean isGlobalCommandPossible() {
     return System.getenv("HOME") != null;
   }
 
@@ -205,6 +208,7 @@ win6 crlf=input
         return file.getPath()
       }
     }
+    return parent;
   }
 
 }

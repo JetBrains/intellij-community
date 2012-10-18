@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package git4idea.test
+
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -34,7 +35,7 @@ import java.lang.reflect.Method
 /**
  * @author Kirill Likhodedov
  */
-@Mixin(Executor)
+@Mixin(GitExecutor)
 public class GitTestImpl implements Git {
 
   @NotNull

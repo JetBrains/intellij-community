@@ -45,7 +45,7 @@ class MockProject implements Project {
 
   @Override
   VirtualFile getBaseDir() {
-    return new GitMockVirtualFile(myProjectDir)
+    return new MockVirtualFile(myProjectDir)
   }
 
   @Override
