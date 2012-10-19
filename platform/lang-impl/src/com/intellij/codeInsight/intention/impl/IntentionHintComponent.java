@@ -152,6 +152,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   @Override
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposed = true;
     myComponentHint.hide();
     super.hide();
@@ -420,7 +421,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myPopupShown = true;
   }
 
-  private void recreateMyPopup(IntentionListStep step) {
+  private void recreateMyPopup(@NotNull IntentionListStep step) {
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }

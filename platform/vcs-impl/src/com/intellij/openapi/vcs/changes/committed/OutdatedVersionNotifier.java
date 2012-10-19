@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -150,6 +151,9 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void initPanel(final CommittedChangeList list, final Change c, final FileEditor editor) {
+    if (!isIncomingChangesSupported(list)) {
+      return;
+    }
     final OutdatedRevisionPanel component = new OutdatedRevisionPanel(list, c);
     editor.putUserData(PANEL_KEY, component);
     myFileEditorManager.addTopComponent(editor, component);
@@ -204,5 +208,10 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       myChangeList = changeList;
       updateLabelText(c);
     }
+  }
+
+  private static boolean isIncomingChangesSupported(@NotNull CommittedChangeList list) {
+    CachingCommittedChangesProvider provider = list.getVcs().getCachingCommittedChangesProvider();
+    return provider != null && provider.supportsIncomingChanges();
   }
 }

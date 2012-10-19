@@ -117,7 +117,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     myCanceled = true;
   }
 
-  public void slice(@NotNull PsiElement element, boolean dataFlowToThis, SliceHandler handler) {
+  public void slice(@NotNull PsiElement element, boolean dataFlowToThis, @NotNull SliceHandler handler) {
     String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
 
     dialogTitle = Pattern.compile("(<style>.*</style>)|<[^<>]*>").matcher(dialogTitle).replaceAll("");
@@ -129,7 +129,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     createToolWindow(dataFlowToThis, rootNode, false, getElementDescription(null, element, null));
   }
 
-  public void createToolWindow(final boolean dataFlowToThis, final SliceRootNode rootNode, boolean splitByLeafExpressions, String displayName) {
+  public void createToolWindow(boolean dataFlowToThis, @NotNull SliceRootNode rootNode, boolean splitByLeafExpressions, @NotNull String displayName) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
     final ContentManager contentManager = getContentManager(dataFlowToThis);
     final Content[] myContent = new Content[1];

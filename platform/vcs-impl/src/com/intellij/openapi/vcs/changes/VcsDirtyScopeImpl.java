@@ -419,7 +419,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(root);
       if (dirsByRoot != null) {
         for (FilePath dir : dirsByRoot) {
-          final VirtualFile vFile = dir.getVirtualFile();
+          final VirtualFile vFile = obtainVirtualFile(dir);
           if (vFile != null && vFile.isValid()) {
             myVcsManager.iterateVfUnderVcsRoot(vFile, processor);
           }
@@ -431,18 +431,24 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       final THashSet<FilePath> files = myDirtyFiles.get(root);
       if (files != null) {
         for (FilePath file : files) {
-          if (file.getVirtualFile() != null) {
-            processor.process(file.getVirtualFile());
-          }
-          final VirtualFile vFile = file.getVirtualFile();
-          if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
-            for (VirtualFile child : vFile.getChildren()) {
-              processor.process(child);
+          VirtualFile vFile = obtainVirtualFile(file);
+          if (vFile != null && vFile.isValid()) {
+            processor.process(vFile);
+            if (vFile.isDirectory()) {
+              for (VirtualFile child : vFile.getChildren()) {
+                processor.process(child);
+              }
             }
           }
         }
       }
     }
+  }
+
+  @Nullable
+  private static VirtualFile obtainVirtualFile(FilePath file) {
+    VirtualFile vFile = file.getVirtualFile();
+    return vFile == null ? VfsUtil.findFileByIoFile(file.getIOFile(), false) : vFile;
   }
 
   @Override

@@ -76,4 +76,13 @@ public class FileHolder {
   public void setIsDir(boolean isDir) {
     myIsDir = isDir;
   }
+
+  @Override
+  public String toString() {
+    return "FileHolder{" +
+           "myIoFile=" + myIoFile +
+           ", myFile=" + myFile +
+           ", myIsDir=" + myIsDir +
+           '}';
+  }
 }

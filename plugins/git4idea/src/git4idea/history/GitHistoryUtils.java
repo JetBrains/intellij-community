@@ -40,6 +40,7 @@ import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.browser.GitCommit;
@@ -172,8 +173,8 @@ public class GitHistoryUtils {
   @Nullable
   public static ItemLatestState getLastRevision(final Project project, FilePath filePath) throws VcsException {
     VirtualFile root = GitUtil.getGitRoot(filePath);
-    GitBranch c = GitBranch.current(project, root);
-    GitBranch t = c == null ? null : c.tracked(project, root);
+    GitBranch c = GitBranchUtil.getCurrentBranch(project, root);
+    GitBranch t = c == null ? null : GitBranchUtil.tracked(project, root, c.getName());
     if (t == null) {
       return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }

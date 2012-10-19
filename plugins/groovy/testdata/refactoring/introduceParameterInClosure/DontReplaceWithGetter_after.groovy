@@ -3,7 +3,7 @@ class X {
 
   def getFoo(){foo}
 
-  def bar = {final def anObject ->
+  def bar = { final def anObject ->
       print anObject
   }
 }

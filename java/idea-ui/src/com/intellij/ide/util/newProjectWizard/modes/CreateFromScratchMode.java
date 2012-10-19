@@ -96,6 +96,11 @@ public class CreateFromScratchMode extends WizardMode {
     
   }
 
+  @Override
+  public String getShortName() {
+    return "Create from Scratch";
+  }
+
   public void dispose() {
     super.dispose();
     myBuildersMap.clear();

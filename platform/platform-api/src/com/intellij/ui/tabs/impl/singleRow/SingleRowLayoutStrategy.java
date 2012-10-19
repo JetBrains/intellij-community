@@ -25,7 +25,7 @@ import java.awt.*;
 
 public abstract class SingleRowLayoutStrategy {
 
-  private static final int MIN_TAB_WIDTH = 120;
+  private static final int MIN_TAB_WIDTH = 50;
   final SingleRowLayout myLayout;
   final JBTabsImpl myTabs;
 

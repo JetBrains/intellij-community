@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
@@ -144,12 +145,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static String getBranchNameOnRemote(@NotNull Project project, @NotNull VirtualFile root) {
     final GitBranch tracked;
     try {
-      final GitBranch current = GitBranch.current(project, root);
+      final GitBranch current = GitBranchUtil.getCurrentBranch(project, root);
       if (current == null) {
         Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
         return null;
       }
-      tracked = current.tracked(project, root);
+      tracked = GitBranchUtil.tracked(project, root, current.getName());
       if (tracked == null || !tracked.isRemote()) {
         Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
         return null;

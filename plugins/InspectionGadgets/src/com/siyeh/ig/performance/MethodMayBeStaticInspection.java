@@ -21,6 +21,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -112,12 +115,58 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       if (isExcluded(method) || MethodUtils.hasSuper(method) || MethodUtils.isOverridden(method)) {
         return;
       }
+      if (implementsSurprisingInterface(method)) {
+        return;
+      }
       final MethodReferenceVisitor visitor = new MethodReferenceVisitor(method);
       method.accept(visitor);
       if (!visitor.areReferencesStaticallyAccessible()) {
         return;
       }
       registerMethodError(method);
+    }
+
+    private boolean implementsSurprisingInterface(final PsiMethod method) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return false;
+      }
+      final Query<PsiClass> search = ClassInheritorsSearch.search(containingClass, method.getUseScope(), true, true, false);
+      final boolean[] result = new boolean[1];
+      search.forEach(new Processor<PsiClass>() {
+        int count = 0;
+
+        @Override
+        public boolean process(PsiClass subClass) {
+          if (++count > 5) {
+            result[0] = true;
+            return false;
+          }
+          final PsiReferenceList list = subClass.getImplementsList();
+          if (list == null) {
+            return true;
+          }
+          final PsiJavaCodeReferenceElement[] referenceElements = list.getReferenceElements();
+          for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+            final PsiElement target = referenceElement.resolve();
+            if (!(target instanceof PsiClass)) {
+              result[0] = true;
+              return false;
+            }
+            final PsiClass aClass = (PsiClass)target;
+            if (!aClass.isInterface()) {
+              result[0] = true;
+              return false;
+            }
+            if (aClass.findMethodBySignature(method, true) != null) {
+              result[0] = true;
+              return false;
+            }
+          }
+          return true;
+        }
+      });
+      return result[0];
     }
 
     private boolean isExcluded(PsiMethod method) {

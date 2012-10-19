@@ -470,4 +470,8 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'myClass', 'myExtendsClause'
   }
 
+  public void _testCommonPrefixMoreImportantThanExpectedType() {
+    checkPreferredItems 0, 'myStep', 'myCurrentStep'
+  }
+
 }

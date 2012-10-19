@@ -298,11 +298,14 @@ public class ReachingDefinitionsCollector {
     for (final Instruction insn : flow) {
       if (isReadInsn(insn)) {
         final int ref = insn.num();
-        for (final int def : dfaResult.getDefinitions(ref)) {
-          if (fragmentInsns.contains(def) &&
-              (!fragmentInsns.contains(ref) || postorder[ref] < postorder[def] && checkPathIsOutsideOfFragment(def, ref, flow, fragmentInsns))) {
-            result.add(ref);
-            break;
+        int[] definitions = dfaResult.getDefinitions(ref);
+        if (definitions != null) {
+          for (final int def : definitions) {
+            if (fragmentInsns.contains(def) &&
+                (!fragmentInsns.contains(ref) || postorder[ref] < postorder[def] && checkPathIsOutsideOfFragment(def, ref, flow, fragmentInsns))) {
+              result.add(ref);
+              break;
+            }
           }
         }
       }

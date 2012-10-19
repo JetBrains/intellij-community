@@ -61,6 +61,7 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
     }
 
     handler.invoke myFixture.project, myFixture.editor, myFixture.file, null
+    doPostponedFormatting(myFixture.project)
     myFixture.checkResult after
   }
 

@@ -31,14 +31,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +86,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     invoke(member);
   }
 
-  public static void invoke(PsiTypeParameterListOwner member) {
+  public static void invoke(final PsiTypeParameterListOwner member) {
     final Project project = member.getProject();
     final InternalUsageInfo[] classRefsInMember = MakeStaticUtil.findClassRefsInMember(member, false);
 
@@ -95,7 +98,26 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     AbstractMakeStaticDialog dialog;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
 
-      if (classRefsInMember.length > 0) {
+      final boolean[] hasMethodReferenceOnInstance = new boolean[] {false};
+      if (member instanceof PsiMethod) {
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          @Override
+          public void run() {
+            hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(new Processor<PsiReference>() {
+              @Override
+              public boolean process(PsiReference reference) {
+                final PsiElement element = reference.getElement();
+                if (element instanceof PsiMethodReferenceExpression) {
+                  return false;
+                }
+                return true;
+              }
+            });
+          }
+        }, "Search for method references", true, project)) return;
+      }
+
+      if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {
         final PsiType type = JavaPsiFacade.getInstance(project).getElementFactory().createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =

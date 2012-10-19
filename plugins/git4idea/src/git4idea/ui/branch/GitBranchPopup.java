@@ -28,10 +28,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -43,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -113,22 +118,8 @@ class GitBranchPopup  {
         return false;
       }
     };
-    myPopup = new PopupFactoryImpl.ActionGroupPopup(
-      title, createActions(),
-      SimpleDataContext.getProjectContext(project),
-      false, false, false, true, null, -1, preselectActionCondition, null) {
-      @Override
-      protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-        WizardPopup popup = super.createPopup(parent, step, parentValue);
-        if (parentValue instanceof PopupFactoryImpl.ActionItem) {
-          AnAction action = ((PopupFactoryImpl.ActionItem)parentValue).getAction();
-          if (action instanceof RootAction) {
-            popup.setAdText(((RootAction)action).getCaption());
-          }
-        }
-        return popup;
-      }
-    };
+
+    myPopup = new GitBranchActionGroupPopup(title, project, preselectActionCondition);
 
     initBranchSyncPolicyIfNotInitialized();
     setCurrentBranchInfo();
@@ -287,6 +278,89 @@ class GitBranchPopup  {
       return "Current branch in " + GitUIUtil.getShortRepositoryName(myRepository) + ": " +
              GitBranchUiUtil.getDisplayableBranchText(myRepository);
     }
+
+    @NotNull
+    public String getBranch() {
+      return GitBranchUiUtil.getBranchNameOrRev(myRepository);
+    }
   }
 
+  private class GitBranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
+    public GitBranchActionGroupPopup(@NotNull String title, @NotNull Project project,
+                                     @NotNull Condition<AnAction> preselectActionCondition) {
+      super(title, GitBranchPopup.this.createActions(), SimpleDataContext.getProjectContext(project), false, false, false, true, null, -1,
+            preselectActionCondition, null);
+    }
+
+    @Override
+    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+      WizardPopup popup = super.createPopup(parent, step, parentValue);
+      RootAction rootAction = getRootAction(parentValue);
+      if (rootAction != null) {
+        popup.setAdText((rootAction).getCaption());
+      }
+      return popup;
+    }
+
+    @Nullable
+    private RootAction getRootAction(Object value) {
+      if (value instanceof PopupFactoryImpl.ActionItem) {
+        AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+        if (action instanceof RootAction) {
+          return (RootAction)action;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    protected ListCellRenderer getListElementRenderer() {
+      return new PopupListElementRenderer(this) {
+
+        private ErrorLabel myBranchLabel;
+
+        @Override
+        protected void customizeComponent(JList list, Object value, boolean isSelected) {
+          super.customizeComponent(list, value, isSelected);
+
+          RootAction rootAction = getRootAction(value);
+          if (rootAction != null) {
+            myBranchLabel.setVisible(true);
+            myBranchLabel.setText(String.format("[%s]", rootAction.getBranch()));
+
+            if (isSelected) {
+              setSelected(myBranchLabel);
+            }
+            else {
+              myBranchLabel.setBackground(getBackground());
+              myBranchLabel.setForeground(Color.gray);    // different foreground than for other elements
+            }
+
+            adjustOpacity(myBranchLabel, isSelected);
+          }
+          else {
+            myBranchLabel.setVisible(false);
+          }
+        }
+
+        @Override
+        protected JComponent createItemComponent() {
+          myTextLabel = new ErrorLabel();
+          myTextLabel.setOpaque(true);
+          myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+          myBranchLabel = new ErrorLabel();
+          myBranchLabel.setOpaque(true);
+          myBranchLabel.setBorder(BorderFactory.createEmptyBorder(1, UIUtil.DEFAULT_HGAP, 1, 1));
+
+          JPanel compoundPanel = new OpaquePanel(new BorderLayout(), Color.white);
+          compoundPanel.add(myTextLabel, BorderLayout.CENTER);
+          compoundPanel.add(myBranchLabel, BorderLayout.EAST);
+
+          return layoutComponent(compoundPanel);
+        }
+
+      };
+    }
+  }
 }

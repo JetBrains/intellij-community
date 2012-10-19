@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class HgMergeCommand {
     } else if (!StringUtil.isEmptyOrSpaces(branch)) {
       arguments.add(branch);
     }
-    final HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "merge", arguments);
+    final HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
     return result;
   }

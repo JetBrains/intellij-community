@@ -1037,6 +1037,7 @@ public class ExpectedTypesProvider {
                                                      @NotNull final PsiMethod method,
                                                      @NotNull final PsiSubstitutor substitutor,
                                                      @NotNull final Set<ExpectedTypeInfo> array) {
+      LOG.assertTrue(substitutor.isValid());
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (!forCompletion && parameters.length != args.length) return;
       if (parameters.length <= index && !method.isVarArgs()) return;
@@ -1172,6 +1173,7 @@ public class ExpectedTypesProvider {
 
     private static PsiType getParameterType(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
       PsiType type = parameter.getType();
+      LOG.assertTrue(type.isValid());
       if (parameter.isVarArgs()) {
         if (type instanceof PsiArrayType) {
           type = ((PsiArrayType)type).getComponentType();

@@ -96,6 +96,11 @@ public abstract class CreateFromSourcesMode extends WizardMode {
   public void onChosen(final boolean enabled) {
   }
 
+  @Override
+  public String getShortName() {
+    return "Create from Sources";
+  }
+
   public void dispose() {
     myProjectBuilder = null;
     super.dispose();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "simplifiable.if.statement.display.name");
+    return InspectionGadgetsBundle.message("simplifiable.if.statement.display.name");
   }
 
   @Override
@@ -175,22 +174,30 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     return builder.toString();
   }
 
-  private static void getPresentableText(PsiElement element, StringBuilder builder) {
+  private static void getPresentableText(@Nullable PsiElement element, StringBuilder builder) {
     if (element == null) {
       return;
     }
     if (element instanceof PsiWhiteSpace) {
+      final PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling instanceof PsiComment) {
+        final PsiComment comment = (PsiComment)prevSibling;
+        if (JavaTokenType.END_OF_LINE_COMMENT.equals(comment.getTokenType())) {
+          builder.append('\n');
+          return;
+        }
+      }
       builder.append(' ');
       return;
     }
     final PsiElement[] children = element.getChildren();
-    if (children.length != 0) {
+    if (children.length == 0) {
+      builder.append(element.getText());
+    }
+    else {
       for (PsiElement child : children) {
         getPresentableText(child, builder);
       }
-    }
-    else {
-      builder.append(element.getText());
     }
   }
 
@@ -258,10 +265,10 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
 
   private static class SimplifiableIfStatementFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "constant.conditional.expression.simplify.quickfix");
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override

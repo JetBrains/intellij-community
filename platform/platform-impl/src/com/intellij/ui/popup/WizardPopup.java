@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,7 +56,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer("Wizard autoselection",AUTO_POPUP_DELAY, this);
 
-  private MnemonicsSearch myMnemonicsSearch;
+  private final MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
 
   private Point myLastOwnerPoint;
@@ -65,11 +66,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
-  public WizardPopup(PopupStep<Object> aStep) {
+  public WizardPopup(@NotNull PopupStep<Object> aStep) {
     this(null, aStep);
   }
 
-  public WizardPopup(JBPopup aParent, PopupStep<Object> aStep) {
+  public WizardPopup(@Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;
     myStep = aStep;
 
@@ -90,10 +91,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, SwingUtilities.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true,
+         null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true,
          true, null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (mySpeedSearch.isHoldingFilter()) {
           mySpeedSearch.reset();
@@ -105,6 +107,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     });
 
     AbstractAction goBackAction = new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         goBack();
       }
@@ -113,6 +116,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     registerAction("goBack3", KeyEvent.VK_ESCAPE, 0, goBackAction);
 
     myMnemonicsSearch = new MnemonicsSearch(this) {
+      @Override
       protected void select(Object value) {
         onSelectByMnemonic(value);
       }
@@ -144,6 +148,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected abstract JComponent createContent();
 
+  @Override
   public void dispose() {
     super.dispose();
 
@@ -167,6 +172,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
   }
 
+  @Override
   public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
     LOG.assertTrue (!isDisposed());
 
@@ -193,6 +199,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     super.show(owner, targetBounds.x, targetBounds.y, true);
   }
 
+  @Override
   protected void afterShow() {
     super.afterShow();
     registerAutoMove();
@@ -231,6 +238,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   protected abstract JComponent getPreferredFocusableComponent();
 
+  @Override
   public void cancel(InputEvent e) {
     super.cancel(e);
     disposeChildren();
@@ -273,6 +281,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myParentValue = parentValue;
   }
 
+  @Override
   @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(resizable, border, isToDrawMacCorner);
@@ -286,6 +295,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       setFocusCycleRoot(true);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       Point p = null;
@@ -375,6 +385,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
   }
 
+  @Override
   public final void actionPerformed(ActionEvent e) {
     myAutoSelectionTimer.stop();
     if (getStep().isAutoSelectionEnabled()) {
@@ -399,6 +410,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   }
 
+  @Override
   public boolean shouldBeShowing(Object value) {
     if (!myStep.isSpeedSearchEnabled()) return true;
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
@@ -425,11 +437,13 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
 
   private class MyComponentAdapter extends ComponentAdapter {
+    @Override
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();
     }
   }
 
+  @Override
   public final void setFinalRunnable(Runnable runnable) {
     if (getParent() == null) {
       super.setFinalRunnable(runnable);

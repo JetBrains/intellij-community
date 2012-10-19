@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
@@ -48,7 +50,7 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
 
   @Override
   public PsiAnnotationOwner getOwner(PsiAnnotation annotation) {
-    return null;
+    return this;
   }
 
   @Override
@@ -82,6 +84,17 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
   @Override
   public String toString() {
     return "Synthetic PsiTypeElement";
+  }
+
+  @Override
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
+    if (newElement instanceof PsiTypeElement) {
+      GrTypeElement groovyTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newElement.getText(), newElement);
+      return myElement.replace(groovyTypeElement);
+    }
+    else {
+      return super.replace(newElement);
+    }
   }
 
   @Override

@@ -1,6 +1,6 @@
 <html>
 <body>
-This inspection reports on any call to <b>java.util.concurrent.locks.Condition.await()</b> not made inside a loop.
+Reports on any call to <b>java.util.concurrent.locks.Condition.await()</b> not made inside a loop.
 <b>await()</b> and related methods are normally
 used to suspend a thread until a condition is signalled as true, and that condition should be checked after the <b>await()</b>
 returns. A loop is the clearest way to achieve this.

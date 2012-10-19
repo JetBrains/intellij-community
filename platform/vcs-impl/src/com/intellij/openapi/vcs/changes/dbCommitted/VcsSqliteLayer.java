@@ -12,27 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * TODO quotations!
- * TODO quotations!
- * TODO quotations!
- * TODO quotations!
- * TODO quotations!
- * TODO quotations!
  */
 package com.intellij.openapi.vcs.changes.dbCommitted;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.committed.ReceivedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.DataOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -47,8 +45,10 @@ import java.util.*;
  * Time: 3:05 PM
  */
 public class VcsSqliteLayer {
+  private final static int ourLastPathRevisionBatchSize = 10;
   private final KnownRepositoryLocations myKnownRepositoryLocations;
   private final CacheJdbcConnection myConnection;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.dbCommitted.VcsSqliteLayer");
 
   public VcsSqliteLayer(final Project project, KnownRepositoryLocations locations) {
     myKnownRepositoryLocations = locations;
@@ -69,6 +69,7 @@ public class VcsSqliteLayer {
       connection.createStatement().execute(createStatementForTable(SqliteTables.REVISION));
       connection.createStatement().execute(createStatementForTable(SqliteTables.PATHS));
       connection.createStatement().execute(createStatementForTable(SqliteTables.PATHS_2_REVS));
+      connection.createStatement().execute(createStatementForTable(SqliteTables.INCOMING_PATHS));
 
       connection.createStatement().execute("CREATE INDEX " + SqliteTables.IDX_ROOT_URL + " ON ROOT (URL)");
       connection.createStatement().execute("CREATE INDEX " + "VCS_FK" + " ON ROOT (VCS_FK)");
@@ -108,26 +109,53 @@ public class VcsSqliteLayer {
   }
 
   private void updateLastRevisions(Set<Long> rootIdsToCheck) throws VcsException {
-    final PreparedStatement statement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_MAX_REVISION,
+    final PreparedStatement maxStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_MAX_REVISION,
       new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
         @Override
         public PreparedStatement convert(Connection connection) throws SQLException {
-          return connection.prepareStatement("SELECT MAX(" + SqliteTables.REVISION.NUMBER_INT + ") , MIN(" + SqliteTables.REVISION.NUMBER_INT + ") " +
-                                             " FROM " + SqliteTables.REVISION.TABLE_NAME + " WHERE " + SqliteTables.REVISION.ROOT_FK + " =?");
+          final String num = SqliteTables.REVISION.NUMBER_INT;
+          return connection.prepareStatement(
+            "SELECT " + num + "MAX_REV, " + SqliteTables.REVISION.DATE + "MAX_DATE FROM " + SqliteTables.REVISION.TABLE_NAME +
+            " WHERE MAX_REV=(" + " SELECT MAX(" + num + ")  FROM " + SqliteTables.REVISION.TABLE_NAME +
+            " WHERE " + SqliteTables.REVISION.ROOT_FK + " =?");
         }
       });
+    final PreparedStatement minStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_MIN_REVISION,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          final String num = SqliteTables.REVISION.NUMBER_INT;
+          return connection.prepareStatement(
+            "SELECT " + num + "MIN_REV, " + SqliteTables.REVISION.DATE + "MIN_DATE FROM " + SqliteTables.REVISION.TABLE_NAME +
+            " WHERE MIN_REV=(" + " SELECT MIN(" + num + ")  FROM " + SqliteTables.REVISION.TABLE_NAME +
+            " WHERE " + SqliteTables.REVISION.ROOT_FK + " =?");
+        }
+      });
+
     try {
       for (final Long id : rootIdsToCheck) {
-        statement.setLong(1, id);
-        final ResultSet set = statement.executeQuery();
+        maxStatement.setLong(1, id);
+        final ResultSet set = maxStatement.executeQuery();
         SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
           @Override
           public void run() throws SQLException {
             final long max = set.getLong(1);
-            final long min = set.getLong(2);
+            final long time = set.getLong(2);
             if (max > 0) {// 0 is === SQL NULL
-              myKnownRepositoryLocations.setLastRevision(id, max);
-              myKnownRepositoryLocations.setFirstRevision(id, min);
+              myKnownRepositoryLocations.setLastRevision(id, new RevisionId(max, time));
+            }
+          }
+        });
+
+        minStatement.setLong(1, id);
+        final ResultSet setMin = minStatement.executeQuery();
+        SqliteUtil.readSelectResults(setMin, new ThrowableRunnable<SQLException>() {
+          @Override
+          public void run() throws SQLException {
+            final long min = setMin.getLong(1);
+            final long time = setMin.getLong(2);
+            if (min > 0) {// 0 is === SQL NULL
+              myKnownRepositoryLocations.setFirstRevision(id, new RevisionId(min, time));
             }
           }
         });
@@ -262,8 +290,12 @@ public class VcsSqliteLayer {
 
     long maxRev = -1;
     long minRev = Long.MAX_VALUE;
-    final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
-    final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
+    long maxTime = -1;
+    long minTime = -1;
+    final RevisionId firstRevData = myKnownRepositoryLocations.getFirstRevision(locationId);
+    final Long firstRevision = firstRevData == null ? null : firstRevData.getNumber();
+    final RevisionId lastRevData = myKnownRepositoryLocations.getLastRevision(locationId);
+    final Long lastRevision = lastRevData == null ? null : lastRevData.getNumber();
 
     final List<List<CommittedChangeList>> split = new CollectionSplitter<CommittedChangeList>(20).split(lists);
     final Map<String, Long> knowPaths = new HashMap<String, Long>();
@@ -272,21 +304,28 @@ public class VcsSqliteLayer {
       final Set<String> paths = new HashSet<String>();
       for (Iterator<CommittedChangeList> iterator = changeLists.iterator(); iterator.hasNext(); ) {
         final CommittedChangeList list = iterator.next();
-        if (lastRevision != null && list.getNumber() <= lastRevision && list.getNumber() >= firstRevision) {
+        final long number = list.getNumber();
+        if (lastRevision != null && number <= lastRevision && number >= firstRevision) {
           iterator.remove();
           continue;
         }
 
-        maxRev = Math.max(maxRev, list.getNumber());
-        minRev = Math.min(minRev, list.getNumber());
+        if (number > maxRev) {
+          maxRev = number;
+          maxTime = list.getCommitDate().getTime();
+        }
+        if (number < minRev) {
+          minRev = number;
+          minTime = list.getCommitDate().getTime();
+        }
 
         names.add(list.getCommitterName()); // todo if null. also comment
-        for (Change change : list.getChanges()) {
+        for (Change change : list.getChangesWithMovedTrees()) {
           if (change.getBeforeRevision() != null) {
-            paths.add(FileUtil.toSystemIndependentName(change.getBeforeRevision().getFile().getPath()));
+            paths.add(getPath(change.getBeforeRevision()));
           }
           if (change.getAfterRevision() != null) {
-            paths.add(FileUtil.toSystemIndependentName(change.getAfterRevision().getFile().getPath()));
+            paths.add(getPath(change.getAfterRevision()));
           }
         }
       }
@@ -296,12 +335,17 @@ public class VcsSqliteLayer {
       insertChangeListsIfNotExists(vcs, knownAuthors, changeLists, locationId, knowPaths);
 
       if (firstRevision == null || minRev < firstRevision) {
-        myKnownRepositoryLocations.setFirstRevision(locationId, minRev);
+        myKnownRepositoryLocations.setFirstRevision(locationId, new RevisionId(minRev, minTime));
       }
       if (lastRevision == null || maxRev > lastRevision) {
-        myKnownRepositoryLocations.setLastRevision(locationId, maxRev);
+        myKnownRepositoryLocations.setLastRevision(locationId, new RevisionId(maxRev, maxTime));
       }
     }
+  }
+
+  private String getPath(ContentRevision revision) {
+    final String path = FileUtil.toSystemIndependentName(revision.getFile().getPath());
+    return path.endsWith("/") ? path : path + "/";
   }
 
   private Map<Long, CommittedChangeList> insertChangeListsIfNotExists(AbstractVcs vcs, final Map<String, Long> authors,
@@ -313,9 +357,9 @@ public class VcsSqliteLayer {
         @Override
         public PreparedStatement convert(Connection connection) throws SQLException {
           return connection.prepareStatement("INSERT INTO " + SqliteTables.REVISION.TABLE_NAME + " ( " +
-                                             StringUtil.join(Arrays.asList(SqliteTables.REVISION.ROOT_FK, SqliteTables.REVISION.AUTHOR_FK, SqliteTables.REVISION.DATE,
-                                                             SqliteTables.REVISION.NUMBER_INT, SqliteTables.REVISION.NUMBER_STR, SqliteTables.REVISION.COMMENT, SqliteTables.REVISION.RAW_DATA), ", ") +
-                                             ") VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            StringUtil.join(Arrays.asList(SqliteTables.REVISION.ROOT_FK, SqliteTables.REVISION.AUTHOR_FK, SqliteTables.REVISION.DATE,
+            SqliteTables.REVISION.NUMBER_INT, SqliteTables.REVISION.NUMBER_STR, SqliteTables.REVISION.COMMENT, SqliteTables.REVISION.COUNT, SqliteTables.REVISION.RAW_DATA), ", ") +
+            ") VALUES (?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
         }
       });
     final Map<Long, CommittedChangeList> result = new HashMap<Long, CommittedChangeList>();
@@ -329,9 +373,10 @@ public class VcsSqliteLayer {
         statement.setLong(4, list.getNumber());
         statement.setString(5, String.valueOf(list.getNumber()));
         statement.setString(6, list.getComment());
+        statement.setLong(7, list.getChanges().size());
         final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
         provider.writeChangeList(new DataOutputStream(stream), list);
-        statement.setBytes(7, stream.toByteArray());
+        statement.setBytes(8, stream.toByteArray());
         final long id = SqliteUtil.insert(statement);
         result.put(id, list);
 
@@ -355,44 +400,52 @@ public class VcsSqliteLayer {
         public PreparedStatement convert(Connection connection) throws SQLException {
           return connection.prepareStatement("INSERT INTO " + SqliteTables.PATHS_2_REVS.TABLE_NAME +
             " ( " + StringUtil.join(Arrays.asList(SqliteTables.PATHS_2_REVS.PATH_FK, SqliteTables.PATHS_2_REVS.REVISION_FK,
-            SqliteTables.PATHS_2_REVS.TYPE, SqliteTables.PATHS_2_REVS.COPY_PATH_ID, SqliteTables.PATHS_2_REVS.DELETE_PATH_ID), " , ") +
-            ") VALUES (?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            SqliteTables.PATHS_2_REVS.TYPE, SqliteTables.PATHS_2_REVS.COPY_PATH_ID, SqliteTables.PATHS_2_REVS.DELETE_PATH_ID,
+            SqliteTables.PATHS_2_REVS.VISIBLE), " , ") +
+            ") VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
         }
       });
     try {
       insert.setLong(2, listId);
-      for (Change change : list.getChanges()) {
-        final ChangeTypeEnum type = ChangeTypeEnum.getChangeType(change);
-        if (change.getBeforeRevision() == null) {
-          // added, one path
-          insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getAfterRevision().getFile().getPath())));
-          insert.setLong(3, type.getCode());
-          SqliteUtil.insert(insert);
-        } else if (ChangeTypeEnum.MOVE.equals(type)) {
-          // 2 paths
-          final Long beforeId = paths.get(FileUtil.toSystemIndependentName(change.getBeforeRevision().getFile().getPath()));
-          insert.setLong(1, beforeId);
-          insert.setLong(3, ChangeTypeEnum.DELETE.getCode());
-          SqliteUtil.insert(insert);
-
-          insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getAfterRevision().getFile().getPath())));
-          insert.setLong(4, beforeId);
-          insert.setLong(3, type.getCode());
-          SqliteUtil.insert(insert);
-        } else if (change.getAfterRevision() == null) {
-          insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getBeforeRevision().getFile().getPath())));
-          insert.setLong(3, type.getCode());
-          SqliteUtil.insert(insert);
-        } else {
-          // only after
-          insert.setLong(1, paths.get(FileUtil.toSystemIndependentName(change.getAfterRevision().getFile().getPath())));
-          insert.setLong(3, type.getCode());
-          SqliteUtil.insert(insert);
-        }
+      final Collection<Change> withMoved = list.getChangesWithMovedTrees();
+      final Set<Change> simple = new HashSet<Change>(list.getChanges());
+      for (Change change : withMoved) {
+        insertOneChange(paths, insert, change, simple.contains(change));
       }
     }
     catch (SQLException e) {
       throw new VcsException(e);
+    }
+  }
+
+  private void insertOneChange(Map<String, Long> paths, PreparedStatement insert, Change change, final boolean visible) throws SQLException {
+    insert.setLong(6, visible ? 1 : 0);
+    final ChangeTypeEnum type = ChangeTypeEnum.getChangeType(change);
+    if (change.getBeforeRevision() == null) {
+      // added, one path
+      insert.setLong(1, paths.get(getPath(change.getAfterRevision())));
+      insert.setLong(3, type.getCode());
+      SqliteUtil.insert(insert);
+    } else if (ChangeTypeEnum.MOVE.equals(type)) {
+      // 2 paths
+      final Long beforeId = paths.get(getPath(change.getBeforeRevision()));
+      insert.setLong(1, beforeId);
+      insert.setLong(3, ChangeTypeEnum.DELETE.getCode());
+      SqliteUtil.insert(insert);
+
+      insert.setLong(1, paths.get(getPath(change.getAfterRevision())));
+      insert.setLong(4, beforeId);
+      insert.setLong(3, type.getCode());
+      SqliteUtil.insert(insert);
+    } else if (change.getAfterRevision() == null) {
+      insert.setLong(1, paths.get(getPath(change.getBeforeRevision())));
+      insert.setLong(3, type.getCode());
+      SqliteUtil.insert(insert);
+    } else {
+      // only after
+      insert.setLong(1, paths.get(getPath(change.getAfterRevision())));
+      insert.setLong(3, type.getCode());
+      SqliteUtil.insert(insert);
     }
   }
 
@@ -488,31 +541,215 @@ public class VcsSqliteLayer {
     }
   }
 
-  public long getFirstRevision(final AbstractVcs vcs, final String root) {
+  @NotNull
+  public RevisionId getFirstRevision(final AbstractVcs vcs, final String root) {
     final String systemIndependent = FileUtil.toSystemIndependentName(root);
     if (! myKnownRepositoryLocations.exists(vcs.getName(), systemIndependent)) {
-      return -1;
+      return RevisionId.FAKE;
     }
     final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), systemIndependent);
-    final Long firstRevision = myKnownRepositoryLocations.getFirstRevision(locationId);
-    return firstRevision == null ? -1 : firstRevision.longValue();
+    return myKnownRepositoryLocations.getFirstRevision(locationId);
   }
 
-  public long getLastRevision(final AbstractVcs vcs, final String root) {
+  @NotNull
+  public RevisionId getLastRevision(final AbstractVcs vcs, final String root) {
     final String systemIndependent = FileUtil.toSystemIndependentName(root);
     if (! myKnownRepositoryLocations.exists(vcs.getName(), systemIndependent)) {
-      return -1;
+      return RevisionId.FAKE;
     }
     final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), systemIndependent);
-    final Long lastRevision = myKnownRepositoryLocations.getLastRevision(locationId);
-    return lastRevision == null ? -1 : lastRevision.longValue();
+    return myKnownRepositoryLocations.getLastRevision(locationId);
+  }
+
+  // alternatively, we can use usual lists + a map marking incoming
+  public List<ReceivedChangeList> selectIncoming(final AbstractVcs vcs, final RepositoryLocation location) throws VcsException {
+    final Map<Long, CommittedChangeList> full = new HashMap<Long, CommittedChangeList>();
+    final TreeMap<Long, Set<String>> incomingPaths = new TreeMap<Long, Set<String>>();
+    final long locationId = getLocationId(vcs, location);
+
+    final PreparedStatement select = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_INCOMING,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          // todo control what is selected
+          return connection.prepareStatement("SELECT R." + SqliteTables.REVISION.NUMBER_INT + " , R." + SqliteTables.REVISION.RAW_DATA +
+            " , P." + SqliteTables.PATHS.PATH +
+            " FROM " + SqliteTables.INCOMING_PATHS.TABLE_NAME + "I INNER JOIN " +
+            SqliteTables.PATHS_2_REVS.TABLE_NAME + "PR ON I." + SqliteTables.INCOMING_PATHS.PR_FK + " = PR." +
+            SqliteTables.PATHS_2_REVS.ID + ", " + SqliteTables.REVISION.TABLE_NAME + " R ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK +
+            " = R." + SqliteTables.REVISION.ID + " , " + SqliteTables.PATHS_2_REVS.TABLE_NAME + "P ON PR." + SqliteTables.PATHS_2_REVS.PATH_FK +
+            " = P." + SqliteTables.PATHS.ID + " WHERE R." + SqliteTables.REVISION.ROOT_FK + "=?");
+        }
+      });
+    final CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
+    try {
+      select.setLong(1, locationId);
+      final ResultSet set = select.executeQuery();
+      SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
+        @Override
+        public void run() throws SQLException {
+          final long revNum = set.getLong("R." + SqliteTables.REVISION.NUMBER_INT);
+          Set<String> paths = incomingPaths.get(revNum);
+          if (paths == null) {
+            final byte[] bytes = set.getBytes("R." + SqliteTables.REVISION.RAW_DATA);
+            final CommittedChangeList nativeList = readListByProvider(bytes, provider, location);
+            full.put(revNum, nativeList);
+            paths = new HashSet<String>();
+            incomingPaths.put(revNum, paths);
+          }
+          final String path = set.getString("P." + SqliteTables.PATHS.PATH);
+          paths.add(path);
+        }
+      });
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
+    final List<ReceivedChangeList> result = new ArrayList<ReceivedChangeList>();
+    for (Map.Entry<Long, Set<String>> entry : incomingPaths.entrySet()) {
+      final Long revNum = entry.getKey();
+
+    }
+    // TODO continue here
+    // TODO continue here
+    // TODO continue here
+    // TODO continue here
+    // TODO continue here
+
+    return null;
+   // return new ArrayList<ReceivedChangeList>(incomingPaths.descendingMap().values());
+  }
+
+  private long getLocationId(AbstractVcs vcs, RepositoryLocation location) {
+    final String normalizedLocation = normalizeLocation(location);
+    if (! myKnownRepositoryLocations.exists(vcs.getName(), normalizedLocation)) {
+      assert false;
+    }
+    return myKnownRepositoryLocations.getLocationId(vcs.getName(), normalizedLocation);
+  }
+
+  public void insertIncoming(final AbstractVcs vcs, final RepositoryLocation location, long pathId, final long lastRev, final long oldRev)
+    throws VcsException {
+    assert lastRev > 0 || oldRev > 0;
+    final long locationId = getLocationId(vcs, location);
+
+    if (lastRev > 0 && oldRev > 0) {
+      final PreparedStatement insertBoth = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_INSERT_INCOMING,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("INSERT INTO " + SqliteTables.INCOMING_PATHS.TABLE_NAME +
+            " ( " + SqliteTables.INCOMING_PATHS.PR_FK + " ) VALUES (SELECT " + SqliteTables.PATHS_2_REVS.ID + " FROM " +
+            SqliteTables.PATHS_2_REVS.TABLE_NAME + "PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON R." +
+            SqliteTables.REVISION.ID + "=PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + " WHERE R." +
+            SqliteTables.REVISION.NUMBER_INT + "<=? AND R." + SqliteTables.REVISION.NUMBER_INT + ">=? AND R." + SqliteTables.REVISION.ROOT_FK +
+            "=? AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=?)");
+        }
+      });
+      try {
+        insertBoth.setLong(1, lastRev);
+        insertBoth.setLong(2, oldRev);
+        insertBoth.setLong(3, locationId);
+        insertBoth.setLong(4, pathId);
+        final int numRows = insertBoth.executeUpdate();
+        return;
+      }
+      catch (SQLException e) {
+        throw new VcsException(e);
+      }
+    }
+
+    if (lastRev > 0) {
+      final PreparedStatement insertOnlyLast = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_INSERT_INCOMING,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("INSERT INTO " + SqliteTables.INCOMING_PATHS.TABLE_NAME +
+            " ( " + SqliteTables.INCOMING_PATHS.PR_FK + " ) VALUES (SELECT " + SqliteTables.PATHS_2_REVS.ID + " FROM " +
+            SqliteTables.PATHS_2_REVS.TABLE_NAME + "PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON R." +
+            SqliteTables.REVISION.ID + "=PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + " WHERE R." +
+            SqliteTables.REVISION.NUMBER_INT + "<=? AND R." + SqliteTables.REVISION.ROOT_FK +
+            "=? AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=?)");
+        }
+      });
+      try {
+        insertOnlyLast.setLong(1, lastRev);
+        insertOnlyLast.setLong(2, locationId);
+        insertOnlyLast.setLong(3, pathId);
+        final int numRows = insertOnlyLast.executeUpdate();
+        return;
+      }
+      catch (SQLException e) {
+        throw new VcsException(e);
+      }
+    }
+    // first rev > 0
+    final PreparedStatement insertOnlyFirst = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_INSERT_INCOMING,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("INSERT INTO " + SqliteTables.INCOMING_PATHS.TABLE_NAME +
+            " ( " + SqliteTables.INCOMING_PATHS.PR_FK + " ) VALUES (SELECT " + SqliteTables.PATHS_2_REVS.ID + " FROM " +
+            SqliteTables.PATHS_2_REVS.TABLE_NAME + "PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON R." +
+            SqliteTables.REVISION.ID + "=PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + " WHERE R." + SqliteTables.REVISION.NUMBER_INT +
+            ">=? AND R." + SqliteTables.REVISION.ROOT_FK +
+            "=? AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=?)");
+        }
+      });
+    try {
+      insertOnlyFirst.setLong(1, oldRev);
+      insertOnlyFirst.setLong(2, locationId);
+      insertOnlyFirst.setLong(3, pathId);
+      final int numRows = insertOnlyFirst.executeUpdate();
+      return;
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  public List<CommittedChangeList> readLists(final AbstractVcs vcs, final RepositoryLocation location,
+                                             final RevisionId last, final RevisionId old, final String subfolder) throws VcsException {
+    final String root = normalizeLocation(location);
+    final RevisionId lastExisitngData = getLastRevision(vcs, root);
+    final RevisionId firstExistingData = getFirstRevision(vcs, root);
+
+    if (lastExisitngData.isFake() || firstExistingData.isFake()) return Collections.emptyList();
+
+    final SelectListsQueryHelper helper =
+      new SelectListsQueryHelper(myConnection, lastExisitngData, firstExistingData, last, old, getLocationId(vcs, location), subfolder);
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    try {
+      final PreparedStatement statement = helper.createStatement();
+      final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
+      final ResultSet set = statement.executeQuery();
+      final Set<Long> controlSet = new HashSet<Long>();
+      SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
+        @Override
+        public void run() throws SQLException {
+          final long number = set.getLong(SqliteTables.REVISION.NUMBER_INT);
+          if (controlSet.contains(number)) {
+            return;
+          }
+          controlSet.add(number);
+          final byte[] bytes = set.getBytes(SqliteTables.REVISION.RAW_DATA);
+          final CommittedChangeList list = readListByProvider(bytes, provider, location);
+          result.add(list);
+        }
+      });
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
+
+    return result;
   }
 
   public List<CommittedChangeList> readLists(final AbstractVcs vcs, final RepositoryLocation location, final long lastRev, final long oldRev)
     throws VcsException {
-    final String root = FileUtil.toSystemIndependentName(location.toPresentableString());
-    final long lastExisting = getLastRevision(vcs, root);
-    final long firstExisting = getFirstRevision(vcs, root);
+    final String root = normalizeLocation(location);
+    final long lastExisting = getLastRevision(vcs, root).getNumber();
+    final long firstExisting = getFirstRevision(vcs, root).getNumber();
 
     if (lastExisting == -1 || firstExisting == -1) return Collections.emptyList();
     final long operatingFirst = oldRev == -1 ? firstExisting : oldRev;
@@ -547,13 +784,8 @@ public class VcsSqliteLayer {
         @Override
         public void run() throws SQLException {
           final byte[] bytes = set.getBytes(SqliteTables.REVISION.RAW_DATA);
-          try {
-            final CommittedChangeList list = provider.readChangeList(location, new DataInputStream(new ByteArrayInputStream(bytes)));
-            result.add(list);
-          }
-          catch (IOException e) {
-            throw new SQLException(e);
-          }
+          final CommittedChangeList list = readListByProvider(bytes, provider, location);
+          result.add(list);
 
           /*final long revisionId = set.getLong("R." + SqliteTables.REVISION.ID);
           CommittedChangeList list = lists.get(revisionId);
@@ -574,62 +806,100 @@ public class VcsSqliteLayer {
     return result;
   }
 
+  private CommittedChangeList readListByProvider(byte[] bytes, CachingCommittedChangesProvider provider, RepositoryLocation location)
+    throws SQLException {
+    final CommittedChangeList list;
+    try {
+      list = provider.readChangeList(location, new DataInputStream(new ByteArrayInputStream(bytes)));
+    }
+    catch (IOException e) {
+      throw new SQLException(e);
+    }
+    return list;
+  }
+
   public PathState getPathState(final AbstractVcs vcs, final RepositoryLocation location, final String path) throws VcsException {
-    final String normalizedPath = FileUtil.toSystemIndependentName(path);
-    final String normalizedLocation = FileUtil.toSystemIndependentName(location.toPresentableString());
+    String normalizedPath = FileUtil.toSystemIndependentName(path);
+    normalizedPath = normalizedPath.endsWith("/") ? normalizedPath : normalizedPath + "/";
+    final String normalizedLocation = normalizeLocation(location);
     if (! myKnownRepositoryLocations.exists(vcs.getName(), normalizedLocation)) return null;
 
     final PreparedStatement maxStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_PATH_DATA,
-      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
-        @Override
-        public PreparedStatement convert(Connection connection) throws SQLException {
-          return connection.prepareStatement("SELECT MAX(R." + SqliteTables.REVISION.NUMBER_INT + ") MAX, MAX(P."+ SqliteTables.PATHS.ID +
-            ") PATH_ID FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME + " PR INNER JOIN " +
-            SqliteTables.REVISION.TABLE_NAME + " R, " + SqliteTables.PATHS.TABLE_NAME + " P ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
-            SqliteTables.REVISION.ID + " AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=P." + SqliteTables.PATHS.ID +
-            " WHERE P." + SqliteTables.PATHS.PATH + "=? AND R." + SqliteTables.REVISION.ROOT_FK + "=?");
-        }
-      });
+                                                                                     new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+                                                                                       @Override
+                                                                                       public PreparedStatement convert(Connection connection)
+                                                                                         throws SQLException {
+                                                                                         final String innerQuery = "SELECT MAX(R." +
+                                                                                                                   SqliteTables.REVISION.NUMBER_INT +
+                                                                                                                   ") MAX FROM " +
+                                                                                                                   SqliteTables.PATHS_2_REVS.TABLE_NAME +
+                                                                                                                   " PR INNER JOIN " +
+                                                                                                                   SqliteTables.REVISION.TABLE_NAME +
+                                                                                                                   " R, " +
+                                                                                                                   SqliteTables.PATHS.TABLE_NAME +
+                                                                                                                   " P ON PR." +
+                                                                                                                   SqliteTables.PATHS_2_REVS.REVISION_FK +
+                                                                                                                   "=R." +
+                                                                                                                   SqliteTables.REVISION.ID +
+                                                                                                                   " AND PR." +
+                                                                                                                   SqliteTables.PATHS_2_REVS.PATH_FK +
+                                                                                                                   "=P." +
+                                                                                                                   SqliteTables.PATHS.ID +
+                                                                                                                   " WHERE P." +
+                                                                                                                   SqliteTables.PATHS.PATH +
+                                                                                                                   "=? AND R." +
+                                                                                                                   SqliteTables.REVISION.ROOT_FK +
+                                                                                                                   "=?";
+
+                                                                                         return connection.prepareStatement("SELECT R." +
+                                                                                                                            SqliteTables.REVISION.NUMBER_INT +
+                                                                                                                            " REV_NU, PR." +
+                                                                                                                            SqliteTables.PATHS_2_REVS.TYPE +
+                                                                                                                            " TYPE FROM " +
+                                                                                                                            SqliteTables.PATHS_2_REVS.TABLE_NAME +
+                                                                                                                            " PR INNER JOIN " +
+                                                                                                                            SqliteTables.REVISION.TABLE_NAME +
+                                                                                                                            " R, " +
+                                                                                                                            SqliteTables.PATHS.TABLE_NAME +
+                                                                                                                            " P ON PR." +
+                                                                                                                            SqliteTables.PATHS_2_REVS.REVISION_FK +
+                                                                                                                            "=R." +
+                                                                                                                            SqliteTables.REVISION.ID +
+                                                                                                                            " AND PR." +
+                                                                                                                            SqliteTables.PATHS_2_REVS.PATH_FK +
+                                                                                                                            "=P." +
+                                                                                                                            SqliteTables.PATHS.ID +
+                                                                                                                            " WHERE P." +
+                                                                                                                            SqliteTables.PATHS.PATH +
+                                                                                                                            "=? AND R." +
+                                                                                                                            SqliteTables.REVISION.ROOT_FK +
+                                                                                                                            "=? AND R." +
+                                                                                                                            SqliteTables.REVISION.NUMBER_INT +
+                                                                                                                            " = (" +
+                                                                                                                            innerQuery +
+                                                                                                                            ")");
+                                                                                       }
+                                                                                     });
 
     try {
       maxStatement.setString(1, normalizedPath);
+      maxStatement.setString(3, normalizedPath);
       final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), normalizedLocation);
       maxStatement.setLong(2, locationId);
-      final long pathId[] = new long[1];
+      maxStatement.setLong(4, locationId);
+      final long type[] = new long[1];
       final long maxRev[] = new long[1];
       maxRev[0] = -1;
       final ResultSet set = maxStatement.executeQuery();
       SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
         @Override
         public void run() throws SQLException {
-          maxRev[0] = set.getLong("MAX");
-          pathId[0] = set.getLong("PATH_ID");
+          maxRev[0] = set.getLong("REV_NU");
+          type[0] = set.getLong("TYPE");
         }
       });
 
-      if (maxRev[0] == -1) return null;
-
-      final PreparedStatement lastChangeType = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_PATHS_2_REVS,
-        new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
-          @Override
-          public PreparedStatement convert(Connection connection) throws SQLException {
-            return connection.prepareStatement("SELECT PR." + SqliteTables.PATHS_2_REVS.TYPE + " FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME +
-              " PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
-              SqliteTables.REVISION.ID + " WHERE R." + SqliteTables.REVISION.NUMBER_INT + "=? AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK +
-              "=?");
-          }
-        });
-      lastChangeType.setLong(1, maxRev[0]);
-      lastChangeType.setLong(2, pathId[0]);
-      final ResultSet typeSet = lastChangeType.executeQuery();
-      final long[] type = new long[1];
-      type[0] = -100;
-      SqliteUtil.readSelectResults(typeSet, new ThrowableRunnable<SQLException>() {
-        @Override
-        public void run() throws SQLException {
-          type[0] = typeSet.getLong(1);
-        }
-      });
+      if (maxRev[0] <= 0) return null;
       if (type[0] == -100) return null;
       final ChangeTypeEnum changeType = ChangeTypeEnum.getChangeType(type[0]);
       if (changeType == null) return null;
@@ -639,4 +909,121 @@ public class VcsSqliteLayer {
       throw new VcsException(e);
     }
   }
+
+  private String normalizeLocation(RepositoryLocation location) {
+    return FileUtil.toSystemIndependentName(location.toPresentableString());
+  }
+
+  // this is batch one
+  /*public <T> void getLastRevisionsForPath(final AbstractVcs vcs, final RepositoryLocation location,
+                                          final Convertor<T, String> pathConvertor, Set<T> files, final PairConsumer<T, PathState> consumer)
+    throws VcsException {
+    final String normalizedLocation = normalizeLocation(location);
+    if (! myKnownRepositoryLocations.exists(vcs.getName(), normalizedLocation)) return;
+    final long locationId = myKnownRepositoryLocations.getLocationId(vcs.getName(), normalizedLocation);
+
+    if (files.size() < ourLastPathRevisionBatchSize) {
+      iterateGetPathState(vcs, location, pathConvertor, files, consumer);
+      return;
+    }
+
+    String s = StringUtil.repeat("?,", ourLastPathRevisionBatchSize);
+    final String repeat = s.substring(0, s.length() - 1);
+    final PreparedStatement maxStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_SELECT_PATH_DATA_BATCH,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("SELECT MAX(R." + SqliteTables.REVISION.NUMBER_INT + ") MAX, P."+ SqliteTables.PATHS.PATH +
+                      " PATH, P." + SqliteTables.PATHS.ID + " PATH_ID FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME + " PR INNER JOIN " +
+                      SqliteTables.REVISION.TABLE_NAME + " R, " + SqliteTables.PATHS.TABLE_NAME + " P ON PR." +
+                      SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
+                      SqliteTables.REVISION.ID + " AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + "=P." + SqliteTables.PATHS.ID +
+                      " WHERE P." + SqliteTables.PATHS.PATH + " IN (" + repeat + ") AND R." + SqliteTables.REVISION.ROOT_FK + "=?");
+        }
+      });
+    final PreparedStatement typeStatement = myConnection.getOrCreatePreparedStatement(SqliteTables.PREPARED_PATHS_2_REVS_BATCH,
+      new ThrowableConvertor<Connection, PreparedStatement, SQLException>() {
+        @Override
+        public PreparedStatement convert(Connection connection) throws SQLException {
+          return connection.prepareStatement("SELECT PR." + SqliteTables.PATHS_2_REVS.TYPE + " TYPE, R." +
+            SqliteTables.REVISION.NUMBER_INT + " REV_NUM, PR." + SqliteTables.PATHS_2_REVS.PATH_FK + " PATH_ID " +
+            " FROM " + SqliteTables.PATHS_2_REVS.TABLE_NAME +
+            " PR INNER JOIN " + SqliteTables.REVISION.TABLE_NAME + " R ON PR." + SqliteTables.PATHS_2_REVS.REVISION_FK + "=R." +
+            SqliteTables.REVISION.ID + " WHERE R." + SqliteTables.REVISION.NUMBER_INT + " IN (" + repeat +
+            ") AND PR." + SqliteTables.PATHS_2_REVS.PATH_FK + " IN(" + repeat + ")");
+        }
+      });
+    final List<List<T>> split = new CollectionSplitter<T>(ourLastPathRevisionBatchSize).split(files);
+    try {
+      maxStatement.setLong(ourLastPathRevisionBatchSize + 1, locationId);
+      for (List<T> list : split) {
+        final Map<String, T> paths2elements = new HashMap<String, T>();
+        final int size = list.size();
+        if (size < ourLastPathRevisionBatchSize) {
+          iterateGetPathState(vcs, location, pathConvertor, list, consumer);
+          return;
+        }
+        for (int i = 0; i < size; i++) {
+          T t = list.get(i);
+          final String convert = pathConvertor.convert(t);
+          assert ! paths2elements.containsKey(convert);
+          paths2elements.put(convert, t);
+          maxStatement.setString(i + 1, convert);
+        }
+
+        final ResultSet set = maxStatement.executeQuery();
+        final Map<Long, Pair<Long, String>> maxMap = new HashMap<Long, Pair<Long, String>>();
+        SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
+          @Override
+          public void run() throws SQLException {
+            final long maxRev = set.getLong("MAX");
+            final String path = set.getString("PATH");
+            final long pathId = set.getLong("PATH_ID");
+            maxMap.put(pathId, Pair.create(maxRev, path));
+          }
+        });
+
+        int i = 0;
+        for (Map.Entry<Long, Pair<Long, String>> entry : maxMap.entrySet()) {
+          typeStatement.setLong(i + 1, entry.getValue().getFirst());  // rev #
+          typeStatement.setLong(ourLastPathRevisionBatchSize + i + 1, entry.getKey()); // path id
+          ++ i;
+        }
+        final ResultSet detailsSet = typeStatement.executeQuery();
+        SqliteUtil.readSelectResults(detailsSet, new ThrowableRunnable<SQLException>() {
+          @Override
+          public void run() throws SQLException {
+            final long type = detailsSet.getLong("TYPE");
+            final ChangeTypeEnum changeType = ChangeTypeEnum.getChangeType(type);
+            if (changeType == null) {
+              LOG.info("Illegal change type: " + type);
+              return;
+            }
+
+            final long revNum = detailsSet.getLong("REV_NUM");
+            final long pathId = detailsSet.getLong("PATH_ID");
+
+            final Pair<Long, String> pair = maxMap.get(pathId);
+            if (pair.getFirst() == revNum) {
+              consumer.consume(paths2elements.get(pair.getSecond()), new PathState(revNum, ! ChangeTypeEnum.DELETE.equals(changeType)));
+            }
+          }
+        });
+      }
+    }
+    catch (SQLException e) {
+      throw new VcsException(e);
+    }
+  }*/
+
+  /*private <T> void iterateGetPathState(AbstractVcs vcs,
+                                       RepositoryLocation location,
+                                       Convertor<T, String> pathConvertor,
+                                       Collection<T> files,
+                                       PairConsumer<T, PathState> consumer) throws VcsException {
+    for (T file : files) {
+      final PathState state = getPathState(vcs, location, pathConvertor.convert(file));
+      consumer.consume(file, state);
+    }
+  }*/
 }

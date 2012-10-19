@@ -16,49 +16,56 @@
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitConfigUtil;
-import git4idea.history.GitHistoryUtils;
-import git4idea.repo.GitRepositoryFiles;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import static git4idea.repo.GitRepository.*;
 
 /**
- * This data class represents a Git branch
+ * <p>Represents a Git branch, local or remote.</p>
+ *
+ * <p>It contains information about the branch name and the hash it points to.
+ *    Note that the object (including the hash) is immutable. That means that if branch reference move along, you have to get new instance
+ *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link git4idea.repo.GitRepository#getCurrentBranch()}.
+ * </p>
+ *
+ * <p>GitBranches are equal, if their full names are equal. That means that if two GitBranch objects have different hashes, they
+ *    are considered equal. But in this case an error if logged, becase it means that one of this GitBranch instances is out-of-date, and
+ *    it is required to use an {@link GitRepository#update(TrackedTopic...) updated} version.</p>
  */
 public class GitBranch extends GitReference {
-  @NonNls public static final String NO_BRANCH_NAME = "(no branch)"; // The name that specifies that git is on specific commit rather then on some branch ({@value}) 
+
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
-  private final boolean myRemote;
-  private boolean myActive;
-  private static final Logger LOG = Logger.getInstance(GitBranch.class);
-  private final String myHash;
+  /**
+   * @deprecated All usages should be reviewed and substituted with actual GitBranch objects with Hashes retrieved from the GitRepository.
+   */
+  @Deprecated
+  public static final Hash DUMMY_HASH = Hash.create("");
 
-  public GitBranch(@NotNull String name, @NotNull String hash, boolean active, boolean remote) {
+  private static final Logger LOG = Logger.getInstance(GitBranch.class);
+
+  @NotNull private final Hash myHash;
+  private final boolean myRemote;
+
+  public GitBranch(@NotNull String name, @NotNull Hash hash, boolean remote) {
     super(name);
     myRemote = remote;
-    myActive = active;
-    myHash = new String(hash.trim());
+    myHash = hash;
   }
   
-  @Deprecated
-  public GitBranch(@NotNull String name, boolean active, boolean remote) {
-    this(name, "", active, remote);
+  /**
+   * <p>Returns the hash on which this branch is reference to.</p>
+   *
+   * <p>In certain cases (which are to be eliminated in the future) it may be empty,
+   *    if this information wasn't supplied to the GitBranch constructor.</p>
+   */
+  @NotNull
+  public String getHash() {
+    return myHash.asString();
   }
 
   /**
@@ -66,13 +73,6 @@ public class GitBranch extends GitReference {
    */
   public boolean isRemote() {
     return myRemote;
-  }
-
-  /**
-   * @return true if the branch is active
-   */
-  public boolean isActive() {
-    return myActive;
   }
 
   @NotNull
@@ -107,298 +107,41 @@ public class GitBranch extends GitReference {
     return Pair.create(remoteName, remoteBranchName);
   }
 
-  /**
-   * Get tracked remote for the branch
-   *
-   * @param project the context project
-   * @param root    the VCS root to investigate
-   * @return the remote name for tracked branch, "." meaning the current repository, or null if no branch is tracked
-   * @throws VcsException if there is a problem with running Git
-   */
-  @Nullable
-  public String getTrackedRemoteName(Project project, VirtualFile root) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedRemoteKey());
-  }
-
-  /**
-   * Get tracked the branch
-   *
-   * @param project the context project
-   * @param root    the VCS root to investigate
-   * @return the name of tracked branch
-   * @throws VcsException if there is a problem with running Git
-   */
-  @Nullable
-  public String getTrackedBranchName(Project project, VirtualFile root) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedBranchKey());
-  }
-
-  /**
-   * Checks if the branch exists in the repository.
-   * @return true if the branch exists, false otherwise.
-   * @deprecated use {@link git4idea.repo.GitRepository#getBranches()}
-   */
-  public boolean exists(VirtualFile root) {
-    final VirtualFile remoteBranch = root.findFileByRelativePath(GitRepositoryFiles.GIT_REFS_REMOTES + "/" + myName);
-    if (remoteBranch != null && remoteBranch.exists()) {
-      return true;
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
     }
-    final VirtualFile packedRefs = root.findFileByRelativePath(GitRepositoryFiles.GIT_PACKED_REFS);
-    if (packedRefs != null && packedRefs.exists()) {
-      final byte[] contents;
-      try {
-        contents = packedRefs.contentsToByteArray();
-        return new String(contents).contains(myName);
-      } catch (IOException e) {
-        LOG.info("exists ", e);
-        return false;
-      }
+
+    // Reusing equals from super: only the name is important:
+    // branches are considered equal even if they point to different commits.
+    // But if equal branches point to different commits (or have different local/remote nature), then it is a programmer bug:
+    // one if GitBranch instances in the calling code is out-of-date.
+    // throwing assertion in that case forcing the programmer to update before comparing.
+    GitBranch that = (GitBranch)o;
+    if (!myHash.equals(that.myHash)) {
+      LOG.error("Branches have equal names, but different hash codes. This: " + toLogString() + ", that: " + that.toLogString());
     }
-    return false;
+    else if (myRemote != that.myRemote) {
+      LOG.error("Branches have equal names, but different local/remote type. This: " + toLogString() + ", that: " + that.toLogString());
+    }
+
+    return true;
   }
 
-  /**
-   * Returns the hash on which this branch is reference to.
-   * May be empty, if this information wasn't supplied to the GitBranch constructor.
-   */
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString();
+  }
+
   @NotNull
-  public String getHash() {
-    return myHash;
+  public String toLogString() {
+    return String.format("%s:%s:%s", getFullName(), getHash(), isRemote() ? "remote" : "local");
   }
 
-  /**
-   * Get current branch from Git.
-   *
-   * @param project a project
-   * @param root    vcs root
-   * @return the current branch or null if there is no current branch or if specific commit has been checked out.
-   * @deprecated Prefer {@link git4idea.repo.GitRepository#getCurrentBranch()} that caches the current branch value,
-   *             and for updating reads it from disk instead of spawning a Git process.
-   *             Note however, that {@link git4idea.repo.GitRepository#getCurrentBranch()} is updated asynchronously.
-   *             If you need to be absolutely sure, that you've got the right value at the moment,
-   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
-   * @throws VcsException if there is a problem running git
-   */
-  @Deprecated
-  @Nullable
-  public static GitBranch current(Project project, VirtualFile root) throws VcsException {
-    return list(project, root, false, false, null, null);
-  }
-
-  /**
-   * List branches for the git root as strings.
-   * @deprecated Prefer {@link git4idea.repo.GitRepository#getBranches()} that caches branches,
-   *             and for updating reads them from disk instead of spawning a Git process.
-   *             Note however, that {@link git4idea.repo.GitRepository#getBranches()} is updated asynchronously.
-   *             If you need to be absolutely sure, that you've got the right value at the moment,
-   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
-   * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String)
-   */
-  @Nullable
-  @Deprecated
-  public static GitBranch listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
-                                        final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
-    final Collection<GitBranch> gitBranches = new ArrayList<GitBranch>();
-    final GitBranch result = list(project, root, local, remote, gitBranches, containingCommit);
-    for (GitBranch b : gitBranches) {
-      branches.add(b.getName());
-    }
-    return result;
-  }
-
-  /**
-   * List branches in the repository. Supply a Collection to this method, and it will be filled by branches.
-   * @deprecated Prefer {@link git4idea.repo.GitRepository#getBranches()} that caches branches,
-   *             and for updating reads them from disk instead of spawning a Git process.
-   *             Note however, that {@link git4idea.repo.GitRepository#getBranches()} is updated asynchronously.
-   *             If you need to be absolutely sure, that you've got the right value at the moment,
-   *             call {@link git4idea.repo.GitRepository#update(git4idea.repo.GitRepository.TrackedTopic...)} before querying.
-   * @param project          the context project
-   * @param root             the git root
-   * @param localWanted      should local branches be collected.
-   * @param remoteWanted     should remote branches be collected.
-   * @param branches         the collection which will be used to store branches.
-   *                         Can be null - then the method does the same as {@link #current(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)}
-   * @param containingCommit show only branches which contain the specified commit. If null, no commit filtering is performed.
-   * @return current branch. May be null if no branch is active.
-   * @throws VcsException if there is a problem with running git
-   */
-  @Nullable
-  @Deprecated
-  public static GitBranch list(final Project project, final VirtualFile root, final boolean localWanted, final boolean remoteWanted,
-                               @Nullable final Collection<GitBranch> branches, @Nullable final String containingCommit) throws VcsException {
-    // preparing native command executor
-    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.addParameters("--no-color");
-    boolean remoteOnly = false;
-    if (remoteWanted && localWanted) {
-      handler.addParameters("-a");
-      remoteOnly = false;
-    } else if (remoteWanted) {
-      handler.addParameters("-r");
-      remoteOnly = true;
-    }
-    if (containingCommit != null) {
-      handler.addParameters("--contains", containingCommit);
-    }
-    final String output = handler.run();
-
-    if (output.trim().length() == 0) {
-      // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
-      String head;
-      try {
-        head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
-        final String prefix = "ref: refs/heads/";
-        return head.startsWith(prefix) ? new GitBranch(head.substring(prefix.length()), true, false) : null;
-      } catch (IOException e) {
-        LOG.info(e);
-        return null;
-      }
-    }
-
-    // standard situation. output example:
-    //  master
-    //* my_feature
-    //  remotes/origin/HEAD -> origin/master
-    //  remotes/origin/eap
-    //  remotes/origin/feature
-    //  remotes/origin/master
-    // also possible:
-    //* (no branch)
-    // and if we call with -r instead of -a, remotes/ prefix is omitted:
-    // origin/HEAD -> origin/master
-    final String[] split = output.split("\n");
-    GitBranch currentBranch = null;
-    String activeRemoteName = null;
-    for (String b : split) {
-      boolean current = b.charAt(0) == '*';
-      b = b.substring(2).trim();
-      if (b.equals(NO_BRANCH_NAME)) { continue; }
-
-      String remotePrefix = null;
-      if (b.startsWith("remotes/")) {
-        remotePrefix = "remotes/";
-      } else if (b.startsWith(REFS_REMOTES_PREFIX)) {
-        remotePrefix = REFS_REMOTES_PREFIX;
-      }
-      boolean isRemote = remotePrefix != null || remoteOnly;
-      if (isRemote) {
-        if (! remoteOnly) {
-          b = b.substring(remotePrefix.length());
-        }
-        final int idx = b.indexOf("HEAD ->");
-        if (idx > 0) {
-          activeRemoteName = b.substring(idx + "HEAD ->".length() + (remotePrefix == null ? 0 : remotePrefix.length()));
-          continue;
-        }
-      }
-      final GitBranch branch = new GitBranch(b, current, isRemote);
-      if (current) {
-        currentBranch = branch;
-      }
-      if (branches != null && ((isRemote && remoteWanted) || (!isRemote && localWanted))) {
-        branches.add(branch);
-      }
-    }
-    if (activeRemoteName != null) {
-      for (GitBranch branch : branches) {
-        if (activeRemoteName.equals(branch.getName())) {
-          branch.setActive(true);
-          break;
-        }
-      }
-    }
-    return currentBranch;
-  }
-
-  /**
-   * Set tracked branch
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @param remote  the remote to track (null, for do not track anything, "." for local repository)
-   * @param branch  the branch to track
-   */
-  public void setTrackedBranch(Project project, VirtualFile root, String remote, String branch) throws VcsException {
-    if (remote == null || branch == null) {
-      GitConfigUtil.unsetValue(project, root, trackedRemoteKey());
-      GitConfigUtil.unsetValue(project, root, trackedBranchKey());
-    }
-    else {
-      GitConfigUtil.setValue(project, root, trackedRemoteKey(), remote);
-      GitConfigUtil.setValue(project, root, trackedBranchKey(), branch);
-    }
-  }
-
-  /**
-   * @return the key for the remote of the tracked branch
-   */
-  private String trackedBranchKey() {
-    return "branch." + getName() + ".merge";
-  }
-
-  /**
-   * @return the key for the tracked branch
-   */
-  private String trackedRemoteKey() {
-    return "branch." + getName() + ".remote";
-  }
-
-  /**
-   * Get tracked branch for the current branch
-   *
-   * @param project the project
-   * @param root    the vcs root
-   * @return the tracked branch
-   * @throws VcsException if there is a problem with accessing configuration file
-   */
-  @Nullable
-  public GitBranch tracked(Project project, VirtualFile root) throws VcsException {
-    final HashMap<String, String> result = new HashMap<String, String>();
-    GitConfigUtil.getValues(project, root, null, result);
-    String remote = result.get(trackedRemoteKey());
-    if (remote == null) {
-      return null;
-    }
-    String branch = result.get(trackedBranchKey());
-    if (branch == null) {
-      return null;
-    }
-    if (branch.startsWith(REFS_HEADS_PREFIX)) {
-      branch = branch.substring(REFS_HEADS_PREFIX.length());
-    }
-    else if (branch.startsWith(REFS_REMOTES_PREFIX)) {
-      branch = branch.substring(REFS_REMOTES_PREFIX.length());
-    }
-    boolean remoteFlag;
-    if (!".".equals(remote)) {
-      branch = remote + "/" + branch;
-      remoteFlag = true;
-    }
-    else {
-      remoteFlag = false;
-    }
-    return new GitBranch(branch, false, remoteFlag);
-  }
-
-  /**
-   * Get a merge base between the current branch and specified branch.
-   *
-   * @param project the current project
-   * @param root    the vcs root
-   * @param branch  the branch
-   * @return the common commit or null if the there is no common commit
-   * @throws VcsException the exception
-   */
-  @Nullable
-  public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
-    throws VcsException {
-    return GitHistoryUtils.getMergeBase(project, root, this.getFullName(), branch.getFullName());
-  }
-
-  public void setActive(boolean active) {
-    myActive = active;
-  }
 }

@@ -247,19 +247,20 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
       }
     }
-    else if (myType1 == mLCURLY && myType2 != PARAMETERS_LIST && myType2 != mCLOSABLE_BLOCK_OP || myType2 == mRCURLY) {
-      myResult = Spacing
-        .createDependentLFSpacing(mySettings.SPACE_WITHIN_BRACES ? 1 : 0, 1, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS,
-                                  mySettings.KEEP_BLANK_LINES_IN_CODE);
+    else if (myType1 == mLCURLY && myType2 == mRCURLY) {  //empty closure
+      myResult = Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else if (closure.getParameters().length == 0 && (myType1 == mLCURLY && myType2 != PARAMETERS_LIST && myType2 != mCLOSABLE_BLOCK_OP || myType2 == mRCURLY)) { //spaces between statements
+
+      boolean spacesWithinBraces = closure.getParent() instanceof GrStringInjection
+                  ? myGroovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
+                  : mySettings.SPACE_WITHIN_BRACES;
+      int minSpaces = spacesWithinBraces ? 1 : 0;
+      myResult = Spacing.createDependentLFSpacing(minSpaces, 1, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS,
+                                                  mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (myType1 == mCLOSABLE_BLOCK_OP) {
-      GrStatement[] statements = closure.getStatements();
-      if (statements.length > 0) {
-        TextRange range =
-          new TextRange(statements[0].getTextRange().getStartOffset(), statements[statements.length - 1].getTextRange().getEndOffset());
-        myResult =
-          Spacing.createDependentLFSpacing(1, Integer.MAX_VALUE, range, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      }
+      myResult = GroovySpacingProcessorBasic.createDependentSpacingForClosure(mySettings, myGroovySettings, closure, true);
     }
   }
 
@@ -268,6 +269,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       if (myType1 == mLCURLY || myType2 == mRCURLY) {
         myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
+    }
+    else if (myType1 == mLCURLY && myType2 == mRCURLY) {
+      myResult = Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (myType1 == mLCURLY && !GrStringUtil.isMultilineStringElement(myChild2) ||
              myType2 == mRCURLY && !GrStringUtil.isMultilineStringElement(myChild1)) {
@@ -280,7 +284,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitNewExpression(GrNewExpression newExpression) {
     if (myType1 == kNEW) {
       createSpaceInCode(true);
-    } else if (myType2 == ARGUMENTS) {
+    }
+    else if (myType2 == ARGUMENTS) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
   }

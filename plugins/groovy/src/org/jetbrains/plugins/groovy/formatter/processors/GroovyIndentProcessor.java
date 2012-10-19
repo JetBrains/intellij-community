@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -85,9 +86,13 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       }
     }
 
+    if (child.getElementType() == GroovyElementTypes.PARAMETERS_LIST && parent instanceof ClosureBodyBlock) {
+      return Indent.getNoneIndent();
+    }
+
     // For common code block
     if (BLOCK_SET.contains(astNode.getElementType()) &&
-        !BLOCK_STATEMENT.equals(astNode.getElementType())) {
+        !BLOCK_STATEMENT.equals(astNode.getElementType()) || parent instanceof ClosureBodyBlock) {
       return indentForBlock(psiParent, child);
     }
 

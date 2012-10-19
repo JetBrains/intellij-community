@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -121,7 +119,7 @@ public class DownloadUtil {
       }, new Producer<Boolean>() {
       @Override
       public Boolean produce() {
-        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download " + url + "");
+        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
       }
     }
     );
@@ -204,13 +202,7 @@ public class DownloadUtil {
     if (progress != null) {
       progress.setText2("Downloading " + location);
     }
-    URL url = new URL(location);
-    try {
-      HttpConfigurable.getInstance().prepareURL(location);
-    } catch (IOException e) {
-      LOG.info("Can not prepareURL '" + location + "'", e);
-    }
-    URLConnection urlConnection = url.openConnection();
+    HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(location);
     try {
       int timeout = (int) TimeUnit.MINUTES.toMillis(2);
       urlConnection.setConnectTimeout(timeout);
@@ -221,15 +213,20 @@ public class DownloadUtil {
       substituteContentLength(progress, originalText, contentLength);
       NetUtils.copyStreamContent(progress, in, output, contentLength);
     } catch (IOException e) {
-      if (urlConnection instanceof HttpURLConnection) {
-        HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-        LOG.warn("Can not download '" + location
-                 + "', response code: " + httpURLConnection.getResponseCode()
-                 + ", response message: " + httpURLConnection.getResponseMessage()
-                 + ", headers: " + httpURLConnection.getHeaderFields()
-        );
-      }
+      LOG.warn("Can not download '" + location
+               + "', response code: " + urlConnection.getResponseCode()
+               + ", response message: " + urlConnection.getResponseMessage()
+               + ", headers: " + urlConnection.getHeaderFields(),
+               e
+      );
       throw e;
+    }
+    finally {
+      try {
+        urlConnection.disconnect();
+      } catch (Exception e) {
+        LOG.warn("Exception at disconnect()", e);
+      }
     }
   }
 

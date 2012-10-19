@@ -58,7 +58,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
         LOG.assertTrue(searchScope != null);
 
-        ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
+        ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
         if (progress != null) {
           progress.pushState();
           String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {

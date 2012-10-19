@@ -119,7 +119,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
   public void testAClassLoader() throws Exception {
     List<HighlightInfo> errors = doTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
-    if (173 != errors.size()) {
+    if (174 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }

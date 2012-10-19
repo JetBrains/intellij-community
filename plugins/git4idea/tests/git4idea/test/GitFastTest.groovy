@@ -29,7 +29,9 @@ import static junit.framework.Assert.assertNotNull
 /**
  * 
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 class GitFastTest {
 
   public static final String TEST_NOTIFICATION_GROUP = "Test"

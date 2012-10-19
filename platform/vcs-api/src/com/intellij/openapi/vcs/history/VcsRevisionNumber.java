@@ -30,11 +30,16 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     }
   };
 
-  class Int implements VcsRevisionNumber{
+  class Int implements VcsRevisionNumber, LongRevisionNumber {
     private final int myValue;
 
     public Int(int value) {
       myValue = value;
+    }
+
+    @Override
+    public long getLongRevisionNumber() {
+      return myValue;
     }
 
     public String asString() {
@@ -73,11 +78,16 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     }
   }
 
-  class Long implements VcsRevisionNumber{
+  class Long implements VcsRevisionNumber, LongRevisionNumber {
     private final long myValue;
 
     public Long(long value) {
       myValue = value;
+    }
+
+    @Override
+    public long getLongRevisionNumber() {
+      return myValue;
     }
 
     public String asString() {

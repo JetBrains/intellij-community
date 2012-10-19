@@ -799,11 +799,9 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   private void removeInvalidBreakpoints() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ArrayList<Breakpoint> toDelete = new ArrayList<Breakpoint>();
 
-    for (Iterator it = getBreakpoints().listIterator(); it.hasNext();) {
-      Breakpoint breakpoint = (Breakpoint)it.next();
+    for (Breakpoint breakpoint : getBreakpoints()) {
       if (!breakpoint.isValid()) {
         toDelete.add(breakpoint);
       }

@@ -27,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+
+  public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
+
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
@@ -42,7 +45,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return ApplicationBundle.message("title.xml");
+    return CONFIGURABLE_DISPLAY_NAME;
   }
 
   @Override

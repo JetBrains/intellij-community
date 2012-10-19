@@ -30,10 +30,12 @@ public class TextChunk {
     myText = text;
   }
 
+  @NotNull
   public TextAttributes getAttributes() {
     return TextAttributes.fromFlyweight(myAttributes);
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }

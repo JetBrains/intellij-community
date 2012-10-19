@@ -62,7 +62,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return children == null ? result : result + children.toString();
   }
 
-  public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, Consumer<Runnable> edtQueue) {
+  public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Runnable> edtQueue) {
     synchronized (lock) {
       GroupNode node = mySubgroupNodes.get(group);
       if (node == null) {
@@ -154,7 +154,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.nodeChanged(this);
   }
 
-  public UsageNode addUsage(@NotNull Usage usage, Consumer<Runnable> edtQueue) {
+  public UsageNode addUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
     final UsageNode node;
     synchronized (lock) {
       if (UsageViewSettings.getInstance().isFilterDuplicatedLine()) {
@@ -343,9 +343,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return myGroup.getText(view);
   }
 
+  @NotNull
   public Collection<GroupNode> getSubGroups() {
     return mySubgroupNodes.values();
   }
+
+  @NotNull
   public Collection<UsageNode> getUsageNodes() {
     return myUsageNodes;
   }

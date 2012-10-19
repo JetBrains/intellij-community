@@ -22,7 +22,7 @@ class S {
     }
 
     private Closure<Double> testMethod() {
-        Closure sin = {x -> Math.sin(x)}
+        Closure sin = { x -> Math.sin(x) }
         return sin
     }
 }

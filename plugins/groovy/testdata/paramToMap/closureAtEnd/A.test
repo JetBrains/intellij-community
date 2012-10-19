@@ -1,5 +1,5 @@
-def test = {Map attrs, x ->
+def test = { Map attrs, x ->
   attrs.cl.call()
 }
 
-test(1, cl: {x -> x}) 
+test(1, cl: { x -> x })

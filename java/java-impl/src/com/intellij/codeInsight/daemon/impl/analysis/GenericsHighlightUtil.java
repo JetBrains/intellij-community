@@ -1280,16 +1280,23 @@ public class GenericsHighlightUtil {
     if (refParamList.getTypeArguments().length == 0) return null;
     JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
+    PsiElement qualifier = null;
     if (parent instanceof PsiJavaCodeReferenceElement) {
       resolveResult = ((PsiJavaCodeReferenceElement)parent).advancedResolve(false);
+      qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
     }
     else if (parent instanceof PsiCallExpression) {
       resolveResult = ((PsiCallExpression)parent).resolveMethodGenerics();
+      if (parent instanceof PsiMethodCallExpression) {
+        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
+        qualifier = methodExpression.getQualifier();
+      }
     }
     if (resolveResult != null) {
       PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiTypeParameterListOwner)) return null;
       if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return null;
+      if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiTypeParameter) return null;
       PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
         if ((parent instanceof PsiCallExpression || parent instanceof PsiMethodReferenceExpression) && PsiUtil.isLanguageLevel7OrHigher(parent)) {

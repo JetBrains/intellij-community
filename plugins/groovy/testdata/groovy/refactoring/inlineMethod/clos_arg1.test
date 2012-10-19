@@ -6,7 +6,7 @@ def qwerty(Closure cl){
         return call;
 }
 -----
-def call = {int x -> return x + 1}.call()
+def call = { int x -> return x + 1 }.call()
 println(call)
 def cl = call
 

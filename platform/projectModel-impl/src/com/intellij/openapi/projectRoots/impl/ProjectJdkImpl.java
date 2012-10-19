@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -89,7 +90,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   @Override
-  public final void setVersionString(String versionString) {
+  public final void setVersionString(@Nullable String versionString) {
     myVersionString = versionString == null || versionString.isEmpty() ? null : versionString;
     myVersionDefined = true;
   }

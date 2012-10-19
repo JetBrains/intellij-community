@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.history.LongRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * author: lesya
  */
-public class CvsRevisionNumber implements VcsRevisionNumber {
+public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber {
 
   private final String myStringRepresentation;
   @Nullable
@@ -66,6 +67,13 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
       }
     }
     return (cnt == 0) ? new int[0] : subRevisions;
+  }
+
+  @Override
+  public long getLongRevisionNumber() {
+    // todo subject of discussion -> 2 or 1 last numbers to take into account
+    if (mySubRevisions == null) return -1;  // date case?
+    return mySubRevisions[mySubRevisions.length - 1];
   }
 
   private CvsRevisionNumber(String stringRepresentation, @NotNull int[] subRevisions) {

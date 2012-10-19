@@ -63,7 +63,6 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ColumnInfo;
@@ -276,11 +275,20 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }, 100, new Runnable() {
       @Override
       public void run() {
+        if (popup.isDisposed()) return;
+
+        final List<UsageNode> nodes = new ArrayList<UsageNode>();
         List<Usage> copy;
         synchronized (usages) {
+          // open up popup as soon as several usages 've been found
+          if (!popup.isVisible() && (usages.size() <= 1 || !showPopupIfNeedTo(popup, popupPosition))) {
+            return;
+          }
+          addUsageNodes(usageView.getRoot(), usageView, nodes);
           copy = new ArrayList<Usage>(usages);
         }
-        rebuildPopup(usageView, copy, table, popup, presentation, popupPosition, !processIcon.isDisposed());
+
+        rebuildPopup(usageView, copy, nodes, table, popup, presentation, popupPosition, !processIcon.isDisposed());
       }
     });
 
@@ -310,7 +318,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
               usages.add(MORE_USAGES_SEPARATOR);
               continueSearch = false;
             }
-            boolean invoked = pingEDT.ping();
+            pingEDT.ping();
 
             return continueSearch;
           }
@@ -843,33 +851,23 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   private void rebuildPopup(@NotNull final UsageViewImpl usageView,
                             @NotNull final List<Usage> usages,
+                            @NotNull List<UsageNode> nodes,
                             @NotNull final JTable table,
                             @NotNull final JBPopup popup,
                             @NotNull final UsageViewPresentation presentation,
                             @NotNull final RelativePoint popupPosition,
                             boolean findUsagesInProgress) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (popup.isDisposed()) return;
 
-    final List<UsageNode> nodes = new ArrayList<UsageNode>();
-    String fullTitle;
-    synchronized (usages) {
-      // open up popup as soon as several usages 've been found
-      if (!popup.isVisible() && (usages.size() <= 1 || !showPopupIfNeedTo(popup, popupPosition))) {
-        return;
-      }
-      addUsageNodes(usageView.getRoot(), usageView, nodes);
-      boolean shouldShowMoreSeparator = usages.contains(MORE_USAGES_SEPARATOR);
-      if (shouldShowMoreSeparator) {
-        nodes.add(MORE_USAGES_SEPARATOR_NODE);
-      }
-
-      String title = presentation.getTabText();
-      fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0), findUsagesInProgress);
+    boolean shouldShowMoreSeparator = usages.contains(MORE_USAGES_SEPARATOR);
+    if (shouldShowMoreSeparator) {
+      nodes.add(MORE_USAGES_SEPARATOR_NODE);
     }
 
-    ((AbstractPopup)popup).setCaption(fullTitle);
+    String title = presentation.getTabText();
+    String fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0), findUsagesInProgress);
 
+    ((AbstractPopup)popup).setCaption(fullTitle);
 
     List<UsageNode> data = collectData(usages, nodes, usageView, presentation);
     MyModel tableModel = setTableModel(table, usageView, data);
@@ -904,14 +902,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
     return selection;
   }
-
-  private final TransferToEDTQueue<ModelDiff.Cmd> myEDTQueue = new TransferToEDTQueue<ModelDiff.Cmd>("update table", new Processor<ModelDiff.Cmd>() {
-    @Override
-    public boolean process(ModelDiff.Cmd cmd) {
-      cmd.apply();
-      return true;
-    }
-  }, Condition.FALSE, 100);
 
   private void setSizeAndDimensions(@NotNull JTable table,
                                     @NotNull JBPopup popup,

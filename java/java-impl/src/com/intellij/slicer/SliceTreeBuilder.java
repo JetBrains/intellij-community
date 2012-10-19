@@ -16,13 +16,13 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -64,7 +64,11 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     }
   };
 
-  public SliceTreeBuilder(JTree tree, Project project, boolean dataFlowToThis, final SliceNode rootNode, boolean splitByLeafExpressions) {
+  public SliceTreeBuilder(@NotNull JTree tree,
+                          @NotNull Project project,
+                          boolean dataFlowToThis,
+                          @NotNull SliceNode rootNode,
+                          boolean splitByLeafExpressions) {
     super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, rootNode), SLICE_NODE_COMPARATOR, false);
     this.dataFlowToThis = dataFlowToThis;
     this.splitByLeafExpressions = splitByLeafExpressions;
@@ -80,7 +84,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void switchToSplittedNodes(final AbstractTreeStructure treeStructure) {
+  public void switchToGroupedByLeavesNodes() {
     analysisInProgress = true;
     SliceLeafAnalyzer.startAnalyzeValues(getTreeStructure(), new Runnable(){
       @Override

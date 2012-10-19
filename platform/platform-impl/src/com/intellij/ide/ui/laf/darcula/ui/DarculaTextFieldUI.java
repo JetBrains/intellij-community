@@ -49,16 +49,6 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   }
 
   @Override
-  protected void installDefaults() {
-    super.installDefaults();
-  }
-
-  @Override
-  protected void paintSafely(Graphics g) {
-    super.paintSafely(g);
-  }
-
-  @Override
   protected void paintBackground(Graphics g) {
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
