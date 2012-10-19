@@ -41,7 +41,9 @@ import static org.testng.Assert.assertNotNull;
  * These tests can be executed only if git is installed in the system and IDEA_TEST_GIT_EXECUTABLE_PATH targets to the folder which
  * contains git executable.
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public abstract class GitTest extends AbstractVcsTestCase {
 
   protected GitTestRepository myRepo;

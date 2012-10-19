@@ -28,7 +28,9 @@ import java.io.IOException;
  * Representation of a Git repository for tests purposes.
  * Works with {@link java.io.File} - be sure to {@link #refresh()} the repository if a {@link VirtualFile} is needed.
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitTestRepository {
 
   private File myRootDir;

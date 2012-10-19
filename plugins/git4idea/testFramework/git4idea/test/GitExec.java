@@ -34,7 +34,9 @@ import java.io.IOException;
 
 /**
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitExecutor}
  */
+@Deprecated
 public class GitExec {
 
   public static void refresh(@NotNull GitRepository repository) {
