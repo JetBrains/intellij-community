@@ -736,11 +736,11 @@ public class AbstractTreeUi {
           expand(getRootNode(), true);
         }
         ActionCallback callback;
-        if (!willUpdate) {
-          callback = updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
+        if (willUpdate) {
+          callback = new ActionCallback.Done();
         }
         else {
-          callback = new ActionCallback.Done();
+          callback = updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
         }
         callback.doWhenDone(new Runnable() {
           @Override
@@ -912,7 +912,7 @@ public class AbstractTreeUi {
       @Override
       public void run(final Boolean changes) {
         if (changes) {
-          invokeLaterIfNeeded(false, new Runnable() {
+          invokeLaterIfNeeded(true, new Runnable() {
             @Override
             public void run() {
               Object element = nodeDescriptor.getElement();
@@ -2175,11 +2175,6 @@ public class AbstractTreeUi {
         }
       }
     }
-  }
-
-  private void scheduleMaybeReady() {
-    myMaybeReady.cancelAllRequests();
-    myMaybeReady.addRequest(myMaybeReadyRunnable, Registry.intValue("ide.tree.waitForReadySchedule"));
   }
 
   private void flushPendingNodeActions() {
@@ -4020,10 +4015,6 @@ public class AbstractTreeUi {
 
     myRevalidatedObjects.add(element);
     AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
-    if (revalidated == null) {
-      runDone(onDone);
-      return;
-    }
 
     revalidated.doWhenDone(new AsyncResult.Handler<Object>() {
       @Override

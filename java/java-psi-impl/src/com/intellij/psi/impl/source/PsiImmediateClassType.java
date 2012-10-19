@@ -86,6 +86,7 @@ public class PsiImmediateClassType extends PsiClassType {
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
+    assert substitutor.isValid();
   }
 
   @Override
@@ -140,6 +141,7 @@ public class PsiImmediateClassType extends PsiClassType {
   @Override
   public String getCanonicalText() {
     if (myCanonicalText == null) {
+      assert mySubstitutor.isValid();
       final StringBuilder buffer = new StringBuilder();
       buildText(myClass, mySubstitutor, buffer, true, false);
       myCanonicalText = buffer.toString();
@@ -207,12 +209,14 @@ public class PsiImmediateClassType extends PsiClassType {
       pineBuffer.append('<');
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
+        assert typeParameter.isValid();
         if (i > 0) pineBuffer.append(',');
         final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult == null) {
           pineBuffer = null;
           break;
         }
+        assert substitutionResult.isValid();
         if (canonical) {
           if (internal) {
             pineBuffer.append(substitutionResult.getInternalCanonicalText());

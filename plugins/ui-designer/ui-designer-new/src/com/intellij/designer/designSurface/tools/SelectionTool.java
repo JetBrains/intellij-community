@@ -214,7 +214,7 @@ public class SelectionTool extends InputTool {
     }
     else if (myToolProvider != null && !area.isTree() &&
              Character.isLetterOrDigit(event.getKeyChar()) &&
-             (event.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK)) == 0) {
+             (event.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) == 0) {
       myToolProvider.startInplaceEditing(new InplaceContext(event.getKeyChar()));
     }
   }

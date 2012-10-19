@@ -335,7 +335,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
       substitutorMap.put(parameter, null);
     }
-    return baseSubstitutor.putAll(PsiSubstitutorImpl.createSubstitutor(substitutorMap));
+    return PsiSubstitutorImpl.createSubstitutor(substitutorMap).putAll(baseSubstitutor);
   }
 
   @NotNull

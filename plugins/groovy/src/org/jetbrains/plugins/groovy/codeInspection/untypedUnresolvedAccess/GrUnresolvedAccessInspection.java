@@ -220,9 +220,10 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     if (cannotBeDynamic || shouldHighlightAsUnresolved(ref)) {
       HighlightInfo info = createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
+      LOG.assertTrue(info != null);
 
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
-      if (isCall(ref)) {
+      if (ref.getParent() instanceof GrMethodCall) {
         registerStaticImportFix(ref, info, displayKey);
       }
       else {
@@ -377,7 +378,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return HighlightInfo.createHighlightInfo(highlightInfoType, refNameElement, message);
   }
 
-  private static void registerStaticImportFix(GrReferenceExpression referenceExpression, HighlightInfo info, final HighlightDisplayKey key) {
+  private static void registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression, @Nullable HighlightInfo info, @Nullable final HighlightDisplayKey key) {
     final String referenceName = referenceExpression.getReferenceName();
     if (StringUtil.isEmpty(referenceName)) return;
     if (referenceExpression.getQualifier() != null) return;
@@ -436,7 +437,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
   }
 
-  private static void registerAddImportFixes(GrReferenceElement refElement, HighlightInfo info, final HighlightDisplayKey key) {
+  private static void registerAddImportFixes(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
     final String referenceName = refElement.getReferenceName();
     //noinspection ConstantConditions
     if (StringUtil.isEmpty(referenceName)) return;
@@ -446,7 +447,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     QuickFixAction.registerQuickFixAction(info, new GroovyAddImportAction(refElement), key);
   }
 
-  private static void registerCreateClassByTypeFix(GrReferenceElement refElement, HighlightInfo info, final HighlightDisplayKey key) {
+  private static void registerCreateClassByTypeFix(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
     if (packageDefinition != null) return;
 
@@ -505,7 +506,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     private final HighlightInfo myInfo;
     private HighlightDisplayKey myKey;
 
-    public QuickFixActionRegistrarAdapter(HighlightInfo info, HighlightDisplayKey displayKey) {
+    public QuickFixActionRegistrarAdapter(@Nullable HighlightInfo info, HighlightDisplayKey displayKey) {
       myInfo = info;
       myKey = displayKey;
     }
@@ -523,7 +524,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     @Override
     public void unregister(Condition<IntentionAction> condition) {
-      QuickFixAction.unregisterQuickFixAction(myInfo, condition);
+      if (myInfo != null) {
+        QuickFixAction.unregisterQuickFixAction(myInfo, condition);
+      }
     }
   }
 }

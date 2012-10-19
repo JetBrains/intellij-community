@@ -6,7 +6,7 @@ def cl = <selection>qwerty</selection>(45){int x -> return x + 1}
         return call + i;
 }
 -----
-def call = {int x -> return x + 1}(42)
+def call = { int x -> return x + 1 }(42)
 println(call)
 def cl = call + 45
 

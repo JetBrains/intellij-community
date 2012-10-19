@@ -6,7 +6,7 @@ def foo = {
 -----
 def foo = {
     int x, int y ->
-    <caret>testMethod(x, y)
+        <caret>testMethod(x, y)
 }
 
 private testMethod(int x, int y) {

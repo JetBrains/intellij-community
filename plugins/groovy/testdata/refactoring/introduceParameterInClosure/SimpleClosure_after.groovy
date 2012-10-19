@@ -1,3 +1,3 @@
-print {int anObject ->
+print { int anObject ->
     print anObject
 }

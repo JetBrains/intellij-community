@@ -89,19 +89,29 @@ public class SelectTemplateStep extends ModuleWizardStep {
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
-    final MultiMap<String, ProjectTemplatesFactory> groups = new MultiMap<String, ProjectTemplatesFactory>();
+    final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
       for (String string : factory.getGroups()) {
-        groups.putValue(string, factory);
+        groups.putValues(string, Arrays.asList(factory.createTemplates(string, context)));
+      }
+    }
+    final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
+    // put single leafs under "Other"
+    for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
+      if (entry.getValue().size() > 1 || ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+        sorted.put(entry.getKey(), entry.getValue());
+      }
+      else  {
+        sorted.putValues("Other", entry.getValue());
       }
     }
 
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
       public SimpleNode[] getChildren() {
-        return ContainerUtil.map2Array(groups.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplatesFactory>>, SimpleNode>() {
+        return ContainerUtil.map2Array(sorted.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
           @Override
-          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplatesFactory>> entry) {
+          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
             return new GroupNode(entry.getKey(), entry.getValue());
           }
         });
@@ -171,33 +181,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myTemplatesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (mySettingsPanel.getComponentCount() > 0) {
-          mySettingsPanel.remove(0);
-        }
         ProjectTemplate template = getSelectedTemplate();
-        if (template != null) {
-          JComponent settingsPanel = template.getSettingsPanel();
-          if (settingsPanel != null) {
-            mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
-          }
-          mySettingsPanel.setVisible(settingsPanel != null);
-          String description = template.getDescription();
-          if (description != null) {
-            StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
-            sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
-            sb.append(description).append("</font></body></html>");
-            description = sb.toString();
-          }
-
-          myDescriptionPane.setText(description);
-          myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
-        }
-        else {
-          mySettingsPanel.setVisible(false);
-          myDescriptionPanel.setVisible(false);
-        }
-        mySettingsPanel.revalidate();
-        mySettingsPanel.repaint();
+        setupPanels(template);
+        mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
+        myContext.requestWizardButtonsUpdate();
       }
     });
 
@@ -213,13 +200,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
 
-    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-    if (state != null) {
-      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    }
-    else {
-      myBuilder.expandAll(null);
-    }
 
     new AnAction() {
       @Override
@@ -234,12 +214,53 @@ public class SelectTemplateStep extends ModuleWizardStep {
             case KeyEvent.VK_DOWN:
               myTemplatesTree.setSelectionRow(row < myTemplatesTree.getRowCount() - 1 ? row + 1 : 0);
               break;
-            case KeyEvent.VK_ENTER:
-              myTemplatesTree.expandRow(row);
           }
         }
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_ENTER), mySearchField);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        TreeState state = SelectTemplateSettings.getInstance().getTreeState();
+       if (state != null) {
+         state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+       }
+       else {
+         myBuilder.expandAll(null);
+       }
+      }
+    });
+
+  }
+
+  private void setupPanels(@Nullable ProjectTemplate template) {
+    if (mySettingsPanel.getComponentCount() > 0) {
+      mySettingsPanel.remove(0);
+    }
+    if (template != null) {
+      JComponent settingsPanel = template.getSettingsPanel();
+      if (settingsPanel != null) {
+        mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
+      }
+      mySettingsPanel.setVisible(settingsPanel != null);
+      String description = template.getDescription();
+      if (StringUtil.isNotEmpty(description)) {
+        StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
+        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        sb.append(description).append("</font></body></html>");
+        description = sb.toString();
+      }
+
+      myDescriptionPane.setText(description);
+      myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
+    }
+    else {
+      mySettingsPanel.setVisible(false);
+      myDescriptionPanel.setVisible(false);
+    }
+    mySettingsPanel.revalidate();
+    mySettingsPanel.repaint();
   }
 
   @Override
@@ -368,23 +389,20 @@ public class SelectTemplateStep extends ModuleWizardStep {
     mySearchField = new SearchTextField(false);
   }
 
-  private class GroupNode extends SimpleNode {
+  private static class GroupNode extends SimpleNode {
     private final String myGroup;
-    private final Collection<ProjectTemplatesFactory> myFactories;
+    private final Collection<ProjectTemplate> myTemplates;
 
-    public GroupNode(String group, Collection<ProjectTemplatesFactory> factories) {
+    public GroupNode(String group, Collection<ProjectTemplate> templates) {
       myGroup = group;
-      myFactories = factories;
+      myTemplates = templates;
     }
 
     @Override
     public SimpleNode[] getChildren() {
       List<SimpleNode> children = new ArrayList<SimpleNode>();
-      for (ProjectTemplatesFactory factory : myFactories) {
-        ProjectTemplate[] templates = factory.createTemplates(myGroup, myContext);
-        for (ProjectTemplate template : templates) {
-          children.add(new TemplateNode(template));
-        }
+      for (ProjectTemplate template : myTemplates) {
+        children.add(new TemplateNode(template));
       }
       return children.toArray(new SimpleNode[children.size()]);
     }

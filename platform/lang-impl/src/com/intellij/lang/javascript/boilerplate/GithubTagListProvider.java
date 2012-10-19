@@ -9,9 +9,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
@@ -53,36 +50,30 @@ public class GithubTagListProvider {
     return null;
   }
 
-  public Task.Backgroundable updateTagListAsynchronously(final GithubProjectGeneratorPeer peer) {
+  public void updateTagListAsynchronously(final GithubProjectGeneratorPeer peer) {
     final String url = formatTagListDownloadUrl();
-    Task.Backgroundable task =
-      new Task.Backgroundable(null, "Updating versions of " + GithubTagListProvider.this.myRepositoryName + " repository...", true, null) {
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          File cacheFile = getCacheFile();
-          try {
-            DownloadUtil.downloadAtomically(indicator, url, cacheFile, myUserName, myRepositoryName);
-            final ImmutableSet<GithubTagInfo> infos = readTagsFromFile(cacheFile);
-            peer.setErrorMessage(null);
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                peer.updateTagList(infos);
-              }
-            });
-          }
-          catch (IOException e) {
-            peer.setErrorMessage("Can not fetch tag list from '" + url + "'!");
-          }
-          catch (GeneratorException e) {
-            peer.setErrorMessage(getGeneratorName() + " cache update failed");
-          }
-        }
-      };
-
     LOG.info(getGeneratorName() + " starting cache update from " + url + " ...");
-    ProgressManager.getInstance().run(task);
-    return task;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        File cacheFile = getCacheFile();
+        try {
+          DownloadUtil.downloadAtomically(null, url, cacheFile, myUserName, myRepositoryName);
+          final ImmutableSet<GithubTagInfo> infos = readTagsFromFile(cacheFile);
+          peer.setErrorMessage(null);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              peer.updateTagList(infos);
+            }
+          });
+        }
+        catch (IOException e) {
+          peer.setErrorMessage("Can not fetch tag list from '" + url + "'!");
+        }
+        catch (GeneratorException e) {
+          peer.setErrorMessage(getGeneratorName() + " cache update failed");
+        }
+      }
+    });
   }
 
   private String getGeneratorName() {

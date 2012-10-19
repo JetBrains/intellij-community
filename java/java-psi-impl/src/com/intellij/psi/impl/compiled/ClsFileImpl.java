@@ -305,7 +305,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
-        final NonCancelableSection section = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
+        final NonCancelableSection section = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
         try {
           setMirror((TreeElement)mirrorTreeElement);
 

@@ -155,13 +155,16 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
    */
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
-    if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
+    if (child1 instanceof GroovyBlock && child2 instanceof GroovyBlock) {
       if (((GroovyBlock)child1).getNode() == ((GroovyBlock)child2).getNode()) {
         return Spacing.getReadOnlySpacing();
       }
 
       Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings, myGroovySettings).getSpacing();
-      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), mySettings);
+      if (spacing != null) {
+        return spacing;
+      }
+      return GroovySpacingProcessorBasic.getSpacing(((GroovyBlock)child1), ((GroovyBlock)child2), mySettings, myGroovySettings);
     }
     return null;
   }
@@ -214,7 +217,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
     }
     if (psiParent instanceof GrParameterList) {
-      return new ChildAttributes(this.getIndent(), this.getAlignment());
+      return new ChildAttributes(getIndent(), getAlignment());
     }
     if (psiParent instanceof GrListOrMap) {
       return new ChildAttributes(Indent.getContinuationIndent(), null);

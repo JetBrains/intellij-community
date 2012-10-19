@@ -583,7 +583,7 @@ public class PsiClassImplUtil {
                                                       @NotNull PsiElementFactory elementFactory,
                                                       @NotNull LanguageLevel languageLevel) {
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
-      return elementFactory.createRawSubstitutor(candidateClass);
+      return elementFactory.createRawSubstitutor(candidateClass).putAll(substitutor);
     }
     final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor, languageLevel);
     PsiType type = substitutor.substitute(containingType);

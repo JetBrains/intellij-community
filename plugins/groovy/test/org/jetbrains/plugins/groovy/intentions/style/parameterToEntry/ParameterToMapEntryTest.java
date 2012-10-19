@@ -118,8 +118,9 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     final String result = file.getText();
     //System.out.println(result);
-    String expected = getExpectedResult(filePath);
-    Assert.assertEquals(expected, result);
+    myFixture.checkResultByFile(filePath.replace(".groovy", ".test"), true);
+//    String expected = getExpectedResult(filePath);
+//    Assert.assertEquals(expected, result);
   }
 
   private String getExpectedResult(final String filePath) {

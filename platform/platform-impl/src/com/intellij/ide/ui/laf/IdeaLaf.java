@@ -31,6 +31,9 @@ import java.awt.*;
 * @author Konstantin Bulenkov
 */
 public final class IdeaLaf extends MetalLookAndFeel {
+
+  public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
+
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
     LafManagerImpl.initInputMapDefaults(defaults);
@@ -69,7 +72,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     //defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
 
     defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
-    defaults.put("ToolTip.background", new ColorUIResource(255, 255, 231));
+    defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);
     defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
     defaults.put("Tree.ancestorInputMap", null);
     defaults.put("FileView.directoryIcon", AllIcons.Nodes.Folder);

@@ -11,5 +11,5 @@ class Inh extends Base {
         foo(123)
     }
 
-    def foo(int anObject) {print anObject}
+    def foo(int anObject) {print anObject }
 }

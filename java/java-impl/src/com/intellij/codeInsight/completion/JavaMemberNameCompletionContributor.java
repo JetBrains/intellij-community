@@ -376,11 +376,15 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
         for (final PsiField field : fields) {
           if (field == element) continue;
-          assert field.isValid();
+
+          assert field.isValid() : "invalid field: " + field;
+          PsiType fieldType = field.getType();
+          assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType;
+
           final PsiModifierList modifierList = field.getModifierList();
           if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
-          if (field.getType().equals(varType)) {
+          if (fieldType.equals(varType)) {
             final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
             if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
                  psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
