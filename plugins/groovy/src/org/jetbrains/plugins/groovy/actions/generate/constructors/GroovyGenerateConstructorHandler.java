@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
 import com.intellij.codeInsight.generation.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -39,6 +40,7 @@ import java.util.List;
  * Date: 21.05.2008
  */
 public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler {
+  private static final Logger LOG = Logger.getInstance(GroovyGenerateConstructorHandler.class);
 
   private static final String DEF_PSEUDO_ANNO = "_____intellij_idea_rulez_def_";
 
@@ -53,6 +55,8 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       if (classMember instanceof PsiMethodMember) {
         final PsiMethod method = ((PsiMethodMember)classMember).getElement();
         final PsiMethod copy = (PsiMethod)method.copy();
+        LOG.assertTrue(copy != null, method.getClass().getName());
+
         if (copy instanceof GrMethod) {
           for (GrParameter parameter : ((GrMethod)copy).getParameterList().getParameters()) {
             if (parameter.getTypeElementGroovy() == null) {
@@ -62,11 +66,13 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
         }
 
         res.add(new PsiMethodMember(factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(copy), method)));
-      } else if (classMember instanceof PsiFieldMember) {
-        final PsiField field = ((PsiFieldMember) classMember).getElement();
+      }
+      else if (classMember instanceof PsiFieldMember) {
+        final PsiField field = ((PsiFieldMember)classMember).getElement();
 
         String prefix = field instanceof GrField && ((GrField)field).getTypeElementGroovy() == null ? DEF_PSEUDO_ANNO : "";
-        res.add(new PsiFieldMember(factory.createFieldFromText(field.getType().getCanonicalText() + " " + prefix + field.getName(), aClass)));
+        res.add(
+          new PsiFieldMember(factory.createFieldFromText(field.getType().getCanonicalText() + " " + prefix + field.getName(), aClass)));
       }
     }
 
