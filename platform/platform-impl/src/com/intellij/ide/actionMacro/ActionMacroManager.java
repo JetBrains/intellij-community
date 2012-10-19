@@ -549,38 +549,38 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     public void postProcessKeyEvent(KeyEvent e) {
-      if (e.getID() != KeyEvent.KEY_PRESSED) return;
-      if (myLastActionInputEvent.contains(e)) {
-        myLastActionInputEvent.remove(e);
-        return;
-      }
-      final boolean modifierKeyIsPressed = e.getKeyCode() == KeyEvent.VK_CONTROL ||
-                                           e.getKeyCode() == KeyEvent.VK_ALT ||
-                                           e.getKeyCode() == KeyEvent.VK_META ||
-                                           e.getKeyCode() == KeyEvent.VK_SHIFT;
-      if (modifierKeyIsPressed) return;
+      final boolean waiting = !IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
 
-      final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
       final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && UIUtil.isReallyTypedEvent(e);
-      final boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
-      final boolean plainType = isChar && !hasActionModifiers;
+      boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
+      boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
-      if (plainType && ready && !isEnter) {
+      boolean noModifierKeyIsPressed = e.getKeyCode() != KeyEvent.VK_CONTROL
+                                       && e.getKeyCode() != KeyEvent.VK_ALT
+                                       && e.getKeyCode() != KeyEvent.VK_META
+                                       && e.getKeyCode() != KeyEvent.VK_SHIFT;
+
+      if (e.getID() == KeyEvent.KEY_PRESSED && (plainType && !waiting) && !isEnter) {
         myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       }
-      else if ((!plainType && ready) || isEnter) {
-        final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
+      else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
+        if ((!myLastActionInputEvent.contains(e) && !waiting) || isEnter) {
+          final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
 
-        final int pressed = stroke.indexOf("pressed");
-        String key = stroke.substring(pressed + "pressed".length());
-        String modifiers = stroke.substring(0, pressed);
+          final int pressed = stroke.indexOf("pressed");
+          String key = stroke.substring(pressed + "pressed".length());
+          String modifiers = stroke.substring(0, pressed);
 
-        String shortcut = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
+          String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
 
-        myRecordingMacro.appendShortcut(shortcut);
-        notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
+          myRecordingMacro.appendShortcut(ready);
+          notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
+          if (!isEnter) {
+            myLastActionInputEvent.remove(e);
+          }
+        }
       }
     }
   }
