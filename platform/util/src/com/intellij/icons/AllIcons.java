@@ -144,6 +144,10 @@ public class AllIcons {
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
 
+    public static final Icon GroupByPackage = Toolbar.Folders;//todo IconLoader.getIcon("/actions/GroupByPackage.png");
+    public static final Icon GroupByModuleGroup = Nodes.ModuleGroup;//todo IconLoader.getIcon("/actions/GroupByModuleGroup.png");
+    public static final Icon GroupByModule = ObjectBrowser.ShowModules;//todo IconLoader.getIcon("/actions/GroupByModule.png");
+    
   }
   
   public static class Ant {
