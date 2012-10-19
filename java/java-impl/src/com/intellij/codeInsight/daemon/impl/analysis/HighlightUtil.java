@@ -2058,7 +2058,7 @@ public class HighlightUtil {
     if (!comment.getText().endsWith("*/")) {
       int start = comment.getTextRange().getEndOffset() - 1;
       int end = start + 1;
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("nonterminated.comment"));
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("unclosed.comment"));
     }
     return null;
   }
