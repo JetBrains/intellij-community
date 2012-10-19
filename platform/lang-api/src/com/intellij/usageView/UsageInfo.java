@@ -206,6 +206,7 @@ public class UsageInfo {
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
+  @NotNull
   public Project getProject() {
     return mySmartPointer.getProject();
   }
