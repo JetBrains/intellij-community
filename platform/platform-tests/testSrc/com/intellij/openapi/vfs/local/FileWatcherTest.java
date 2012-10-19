@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -83,15 +84,16 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     super.setUp();
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
-    myWatcher = FileWatcher.getInstance();
+    myFileSystem = LocalFileSystem.getInstance();
+    assertNotNull(myFileSystem);
+
+    myWatcher = ((LocalFileSystemImpl)myFileSystem).getFileWatcher();
     assertNotNull(myWatcher);
     assertFalse(myWatcher.isOperational());
     myWatcher.startup(myNotifier);
     assertTrue(myWatcher.isOperational());
 
-    myFileSystem = LocalFileSystem.getInstance();
-    assertNotNull(myFileSystem);
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
 
     myConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {

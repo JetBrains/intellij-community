@@ -46,7 +46,7 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
   public PsiType getType() {
     PsiType arrayType = getArrayExpression().getType();
     if (!(arrayType instanceof PsiArrayType)) return null;
-    return ((PsiArrayType)arrayType).getComponentType();
+    return GenericsUtil.getVariableTypeByExpressionType(((PsiArrayType)arrayType).getComponentType());
   }
 
   @Override

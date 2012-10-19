@@ -40,7 +40,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -764,7 +763,7 @@ public class HighlightClassUtil {
       if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
       PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) return false;
+      if (!(qualifierExpression instanceof PsiReferenceExpression) && !(qualifierExpression instanceof PsiNewExpression)) return false;
       PsiType type = qualifierExpression.getType();
       if (!(type instanceof PsiClassType)) return false;
       PsiClass resolved = ((PsiClassType)type).resolve();

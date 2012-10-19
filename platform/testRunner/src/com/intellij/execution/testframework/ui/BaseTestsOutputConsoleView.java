@@ -22,14 +22,16 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView {
+public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView, HelpIdProvider {
   private ConsoleView myConsole;
   private TestsOutputConsolePrinter myPrinter;
   protected TestConsoleProperties myProperties;
@@ -163,5 +165,11 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   public TestConsoleProperties getProperties() {
     return myProperties;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "reference.runToolWindow.testResultsTab";
   }
 }

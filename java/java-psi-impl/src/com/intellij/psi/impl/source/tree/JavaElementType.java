@@ -224,7 +224,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
+        JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
       }
     };
 

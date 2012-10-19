@@ -133,10 +133,6 @@ public class JavaParserUtil {
     builder.putUserDataUnprotected(LANG_LEVEL_KEY, level);
   }
 
-  public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_8);
-  }
-
   @NotNull
   public static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserDataUnprotected(LANG_LEVEL_KEY);

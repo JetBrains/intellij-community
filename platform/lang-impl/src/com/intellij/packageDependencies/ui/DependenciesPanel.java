@@ -545,7 +545,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
       super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"),
-            AllIcons.ObjectBrowser.ShowModules);
+            AllIcons.Actions.GroupByModule);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -561,7 +561,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   
   private final class ShowModuleGroupsAction extends ToggleAction {
     ShowModuleGroupsAction() {
-      super("Show module groups", "Show module groups", AllIcons.Nodes.ModuleGroup);
+      super("Show module groups", "Show module groups", AllIcons.Actions.GroupByModuleGroup);
     }
 
     public boolean isSelected(AnActionEvent event) {
