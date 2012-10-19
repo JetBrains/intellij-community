@@ -76,6 +76,7 @@ public interface HighlightInfoType {
   HighlightInfoType CONSTRUCTOR_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
   HighlightInfoType CONSTRUCTOR_DECLARATION = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
   HighlightInfoType STATIC_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
+  HighlightInfoType ABSTRACT_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
   HighlightInfoType CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CLASS_NAME_ATTRIBUTES);
   HighlightInfoType ANONYMOUS_CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
   HighlightInfoType INTERFACE_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);

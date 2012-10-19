@@ -134,6 +134,9 @@ public class HighlightNamesUtil {
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       return HighlightInfoType.STATIC_METHOD;
     }
+    if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return HighlightInfoType.ABSTRACT_METHOD;
+    }
     return HighlightInfoType.METHOD_CALL;
   }
 

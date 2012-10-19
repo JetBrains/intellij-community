@@ -78,6 +78,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.call"), CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.declaration"), CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.method"), CodeInsightColors.STATIC_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.method"), CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
 
@@ -106,6 +107,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("methodCall", CodeInsightColors.METHOD_CALL_ATTRIBUTES);
     ourTags.put("methodDeclaration", CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
     ourTags.put("static_method", CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
+    ourTags.put("abstract_method", CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
     ourTags.put("param", CodeInsightColors.PARAMETER_ATTRIBUTES);
     ourTags.put("class", CodeInsightColors.CLASS_NAME_ATTRIBUTES);
     ourTags.put("anonymousClass", CodeInsightColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
@@ -169,6 +171,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
       "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning>; \n" +
       "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +
+      "    <field>field</field>.<abstract_method>run</abstract_method>(); \n" +
       "    new <anonymousClass>SomeClass</anonymousClass>() {\n" +
       "      {\n" +
       "        int <localVar>a</localVar> = <implicitAnonymousParameter>localVar</implicitAnonymousParameter>;\n" +
