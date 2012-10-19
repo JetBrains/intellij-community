@@ -7,6 +7,7 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -58,6 +59,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiVariable == null) psiVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
     if (psiVariable == null || psiVariable instanceof PsiResourceVariable) return false;
+    if (psiVariable.getLanguage() != JavaLanguage.INSTANCE) return false;
     if (psiVariable.getTypeElement() == null) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(psiVariable)) return false;
     final PsiType psiType = psiVariable.getType();

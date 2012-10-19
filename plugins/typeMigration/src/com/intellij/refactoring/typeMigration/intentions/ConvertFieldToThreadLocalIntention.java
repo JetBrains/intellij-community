@@ -7,6 +7,7 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,6 +50,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiField == null) return false;
+    if (psiField.getLanguage() != JavaLanguage.INSTANCE) return false;
     if (psiField.getTypeElement() == null) return false;
     final PsiType fieldType = psiField.getType();
     final PsiClass fieldTypeClass = PsiUtil.resolveClassInType(fieldType);
