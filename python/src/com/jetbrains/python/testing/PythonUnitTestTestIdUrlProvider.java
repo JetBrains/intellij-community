@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -67,8 +69,11 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
     for (PyClass cls : PyClassNameIndex.find(className, project, false)) {
       ProgressManager.checkCanceled();
 
-      final String clsFileName = FileUtil.getNameWithoutExtension(cls.getContainingFile().getName());
-      if (!clsFileName.equalsIgnoreCase(fileName)) {
+      final PsiFile containingFile = cls.getContainingFile();
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
+      final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
+      if (!clsFileNameWithoutExt.endsWith(fileName)) {
         continue;
       }
       if (methodName == null) {
