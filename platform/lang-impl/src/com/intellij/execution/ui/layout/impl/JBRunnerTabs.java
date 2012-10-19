@@ -255,6 +255,7 @@ public class
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
       setBorder(new EmptyBorder(5, 5, 7, 5));
+      myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     }                                                                                            
 
     @Override
