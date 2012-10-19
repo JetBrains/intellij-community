@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitBranch;
 import git4idea.PlatformFacade;
-import git4idea.tests.GitTest;
+import git4idea.test.GitTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;

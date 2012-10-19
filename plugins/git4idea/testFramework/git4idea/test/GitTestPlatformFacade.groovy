@@ -38,7 +38,6 @@ import git4idea.PlatformFacade
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
-import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 /**

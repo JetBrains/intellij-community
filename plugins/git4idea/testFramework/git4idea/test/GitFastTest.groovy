@@ -20,7 +20,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.tests.TestDialogManager
 import org.junit.After
 import org.junit.Before
 

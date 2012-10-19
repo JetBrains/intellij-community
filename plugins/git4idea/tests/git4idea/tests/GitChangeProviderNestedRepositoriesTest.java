@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
+import git4idea.test.GitTestRepository;
 import git4idea.test.GitTestUtil;
 import junit.framework.Assert;
 import org.testng.annotations.BeforeMethod;

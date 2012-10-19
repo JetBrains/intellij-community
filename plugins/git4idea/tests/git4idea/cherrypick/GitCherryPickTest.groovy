@@ -33,8 +33,8 @@ import git4idea.test.MockGit
 import git4idea.test.MockVcsHelper
 import sun.security.provider.SHA
 
-import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import static git4idea.test.MockGit.commitMessageForCherryPick
+import static MockGit.OperationName.CHERRY_PICK
+import static MockGit.commitMessageForCherryPick
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
 import git4idea.test.TestNotificator

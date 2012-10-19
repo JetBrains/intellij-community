@@ -24,7 +24,7 @@ import git4idea.test.MockVcsHelper
 import org.junit.Before
 import org.junit.Test
 
-import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.*
 
 /**

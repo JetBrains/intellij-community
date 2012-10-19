@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitVcs;
+import git4idea.test.GitTestRepository;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

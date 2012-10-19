@@ -17,6 +17,7 @@ package git4idea.tests;
 
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.test.GitTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
