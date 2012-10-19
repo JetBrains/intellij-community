@@ -39,48 +39,65 @@ public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public String[] getGroups() {
-    return new String[] {GROUP_NAME};
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    return ContainerUtil.map2Array(builders, String.class, new Function<ModuleBuilder, String>() {
+      @Override
+      public String fun(ModuleBuilder builder) {
+        return getGroupName(builder);
+      }
+    });
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-    return ContainerUtil.map2Array(builders, ProjectTemplate.class, new Function<ModuleBuilder, ProjectTemplate>() {
-      @Override
-      public ProjectTemplate fun(final ModuleBuilder builder) {
-        return new ProjectTemplate() {
-          @NotNull
-          @Override
-          public String getName() {
-            return builder.getPresentableName();
-          }
+    for (ModuleBuilder builder : builders) {
+      if (getGroupName(builder).equals(group)) return new ProjectTemplate[] {new EmptyModuleTemplate(builder)};
+    }
+    return new ProjectTemplate[0];
+  }
 
-          @Nullable
-          @Override
-          public String getDescription() {
-            return builder.getDescription();
-          }
+  private static String getGroupName(ModuleBuilder builder) {
+    String name = builder.getPresentableName();
+    return name.split(" ")[0];
+  }
 
-          @Nullable
-          @Override
-          public JComponent getSettingsPanel() {
-            return null;
-          }
+  private static class EmptyModuleTemplate implements ProjectTemplate {
+    private final ModuleBuilder myBuilder;
 
-          @NotNull
-          @Override
-          public ModuleBuilder createModuleBuilder() {
-            return builder;
-          }
+    public EmptyModuleTemplate(ModuleBuilder builder) {
+      myBuilder = builder;
+    }
 
-          @Nullable
-          @Override
-          public ValidationInfo validateSettings() {
-            return null;
-          }
-        };
-      }
-    });
+    @NotNull
+    @Override
+    public String getName() {
+      return myBuilder.getPresentableName();
+    }
+
+    @Nullable
+    @Override
+    public String getDescription() {
+      return myBuilder.getDescription();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getSettingsPanel() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public ModuleBuilder createModuleBuilder() {
+      return myBuilder;
+    }
+
+    @Nullable
+    @Override
+    public ValidationInfo validateSettings() {
+      return null;
+    }
   }
 }
