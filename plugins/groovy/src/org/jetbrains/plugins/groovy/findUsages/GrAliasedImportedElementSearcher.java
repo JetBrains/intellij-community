@@ -80,7 +80,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
     }
 
     @Override
-    public boolean processTextOccurrence(final PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
+    public boolean processTextOccurrence(@NotNull final PsiElement element, int offsetInElement, @NotNull Processor<PsiReference> consumer) {
       String alias = getAlias(element);
       if (alias == null) return true;
 

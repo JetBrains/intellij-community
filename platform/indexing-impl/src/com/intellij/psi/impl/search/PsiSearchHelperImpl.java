@@ -116,7 +116,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          @NotNull final String text,
                                          short searchContext,
                                          final boolean caseSensitively) {
-    if (text.length() == 0) {
+    if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -272,20 +272,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private List<VirtualFile> getFilesWithText(@NotNull GlobalSearchScope scope,
-                                         final short searchContext,
-                                         final boolean caseSensitively,
-                                         @NotNull String text,
-                                         ProgressIndicator progress) {
+                                             final short searchContext,
+                                             final boolean caseSensitively,
+                                             @NotNull String text,
+                                             final ProgressIndicator progress) {
     myManager.startBatchFilesProcessingMode();
     try {
       final List<VirtualFile> result = new ArrayList<VirtualFile>();
-      boolean success = processFilesWithText(
-        scope,
-        searchContext,
-        caseSensitively,
-        text,
-        new CommonProcessors.CollectProcessor<VirtualFile>(result)
-      );
+      Processor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(result){
+        @Override
+        public boolean process(VirtualFile file) {
+          if (progress != null) progress.checkCanceled();
+          return super.process(file);
+        }
+      };
+      boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
       LOG.assertTrue(success);
       return result;
     }
@@ -299,7 +300,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                       final boolean caseSensitively,
                                       @NotNull String text,
                                       @NotNull final Processor<VirtualFile> processor) {
-    final ArrayList<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
+    List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
     final CommonProcessors.CollectProcessor<VirtualFile> collectProcessor = new CommonProcessors.CollectProcessor<VirtualFile>();
@@ -308,7 +309,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       public boolean value(Integer integer) {
         return (integer.intValue() & searchContext) != 0;
       }
-    }, collectProcessor, getWordEntries(text, caseSensitively));
+    }, collectProcessor, entries);
 
     final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
     return ContainerUtil.process(collectProcessor.getResults(), new ReadActionProcessor<VirtualFile>() {
@@ -341,7 +342,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                              @NotNull String qName,
                                              @NotNull final PsiNonJavaFileReferenceProcessor processor,
                                              @NotNull final GlobalSearchScope initialScope) {
-    if (qName.length() == 0) {
+    if (qName.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -450,15 +451,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static class RequestWithProcessor {
-    final PsiSearchRequest request;
-    Processor<PsiReference> refProcessor;
+    @NotNull final PsiSearchRequest request;
+    @NotNull Processor<PsiReference> refProcessor;
 
-    private RequestWithProcessor(PsiSearchRequest first, Processor<PsiReference> second) {
+    private RequestWithProcessor(@NotNull PsiSearchRequest first, @NotNull Processor<PsiReference> second) {
       request = first;
       refProcessor = second;
     }
 
-    boolean uniteWith(final RequestWithProcessor another) {
+    boolean uniteWith(@NotNull final RequestWithProcessor another) {
       if (request.equals(another.request)) {
         final Processor<PsiReference> myProcessor = refProcessor;
         if (myProcessor != another.refProcessor) {
@@ -489,9 +490,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     do {
-      final MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
-      final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
-      final LinkedHashSet<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
+      MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
+      List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
+      Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
       distributePrimitives(collectors, locals, globals, customs);
 
       if (!processGlobalRequestsOptimized(globals, progress)) {
@@ -529,7 +530,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return changed;
   }
 
-  private boolean processGlobalRequestsOptimized(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+  private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
                                                  final ProgressIndicator progress) {
     if (singles.isEmpty()) {
       return true;
@@ -565,7 +566,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (progress != null) {
         final StringBuilder result = new StringBuilder();
         for (String string : allWords) {
-          if (string != null && string.length() != 0) {
+          if (string != null && !string.isEmpty()) {
             if (result.length() > 50) {
               result.append("...");
               break;
@@ -599,8 +600,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private static TextOccurenceProcessor adaptProcessor(final PsiSearchRequest singleRequest,
-                                                       final Processor<PsiReference> consumer) {
+  @NotNull
+  private static TextOccurenceProcessor adaptProcessor(@NotNull PsiSearchRequest singleRequest,
+                                                       @NotNull final Processor<PsiReference> consumer) {
     final SearchScope searchScope = singleRequest.searchScope;
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
     final RequestResultProcessor wrapped = singleRequest.processor;
@@ -714,17 +716,19 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return local;
   }
 
-  private static void distributePrimitives(final Map<SearchRequestCollector, Processor<PsiReference>> collectors,
-                                    LinkedHashSet<RequestWithProcessor> locals,
-                                    MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                                    List<Computable<Boolean>> customs) {
-    for (final SearchRequestCollector collector : collectors.keySet()) {
-      final Processor<PsiReference> processor = collectors.get(collector);
+  private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors,
+                                           @NotNull Set<RequestWithProcessor> locals,
+                                           @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+                                           @NotNull List<Computable<Boolean>> customs) {
+    for (final Map.Entry<SearchRequestCollector, Processor<PsiReference>> entry : collectors.entrySet()) {
+      final Processor<PsiReference> processor = entry.getValue();
+      SearchRequestCollector collector = entry.getKey();
       for (final PsiSearchRequest primitive : collector.takeSearchRequests()) {
         final SearchScope scope = primitive.searchScope;
         if (scope instanceof LocalSearchScope) {
           registerRequest(locals, primitive, processor);
-        } else {
+        }
+        else {
           final List<String> words = StringUtil.getWordsInStringLongestFirst(primitive.word);
           final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
           for (String word : words) {
@@ -755,7 +759,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collection.add(newValue);
   }
 
-  private boolean processSingleRequest(PsiSearchRequest single, Processor<PsiReference> consumer) {
+  private boolean processSingleRequest(@NotNull PsiSearchRequest single, @NotNull Processor<PsiReference> consumer) {
     return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext, single.caseSensitive);
   }
 
@@ -763,8 +767,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                                 @NotNull final GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurencesIn,
-                                                @Nullable ProgressIndicator progress) {
-    
+                                                @Nullable final ProgressIndicator progress) {
     final AtomicInteger count = new AtomicInteger();
     final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
     final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
@@ -773,14 +776,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       @Override
       public boolean process(VirtualFile file) {
+        if (progress != null) progress.checkCanceled();
         if (Comparing.equal(file, fileToIgnoreOccurencesInVirtualFile)) return true;
         if (!index.shouldBeFound(scope, file)) return true;
         final int value = count.incrementAndGet();
         return value < 10;
       }
     };
-    final ArrayList<IdIndexEntry> keys = getWordEntries(name, true);
-    final boolean cheap = keys.isEmpty() || processFilesContainingAllKeys(scope, null, processor, keys);
+    List<IdIndexEntry> keys = getWordEntries(name, true);
+    boolean cheap = keys.isEmpty() || processFilesContainingAllKeys(scope, null, processor, keys);
 
     if (!cheap) {
       return SearchCostResult.TOO_MANY_OCCURRENCES;
@@ -789,9 +793,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return count.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
   }
 
-  private static boolean processFilesContainingAllKeys(final GlobalSearchScope scope,
+  private static boolean processFilesContainingAllKeys(@NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<Integer> checker,
-                                                       final Processor<VirtualFile> processor, final Collection<IdIndexEntry> keys) {
+                                                       @NotNull final Processor<VirtualFile> processor,
+                                                       @NotNull final Collection<IdIndexEntry> keys) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -800,7 +805,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
   }
 
-  private static ArrayList<IdIndexEntry> getWordEntries(String name, boolean caseSensitively) {
+  @NotNull
+  private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     final ArrayList<IdIndexEntry> keys = new ArrayList<IdIndexEntry>();
     for (String word : words) {

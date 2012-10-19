@@ -28,12 +28,11 @@ public class PsiSearchRequest {
   public final RequestResultProcessor processor;
 
   public PsiSearchRequest(@NotNull SearchScope searchScope,
-                       @NotNull String word,
-                       short searchContext,
-                       boolean caseSensitive,
-                       @NotNull RequestResultProcessor processor) {
-
-    if (word.length() == 0) {
+                          @NotNull String word,
+                          short searchContext,
+                          boolean caseSensitive,
+                          @NotNull RequestResultProcessor processor) {
+    if (word.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     this.searchScope = searchScope;
@@ -57,20 +56,18 @@ public class PsiSearchRequest {
 
     if (caseSensitive != that.caseSensitive) return false;
     if (searchContext != that.searchContext) return false;
-    if (processor != null ? !processor.equals(that.processor) : that.processor != null) return false;
-    if (searchScope != null ? !searchScope.equals(that.searchScope) : that.searchScope != null) return false;
-    if (word != null ? !word.equals(that.word) : that.word != null) return false;
-
-    return true;
+    if (!processor.equals(that.processor)) return false;
+    if (!searchScope.equals(that.searchScope)) return false;
+    return word.equals(that.word);
   }
 
   @Override
   public int hashCode() {
-    int result = searchScope != null ? searchScope.hashCode() : 0;
-    result = 31 * result + (word != null ? word.hashCode() : 0);
+    int result = searchScope.hashCode();
+    result = 31 * result + word.hashCode();
     result = 31 * result + (int)searchContext;
     result = 31 * result + (caseSensitive ? 1 : 0);
-    result = 31 * result + (processor != null ? processor.hashCode() : 0);
+    result = 31 * result + processor.hashCode();
     return result;
   }
 }
