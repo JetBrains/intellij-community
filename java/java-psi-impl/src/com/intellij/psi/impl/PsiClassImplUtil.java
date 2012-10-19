@@ -583,7 +583,7 @@ public class PsiClassImplUtil {
                                                       @NotNull PsiElementFactory elementFactory,
                                                       @NotNull LanguageLevel languageLevel) {
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
-      return elementFactory.createRawSubstitutor(candidateClass);
+      return elementFactory.createRawSubstitutor(candidateClass).putAll(substitutor);
     }
     final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor, languageLevel);
     PsiType type = substitutor.substitute(containingType);
@@ -675,9 +675,6 @@ public class PsiClassImplUtil {
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass,
                                                                state.get(PsiSubstitutor.KEY), factory, languageLevel);
-      if (aClass instanceof PsiTypeParameter && PsiUtil.isRawSubstitutor(superClass, finalSubstitutor)) {
-        finalSubstitutor = PsiSubstitutor.EMPTY;
-      }
       if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, isRaw)) {
         resolved = true;
       }

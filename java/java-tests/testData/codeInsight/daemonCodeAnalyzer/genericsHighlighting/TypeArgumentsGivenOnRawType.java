@@ -5,7 +5,7 @@ class A<D> {
     }
 
     <T extends A> void foo1(A.C<error descr="Type arguments given on a raw type"><Integer></error> x) {
-      <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer bar = x.bar();</error>
+      Integer bar = x.bar();
     }
 
     <T extends A> void foo2(A<String>.C<Integer> x) {

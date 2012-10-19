@@ -216,8 +216,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       }
       if (is15OrHigher) {
         final PsiSubstitutor substitutor = result.getSubstitutor();
-        if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
         PsiType substitutedReturnType = substitutor.substitute(ret);
+        if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
         PsiType lowerBound = PsiType.NULL;
         if (substitutedReturnType instanceof PsiCapturedWildcardType) {
           lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();
