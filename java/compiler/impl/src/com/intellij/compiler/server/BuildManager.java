@@ -360,7 +360,8 @@ public class BuildManager implements ApplicationComponent{
 
   private void addMakeRequest(Runnable runnable) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(runnable, MAKE_TRIGGER_DELAY);
+    final int delay = Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY);
+    myAlarm.addRequest(runnable, delay);
   }
 
   private void runAutoMake() {
