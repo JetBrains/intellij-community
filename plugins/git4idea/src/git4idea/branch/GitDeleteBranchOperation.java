@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.*;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
@@ -46,7 +46,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   private final String myBranchName;
 
-  GitDeleteBranchOperation(@NotNull Project project, PlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitDeleteBranchOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
     super(project, facade, git, uiHandler, repositories);
     myBranchName = branchName;

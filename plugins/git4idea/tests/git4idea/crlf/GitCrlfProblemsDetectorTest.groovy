@@ -21,13 +21,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.PlatformFacade
+import com.intellij.dvcs.DvcsPlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
 import git4idea.test.GitExecutor
 import git4idea.test.GitTestImpl
-import git4idea.test.GitTestPlatformFacade
+import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import git4idea.test.GitTestRepositoryManager
 import org.junit.After
 import org.junit.Before
@@ -45,7 +45,7 @@ class GitCrlfProblemsDetectorTest {
   private MockProject myProject
   private String myRootDir
 
-  private PlatformFacade myPlatformFacade
+  private DvcsPlatformFacade myPlatformFacade
   private Git myGit
 
   private String myOldCoreAutoCrlfValue
@@ -54,7 +54,7 @@ class GitCrlfProblemsDetectorTest {
   public void setUp() throws Exception {
     myRootDir = FileUtil.createTempDirectory("", "").getPath()
     myProject = new MockProject(myRootDir)
-    myPlatformFacade = new GitTestPlatformFacade()
+    myPlatformFacade = new DvcsTestPlatformFacade()
     myGit = new GitTestImpl()
 
     cd myRootDir

@@ -30,7 +30,7 @@ import git4idea.history.wholeTree.AbstractHash
 import git4idea.test.GitFastTest
 import git4idea.test.GitLightRepository
 import git4idea.test.MockGit
-import git4idea.test.MockVcsHelper
+import com.intellij.dvcs.test.MockVcsHelper
 import sun.security.provider.SHA
 
 import static MockGit.OperationName.CHERRY_PICK

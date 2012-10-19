@@ -26,9 +26,9 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.Notificator;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -51,7 +51,7 @@ public class GitPreservingProcess {
   private static final Logger LOG = Logger.getInstance(GitPreservingProcess.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final PlatformFacade myFacade;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final String myOperationTitle;
@@ -65,7 +65,7 @@ public class GitPreservingProcess {
   private boolean myLoaded;
   private final Object LOAD_LOCK = new Object();
 
-  public GitPreservingProcess(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git,
+  public GitPreservingProcess(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
                               @NotNull Collection<GitRepository> repositories,
                               @NotNull String operationTitle, @NotNull String destinationName,
                               @NotNull ProgressIndicator indicator, @NotNull Runnable operation) {

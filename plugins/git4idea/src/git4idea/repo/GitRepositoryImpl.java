@@ -25,8 +25,8 @@ import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitBranch;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   private static final Object STUB_OBJECT = new Object();
 
   private final Project myProject;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
   private final VirtualFile myRootDir;
   private final GitRepositoryReader myReader;
   private final VirtualFile myGitDir;
@@ -61,7 +61,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * If you need to have an instance of GitRepository for a repository outside the project, use
    * {@link #getLightInstance(VirtualFile, Project, PlatformFacade, Disposable)}.
    */
-  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull PlatformFacade facade, @NotNull Project project,
+  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull GitPlatformFacade facade, @NotNull Project project,
                             @NotNull Disposable parentDisposable, final boolean light) {
     myRootDir = rootDir;
     myPlatformFacade = facade;
@@ -90,7 +90,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * {@link GitUntrackedFilesHolder}.
    */
   @NotNull
-  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull PlatformFacade facade,
+  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
                                                @NotNull Disposable parentDisposable) {
     return new GitRepositoryImpl(root, facade, project, parentDisposable, true);
   }
@@ -99,7 +99,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
-  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull PlatformFacade facade,
+  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
                                               @NotNull Disposable parentDisposable) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, facade, project, parentDisposable, false);
     repository.myUntrackedFilesHolder.setupVfsListener(project);

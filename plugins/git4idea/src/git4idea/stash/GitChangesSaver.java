@@ -25,8 +25,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -47,7 +47,7 @@ public abstract class GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
-  @NotNull protected final PlatformFacade myPlatformFacade;
+  @NotNull protected final GitPlatformFacade myPlatformFacade;
   @NotNull protected final ChangeListManagerEx myChangeManager;
   @NotNull protected final Git myGit;
   @NotNull protected final ProgressIndicator myProgressIndicator;
@@ -64,7 +64,7 @@ public abstract class GitChangesSaver {
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
    * @return {@link GitStashChangesSaver}, {@link GitShelveChangesSaver} or {@link GitDumbChangesSaver}
    */
-  public static GitChangesSaver getSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+  public static GitChangesSaver getSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
@@ -78,12 +78,12 @@ public abstract class GitChangesSaver {
   }
 
   // In the case of illegal value in the settings or impossibility to get the settings.
-  private static GitChangesSaver getDefaultSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+  private static GitChangesSaver getDefaultSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
                                                  @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
     return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
   }
 
-  protected GitChangesSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+  protected GitChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
                             @NotNull ProgressIndicator indicator, @NotNull String stashMessage) {
     myProject = project;
     myPlatformFacade = platformFacade;

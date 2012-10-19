@@ -18,7 +18,7 @@ package git4idea.roots
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.dvcs.test.MockProject
-import git4idea.test.GitTestPlatformFacade
+import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import com.intellij.dvcs.test.MockVirtualFile
 import org.junit.After
 /**
@@ -27,10 +27,10 @@ import org.junit.After
  */
 class AbstractGitRootTest {
 
-  GitTestPlatformFacade myPlatformFacade
+  DvcsTestPlatformFacade myPlatformFacade
 
   AbstractGitRootTest() {
-    myPlatformFacade = new GitTestPlatformFacade()
+    myPlatformFacade = new DvcsTestPlatformFacade()
   }
 
   static File baseDir

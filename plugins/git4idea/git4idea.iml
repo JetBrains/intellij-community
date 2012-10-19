@@ -72,7 +72,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="dvcs" scope="TEST" />
+    <orderEntry type="module" module-name="dvcs" />
   </component>
 </module>
 

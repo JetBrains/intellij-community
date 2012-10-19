@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.attributes.GitAttribute;
 import git4idea.attributes.GitCheckAttrParser;
 import git4idea.commands.Git;
@@ -56,18 +56,18 @@ public class GitCrlfProblemsDetector {
   private static final String CRLF = "\r\n";
 
   @NotNull private final Project myProject;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Git myGit;
 
   private final boolean myShouldWarn;
 
   @NotNull
-  public static GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull PlatformFacade platformFacade,
+  public static GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                                                @NotNull Git git, @NotNull Collection<VirtualFile> files) {
     return new GitCrlfProblemsDetector(project, platformFacade, git, files);
   }
 
-  private GitCrlfProblemsDetector(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+  private GitCrlfProblemsDetector(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
                                   @NotNull Collection<VirtualFile> files) {
     myProject = project;
     myPlatformFacade = platformFacade;

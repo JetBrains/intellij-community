@@ -15,11 +15,12 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import com.intellij.dvcs.test.MockProject
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.PlatformFacade
+import com.intellij.dvcs.DvcsPlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
@@ -28,7 +29,7 @@ import org.junit.Before
 
 /**
  * <p>GitLightTest is a test that doesn't need to start the whole {@link com.intellij.openapi.application.Application} and Project.
- *    It substitutes everything with Mocks, and communicates with this mocked platform via {@link GitTestPlatformFacade}.</p>
+ *    It substitutes everything with Mocks, and communicates with this mocked platform via {@link com.intellij.dvcs.test.DvcsTestPlatformFacade}.</p>
  *
  * <p>However, GitLightTests tests are not entirely unit. They may use other components from the git4idea plugin, they operate on the
  *    real file system, and they call native Git to prepare test case and from the code which is being tested.</p>
@@ -54,7 +55,7 @@ class GitLightTest {
   protected String myProjectRoot
 
   protected MockProject myProject
-  protected PlatformFacade myPlatformFacade
+  protected DvcsPlatformFacade myPlatformFacade
   protected Git myGit
 
   @Before
@@ -63,7 +64,7 @@ class GitLightTest {
     cd myTestRoot
     myProjectRoot = mkdir ("project")
     myProject = new MockProject(myProjectRoot)
-    myPlatformFacade = new GitTestPlatformFacade()
+    myPlatformFacade = new DvcsTestPlatformFacade()
     myGit = new GitTestImpl()
   }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootError
 import git4idea.test.GitMockVcsManager
-import git4idea.test.GitTestPlatformFacade
+import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import org.junit.Before
 import org.junit.Test
 
@@ -35,12 +35,12 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
 
   Project myProject
-  GitTestPlatformFacade myPlatformFacade
+  DvcsTestPlatformFacade myPlatformFacade
   GitMockVcsManager myVcsManager
 
   @Before
   void setUp() {
-    myPlatformFacade = new GitTestPlatformFacade()
+    myPlatformFacade = new DvcsTestPlatformFacade()
   }
 
   @Test

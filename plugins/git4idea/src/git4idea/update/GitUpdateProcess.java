@@ -35,8 +35,8 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
@@ -83,7 +83,7 @@ public class GitUpdateProcess {
     READ_FROM_SETTINGS
   }
 
-  public GitUpdateProcess(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull ProgressIndicator progressIndicator,
+  public GitUpdateProcess(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRepositories = repositories;
@@ -400,7 +400,7 @@ public class GitUpdateProcess {
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, myGit, ServiceManager.getService(GitPlatformFacade.class), rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

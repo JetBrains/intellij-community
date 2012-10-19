@@ -19,11 +19,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryImpl;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class GitExec {
   public static GitRepository init(@NotNull Project project, @NotNull VirtualFile root) throws IOException {
     new GitTestRunEnv(new File(root.getPath())).run("init");
     root.refresh(false, true);
-    return GitRepositoryImpl.getLightInstance(root, project, ServiceManager.getService(project, PlatformFacade.class), project);
+    return GitRepositoryImpl.getLightInstance(root, project, ServiceManager.getService(project, GitPlatformFacade.class), project);
   }
 
   /**
@@ -63,7 +63,7 @@ public class GitExec {
     assert root != null;
     root.refresh(false, true);
     return bare ? null : GitRepositoryImpl.getLightInstance(root, project,
-                                                            ServiceManager.getService(project, PlatformFacade.class), project);
+                                                            ServiceManager.getService(project, GitPlatformFacade.class), project);
   }
 
   public static String push(@NotNull GitRepository repository, String... args) throws IOException {

@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
-import git4idea.PlatformFacade
+import com.intellij.dvcs.DvcsPlatformFacade
 /**
  * 
  * @author Kirill Likhodedov
@@ -34,12 +34,12 @@ import git4idea.PlatformFacade
 public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   Project myProject
-  PlatformFacade myPlatformFacade
+  DvcsPlatformFacade myPlatformFacade
   Collection<String> myRoots = []
   boolean myProjectRootMapping = false
   AbstractVcs myVcs
 
-  GitMockVcsManager(Project project, PlatformFacade facade) {
+  GitMockVcsManager(Project project, DvcsPlatformFacade facade) {
     myProject = project
     myPlatformFacade = facade
     myVcs = facade.getVcs(project)

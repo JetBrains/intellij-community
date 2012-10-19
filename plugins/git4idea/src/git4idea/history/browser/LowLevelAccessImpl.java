@@ -29,7 +29,7 @@ import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.GitCommand;
@@ -121,7 +121,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       if (! child.exists()) {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
-      repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, PlatformFacade.class), myProject);
+      repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject);
       repository.update(GitRepository.TrackedTopic.BRANCHES);
       repository.getBranches();
     }

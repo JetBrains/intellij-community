@@ -130,7 +130,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitMergeProvider myMergeProvider;
   private final GitMergeProvider myReverseMergeProvider;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
-  private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull GitPlatformFacade myPlatformFacade;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
@@ -179,7 +179,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myExecutableValidator = new GitExecutableValidator(myProject, this);
-    myPlatformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
+    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
   }
 
 

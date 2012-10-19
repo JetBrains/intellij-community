@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
+package com.intellij.dvcs.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.vcs.*;

@@ -15,6 +15,8 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.DvcsTestPlatformFacade
+import com.intellij.dvcs.test.MockVcsHelper
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -37,7 +39,7 @@ class GitFastTest {
   public static final String TEST_NOTIFICATION_GROUP = "Test"
 
   Project myProject
-  GitTestPlatformFacade myPlatformFacade
+  DvcsTestPlatformFacade myPlatformFacade
   GitTestRepositoryManager myRepositoryManager
   MockGit myGit
   String myProjectDir
