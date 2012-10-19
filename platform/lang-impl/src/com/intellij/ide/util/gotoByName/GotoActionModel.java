@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBLabel;
@@ -129,6 +130,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
         panel.setOpaque(true);
         final Color bg = isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
         panel.setBackground(bg);
@@ -161,6 +163,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           }
         }
         else if (value instanceof OptionDescription) {
+          if (!isSelected) {
+            panel.setBackground(LightColors.SLIGHTLY_GRAY);
+          }
           String hit = ((OptionDescription)value).getHit();
           if (hit == null) {
             hit = ((OptionDescription)value).getOption();
@@ -169,13 +174,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (hit.length() > 60) {
             hit = hit.substring(0, 60) + "...";
           }
-          final JBLabel label = new JBLabel(hit.trim());
+          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final JLabel label = new JLabel(hit.trim());
           label.setIcon(EMPTY_ICON);
+          label.setForeground(fg);
+          label.setBackground(bg);
           panel.add(label, BorderLayout.WEST);
-          panel.add(new JBLabel("Settings"), BorderLayout.EAST);
-          if (!isSelected) {
-            panel.setBackground(LightColors.SLIGHTLY_GRAY);
-          }
+          final JLabel settingsLabel = new JLabel("Settings");
+          settingsLabel.setForeground(fg);
+          settingsLabel.setBackground(bg);
+          panel.add(settingsLabel, BorderLayout.EAST);
         }
         else if (value instanceof String) {
           final JBLabel label = new JBLabel((String)value);
