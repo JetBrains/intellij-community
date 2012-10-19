@@ -74,12 +74,12 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
   }
 
-  protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) {
     configureByFile(filePath);
     doTestConfiguredFile(checkWarnings, checkInfos, filePath);
   }
 
-  protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
     configureByFile(filePath);
     doTestConfiguredFile(checkWarnings, checkWeakWarnings, checkInfos, filePath);
   }

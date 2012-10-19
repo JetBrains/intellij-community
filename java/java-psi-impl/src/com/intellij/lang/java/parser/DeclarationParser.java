@@ -212,7 +212,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse ..." to work well
-      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false, false);
+      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null) {
         builder.advanceLexer();
       }
@@ -408,7 +408,7 @@ public class DeclarationParser {
 
     eatBrackets(builder, constructor, "expected.semicolon");
 
-    if (areTypeAnnotationsSupported(builder)) {
+    if (builder.getTokenType() == JavaTokenType.AT) {
       final PsiBuilder.Marker receiver = builder.mark();
       final PsiBuilder.Marker annotations = parseAnnotations(builder);
       if (annotations != null) {
@@ -419,8 +419,7 @@ public class DeclarationParser {
       }
     }
 
-    myParser.getReferenceParser()
-      .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
+    myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
     final boolean hasDefault = expect(builder, JavaTokenType.DEFAULT_KEYWORD);
     if (hasDefault && anno) {
@@ -560,7 +559,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false, false);
+      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false);
       if (ref == null && builder.getTokenType() != null) {
         builder.advanceLexer();
       }
@@ -744,8 +743,8 @@ public class DeclarationParser {
       }
     }
 
-    if (marker != null) {
-      marker.error(errorKey != null ? JavaErrorMessages.message(errorKey):null);
+    if (marker != null && errorKey != null) {
+      marker.error(JavaErrorMessages.message(errorKey));
     }
 
     return result;
@@ -769,7 +768,7 @@ public class DeclarationParser {
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false, false);
+    final PsiBuilder.Marker classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }

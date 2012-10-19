@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.ReferenceParser;
-import com.intellij.pom.java.LanguageLevel;
 
 
 public class ReferenceParserTest extends JavaParsingTestCase {
@@ -37,11 +36,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testType3() { doTypeParserTest("int[]["); }
   public void testType4() { doTypeParserTest("Map<String,List<String>>"); }
   public void testType5() { doTypeParserTest("Object[]..."); }
-  public void testType6() {
-    withLevel(LanguageLevel.JDK_1_8, new Runnable() { @Override public void run() {
-      doTypeParserTest("@English String @NonEmpty []");
-    }});
-  }
+  public void testType6() { doTypeParserTest("@English String @NonEmpty []"); }
   public void testType7() { doTypeParserTest("Diamond<>"); }
   public void testType8() { doTypeParserTest("A|"); }
   public void testType9() { doTypeParserTest("A|B"); }
@@ -68,7 +63,7 @@ public class ReferenceParserTest extends JavaParsingTestCase {
 
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, myIncomplete, false, false, false, false);
+      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, myIncomplete, false, false, false);
     }
   }
 
