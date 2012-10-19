@@ -1,4 +1,4 @@
-def foo = {Map attrs, a ->
+def foo = { Map attrs, a ->
   a + attrs.b
 }
 
