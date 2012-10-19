@@ -5,6 +5,8 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -22,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidCodeStyleNotificationProvider implements EditorNotifications.Provider<AndroidCodeStyleNotificationProvider.MyPanel> {
+public class AndroidCodeStyleNotificationProvider extends EditorNotifications.Provider<AndroidCodeStyleNotificationProvider.MyPanel> {
   private static final Key<MyPanel> KEY = Key.create("android.xml.code.style.notification");
 
   @NonNls private static final String ANDROID_XML_CODE_STYLE_NOTIFICATION_GROUP = "Android XML code style notification";
@@ -42,8 +44,9 @@ public class AndroidCodeStyleNotificationProvider implements EditorNotifications
 
   @Nullable
   @Override
-  public MyPanel createNotificationPanel(VirtualFile file) {
-    if (file.getFileType() != XmlFileType.INSTANCE) {
+  public MyPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+    if (file.getFileType() != XmlFileType.INSTANCE ||
+        !(fileEditor instanceof TextEditor)) {
       return null;
     }
     final Module module = ModuleUtilCore.findModuleForFile(file, myProject);

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -40,7 +41,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class ConfigureGroovyLibraryNotificationProvider implements EditorNotifications.Provider<EditorNotificationPanel> {
+public class ConfigureGroovyLibraryNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("configure.groovy.library");
 
   private final Project myProject;
@@ -70,7 +71,7 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file) {
+  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
     try {
       if (!supportedFileTypes.contains(file.getFileType())) return null;
       if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) return null;

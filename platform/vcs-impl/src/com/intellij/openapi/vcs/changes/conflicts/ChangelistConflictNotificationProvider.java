@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ import com.intellij.ui.EditorNotifications;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictNotificationProvider implements EditorNotifications.Provider<ChangelistConflictNotificationPanel> {
+public class ChangelistConflictNotificationProvider extends EditorNotifications.Provider<ChangelistConflictNotificationPanel> {
 
   private static final Key<ChangelistConflictNotificationPanel> KEY = Key.create("changelistConflicts");
 
@@ -37,7 +38,7 @@ public class ChangelistConflictNotificationProvider implements EditorNotificatio
     return KEY;
   }
 
-  public ChangelistConflictNotificationPanel createNotificationPanel(VirtualFile file) {
+  public ChangelistConflictNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
     return myConflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(myConflictTracker, file) : null;
   }
 }
