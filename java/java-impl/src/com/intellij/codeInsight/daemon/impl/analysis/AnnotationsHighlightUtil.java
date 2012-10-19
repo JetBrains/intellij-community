@@ -219,7 +219,7 @@ public class AnnotationsHighlightUtil {
     final PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.nonconstant.attribute.value"));
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.non.constant.attribute.value"));
       }
     }
 
@@ -238,17 +238,32 @@ public class AnnotationsHighlightUtil {
   @Nullable
   public static HighlightInfo checkApplicability(final PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
-    if (!(owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter)) return null;
-    PsiElement member = ((PsiElement)owner).getParent();
-    String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
-    if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) return null;
-    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-    String description = JavaErrorMessages.message("annotation.not.applicable",
-                                                   nameRef.getText(),
-                                                   JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
-    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
-    return highlightInfo;
+    if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter) {
+      PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+      if (nameRef == null) {
+        return null;
+      }
+      PsiElement member = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
+      String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(member);
+      if (elementTypeFields == null || PsiAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
+        return null;
+      }
+      String target = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
+      String description = JavaErrorMessages.message("annotation.not.applicable", nameRef.getText(), target);
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
+      return highlightInfo;
+    }
+
+    PsiElement parent = annotation.getParent();
+    if (!(parent instanceof PsiAnnotationOwner || parent instanceof PsiNameValuePair)) {
+      String message = JavaErrorMessages.message("annotation.not.allowed.here");
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, message);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
+      return highlightInfo;
+    }
+
+    return null;
   }
 
   public static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {

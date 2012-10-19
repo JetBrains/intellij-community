@@ -28,6 +28,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);
   }
 
+  public void testWrongPlace() { doTest(false); }
   public void testNotValueNameOmitted() { doTest(false); }
   public void testCannotFindMethod() { doTest(false); }
   public void testIncompatibleType1() { doTest(false); }
@@ -41,7 +42,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInapplicable() { doTest(false); }
   public void testDuplicateAttribute() { doTest(false); }
   public void testDuplicateTarget() { doTest(false); }
-  public void testTypeAnnotations() { doTest(false); }
+  //public void testTypeAnnotations() { doTest(false); }
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }
 }
