@@ -15,6 +15,7 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,6 +28,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -102,7 +104,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       };
       try {
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable, ModalityState.any());
       }
       catch (Exception e) {
         // ignore
@@ -156,6 +158,33 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     if (connection instanceof HttpURLConnection) {
       ((HttpURLConnection)connection).disconnect();
+    }
+  }
+
+  /**
+   * Opens HTTP connection to a given location using configured http proxy settings.
+   * @param location url to connect to
+   * @return instance of {@link HttpURLConnection}
+   * @throws IOException in case of any I/O troubles or if created connection isn't instance of HttpURLConnection.
+   */
+  @NotNull
+  public HttpURLConnection openHttpConnection(@NotNull String location) throws IOException {
+    setAuthenticator();
+    URL url = new URL(location);
+    final URLConnection urlConnection;
+    if (USE_HTTP_PROXY) {
+      InetSocketAddress proxyAddress = new InetSocketAddress(InetAddress.getByName(PROXY_HOST), PROXY_PORT);
+      Proxy proxy = new Proxy(Proxy.Type.HTTP, proxyAddress);
+      urlConnection = url.openConnection(proxy);
+    }
+    else {
+      urlConnection = url.openConnection();
+    }
+    if (urlConnection instanceof HttpURLConnection) {
+      return (HttpURLConnection) urlConnection;
+    }
+    else {
+      throw new IOException("Expected " + HttpURLConnection.class + ", but got " + url.getClass());
     }
   }
 
