@@ -31,6 +31,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -96,6 +97,12 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     }
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep createSettingsStep(WizardContext context) {
+    return null; //ProjectWizardStepFactory.getInstance().createNameAndLocationStep(context);
   }
 
   private static Icon getJavaModuleIcon() {

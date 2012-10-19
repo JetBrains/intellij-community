@@ -17,25 +17,25 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -46,28 +46,9 @@ class TemplateModuleBuilder extends ModuleBuilder {
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType) {
     myTemplate = template;
-    myType = computeModuleType(myTemplate);
-  }
-
-  @NotNull
-  private static ModuleType computeModuleType(ArchivedProjectTemplate template) {
-    String iml = template.readEntry(new Condition<ZipEntry>() {
-      @Override
-      public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith(".iml");
-      }
-    });
-    if (iml == null) return ModuleType.EMPTY;
-    try {
-      Document document = JDOMUtil.loadDocument(iml);
-      String type = document.getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
-      return ModuleTypeManager.getInstance().findByID(type);
-    }
-    catch (Exception e) {
-      return ModuleType.EMPTY;
-    }
+    myType = moduleType;
   }
 
   @Override

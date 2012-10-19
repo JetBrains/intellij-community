@@ -16,11 +16,17 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +43,10 @@ import java.util.zip.ZipInputStream;
 public class ArchivedProjectTemplate implements ProjectTemplate {
 
   static final String DESCRIPTION_PATH = ".idea/description.html";
+
   private final String myDisplayName;
   private final URL myArchivePath;
+  private final ModuleType myModuleType;
   private final WizardContext myContext;
 
   public ArchivedProjectTemplate(String displayName,
@@ -48,6 +56,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
     myDisplayName = displayName;
     myArchivePath = archivePath;
     myContext = context;
+    myModuleType = computeModuleType(this);
   }
 
   @NotNull
@@ -90,9 +99,27 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return new TemplateModuleBuilder(this);
+    return new TemplateModuleBuilder(this, myModuleType);
   }
 
+  @NotNull
+  private static ModuleType computeModuleType(ArchivedProjectTemplate template) {
+    String iml = template.readEntry(new Condition<ZipEntry>() {
+      @Override
+      public boolean value(ZipEntry entry) {
+        return entry.getName().endsWith(".iml");
+      }
+    });
+    if (iml == null) return ModuleType.EMPTY;
+    try {
+      Document document = JDOMUtil.loadDocument(iml);
+      String type = document.getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
+      return ModuleTypeManager.getInstance().findByID(type);
+    }
+    catch (Exception e) {
+      return ModuleType.EMPTY;
+    }
+  }
 
   @Nullable
   @Override
@@ -106,6 +133,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
 
   @Override
   public JComponent getSettingsPanel() {
-    return null;
+    ModuleWizardStep step = myModuleType.createSettingsStep(myContext);
+    return step == null ? null : step.getComponent();
   }
 }

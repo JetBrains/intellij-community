@@ -51,6 +51,9 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
+  @Nullable
+  public ModuleWizardStep createSettingsStep(WizardContext context) { return null; }
+
   public final String getId() {
     return myId;
   }
