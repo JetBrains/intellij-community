@@ -181,33 +181,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myTemplatesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (mySettingsPanel.getComponentCount() > 0) {
-          mySettingsPanel.remove(0);
-        }
         ProjectTemplate template = getSelectedTemplate();
-        if (template != null) {
-          JComponent settingsPanel = template.getSettingsPanel();
-          if (settingsPanel != null) {
-            mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
-          }
-          mySettingsPanel.setVisible(settingsPanel != null);
-          String description = template.getDescription();
-          if (StringUtil.isNotEmpty(description)) {
-            StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
-            sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
-            sb.append(description).append("</font></body></html>");
-            description = sb.toString();
-          }
-
-          myDescriptionPane.setText(description);
-          myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
-        }
-        else {
-          mySettingsPanel.setVisible(false);
-          myDescriptionPanel.setVisible(false);
-        }
-        mySettingsPanel.revalidate();
-        mySettingsPanel.repaint();
+        setupPanels(template);
+        mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
+        myContext.requestWizardButtonsUpdate();
       }
     });
 
@@ -223,13 +200,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
 
-    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-    if (state != null) {
-      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    }
-    else {
-      myBuilder.expandAll(null);
-    }
 
     new AnAction() {
       @Override
@@ -248,6 +218,49 @@ public class SelectTemplateStep extends ModuleWizardStep {
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        TreeState state = SelectTemplateSettings.getInstance().getTreeState();
+       if (state != null) {
+         state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+       }
+       else {
+         myBuilder.expandAll(null);
+       }
+      }
+    });
+
+  }
+
+  private void setupPanels(@Nullable ProjectTemplate template) {
+    if (mySettingsPanel.getComponentCount() > 0) {
+      mySettingsPanel.remove(0);
+    }
+    if (template != null) {
+      JComponent settingsPanel = template.getSettingsPanel();
+      if (settingsPanel != null) {
+        mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
+      }
+      mySettingsPanel.setVisible(settingsPanel != null);
+      String description = template.getDescription();
+      if (StringUtil.isNotEmpty(description)) {
+        StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
+        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        sb.append(description).append("</font></body></html>");
+        description = sb.toString();
+      }
+
+      myDescriptionPane.setText(description);
+      myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
+    }
+    else {
+      mySettingsPanel.setVisible(false);
+      myDescriptionPanel.setVisible(false);
+    }
+    mySettingsPanel.revalidate();
+    mySettingsPanel.repaint();
   }
 
   @Override
