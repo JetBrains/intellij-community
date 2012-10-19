@@ -572,7 +572,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       return null;
     }
     final AndroidDebugBridge.IDeviceChangeListener deviceListener = new AndroidDebugBridge.IDeviceChangeListener() {
-      boolean installed = false;
+      private volatile boolean installed = false;
 
       public void deviceConnected(IDevice device) {
         if (device.getAvdName() == null || isMyDevice(device)) {
@@ -589,18 +589,22 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       public void deviceChanged(final IDevice device, int changeMask) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            if (!installed && isMyDevice(device) && device.isOnline()) {
-              if (myTargetDevices.length == 0) {
-                myTargetDevices = new IDevice[]{device};
-              }
-              message("Device is online: " + device.getSerialNumber(), STDOUT);
-              installed = true;
-              if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
-                getProcessHandler().destroyProcess();
-              }
-            }
+            onDeviceChanged(device);
           }
         });
+      }
+
+      private synchronized void onDeviceChanged(IDevice device) {
+        if (!installed && isMyDevice(device) && device.isOnline()) {
+          if (myTargetDevices.length == 0) {
+            myTargetDevices = new IDevice[]{device};
+          }
+          message("Device is online: " + device.getSerialNumber(), STDOUT);
+          installed = true;
+          if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
+            getProcessHandler().destroyProcess();
+          }
+        }
       }
     };
     AndroidDebugBridge.addDeviceChangeListener(deviceListener);
