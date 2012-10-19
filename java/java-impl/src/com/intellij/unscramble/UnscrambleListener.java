@@ -66,9 +66,10 @@ public class UnscrambleListener implements ApplicationActivationListener {
   }
 
   private static final Pattern STACKTRACE_LINE =
-    Pattern.compile("[\t]*at [[a-zA-Z0-9]+\\.]+[a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)+[ [~]*\\[[a-zA-Z0-9\\.\\:/]\\]]*");
+    Pattern.compile("[\t]*at [[_a-zA-Z0-9]+\\.]+[_a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)+[ [~]*\\[[a-zA-Z0-9\\.\\:/]\\]]*");
 
   public static boolean isStacktrace(String stacktrace) {
+    stacktrace = UnscrambleDialog.normalizeText(stacktrace);
     int linesCount = 0;
     for (String line : stacktrace.split("\n")) {
       line = line.trim();
