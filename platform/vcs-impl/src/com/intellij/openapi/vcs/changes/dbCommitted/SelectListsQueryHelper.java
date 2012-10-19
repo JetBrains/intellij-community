@@ -122,6 +122,7 @@ public class SelectListsQueryHelper {
                                                                                       throws SQLException {
                                                                                       return connection.prepareStatement("SELECT " +
                                                                                                                          SqliteTables.REVISION.RAW_DATA +
+                                                                                                                         " , " + SqliteTables.REVISION.NUMBER_INT +
                                                                                                                          " FROM " +
                                                                                                                          SqliteTables.REVISION.TABLE_NAME +
                                                                                                                          " R INNER JOIN " +

@@ -723,9 +723,15 @@ public class VcsSqliteLayer {
       final PreparedStatement statement = helper.createStatement();
       final CachingCommittedChangesProvider provider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
       final ResultSet set = statement.executeQuery();
+      final Set<Long> controlSet = new HashSet<Long>();
       SqliteUtil.readSelectResults(set, new ThrowableRunnable<SQLException>() {
         @Override
         public void run() throws SQLException {
+          final long number = set.getLong(SqliteTables.REVISION.NUMBER_INT);
+          if (controlSet.contains(number)) {
+            return;
+          }
+          controlSet.add(number);
           final byte[] bytes = set.getBytes(SqliteTables.REVISION.RAW_DATA);
           final CommittedChangeList list = readListByProvider(bytes, provider, location);
           result.add(list);
