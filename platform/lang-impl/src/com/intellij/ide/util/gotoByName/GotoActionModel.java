@@ -165,8 +165,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (hit == null) {
             hit = ((OptionDescription)value).getOption();
           }
-          if (hit.length() > 30) {
-            hit = hit.substring(0, 30) + "...";
+          hit = StringUtil.unescapeXml(hit);
+          if (hit.length() > 60) {
+            hit = hit.substring(0, 60) + "...";
           }
           final JBLabel label = new JBLabel(hit.trim());
           label.setIcon(EMPTY_ICON);
