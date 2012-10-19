@@ -407,10 +407,16 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(nameElement.getProject());
     PsiElement newNameElement;
-    try {
-      newNameElement = factory.createReferenceNameFromText(name);
+    if (JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(name)) {
+      try {
+        GrMethod method = factory.createMethod(name, null);
+        newNameElement = method.getNameIdentifierGroovy();
+      }
+      catch (IncorrectOperationException e) {
+        newNameElement = factory.createLiteralFromValue(name).getFirstChild();
+      }
     }
-    catch (IncorrectOperationException e) {
+    else {
       newNameElement = factory.createLiteralFromValue(name).getFirstChild();
     }
     nameElement.replace(newNameElement);
