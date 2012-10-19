@@ -138,8 +138,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrReferenceExpression createReferenceExpressionFromText(String idText, PsiElement context) {
-    PsiFile file = createGroovyFile(idText, false, context);
-    return (GrReferenceExpression) ((GroovyFileBase) file).getTopStatements()[0];
+    GroovyFile file = createGroovyFile(idText, false, context);
+    GrTopStatement[] statements = file.getTopStatements();
+
+    if (statements.length != 1) throw new IncorrectOperationException("refText: " + idText);
+    if (!(statements[0] instanceof GrReferenceExpression)) throw new IncorrectOperationException("refText: " + idText);
+
+    return (GrReferenceExpression)statements[0];
   }
 
   @Override
