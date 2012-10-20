@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -155,6 +156,7 @@ public class IgnoreFileAction extends AnAction {
 
   private static CvsContextAdapter createContext(final Collection<VirtualFile> createdCvsIgnoreFiles, final CvsContext context) {
     return new CvsContextAdapter() {
+      @NotNull
       public VirtualFile[] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(createdCvsIgnoreFiles);
       }
