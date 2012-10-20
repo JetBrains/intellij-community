@@ -26,12 +26,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author ven
@@ -235,6 +240,17 @@ public class AnnotationsHighlightUtil {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.invalid.annotation.member.type"));
   }
 
+  private static final ElementPattern<PsiElement> ANNOTATION_ALLOWED = psiElement().andOr(
+    psiElement().with(new PatternCondition<PsiElement>("annotationOwner") {
+      @Override
+      public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+        return element instanceof PsiAnnotationOwner;
+      }
+    }),
+    psiElement().withParent(PsiNameValuePair.class),
+    psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class)
+  );
+
   @Nullable
   public static HighlightInfo checkApplicability(final PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
@@ -255,8 +271,7 @@ public class AnnotationsHighlightUtil {
       return highlightInfo;
     }
 
-    PsiElement parent = annotation.getParent();
-    if (!(parent instanceof PsiAnnotationOwner || parent instanceof PsiNameValuePair)) {
+    if (!ANNOTATION_ALLOWED.accepts(annotation)) {
       String message = JavaErrorMessages.message("annotation.not.allowed.here");
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
