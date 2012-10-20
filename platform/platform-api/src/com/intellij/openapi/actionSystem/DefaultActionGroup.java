@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ import java.util.List;
  * @see Constraints
  */
 public class DefaultActionGroup extends ActionGroup {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
   /**
    * Contains instances of AnAction
    */
@@ -165,7 +167,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private boolean addToSortedList(AnAction action, Constraints constraint, ActionManager actionManager){
+  private boolean addToSortedList(@NotNull AnAction action, Constraints constraint, ActionManager actionManager){
     int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
     if (index == -1){
       return false;
@@ -236,6 +238,9 @@ public class DefaultActionGroup extends ActionGroup {
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
     for(int i = 0; i < sortedSize; i++){
       AnAction action = mySortedChildren.get(i);
+      if (action == null) {
+        LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
+      }
       if (action instanceof ActionStub) {
         action = unstub(e, (ActionStub)action);
         mySortedChildren.set(i, action);
@@ -246,6 +251,9 @@ public class DefaultActionGroup extends ActionGroup {
     for(int i = 0; i < myPairs.size(); i++){
       final Pair<AnAction, Constraints> pair = myPairs.get(i);
       AnAction action = pair.first;
+      if (action == null) {
+        LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
+      }
       if (action instanceof ActionStub) {
         action = unstub(e, (ActionStub)action);
         myPairs.set(i, Pair.create(action, pair.second));
@@ -256,9 +264,12 @@ public class DefaultActionGroup extends ActionGroup {
     return children;
   }
 
-  private AnAction unstub(AnActionEvent e, final ActionStub stub) {
+  private AnAction unstub(@Nullable AnActionEvent e, final ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     AnAction action = actionManager.getAction(stub.getId());
+    if (action == null) {
+      LOG.error("Null child action in group " + this + "of class" + getClass() + ", id=" + stub.getId());
+    }
     replace(stub, action);
     return action;
   }

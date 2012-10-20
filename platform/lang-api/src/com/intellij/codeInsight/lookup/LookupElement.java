@@ -101,4 +101,17 @@ public abstract class LookupElement extends UserDataHolderBase {
   public boolean isCaseSensitive() {
     return true;
   }
+
+  /**
+   * Invoked when the completion autopopup contains only the items that exactly match the user-entered prefix to determine
+   * whether the popup should be closed to not get in the way when navigating through the code.
+   * Should return true if there's some meaningful information in this item's presentation that the user will miss
+   * if the autopopup is suddenly closed automatically. Java method parameters are a good example. For simple variables,
+   * there's nothing else interesting besides the variable name which is already entered in the editor, so the autopopup may be closed.
+   */
+  public boolean isWorthShowingInAutoPopup() {
+    final LookupElementPresentation presentation = new LookupElementPresentation();
+    renderElement(presentation);
+    return !presentation.getTailFragments().isEmpty();
+  }
 }
