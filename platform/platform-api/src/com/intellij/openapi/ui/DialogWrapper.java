@@ -687,7 +687,7 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
   }
 
-  protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
+  protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
   }
 

@@ -55,15 +55,17 @@ public class Pair<A, B> {
     return EMPTY;
   }
 
-  public Pair(A first, B second) {
+  public Pair(@Nullable A first, @Nullable B second) {
     this.first = first;
     this.second = second;
   }
 
+  @Nullable
   public final A getFirst() {
     return first;
   }
 
+  @Nullable
   public final B getSecond() {
     return second;
   }

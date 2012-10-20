@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -36,7 +37,7 @@ public abstract class DialogWrapperPeerFactory {
     return ServiceManager.getService(DialogWrapperPeerFactory.class);
   }
 
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, Project project, boolean canBeParent);
+  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent, boolean tryToolkitModal);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);

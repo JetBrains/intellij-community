@@ -328,7 +328,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
   }
 
-  public void stopRecording(Project project) {
+  public void stopRecording(@Nullable Project project) {
     LOG.assertTrue(myIsRecording);
 
     if (myWidget != null) {
