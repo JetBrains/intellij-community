@@ -72,4 +72,9 @@ public class LiveTemplateLookupElement extends LookupElement {
     context.setAddCompletionChar(false);
     TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), myTemplate);
   }
+
+  @Override
+  public boolean isWorthShowingInAutoPopup() {
+    return false;
+  }
 }
