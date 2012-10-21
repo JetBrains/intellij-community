@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.debugger;
+package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PairFunction;
@@ -61,7 +61,8 @@ public class ShowUIDefaultsAction extends AnAction {
       }
     });
 
-    new DialogWrapper(getEventProject(e)) {
+    final Project project = getEventProject(e);
+    new DialogWrapper(project) {
       {
         setTitle("Edit LaF Defaults");
         init();
@@ -78,7 +79,7 @@ public class ShowUIDefaultsAction extends AnAction {
       @Nullable
       @Override
       protected String getDimensionServiceKey() {
-        return "UI.Defaults.Dialog";
+        return project == null ? null : "UI.Defaults.Dialog";
       }
 
       @Override

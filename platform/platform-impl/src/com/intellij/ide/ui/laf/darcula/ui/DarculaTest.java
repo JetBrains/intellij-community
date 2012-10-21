@@ -16,9 +16,13 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ui.ShowUIDefaultsAction;
 import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,8 +50,17 @@ public class DarculaTest {
     catch (UnsupportedLookAndFeelException ignored) {}
     final JFrame frame = new JFrame("Darcula Demo");
     frame.setSize(600, 500);
-    frame.setContentPane(new DarculaTest().myRoot);
+    final JPanel root = new DarculaTest().myRoot;
+    frame.setContentPane(root);
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_F1) {
+          new ShowUIDefaultsAction().actionPerformed(null);
+        }
+      }
+    }, AWTEvent.KEY_EVENT_MASK);
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
