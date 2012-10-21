@@ -15,17 +15,17 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.MockVcsHelper
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.tests.TestDialogManager
 import org.junit.After
 import org.junit.Before
 
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
-
 /**
  * 
  * @author Kirill Likhodedov
@@ -49,7 +49,7 @@ class GitFastTest {
     myProjectDir = FileUtil.createTempDirectory("git", null)
 
     myProject = [
-            getBaseDir: { new GitMockVirtualFile(myProjectDir) }
+            getBaseDir: { new MockVirtualFile(myProjectDir) }
     ] as Project
 
     myPlatformFacade = new GitTestPlatformFacade()

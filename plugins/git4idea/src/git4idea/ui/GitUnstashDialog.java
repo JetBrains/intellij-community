@@ -429,7 +429,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class),
+      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(GitPlatformFacade.class),
             Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;

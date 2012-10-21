@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package com.intellij.dvcs.test
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -24,11 +24,11 @@ import com.intellij.openapi.roots.*
  * 
  * @author Kirill Likhodedov
  */
-class GitMockProjectRootManager extends ProjectRootManager {
+class MockProjectRootManager extends ProjectRootManager {
 
   Collection<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
 
-  GitMockProjectRootManager() {
+  MockProjectRootManager() {
 
   }
 

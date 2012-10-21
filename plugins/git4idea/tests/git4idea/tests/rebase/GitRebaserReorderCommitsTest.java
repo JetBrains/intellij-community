@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.rebase.GitRebaser;
-import git4idea.tests.GitTest;
+import git4idea.test.GitTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.util.ui.UIUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,12 +33,12 @@ public class GitFreezingProcess {
 
   private static final Logger LOG = Logger.getInstance(GitFreezingProcess.class);
 
-  @NotNull private final PlatformFacade myFacade;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final String myOperationTitle;
   @NotNull private final Runnable myRunnable;
   @NotNull private final ChangeListManagerEx myChangeListManager;
 
-  public GitFreezingProcess(@NotNull Project project, @NotNull PlatformFacade facade,
+  public GitFreezingProcess(@NotNull Project project, @NotNull GitPlatformFacade facade,
                             @NotNull String operationTitle, @NotNull Runnable runnable) {
     myFacade = facade;
     myOperationTitle = operationTitle;
@@ -70,7 +70,7 @@ public class GitFreezingProcess {
     LOG.debug("finished.");
   }
 
-  public static void saveAndBlock(@NotNull PlatformFacade platformFacade) {
+  public static void saveAndBlock(@NotNull GitPlatformFacade platformFacade) {
     platformFacade.getProjectManager().blockReloadingProjectOnExternalChanges();
     platformFacade.saveAllDocuments();
     platformFacade.getSaveAndSyncHandler().blockSaveOnFrameDeactivation();
@@ -97,7 +97,7 @@ public class GitFreezingProcess {
     rethrowingRunnable.rethrowIfHappened();
   }
 
-  public static void unblock(@NotNull PlatformFacade platformFacade) {
+  public static void unblock(@NotNull GitPlatformFacade platformFacade) {
     platformFacade.getProjectManager().unblockReloadingProjectOnExternalChanges();
     platformFacade.getSaveAndSyncHandler().unblockSaveOnFrameDeactivation();
     platformFacade.getSaveAndSyncHandler().unblockSyncOnFrameActivation();

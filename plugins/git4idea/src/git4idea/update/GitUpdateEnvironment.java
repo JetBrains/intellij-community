@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   private final GitVcs myVcs;
   private final Project myProject;
   private final GitVcsSettings mySettings;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
   private static final Logger LOG = Logger.getInstance(GitUpdateEnvironment.class);
 
@@ -58,7 +58,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     myVcs = vcs;
     myProject = project;
     mySettings = settings;
-    myPlatformFacade = ServiceManager.getService(project, PlatformFacade.class);
+    myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {

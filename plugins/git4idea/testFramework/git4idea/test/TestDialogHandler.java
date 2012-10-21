@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.test;
 
 /**
  * TestDialogHandler is invoked by {@link TestDialogManager} instead of showing a dialog on a screen (which is usually impossible for tests).

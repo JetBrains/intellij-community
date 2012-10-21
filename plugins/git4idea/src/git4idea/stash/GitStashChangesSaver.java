@@ -29,8 +29,8 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitHandlerUtil;
@@ -55,7 +55,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  public GitStashChangesSaver(@NotNull Project project, @NotNull PlatformFacade platformFacade, @NotNull Git git,
+  public GitStashChangesSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
                               @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
     super(project, platformFacade, git, progressIndicator, stashMessage);
     myRepositoryManager = platformFacade.getRepositoryManager(project);
@@ -159,7 +159,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, PlatformFacade platformFacade, @NotNull Git git,
+    public UnstashConflictResolver(@NotNull Project project, GitPlatformFacade platformFacade, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
       super(project, git, platformFacade, stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;

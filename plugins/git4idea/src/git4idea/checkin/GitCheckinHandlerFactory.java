@@ -33,9 +33,9 @@ import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
@@ -108,7 +108,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      final PlatformFacade platformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
+      final GitPlatformFacade platformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
       final Git git = ServiceManager.getService(Git.class);
 
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.

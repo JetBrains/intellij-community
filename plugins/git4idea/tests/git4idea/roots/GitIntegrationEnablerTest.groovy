@@ -19,7 +19,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitFastTest
-import git4idea.test.GitMockVirtualFile
+import com.intellij.dvcs.test.MockVirtualFile
 import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
@@ -103,7 +103,7 @@ class GitIntegrationEnablerTest extends GitFastTest {
   }
 
   GitRootDetectInfo given(Collection<String> roots, boolean full = true, boolean below = false) {
-    new GitRootDetectInfo(roots.collect { (VirtualFile)new GitMockVirtualFile(toAbsolute(it, myProject)) }, full, below)
+    new GitRootDetectInfo(roots.collect { (VirtualFile)new MockVirtualFile(toAbsolute(it, myProject)) }, full, below)
   }
 
   Map expect(Map map, Notification notification = null, Class dialogClass = null) {

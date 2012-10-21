@@ -17,7 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -39,7 +39,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
 
-  GitCheckoutNewBranchOperation(@NotNull Project project, PlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitCheckoutNewBranchOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                                 @NotNull Collection<GitRepository> repositories, @NotNull String newBranchName) {
     super(project, facade, git, uiHandler, repositories);
     myNewBranchName = newBranchName;

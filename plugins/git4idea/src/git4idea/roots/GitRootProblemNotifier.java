@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.util.Function;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ import static git4idea.Notificator.createNotification;
 public class GitRootProblemNotifier {
 
   private final @NotNull Project myProject;
-  private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull GitPlatformFacade myPlatformFacade;
   private final @NotNull VcsConfiguration mySettings;
 
   private @Nullable Notification myNotification;
@@ -65,7 +65,7 @@ public class GitRootProblemNotifier {
 
   // registered as a project service
   @SuppressWarnings("UnusedDeclaration")
-  private GitRootProblemNotifier(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  private GitRootProblemNotifier(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
     mySettings = VcsConfiguration.getInstance(myProject);

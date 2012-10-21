@@ -16,7 +16,6 @@
 package git4idea.test
 
 import git4idea.repo.GitRepository
-
 /**
  * Create popular scenarios used in multiple tests, for example:
  *  - create a branch and commit something there;
@@ -135,7 +134,7 @@ class GitScenarios {
 
   def prepend(String fileName, String content) {
     def previousContent = cat(fileName)
-    new File(ourCurrentDir, fileName).withWriter("UTF-8") { it.write(content + previousContent) }
+    new File(pwd(), fileName).withWriter("UTF-8") { it.write(content + previousContent) }
   }
 
 }

@@ -22,8 +22,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -39,11 +39,11 @@ import java.util.List;
 public class GitRootErrorsFinder {
 
   private final @NotNull Project myProject;
-  private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull GitPlatformFacade myPlatformFacade;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
 
-  public GitRootErrorsFinder(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  public GitRootErrorsFinder(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
     myVcsManager = myPlatformFacade.getVcsManager(myProject);

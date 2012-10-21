@@ -15,6 +15,7 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
@@ -25,7 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
-import git4idea.PlatformFacade
+import com.intellij.dvcs.DvcsPlatformFacade
 /**
  * 
  * @author Kirill Likhodedov
@@ -33,12 +34,12 @@ import git4idea.PlatformFacade
 public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   Project myProject
-  PlatformFacade myPlatformFacade
+  DvcsPlatformFacade myPlatformFacade
   Collection<String> myRoots = []
   boolean myProjectRootMapping = false
   AbstractVcs myVcs
 
-  GitMockVcsManager(Project project, PlatformFacade facade) {
+  GitMockVcsManager(Project project, DvcsPlatformFacade facade) {
     myProject = project
     myPlatformFacade = facade
     myVcs = facade.getVcs(project)
@@ -55,7 +56,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   @Override
   VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
-    List<VirtualFile> roots = myRoots.collect { new GitMockVirtualFile(it) }
+    List<VirtualFile> roots = myRoots.collect { new MockVirtualFile(it) }
     roots.addAll(myPlatformFacade.getProjectRootManager(myProject).getContentRoots())
     roots
   }

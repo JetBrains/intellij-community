@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package com.intellij.dvcs.test
+import com.intellij.dvcs.DvcsPlatformFacade
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.mock.MockLocalFileSystem
@@ -21,75 +22,28 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
-import git4idea.Notificator
-import git4idea.PlatformFacade
-import git4idea.config.GitVcsApplicationSettings
-import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRepositoryManager
-import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 /**
  * 
  * @author Kirill Likhodedov
  */
-public class GitTestPlatformFacade implements PlatformFacade {
+public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
 
-  private GitMockVcsManager myVcsManager;
-  private GitMockVcs myVcs;
-  private TestNotificator myNotificator;
-  private TestDialogManager myTestDialogManager;
-  private GitMockProjectRootManager myProjectRootManager;
+  private MockProjectRootManager myProjectRootManager;
   private ChangeListManagerEx myChangeListManager;
-  private GitTestRepositoryManager myRepositoryManager;
   private MockVcsHelper myVcsHelper;
 
-  public GitTestPlatformFacade() {
-    myTestDialogManager = new TestDialogManager();
-    myProjectRootManager = new GitMockProjectRootManager();
+  public DvcsTestPlatformFacade() {
+    myProjectRootManager = new MockProjectRootManager();
     myChangeListManager = new MockChangeListManager();
-    myRepositoryManager = new GitTestRepositoryManager();
-  }
-
-  @NotNull
-  @Override
-  public ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
-    if (myVcsManager == null) {
-      myVcsManager = new GitMockVcsManager(project, this);
-    }
-    return myVcsManager;
-  }
-
-  @NotNull
-  @Override
-  public Notificator getNotificator(@NotNull Project project) {
-    if (myNotificator == null) {
-      myNotificator = new TestNotificator(project);
-    }
-    return myNotificator;
-  }
-
-  @Override
-  public void showDialog(@NotNull DialogWrapper dialog) {
-    try {
-      myTestDialogManager.show(dialog);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @NotNull
@@ -137,12 +91,6 @@ public class GitTestPlatformFacade implements PlatformFacade {
     return myVcsHelper;
   }
 
-  @NotNull
-  @Override
-  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return myRepositoryManager;
-  }
-
   @Nullable
   @Override
   public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
@@ -160,12 +108,6 @@ public class GitTestPlatformFacade implements PlatformFacade {
     }
   }
 
-  @NotNull
-  @Override
-  public GitVcsSettings getSettings(Project project) {
-    return new GitVcsSettings(new GitVcsApplicationSettings());
-  }
-
   @Override
   public void saveAllDocuments() {
   }
@@ -173,7 +115,7 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Nullable
   @Override
   public VirtualFile getVirtualFileByPath(@NotNull String path) {
-    return new GitMockVirtualFile(path);
+    return new MockVirtualFile(path);
   }
 
   @NotNull
@@ -196,18 +138,5 @@ public class GitTestPlatformFacade implements PlatformFacade {
     ] as SaveAndSyncHandler
   }
 
-  @NotNull
-  @Override
-  public AbstractVcs getVcs(@NotNull Project project) {
-    if (myVcs == null) {
-      myVcs = new GitMockVcs(project);
-    }
-    return myVcs;
-  }
-
-  @NotNull
-  public TestDialogManager getDialogManager() {
-    return myTestDialogManager;
-  }
 
 }

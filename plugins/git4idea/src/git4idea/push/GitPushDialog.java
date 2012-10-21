@@ -28,7 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
@@ -68,7 +68,7 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushDialog(@NotNull Project project) {
     super(project);
     myProject = project;
-    myPusher = new GitPusher(myProject, ServiceManager.getService(project, PlatformFacade.class), new EmptyProgressIndicator());
+    myPusher = new GitPusher(myProject, ServiceManager.getService(project, GitPlatformFacade.class), new EmptyProgressIndicator());
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
     myRepositories = getRepositoriesWithRemotes();

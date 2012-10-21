@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package com.intellij.dvcs;
 
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -29,8 +29,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,19 +45,15 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 
- * @author Denis Zhdanov
  * @author Kirill Likhodedov
  */
-public interface PlatformFacade {
+public interface DvcsPlatformFacade {
 
   @NotNull
   AbstractVcs getVcs(@NotNull Project project);
 
   @NotNull
   ProjectLevelVcsManager getVcsManager(@NotNull Project project);
-
-  @NotNull
-  Notificator getNotificator(@NotNull Project project);
 
   void showDialog(@NotNull DialogWrapper dialog);
 
@@ -84,9 +78,6 @@ public interface PlatformFacade {
   @NotNull
   AbstractVcsHelper getVcsHelper(@NotNull Project project);
 
-  @NotNull
-  GitRepositoryManager getRepositoryManager(@NotNull Project project);
-
   @Nullable
   IdeaPluginDescriptor getPluginByClassName(@NotNull String name);
 
@@ -96,9 +87,6 @@ public interface PlatformFacade {
    */
   @Nullable
   String getLineSeparator(@NotNull VirtualFile file, boolean detect);
-
-  @NotNull
-  GitVcsSettings getSettings(Project project);
 
   void saveAllDocuments();
 

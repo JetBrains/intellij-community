@@ -29,9 +29,9 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
@@ -53,7 +53,7 @@ public class GitConflictResolver {
 
   @NotNull protected final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
   private final Collection<VirtualFile> myRoots;
   private final Params myParams;
 
@@ -104,7 +104,7 @@ public class GitConflictResolver {
     
   }
 
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade,
+  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade,
                              @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myGit = git;

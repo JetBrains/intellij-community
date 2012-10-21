@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.test;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.test.GitTestRunEnv;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,9 @@ import java.io.IOException;
  * Representation of a Git repository for tests purposes.
  * Works with {@link java.io.File} - be sure to {@link #refresh()} the repository if a {@link VirtualFile} is needed.
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitTestRepository {
 
   private File myRootDir;

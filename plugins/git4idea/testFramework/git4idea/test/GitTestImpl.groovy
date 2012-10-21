@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package git4idea.test
+
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil

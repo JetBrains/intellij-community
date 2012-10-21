@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 package git4idea.crlf
-
+import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
-import git4idea.test.*
+import git4idea.test.GitExecutor
+import git4idea.test.GitTestImpl
+import git4idea.test.GitTestPlatformFacade
+import git4idea.test.GitTestRepositoryManager
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -37,10 +40,10 @@ import static org.junit.Assert.assertTrue
 @Mixin(GitExecutor)
 class GitCrlfProblemsDetectorTest {
 
-  private GitMockProject myProject
+  private MockProject myProject
   private String myRootDir
 
-  private PlatformFacade myPlatformFacade
+  private GitTestPlatformFacade myPlatformFacade
   private Git myGit
 
   private String myOldCoreAutoCrlfValue
@@ -48,7 +51,7 @@ class GitCrlfProblemsDetectorTest {
   @Before
   public void setUp() throws Exception {
     myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new GitMockProject(myRootDir)
+    myProject = new MockProject(myRootDir)
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
 
@@ -60,7 +63,7 @@ class GitCrlfProblemsDetectorTest {
 
     git ("init")
 
-    GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
+    GitRepository repository = GitRepositoryImpl.getLightInstance(new MockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
   }
 
@@ -73,7 +76,7 @@ class GitCrlfProblemsDetectorTest {
     Disposer.dispose(myProject)
   }
 
-  private boolean isGlobalCommandPossible() {
+  private static boolean isGlobalCommandPossible() {
     return System.getenv("HOME") != null;
   }
 
@@ -158,7 +161,7 @@ win6 crlf=input
     assertTrue "Warning should be done, since one of the files has CRLFs and no related attributes",
            GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit,
                                           ["unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"]
-                                                  .collect { it -> GitMockVirtualFile.fromPath(it, myRootDir) as VirtualFile})
+                                                  .collect { it -> MockVirtualFile.fromPath(it, myRootDir) as VirtualFile})
                    .shouldWarn()
   }
 
@@ -185,7 +188,7 @@ win6 crlf=input
   }
 
   private VirtualFile createVirtualFile(String relPath) {
-    return new GitMockVirtualFile(createFile(relPath))
+    return new MockVirtualFile(createFile(relPath))
   }
 
   private String createFile(String relPath) {
@@ -203,6 +206,7 @@ win6 crlf=input
         return file.getPath()
       }
     }
+    return parent;
   }
 
 }

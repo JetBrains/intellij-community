@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package com.intellij.dvcs.test
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NotNull
  * 
  * @author Kirill Likhodedov
  */
-class GitMockProject implements Project {
+class MockProject implements Project {
 
   String myProjectDir
 
-  GitMockProject(String projectDir) {
+  MockProject(String projectDir) {
     myProjectDir = projectDir
   }
 
@@ -45,7 +45,7 @@ class GitMockProject implements Project {
 
   @Override
   VirtualFile getBaseDir() {
-    return new GitMockVirtualFile(myProjectDir)
+    return new MockVirtualFile(myProjectDir)
   }
 
   @Override

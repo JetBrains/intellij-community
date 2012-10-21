@@ -28,8 +28,8 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
+import static MockGit.OperationName.CHERRY_PICK
+import static MockGit.OperationName.GET_UNMERGED_FILES
 
 /**
  * 

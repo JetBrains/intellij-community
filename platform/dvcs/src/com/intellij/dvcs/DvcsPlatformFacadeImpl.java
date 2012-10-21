@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package com.intellij.dvcs;
 
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
@@ -21,7 +21,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -38,26 +36,18 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
  */
-public class PlatformFacadeImpl implements PlatformFacade {
+public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
 
   @NotNull
   @Override
   public ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project);
-  }
-
-  @NotNull
-  @Override
-  public Notificator getNotificator(@NotNull Project project) {
-    return Notificator.getInstance(project);
   }
 
   @Override
@@ -107,12 +97,6 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return AbstractVcsHelper.getInstance(project);
   }
 
-  @NotNull
-  @Override
-  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
-  }
-
   @Nullable
   @Override
   public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
@@ -123,12 +107,6 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public String getLineSeparator(@NotNull VirtualFile file, boolean detect) {
     return LoadTextUtil.detectLineSeparator(file, detect);
-  }
-
-  @NotNull
-  @Override
-  public GitVcsSettings getSettings(@NotNull Project project) {
-    return GitVcsSettings.getInstance(project);
   }
 
   @Override
@@ -159,9 +137,4 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return SaveAndSyncHandlerImpl.getInstance();
   }
 
-  @NotNull
-  @Override
-  public AbstractVcs getVcs(@NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
-  }
 }

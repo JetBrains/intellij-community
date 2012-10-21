@@ -18,7 +18,7 @@ package git4idea.repo;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +111,7 @@ public class GitConfig {
    * If it has valid format in general, but some sections are invalid, it skips invalid sections, but reports an error.
    */
   @NotNull
-  static GitConfig read(@NotNull PlatformFacade platformFacade, @NotNull File configFile) {
+  static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
     Ini ini = new Ini();
     ini.getConfig().setMultiOption(true);  // duplicate keys (e.g. url in [remote])
     ini.getConfig().setTree(false);        // don't need tree structure: it corrupts url in section name (e.g. [url "http://github.com/"]

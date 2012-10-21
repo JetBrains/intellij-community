@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -71,6 +72,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="dvcs" />
   </component>
 </module>
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 package git4idea.test
-
+import com.intellij.dvcs.DvcsPlatformFacade
+import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.PlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
 import org.junit.After
 import org.junit.Before
-
 /**
  * <p>GitLightTest is a test that doesn't need to start the whole {@link com.intellij.openapi.application.Application} and Project.
- *    It substitutes everything with Mocks, and communicates with this mocked platform via {@link GitTestPlatformFacade}.</p>
+ *    It substitutes everything with Mocks, and communicates with this mocked platform via {@link com.intellij.dvcs.test.DvcsTestPlatformFacade}.</p>
  *
  * <p>However, GitLightTests tests are not entirely unit. They may use other components from the git4idea plugin, they operate on the
  *    real file system, and they call native Git to prepare test case and from the code which is being tested.</p>
@@ -51,8 +51,8 @@ class GitLightTest {
    */
   protected String myProjectRoot
 
-  protected GitMockProject myProject
-  protected PlatformFacade myPlatformFacade
+  protected MockProject myProject
+  protected DvcsPlatformFacade myPlatformFacade
   protected Git myGit
 
   @Before
@@ -60,7 +60,7 @@ class GitLightTest {
     myTestRoot = FileUtil.createTempDirectory("", "").getPath()
     cd myTestRoot
     myProjectRoot = mkdir ("project")
-    myProject = new GitMockProject(myProjectRoot)
+    myProject = new MockProject(myProjectRoot)
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
   }
@@ -77,7 +77,7 @@ class GitLightTest {
     // TODO this smells hacky
     // the constructor and notifyListeners() should probably be private
     // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
-    GitRepository repository = new GitRepositoryImpl(new GitMockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
+    GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
       @Override
       protected void notifyListeners() {
       }

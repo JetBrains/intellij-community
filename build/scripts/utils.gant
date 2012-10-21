@@ -269,7 +269,8 @@ binding.setVariable("platformImplementationModules", [
         "lvcs-impl",
         "spellchecker",
         "images",
-        "RegExpSupport"
+        "RegExpSupport",
+        "dvcs"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
