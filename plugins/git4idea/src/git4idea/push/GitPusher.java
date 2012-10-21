@@ -62,7 +62,7 @@ public final class GitPusher {
    */
   static final int RECENT_COMMITS_NUMBER = 5;
   
-  static final GitBranch NO_TARGET_BRANCH = new GitBranch("", GitBranch.DUMMY_HASH, true);
+  static final GitBranch NO_TARGET_BRANCH = new GitRemoteBranch(null, "", GitBranch.DUMMY_HASH);
 
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
   private static final String INDICATOR_TEXT = "Pushing";

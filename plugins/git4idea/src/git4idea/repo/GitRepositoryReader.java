@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.Hash;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
@@ -122,7 +123,7 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
-      return new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false);
+      return new GitLocalBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash));
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -153,7 +154,7 @@ class GitRepositoryReader {
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
-    return new GitBranch(branchName, hash, false);
+    return new GitLocalBranch(branchName, hash);
   }
 
   private File findBranchFile(@NotNull String branchName) {
@@ -286,7 +287,7 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false));
+      branches.add(new GitLocalBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash)));
     }
     return branches;
   }
@@ -318,7 +319,13 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), true));
+            branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash)) {
+              // TODO
+              @Override
+              public boolean isRemote() {
+                return true;
+              }
+            });
           }
         }
         return true;
@@ -346,9 +353,15 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), Hash.create(hash), false));
+            localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), Hash.create(hash), true));
+            remoteBranches.add(new GitBranch(branchName, Hash.create(hash)) {
+              // TODO
+              @Override
+              public boolean isRemote() {
+                return true;
+              }
+            });
           }
         }
       });

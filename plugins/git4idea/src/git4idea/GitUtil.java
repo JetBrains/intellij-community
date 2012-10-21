@@ -808,6 +808,16 @@ public class GitUtil {
     return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
+  @Nullable
+  public static GitRepository getRepositoryForRootOrLogError(@NotNull Project project, @NotNull VirtualFile root) {
+    GitRepositoryManager manager = getRepositoryManager(project);
+    GitRepository repository = manager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository is null for root " + root);
+    }
+    return repository;
+  }
+
   @NotNull
   public static String getPrintableRemotes(@NotNull Collection<GitRemote> remotes) {
     return StringUtil.join(remotes, new Function<GitRemote, String>() {

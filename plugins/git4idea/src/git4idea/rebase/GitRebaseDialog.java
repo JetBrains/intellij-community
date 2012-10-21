@@ -21,14 +21,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import git4idea.GitBranch;
-import git4idea.GitTag;
-import git4idea.GitUtil;
+import git4idea.*;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
@@ -347,7 +347,7 @@ public class GitRebaseDialog extends DialogWrapper {
     try {
       final VirtualFile root = gitRoot();
       String currentBranch = (String)myBranchComboBox.getSelectedItem();
-      final GitBranch trackedBranch;
+      GitBranch trackedBranch = null;
       if (currentBranch != null) {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
         String merge = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
@@ -358,15 +358,15 @@ public class GitRebaseDialog extends DialogWrapper {
         }
         else {
           if (remote.equals(".")) {
-            trackedBranch = new GitBranch(name, GitBranch.DUMMY_HASH, false);
+            trackedBranch = new GitSvnRemoteBranch(name, GitBranch.DUMMY_HASH);
           }
           else {
-            trackedBranch = new GitBranch(remote + "/" + name, GitBranch.DUMMY_HASH, true);
+            GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
+            if (r != null) {
+              trackedBranch = new GitRemoteBranch(r, name, GitBranch.DUMMY_HASH);
+            }
           }
         }
-      }
-      else {
-        trackedBranch = null;
       }
       if (trackedBranch != null) {
         myOntoComboBox.setSelectedItem(trackedBranch);

@@ -26,6 +26,10 @@ import static git4idea.repo.GitRepository.*;
 /**
  * <p>Represents a Git branch, local or remote.</p>
  *
+ * <p>Local and remote branches are different in that nature, that remote branch has complex name ("origin/master") containing both
+ *    the name of the remote and the name of the branch. And while the standard name of the remote branch if origin/master,
+ *    in certain cases we must operate with the name which the branch has at the remote: "master".</p>
+ *
  * <p>It contains information about the branch name and the hash it points to.
  *    Note that the object (including the hash) is immutable. That means that if branch reference move along, you have to get new instance
  *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link git4idea.repo.GitRepository#getCurrentBranch()}.
@@ -35,7 +39,7 @@ import static git4idea.repo.GitRepository.*;
  *    are considered equal. But in this case an error if logged, becase it means that one of this GitBranch instances is out-of-date, and
  *    it is required to use an {@link GitRepository#update(TrackedTopic...) updated} version.</p>
  */
-public class GitBranch extends GitReference {
+public abstract class GitBranch extends GitReference {
 
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
@@ -49,14 +53,23 @@ public class GitBranch extends GitReference {
   private static final Logger LOG = Logger.getInstance(GitBranch.class);
 
   @NotNull private final Hash myHash;
-  private final boolean myRemote;
 
-  public GitBranch(@NotNull String name, @NotNull Hash hash, boolean remote) {
-    super(name);
-    myRemote = remote;
+  public GitBranch(@NotNull String name, @NotNull Hash hash) {
+    super(cleanFromPrefix(name));
     myHash = hash;
   }
-  
+
+  @NotNull
+  private static String cleanFromPrefix(@NotNull String branchName) {
+    if (branchName.startsWith(REFS_HEADS_PREFIX)) {
+      return branchName.substring(REFS_HEADS_PREFIX.length());
+    }
+    else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
+      return branchName.substring(REFS_REMOTES_PREFIX.length());
+    }
+    return branchName;
+  }
+
   /**
    * <p>Returns the hash on which this branch is reference to.</p>
    *
@@ -71,13 +84,11 @@ public class GitBranch extends GitReference {
   /**
    * @return true if the branch is remote
    */
-  public boolean isRemote() {
-    return myRemote;
-  }
+  public abstract boolean isRemote();
 
   @NotNull
   public String getFullName() {
-    return (myRemote ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
+    return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
 
   /**
@@ -128,7 +139,7 @@ public class GitBranch extends GitReference {
     if (!myHash.equals(that.myHash)) {
       LOG.error("Branches have equal names, but different hash codes. This: " + toLogString() + ", that: " + that.toLogString());
     }
-    else if (myRemote != that.myRemote) {
+    else if (isRemote() != that.isRemote()) {
       LOG.error("Branches have equal names, but different local/remote type. This: " + toLogString() + ", that: " + that.toLogString());
     }
     */

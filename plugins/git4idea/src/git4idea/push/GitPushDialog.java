@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchUtil;
@@ -245,10 +246,7 @@ public class GitPushDialog extends DialogWrapper {
         remote = myRefspecPanel.getSelectedRemote();
         GitBranch manualBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, manualBranchName);
         if (manualBranch == null) {
-          if (!manualBranchName.startsWith("refs/remotes/")) {
-            manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
-          }
-          manualBranch = new GitBranch(manualBranchName, GitBranch.DUMMY_HASH, true);
+          manualBranch = new GitRemoteBranch(remote, manualBranchName, GitBranch.DUMMY_HASH);
         }
         targetBranch = manualBranch;
       }

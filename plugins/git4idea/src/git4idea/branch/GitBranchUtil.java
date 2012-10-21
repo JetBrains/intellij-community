@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitSvnRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitBranchTrackInfo;
@@ -98,7 +100,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static Collection<String> convertBranchesToNames(@NotNull Collection<GitBranch> branches) {
+  public static Collection<String> convertBranchesToNames(@NotNull Collection<? extends GitBranch> branches) {
     return Collections2.transform(branches, new Function<GitBranch, String>() {
       @Override
       public String apply(@Nullable GitBranch input) {
@@ -152,36 +154,45 @@ public class GitBranchUtil {
   }
 
   /**
-   * Get the tracked branch for the given branch, or null if the given branch doesn't track anything.
+   * Get the tracking branch for the given branch, or null if the given branch doesn't track anything.
    * @deprecated Use {@link GitConfig#getBranchTrackInfos()}
    */
   @Deprecated
   @Nullable
-  public static GitBranch tracked(Project project, VirtualFile root, String branchName) throws VcsException {
+  public static GitBranch tracked(@NotNull Project project, @NotNull VirtualFile root, @NotNull String branchName) throws VcsException {
     final HashMap<String, String> result = new HashMap<String, String>();
     GitConfigUtil.getValues(project, root, null, result);
-    String remote = result.get(trackedRemoteKey(branchName));
-    if (remote == null) {
+    String remoteName = result.get(trackedRemoteKey(branchName));
+    if (remoteName == null) {
       return null;
     }
     String branch = result.get(trackedBranchKey(branchName));
     if (branch == null) {
       return null;
     }
-    if (branch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-      branch = branch.substring(GitBranch.REFS_HEADS_PREFIX.length());
+
+    if (".".equals(remoteName)) {
+      return new GitSvnRemoteBranch(branch, GitBranch.DUMMY_HASH);
     }
-    else if (branch.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
-      branch = branch.substring(GitBranch.REFS_REMOTES_PREFIX.length());
+
+    GitRemote remote = findRemoteByNameOrLogError(project, root, remoteName);
+    if (remote == null) return null;
+    return new GitRemoteBranch(remote, branch, GitBranch.DUMMY_HASH);
+  }
+
+  @Nullable
+  @Deprecated
+  public static GitRemote findRemoteByNameOrLogError(@NotNull Project project, @NotNull VirtualFile root, @NotNull String remoteName) {
+    GitRepository repository = GitUtil.getRepositoryForRootOrLogError(project, root);
+    if (repository == null) {
+      return null;
     }
-    boolean remoteFlag;
-    if (!".".equals(remote)) {
-      branch = remote + "/" + branch;
-      remoteFlag = true;
+
+    GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
+    if (remote == null) {
+      LOG.warn("Couldn't find remote with name " + remoteName);
+      return null;
     }
-    else {
-      remoteFlag = false;
-    }
-    return new GitBranch(branch, GitBranch.DUMMY_HASH, remoteFlag);
+    return remote;
   }
 }
