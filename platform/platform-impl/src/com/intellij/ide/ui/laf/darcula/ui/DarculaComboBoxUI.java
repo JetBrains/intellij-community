@@ -41,6 +41,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     myComboBox.setBorder(this);
   }
 
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaComboBoxUI(((JComboBox)c));
   }
@@ -57,26 +58,23 @@ protected JButton createArrowButton() {
 
         final int w = getWidth();
         final int h = getHeight();
-        g.setColor(myComboBox.isEditable() ? UIUtil.getControlColor() : UIUtil.getControlColor());
+        g.setColor(UIUtil.getControlColor());
         g.fillRect(0, 0, w, h);
-        g.setColor(getForeground());
+        g.setColor(myComboBox.isEnabled() ? getForeground() : getForeground().darker());
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
         final int xU = w / 4;
         final int yU = h / 4;
         final Path2D.Double path = new Path2D.Double();
-        path.moveTo(xU+1, yU + 2);
+        path.moveTo(xU + 1, yU + 2);
         path.lineTo(3 * xU + 1, yU + 2);
-        path.lineTo(2*xU+1, 3*yU );
-        path.lineTo(xU+1, yU + 2);
+        path.lineTo(2 * xU + 1, 3 * yU);
+        path.lineTo(xU + 1, yU + 2);
         path.closePath();
         g.fill(path);
         g.setColor(ColorUtil.fromHex("939393"));
-        g.drawLine(0, 0, 0 , h);
-        //paintTriangle(g, w / 2, h / 2, 5, SOUTH, myComboBox.isEnabled());
-        //g.setColor(ColorUtil.fromHex("939393"));
-        //g.drawLine(0,0, 0,h);
+        g.drawLine(0, -1, 0, h);
         config.restore();
       }
     };
@@ -91,16 +89,42 @@ protected JButton createArrowButton() {
   }
 
   @Override
+  public void paint(Graphics g, JComponent c) {
+    paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
+    super.paint(g, c);
+  }
+
+  @Override
   public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
     final Graphics2D g = (Graphics2D)g2;
+    final Rectangle arrowButtonBounds = arrowButton.getBounds();
+    final int xxx = arrowButtonBounds.x - 5;
+    if (editor != null) {
+      final GraphicsConfig config = new GraphicsConfig(g);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      g.setColor(editor.getBackground());
+      g.fillRoundRect(x+1,y+1,width-2,height-2, 5, 5);
+      g.setColor(arrowButton.getBackground());
+      g.fillRoundRect(xxx, y+1, width - xxx , height-2, 5, 5);
+      g.setColor(editor.getBackground());
+      g.fillRect(xxx, y + 1, 5, height - 2);
+      config.restore();
+    }
+
+    g.setColor(ColorUtil.fromHex("939393"));
+    int off = hasFocus ? 1 : 0;
+    g.drawLine(xxx + 5, y+1 + off, xxx + 5, height - 1 - 2*off);
+
     if (hasFocus || (editor != null && editor.hasFocus())) {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 4);
-    } else {
+    }
+    else {
       g.setColor(ColorUtil.fromHex("939393"));
       final GraphicsConfig config = new GraphicsConfig(g);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-      g.drawRoundRect(1, 1, width - 2, height - 2, 5,5);
+      g.drawRoundRect(1, 1, width - 2, height - 2, 5, 5);
       config.restore();
     }
   }
