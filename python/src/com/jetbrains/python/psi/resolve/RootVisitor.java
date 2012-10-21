@@ -18,5 +18,5 @@ public interface RootVisitor {
    *
    * @return false when visiting must stop.
    */
-  boolean visitRoot(VirtualFile root, @Nullable Module module, @Nullable Sdk sdk);
+  boolean visitRoot(VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource);
 }

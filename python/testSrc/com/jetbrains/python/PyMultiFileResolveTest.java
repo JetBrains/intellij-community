@@ -26,7 +26,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   public void testSimple() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFile);
-    assertEquals("ImportedFile.py", ((PyFile) element).getName());
+    assertEquals("ImportedFile.py", ((PyFile)element).getName());
   }
 
   public void testFromImport() {
@@ -34,7 +34,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue(results.length == 2); // func and import stmt
     PsiElement func_elt = results[0].getElement();
     assertTrue("is PyFunction?", func_elt instanceof PyFunction);
-    assertEquals("named 'func'?", "func", ((PyFunction) func_elt).getName());
+    assertEquals("named 'func'?", "func", ((PyFunction)func_elt).getName());
     PsiElement import_elt = results[1].getElement();
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
@@ -44,7 +44,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue(results.length == 2); // func and import-* stmt
     PsiElement func_elt = results[0].getElement();
     assertTrue("is PyFunction?", func_elt instanceof PyFunction);
-    assertEquals("named 'func'?", "func", ((PyFunction) func_elt).getName());
+    assertEquals("named 'func'?", "func", ((PyFunction)func_elt).getName());
     PsiElement import_elt = results[1].getElement();
     assertTrue("is import?", import_elt instanceof PyStarImportElement);
   }
@@ -57,7 +57,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   public void testFromPackageImportFile() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
-    assertEquals("myfile.py", ((PyFile) element).getName());
+    assertEquals("myfile.py", ((PyFile)element).getName());
   }
 
   public void testFromQualifiedPackageImport() {
@@ -68,20 +68,20 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   public void testFromQualifiedFileImportClass() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
-    assertEquals("myfile.py", ((PsiFile) element).getName());
-    assertEquals("mypackage", ((PsiFile) element).getContainingDirectory().getName());
+    assertEquals("myfile.py", ((PsiFile)element).getName());
+    assertEquals("mypackage", ((PsiFile)element).getContainingDirectory().getName());
   }
 
   public void testImportAs() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
-    assertEquals("func", ((PyFunction) element).getName());
+    assertEquals("func", ((PyFunction)element).getName());
   }
 
   public void testFromQualifiedPackageImportFile() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
-    assertEquals("testfile.py", ((PsiFile) element).getName());
+    assertEquals("testfile.py", ((PsiFile)element).getName());
   }
 
   public void testFromInitPyImportFunction() {
@@ -101,7 +101,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
     final PsiElement result = doResolve(psiFile);
     assertInstanceOf(result, PyFile.class);
-    assertEquals("mod.py", ((PyFile) result).getName());
+    assertEquals("mod.py", ((PyFile)result).getName());
   }
 
   public void testResolveInPkg() {
@@ -109,7 +109,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue(results.length == 2); // func and import stmt
     PsiElement func_elt = results[0].getElement();
     assertTrue("is PyFunction?", func_elt instanceof PyFunction);
-    assertEquals("named 'token'?", "token", ((PyFunction) func_elt).getName());
+    assertEquals("named 'token'?", "token", ((PyFunction)func_elt).getName());
     PsiElement import_elt = results[1].getElement();
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
@@ -186,7 +186,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     PsiElement element = doResolve();
     element = element.getNavigationElement();
     assertInstanceOf(element, PyFile.class);
-    assertEquals("__init__.py", ((PyFile) element).getName());
+    assertEquals("__init__.py", ((PyFile)element).getName());
   }
 
   public void testImportOsPath() {
@@ -405,7 +405,8 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     setLanguageLevel(LanguageLevel.PYTHON33);
     try {
       assertResolvesTo(PsiDirectory.class, "p1");
-    } finally {
+    }
+    finally {
       setLanguageLevel(null);
     }
   }
@@ -415,9 +416,16 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     setLanguageLevel(LanguageLevel.PYTHON33);
     try {
       assertResolvesTo(PyFunction.class, "foo");
-    } finally {
+    }
+    finally {
       setLanguageLevel(null);
     }
+  }
+
+  // PY-7775
+  public void testProjectSourcesFirst() {
+    myTestFileName = "mod/" + getTestName(false) + ".py";
+    assertResolvesTo(PyFunction.class, "foobar");
   }
 
   private void prepareTestDirectory() {
@@ -429,7 +437,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   private PsiFile prepareFile() {
     prepareTestDirectory();
     VirtualFile sourceFile = null;
-    for (String ext : new String[] {".py", ".pyx"}) {
+    for (String ext : new String[]{".py", ".pyx"}) {
       final String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ext;
       sourceFile = myFixture.findFileInTempDir(fileName);
       if (sourceFile != null) {
@@ -460,7 +468,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
       if (resolveResults.length == 0) {
         return null;
       }
-      return resolveResults[0].isValidResult() ? resolveResults [0].getElement() : null;
+      return resolveResults[0].isValidResult() ? resolveResults[0].getElement() : null;
     }
     finally {
       psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);

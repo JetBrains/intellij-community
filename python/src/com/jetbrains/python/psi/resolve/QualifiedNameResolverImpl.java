@@ -36,7 +36,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   boolean myCheckForPackage = true;
   private final QualifiedNameResolveContext myContext = new QualifiedNameResolveContext();
   private final @NotNull PyQualifiedName myQualifiedName;
-  final Set<PsiElement> results = Sets.newLinkedHashSet();
+  final Set<PsiElement> mySourceResults = Sets.newLinkedHashSet();
+  final Set<PsiElement> myLibResults = Sets.newLinkedHashSet();
   private boolean myVisitAllModules = false;
   private int myRelativeLevel = -1;
   private boolean myWithoutRoots;
@@ -102,7 +103,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   /**
    * Specifies whether we should attempt to resolve imports relative to the current file.
-   * 
+   *
    * @param relativeLevel if >= 0, we try to resolve at the specified number of levels above the current file.
    * @return this
    */
@@ -140,24 +141,33 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     myCheckForPackage = false;
     return this;
   }
-  
-  public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk) {
+
+  public boolean visitRoot(final VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
     if (!root.isValid()) {
       return true;
     }
     PsiFileSystemItem resolveResult = resolveInRoot(root);
     if (resolveResult != null) {
-      results.add(resolveResult);
+      addRoot(resolveResult, isModuleSource);
     }
 
     if (isAcceptRootAsTopLevelPackage() && myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
       resolveResult = resolveInRoot(root.getParent());
       if (resolveResult != null) {
-        results.add(resolveResult);
+        addRoot(resolveResult, isModuleSource);
       }
     }
 
     return true;
+  }
+
+  private void addRoot(PsiFileSystemItem resolveResult, boolean isModuleSource) {
+    if (isModuleSource) {
+      mySourceResults.add(resolveResult);
+    }
+    else {
+      myLibResults.add(resolveResult);
+    }
   }
 
   @Override
@@ -177,24 +187,27 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
       PsiFileSystemItem module = resolveModuleAt(dir);
       if (module != null) {
-        results.add(module);
+        addRoot(module, true);
       }
     }
 
     if (!myWithoutRoots) {
-      results.addAll(resolveInRoots());
+      mySourceResults.addAll(resolveInRoots());
     }
 
     if (!myWithoutForeign) {
       for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
         PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext);
         if (foreign != null) {
-          results.add(foreign);
+          mySourceResults.add(foreign);
         }
       }
     }
 
-    return Lists.newArrayList(results);
+    mySourceResults.addAll(myLibResults);
+    myLibResults.clear();
+
+    return Lists.newArrayList(mySourceResults);
   }
 
   private List<PsiElement> resolveInRoots() {
@@ -228,7 +241,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       throw new IllegalStateException();
     }
 
-    final ArrayList<PsiElement> resultList = Lists.newArrayList(results);
+    mySourceResults.addAll(myLibResults);
+    myLibResults.clear();
+    final ArrayList<PsiElement> resultList = Lists.newArrayList(mySourceResults);
     if (cache != null) {
       cache.put(myQualifiedName, resultList);
     }
@@ -249,18 +264,18 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
         //noinspection unchecked
-        result.add((T) element);
+        result.add((T)element);
       }
     }
     return result;
-  } 
+  }
 
   @Override
   @Nullable
   public <T extends PsiElement> T firstResultOfType(Class<T> clazz) {
     final List<T> list = resultsOfType(clazz);
     return list.size() > 0 ? list.get(0) : null;
-  } 
+  }
 
   private boolean withOtherSdk() {
     return myContext.getSdk() != null && myContext.getSdk() != PythonSdkType.findPythonSdk(myContext.getModule());
@@ -307,9 +322,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       if (name == null) {
         return null;
       }
-      seeker = (PsiFileSystemItem) ResolveImportUtil.resolveChild(seeker, name, myContext.getFootholdFile(), true, myCheckForPackage);
+      seeker = (PsiFileSystemItem)ResolveImportUtil.resolveChild(seeker, name, myContext.getFootholdFile(), true, myCheckForPackage);
     }
     return seeker;
   }
-
 }

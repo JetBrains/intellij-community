@@ -125,11 +125,13 @@ public class QualifiedNameFinder {
 
   /**
    * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
+   * For equal depth source root is in preference to library.
    */
   private static class PathChoosingVisitor implements RootVisitor {
 
     private final VirtualFile myVFile;
     private List<String> myResult;
+    private boolean myIsModuleSource;
 
     private PathChoosingVisitor(VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
@@ -140,11 +142,11 @@ public class QualifiedNameFinder {
       }
     }
 
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
+    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
       final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
       if (relativePath != null) {
         List<String> result = StringUtil.split(relativePath, "/");
-        if (myResult == null || result.size() < myResult.size()) {
+        if (myResult == null || result.size() < myResult.size() || (isModuleSource && !myIsModuleSource)) {
           if (result.size() > 0) {
             result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
           }
@@ -154,6 +156,7 @@ public class QualifiedNameFinder {
             }
           }
           myResult = result;
+          myIsModuleSource = isModuleSource;
         }
       }
       return myResult == null || myResult.size() > 0;
