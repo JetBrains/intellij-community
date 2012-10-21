@@ -37,11 +37,11 @@ class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatfor
   private TestNotificator myNotificator;
   private TestDialogManager myTestDialogManager;
   private GitTestRepositoryManager myRepositoryManager;
+  private GitMockVcsManager myVcsManager;
 
   GitTestPlatformFacade() {
     myRepositoryManager = new GitTestRepositoryManager();
     myTestDialogManager = new TestDialogManager();
-    private GitMockVcsManager myVcsManager;
   }
 
   @NotNull
