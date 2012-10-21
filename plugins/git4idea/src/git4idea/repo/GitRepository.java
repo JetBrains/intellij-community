@@ -39,8 +39,9 @@ import java.util.Collection;
  *   To force asynchronous update, it is enough to call {@link VirtualFile#refresh(boolean, boolean) refresh} on the root directory.
  * </p>
  * <p>
- *   To make a synchronous update of the repository call {@link #update(TrackedTopic...)} and specify
- *   which topics should be updated. Updating requires reading from disk, so updating {@link GitRepository.TrackedTopic.ALL} may take some time.
+ *   To make a synchronous update of the repository call {@link #update()}.
+ *   Updating requires reading from disk, so it may take some time, however, updating the whole community repository took ~10 ms at the time
+ *   of measurement, so must be fast enough. Better not to be called in AWT though.
  * </p>
  * <p>
  *   Other components may subscribe to GitRepository changes via the {@link #GIT_REPO_CHANGE} {@link Topic}
@@ -52,7 +53,7 @@ import java.util.Collection;
  *   GitRepository is updated asynchronously,
  *   so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
  *   <br/>
- *   If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
+ *   If one needs a really 100 % up-to-date value, one should call {@link #update()} and then get...().
  *   update() is a synchronous read from .git, so it is guaranteed to query the real value.
  * </p>
  *
@@ -90,20 +91,6 @@ public interface GitRepository {
      * Detached HEAD state, but not during rebase (for example, manual checkout of a commit hash).
      */
     DETACHED
-  }
-
-  /**
-   * GitRepository tracks the updates of some information about Git repository, caches this information and provides methods to access to
-   * it. The pieces of this information are called Topics. They can be used to update the repository.
-   */
-  enum TrackedTopic {
-    STATE,
-    CURRENT_REVISION,
-    CURRENT_BRANCH,
-    BRANCHES,
-    CONFIG,
-    ALL_CURRENT,
-    ALL
   }
 
   @NotNull
@@ -172,9 +159,9 @@ public interface GitRepository {
   void addListener(@NotNull GitRepositoryChangeListener listener);
 
   /**
-   * Synchronously updates the GitRepository by reading information from the specified topics.
+   * Synchronously updates the GitRepository by reading information from .git/config and .git/refs/...
    */
-  void update(TrackedTopic... topics);
+  void update();
 
   String toLogString();
 

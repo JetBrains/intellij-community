@@ -27,7 +27,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
@@ -203,9 +202,7 @@ public class GitTagDialog extends DialogWrapper {
       finally {
         exceptions.addAll(h.errors());
         GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
-        if (manager != null) {
-          manager.updateRepository(getGitRoot(), GitRepository.TrackedTopic.ALL);
-        }
+        manager.updateRepository(getGitRoot());
       }
     }
     finally {

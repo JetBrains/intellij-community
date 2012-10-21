@@ -111,7 +111,7 @@ public class GitComplexProcess {
     UPDATE_REPOSITORIES = new TaskDescriptor(myTitle, Where.POOLED) {
       @Override public void run(ContinuationContext context) {
         for (GitRepository repo : myRepositoryManager.getRepositories()) {
-          repo.update(GitRepository.TrackedTopic.ALL);
+          repo.update();
         }
       }
     };

@@ -128,7 +128,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       String branch = pair.getSecond();
       GitCommandResult res = pushDeletion(repository, remote, branch);
       result.append(repository, res);
-      repository.update(GitRepository.TrackedTopic.BRANCHES);
+      repository.update();
     }
     if (!result.totalSuccess()) {
       Notificator.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,

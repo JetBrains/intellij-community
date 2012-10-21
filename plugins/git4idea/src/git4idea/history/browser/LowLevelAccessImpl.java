@@ -120,7 +120,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
       repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject);
-      repository.update(GitRepository.TrackedTopic.BRANCHES);
+      repository.update();
       repository.getBranches();
     }
     GitBranchesCollection branches = repository.getBranches();

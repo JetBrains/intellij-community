@@ -28,7 +28,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
 import git4idea.rebase.GitRebaseLineListener;
-import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,9 +66,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
       protected void run(GitTaskResult taskResult) {
         editor.close();
         GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-        if (manager != null) {
-          manager.updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
-        }
+        manager.updateRepository(root);
         root.refresh(false, true);
         notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
       }

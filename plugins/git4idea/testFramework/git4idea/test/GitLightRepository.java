@@ -206,7 +206,7 @@ public class GitLightRepository implements GitRepository {
   }
 
   @Override
-  public void update(TrackedTopic... topics) {
+  public void update() {
     throw new UnsupportedOperationException();
   }
 

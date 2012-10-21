@@ -91,7 +91,7 @@ public class GitFetcher {
       return fetchCurrentRemote(repository);
     }
 
-    repository.update(GitRepository.TrackedTopic.BRANCHES);
+    repository.update();
     return fetchResult;
   }
 

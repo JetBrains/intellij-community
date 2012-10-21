@@ -64,10 +64,10 @@ public interface GitRepositoryManager {
   /**
    * Synchronously updates the specified information about Git repository under the given root.
    * @param root   root directory of the Git repository.
-   * @param topics TrackedTopics that are to be updated.
+   *
    */
-  void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics);
+  void updateRepository(VirtualFile root);
 
-  void updateAllRepositories(GitRepository.TrackedTopic... topics);
+  void updateAllRepositories();
 
 }

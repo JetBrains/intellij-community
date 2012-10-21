@@ -81,7 +81,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     } else {
       myUntrackedFilesHolder = null;
     }
-    update(TrackedTopic.ALL);
+    update();
   }
 
   /**
@@ -216,28 +216,13 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   }
 
   @Override
-  public void update(TrackedTopic... topics) {
-    for (TrackedTopic topic : topics) {
-      switch (topic) {
-        case STATE:            updateState(); break;
-        case CURRENT_REVISION: updateCurrentRevision(); break;
-        case CURRENT_BRANCH:   updateCurrentBranch(); break;
-        case BRANCHES:         updateBranchList(); break;
-        case CONFIG:           updateConfig(); break;
-        case ALL_CURRENT:
-          updateState();
-          updateCurrentRevision();
-          updateCurrentBranch();
-          break;
-        case ALL:
-          updateState();
-          updateCurrentRevision();
-          updateCurrentBranch();
-          updateBranchList();
-          updateConfig();
-          break;
-      }
-    }
+  public void update() {
+    updateState();
+    updateCurrentRevision();
+    updateCurrentBranch();
+    updateBranchList();
+    updateConfig();
+
     notifyListeners();
   }
 

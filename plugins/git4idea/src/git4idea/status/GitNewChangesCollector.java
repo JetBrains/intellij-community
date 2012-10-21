@@ -271,7 +271,7 @@ class GitNewChangesCollector extends GitChangesCollector {
     if (myRepository != null) {
       // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
       // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
-      myRepository.update(GitRepository.TrackedTopic.CURRENT_REVISION);
+      myRepository.update();
       final String rev = myRepository.getCurrentRevision();
       return rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
     } else {
