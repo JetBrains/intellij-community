@@ -16,6 +16,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.Gray;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -36,11 +37,11 @@ class NavBarBorder implements Border {
     if (!myDocked) return;
     
     if (UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
-      g.setColor(new Color(255, 255, 255, 120));
-      g.drawLine(x, y, x + width, y);
+      //g.setColor(Gray._180);
+      //g.drawLine(x, y, x + width, y);
 
-      g.setColor(new Color(0, 0, 0, 50));
-      g.drawLine(x, y + 1, x + width, y + 1);
+      g.setColor(Gray._0.withAlpha(50));
+      g.drawLine(x, y, x + width, y);
     }
   }
 
@@ -54,7 +55,7 @@ class NavBarBorder implements Border {
         return new Insets(0, 0, 0, 4);
       }
       
-      return new Insets(2, 0, 0, 4);
+      return new Insets(1, 0, 0, 4);
     }
 
     return new Insets(1, 0, 1, 4);
