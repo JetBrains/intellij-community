@@ -15,7 +15,6 @@
  */
 package git4idea.test
 
-import com.intellij.dvcs.test.DvcsTestPlatformFacade
 import com.intellij.dvcs.test.MockVcsHelper
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
@@ -27,7 +26,6 @@ import org.junit.Before
 
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
-
 /**
  * 
  * @author Kirill Likhodedov
@@ -39,7 +37,7 @@ class GitFastTest {
   public static final String TEST_NOTIFICATION_GROUP = "Test"
 
   Project myProject
-  DvcsTestPlatformFacade myPlatformFacade
+  GitTestPlatformFacade myPlatformFacade
   GitTestRepositoryManager myRepositoryManager
   MockGit myGit
   String myProjectDir

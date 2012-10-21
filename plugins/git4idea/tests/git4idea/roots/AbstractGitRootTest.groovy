@@ -15,25 +15,28 @@
  */
 package git4idea.roots
 
+import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.dvcs.test.MockProject
-import com.intellij.dvcs.test.DvcsTestPlatformFacade
-import com.intellij.dvcs.test.MockVirtualFile
+import git4idea.test.GitTestPlatformFacade
 import org.junit.After
+import org.junit.Before
 /**
  * 
  * @author Kirill Likhodedov
+ * TODO Inherit GitLightTest
  */
 class AbstractGitRootTest {
 
-  DvcsTestPlatformFacade myPlatformFacade
+  GitTestPlatformFacade myPlatformFacade
+  static File baseDir
 
-  AbstractGitRootTest() {
-    myPlatformFacade = new DvcsTestPlatformFacade()
+  @Before
+  void setUp() {
+    myPlatformFacade = new GitTestPlatformFacade()
   }
 
-  static File baseDir
   @After
   void tearDown() {
     FileUtil.delete(baseDir)

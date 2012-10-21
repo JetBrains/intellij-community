@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 package git4idea.test
-
-import com.intellij.dvcs.test.DvcsTestPlatformFacade
+import com.intellij.dvcs.DvcsPlatformFacade
 import com.intellij.dvcs.test.MockProject
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.dvcs.DvcsPlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
 import org.junit.After
 import org.junit.Before
-
 /**
  * <p>GitLightTest is a test that doesn't need to start the whole {@link com.intellij.openapi.application.Application} and Project.
  *    It substitutes everything with Mocks, and communicates with this mocked platform via {@link com.intellij.dvcs.test.DvcsTestPlatformFacade}.</p>
@@ -64,7 +61,7 @@ class GitLightTest {
     cd myTestRoot
     myProjectRoot = mkdir ("project")
     myProject = new MockProject(myProjectRoot)
-    myPlatformFacade = new DvcsTestPlatformFacade()
+    myPlatformFacade = new GitTestPlatformFacade()
     myGit = new GitTestImpl()
   }
 
