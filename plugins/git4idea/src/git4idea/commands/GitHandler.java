@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
@@ -269,7 +270,25 @@ public abstract class GitHandler {
    */
   public void addParameters(List<String> parameters) {
     checkNotStarted();
-    myCommandLine.addParameters(parameters);
+    for (String parameter : parameters) {
+      myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
+    }
+  }
+
+  @NotNull
+  private static String escapeParameterIfNeeded(@NotNull String parameter) {
+    if (SystemInfo.isWindows && parameter.contains("^")) {
+      return parameter.replaceAll("\\^", "^^^^");
+    }
+    return parameter;
+  }
+
+  @NotNull
+  private String unescapeCommandLine(@NotNull String commandLine) {
+    if (SystemInfo.isWindows && commandLine.contains("^")) {
+      return commandLine.replaceAll("\\^\\^\\^\\^", "^");
+    }
+    return commandLine;
   }
 
   /**
@@ -394,11 +413,11 @@ public abstract class GitHandler {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
         LOG.info("cd " + myWorkingDirectory);
-        LOG.info(myCommandLine.getCommandLineString());
+        LOG.info(printableCommandLine());
       }
       else {
         LOG.debug("cd " + myWorkingDirectory);
-        LOG.debug(myCommandLine.getCommandLineString());
+        LOG.debug(printableCommandLine());
       }
 
       // setup environment
@@ -434,7 +453,7 @@ public abstract class GitHandler {
    * @return a command line with full path to executable replace to "git"
    */
   public String printableCommandLine() {
-    return myCommandLine.getCommandLineString("git");
+    return unescapeCommandLine(myCommandLine.getCommandLineString("git"));
   }
 
   /**
