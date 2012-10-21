@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -57,6 +58,8 @@ import java.util.*;
  * @author vlan
  */
 public class PyPackageManagerImpl extends PyPackageManager {
+  private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
+
   public static final int OK = 0;
   public static final int ERROR_WRONG_USAGE = 1;
   public static final int ERROR_NO_PIP = 2;
@@ -438,6 +441,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       catch (PyExternalProcessException e) {
         myExceptionCache = e;
+        LOG.info("Error loading packages list: " + e.getMessage(), e);
         throw e;
       }
     }
