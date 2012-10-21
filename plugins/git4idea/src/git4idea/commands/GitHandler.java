@@ -259,8 +259,7 @@ public abstract class GitHandler {
    */
   @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
-    checkNotStarted();
-    myCommandLine.addParameters(parameters);
+    addParameters(Arrays.asList(parameters));
   }
 
   /**
