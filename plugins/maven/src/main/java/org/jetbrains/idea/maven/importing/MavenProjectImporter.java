@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -453,8 +454,46 @@ public class MavenProjectImporter {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
         MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, mavenized);
+        configureMavenFacet(modules, mavenized);
       }
     });
+  }
+
+  private void configureMavenFacet(Collection<Module> modules, boolean modulesMavenized) {
+    if (modules.isEmpty()) {
+      return;
+    }
+    final Map<Module, MavenProject> moduleToProjectMap = new HashMap<Module, MavenProject>();
+    for (Map.Entry<MavenProject, Module> entry : myMavenProjectToModule.entrySet()) {
+      moduleToProjectMap.put(entry.getValue(), entry.getKey());
+    }
+    final MavenFacetType facetType = MavenFacetType.getInstance();
+    for (final Module module : modules) {
+      final ModifiableFacetModel model = myModelsProvider.getFacetModel(module);
+      MavenFacet facet = model.getFacetByType(facetType.getId());
+
+      if (!modulesMavenized) {
+        if (facet != null) {
+          model.removeFacet(facet);
+        }
+        continue;
+      }
+
+      if (facet == null) {
+        facet = facetType.createFacet(module, facetType.getPresentableName(), facetType.createDefaultConfiguration(), null);
+        model.addFacet(facet);
+      }
+      else {
+        final MavenFacetConfiguration config = facet.getConfiguration();
+        config.clearState();
+      }
+
+      final MavenProject mavenProject = moduleToProjectMap.get(module);
+      if (mavenProject != null) {
+        final MavenFacetConfiguration config = facet.getConfiguration();
+        config.addResources(mavenProject.getResources());
+      }
+    }
   }
 
   private boolean ensureModuleCreated(MavenProject project) {

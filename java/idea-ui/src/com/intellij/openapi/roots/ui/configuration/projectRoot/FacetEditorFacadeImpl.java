@@ -52,8 +52,10 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(module);
     for (Facet facet : facetModel.getSortedFacets()) {
-      addFacetNode(facet, moduleNode);
-      facetsExist = true;
+      if (!facet.isImplicit()) {
+        addFacetNode(facet, moduleNode);
+        facetsExist = true;
+      }
     }
 
     return facetsExist;

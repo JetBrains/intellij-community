@@ -11,7 +11,6 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -111,10 +110,13 @@ public class FSOperations {
   }
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
-    final BuildFSState fsState = context.getProjectDescriptor().fsState;
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      fsState.processFilesToRecompile(context, target, processor);
+      processFilesToRecompile(context, target, processor);
     }
+  }
+
+  public static void processFilesToRecompile(CompileContext context, ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+    context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
   static void markDirtyFiles(CompileContext context,

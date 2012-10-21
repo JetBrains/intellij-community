@@ -792,11 +792,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     final Element annotationProcessingSettings = addChild(parentNode, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
-    AnnotationProcessorProfileSerializer
-      .writeExternal(myDefaultProcessorsProfile, addChild(annotationProcessingSettings, "profile").setAttribute("default", "true"));
+    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
+    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      AnnotationProcessorProfileSerializer
-        .writeExternal(profile, addChild(annotationProcessingSettings, "profile").setAttribute("default", "false"));
+      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
+      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
     }
 
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {

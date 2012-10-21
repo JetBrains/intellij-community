@@ -1,11 +1,18 @@
 package org.jetbrains.jps.maven.model.impl;
 
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
+import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -41,4 +48,40 @@ public class JpsMavenModelSerializationExtension extends JpsModelSerializerExten
       orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
     }
   }
+
+
+  private final JpsFacetConfigurationSerializer<JpsMavenModuleExtension> FACET_SERIALIZER = new JpsFacetConfigurationSerializer<JpsMavenModuleExtension>(JpsMavenModuleExtensionImpl.ROLE, "_maven_", "maven") {
+    @Override
+    public JpsMavenModuleExtension loadExtension(Element configurationElement,
+                                                 String facetName,
+                                                 JpsModule module,
+                                                 String baseModulePath,
+                                                 JpsElement parentFacet) {
+      final JpsMavenModuleExtension extension = JpsMavenExtensionService.getInstance().getExtension(module);
+      if (extension != null) {
+        final MavenModuleExtensionProperties state = XmlSerializer.deserialize(configurationElement, MavenModuleExtensionProperties.class);
+        if (state != null) {
+          extension.setState(state);
+        }
+      }
+      return extension;
+    }
+
+    @Override
+    protected JpsMavenModuleExtension loadExtension(@NotNull Element facetConfigurationElement, String name, String baseModulePath, JpsElement parent, JpsModule module) {
+      throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    protected void saveExtension(JpsMavenModuleExtension extension, Element facetConfigurationTag, JpsModule module) {
+      final MavenModuleExtensionProperties state = extension.getState();
+      XmlSerializer.serializeInto(state, facetConfigurationTag);
+    }
+  };
+
+  @Override
+  public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
+    return Collections.singletonList(FACET_SERIALIZER);
+  }
+
 }
