@@ -33,7 +33,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -346,13 +345,13 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
 
         UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
           @Override
-          public void undo() throws UnexpectedUndoException {
+          public void undo() {
             dropCache();
             notifyChangedExternally();
           }
 
           @Override
-          public void redo() throws UnexpectedUndoException {
+          public void redo() {
             dropCache();
             notifyChangedExternally();
           }
