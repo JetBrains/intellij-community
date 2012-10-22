@@ -77,6 +77,8 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
+    
+    assert substitutor.isValid();
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
