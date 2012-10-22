@@ -209,6 +209,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   private void disposeConsoleProcess() throws InterruptedException {
     myProcessHandler.destroyProcess();
+
+    waitFor(myProcessHandler);
+
     if (!myProcessHandler.isProcessTerminated()) {
       if (!waitFor(myProcessHandler)) {
         if (!myProcessHandler.isProcessTerminated()) {
