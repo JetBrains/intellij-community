@@ -73,7 +73,7 @@ public class PythonUnitTestUtil {
       }
     }
     for (PyFunction cls : file.getTopLevelFunctions()) {
-      if (isTestCaseFunction(cls, testQualifiedNames)) {
+      if (isTestCaseFunction(cls)) {
         result.add(cls);
       }
     }
@@ -81,11 +81,11 @@ public class PythonUnitTestUtil {
   }
 
   public static boolean isTestCaseFunction(PyFunction function) {
-    return isTestCaseFunction(function, PYTHON_TEST_QUALIFIED_CLASSES);
+    return isTestCaseFunction(function, true);
 
   }
 
-  public static boolean isTestCaseFunction(PyFunction function, Set<String> testQualifiedNames) {
+  public static boolean isTestCaseFunction(PyFunction function, boolean checkAssert) {
     final String name = function.getName();
     if (name == null || !TEST_MATCH_PATTERN.matcher(name).find()) {
       return false;
@@ -93,8 +93,10 @@ public class PythonUnitTestUtil {
     if (function.getContainingClass() != null) {
       if (isTestCaseClass(function.getContainingClass())) return true;
     }
-    boolean hasAssert = hasAssertOrYield(function.getStatementList());
-    if (!hasAssert) return false;
+    if (checkAssert) {
+      boolean hasAssert = hasAssertOrYield(function.getStatementList());
+      if (!hasAssert) return false;
+    }
     return true;
   }
 
