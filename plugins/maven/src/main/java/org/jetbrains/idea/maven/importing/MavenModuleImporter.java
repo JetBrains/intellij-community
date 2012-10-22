@@ -432,7 +432,7 @@ public class MavenModuleImporter {
   }
 
   private boolean shouldEnableAnnotationProcessors() {
-    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE;
+    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE && !"pom".equals(myMavenProject.getPackaging());
   }
 
   @NotNull
