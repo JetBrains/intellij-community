@@ -138,8 +138,7 @@ public class IdeaApplication {
           setWM(xwm, "METACITY_WM");  // Mutter support absent - mimic Metacity
         }
       }
-      else if ("Muffin".equals(wmName)) {
-        // Muffin is completely unsupported at the moment - so mimic Mutter if possible, Metacity otherwise
+      else if ("Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
         try {
           xwmClass.getDeclaredField("MUTTER_WM");
           setWM(xwm, "MUTTER_WM");
@@ -149,7 +148,6 @@ public class IdeaApplication {
         }
       }
       else if ("Marco".equals(wmName)) {
-        // Marco is another useless Metacity clone
         setWM(xwm, "METACITY_WM");
       }
       else if ("awesome".equals(wmName)) {
