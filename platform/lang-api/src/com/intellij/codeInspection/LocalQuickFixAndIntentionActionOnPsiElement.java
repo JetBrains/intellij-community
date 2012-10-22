@@ -73,7 +73,9 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    invoke(project, startElement.getContainingFile(), null, startElement, endElement);
+    PsiFile file = startElement.getContainingFile();
+    if (file == null) return;
+    invoke(project, file, null, startElement, endElement);
   }
 
   @Override
@@ -84,7 +86,6 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     return startElement != null &&
            endElement != null &&
            startElement.isValid() &&
-           startElement.getContainingFile() != null &&
            (endElement == startElement || endElement.isValid()) &&
            file != null &&
            isAvailable(project, file, startElement, endElement);
