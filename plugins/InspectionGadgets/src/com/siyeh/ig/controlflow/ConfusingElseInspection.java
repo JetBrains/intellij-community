@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,15 +51,12 @@ public class ConfusingElseInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "confusing.else.problem.descriptor");
+    return InspectionGadgetsBundle.message("confusing.else.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("confusing.else.option"),
-      this, "reportWhenNoStatementFollow");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.else.option"), this, "reportWhenNoStatementFollow");
   }
 
   @Override
@@ -78,63 +74,45 @@ public class ConfusingElseInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "confusing.else.unwrap.quickfix");
+      return InspectionGadgetsBundle.message("confusing.else.unwrap.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement ifKeyword = descriptor.getPsiElement();
-      final PsiIfStatement ifStatement =
-        (PsiIfStatement)ifKeyword.getParent();
-      assert ifStatement != null;
-      final PsiExpression condition = ifStatement.getCondition();
-      final String conditionText;
-      if (condition == null) {
-        conditionText = "";
-      }
-      else {
-        conditionText = condition.getText();
-      }
-      final PsiStatement thenBranch = ifStatement.getThenBranch();
-      if (thenBranch == null) {
+      final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
+      if (ifStatement == null) {
         return;
       }
-      @NonNls final String text = "if(" + conditionText + ')' +
-                                  thenBranch.getText();
       final PsiStatement elseBranch = ifStatement.getElseBranch();
       if (elseBranch == null) {
         return;
       }
+      PsiElement anchor = ifStatement;
+      PsiElement parent = anchor.getParent();
+      while (parent instanceof PsiIfStatement) {
+        anchor = parent;
+        parent = anchor.getParent();
+      }
       if (elseBranch instanceof PsiBlockStatement) {
-        final PsiBlockStatement elseBlock =
-          (PsiBlockStatement)elseBranch;
+        final PsiBlockStatement elseBlock = (PsiBlockStatement)elseBranch;
         final PsiCodeBlock block = elseBlock.getCodeBlock();
         final PsiElement[] children = block.getChildren();
         if (children.length > 2) {
-          final PsiElement containingElement =
-            ifStatement.getParent();
-          assert containingElement != null;
-          containingElement.addRangeAfter(children[1],
-                                          children[children.length - 2], ifStatement);
+          parent.addRangeAfter(children[1], children[children.length - 2], anchor);
         }
       }
       else {
-        final PsiElement containingElement = ifStatement.getParent();
-        assert containingElement != null;
-        containingElement.addAfter(elseBranch, ifStatement);
+        parent.addAfter(elseBranch, anchor);
       }
-      replaceStatement(ifStatement, text);
+      elseBranch.delete();
     }
   }
 
-  private class ConfusingElseVisitor
-    extends BaseInspectionVisitor {
+  private class ConfusingElseVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(
-      @NotNull PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiStatement thenBranch = statement.getThenBranch();
       if (thenBranch == null) {
@@ -152,8 +130,7 @@ public class ConfusingElseInspection extends BaseInspection {
         if (nextStatement == null) {
           return;
         }
-        if (!ControlFlowUtils.statementMayCompleteNormally(
-          elseBranch)) {
+        if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
           return;
           // protecting against an edge case where both branches return
           // and are followed by a case label
@@ -187,21 +164,19 @@ public class ConfusingElseInspection extends BaseInspection {
       return !(parent instanceof PsiCodeBlock);
     }
 
+    @Nullable
     private PsiStatement getNextStatement(PsiIfStatement statement) {
       while (true) {
         final PsiElement parent = statement.getParent();
         if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement parentIfStatement =
-            (PsiIfStatement)parent;
-          final PsiStatement elseBranch =
-            parentIfStatement.getElseBranch();
+          final PsiIfStatement parentIfStatement = (PsiIfStatement)parent;
+          final PsiStatement elseBranch = parentIfStatement.getElseBranch();
           if (elseBranch == statement) {
             statement = parentIfStatement;
             continue;
           }
         }
-        return PsiTreeUtil.getNextSiblingOfType(statement,
-                                                PsiStatement.class);
+        return PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
       }
     }
   }
