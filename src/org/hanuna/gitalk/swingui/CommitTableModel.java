@@ -20,7 +20,7 @@ public class CommitTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Class getColumnClass(int column) {
+    public Class<?> getColumnClass(int column) {
         switch (column) {
             case 0:
                 return GraphCell.class;
@@ -55,9 +55,9 @@ public class CommitTableModel extends AbstractTableModel {
             case 0:
                 return new GraphCell(commit, commitRows.get(rowIndex));
             case 1:
-                return commit.getData().getAuthor();
+                return commit.getAuthor();
             case 2:
-                long timeStamp = commit.getData().getTimeStamp();
+                long timeStamp = commit.getTimeStamp();
                 return DateConverter.getStringOfDate(timeStamp);
             default:
                 throw new IllegalArgumentException("columnIndex > 2");

@@ -46,7 +46,6 @@ public class TestUtils {
         for (Commit commit : node.getParents()) {
             sb.append(commit.index()).append("|-");
         }
-        sb.append(toStr(node.getData()));
         return sb.toString();
     }
 
@@ -56,7 +55,7 @@ public class TestUtils {
         for (Commit commit : node.getParents()) {
             sb.append(commit.index()).append("|-");
         }
-        sb.append(node.getData().getHash().toStrHash());
+        sb.append(node.hash().toStrHash());
         return sb.toString();
     }
 
@@ -74,30 +73,35 @@ public class TestUtils {
 
         Process p = Runtime.getRuntime().exec("git log --all --date-order --format=%h|-%p|-%an|-%ct|-%s");
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
         ReadOnlyList<Commit> list = GitLogParser.parseCommitLog(r);
-
-        CommitRowListBuilder builder = new CommitRowListBuilder(list);
-        List<RowOfNode> rows = builder.buildListLineOfNode();
-
-
         date = new Date();
         System.out.println(date.getTime() - time);
-        System.out.println(list.size());
 
-        new GitAlkUI(builder.build(), list);
-        if (1 == 0) {
-            for (int i = 0; i < list.size(); i++) {
-                Commit node = list.get(i);
-                System.out.println(toStr(node));
-            }
-            System.out.println();
-            for (RowOfNode line : rows) {
-                for (Node node : line) {
-                    System.out.print(node.getCommitIndex() + ":" + node.getColorIndex() + " ");
+
+
+            CommitRowListBuilder builder = new CommitRowListBuilder(list);
+            List<RowOfNode> rows = builder.buildListLineOfNode();
+
+
+            date = new Date();
+            System.out.println(date.getTime() - time);
+            System.out.println(list.size());
+
+            new GitAlkUI(builder.build(), list);
+            if (1 == 0) {
+                for (int i = 0; i < list.size(); i++) {
+                    Commit node = list.get(i);
+                    System.out.println(toStr(node));
                 }
-                System.out.println(line.getStartIndexColor() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
+                System.out.println();
+                for (RowOfNode line : rows) {
+                    for (Node node : line) {
+                        System.out.print(node.getCommitIndex() + ":" + node.getColorIndex() + " ");
+                    }
+                    System.out.println(line.getStartIndexColor() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
+                }
             }
         }
-    }
 
 }

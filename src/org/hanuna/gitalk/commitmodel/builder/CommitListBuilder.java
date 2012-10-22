@@ -1,12 +1,17 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
-import org.hanuna.gitalk.commitmodel.*;
+import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.SimpleReadOnlyList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author erokhins

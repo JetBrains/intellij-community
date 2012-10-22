@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.commitmodel;
 
-import com.sun.istack.internal.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,29 +11,23 @@ import static org.hanuna.gitalk.common.MyAssert.myAssert;
 /**
  * @author erokhins
  */
-public class Hash {
+public final class Hash {
+    private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>();
+
     @NotNull
-    private final byte[] data;
-    private static final Map<Hash, Hash> cache = new HashMap<Hash, Hash>();
-
-    private Hash(byte[] hash) {
-        this.data = hash;
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof Hash) {
-            Hash hash = (Hash) obj;
-            return Arrays.equals(this.data, hash.data);
+    public static Hash buildHash(@NotNull String inputStr) {
+        byte[] data = buildData(inputStr);
+        Hash newHash = new Hash(data);
+        if (ourCache.containsKey(newHash)) {
+            return ourCache.get(newHash);
+        } else {
+            ourCache.put(newHash, newHash);
         }
-        return false;
-    }
-
-    public int hashCode() {
-        return Arrays.hashCode(data);
+        return newHash;
     }
 
     @NotNull
-    private static byte[] buildData(String inputStr) {
+    private static byte[] buildData(@NotNull String inputStr) {
         // if length == 5, need 3 byte + 1 signal byte
         int length = inputStr.length();
         byte even = (byte) (length % 2);
@@ -55,15 +49,12 @@ public class Hash {
     }
 
     @NotNull
-    public static Hash buildHash(String inputStr) {
-        byte[] data = buildData(inputStr);
-        Hash newHash = new Hash(data);
-        if (cache.containsKey(newHash)) {
-            return cache.get(newHash);
-        } else {
-            cache.put(newHash, newHash);
-        }
-        return newHash;
+    private final byte[] data;
+    private final int hashCode;
+
+    private Hash(@NotNull byte[] hash) {
+        this.data = hash;
+        this.hashCode = Arrays.hashCode(hash);
     }
 
     public String toStrHash() {
@@ -82,6 +73,18 @@ public class Hash {
             }
         }
         return sb.toString();
+    }
+
+    public boolean equals(Object obj) {
+        if (obj != null && obj.getClass() == Hash.class) {
+            Hash hash = (Hash) obj;
+            return Arrays.equals(this.data, hash.data);
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return hashCode;
     }
 
     public String toString() {

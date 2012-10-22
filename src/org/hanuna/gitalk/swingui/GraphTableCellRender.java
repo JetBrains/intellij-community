@@ -21,7 +21,7 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
         data = (GraphCell) value;
-        String text = data.getCommit().getData().getCommitMessage();
+        String text = data.getCommit().getMessage();
         super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
 
         int countNodes = data.getCommitRow().count();
