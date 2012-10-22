@@ -37,10 +37,10 @@ public class AnnotationInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryInterfaceModifierVisitor();
+    return new AnnotationVisitor();
   }
 
-  private static class UnnecessaryInterfaceModifierVisitor extends BaseInspectionVisitor {
+  private static class AnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {
