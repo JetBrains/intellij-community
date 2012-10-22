@@ -276,6 +276,7 @@ public class ReferenceExpressionCompletionContributor {
         itemType = ((PsiWildcardType)itemType).getExtendsBound();
       }
       if (itemType == null) return;
+      assert itemType.isValid() : baseItem + "; " + baseItem.getClass();
 
       final PsiElement element1 = reference.getElement();
       final PsiElement qualifier =
