@@ -39,6 +39,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,12 +49,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -405,7 +409,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
     }
-    final AndroidDebugBridge.IDeviceChangeListener[] deviceListener = {null};
+    final MyDeviceChangeListener[] deviceListener = {null};
     getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
@@ -413,6 +417,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
           AndroidDebugBridge.removeClientChangeListener(AndroidRunningState.this);
         }
         if (deviceListener[0] != null) {
+          Disposer.dispose(deviceListener[0]);
           AndroidDebugBridge.removeDeviceChangeListener(deviceListener[0]);
         }
         myStopped = true;
@@ -554,7 +559,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() {
+  private MyDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() {
     if (myTargetDevices.length > 0) {
       for (IDevice targetDevice : myTargetDevices) {
         if (targetDevice.isOnline()) {
@@ -571,42 +576,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       return null;
     }
-    final AndroidDebugBridge.IDeviceChangeListener deviceListener = new AndroidDebugBridge.IDeviceChangeListener() {
-      private volatile boolean installed = false;
-
-      public void deviceConnected(IDevice device) {
-        if (device.getAvdName() == null || isMyDevice(device)) {
-          message("Device connected: " + device.getSerialNumber(), STDOUT);
-        }
-      }
-
-      public void deviceDisconnected(IDevice device) {
-        if (isMyDevice(device)) {
-          message("Device disconnected: " + device.getSerialNumber(), STDOUT);
-        }
-      }
-
-      public void deviceChanged(final IDevice device, int changeMask) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            onDeviceChanged(device);
-          }
-        });
-      }
-
-      private synchronized void onDeviceChanged(IDevice device) {
-        if (!installed && isMyDevice(device) && device.isOnline()) {
-          if (myTargetDevices.length == 0) {
-            myTargetDevices = new IDevice[]{device};
-          }
-          message("Device is online: " + device.getSerialNumber(), STDOUT);
-          installed = true;
-          if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
-            getProcessHandler().destroyProcess();
-          }
-        }
-      }
-    };
+    final MyDeviceChangeListener deviceListener = new MyDeviceChangeListener();
     AndroidDebugBridge.addDeviceChangeListener(deviceListener);
     return deviceListener;
   }
@@ -899,5 +869,71 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     boolean success = isSuccess(receiver);
     message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;
+  }
+
+  private class MyDeviceChangeListener implements AndroidDebugBridge.IDeviceChangeListener, Disposable {
+    private final MergingUpdateQueue myQueue =
+      new MergingUpdateQueue("ANDROID_DEVICE_STATE_UPDATE_QUEUE", 1000, true, null, this, null, false);
+    private volatile boolean installed;
+
+    public MyDeviceChangeListener() {
+      installed = false;
+    }
+
+    public void deviceConnected(final IDevice device) {
+      // avd may be null if usb device is used, or if it didn't set by ddmlib yet
+      if (device.getAvdName() == null || isMyDevice(device)) {
+        message("Device connected: " + device.getSerialNumber(), STDOUT);
+
+        // we need this, because deviceChanged is not triggered if avd is set to the emulator
+        myQueue.queue(new MyDeviceStateUpdate(device));
+      }
+    }
+
+    public void deviceDisconnected(IDevice device) {
+      if (isMyDevice(device)) {
+        message("Device disconnected: " + device.getSerialNumber(), STDOUT);
+      }
+    }
+
+    public void deviceChanged(final IDevice device, int changeMask) {
+      myQueue.queue(new Update(device.getSerialNumber()) {
+        @Override
+        public void run() {
+          onDeviceChanged(device);
+        }
+      });
+    }
+
+    private synchronized void onDeviceChanged(IDevice device) {
+      if (!installed && isMyDevice(device) && device.isOnline()) {
+        if (myTargetDevices.length == 0) {
+          myTargetDevices = new IDevice[]{device};
+        }
+        message("Device is online: " + device.getSerialNumber(), STDOUT);
+        installed = true;
+        if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
+          getProcessHandler().destroyProcess();
+        }
+      }
+    }
+
+    public void dispose() {
+    }
+
+    private class MyDeviceStateUpdate extends Update {
+      private final IDevice myDevice;
+
+      public MyDeviceStateUpdate(IDevice device) {
+        super(device.getSerialNumber());
+        myDevice = device;
+      }
+
+      @Override
+      public void run() {
+        onDeviceChanged(myDevice);
+        myQueue.queue(new MyDeviceStateUpdate(myDevice));
+      }
+    }
   }
 }
