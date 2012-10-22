@@ -24,6 +24,7 @@ package git4idea.repo;
   import git4idea.GitBranch;
   import git4idea.GitPlatformFacade;
   import git4idea.GitSvnRemoteBranch;
+  import git4idea.GitUtil;
   import org.ini4j.Ini;
   import org.ini4j.Profile;
   import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,7 @@ public class GitConfig {
   @NotNull
   Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitRemote> remotes,
                                                  @NotNull Collection<GitBranch> branches, @NotNull Collection<GitBranch> remoteBranches) {
-    return Collections2.transform(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
+    return Collections2.filter(Collections2.transform(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
       @Nullable
       @Override
       public GitBranchTrackInfo apply(@Nullable BranchConfig input) {
@@ -121,7 +122,7 @@ public class GitConfig {
         }
         return null;
       }
-    });
+    }), GitUtil.NOT_NULL_PREDICATE);
   }
 
   /**

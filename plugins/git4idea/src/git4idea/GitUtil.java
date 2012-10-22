@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.google.common.base.Predicate;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -91,6 +92,13 @@ public class GitUtil {
 
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
   private static final int SHORT_HASH_LENGTH = 8;
+
+  public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
+    @Override
+    public boolean apply(@Nullable GitBranchTrackInfo input) {
+      return input != null;
+    }
+  };
 
   /**
    * A private constructor to suppress instance creation
