@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootError
 import git4idea.test.GitMockVcsManager
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -38,6 +39,11 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   @Before
   void setUp() {
     super.setUp()
+  }
+
+  @After
+  void tearDown() {
+    super.tearDown();
   }
 
   @Test
