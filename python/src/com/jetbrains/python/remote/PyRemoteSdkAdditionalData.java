@@ -19,8 +19,8 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements RemoteSdkAdditionalData {
-  private static final String HELPERS_DIR = "pycharm_helpers";
+public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements RemoteSdkAdditionalData {
+  private static final String HELPERS_DIR = ".pycharm_helpers";
   private final static String SKELETONS_PATH = "SKELETONS_PATH";
 
   private final RemoteSdkDataHolder myRemoteSdkDataHolder = new RemoteSdkDataHolder(HELPERS_DIR);
