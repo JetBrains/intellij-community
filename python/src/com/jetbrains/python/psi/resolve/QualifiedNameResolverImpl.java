@@ -192,7 +192,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
 
     if (!myWithoutRoots) {
-      mySourceResults.addAll(resolveInRoots());
+      addResultsFromRoots();
     }
 
     if (!myWithoutForeign) {
@@ -210,12 +210,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return Lists.newArrayList(mySourceResults);
   }
 
-  private List<PsiElement> resolveInRoots() {
+  private void addResultsFromRoots() {
     PythonPathCache cache = findMyCache();
     if (cache != null) {
       final List<PsiElement> cachedResults = cache.get(myQualifiedName);
       if (cachedResults != null) {
-        return cachedResults;
+        mySourceResults.addAll(cachedResults);
+        return;
       }
     }
 
@@ -241,13 +242,15 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       throw new IllegalStateException();
     }
 
-    mySourceResults.addAll(myLibResults);
-    myLibResults.clear();
-    final ArrayList<PsiElement> resultList = Lists.newArrayList(mySourceResults);
+    cacheResults(cache);
+  }
+
+  private void cacheResults(@Nullable PythonPathCache cache) {
     if (cache != null) {
+      final ArrayList<PsiElement> resultList = Lists.newArrayList(mySourceResults);
+      resultList.addAll(myLibResults);
       cache.put(myQualifiedName, resultList);
     }
-    return resultList;
   }
 
   @Override
