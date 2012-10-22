@@ -17,13 +17,13 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.metal.MetalButtonUI;
+import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaButtonUI extends MetalButtonUI {
+public class DarculaButtonUI extends BasicButtonUI {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
     return new DarculaButtonUI();

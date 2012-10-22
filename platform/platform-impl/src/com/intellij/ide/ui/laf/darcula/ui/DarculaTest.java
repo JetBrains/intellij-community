@@ -42,6 +42,10 @@ public class DarculaTest {
   private JTextField myThisTextIsDisabledTextField;
   private JPasswordField myPasswordField1;
   private JPanel myRoot;
+  private JButton myHelpButton;
+  private JButton myCancelButton;
+  private JButton myDisabledButton;
+  private JButton myDefaultButton;
 
   public static void main(String[] args) {
     try {
@@ -50,8 +54,10 @@ public class DarculaTest {
     catch (UnsupportedLookAndFeelException ignored) {}
     final JFrame frame = new JFrame("Darcula Demo");
     frame.setSize(600, 500);
-    final JPanel root = new DarculaTest().myRoot;
+    final DarculaTest form = new DarculaTest();
+    final JPanel root = form.myRoot;
     frame.setContentPane(root);
+    frame.getRootPane().setDefaultButton(form.myDefaultButton);
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
       @Override
