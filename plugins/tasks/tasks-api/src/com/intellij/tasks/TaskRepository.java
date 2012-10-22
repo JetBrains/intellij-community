@@ -22,7 +22,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -77,13 +76,14 @@ public abstract class TaskRepository  {
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
    *
    *
+   *
    * @param query repository specific.
    * @param max maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
    * @throws Exception
    */
-  public abstract List<Task> getIssues(@Nullable String query, int max, long since) throws Exception;
+  public abstract Task[] getIssues(@Nullable String query, int max, long since) throws Exception;
 
   @Nullable
   public abstract Task findTask(String id) throws Exception;

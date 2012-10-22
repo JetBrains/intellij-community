@@ -754,9 +754,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        final List<Task> tasks = repository.getIssues(request, max, since);
+        final Task[] tasks = repository.getIssues(request, max, since);
         myBadRepositories.remove(repository);
-        if (issues == null) issues = new ArrayList<Task>(tasks.size());
+        if (issues == null) issues = new ArrayList<Task>(tasks.length);
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
