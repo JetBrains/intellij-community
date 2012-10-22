@@ -364,7 +364,7 @@ public class MavenModuleImporter {
         if (defaultMavenProfile == null) {
           defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
           defaultMavenProfile.setEnabled(true);
-          moduleProfile.setOutputRelativeToContentRoot(true);
+          defaultMavenProfile.setOutputRelativeToContentRoot(true);
           defaultMavenProfile.setObtainProcessorsFromClasspath(true);
           defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_ANNOTATION_PATH_OUTPUT, false);
           defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_TEST_ANNOTATION_OUTPUT, true);
