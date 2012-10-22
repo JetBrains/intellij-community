@@ -254,7 +254,7 @@ public class AnnotationsHighlightUtil {
   @Nullable
   public static HighlightInfo checkApplicability(final PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
-    if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter) {
+    if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiTypeParameter) {
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
       if (nameRef == null) {
         return null;

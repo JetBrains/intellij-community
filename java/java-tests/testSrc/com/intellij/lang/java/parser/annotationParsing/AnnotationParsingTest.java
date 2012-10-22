@@ -16,8 +16,6 @@
 package com.intellij.lang.java.parser.annotationParsing;
 
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 
 /**
  * @author ven
@@ -40,15 +38,5 @@ public class AnnotationParsingTest extends JavaParsingTestCase {
   public void testQualifiedAnnotation() { doTest(true); }
   public void testEnumSmartTypeCompletion() { doTest(true); }
   public void testErrors() { doTest(true); }
-
-  public void testTypeAnno() {
-    doTest(true);
-    myFile.accept(new PsiRecursiveElementVisitor() {
-      @Override
-      public void visitErrorElement(PsiErrorElement element) {
-        fail(element.getErrorDescription());
-        super.visitErrorElement(element);
-      }
-    });
-  }
+  public void testTypeAnno() { doTest(true); }
 }
