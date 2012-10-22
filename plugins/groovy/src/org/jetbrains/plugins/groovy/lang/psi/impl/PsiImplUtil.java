@@ -499,7 +499,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static <T extends PsiElement> void setQualifier(GrQualifiedReference<T> ref, T newQualifier) {
+  public static <T extends PsiElement> void setQualifier(@NotNull GrQualifiedReference<T> ref, @Nullable T newQualifier) {
     final T oldQualifier = ref.getQualifier();
     final ASTNode node = ref.getNode();
     final PsiElement refNameElement = ref.getReferenceNameElement();
