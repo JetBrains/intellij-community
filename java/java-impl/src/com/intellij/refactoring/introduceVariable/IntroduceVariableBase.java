@@ -964,7 +964,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr, anchor);
-    final String variableName = suggestedName.names[0];
+    final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "";
     final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(project);
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {
