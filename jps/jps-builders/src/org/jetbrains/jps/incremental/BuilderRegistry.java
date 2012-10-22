@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -72,11 +71,15 @@ public class BuilderRegistry {
   }
 
   public List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
-    return Collections.unmodifiableList(myModuleLevelBuilders.get(category)); // todo
+    return Collections.unmodifiableList(myModuleLevelBuilders.get(category));
   }
 
   public List<ModuleLevelBuilder> getModuleLevelBuilders() {
-    return ContainerUtil.concat(myModuleLevelBuilders.values());
+    List<ModuleLevelBuilder> result = new ArrayList<ModuleLevelBuilder>();
+    for (BuilderCategory category : BuilderCategory.values()) {
+      result.addAll(getBuilders(category));
+    }
+    return result;
   }
 
   public List<TargetBuilder<?,?>> getTargetBuilders() {
