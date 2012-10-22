@@ -40,6 +40,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class HighlightNamesUtil {
@@ -48,13 +49,50 @@ public class HighlightNamesUtil {
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
                                                   @NotNull EditorColorsScheme colorsScheme) {
-    HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
+    boolean calledOnThis = isCalledOnThis(elementToHighlight);
+    boolean isInheritedMethod = false;
+    if (calledOnThis) {
+      PsiClass enclosingClass = findEnclosingClass(elementToHighlight);
+      isInheritedMethod = isMethodInHierarchy(method, enclosingClass.getSuperClass());
+    }
+
+    HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInheritedMethod);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
       HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
       if (info != null) return info;
     }
     return null;
+  }
+
+  private static boolean isMethodInHierarchy(PsiMethod method, PsiClass psiClass) {
+    if (Arrays.asList(psiClass.getAllMethods()).contains(method)) {
+      return true;
+    }
+    boolean result = false;
+    PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null) {
+      result = isMethodInHierarchy(method, superClass);
+    }
+    return result;
+  }
+
+  private static boolean isCalledOnThis(PsiElement elementToHighlight) {
+    PsiElement parent = elementToHighlight.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)parent;
+      PsiElement firstElement = psiReferenceExpression.getFirstChild();
+      return firstElement instanceof PsiThisExpression || firstElement instanceof PsiReferenceParameterList;
+    }
+    return false;
+  }
+
+  private static PsiClass findEnclosingClass(PsiElement element) {
+    PsiElement currentElement = element;
+    while (!(currentElement instanceof PsiClass)) {
+      currentElement = currentElement.getParent();
+    }
+    return (PsiClass)currentElement;
   }
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
@@ -126,10 +164,11 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static HighlightInfoType getMethodNameHighlightType(PsiMethod method, boolean isDeclaration) {
+  private static HighlightInfoType getMethodNameHighlightType(PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
     if (method.isConstructor()) {
       return isDeclaration ? HighlightInfoType.CONSTRUCTOR_DECLARATION : HighlightInfoType.CONSTRUCTOR_CALL;
     }
+    if (isInheritedMethod) return HighlightInfoType.INHERITED_METHOD;
     if (isDeclaration) return HighlightInfoType.METHOD_DECLARATION;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       return HighlightInfoType.STATIC_METHOD;

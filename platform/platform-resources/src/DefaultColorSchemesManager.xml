@@ -501,6 +501,14 @@
         </value>
       </option>
 
+      <option name="INHERITED_METHOD_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
+
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>

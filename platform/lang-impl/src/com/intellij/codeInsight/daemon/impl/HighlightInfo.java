@@ -291,6 +291,7 @@ public class HighlightInfo implements Segment {
     if (type == HighlightInfoType.METHOD_DECLARATION) return false;
     if (type == HighlightInfoType.STATIC_METHOD) return false;
     if (type == HighlightInfoType.ABSTRACT_METHOD) return false;
+    if (type == HighlightInfoType.INHERITED_METHOD) return false;
     if (type == HighlightInfoType.CONSTRUCTOR_CALL) return false;
     if (type == HighlightInfoType.CONSTRUCTOR_DECLARATION) return false;
     if (type == HighlightInfoType.INTERFACE_NAME) return false;
