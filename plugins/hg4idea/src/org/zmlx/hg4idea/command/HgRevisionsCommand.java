@@ -86,7 +86,7 @@ abstract class HgRevisionsCommand {
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result;
     if (argsForCmd != null) {
-      result = execute(hgCommandExecutor, hgFile.getRepo(), template, 1, originalHgFile, argsForCmd);
+      result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
     }
     else {
       result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile);
@@ -129,6 +129,7 @@ abstract class HgRevisionsCommand {
           String[] parentStrings = parentsString.trim().split(" ");
           for (String parentString : parentStrings) {
             String[] parentParts = parentString.split(":");
+            //if revision has only 1 parent and "--debug" argument were added,  its second parent has revision number  -1
             if (Integer.valueOf(parentParts[0]) >= 0) {
               parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
             }

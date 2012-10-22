@@ -384,8 +384,17 @@ public abstract class HgUtil {
     }
   }
 
-  //convert VcsVirtualFile to simple VirtualFile
-  public static VirtualFile convertToLocalVirtualFile(VirtualFile file) {
+  /**
+   * Convert VcsVirtualFile to "local" Virtual File if needed.
+   * If a file instanceof VcsVirtualFile, then his path is not the path to a local file and the VCS can not find his real location.
+   * This method is called in {@link org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider} class to work correctly getLocation().
+   *
+   * @param file file to convert
+   * @return local virtual file
+   */
+
+  @Nullable
+  public static VirtualFile convertToLocalVirtualFile(@Nullable VirtualFile file) {
     if (!(file instanceof VcsVirtualFile)) {
       return file;
     }

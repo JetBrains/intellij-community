@@ -189,9 +189,8 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
-    List<String> args = new ArrayList<String>();
-    args.add("--debug");
-    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args); //can be zero
+    List<HgFileRevision> localRevisions =
+      hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, Collections.singletonList("--debug")); //can be empty
 
     Collections.reverse(localRevisions);
 
@@ -254,10 +253,14 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     settings.CHANGE_AFTER = number.asString();
     settings.CHANGE_BEFORE = number.asString();
     // todo implement in proper way
-    final FilePathImpl filePath = new FilePathImpl(HgUtil.convertToLocalVirtualFile(file));
-    final List<CommittedChangeList> list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
-    if (list != null && list.size() == 1) {
-      return new Pair<CommittedChangeList, FilePath>(list.get(0), filePath);
+    VirtualFile localVitrualFile = HgUtil.convertToLocalVirtualFile(file);
+    if (localVitrualFile == null) {
+      return null;
+    }
+    final FilePathImpl filePath = new FilePathImpl(localVitrualFile);
+    final CommittedChangeList list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
+    if (list != null) {
+      return new Pair<CommittedChangeList, FilePath>(list, filePath);
     }
     return null;
   }
@@ -272,13 +275,13 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return false;
   }
 
-  public List<CommittedChangeList> getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
-    if(repositoryLocation == null){
+  @Nullable
+  public CommittedChangeList getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
+    if (repositoryLocation == null) {
       return null;
     }
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
-    List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     List<String> args = new ArrayList<String>();
@@ -299,12 +302,11 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
     }
     for (Map.Entry<String, String> copiedFile : localRevision.getCopiedFiles().entrySet()) {
-      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
+      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.COPIED));
     }
 
-    result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getCommitMessage(), localRevision.getAuthor(),
-                                         localRevision.getRevisionDate(),
-                                         changes));
-    return result;
+    return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getCommitMessage(), localRevision.getAuthor(),
+                                     localRevision.getRevisionDate(),
+                                     changes);
   }
 }
