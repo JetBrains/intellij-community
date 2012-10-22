@@ -44,6 +44,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -434,10 +435,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }, null));
       }
     }
-    else if ((info.myThrowable instanceof ClassNotFoundException || info.myThrowable instanceof NoClassDefFoundError) &&
-             myParseTime &&
-             !info.myThrowable.toString().contains("jetbrains") &&
-             !info.myThrowable.toString().contains("intellij")) {
+    else if (((info.myThrowable instanceof ClassNotFoundException || info.myThrowable instanceof NoClassDefFoundError) &&
+              myParseTime &&
+              !info.myThrowable.toString().contains("jetbrains") &&
+              !info.myThrowable.toString().contains("intellij")) ||
+             info.myThrowable instanceof ProcessCanceledException) {
       info.myShowLog = false;
     }
     else {
