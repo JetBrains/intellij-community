@@ -58,12 +58,12 @@ public class Pair<A, B> {
     this.second = second;
   }
 
-  @Nullable
+  @SuppressWarnings("ConstantConditions")
   public final A getFirst() {
     return first;
   }
 
-  @Nullable
+  @SuppressWarnings("ConstantConditions")
   public final B getSecond() {
     return second;
   }
