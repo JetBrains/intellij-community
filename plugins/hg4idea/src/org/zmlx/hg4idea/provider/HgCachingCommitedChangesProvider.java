@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -161,6 +161,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     return null;
   }
 
+  @Nullable
   public RepositoryLocation getLocationFor(FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
     if (repo == null) {
@@ -188,8 +189,9 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
-
-    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be zero
+    List<String> args = new ArrayList<String>();
+    args.add("--debug");
+    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args); //can be zero
 
     Collections.reverse(localRevisions);
 
@@ -219,9 +221,9 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   }
 
   private Change createChange(VirtualFile root,
-                              String fileBefore,
-                              HgRevisionNumber revisionBefore,
-                              String fileAfter,
+                              @Nullable String fileBefore,
+                              @Nullable HgRevisionNumber revisionBefore,
+                              @Nullable String fileAfter,
                               HgRevisionNumber revisionAfter,
                               FileStatus aStatus) {
 
@@ -252,9 +254,9 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     settings.CHANGE_AFTER = number.asString();
     settings.CHANGE_BEFORE = number.asString();
     // todo implement in proper way
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-    final List<CommittedChangeList> list = getCommittedChanges(settings, getLocationFor(filePath), 1);
-    if (list.size() == 1) {
+    final FilePathImpl filePath = new FilePathImpl(HgUtil.convertToLocalVirtualFile(file));
+    final List<CommittedChangeList> list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
+    if (list != null && list.size() == 1) {
       return new Pair<CommittedChangeList, FilePath>(list.get(0), filePath);
     }
     return null;
@@ -268,5 +270,41 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   @Override
   public boolean supportsIncomingChanges() {
     return false;
+  }
+
+  public List<CommittedChangeList> getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
+    if(repositoryLocation == null){
+      return null;
+    }
+    VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
+    HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
+    List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
+    HgLogCommand hgLogCommand = new HgLogCommand(project);
+    hgLogCommand.setLogFile(false);
+    List<String> args = new ArrayList<String>();
+    args.add("--debug");
+    args.add("--rev");
+    args.add(revision);
+    HgFileRevision localRevision = hgLogCommand.execute(hgFile, 1, true, args).get(0);
+    HgRevisionNumber vcsRevisionNumber = localRevision.getRevisionNumber();
+    HgRevisionNumber firstParent = vcsRevisionNumber.getParents().get(0);
+    List<Change> changes = new ArrayList<Change>();
+    for (String file : localRevision.getModifiedFiles()) {
+      changes.add(createChange(root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
+    }
+    for (String file : localRevision.getAddedFiles()) {
+      changes.add(createChange(root, null, null, file, vcsRevisionNumber, FileStatus.ADDED));
+    }
+    for (String file : localRevision.getDeletedFiles()) {
+      changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
+    }
+    for (Map.Entry<String, String> copiedFile : localRevision.getCopiedFiles().entrySet()) {
+      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
+    }
+
+    result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getCommitMessage(), localRevision.getAuthor(),
+                                         localRevision.getRevisionDate(),
+                                         changes));
+    return result;
   }
 }

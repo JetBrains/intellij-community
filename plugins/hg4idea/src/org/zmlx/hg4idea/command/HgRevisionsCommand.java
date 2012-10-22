@@ -65,7 +65,14 @@ abstract class HgRevisionsCommand {
   @Nullable
   protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile);
 
+  protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
+                                             String template, int limit, HgFile hgFile, @Nullable List<String> argsForCmd);
+
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
+    return execute(hgFile, limit, includeFiles, null);
+  }
+
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
     if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
       return Collections.emptyList();
     }
@@ -77,7 +84,13 @@ abstract class HgRevisionsCommand {
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    HgCommandResult result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile);
+    HgCommandResult result;
+    if (argsForCmd != null) {
+      result = execute(hgCommandExecutor, hgFile.getRepo(), template, 1, originalHgFile, argsForCmd);
+    }
+    else {
+      result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile);
+    }
 
     final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     if (result == null) {
@@ -116,7 +129,9 @@ abstract class HgRevisionsCommand {
           String[] parentStrings = parentsString.trim().split(" ");
           for (String parentString : parentStrings) {
             String[] parentParts = parentString.split(":");
-            parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
+            if (Integer.valueOf(parentParts[0]) >= 0) {
+              parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
+            }
           }
         }
         final HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(revisionString, changeset, parents);

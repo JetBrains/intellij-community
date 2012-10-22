@@ -25,6 +25,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcsUtil.VcsUtil;
@@ -380,5 +382,18 @@ public abstract class HgUtil {
     } else {
       runnable.run();
     }
+  }
+
+  //convert VcsVirtualFile to simple VirtualFile
+  public static VirtualFile convertToLocalVirtualFile(VirtualFile file) {
+    if (!(file instanceof VcsVirtualFile)) {
+      return file;
+    }
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile resultFile = lfs.findFileByPath(file.getPath());
+    if (resultFile == null) {
+      resultFile = lfs.refreshAndFindFileByPath(file.getPath());
+    }
+    return resultFile;
   }
 }
