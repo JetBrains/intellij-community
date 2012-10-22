@@ -300,7 +300,10 @@ public class ChangeContextUtil {
         PsiElement newRefElement = newMethodCall.getMethodExpression().resolve();
         return refElement.equals(newRefElement);
       }
-      else{
+      else if (refExpr instanceof PsiMethodReferenceExpression) {
+        return false;        
+      }
+      else {
         PsiReferenceExpression newRefExpr = (PsiReferenceExpression)factory.createExpressionFromText(
           refExpr.getReferenceName(), refExpr);
         PsiElement newRefElement = newRefExpr.resolve();
