@@ -1032,6 +1032,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
+    final GrReferenceExpression qualifier = superExpression.getQualifier();
+    if (qualifier == null) {
+      final GrMember container = PsiTreeUtil.getParentOfType(superExpression, GrMethod.class, GrClassInitializer.class);
+      if (container != null && container.hasModifierProperty(STATIC)) {
+        myHolder.createErrorAnnotation(superExpression, GroovyBundle.message("super.cannot.be.used.in.static.context"));
+      }
+    }
     checkThisOrSuperReferenceExpression(superExpression, myHolder);
   }
 
@@ -1409,23 +1416,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return PsiTreeUtil.getParentOfType(statement, GrLoopStatement.class, true, GrClosableBlock.class, GrMember.class, GroovyFile.class);
   }
 
-  private static void checkThisOrSuperReferenceExpression(GrExpression expression, AnnotationHolder holder) {
-    if (GroovyConfigUtils.getInstance().isVersionAtLeast(expression, GroovyConfigUtils.GROOVY1_8)) return;
-
-    final GrReferenceExpression qualifier = expression instanceof GrThisReferenceExpression
-                                            ? ((GrThisReferenceExpression)expression).getQualifier()
-                                            : ((GrSuperReferenceExpression)expression).getQualifier();
-    if (qualifier == null) {
-      if (expression instanceof GrSuperReferenceExpression) { //'this' refers to java.lang.Class<ThisClass> in static context
-        final GrMethod method = PsiTreeUtil.getParentOfType(expression, GrMethod.class);
-        if (method != null && method.hasModifierProperty(STATIC)) {
-          Annotation annotation =
-            holder.createInfoAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
-          annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
-        }
+  private static void checkThisOrSuperReferenceExpression(GrThisSuperReferenceExpression expression, AnnotationHolder holder) {
+    final GrReferenceExpression qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(expression, GrTypeDefinition.class, true, GroovyFile.class);
+      if (containingClass == null || containingClass.getContainingClass() == null && !containingClass.isAnonymous()) {
+        holder.createErrorAnnotation(expression, GroovyBundle.message("qualified.0.is.allowed.only.in.nested.or.inner.classes", expression.getReferenceName()));
+        return;
       }
-    }
-    else {
+
       final PsiElement resolved = qualifier.resolve();
       if (resolved instanceof PsiClass) {
         if (PsiTreeUtil.isAncestor(resolved, expression, true)) {
@@ -1442,7 +1441,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
       }
       else {
-        holder.createErrorAnnotation(qualifier, GroovyBundle.message("unknown.class", qualifier.getText()));
+        holder.createErrorAnnotation(qualifier, GroovyBundle.message("cannot.resolve", qualifier.getText()));
       }
     }
   }

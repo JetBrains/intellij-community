@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
+
 import com.intellij.testFramework.IdeaTestUtil
 import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
 import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
@@ -21,18 +22,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
-//import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-//import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
-//import org.jetbrains.plugins.groovy.codeInspection.bugs.*
-//import org.jetbrains.plugins.groovy.codeInspection.confusing.*
-//import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
-//import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
-//import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
-//import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
-//import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
-//import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-//import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
-//import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
+
 /**
  * @author peter
  */
