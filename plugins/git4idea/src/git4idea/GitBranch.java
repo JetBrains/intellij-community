@@ -21,8 +21,6 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static git4idea.repo.GitRepository.*;
-
 /**
  * <p>Represents a Git branch, local or remote.</p>
  *
@@ -54,7 +52,7 @@ public abstract class GitBranch extends GitReference {
 
   @NotNull private final Hash myHash;
 
-  public GitBranch(@NotNull String name, @NotNull Hash hash) {
+  protected GitBranch(@NotNull String name, @NotNull Hash hash) {
     super(cleanFromPrefix(name));
     myHash = hash;
   }

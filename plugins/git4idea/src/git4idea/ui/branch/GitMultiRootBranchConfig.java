@@ -138,7 +138,7 @@ public class GitMultiRootBranchConfig {
   @NotNull
   public static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
     Collection<String> trackingBranches = new ArrayList<String>(1);
-    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (remoteBranch.equals(trackInfo.getRemote().getName() + "/" + trackInfo.getRemoteBranch())) {
         trackingBranches.add(trackInfo.getBranch());
       }
@@ -148,7 +148,7 @@ public class GitMultiRootBranchConfig {
 
   @Nullable
   private static Pair<String, String> getTrackedBranchAndRemote(@NotNull GitRepository repository, @NotNull String branch) {
-    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (trackInfo.getBranch().equals(branch)) {
         return Pair.create(trackInfo.getRemoteBranch(), trackInfo.getRemote().getName());
       }

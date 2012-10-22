@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,36 +15,35 @@
  */
 package git4idea.repo;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import git4idea.GitPlatformFacade;
-import org.ini4j.Ini;
-import org.ini4j.Profile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+  import com.google.common.base.Function;
+  import com.google.common.collect.Collections2;
+  import com.intellij.ide.plugins.IdeaPluginDescriptor;
+  import com.intellij.openapi.diagnostic.Logger;
+  import com.intellij.openapi.util.Pair;
+  import com.intellij.openapi.util.text.StringUtil;
+  import git4idea.GitBranch;
+  import git4idea.GitPlatformFacade;
+  import git4idea.GitSvnRemoteBranch;
+  import org.ini4j.Ini;
+  import org.ini4j.Profile;
+  import org.jetbrains.annotations.NotNull;
+  import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+  import java.io.File;
+  import java.io.IOException;
+  import java.util.*;
+  import java.util.regex.Matcher;
+  import java.util.regex.Pattern;
 
 /**
- * <p>
- *   Contains information read from the {@code .git/config} file.
- *   To get the instance call {@link GitRepository#getConfig()}.
- *   It is updated (actually re-created) by the {@link GitRepositoryUpdater}.
- * </p>
+ * <p>Contains information read from the {@code .git/config} file.
+ *    To get the instance call {@link GitRepository#getConfig()}.
+ *    It is updated (actually re-created) by the {@link GitRepositoryUpdater}.</p>
  *
- * <p>
- *   Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.
- * </p>
+ * <p>Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.</p>
  *
  * TODO: note, that other git configuration files (such as ~/.gitconfig) are not handled yet.
  * 
- * TODO: for now, only git remotes are read 
- *
  * @author Kirill Likhodedov
  */
 public class GitConfig {
@@ -55,7 +54,9 @@ public class GitConfig {
    *   remote = .
    *   merge = refs/remotes/trunk
    * </pre>
+   * @deprecated Use {@link GitSvnRemoteBranch}
    */
+  @Deprecated
   public static final String DOT_REMOTE = ".";
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
@@ -65,50 +66,68 @@ public class GitConfig {
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"");
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch");
 
-  private final Collection<GitRemote> myRemotes;
-  private final Collection<GitBranchTrackInfo> myBranchTrackInfos;
+  @NotNull private final Collection<Remote> myRemotes;
+  @NotNull private final Collection<Url> myUrls;
+  @NotNull private final Collection<BranchConfig> myTrackedInfos;
 
-  private GitConfig(Collection<GitRemote> remotes, @NotNull Collection<GitBranchTrackInfo> branchTrackInfos) {
+
+  private GitConfig(@NotNull Collection<Remote> remotes, @NotNull Collection<Url> urls, @NotNull Collection<BranchConfig> trackedInfos) {
     myRemotes = remotes;
-    myBranchTrackInfos = branchTrackInfos;
+    myUrls = urls;
+    myTrackedInfos = trackedInfos;
   }
 
   /**
-   * <p>
-   *   Returns Git remotes defined in {@code .git/config}.
-   * </p>
-   * <p>
-   *   Remote is returned with all transformations (such as {@code pushUrl, url.<base>.insteadOf}) already applied to it.
-   *   See {@link GitRemote} for details.
-   * </p>
-   * <p>
-   *   <b>Note:</b> remotes can be defined separately in {@code .git/remotes} directory, by creating a file for each remote with
-   *   remote parameters written in the file.
-   *   This method returns ONLY remotes defined in {@code .git/config}.
-   *   The method is intentionally non-public forcing to use {@link GitRepository#getRemotes()} which returns the complete list.
-   * </p>
+   * <p>Returns Git remotes defined in {@code .git/config}.</p>
+   *
+   * <p>Remote is returned with all transformations (such as {@code pushUrl, url.<base>.insteadOf}) already applied to it.
+   *    See {@link GitRemote} for details.</p>
+   *
+   * <p><b>Note:</b> remotes can be defined separately in {@code .git/remotes} directory, by creating a file for each remote with
+   *    remote parameters written in the file. This method returns ONLY remotes defined in {@code .git/config}.</p>
    * @return Git remotes defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitRemote> getRemotes() {
-    return myRemotes;
+  Collection<GitRemote> parseRemotes() {
+    // populate GitRemotes with substituting urls when needed
+    return Collections2.transform(myRemotes, new Function<Remote, GitRemote>() {
+      @Override
+      public GitRemote apply(@Nullable Remote remote) {
+        assert remote != null;
+        return convertRemoteToGitRemote(myUrls, remote);
+      }
+    });
+  }
+
+  @NotNull
+  private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
+    UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
+    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
+                         remote.getFetchSpecs(), computePushSpec(remote));
   }
 
   /**
-   * @return branch tracking information defined in {@code .git/config}.
+   * Create branch tracking information based on the information defined in {@code .git/config}.
    */
   @NotNull
-  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-    return myBranchTrackInfos;
+  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitRemote> remotes,
+                                                 @NotNull Collection<GitBranch> branches, @NotNull Collection<GitBranch> remoteBranches) {
+    return Collections2.transform(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
+      @Nullable
+      @Override
+      public GitBranchTrackInfo apply(@Nullable BranchConfig input) {
+        if (input != null) {
+          return convertBranchConfig(input, remotes);
+        }
+        return null;
+      }
+    });
   }
 
   /**
    * Creates an instance of GitConfig by reading information from the specified {@code .git/config} file.
-   * @param configFile
-   * @return
-   * @throws GitRepoStateException if {@code .git/config} couldn't be read or has invalid format.
-   * <br/>
-   * If it has valid format in general, but some sections are invalid, it skips invalid sections, but reports an error.
+   * @throws GitRepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
+   *         If in general it has valid format, but some sections are invalid, it skips invalid sections, but reports an error.
    */
   @NotNull
   static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
@@ -120,32 +139,32 @@ public class GitConfig {
     }
     catch (IOException e) {
       LOG.error(new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
-      return new GitConfig(Collections.<GitRemote>emptyList(), Collections.<GitBranchTrackInfo>emptyList());
+      return new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(), Collections.<BranchConfig>emptyList());
     }
 
     IdeaPluginDescriptor plugin = platformFacade.getPluginByClassName(GitConfig.class.getName());
     ClassLoader classLoader = plugin == null ? null : plugin.getPluginClassLoader(); // null if IDEA is started from IDEA
 
-    Collection<GitRemote> gitRemotes = parseRemotes(ini, classLoader);
-    Collection<GitBranchTrackInfo> trackedInfos = parseTrackedInfos(ini, classLoader, gitRemotes);
+    Pair<Collection<Remote>, Collection<Url>> remotesAndUrls = parseRemotes(ini, classLoader);
+    Collection<BranchConfig> trackedInfos = parseTrackedInfos(ini, classLoader);
     
-    return new GitConfig(gitRemotes, trackedInfos);
+    return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos);
   }
 
-  private static Collection<GitBranchTrackInfo> parseTrackedInfos(Ini ini, ClassLoader classLoader, Collection<GitRemote> remotes) {
-    Collection<GitBranchTrackInfo> branchTrackInfos = new ArrayList<GitBranchTrackInfo>();
+  @NotNull
+  private static Collection<BranchConfig> parseTrackedInfos(@NotNull Ini ini, @Nullable ClassLoader classLoader) {
+    Collection<BranchConfig> configs = new ArrayList<BranchConfig>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
       if (sectionName.startsWith("branch")) {
         BranchConfig branchConfig = parseBranchSection(sectionName, section,  classLoader);
-        GitBranchTrackInfo branchTrackInfo = convertBranchConfig(branchConfig, remotes);
-        if (branchTrackInfo != null) {
-          branchTrackInfos.add(branchTrackInfo);
+        if (branchConfig != null) {
+          configs.add(branchConfig);
         }
       }
     }
-    return branchTrackInfos;
+    return configs;
   }
 
   @Nullable
@@ -204,7 +223,8 @@ public class GitConfig {
     return null;
   }
 
-  private static Collection<GitRemote> parseRemotes(Ini ini, ClassLoader classLoader) {
+  @NotNull
+  private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini, @Nullable ClassLoader classLoader) {
     Collection<Remote> remotes = new ArrayList<Remote>();
     Collection<Url> urls = new ArrayList<Url>();
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
@@ -224,25 +244,7 @@ public class GitConfig {
         }
       }
     }
-
-    return makeGitRemotes(remotes, urls);
-  }
-
-  // populate GitRemotes with substituting urls when needed
-  @NotNull
-  private static Collection<GitRemote> makeGitRemotes(@NotNull Collection<Remote> remotes, @NotNull Collection<Url> urls) {
-    Collection<GitRemote> gitRemotes = new ArrayList<GitRemote>(remotes.size());
-    for (Remote remote : remotes) {
-      GitRemote gitRemote = convertRemoteToGitRemote(urls, remote);
-      gitRemotes.add(gitRemote);
-    }
-    return gitRemotes;
-  }
-
-  @NotNull
-  private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
-    UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
-    return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(), remote.getFetchSpecs(), computePushSpec(remote));
+    return Pair.create(remotes, urls);
   }
 
   @NotNull

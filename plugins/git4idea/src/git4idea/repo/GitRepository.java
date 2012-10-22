@@ -130,9 +130,6 @@ public interface GitRepository {
   @NotNull
   GitBranchesCollection getBranches();
 
-  @NotNull
-  GitConfig getConfig();
-
   /**
    * Returns remotes defined in this Git repository.
    * It is different from {@link git4idea.repo.GitConfig#getRemotes()} because remotes may be defined not only in {@code .git/config},
@@ -144,6 +141,9 @@ public interface GitRepository {
    */
   @NotNull
   Collection<GitRemote> getRemotes();
+
+  @NotNull
+  Collection<GitBranchTrackInfo> getBranchTrackInfos();
 
   boolean isMergeInProgress();
 

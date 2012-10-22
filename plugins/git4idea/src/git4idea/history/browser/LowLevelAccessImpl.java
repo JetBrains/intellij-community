@@ -35,7 +35,6 @@ import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryImpl;
@@ -277,12 +276,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       }
       GitBranch branch = null;
       if (isRemote) {
-        int slashIndex = b.indexOf('/');
-        String remoteName = b.substring(0, slashIndex);
-        String localName = b.substring(slashIndex + 1);
-        GitRemote remote = GitBranchUtil.findRemoteByNameOrLogError(project, root, remoteName);
-        if (remote != null) {
-          branch = new GitRemoteBranch(remote, localName, GitBranch.DUMMY_HASH);
+        GitRepository repository = GitUtil.getRepositoryForRootOrLogError(project, root);
+        if (repository != null) {
+          branch = GitBranchUtil.parseRemoteBranch(b, GitBranch.DUMMY_HASH, repository.getRemotes());
         }
       }
       else {

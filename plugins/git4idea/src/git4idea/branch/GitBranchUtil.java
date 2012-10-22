@@ -21,15 +21,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitSvnRemoteBranch;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.config.GitConfigUtil;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitConfig;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
+import git4idea.repo.*;
 import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +47,7 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForBranch(@NotNull GitRepository repository, @NotNull GitBranch branch) {
-    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (trackInfo.getBranch().equals(branch.getName())) {
         return trackInfo;
       }
@@ -195,4 +189,42 @@ public class GitBranchUtil {
     }
     return remote;
   }
+
+  /**
+   *
+   * @return {@link GitRemoteBranch} or {@link GitSvnRemoteBranch}, or null in case of an error. The error is logged in this method.
+   * @deprecated Should be used only in the GitRepositoryReader, i. e. moved there once all other usages are removed.
+   */
+  @Deprecated
+  @Nullable
+  public static GitBranch parseRemoteBranch(@NotNull String fullBranchName, @NotNull Hash hash, @NotNull Collection<GitRemote> remotes) {
+    String stdName = fullBranchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
+
+    int slash = stdName.indexOf('/');
+    if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
+      return new GitSvnRemoteBranch(fullBranchName, hash);
+    }
+    else {
+      String remoteName = stdName.substring(0, slash);
+      String branchName = stdName.substring(slash + 1);
+      GitRemote remote = findRemoteByName(remoteName, remotes);
+      if (remote == null) {
+        return null;
+      }
+      return new GitRemoteBranch(remote, branchName, hash);
+    }
+  }
+
+  @Nullable
+  private static GitRemote findRemoteByName(@NotNull String remoteName, @NotNull Collection<GitRemote> remotes) {
+    for (GitRemote remote : remotes) {
+      if (remote.getName().equals(remoteName)) {
+        return remote;
+      }
+    }
+    // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
+    LOG.info(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
+    return null;
+  }
+
 }

@@ -366,7 +366,7 @@ public final class GitPusher {
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull GitBranch source) {
-    for (GitBranchTrackInfo trackInfo : repository.getConfig().getBranchTrackInfos()) {
+    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (trackInfo.getBranch().equals(source.getName())) {
         return true;
       }

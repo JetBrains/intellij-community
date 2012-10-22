@@ -170,13 +170,13 @@ public class GitLightRepository implements GitRepository {
 
   @NotNull
   @Override
-  public GitConfig getConfig() {
+  public Collection<GitRemote> getRemotes() {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public Collection<GitRemote> getRemotes() {
+  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
     throw new UnsupportedOperationException();
   }
 

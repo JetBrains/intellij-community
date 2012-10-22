@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.GitBranch;
 import git4idea.test.GitTestPlatformFacade;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.DataProvider;
@@ -49,13 +50,15 @@ public class GitConfigTest {
   @Test(dataProvider = "remote")
   public void testRemotes(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
-    GitTestUtil.assertEqualCollections(config.getRemotes(), readRemoteResults(resultFile));
+    GitTestUtil.assertEqualCollections(config.parseRemotes(), readRemoteResults(resultFile));
   }
   
   @Test(dataProvider = "branch")
   public void testBranches(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
-    GitTestUtil.assertEqualCollections(config.getBranchTrackInfos(), readBranchResults(resultFile));
+    GitTestUtil.assertEqualCollections(
+      config.parseTrackInfos(config.parseRemotes(), Collections.<GitBranch>emptyList(), Collections.<GitBranch>emptyList()),
+      readBranchResults(resultFile));
   }
 
   private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
