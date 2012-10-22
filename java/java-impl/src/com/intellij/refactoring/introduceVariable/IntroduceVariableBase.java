@@ -440,7 +440,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                                              args, PsiSubstitutor.EMPTY, parent,
                                                                                              DefaultParameterTypeInferencePolicy.INSTANCE);
 
-      if (startOffset < args[parameters.length - 1].getTextRange().getStartOffset()) return null;
+      if (args.length < parameters.length || startOffset < args[parameters.length - 1].getTextRange().getStartOffset()) return null;
 
       final PsiFile containingFile = parent.getContainingFile();
 
