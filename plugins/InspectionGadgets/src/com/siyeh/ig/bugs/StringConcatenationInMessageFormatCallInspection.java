@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,35 +29,31 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationInMessageFormatCallInspection
-  extends BaseInspection {
+public class StringConcatenationInMessageFormatCallInspection extends BaseInspection {
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.message.format.call.display.name");
+    return InspectionGadgetsBundle.message("string.concatenation.in.message.format.call.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "string.concatenation.in.message.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.concatenation.in.message.format.call.problem.descriptor");
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)infos[0];
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
     final String referenceName = referenceExpression.getReferenceName();
     return new StringConcatenationInFormatCallFix(referenceName);
   }
 
-  private static class StringConcatenationInFormatCallFix
-    extends InspectionGadgetsFix {
+  private static class StringConcatenationInFormatCallFix extends InspectionGadgetsFix {
 
     private final String variableName;
 
@@ -67,19 +63,16 @@ public class StringConcatenationInMessageFormatCallInspection
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "string.concatenation.in.format.call.quickfix", variableName);
+      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix", variableName);
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiBinaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)element;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
       final PsiElement parent = binaryExpression.getParent();
       if (!(parent instanceof PsiExpressionList)) {
         return;
@@ -96,8 +89,7 @@ public class StringConcatenationInMessageFormatCallInspection
       final Object constant =
         ExpressionUtils.computeConstantExpression(lhs);
       if (constant instanceof String) {
-        final PsiExpression newExpression =
-          addParameter(lhs, parameter);
+        final PsiExpression newExpression = addParameter(lhs, parameter);
         if (newExpression == null) {
           expressionList.addAfter(lhs, binaryExpression);
         }
@@ -111,17 +103,15 @@ public class StringConcatenationInMessageFormatCallInspection
       binaryExpression.delete();
     }
 
-    private static PsiExpression addParameter(PsiExpression expression,
-                                              int parameterNumber) {
+    @Nullable
+    private static PsiExpression addParameter(PsiExpression expression, int parameterNumber) {
       if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs == null) {
           return null;
         }
-        final PsiExpression newExpression =
-          addParameter(rhs, parameterNumber);
+        final PsiExpression newExpression = addParameter(rhs, parameterNumber);
         if (newExpression == null) {
           return null;
         }
@@ -129,17 +119,14 @@ public class StringConcatenationInMessageFormatCallInspection
         return expression;
       }
       else if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression =
-          (PsiLiteralExpression)expression;
+        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
         final Object value = literalExpression.getValue();
         if (!(value instanceof String)) {
           return null;
         }
         final Project project = expression.getProject();
-        final PsiElementFactory factory =
-          JavaPsiFacade.getElementFactory(project);
-        return factory.createExpressionFromText("\"" + value + '{' +
-                                                parameterNumber + "}\"", null);
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        return factory.createExpressionFromText("\"" + value + '{' + parameterNumber + "}\"", null);
       }
       else {
         return null;
@@ -152,19 +139,14 @@ public class StringConcatenationInMessageFormatCallInspection
     return new StringConcatenationInMessageFormatCallVisitor();
   }
 
-  private static class StringConcatenationInMessageFormatCallVisitor
-    extends BaseInspectionVisitor {
+  private static class StringConcatenationInMessageFormatCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      if (!isMessageFormatCall(methodExpression)) {
+      if (!isMessageFormatCall(expression)) {
         return;
       }
-
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -176,8 +158,7 @@ public class StringConcatenationInMessageFormatCallInspection
         return;
       }
       final int formatArgumentIndex;
-      if ("java.util.Locale".equals(type.getCanonicalText())
-          && arguments.length > 1) {
+      if ("java.util.Locale".equals(type.getCanonicalText()) && arguments.length > 1) {
         formatArgumentIndex = 1;
       }
       else {
@@ -185,8 +166,7 @@ public class StringConcatenationInMessageFormatCallInspection
       }
       final PsiExpression formatArgument = arguments[formatArgumentIndex];
       final PsiType formatArgumentType = formatArgument.getType();
-      if (formatArgumentType == null ||
-          !formatArgumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (formatArgumentType == null || !formatArgumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
       if (!(formatArgument instanceof PsiBinaryExpression)) {
@@ -195,9 +175,7 @@ public class StringConcatenationInMessageFormatCallInspection
       if (PsiUtil.isConstantExpression(formatArgument)) {
         return;
       }
-
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)formatArgument;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)formatArgument;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiType lhsType = lhs.getType();
       if (lhsType == null || !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -210,27 +188,23 @@ public class StringConcatenationInMessageFormatCallInspection
       registerError(formatArgument, rhs);
     }
 
-    private static boolean isMessageFormatCall(
-      PsiReferenceExpression methodExpression) {
-      @NonNls final String referenceName =
-        methodExpression.getReferenceName();
+    private static boolean isMessageFormatCall(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String referenceName = methodExpression.getReferenceName();
       if (!"format".equals(referenceName)) {
         return false;
       }
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (!(qualifierExpression instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifierExpression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiClass)) {
         return false;
       }
       final PsiClass aClass = (PsiClass)target;
-      return InheritanceUtil.isInheritor(aClass,
-                                         "java.text.MessageFormat");
+      return InheritanceUtil.isInheritor(aClass, "java.text.MessageFormat");
     }
   }
 }

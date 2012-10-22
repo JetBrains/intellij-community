@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends BaseInspection {
@@ -32,15 +32,13 @@ public class BigDecimalEqualsInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "big.decimal.equals.display.name");
+    return InspectionGadgetsBundle.message("big.decimal.equals.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "big.decimal.equals.problem.descriptor");
+    return InspectionGadgetsBundle.message("big.decimal.equals.problem.descriptor");
   }
 
   @Override
@@ -51,20 +49,15 @@ public class BigDecimalEqualsInspection extends BaseInspection {
   private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "big.decimal.equals.replace.quickfix");
+      return InspectionGadgetsBundle.message("big.decimal.equals.replace.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression =
-        (PsiReferenceExpression)name.getParent();
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       assert expression != null;
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression.getParent();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final PsiExpression qualifier = expression.getQualifierExpression();
       if (qualifier == null) {
         return;
@@ -74,8 +67,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] args = argumentList.getExpressions();
       final String argText = args[0].getText();
-      replaceExpression(call,
-                        qualifierText + ".compareTo(" + argText + ")==0");
+      replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0");
     }
   }
 
@@ -87,27 +79,23 @@ public class BigDecimalEqualsInspection extends BaseInspection {
   private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!MethodCallUtils.isEqualsCall(expression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
         return;
       }
       final PsiExpression arg = arguments[0];
-      if (!TypeUtils.expressionHasType(arg, "java.math.BigDecimal")) {
+      if (!ExpressionUtils.hasType(arg, "java.math.BigDecimal")) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!TypeUtils.expressionHasType(qualifier, "java.math.BigDecimal"
-      )) {
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (!ExpressionUtils.hasType(qualifier, "java.math.BigDecimal")) {
         return;
       }
       final PsiElement context = expression.getParent();

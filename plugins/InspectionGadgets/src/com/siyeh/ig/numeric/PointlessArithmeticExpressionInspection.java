@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,8 +181,7 @@ public class PointlessArithmeticExpressionInspection
       if (!arithmeticTokens.contains(expression.getOperationTokenType())) {
         return;
       }
-      if (TypeUtils.expressionHasType(expression,
-                                      CommonClassNames.JAVA_LANG_STRING)) {
+      if (ExpressionUtils.hasStringType(expression)) {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
