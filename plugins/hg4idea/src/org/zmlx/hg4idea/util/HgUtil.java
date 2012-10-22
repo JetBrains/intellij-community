@@ -25,6 +25,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -385,14 +387,13 @@ public abstract class HgUtil {
   }
 
   /**
-   * Convert VcsVirtualFile to "local" Virtual File if needed.
-   * If a file instanceof VcsVirtualFile, then his path is not the path to a local file and the VCS can not find his real location.
-   * This method is called in {@link org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider} class to work correctly getLocation().
+   * Convert {@link VcsVirtualFile} to the {@link LocalFileSystem local} Virtual File.
    *
-   * @param file file to convert
-   * @return local virtual file
+   * TODO
+   * It is a workaround for the following problem: VcsVirtualFiles returned from the {@link FileHistoryPanelImpl} contain the current path
+   * of the file, not the path that was in certain revision. This has to be fixed by making {@link HgFileRevision} implement
+   * {@link VcsFileRevisionEx}.
    */
-
   @Nullable
   public static VirtualFile convertToLocalVirtualFile(@Nullable VirtualFile file) {
     if (!(file instanceof VcsVirtualFile)) {
