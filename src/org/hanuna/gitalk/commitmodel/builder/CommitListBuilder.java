@@ -6,71 +6,55 @@ import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.SimpleReadOnlyList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author erokhins
  */
 public class CommitListBuilder {
     private final List<Commit> commits = new ArrayList<Commit>();
-    private final MutableCommitNodeCache cache = new MutableCommitNodeCache();
+    private final Map<Hash, MutableCommit> cache = new HashMap<Hash, MutableCommit>();
+    // commits, which was read or parent of read commit
+    private int countUniqueCommits = 0;
+
+    @NotNull
+    private MutableCommit getCommit(@NotNull Hash hash) {
+        MutableCommit commit = cache.get(hash);
+        if (commit == null) {
+            countUniqueCommits++;
+            commit = new MutableCommit(hash);
+            cache.put(hash, commit);
+        }
+        return commit;
+    }
+
+    private void removeCommit(@NotNull Hash hash) {
+        cache.remove(hash);
+    }
 
     public void append(@NotNull CommitData data) {
-        MutableCommit commit = cache.pop(data.getHash());
+        boolean hasChildren = true;
+        int startCountCommits = this.countUniqueCommits;
+        MutableCommit commit = getCommit(data.getHash());
+        if (startCountCommits < this.countUniqueCommits) {
+            hasChildren = false;
+            startCountCommits = this.countUniqueCommits;
+        }
         List<Commit> parents = new ArrayList<Commit>(data.getParentsHash().size());
         for (Hash hash : data.getParentsHash()) {
-            parents.add(cache.get(hash));
+            MutableCommit parent = getCommit(hash);
+            parents.add(parent);
         }
-        commit.set(data, new SimpleReadOnlyList<Commit>(parents), commits.size());
+        removeCommit(data.getHash());
+        commit.set(data, new SimpleReadOnlyList<Commit>(parents), hasChildren,
+                    this.countUniqueCommits - startCountCommits, commits.size());
         commits.add(commit);
     }
 
     @NotNull
     public ReadOnlyList<Commit> build() {
-        cache.checkEmpty();
         return new SimpleReadOnlyList<Commit>(commits);
-    }
-
-    private static class MutableCommitNodeCache {
-        private final Map<Hash, MutableCommit> cache = new HashMap<Hash, MutableCommit>();
-
-
-        @NotNull
-        public MutableCommit get(@Nullable Hash hash) {
-            if (hash == null) {
-                return null;
-            }
-            MutableCommit commit = cache.get(hash);
-            if (commit == null) {
-                commit = new MutableCommit();
-                cache.put(hash, commit);
-            }
-            return commit;
-        }
-
-        @NotNull
-        public MutableCommit pop(@Nullable Hash hash) {
-            if (hash == null) {
-                return null;
-            }
-            MutableCommit commit = cache.get(hash);
-            if (commit == null) {
-                commit = new MutableCommit();
-            }
-                cache.remove(hash);
-            return commit;
-        }
-
-        public void checkEmpty() {
-            if (!cache.isEmpty()) {
-                throw new NotFullLog(cache.keySet());
-            }
-        }
     }
 
 }

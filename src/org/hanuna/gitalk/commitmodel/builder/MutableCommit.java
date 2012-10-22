@@ -9,41 +9,36 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class MutableCommit implements Commit {
-    private CommitData data;
+class MutableCommit implements Commit {
+    private final Hash hash;
     private ReadOnlyList<Commit> parents;
-    private int index;
-    private int countNewCommits;
+    private boolean hasChildren;
+    private String author;
+    private String message;
+    private long timeStamp;
+    private int index = -1;
+    private int countNewUniqueCommitsAmongParents;
 
-    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, int index) {
-        this.data = data;
+    public MutableCommit(Hash hash) {
+        this.hash = hash;
+    }
+
+    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, boolean hasChildren,
+                    int countNewUniqueCommitsAmongParents, int index) {
         this.parents = parents;
+        this.hasChildren = hasChildren;
+        this.countNewUniqueCommitsAmongParents = countNewUniqueCommitsAmongParents;
+        this.author = data.getAuthor();
+        this.message = data.getCommitMessage();
+        this.timeStamp = data.getTimeStamp();
         this.index = index;
-        this.countNewCommits = -1;
     }
 
 
     @NotNull
     @Override
     public Hash hash() {
-        return data.getHash();
-    }
-
-    @Override
-    public long getTimeStamp() {
-        return data.getTimeStamp();
-    }
-
-    @NotNull
-    @Override
-    public String getMessage() {
-        return data.getCommitMessage();
-    }
-
-    @NotNull
-    @Override
-    public String getAuthor() {
-        return data.getAuthor();
+        return hash;
     }
 
     @NotNull
@@ -53,13 +48,49 @@ public class MutableCommit implements Commit {
     }
 
     @Override
-    public int countNewCommits() {
-        return countNewCommits;
+    public boolean hasChildren() {
+        return hasChildren;
     }
 
+    @Override
+    public int countNewUniqueCommitsAmongParents() {
+        return countNewUniqueCommitsAmongParents;
+    }
+
+    @NotNull
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    @NotNull
+    @Override
+    public String getAuthor() {
+        return author;
+    }
+
+    @Override
+    public long getTimeStamp() {
+        return timeStamp;
+    }
+
+
+    public boolean equals(Object obj) {
+        if (obj instanceof Commit) {
+            return ((Commit) obj).hash().equals(hash);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return hash.hashCode();
+    }
 
     @Override
     public int index() {
+        assert index != -1 : "index undefined";
         return index;
     }
+
 }
