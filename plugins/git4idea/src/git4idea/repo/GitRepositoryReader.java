@@ -260,28 +260,9 @@ class GitRepositoryReader {
     Set<GitBranch> localBranches = readUnpackedLocalBranches();
     Set<GitBranch> remoteBranches = readUnpackedRemoteBranches(remotes);
     GitBranchesCollection packedBranches = readPackedBranches(remotes);
-    addPackedBranches(packedBranches.getLocalBranches(), localBranches);
-    addPackedBranches(packedBranches.getRemoteBranches(), remoteBranches);
+    localBranches.addAll(packedBranches.getLocalBranches());
+    remoteBranches.addAll(packedBranches.getRemoteBranches());
     return new GitBranchesCollection(localBranches, remoteBranches);
-  }
-
-  // this is to avoid hash comparison in GitBranch.equals that leads to a log error.
-  // the algorithm is N^2 instead of N, but the number of branches rarely exceeds even 100, so that shouldn't be a problem.
-  private static void addPackedBranches(@NotNull Collection<GitBranch> packedBranches, @NotNull Set<GitBranch> branchesCollection) {
-    Set<GitBranch> branchesToAdd = new HashSet<GitBranch>();
-    for (GitBranch packedBranch : packedBranches) {
-      boolean found = false;
-      for (GitBranch branch : branchesCollection) {
-        if (branch.getName().equals(packedBranch.getName())) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        branchesToAdd.add(packedBranch);
-      }
-    }
-    branchesCollection.addAll(branchesToAdd);
   }
 
   /**
