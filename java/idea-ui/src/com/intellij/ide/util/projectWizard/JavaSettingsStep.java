@@ -19,12 +19,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.ProjectSettingsStep;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +57,12 @@ public class JavaSettingsStep extends ProjectSettingsStep {
 
     ProjectSdksModel model = new ProjectSdksModel();
     Project project = wizardContext.getProject();
-    model.reset(project);
+    model.reset(project, new Condition<Sdk>() {
+      @Override
+      public boolean value(Sdk sdk) {
+        return sdk.getSdkType() instanceof JavaSdkType;
+      }
+    });
     myJdkComboBox = new JdkComboBox(model);
     JButton button = new JButton("\u001BNew...");
     myJdkComboBox.setSetupButton(button, project, model,

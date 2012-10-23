@@ -86,12 +86,14 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset(@Nullable Project project) {
+  public void reset(@Nullable Project project, Condition<Sdk> filter) {
     myProjectSdks.clear();
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
-        myProjectSdks.put(sdk, (Sdk)sdk.clone());
+        if (filter.value(sdk)) {
+          myProjectSdks.put(sdk, (Sdk)sdk.clone());
+        }
       }
       catch (CloneNotSupportedException e) {
         //can't be
@@ -102,6 +104,10 @@ public class ProjectSdksModel implements SdkModel {
     }
     myModified = false;
     myInitialized = true;
+  }
+
+  public void reset(@Nullable Project project) {
+    reset(project, Condition.TRUE);
   }
 
   public void disposeUIResources() {
