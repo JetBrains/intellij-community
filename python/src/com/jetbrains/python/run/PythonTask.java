@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,7 +112,7 @@ public class PythonTask {
       bashParams.addParameter("-cl");
 
       NotNullFunction<String, String> escaperFunction = StringUtil.escaper(false, "|>$\"'& ");
-      StringBuilder paramString = new StringBuilder(escaperFunction.fun(homePath) + " " +escaperFunction.fun(myRunnerScript));
+      StringBuilder paramString = new StringBuilder(escaperFunction.fun(homePath) + " " + escaperFunction.fun(myRunnerScript));
 
       for (String p : myParameters) {
         paramString.append(" ").append(p);
@@ -152,8 +153,9 @@ public class PythonTask {
 
   protected List<String> setupPythonPath(final boolean addProjectRoot) {
     final List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(mySdk));
-    if (addProjectRoot)
+    if (addProjectRoot) {
       pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule));
+    }
     return pythonPath;
   }
 
@@ -174,6 +176,19 @@ public class PythonTask {
           }
         }
       })
+      .withStop(new Runnable() {
+                  @Override
+                  public void run() {
+                    process.destroyProcess();
+                  }
+                }, new Computable<Boolean>() {
+
+                  @Override
+                  public Boolean compute() {
+                    return !process.isProcessTerminated();
+                  }
+                }
+      )
       .withAfterCompletion(myAfterCompletion)
       .withHelpId(myHelpId)
       .run();
