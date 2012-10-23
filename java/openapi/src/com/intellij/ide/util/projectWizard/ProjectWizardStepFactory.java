@@ -28,7 +28,7 @@ import javax.swing.*;
 /**
  * A factory for creating some commonly used project wizards steps
  */
-public abstract class ProjectWizardStepFactory {
+public abstract class ProjectWizardStepFactory extends CommonWizardStepFactory {
 
   public static ProjectWizardStepFactory getInstance() {
     return ServiceManager.getService(ProjectWizardStepFactory.class);
@@ -70,4 +70,6 @@ public abstract class ProjectWizardStepFactory {
 
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider);
+
+  public abstract SettingsStep createJavaSettingsStep(WizardContext context);
 }

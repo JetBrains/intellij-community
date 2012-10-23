@@ -16,10 +16,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -103,8 +100,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public ModuleWizardStep createSettingsStep(WizardContext context) {
-    return ProjectWizardStepFactory.getInstance().createNameAndLocationStep(context);
+  public SettingsStep createSettingsStep(WizardContext context) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context);
   }
 
   private static Icon getJavaModuleIcon() {

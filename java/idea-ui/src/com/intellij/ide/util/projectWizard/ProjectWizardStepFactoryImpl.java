@@ -20,14 +20,21 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -135,5 +142,32 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
       return new SupportForFrameworksStep(builder, container);
     }
     return null;
+  }
+
+  @Override
+  public SettingsStep createJavaSettingsStep(final WizardContext context) {
+
+    ProjectSdksModel model = new ProjectSdksModel();
+    model.reset(context.getProject());
+    final JdkComboBox jdkComboBox = new JdkComboBox(model);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
+    panel.add(new JBCheckBox("Create source root:"), BorderLayout.WEST);
+    panel.add(new JBTextField(), BorderLayout.CENTER);
+
+    return new ProjectSettingsStep(context) {
+      @Override
+      public void updateDataModel() {
+        super.updateDataModel();
+        context.setProjectJdk(jdkComboBox.getSelectedJdk());
+      }
+    }.addField("Project &SDK:", jdkComboBox).addExpertPanel(panel);
+  }
+
+  @NotNull
+  @Override
+  public SettingsStep createSettingsStep(WizardContext context) {
+    return new ProjectSettingsStep(context);
   }
 }

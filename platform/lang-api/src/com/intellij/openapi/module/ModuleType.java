@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +50,8 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   @Nullable
-  public ModuleWizardStep createSettingsStep(WizardContext context) {
-    return null;
+  public SettingsStep createSettingsStep(WizardContext context) {
+    return CommonWizardStepFactory.getFactory().createSettingsStep(context);
   }
 
   public final String getId() {
