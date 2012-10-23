@@ -12,3 +12,5 @@ abstract class C {
   @Anno(nested = {@Anno, @Anno})
   void notWrong() { }
 }
+
+class B extends <error descr="Annotations are not allowed here">@Deprecated</error> Object{}
