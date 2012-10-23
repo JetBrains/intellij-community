@@ -28,10 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,13 +93,13 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
-    if (expr instanceof GrThisReferenceExpression) {
-      possibleNames.add(validator.validateName("thisInstance", true));
-    }
-    if (expr instanceof GrSuperReferenceExpression) {
-      possibleNames.add(validator.validateName("superInstance", true));
-    }
     if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getName() != null) {
+      if (PsiUtil.isThisReference(expr)) {
+        possibleNames.add(validator.validateName("thisInstance", true));
+      }
+      if (PsiUtil.isSuperReference(expr)) {
+        possibleNames.add(validator.validateName("superInstance", true));
+      }
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
       String name = refExpr.getName();
       if (name != null && name.toUpperCase().equals(name)) {

@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -390,7 +389,7 @@ public class GroovyIntroduceParameterUtil {
     public void visitReferenceExpression(GrReferenceExpression ref) {
       super.visitReferenceExpression(ref);
       final GrExpression qualifier = ref.getQualifier();
-      if (qualifier != null && !(qualifier instanceof GrThisReferenceExpression)) return;
+      if (!PsiUtil.isThisReference(qualifier)) return;
 
       final PsiElement resolved = ref.resolve();
       if (!(resolved instanceof PsiField)) return;

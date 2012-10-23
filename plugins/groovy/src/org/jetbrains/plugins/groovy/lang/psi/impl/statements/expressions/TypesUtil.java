@@ -52,7 +52,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -716,7 +719,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiClassType createSimilarCollection(PsiType collection, Project project, PsiType... itemType) {
+  public static PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
     if (InheritanceUtil.isInheritor(collection, "java.util.SortedSet")) {
       return createCollection(project, "java.util.SortedSet", itemType);
     }

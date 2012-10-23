@@ -104,7 +104,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   public static boolean expressionIsIncorrect(GrExpression expression, boolean acceptVoidCalls) {
     if (expression instanceof GrParenthesizedExpression) return true;
-    if (expression instanceof GrSuperReferenceExpression) return true;
+    if (PsiUtil.isSuperReference(expression)) return true;
     if (expression instanceof GrAssignmentExpression) return true;
     if (expression instanceof GrReferenceExpression && expression.getParent() instanceof GrCall) {
       final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();

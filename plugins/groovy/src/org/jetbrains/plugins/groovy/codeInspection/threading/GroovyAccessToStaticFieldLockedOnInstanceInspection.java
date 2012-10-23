@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
@@ -79,29 +79,26 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
       }
       PsiElement elementToCheck = expression;
       while (true) {
-        final GrSynchronizedStatement syncStatement =
-            PsiTreeUtil.getParentOfType(elementToCheck,
-                GrSynchronizedStatement.class);
+        final GrSynchronizedStatement syncStatement = PsiTreeUtil.getParentOfType(elementToCheck, GrSynchronizedStatement.class);
         if (syncStatement == null) {
           break;
         }
-        final GrExpression lockExpression =
-            syncStatement.getMonitor();
-        if (lockExpression instanceof GrReferenceExpression) {
-          final GrReferenceExpression reference =
-              (GrReferenceExpression) lockExpression;
+        final GrExpression lockExpression = syncStatement.getMonitor();
+
+        if (lockExpression instanceof GrReferenceExpression && PsiUtil.isThisReference(lockExpression)) {
+          isLockedOnInstance = true;
+        }
+        else if (lockExpression instanceof GrReferenceExpression) {
+          final GrReferenceExpression reference = (GrReferenceExpression) lockExpression;
           final PsiElement referent = reference.resolve();
           if (referent instanceof PsiField) {
             final PsiField referentField = (PsiField) referent;
-            if (referentField.hasModifierProperty(
-                PsiModifier.STATIC)) {
+            if (referentField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             } else {
               isLockedOnInstance = true;
             }
           }
-        } else if (lockExpression instanceof GrThisReferenceExpression) {
-          isLockedOnInstance = true;
         }
         elementToCheck = syncStatement;
       }

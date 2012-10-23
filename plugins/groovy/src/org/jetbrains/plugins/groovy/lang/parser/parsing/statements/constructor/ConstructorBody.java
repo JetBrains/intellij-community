@@ -70,13 +70,13 @@ public class ConstructorBody implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, kTHIS, mLPAREN)) {
       final PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, kTHIS);
-      marker.done(THIS_REFERENCE_EXPRESSION);
+      marker.done(REFERENCE_EXPRESSION);
       result = true;
     }
     if (ParserUtils.lookAhead(builder, kSUPER, mLPAREN)) {
       final PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, kSUPER);
-      marker.done(SUPER_REFERENCE_EXPRESSION);
+      marker.done(REFERENCE_EXPRESSION);
       result = true;
     }
 

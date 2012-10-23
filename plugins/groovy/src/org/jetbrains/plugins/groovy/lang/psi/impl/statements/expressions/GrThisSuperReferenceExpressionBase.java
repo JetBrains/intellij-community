@@ -11,14 +11,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 
 /**
  * @author Maxim.Medvedev
@@ -40,6 +41,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
     PsiImplUtil.setQualifier(this, newQualifier);
   }
 
+  @NotNull
   @Override
   public PsiElement getReferenceNameElement() {
     return getLastChild();
@@ -52,7 +54,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
 
   @Override
   public TextRange getRangeInElement() {
-    final PsiElement token = findNotNullChildByType(TokenSet.create(GroovyElementTypes.kTHIS, GroovyElementTypes.kSUPER));
+    final PsiElement token = findNotNullChildByType(TokenSet.create(GroovyTokenTypes.kTHIS, GroovyTokenTypes.kSUPER));
     return TextRange.from(token.getStartOffsetInParent(), token.getTextLength());
   }
 

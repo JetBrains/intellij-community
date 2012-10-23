@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -31,7 +31,7 @@ public interface GrConstructorInvocation extends GrStatement, GrConstructorCall 
 
   boolean isThisCall();
 
-  GrThisSuperReferenceExpression getThisOrSuperKeyword();
+  GrReferenceExpression getInvokedExpression();
 
   @Nullable
   PsiClass getDelegatedClass();

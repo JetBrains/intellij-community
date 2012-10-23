@@ -33,10 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 
@@ -112,7 +112,7 @@ public class ConvertGStringToStringIntention extends Intention {
   }
 
   private static String prepareExpression(GrExpression expr) {
-    if (expr instanceof GrThisSuperReferenceExpression) return expr.getText();
+    if (PsiUtil.isThisOrSuperRef(expr)) return expr.getText();
     String text = expr.getText();
 
     final PsiType type = expr.getType();

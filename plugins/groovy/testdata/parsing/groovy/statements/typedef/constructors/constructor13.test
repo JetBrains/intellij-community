@@ -56,7 +56,7 @@ Groovy script
           PsiElement(;)(';')
           PsiWhiteSpace(' ')
           Method call
-            'super' reference expression
+            Reference expression
               PsiElement(super)('super')
             PsiWhiteSpace(' ')
             Arguments
