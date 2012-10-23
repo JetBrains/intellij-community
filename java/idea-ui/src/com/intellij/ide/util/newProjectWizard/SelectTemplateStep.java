@@ -35,9 +35,7 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -72,7 +70,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private SearchTextField mySearchField;
   private JTextPane myDescriptionPane;
   private JPanel myDescriptionPanel;
-  private JPanel myExpertSettings;
+  private JPanel myExpertPlaceholder;
+  private HideableTitledPanel myExpertPanel = new HideableTitledPanel("E&xpert Settings", false);
 
   private final WizardContext myContext;
   private final StepSequence mySequence;
@@ -88,6 +87,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myContext = context;
     mySequence = sequence;
     Messages.installHyperlinkSupport(myDescriptionPane);
+    myExpertPlaceholder.add(myExpertPanel, BorderLayout.CENTER);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
@@ -205,8 +205,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     });
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
-    myExpertSettings.setVisible(false);
-
+    myExpertPanel.setVisible(false);
+    myExpertPanel.setOn(false);
 
     new AnAction() {
       @Override
@@ -244,9 +244,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
     if (mySettingsPanel.getComponentCount() > 0) {
       mySettingsPanel.remove(0);
     }
-    if (myExpertSettings.getComponentCount() > 0) {
-      myExpertSettings.remove(0);
-    }
+    myExpertPanel.setContentComponent(null);
     JComponent expertSettingsPanel = null;
     String description = null;
     if (template != null) {
@@ -254,7 +252,9 @@ public class SelectTemplateStep extends ModuleWizardStep {
         mySettingsPanel.add(mySettingsStep.getSettingsPanel(), BorderLayout.NORTH);
         expertSettingsPanel = mySettingsStep.getExpertSettingsPanel();
         if (expertSettingsPanel != null) {
-          myExpertSettings.add(expertSettingsPanel);
+          expertSettingsPanel.setBorder(IdeBorderFactory.createEmptyBorder(5, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
+          myExpertPanel.setContentComponent(expertSettingsPanel);
+          myExpertPanel.setOn(false);
         }
       }
       description = template.getDescription();
@@ -268,7 +268,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
     }
 
     mySettingsPanel.setVisible(mySettingsStep != null);
-    myExpertSettings.setVisible(expertSettingsPanel != null);
+    myExpertPanel.setVisible(expertSettingsPanel != null);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();

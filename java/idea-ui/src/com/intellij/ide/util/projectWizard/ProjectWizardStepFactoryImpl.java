@@ -30,7 +30,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -145,6 +144,11 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
+  public SettingsStep createSettingsStep(WizardContext context) {
+    return new ProjectSettingsStep(context);
+  }
+
+  @Override
   public SettingsStep createJavaSettingsStep(final WizardContext context) {
 
     ProjectSdksModel model = new ProjectSdksModel();
@@ -153,8 +157,12 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    panel.add(new JBCheckBox("Create source root:"), BorderLayout.WEST);
-    panel.add(new JBTextField(), BorderLayout.CENTER);
+    JBCheckBox checkBox = new JBCheckBox("_Create source root:");
+    checkBox.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    JBTextField field = new JBTextField();
+    checkBox.setAnchor(field);
+    panel.add(checkBox, BorderLayout.WEST);
+    panel.add(field, BorderLayout.CENTER);
 
     return new ProjectSettingsStep(context) {
       @Override
@@ -163,11 +171,5 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         context.setProjectJdk(jdkComboBox.getSelectedJdk());
       }
     }.addField("Project &SDK:", jdkComboBox).addExpertPanel(panel);
-  }
-
-  @NotNull
-  @Override
-  public SettingsStep createSettingsStep(WizardContext context) {
-    return new ProjectSettingsStep(context);
   }
 }

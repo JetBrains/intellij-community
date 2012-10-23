@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -291,7 +292,7 @@ public class ProjectSettingsStep extends ProjectNameStep {
     JComponent settingsPanel = getSettingsPanel();
     new MnemonicHelper().register(settingsPanel);
 
-    JLabel jLabel = new JLabel(label);
+    JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
     settingsPanel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
                                              GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));

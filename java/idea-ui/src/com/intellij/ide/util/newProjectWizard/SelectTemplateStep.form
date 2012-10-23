@@ -87,15 +87,12 @@
               </component>
             </children>
           </grid>
-          <grid id="5d4a2" binding="myExpertSettings" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <grid id="5d4a2" binding="myExpertPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
-            <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-            </clientProperties>
-            <border type="etched" title="Expert Settings"/>
+            <border type="none"/>
             <children/>
           </grid>
         </children>
