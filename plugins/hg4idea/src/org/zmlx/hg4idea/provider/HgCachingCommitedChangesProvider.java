@@ -190,7 +190,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     List<HgFileRevision> localRevisions =
-      hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, Collections.singletonList("--debug")); //can be empty
+      hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be empty
 
     Collections.reverse(localRevisions);
 
@@ -285,7 +285,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     List<String> args = new ArrayList<String>();
-    args.add("--debug");
+    args.add("--follow");
     args.add("--rev");
     args.add(revision);
     HgFileRevision localRevision = hgLogCommand.execute(hgFile, 1, true, args).get(0);

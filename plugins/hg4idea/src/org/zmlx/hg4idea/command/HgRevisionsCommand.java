@@ -162,7 +162,11 @@ abstract class HgRevisionsCommand {
                 Iterator<String> keys = copies.keySet().iterator();
                 while (keys.hasNext()) {
                   String s = keys.next();
-                  if (!filesDeleted.contains(s)) {
+                  if (filesAdded.contains(copies.get(s)) && filesDeleted.contains(s)) {
+                    filesAdded.remove(copies.get(s));
+                    filesDeleted.remove(s);
+                  }
+                  else if (!filesDeleted.contains(s)) {
                     keys.remove();
                   }
                 }
