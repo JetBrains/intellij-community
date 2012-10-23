@@ -99,8 +99,6 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     createComponents(allowNoContext);
     
-    reset();
-
     com.intellij.ui.DocumentAdapter listener = new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
