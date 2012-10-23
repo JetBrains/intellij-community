@@ -43,7 +43,7 @@ public class RunContentExecutor {
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
 
-  public RunContentExecutor(Project project, ProcessHandler process) {
+  public RunContentExecutor(@NotNull Project project, @NotNull ProcessHandler process) {
     myProject = project;
     myProcess = process;
   }
@@ -84,7 +84,7 @@ public class RunContentExecutor {
     return this;
   }
 
-  private ConsoleView createConsole(Project project, ProcessHandler processHandler) {
+  private ConsoleView createConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilterList) {
       consoleBuilder.addFilter(filter);
