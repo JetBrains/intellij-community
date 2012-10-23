@@ -92,13 +92,13 @@ class DragHelper extends MouseDragHelper {
     myPressedTabLabel = findLabel(new RelativePoint(event).getPoint(myTabs));
   }
 
-  protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
-    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event)) return;
+  protected boolean processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
+    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event)) return false;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
     if (isDragJustStarted()) {
-      if (myPressedTabLabel == null) return;
+      if (myPressedTabLabel == null) return false;
 
       final Rectangle labelBounds = myPressedTabLabel.getBounds();
 
@@ -111,7 +111,7 @@ class DragHelper extends MouseDragHelper {
       myDragOriginalRec.y -= myHoldDelta.height;
     }
     else {
-      if (myDragRec == null) return;
+      if (myDragRec == null) return false;
 
       final Point toPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), myTabs);
 
@@ -163,6 +163,7 @@ class DragHelper extends MouseDragHelper {
       headerRec.height += border * 2;
       myTabs.repaint(headerRec);
     }
+    return true;
   }
 
   private boolean isDragSource(MouseEvent event) {
