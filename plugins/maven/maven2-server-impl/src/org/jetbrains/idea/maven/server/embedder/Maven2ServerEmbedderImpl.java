@@ -327,13 +327,19 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @NotNull
+  @Override
   public MavenServerExecutionResult execute(@NotNull final File file,
-                                             @NotNull final Collection<String> activeProfiles,
-                                             @NotNull final List<String> goals)
-    throws MavenServerProcessCanceledException, RemoteException {
+                                            @NotNull final Collection<String> activeProfiles,
+                                            @NotNull final Collection<String> inactiveProfiles,
+                                            @NotNull final List<String> goals,
+                                            @NotNull final List<String> selectedProjects,
+                                            final boolean alsoMake,
+                                            final boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
     return doExecute(new Executor<MavenServerExecutionResult>() {
       public MavenServerExecutionResult execute() throws Exception {
-        MavenExecutionResult result = myImpl.execute(file, new ArrayList<String>(activeProfiles), goals);
+        MavenExecutionResult result = myImpl
+          .execute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals, selectedProjects, alsoMake,
+                   alsoMakeDependents);
         return createExecutionResult(file, result, null);
       }
     });
