@@ -100,6 +100,9 @@ public class JavaBuilderUtil {
             if (!newlyAffectedFiles.isEmpty()) {
 
               if (LOG.isDebugEnabled()) {
+                for (File file : newlyAffectedFiles) {
+                  LOG.debug("affected file: " + file.getPath());
+                }
                 final List<Pair<File, JpsModule>> wrongFiles =
                   checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
                 if (!wrongFiles.isEmpty()) {
