@@ -282,5 +282,12 @@ public class
         wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
       }
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension result = super.getPreferredSize();
+      result.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      return result;
+    }
   }
 }
