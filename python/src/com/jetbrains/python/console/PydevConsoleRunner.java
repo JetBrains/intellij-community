@@ -16,9 +16,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,6 +29,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -40,6 +40,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
@@ -49,6 +50,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -83,6 +85,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private List<ConsoleListener> myConsoleListeners = Lists.newArrayList();
   private final PyConsoleType myConsoleType;
   private String myCommandLine;
+  private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -102,6 +105,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myPorts = ports;
   }
 
+  public void setStatementsToExecute(String... statementsToExecute) {
+    myStatementsToExecute = statementsToExecute;
+  }
+
   public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs) {
     setPythonIOEncoding(setPythonUnbuffered(envs), "utf-8");
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
@@ -115,7 +122,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     AnAction backspaceHandlingAction = createBackspaceHandlingAction();
     //toolbarActions.add(backspaceHandlingAction);
     AnAction interruptAction = createInterruptAction();
+
+    AnAction rerunAction = createRerunAction();
+    toolbarActions.add(rerunAction);
+
     List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+
+    actions.add(0, rerunAction);
+
     actions.add(backspaceHandlingAction);
     actions.add(interruptAction);
     return actions;
@@ -130,16 +144,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                                 final String... statements2execute) {
     final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, workingDirectory, environmentVariables);
     if (consoleRunner == null) return null;
-    consoleRunner.run(statements2execute);
+    consoleRunner.setStatementsToExecute(statements2execute);
+    consoleRunner.run();
     return consoleRunner;
   }
 
-  public void run(final String... statements2execute) {
+  public void run() {
     ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Connecting to console...");
         try {
-          initAndRun(statements2execute);
+          initAndRun(myStatementsToExecute);
         }
         catch (ExecutionException e) {
           LOG.warn("Error running console", e);
@@ -236,7 +251,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> envs)
-    throws RemoteInterpreterException, ExecutionException {
+    throws ExecutionException {
     RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -333,6 +348,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+  protected AnAction createRerunAction() {
+    return new RestartAction(this);
   }
 
   private AnAction createInterruptAction() {
@@ -450,7 +469,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
                               e.getPresentation(), e.getActionManager(), e.getModifiers());
           try {
-            myPydevConsoleCommunication.close();
+            closeCommunication();
             // waiting for REPL communication before destroying process handler
             Thread.sleep(300);
           }
@@ -463,6 +482,25 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  private void closeCommunication() {
+    if (myPydevConsoleCommunication.isExecuting()) {
+      final Semaphore s = new Semaphore(); //TODO: test me
+      myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+        @Override
+        public void executionFinished() {
+          s.up();
+        }
+
+        @Override
+        public void inputRequested() {
+        }
+      });
+      myPydevConsoleCommunication.close();
+
+      s.waitFor();
+    }
   }
 
   @NotNull
@@ -541,5 +579,24 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public interface ConsoleListener {
     void handleConsoleInitialized(LanguageConsoleViewImpl consoleView);
+  }
+
+
+  private static class RestartAction extends AnAction {
+    private PydevConsoleRunner myConsoleRunner;
+
+
+    private RestartAction(PydevConsoleRunner runner) {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
+      getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
+      myConsoleRunner = runner;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myConsoleRunner.closeCommunication();
+
+      myConsoleRunner.run();
+    }
   }
 }

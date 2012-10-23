@@ -533,7 +533,7 @@ class DocumentationBuilder {
       myPath = path;
     }
 
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
+    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
       String vpath = VfsUtil.urlToPath(root.getUrl());
       if (myPath.startsWith(vpath)) {
         myResult = vpath;

@@ -99,7 +99,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Stops the communication with the client (passes message for it to quit).
    */
-  public void close() throws Exception {
+  public void close() {
     if (this.client != null) {
       new Task.Backgroundable(myProject, "Close console communication", true) {
         @Override

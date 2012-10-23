@@ -19,8 +19,8 @@ import java.util.List;
 /**
  * @author traff
  */
-public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements RemoteSdkAdditionalData {
-  private static final String HELPERS_DIR = "pycharm_helpers";
+public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implements RemoteSdkAdditionalData {
+  private static final String HELPERS_DIR = ".pycharm_helpers";
   private final static String SKELETONS_PATH = "SKELETONS_PATH";
 
   private final RemoteSdkDataHolder myRemoteSdkDataHolder = new RemoteSdkDataHolder(HELPERS_DIR);
@@ -61,18 +61,18 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public String getTempFilesPath() {
-    return myRemoteSdkDataHolder.getTempFilesPath();
-  }
-
-  @Override
   public String getHelpersPath() {
     return myRemoteSdkDataHolder.getHelpersPath();
   }
 
   @Override
-  public void setTempFilesPath(String tempFilesPath) {
-    myRemoteSdkDataHolder.setTempFilesPath(tempFilesPath);
+  public String getDefaultHelpersName() {
+    return myRemoteSdkDataHolder.getDefaultHelpersName();
+  }
+
+  @Override
+  public void setHelpersPath(String tempFilesPath) {
+    myRemoteSdkDataHolder.setHelpersPath(tempFilesPath);
   }
 
   @Override
@@ -231,7 +231,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
       data.setSkeletonsPath(StringUtil.nullize(element.getAttributeValue(SKELETONS_PATH)));
       String helpers_path = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
       if (helpers_path != null) {
-        data.setTempFilesPath(helpers_path);
+        data.setHelpersPath(helpers_path);
       }
     }
 
@@ -300,6 +300,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     copy.setUseKeyPair(isUseKeyPair());
 
     copy.setInterpreterPath(getInterpreterPath());
+    copy.setHelpersPath(getHelpersPath());
     copy.setStorePassword(isStorePassword());
     copy.setStorePassphrase(isStorePassphrase());
     copy.setHelpersVersionChecked(isHelpersVersionChecked());

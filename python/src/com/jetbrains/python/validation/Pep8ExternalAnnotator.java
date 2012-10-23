@@ -79,7 +79,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Nullable
   @Override
   public State collectionInformation(@NotNull PsiFile file) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(file));
+    final Sdk sdk = PythonSdkType.findLocalPython(ModuleUtilCore.findModuleForPsiElement(file));
     if (sdk == null) return null;
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;

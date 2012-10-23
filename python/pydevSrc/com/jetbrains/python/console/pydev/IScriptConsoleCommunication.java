@@ -48,5 +48,5 @@ public interface IScriptConsoleCommunication {
      * Stops the communication with the server. Should ask the server to terminate at this point.
      * @throws Exception
      */
-    void close() throws Exception;
+    void close();
 }

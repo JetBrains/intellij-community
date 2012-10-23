@@ -79,7 +79,7 @@ public class RootVisitorHost {
   public static boolean visitSdkRoots(@NotNull Sdk sdk, @NotNull RootVisitor visitor) {
     final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile root : roots) {
-      if (!visitor.visitRoot(root, null, sdk)) {
+      if (!visitor.visitRoot(root, null, sdk, false)) {
         return true;
       }
     }
@@ -92,10 +92,10 @@ public class RootVisitorHost {
     for (ContentEntry entry : rootModel.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
-      if (rootFile != null && !visitor.visitRoot(rootFile, null, null)) return false;
+      if (rootFile != null && !visitor.visitRoot(rootFile, null, null, true)) return false;
       contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
-        if (!visitor.visitRoot(folder, rootModel.getModule(), null)) return false;
+        if (!visitor.visitRoot(folder, rootModel.getModule(), null, true)) return false;
       }
     }
     return true;
@@ -108,7 +108,7 @@ public class RootVisitorHost {
     Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry) entry).getModule() : null;
     Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry) entry).getJdk() : null;
     for (VirtualFile root : allRoots) {
-      if (!visitor.visitRoot(root, module, sdk)) {
+      if (!visitor.visitRoot(root, module, sdk, false)) {
         return false;
       }
     }
