@@ -67,6 +67,7 @@ class DragHelper extends MouseDragHelper {
     } else {
       delegate.processDragOut(event, myDragOutSource);
     }
+    event.consume();
   }
 
   @Override
@@ -89,7 +90,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
-    if (!myTabs.isTabDraggingEnabled()) return;
+    if (!myTabs.isTabDraggingEnabled() || !isDragSource(event)) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
 
@@ -159,6 +160,15 @@ class DragHelper extends MouseDragHelper {
       headerRec.height += border * 2;
       myTabs.repaint(headerRec);
     }
+    event.consume();
+  }
+
+  private boolean isDragSource(MouseEvent event) {
+    final Object source = event.getSource();
+    if (source instanceof Component) {
+      return SwingUtilities.windowForComponent(myTabs) == SwingUtilities.windowForComponent((Component)source);
+    }
+    return false;
   }
 
   private TabLabel findMostOverlapping(Axis measurer, TabLabel... labels) {
