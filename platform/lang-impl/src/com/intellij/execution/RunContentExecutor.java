@@ -141,7 +141,7 @@ public class RunContentExecutor {
   private class RerunAction extends AnAction implements DumbAware {
     public RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
-            AllIcons.Actions.RefreshUsages);
+            AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 
