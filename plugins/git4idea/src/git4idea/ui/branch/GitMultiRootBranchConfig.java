@@ -15,12 +15,12 @@
  */
 package git4idea.ui.branch;
 
-import com.intellij.openapi.util.Pair;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitConfig;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,28 +93,20 @@ public class GitMultiRootBranchConfig {
    */
   @Nullable
   public String getTrackedBranch(@NotNull String branch) {
-    String trackedBranch = null;
-    String trackedRemote = null;
+    String trackedName = null;
     for (GitRepository repository : myRepositories) {
-      Pair<String, String> tracked = getTrackedBranchAndRemote(repository, branch);
+      GitRemoteBranch tracked = getTrackedBranch(repository, branch);
       if (tracked == null) {
         return null;
       }
-      if (trackedBranch == null) {
-        trackedBranch = tracked.getFirst();
-        trackedRemote = tracked.getSecond();
+      if (trackedName == null) {
+        trackedName = tracked.getNameForLocalOperations();
       }
-      else if (!tracked.getFirst().equals(trackedBranch) || !tracked.getSecond().equals(trackedRemote)) {
+      else if (!trackedName.equals(tracked.getNameForLocalOperations())) {
         return null;
       }
     }
-    if (GitConfig.DOT_REMOTE.equals(trackedRemote)) {
-      // for git-svn branches: to display "refs/remotes/trunk" instead of "./refs/remotes/trunk"
-      return trackedBranch;
-    }
-    else {
-      return trackedRemote + "/" + trackedBranch;
-    }
+    return trackedName;
   }
 
   /**
@@ -140,20 +132,16 @@ public class GitMultiRootBranchConfig {
     Collection<String> trackingBranches = new ArrayList<String>(1);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (remoteBranch.equals(trackInfo.getRemote().getName() + "/" + trackInfo.getRemoteBranch())) {
-        trackingBranches.add(trackInfo.getBranch());
+        trackingBranches.add(trackInfo.getLocalBranch().getName());
       }
     }
     return trackingBranches;
   }
 
   @Nullable
-  private static Pair<String, String> getTrackedBranchAndRemote(@NotNull GitRepository repository, @NotNull String branch) {
-    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getBranch().equals(branch)) {
-        return Pair.create(trackInfo.getRemoteBranch(), trackInfo.getRemote().getName());
-      }
-    }
-    return null;
+  private static GitRemoteBranch getTrackedBranch(@NotNull GitRepository repository, @NotNull String branchName) {
+    GitLocalBranch branch = GitBranchUtil.findLocalBranchByName(repository, branchName);
+    return branch == null ? null : branch.findTrackedBranch(repository);
   }
 
   @NotNull
@@ -161,12 +149,15 @@ public class GitMultiRootBranchConfig {
     Collection<String> commonBranches = null;
     for (GitRepository repository : myRepositories) {
       GitBranchesCollection branchesCollection = repository.getBranches();
-      Collection<GitBranch> branches = local ? branchesCollection.getLocalBranches() : branchesCollection.getRemoteBranches();
+
+      Collection<String> names = local
+                                 ? GitBranchUtil.getBranchNamesWithoutRemoteHead(branchesCollection.getRemoteBranches())
+                                 : GitBranchUtil.convertBranchesToNames(branchesCollection.getLocalBranches());
       if (commonBranches == null) {
-        commonBranches = GitUtil.getBranchNamesWithoutRemoteHead(branches);
+        commonBranches = names;
       }
       else {
-        commonBranches.retainAll(GitUtil.getBranchNamesWithoutRemoteHead(branches));
+        commonBranches.retainAll(names);
       }
     }
 

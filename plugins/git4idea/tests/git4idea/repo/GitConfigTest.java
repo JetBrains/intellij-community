@@ -18,6 +18,9 @@ package git4idea.repo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitStandardRemoteBranch;
 import git4idea.test.GitTestPlatformFacade;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.DataProvider;
@@ -57,7 +60,7 @@ public class GitConfigTest {
   public void testBranches(String testName, File configFile, File resultFile) throws IOException {
     GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
     GitTestUtil.assertEqualCollections(
-      config.parseTrackInfos(config.parseRemotes(), Collections.<GitBranch>emptyList(), Collections.<GitBranch>emptyList()),
+      config.parseTrackInfos(Collections.<GitLocalBranch>emptyList(), Collections.<GitRemoteBranch>emptyList()),
       readBranchResults(resultFile));
   }
 
@@ -72,10 +75,12 @@ public class GitConfigTest {
       String[] info = remString.split("\n");
       String branch = info[0];
       GitRemote remote = getRemote(info[1]);
-      String remoteSpec = info[2];
-      String remoteBranchName = info[3];
+      String remoteBranchAtRemote = info[2];
+      String remoteBranchHere = info[3];
       boolean merge = info[4].equals("merge");
-      remotes.add(new GitBranchTrackInfo(branch, remote, remoteSpec, merge));
+      remotes.add(new GitBranchTrackInfo(new GitLocalBranch(branch, GitBranch.DUMMY_HASH),
+                                         new GitStandardRemoteBranch(remote, remoteBranchAtRemote, GitBranch.DUMMY_HASH),
+                                         merge));
     }
     return remotes;
   }

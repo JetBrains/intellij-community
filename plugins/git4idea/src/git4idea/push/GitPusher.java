@@ -62,7 +62,7 @@ public final class GitPusher {
    */
   static final int RECENT_COMMITS_NUMBER = 5;
   
-  static final GitBranch NO_TARGET_BRANCH = new GitRemoteBranch(null, "", GitBranch.DUMMY_HASH);
+  static final GitRemoteBranch NO_TARGET_BRANCH = new GitStandardRemoteBranch(null, "", GitBranch.DUMMY_HASH);
 
   private static final Logger LOG = Logger.getInstance(GitPusher.class);
   private static final String INDICATOR_TEXT = "Pushing";
@@ -177,8 +177,8 @@ public final class GitPusher {
     Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
 
     for (GitBranchPair sourceDest : sourcesDestinations) {
-      GitBranch source = sourceDest.getBranch();
-      GitBranch dest = sourceDest.getDest();
+      GitLocalBranch source = sourceDest.getBranch();
+      GitRemoteBranch dest = sourceDest.getDest();
       assert dest != null : "Destination branch can't be null here for branch " + source;
 
       List<GitCommit> commits;
@@ -340,7 +340,7 @@ public final class GitPusher {
   }
 
   private static void setUpstream(@NotNull GitRepository repository,
-                                  @NotNull GitBranch source, @NotNull GitRemote remote, @NotNull GitBranch dest) {
+                                  @NotNull GitLocalBranch source, @NotNull GitRemote remote, @NotNull GitRemoteBranch dest) {
     if (!branchTrackingInfoIsSet(repository, source)) {
       Project project = repository.getProject();
       VirtualFile root = repository.getRoot();
@@ -349,7 +349,7 @@ public final class GitPusher {
         boolean rebase = getMergeOrRebaseConfig(project, root);
         String mergeOrRebase = rebase ? ".rebase" : ".merge";
         GitConfigUtil.setValue(project, root, "branch." + branchName + ".remote", remote.getName());
-        GitConfigUtil.setValue(project, root, "branch." + branchName + mergeOrRebase, dest.getShortName());
+        GitConfigUtil.setValue(project, root, "branch." + branchName + mergeOrRebase, dest.getNameForRemoteOperations());
       }
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
@@ -367,7 +367,7 @@ public final class GitPusher {
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull GitBranch source) {
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getBranch().equals(source.getName())) {
+      if (trackInfo.getLocalBranch().equals(source.getName())) {
         return true;
       }
     }

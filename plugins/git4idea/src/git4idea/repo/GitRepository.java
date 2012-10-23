@@ -18,7 +18,7 @@ package git4idea.repo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +125,7 @@ public interface GitRepository {
    * Returns null, if the repository is not on a branch and not in the REBASING state.
    */
   @Nullable
-  GitBranch getCurrentBranch();
+  GitLocalBranch getCurrentBranch();
 
   @NotNull
   GitBranchesCollection getBranches();

@@ -21,50 +21,30 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class GitRemoteBranch extends GitBranch {
+public abstract class GitRemoteBranch extends GitBranch {
 
-  @NotNull private final GitRemote myRemote;
-  @NotNull private final String myNameAtRemote;
-
-  public GitRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @NotNull Hash hash) {
-    super(formStandardName(remote, nameAtRemote), hash);
-    myRemote = remote;
-    myNameAtRemote = nameAtRemote;
+  protected GitRemoteBranch(@NotNull String name, @NotNull Hash hash) {
+    super(name, hash);
   }
+
+  /**
+   * Returns the name of this remote branch to be used in remote operations: fetch, push, pull.
+   * It is the name of this branch how it is defined on the remote.
+   * For example, "master".
+   * @see #getNameForLocalOperations()
+   */
+  @NotNull
+  public abstract String getNameForRemoteOperations();
+
+  /**
+   * Returns the name of this remote branch to be used in local operations: checkout, merge, rebase.
+   * It is the name of this branch how it is references in this local repository.
+   * For example, "origin/master".
+   */
+  @NotNull
+  public abstract String getNameForLocalOperations();
 
   @NotNull
-  private static String formStandardName(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
-    return remote.getName() + "/" + nameAtRemote;
-  }
-
-  @Override
-  public boolean isRemote() {
-    return true;
-  }
-
-  @NotNull
-  public GitRemote getRemote() {
-    return myRemote;
-  }
-
-  @NotNull
-  public String getNameAtRemote() {
-    return myNameAtRemote;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
-  }
+  public abstract GitRemote getRemote();
 
 }

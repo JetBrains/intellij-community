@@ -19,37 +19,22 @@ import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>The naming conventions of SVN remote branches are slightly different from the ordinary remote branches.</p>
- *
- * <p>No remote is specified: dot (".") is used as a remote.</p>
- * <p>Remote branch name has "refs/remotes/branch" format, i. e. it doesn't have a remote prefix.</p>
- *
- * <p>Because of these differences, GitSvnRemoteBranch doesn't {@link GitStandardRemoteBranch}. </p>
- *
  * @author Kirill Likhodedov
  */
-public class GitSvnRemoteBranch extends GitRemoteBranch {
+public class GitStandardRemoteBranch extends GitRemoteBranch {
 
-  public GitSvnRemoteBranch(@NotNull String fullName, @NotNull Hash hash) {
-    super(fullName, hash);
+  @NotNull private final GitRemote myRemote;
+  @NotNull private final String myNameAtRemote;
+
+  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @NotNull Hash hash) {
+    super(formStandardName(remote, nameAtRemote), hash);
+    myRemote = remote;
+    myNameAtRemote = nameAtRemote;
   }
 
   @NotNull
-  @Override
-  public String getNameForRemoteOperations() {
-    return getFullName();
-  }
-
-  @NotNull
-  @Override
-  public String getNameForLocalOperations() {
-    return getFullName();
-  }
-
-  @NotNull
-  @Override
-  public GitRemote getRemote() {
-    return GitRemote.DOT;
+  private static String formStandardName(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
+    return remote.getName() + "/" + nameAtRemote;
   }
 
   @Override
@@ -57,10 +42,10 @@ public class GitSvnRemoteBranch extends GitRemoteBranch {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getFullName() {
-    return getName();
+  @NotNull
+  public GitRemote getRemote() {
+    return myRemote;
   }
 
   @Override
@@ -76,6 +61,18 @@ public class GitSvnRemoteBranch extends GitRemoteBranch {
   @Override
   public String toString() {
     return super.toString();
+  }
+
+  @NotNull
+  @Override
+  public String getNameForRemoteOperations() {
+    return myNameAtRemote;
+  }
+
+  @NotNull
+  @Override
+  public String getNameForLocalOperations() {
+    return myName;
   }
 
 }

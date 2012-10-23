@@ -16,15 +16,16 @@
 package git4idea.repo;
 
   import com.google.common.base.Function;
+  import com.google.common.base.Predicate;
   import com.google.common.collect.Collections2;
+  import com.google.common.collect.Iterables;
   import com.intellij.ide.plugins.IdeaPluginDescriptor;
   import com.intellij.openapi.diagnostic.Logger;
   import com.intellij.openapi.util.Pair;
   import com.intellij.openapi.util.text.StringUtil;
-  import git4idea.GitBranch;
-  import git4idea.GitPlatformFacade;
-  import git4idea.GitSvnRemoteBranch;
-  import git4idea.GitUtil;
+  import com.intellij.util.ArrayUtil;
+  import git4idea.*;
+  import git4idea.branch.GitBranchUtil;
   import org.ini4j.Ini;
   import org.ini4j.Profile;
   import org.jetbrains.annotations.NotNull;
@@ -37,9 +38,9 @@ package git4idea.repo;
   import java.util.regex.Pattern;
 
 /**
- * <p>Contains information read from the {@code .git/config} file.
- *    To get the instance call {@link GitRepository#getConfig()}.
- *    It is updated (actually re-created) by the {@link GitRepositoryUpdater}.</p>
+ * <p>Reads information from the {@code .git/config} file, and parses it to actual objects.</p>
+ *
+ * <p>Currently doesn't read all the information: general information about remotes and branch tracking</p>
  *
  * <p>Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.</p>
  *
@@ -111,14 +112,14 @@ public class GitConfig {
    * Create branch tracking information based on the information defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitRemote> remotes,
-                                                 @NotNull Collection<GitBranch> branches, @NotNull Collection<GitBranch> remoteBranches) {
+  Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitLocalBranch> localBranches,
+                                                 @NotNull final Collection<GitRemoteBranch> remoteBranches) {
     return Collections2.filter(Collections2.transform(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
       @Nullable
       @Override
       public GitBranchTrackInfo apply(@Nullable BranchConfig input) {
         if (input != null) {
-          return convertBranchConfig(input, remotes);
+          return convertBranchConfig(input, localBranches, remoteBranches);
         }
         return null;
       }
@@ -169,11 +170,13 @@ public class GitConfig {
   }
 
   @Nullable
-  private static GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig, @NotNull Collection<GitRemote> remotes) {
+  private static GitBranchTrackInfo convertBranchConfig(@Nullable BranchConfig branchConfig,
+                                                        @NotNull Collection<GitLocalBranch> localBranches,
+                                                        @NotNull Collection<GitRemoteBranch> remoteBranches) {
     if (branchConfig == null) {
       return null;
     }
-    String branchName = branchConfig.getName();
+    final String branchName = branchConfig.getName();
     String remoteName = branchConfig.getBean().getRemote();
     String mergeName = branchConfig.getBean().getMerge();
     String rebaseName = branchConfig.getBean().getRebase();
@@ -186,31 +189,39 @@ public class GitConfig {
       LOG.info("No branch." + branchName + ".remote item in the .git/config");
       return null;
     }
-    boolean merge = mergeName != null;
-    final String remoteBranch = (merge ? mergeName : rebaseName);
 
-    GitRemote branchRemote = null;
-    if (DOT_REMOTE.equals(remoteName)) {
-      branchRemote = GitRemote.DOT;
+    boolean merge = mergeName != null;
+    final String remoteBranchName = (merge ? mergeName : rebaseName);
+    assert remoteName != null;
+    assert remoteBranchName != null;
+
+    GitLocalBranch localBranch = findLocalBranch(branchName, localBranches);
+    GitRemoteBranch remoteBranch = GitBranchUtil.findRemoteBranchByName(remoteBranchName, remoteName, remoteBranches);
+    if (localBranch == null || remoteBranch == null) {
+      return null;
     }
-    else {
-      for (GitRemote remote : remotes) {
-        if (remote.getName().equals(remoteName)) {
-          branchRemote = remote;
-          break;
-        }
-      }
-      if (branchRemote == null) {
-        LOG.info("No remote found with name " + remoteName);
-        return null;
-      }
-    }
-    assert remoteBranch != null; // this is checked in StringUtil.isEmptyOrSpaces
-    return new GitBranchTrackInfo(branchName, branchRemote, remoteBranch, merge);
+    return new GitBranchTrackInfo(localBranch, remoteBranch, merge);
   }
 
   @Nullable
-  private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, ClassLoader classLoader) {
+  private static GitLocalBranch findLocalBranch(@NotNull final String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
+    try {
+      return Iterables.find(localBranches, new Predicate<GitLocalBranch>() {
+        @Override
+        public boolean apply(@Nullable GitLocalBranch input) {
+          assert input != null;
+          return input.getName().equals(branchName);
+        }
+      });
+    }
+    catch (NoSuchElementException e) {
+      LOG.info("Couldn't find branch with name " + branchName);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, @Nullable ClassLoader classLoader) {
     BranchBean branchBean = section.as(BranchBean.class, classLoader);
     Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
@@ -433,13 +444,13 @@ public class GitConfig {
     }
 
     @Nullable
-    // null means to entry, i.e. nothing to substitute. Empty string means substituing everything 
+    // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getInsteadOf() {
       return myUrlBean.getInsteadOf();
     }
 
     @Nullable
-    // null means to entry, i.e. nothing to substitute. Empty string means substituing everything 
+    // null means to entry, i.e. nothing to substitute. Empty string means substituting everything
     public String getPushInsteadOf() {
       return myUrlBean.getPushInsteadOf();
     }
@@ -475,13 +486,8 @@ public class GitConfig {
   }
 
   @NotNull
-  private static String notNull(@Nullable String s) {
-    return s == null ? "" : s;
-  }
-  
-  @NotNull
   private static String[] notNull(@Nullable String[] s) {
-    return s == null ? new String[0] : s;
+    return s == null ? ArrayUtil.EMPTY_STRING_ARRAY : s;
   }
 
   @NotNull

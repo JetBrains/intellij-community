@@ -15,7 +15,10 @@
  */
 package git4idea;
 
+import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -46,4 +49,13 @@ public class GitLocalBranch extends GitBranch {
     return super.toString();
   }
 
+  @Nullable
+  public GitRemoteBranch findTrackedBranch(@NotNull GitRepository repository) {
+    for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
+      if (info.getLocalBranch().equals(this)) {
+        return info.getRemoteBranch();
+      }
+    }
+    return null;
+  }
 }

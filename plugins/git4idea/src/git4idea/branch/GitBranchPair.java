@@ -15,7 +15,8 @@
  */
 package git4idea.branch;
 
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,19 +26,21 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 public class GitBranchPair {
-  private @NotNull GitBranch myBranch;
-  private @Nullable GitBranch myDestBranch;
+  private @NotNull GitLocalBranch myBranch;
+  private @Nullable GitRemoteBranch myDestBranch;
 
-  public GitBranchPair(@NotNull GitBranch branch, @Nullable GitBranch destination) {
+  public GitBranchPair(@NotNull GitLocalBranch branch, @Nullable GitRemoteBranch destination) {
     myBranch = branch;
     myDestBranch = destination;
   }
 
-  public @NotNull GitBranch getBranch() {
+  @NotNull
+  public GitLocalBranch getBranch() {
     return myBranch;
   }
 
-  public @Nullable GitBranch getDest() {
+  @Nullable
+  public GitRemoteBranch getDest() {
     return myDestBranch;
   }
 

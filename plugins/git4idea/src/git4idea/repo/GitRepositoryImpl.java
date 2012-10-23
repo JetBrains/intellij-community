@@ -24,7 +24,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -53,7 +53,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @NotNull private volatile State myState;
   @Nullable private volatile String myCurrentRevision;
-  @Nullable private volatile GitBranch myCurrentBranch;
+  @Nullable private volatile GitLocalBranch myCurrentBranch;
   @NotNull private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
   @NotNull private volatile Collection<GitRemote> myRemotes = Collections.emptyList();
   @NotNull private volatile Collection<GitBranchTrackInfo> myBranchTrackInfos;
@@ -165,7 +165,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @Override
   @Nullable
-  public GitBranch getCurrentBranch() {
+  public GitLocalBranch getCurrentBranch() {
     return myCurrentBranch;
   }
 
@@ -223,7 +223,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     myRemotes = config.parseRemotes();
     readRepository(myRemotes);
-    myBranchTrackInfos = config.parseTrackInfos(myRemotes, myBranches.getLocalBranches(), myBranches.getRemoteBranches());
+    myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
 
     notifyListeners();
   }

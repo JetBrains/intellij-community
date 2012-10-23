@@ -18,10 +18,13 @@ package git4idea.history.browser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.history.wholeTree.AbstractHash;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.TreeSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -91,9 +94,9 @@ public class CachedRefs implements SymbolicRefsI {
 
   public TreeSet<String> getLocalBranches() {
     if (myLocalBranches == null) {
-      Collection<GitBranch> branches = myCollection.getLocalBranches();
+      Collection<GitLocalBranch> branches = myCollection.getLocalBranches();
       myLocalBranches = new TreeSet<String>();
-      for (GitBranch branch : branches) {
+      for (GitLocalBranch branch : branches) {
         myLocalBranches.add(branch.getName());
       }
     }
@@ -102,9 +105,9 @@ public class CachedRefs implements SymbolicRefsI {
 
   public TreeSet<String> getRemoteBranches() {
     if (myRemoteBranches == null) {
-      Collection<GitBranch> branches = myCollection.getRemoteBranches();
+      Collection<GitRemoteBranch> branches = myCollection.getRemoteBranches();
       myRemoteBranches = new TreeSet<String>();
-      for (GitBranch branch : branches) {
+      for (GitRemoteBranch branch : branches) {
         myRemoteBranches.add(branch.getName());
       }
     }
@@ -144,11 +147,11 @@ public class CachedRefs implements SymbolicRefsI {
     return myHeadHash;
   }
 
-  public Collection<GitBranch> getLocal() {
+  public Collection<? extends GitBranch> getLocal() {
     return myCollection.getLocalBranches();
   }
 
-  public Collection<GitBranch> getRemote() {
+  public Collection<? extends GitBranch> getRemote() {
     return myCollection.getRemoteBranches();
   }
 }

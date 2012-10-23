@@ -16,7 +16,6 @@
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,33 +86,6 @@ public abstract class GitBranch extends GitReference {
   @NotNull
   public String getFullName() {
     return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
-  }
-
-  /**
-   * <p>
-   *   Returns the "local" name of a remote branch.
-   *   For example, for "origin/master" returns "master".
-   * </p>
-   * <p>
-   *   Note that slashes are not permitted in remote names, so if we know that a branch is a remote branch,
-   *   we know that local branch name is tha part after the slash.
-   * </p>
-   * @return "local" name of a remote branch, or just {@link #getName()} for local branches.
-   */
-  @NotNull
-  public String getShortName() {
-    return splitNameOfRemoteBranch(getName()).getSecond();
-  }
-
-  /**
-   * Returns the remote and the "local" name of a remote branch.
-   * Expects branch in format "origin/master", i.e. remote/branch
-   */
-  public static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
-    int firstSlash = branchName.indexOf('/');
-    String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
-    String remoteBranchName = branchName.substring(firstSlash + 1);
-    return Pair.create(remoteName, remoteBranchName);
   }
 
   @Override

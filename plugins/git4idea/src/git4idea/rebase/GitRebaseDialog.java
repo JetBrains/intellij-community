@@ -363,7 +363,7 @@ public class GitRebaseDialog extends DialogWrapper {
           else {
             GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
             if (r != null) {
-              trackedBranch = new GitRemoteBranch(r, name, GitBranch.DUMMY_HASH);
+              trackedBranch = new GitStandardRemoteBranch(r, name, GitBranch.DUMMY_HASH);
             }
           }
         }

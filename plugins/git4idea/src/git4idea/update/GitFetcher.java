@@ -23,10 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.Notificator;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
@@ -148,7 +145,7 @@ public class GitFetcher {
     }
 
     GitRemote remote = fetchParams.getRemote();
-    String remoteBranch = fetchParams.getRemoteBranch();
+    String remoteBranch = fetchParams.getRemoteBranch().getNameForRemoteOperations();
     String url = fetchParams.getUrl();
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
@@ -384,7 +381,7 @@ public class GitFetcher {
 
   private static class FetchParams {
     private GitRemote myRemote;
-    private String myRemoteBranch;
+    private GitRemoteBranch myRemoteBranch;
     private GitFetchResult myError;
     private String myUrl;
 
@@ -392,7 +389,7 @@ public class GitFetcher {
       myError = error;
     }
 
-    FetchParams(GitRemote remote, String remoteBranch, String url) {
+    FetchParams(GitRemote remote, GitRemoteBranch remoteBranch, String url) {
       myRemote = remote;
       myRemoteBranch = remoteBranch;
       myUrl = url;
@@ -410,7 +407,7 @@ public class GitFetcher {
       return myRemote;
     }
 
-    public String getRemoteBranch() {
+    public GitRemoteBranch getRemoteBranch() {
       return myRemoteBranch;
     }
 

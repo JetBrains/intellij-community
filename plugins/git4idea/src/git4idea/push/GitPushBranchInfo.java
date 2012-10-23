@@ -15,7 +15,8 @@
  */
 package git4idea.push;
 
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +30,8 @@ import java.util.List;
  */
 final class GitPushBranchInfo {
 
-  private final GitBranch mySourceBranch;
-  private final GitBranch myDestBranch;
+  private final GitLocalBranch mySourceBranch;
+  private final GitRemoteBranch myDestBranch;
   private final Type myType;
   private final List<GitCommit> myCommits;
 
@@ -40,7 +41,8 @@ final class GitPushBranchInfo {
     NO_TRACKED_OR_TARGET  // the branch has no tracked/matched, and target was not manually specified
   }
 
-  GitPushBranchInfo(@NotNull GitBranch sourceBranch, @NotNull GitBranch destBranch, @NotNull List<GitCommit> commits, Type type) {
+  GitPushBranchInfo(@NotNull GitLocalBranch sourceBranch, @NotNull GitRemoteBranch destBranch,
+                    @NotNull List<GitCommit> commits, @NotNull Type type) {
     mySourceBranch = sourceBranch;
     myCommits = commits;
     myDestBranch = destBranch;
@@ -61,7 +63,7 @@ final class GitPushBranchInfo {
   }
 
   @NotNull
-  GitBranch getDestBranch() {
+  GitRemoteBranch getDestBranch() {
     return myDestBranch;
   }
 
@@ -71,7 +73,7 @@ final class GitPushBranchInfo {
   }
 
   @NotNull
-  public GitBranch getSourceBranch() {
+  public GitLocalBranch getSourceBranch() {
     return mySourceBranch;
   }
 

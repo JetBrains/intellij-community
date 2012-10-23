@@ -674,9 +674,6 @@ public class GitUtil {
       return true;
     }
     GitRepositoryManager manager = getRepositoryManager(project);
-    if (manager == null) {
-      return true;
-    }
     return !manager.moreThanOneRoot();
   }
 
@@ -703,8 +700,13 @@ public class GitUtil {
     return null;
   }
 
+  /**
+   * @deprecated Calls Git for tracked info, use {@link GitRepository#getBranchTrackInfos()} instead.
+   */
   @Nullable
-  public static Pair<GitRemote, GitBranch> findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
+  @Deprecated
+  public static Pair<GitRemote, GitRemoteBranch> findMatchingRemoteBranch(GitRepository repository, GitLocalBranch branch)
+    throws VcsException {
     /*
     from man git-push:
     git push
@@ -723,7 +725,7 @@ public class GitUtil {
       return null;
     }
 
-    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
+    for (GitRemoteBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
       if (remoteBranch.getName().equals(remote.getName() + "/" + branch.getName())) {
         return Pair.create(remote, remoteBranch);
       }
@@ -741,22 +743,8 @@ public class GitUtil {
     return null;
   }
 
-  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitBranch dest) {
+  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitRemoteBranch dest) {
     return repository.getBranches().getRemoteBranches().contains(dest);
-  }
-
-  /**
-   * Convert {@link GitBranch GitBranches} to their names, and remove remote HEAD pointers.
-   */
-  @NotNull
-  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitBranch> branches) {
-    Collection<String> names = new ArrayList<String>(branches.size());
-    for (GitBranch branch : branches) {
-      if (!branch.isRemote() || !branch.getShortName().equals("HEAD")) {
-        names.add(branch.getName());
-      }
-    }
-    return names;
   }
 
   @NotNull
