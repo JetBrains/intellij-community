@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -26,10 +29,10 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -77,10 +80,12 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   private final WizardContext myContext;
   private final StepSequence mySequence;
+  private ModuleWizardStep mySettingsStep;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myBuilder;
   private MinusculeMatcher[] myMatchers;
+  private ModuleBuilder myModuleBuilder;
 
   public SelectTemplateStep(WizardContext context, StepSequence sequence) {
 
@@ -182,8 +187,13 @@ public class SelectTemplateStep extends ModuleWizardStep {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         ProjectTemplate template = getSelectedTemplate();
+        myModuleBuilder = template == null ? null : template.createModuleBuilder();
+        mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.createSettingsStep(myContext);
+        if (mySettingsStep == null) {
+          mySettingsStep = ProjectWizardStepFactory.getInstance().createNameAndLocationStep(myContext);
+        }
         setupPanels(template);
-        mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
+        mySequence.setType(myModuleBuilder == null ? null : myModuleBuilder.getBuilderId());
         myContext.requestWizardButtonsUpdate();
       }
     });
@@ -239,11 +249,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
       mySettingsPanel.remove(0);
     }
     if (template != null) {
-      JComponent settingsPanel = template.getSettingsPanel();
-      if (settingsPanel != null) {
-        mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
+      if (mySettingsStep != null) {
+        mySettingsPanel.add(mySettingsStep.getComponent(), BorderLayout.NORTH);
       }
-      mySettingsPanel.setVisible(settingsPanel != null);
+      mySettingsPanel.setVisible(mySettingsStep != null);
       String description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
         StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
@@ -266,12 +275,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
   @Override
   public void updateStep() {
     myBuilder.queueUpdate();
-    setModuleType();
-  }
-
-  private void setModuleType() {
-    ProjectTemplate template = getSelectedTemplate();
-    mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
   }
 
   @Override
@@ -286,9 +289,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     if (template == null) {
       throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
     }
-    ValidationInfo info = template.validateSettings();
-    if (info != null) {
-      throw new ConfigurationException(info.message);
+    if (mySettingsStep != null) {
+      return mySettingsStep.validate();
     }
     return true;
   }
@@ -372,7 +374,18 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    setModuleType();
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
+    }
+    final ModuleBuilder builder = myModuleBuilder;
+    if (builder != null) {
+      String name = myContext.getProjectName();
+      builder.setName(name);
+      String directory = myContext.getProjectFileDirectory();
+      builder.setModuleFilePath(
+        FileUtil.toSystemIndependentName(directory + "/" + name + ModuleFileType.DOT_DEFAULT_EXTENSION));
+      builder.setContentEntryPath(directory);
+    }
   }
 
   @Override

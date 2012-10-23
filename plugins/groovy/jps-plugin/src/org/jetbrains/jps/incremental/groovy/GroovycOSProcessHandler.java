@@ -150,7 +150,11 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
-        compilerMessages.add(new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt));
+        CompilerMessage msg = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Message received: " + msg);
+        }
+        compilerMessages.add(msg);
       }
     }
   }

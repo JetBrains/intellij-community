@@ -49,7 +49,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -69,7 +68,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -399,13 +397,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      System.out.println("compileContext = " + compileContext);
-      System.out.println(DebugUtil.currentStackTrace());
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
-          System.out.println("category = " + category);
-          System.out.println("messages = " + Arrays.toString(messages));
           for (CompilerMessage message : messages) {
             if (category != CompilerMessageCategory.INFORMATION || !message.getMessage().startsWith("Compilation completed successfully")) {
               myMessages.add(message);
