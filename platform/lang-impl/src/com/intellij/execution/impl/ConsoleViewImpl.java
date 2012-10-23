@@ -1356,11 +1356,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Nullable
   protected OccurenceInfo calcNextOccurrence(final int delta) {
-    return EditorHyperlinkSupport.getNextOccurrence(myEditor, myHyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
+    final EditorHyperlinkSupport hyperlinks = myHyperlinks;
+    if (hyperlinks == null) {
+      return null;
+    }
+
+    return EditorHyperlinkSupport.getNextOccurrence(myEditor, hyperlinks.getHyperlinks().keySet(), delta, new Consumer<RangeHighlighter>() {
       @Override
       public void consume(RangeHighlighter next) {
         scrollTo(next.getStartOffset());
-        final HyperlinkInfo hyperlinkInfo = myHyperlinks.getHyperlinks().get(next);
+        final HyperlinkInfo hyperlinkInfo = hyperlinks.getHyperlinks().get(next);
         if (hyperlinkInfo != null) {
           hyperlinkInfo.navigate(myProject);
         }
