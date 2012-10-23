@@ -18,7 +18,7 @@ public class GenericWebRepositoryType extends BaseRepositoryType<GenericWebRepos
   @NotNull
   @Override
   public String getName() {
-    return "Generic Web Repository";
+    return "Generic";
   }
 
   @Override

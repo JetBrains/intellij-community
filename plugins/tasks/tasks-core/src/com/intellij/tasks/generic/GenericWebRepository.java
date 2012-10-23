@@ -9,7 +9,9 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,6 +28,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private String myTasksListURL = "";
   private String myTaskPattern = "";
   private String myLoginURL = "";
+  private String myLoginMethodType = GenericWebRepositoryEditor.GET;
+  private String myGetTasksMethodType = GenericWebRepositoryEditor.GET;
 
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
@@ -33,7 +37,10 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   final static String ID_PLACEHOLDER = "{id}";
   final static String SUMMARY_PLACEHOLDER = "{summary}";
   final static String QUERY_PLACEHOLDER = "{query}";
+  final static String MAX_COUNT_PLACEHOLDER = "{count}";
+  //todo
   final static String DESCRIPTION_PLACEHOLDER = "{description}";
+  //todo
   final static String PAGE_PLACEHOLDER = "{page}";
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -49,6 +56,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     myTasksListURL = other.getTasksListURL();
     myTaskPattern = other.getTaskPattern();
     myLoginURL = other.getLoginURL();
+    myLoginMethodType = other.getLoginMethodType();
+    myGetTasksMethodType = other.getGetTasksMethodType();
   }
 
   @Override
@@ -57,21 +66,22 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
     if (!isLoginAnonymously()) login(httpClient);
 
-    final GetMethod getMethod = new GetMethod(getFullTasksUrl(query != null ? query : ""));
-    httpClient.executeMethod(getMethod);
-    if (getMethod.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + getMethod.getStatusCode());
-    final String response = getMethod.getResponseBodyAsString(Integer.MAX_VALUE);
+    final List<String> placeholders = getPlaceholders(myTaskPattern);
+    if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
+      throw new Exception("Incorrect Task Pattern");
+    }
+
+    //todo add possibility to select method type
+    final HttpMethod method = getTaskListsMethod(query != null ? query : "", max);
+    httpClient.executeMethod(method);
+    if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
+    final String response = method.getResponseBodyAsString();
 
     final String taskPatternWithoutPlaceholders = myTaskPattern.replaceAll("\\{.+?\\}", "");
     Matcher matcher = Pattern
       .compile(taskPatternWithoutPlaceholders,
                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL | Pattern.UNICODE_CASE | Pattern.CANON_EQ)
       .matcher(response);
-
-    final List<String> placeholders = getPlaceholders(myTaskPattern);
-    if (matcher.groupCount() != 2 || !placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
-      throw new Exception("Incorrect Task Pattern");
-    }
 
     List<Task> tasks = new ArrayList<Task>();
     while (matcher.find()) {
@@ -86,10 +96,40 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return tasks.toArray(new Task[tasks.size()]);
   }
 
+  private HttpMethod getTaskListsMethod(final String query, final int max) {
+    String requestUrl = getFullTasksUrl(query, max);
+    return GenericWebRepositoryEditor.GET.equals(myGetTasksMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+  }
+
   private void login(final HttpClient httpClient) throws Exception {
-    final GetMethod method = new GetMethod(getFullLoginUrl());
+    final HttpMethod method = getLoginMethod();
     httpClient.executeMethod(method);
     if (method.getStatusCode() != 200) throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+  }
+
+  private HttpMethod getLoginMethod() {
+    String requestUrl = getFullLoginUrl();
+    return GenericWebRepositoryEditor.GET.equals(myLoginMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+  }
+
+  private static HttpMethod getPostMethodFromURL(final String requestUrl) {
+    int n = requestUrl.indexOf('?');
+    if (n == -1) {
+      return new PostMethod(requestUrl);
+    }
+
+    PostMethod postMethod = new PostMethod(requestUrl.substring(0, n));
+    n = requestUrl.indexOf('?');
+    String[] requestParams = requestUrl.substring(n + 1).split("&");
+    for (String requestParam : requestParams) {
+      String[] nv = requestParam.split("=");
+      if (nv.length == 1) {
+        postMethod.addParameter(nv[0], "");
+      } else {
+        postMethod.addParameter(nv[0], nv[1]);
+      }
+    }
+    return postMethod;
   }
 
   private static List<String> getPlaceholders(String value) {
@@ -105,21 +145,18 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return vars;
   }
 
-  private String getFullTasksUrl(final String query) {
+  private String getFullTasksUrl(final String query, final int max) {
     return getTasksListURL()
-      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl())
-      .replaceAll(placeholder2regexp(QUERY_PLACEHOLDER), query);
+      .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
+      .replaceAll(Pattern.quote(QUERY_PLACEHOLDER), encodeUrl(query))
+      .replaceAll(Pattern.quote(MAX_COUNT_PLACEHOLDER), String.valueOf(max));
   }
 
   private String getFullLoginUrl() {
     return getLoginURL()
-      .replaceAll(placeholder2regexp(SERVER_URL_PLACEHOLDER), getUrl())
-      .replaceAll(placeholder2regexp(USERNAME_PLACEHOLDER), getUsername())
-      .replaceAll(placeholder2regexp(PASSWORD_PLACEHOLDER), getPassword());
-  }
-
-  private static String placeholder2regexp(String placeholder) {
-    return placeholder.replaceAll("\\{", "\\\\{");
+      .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
+      .replaceAll(Pattern.quote(USERNAME_PLACEHOLDER), encodeUrl(getUsername()))
+      .replaceAll(Pattern.quote(PASSWORD_PLACEHOLDER), encodeUrl(getPassword()));
   }
 
   @Nullable
@@ -158,6 +195,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(getTasksListURL(), that.getTasksListURL())) return false;
     if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
     if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;
+    if (!Comparing.equal(getLoginMethodType(), that.getLoginMethodType())) return false;
+    if (!Comparing.equal(getGetTasksMethodType(), that.getGetTasksMethodType())) return false;
     return true;
   }
 
@@ -183,5 +222,21 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   public void setLoginURL(final String loginURL) {
     myLoginURL = loginURL;
+  }
+
+  public void setLoginMethodType(final String loginMethodType) {
+    myLoginMethodType = loginMethodType;
+  }
+
+  public void setGetTasksMethodType(final String getTasksMethodType) {
+    myGetTasksMethodType = getTasksMethodType;
+  }
+
+  public String getLoginMethodType() {
+    return myLoginMethodType;
+  }
+
+  public String getGetTasksMethodType() {
+    return myGetTasksMethodType;
   }
 }
