@@ -29,6 +29,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -147,6 +148,13 @@ public class OldReferencesResolver {
     PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
     if (oldExpr instanceof GrReferenceExpression) {
+      if (isThisReferenceToContainingClass(oldExpr) || isSimpleSuperReference(oldExpr)) {
+        if (myInstanceRef != null) {
+          newExpr.replace(getInstanceRef(factory));
+        }
+        return;
+      }
+
       final GrReferenceExpression oldRef = (GrReferenceExpression)oldExpr;
       newExpr = newExpr.replace(decodeReferenceExpression((GrReferenceExpression)newExpr, oldRef));
       //newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
@@ -207,12 +215,6 @@ public class OldReferencesResolver {
           }
         }
       }
-    }
-    else if (isThisReferenceToContainingClass(oldExpr) || isSimpleSuperReference(oldExpr)) {
-      if (myInstanceRef != null) {
-        newExpr.replace(getInstanceRef(factory));
-      }
-      return;
     }
     else {
       PsiClass refClass = oldExpr.getCopyableUserData(REF_CLASS_KEY);
@@ -302,13 +304,22 @@ public class OldReferencesResolver {
   }
 
   private static boolean isSimpleSuperReference(PsiElement oldExpr) {
-    return oldExpr instanceof GrSuperReferenceExpression && ((GrSuperReferenceExpression)oldExpr).getQualifier() == null;
+    if (oldExpr instanceof GrReferenceExpression) {
+      GrReferenceExpression ref = (GrReferenceExpression)oldExpr;
+      if (ref.getQualifier() == null) {
+        PsiElement nameElement = ref.getReferenceNameElement();
+        if (nameElement != null) {
+          return nameElement.getNode().getElementType() == GroovyTokenTypes.kSUPER;
+        }
+      }
+    }
+    return false;
   }
 
   private boolean isThisReferenceToContainingClass(PsiElement oldExpr) {
-    if (!(oldExpr instanceof GrThisReferenceExpression)) return false;
+    if (!(oldExpr instanceof GrReferenceExpression && PsiUtil.isThisReference(oldExpr))) return false;
 
-    final GrReferenceExpression qualifier = ((GrThisReferenceExpression)oldExpr).getQualifier();
+    final GrReferenceExpression qualifier = (GrReferenceExpression)((GrReferenceExpression)oldExpr).getQualifier();
     if (qualifier == null) return true;
 
     final PsiClass contextClass = PsiUtil.getContextClass(myToReplaceIn);

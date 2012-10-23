@@ -235,8 +235,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SPREAD_ARGUMENT = new GroovyElementType("Spread argument");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
-  GroovyElementType THIS_REFERENCE_EXPRESSION = new GroovyElementType("This reference expressions");
-  GroovyElementType SUPER_REFERENCE_EXPRESSION = new GroovyElementType("Super reference expressions");
 
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
 

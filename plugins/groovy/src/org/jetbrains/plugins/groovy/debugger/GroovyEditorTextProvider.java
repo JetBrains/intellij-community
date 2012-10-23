@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -77,9 +76,6 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
       }
     }
 
-    if (parent instanceof GrThisReferenceExpression) {
-      return parent;
-    }
     return null;
   }
 

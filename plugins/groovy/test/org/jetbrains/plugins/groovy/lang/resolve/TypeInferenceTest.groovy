@@ -150,6 +150,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testMethodCallInvokedOnArrayAccess() {
     final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy");
+    assertNotNull(reference)
+    assertNotNull(reference.type)
     assertEquals("java.lang.Integer", reference.type.canonicalText);
   }
 

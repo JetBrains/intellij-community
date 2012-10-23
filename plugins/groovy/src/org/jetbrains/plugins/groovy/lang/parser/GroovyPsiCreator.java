@@ -232,8 +232,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == REGEX) return new GrRegexImpl(node);
     if (elem == GSTRING_INJECTION) return new GrStringInjectionImpl(node);
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
-    if (elem == THIS_REFERENCE_EXPRESSION) return new GrThisReferenceExpressionImpl(node);
-    if (elem == SUPER_REFERENCE_EXPRESSION) return new GrSuperReferenceExpressionImpl(node);
     if (elem == PARENTHESIZED_EXPRESSION) return new GrParenthesizedExpressionImpl(node);
     if (elem == NEW_EXPRESSION) return new GrNewExpressionImpl(node);
     if (elem == ANONYMOUS_CLASS_DEFINITION) return new GrAnonymousClassDefinitionImpl(node);

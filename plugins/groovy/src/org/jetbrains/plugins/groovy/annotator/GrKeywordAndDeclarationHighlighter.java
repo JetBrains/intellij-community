@@ -104,6 +104,8 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     }
     else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
+      if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       return false; //don't highlight foo.def
     }
 

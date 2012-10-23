@@ -97,7 +97,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
   private static String convertLeafExpression(GrExpression condition) {
     if (BoolUtils.isNegation(condition)) {
       final GrExpression negated = BoolUtils.getNegated(condition);
-      if (ParenthesesUtils.getPrecendence(negated) >
+      if (ParenthesesUtils.getPrecedence(negated) >
           ParenthesesUtils.OR_PRECEDENCE) {
         return '(' + negated.getText() + ')';
       }
@@ -112,7 +112,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
       final GrExpression rhs = binaryExpression.getRightOperand();
       assert rhs != null;
       return lhs.getText() + negatedComparison + rhs.getText();
-    } else if (ParenthesesUtils.getPrecendence(condition) >
+    } else if (ParenthesesUtils.getPrecedence(condition) >
         ParenthesesUtils.PREFIX_PRECEDENCE) {
       return "!(" + condition.getText() + ')';
     } else {

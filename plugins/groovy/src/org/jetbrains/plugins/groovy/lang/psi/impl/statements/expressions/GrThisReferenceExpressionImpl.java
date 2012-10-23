@@ -78,7 +78,6 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitThisExpression(this);
   }
 
   public String toString() {

@@ -137,7 +137,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       return lhs.getText() + negatedComparison + rhs.getText();
     } else {
       final String baseText = exp.getText();
-      if (ParenthesesUtils.getPrecendence(exp) >
+      if (ParenthesesUtils.getPrecedence(exp) >
           ParenthesesUtils.PREFIX_PRECEDENCE) {
         return "!(" + baseText + ')';
       } else {

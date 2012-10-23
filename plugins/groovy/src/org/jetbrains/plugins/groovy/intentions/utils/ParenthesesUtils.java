@@ -82,18 +82,16 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
   }
 
-  public static int getPrecendence(GrExpression expression) {
-    if (expression instanceof GrThisReferenceExpression ||
-        expression instanceof GrLiteral ||
-        expression instanceof GrSuperReferenceExpression ) {
+  public static int getPrecedence(GrExpression expression) {
+    if (expression instanceof GrLiteral) {
       return LITERAL_PRECEDENCE;
     }
     if (expression instanceof GrReferenceExpression) {
-      final GrReferenceExpression referenceExpression =
-          (GrReferenceExpression) expression;
+      final GrReferenceExpression referenceExpression = (GrReferenceExpression)expression;
       if (referenceExpression.getQualifierExpression() != null) {
         return METHOD_CALL_PRECEDENCE;
-      } else {
+      }
+      else {
         return LITERAL_PRECEDENCE;
       }
     }
@@ -105,11 +103,10 @@ public class ParenthesesUtils {
       return TYPE_CAST_PRECEDENCE;
     }
     if (expression instanceof GrUnaryExpression) {
-      return ((GrUnaryExpression)expression).isPostfix()?POSTFIX_PRECEDENCE:PREFIX_PRECEDENCE;
+      return ((GrUnaryExpression)expression).isPostfix() ? POSTFIX_PRECEDENCE : PREFIX_PRECEDENCE;
     }
     if (expression instanceof GrBinaryExpression) {
-      final GrBinaryExpression binaryExpression =
-          (GrBinaryExpression) expression;
+      final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
       final IElementType sign = binaryExpression.getOperationTokenType();
       return precedenceForBinaryOperator(sign);
     }

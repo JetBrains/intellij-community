@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -130,8 +129,7 @@ public class FieldConflictsResolver {
         LOG.assertTrue(parentClass != null);
         expressionFromText = factory.createReferenceExpressionFromText("A.this." + member.getName());
         //noinspection ConstantConditions
-        ((GrThisReferenceExpression)expressionFromText.getQualifier()).getQualifier().replace(
-          factory.createReferenceElementForClass(parentClass));
+        ((GrReferenceExpression)expressionFromText.getQualifier()).getQualifier().replace(factory.createReferenceElementForClass(parentClass));
       }
       else {
         expressionFromText = (GrReferenceExpression)factory.createExpressionFromText("this." + member.getName());

@@ -32,7 +32,7 @@ Groovy script
           PsiWhiteSpace('\n        ')
           Method call
             Reference expression
-              'super' reference expression
+              Reference expression
                 PsiElement(super)('super')
               PsiElement(.)('.')
               PsiElement(identifier)('foo')
