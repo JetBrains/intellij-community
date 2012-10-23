@@ -98,17 +98,21 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.setId(null);
 
     createComponents(allowNoContext);
-    
-    com.intellij.ui.DocumentAdapter listener = new com.intellij.ui.DocumentAdapter() {
+
+    myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(myKeyField.getText().trim());
+        nodeChanged.run();
+      }
+    });
+    myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+      @Override
+      protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText().trim());
         nodeChanged.run();
       }
-    };
-    myKeyField.getDocument().addDocumentListener(listener);
-    myDescription.getDocument().addDocumentListener(listener);
+    });
 
     new UiNotifyConnector(this, new Activatable.Adapter() {
       @Override
@@ -471,7 +475,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence()).isEmpty());
   }
 
-  private void reset() {
+  void resetUi() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
 
