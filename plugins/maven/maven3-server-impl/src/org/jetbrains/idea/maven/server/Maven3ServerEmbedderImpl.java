@@ -571,8 +571,13 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   @NotNull
   @Override
-  public MavenServerExecutionResult execute(@NotNull File file, @NotNull Collection<String> activeProfiles, @NotNull List<String> goals)
-    throws RemoteException, MavenServerProcessCanceledException {
+  public MavenServerExecutionResult execute(@NotNull File file,
+                                            @NotNull Collection<String> activeProfiles,
+                                            @NotNull Collection<String> inactiveProfiles,
+                                            @NotNull List<String> goals,
+                                            @NotNull List<String> selectedProjects,
+                                            boolean alsoMake,
+                                            boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
     throw new UnsupportedOperationException();
   }
 

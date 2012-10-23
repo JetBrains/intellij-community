@@ -918,6 +918,33 @@ public class MavenProjectsTree {
     }
   }
 
+  public MavenProject findRootProject(@NotNull MavenProject project) {
+    readLock();
+    try {
+      MavenProject rootProject = project;
+      while (true) {
+        MavenProject aggregator = myModuleToAggregatorMapping.get(project);
+        if (aggregator == null) {
+          return rootProject;
+        }
+        rootProject = aggregator;
+      }
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
+  public boolean isRootProject(@NotNull MavenProject project) {
+    readLock();
+    try {
+      return myModuleToAggregatorMapping.get(project) == null;
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
   public List<MavenProject> getModules(MavenProject aggregator) {
     readLock();
     try {

@@ -44,7 +44,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
   private final Consumer<String> myStatusUpdater;
 
   public GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {
@@ -150,11 +150,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
-        CompilerMessage msg = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Message received: " + msg);
-        }
-        compilerMessages.add(msg);
+        compilerMessages.add(new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt));
       }
     }
   }

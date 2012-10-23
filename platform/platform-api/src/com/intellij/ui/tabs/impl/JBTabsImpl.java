@@ -61,7 +61,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
@@ -2801,6 +2800,18 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
 
     return this;
+  }
+
+  public boolean useSmallLabels() {
+    return false;
+  }
+
+  public boolean useBoldLabels() {
+    return false;
+  }
+
+  public boolean hasUnderline() {
+    return false;
   }
 
   public boolean isGhostsAlwaysVisible() {

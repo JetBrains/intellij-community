@@ -38,6 +38,7 @@ class GitExecutor extends Executor {
     printVersionTheFirstTime();
     def split = StringUtil.split(command, " ")
     split.add(0, GIT_EXECUTABLE)
+    log("git $command")
     for (int attempt = 0; attempt < 3; attempt++) {
       String stdout = run(split);
       if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {

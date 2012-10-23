@@ -371,7 +371,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     public GroupByChangeListAction() {
-      super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.ObjectBrowser.Browser);
+      super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
     }
 
     public boolean isSelected(AnActionEvent e) {
