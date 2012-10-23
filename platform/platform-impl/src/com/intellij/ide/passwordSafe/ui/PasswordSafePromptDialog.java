@@ -17,6 +17,7 @@ package com.intellij.ide.passwordSafe.ui;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -288,15 +289,18 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         if (d.isOK()) {
           String p = new String(d.myPasswordPasswordField.getPassword());
           pw.set(p);
-          if (d.myRememberThePasswordCheckBox.isSelected()) {
-            try {
+          try {
+            if (d.myRememberThePasswordCheckBox.isSelected()) {
               ps.storePassword(project, requester, key, p);
             }
-            catch (PasswordSafeException e) {
-              Messages.showErrorDialog(project, e.getMessage(), "Failed to store password");
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to store password", e);
-              }
+            else if (!ps.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+              ps.getMemoryProvider().storePassword(project, requester, key, p);
+            }
+          }
+          catch (PasswordSafeException e) {
+            Messages.showErrorDialog(project, e.getMessage(), "Failed to store password");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Failed to store password", e);
             }
           }
         }

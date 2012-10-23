@@ -288,14 +288,13 @@ public class UIUtil {
 
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
-    if (!(c >= 0x20 && c != 0x7F)) return false;
+    if (c < 0x20 || c == 0x7F) return false;
 
-    int modifiers = e.getModifiers();
     if (SystemInfo.isMac) {
       return !e.isMetaDown() && !e.isControlDown();
     }
 
-    return (modifiers & ActionEvent.ALT_MASK) == (modifiers & ActionEvent.CTRL_MASK);
+    return !e.isAltDown() && !e.isControlDown();
   }
 
   public static int getStringY(@NotNull final String string, @NotNull final Rectangle bounds, @NotNull final Graphics2D g) {

@@ -25,8 +25,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
@@ -48,7 +48,7 @@ abstract class GitBranchOperation {
   private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
-  @NotNull protected final PlatformFacade myFacade;
+  @NotNull protected final GitPlatformFacade myFacade;
   @NotNull protected final Git myGit;
   @NotNull protected final GitBranchUiHandler myUiHandler;
   @NotNull private final Collection<GitRepository> myRepositories;
@@ -58,7 +58,7 @@ abstract class GitBranchOperation {
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
-  protected GitBranchOperation(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git,
+  protected GitBranchOperation(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
                                @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<GitRepository> repositories) {
     myProject = project;
     myFacade = facade;

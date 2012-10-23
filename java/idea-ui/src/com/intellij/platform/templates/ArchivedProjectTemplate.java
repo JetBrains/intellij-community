@@ -15,32 +15,22 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
+import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
+import com.intellij.ui.IdeBorderFactory;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.zip.ZipEntry;
@@ -53,9 +43,12 @@ import java.util.zip.ZipInputStream;
 public class ArchivedProjectTemplate implements ProjectTemplate {
 
   static final String DESCRIPTION_PATH = ".idea/description.html";
+
   private final String myDisplayName;
   private final URL myArchivePath;
+  private final ModuleType myModuleType;
   private final WizardContext myContext;
+  private final ProjectNameStep mySettingsStep;
 
   public ArchivedProjectTemplate(String displayName,
                                  URL archivePath,
@@ -64,6 +57,9 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
     myDisplayName = displayName;
     myArchivePath = archivePath;
     myContext = context;
+    myModuleType = computeModuleType(this);
+    mySettingsStep = new ProjectNameStep(context, null);
+    mySettingsStep.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
   }
 
   @NotNull
@@ -74,11 +70,22 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
 
   @Override
   public String getDescription() {
+    return readEntry(new Condition<ZipEntry>() {
+      @Override
+      public boolean value(ZipEntry entry) {
+        return entry.getName().endsWith(DESCRIPTION_PATH);
+      }
+    });
+  }
+
+  @Nullable
+  String readEntry(Condition<ZipEntry> condition) {
+    ZipInputStream stream = null;
     try {
-      ZipInputStream stream = getStream();
+      stream = getStream();
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
-        if (entry.getName().endsWith(DESCRIPTION_PATH)) {
+        if (condition.value(entry)) {
           return StreamUtil.readText(stream);
         }
       }
@@ -86,49 +93,35 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
     catch (IOException e) {
       return null;
     }
+    finally {
+      StreamUtil.closeStream(stream);
+    }
     return null;
   }
 
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return new ModuleBuilder() {
-      @Override
-      public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+    return new TemplateModuleBuilder(this, myModuleType);
+  }
 
-      }
-
+  @NotNull
+  private static ModuleType computeModuleType(ArchivedProjectTemplate template) {
+    String iml = template.readEntry(new Condition<ZipEntry>() {
       @Override
-      public ModuleType getModuleType() {
-        return null;
+      public boolean value(ZipEntry entry) {
+        return entry.getName().endsWith(".iml");
       }
-
-      @NotNull
-      @Override
-      public Module createModule(@NotNull ModifiableModuleModel moduleModel)
-        throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
-        final String path = getContentEntryPath();
-        String iml;
-        try {
-          File dir = new File(path);
-          ZipInputStream zipInputStream = getStream();
-          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream);
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-          iml = ContainerUtil.find(dir.list(), new Condition<String>() {
-            @Override
-            public boolean value(String s) {
-              return s.endsWith(".iml");
-            }
-          });
-          new File(path, iml).renameTo(new File(getModuleFilePath()));
-          RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
-      }
-    };
+    });
+    if (iml == null) return ModuleType.EMPTY;
+    try {
+      Document document = JDOMUtil.loadDocument(iml);
+      String type = document.getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
+      return ModuleTypeManager.getInstance().findByID(type);
+    }
+    catch (Exception e) {
+      return ModuleType.EMPTY;
+    }
   }
 
   @Nullable
@@ -137,12 +130,7 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  private ZipInputStream getStream() throws IOException {
+  ZipInputStream getStream() throws IOException {
     return new ZipInputStream(myArchivePath.openStream());
-  }
-
-  @Override
-  public JComponent getSettingsPanel() {
-    return null;
   }
 }

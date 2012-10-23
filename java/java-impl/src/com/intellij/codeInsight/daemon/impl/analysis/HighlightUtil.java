@@ -1819,13 +1819,13 @@ public class HighlightUtil {
           type = ((PsiReferenceExpression)qualifier).getType();
           referencedClass = PsiUtil.resolveClassInType(type);
         }
-        else if (qualifier instanceof PsiThisExpression || qualifier == null) {
-          @SuppressWarnings({"unchecked"}) PsiMethod parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
-          resolved = parent;
-          expression = qualifier == null ? expression : qualifier;
+        else if (qualifier == null) {
+          resolved = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
           if (resolved != null) {
             referencedClass = ((PsiMethod)resolved).getContainingClass();
           }
+        } else if (qualifier instanceof PsiThisExpression) {
+          referencedClass = PsiUtil.resolveClassInType(((PsiThisExpression)qualifier).getType());
         }
       }
       if (resolved instanceof PsiField) {
@@ -2058,7 +2058,7 @@ public class HighlightUtil {
     if (!comment.getText().endsWith("*/")) {
       int start = comment.getTextRange().getEndOffset() - 1;
       int end = start + 1;
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("nonterminated.comment"));
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("unclosed.comment"));
     }
     return null;
   }

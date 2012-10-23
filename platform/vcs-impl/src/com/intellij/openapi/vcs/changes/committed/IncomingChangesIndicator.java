@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.wm.*;
@@ -98,7 +95,8 @@ public class IncomingChangesIndicator {
   private boolean needIndicator() {
     final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
     for (AbstractVcs vcs : vcss) {
-      if (vcs.getCachingCommittedChangesProvider() != null) {
+      CachingCommittedChangesProvider provider = vcs.getCachingCommittedChangesProvider();
+      if (provider != null && provider.supportsIncomingChanges()) {
         return true;
       }
     }

@@ -47,9 +47,9 @@
     <action id="Android.RunDdms" class="org.jetbrains.android.actions.AndroidRunDdmsAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
-    <action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
+    <!--<action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
-    </action>
+    </action>-->
     <action id="Android.RunDraw9Patch" class="org.jetbrains.android.actions.AndroidRunDraw9PatchAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
@@ -332,6 +332,11 @@
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>
+
+    <lang.formatter language="XML" implementationClass="org.jetbrains.android.formatter.AndroidXmlFormattingModelBuilder"/>
+    <codeStyleSettingsProvider implementation="org.jetbrains.android.formatter.AndroidXmlCodeStyleSettingsProvider"/>
+    <predefinedCodeStyle implementation="org.jetbrains.android.formatter.AndroidXmlPredefinedCodeStyle"/>
+    <editorNotificationProvider implementation="org.jetbrains.android.formatter.AndroidCodeStyleNotificationProvider"/>
   </extensions>
 
   <extensionPoints>

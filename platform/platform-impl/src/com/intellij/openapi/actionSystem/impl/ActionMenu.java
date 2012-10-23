@@ -254,7 +254,7 @@ public final class ActionMenu extends JMenu {
       mayContextBeInvalid = false;
     }
     else {
-      context = DataManager.getInstance().getDataContext();
+      context = DataManager.getInstance().getDataContext(this);
       mayContextBeInvalid = true;
     }
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);

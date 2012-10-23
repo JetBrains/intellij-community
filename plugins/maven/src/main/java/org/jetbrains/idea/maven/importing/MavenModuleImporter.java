@@ -364,6 +364,7 @@ public class MavenModuleImporter {
         if (defaultMavenProfile == null) {
           defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
           defaultMavenProfile.setEnabled(true);
+          defaultMavenProfile.setOutputRelativeToContentRoot(true);
           defaultMavenProfile.setObtainProcessorsFromClasspath(true);
           defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_ANNOTATION_PATH_OUTPUT, false);
           defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_TEST_ANNOTATION_OUTPUT, true);
@@ -383,6 +384,7 @@ public class MavenModuleImporter {
 
         if (moduleProfile == null) {
           moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
+          moduleProfile.setOutputRelativeToContentRoot(true);
           moduleProfile.setEnabled(true);
           moduleProfile.setObtainProcessorsFromClasspath(true);
           moduleProfile.addModuleName(myModule.getName());
@@ -430,7 +432,7 @@ public class MavenModuleImporter {
   }
 
   private boolean shouldEnableAnnotationProcessors() {
-    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE;
+    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE && !"pom".equals(myMavenProject.getPackaging());
   }
 
   @NotNull

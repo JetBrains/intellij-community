@@ -187,7 +187,8 @@ public abstract class ChangeSignatureDialogBase<
 
     if (table != null && table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
-        table.getSelectionModel().setSelectionInterval(0, 0);
+        final int selectedIdx = getSelectedIdx();
+        table.getSelectionModel().setSelectionInterval(selectedIdx, selectedIdx);
         table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
       }
       return table;
@@ -195,6 +196,10 @@ public abstract class ChangeSignatureDialogBase<
     else {
       return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
     }
+  }
+
+  protected int getSelectedIdx() {
+    return 0;
   }
 
   protected JBTable getTableComponent() {

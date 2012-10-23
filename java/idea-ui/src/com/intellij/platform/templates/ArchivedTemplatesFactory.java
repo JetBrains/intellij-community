@@ -99,7 +99,7 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
   }
 
   static String getCustomTemplatesPath() {
-    return PathManager.getConfigPath() + "/projectTemplates";
+    return PathManager.getConfigPath() + "/resources/projectTemplates";
   }
 
   @NotNull

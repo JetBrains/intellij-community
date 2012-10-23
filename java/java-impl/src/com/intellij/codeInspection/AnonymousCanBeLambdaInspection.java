@@ -80,7 +80,12 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
                   @Override
                   public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
                     super.visitMethodCallExpression(methodCallExpression);
-                    if (methodCallExpression.resolveMethod() == methods[0]) {
+                    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+                    if (psiMethod == methods[0] ||
+                        psiMethod != null &&
+                        !methodCallExpression.getMethodExpression().isQualified() &&
+                        "getClass".equals(psiMethod.getName()) &&
+                        psiMethod.getParameterList().getParametersCount() == 0) {
                       bodyContainsForbiddenRefs[0] = true;
                     }
                   }

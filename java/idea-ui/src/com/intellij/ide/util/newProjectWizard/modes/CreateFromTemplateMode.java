@@ -56,7 +56,7 @@ public class CreateFromTemplateMode extends WizardMode {
     StepSequence sequence = new StepSequence();
     mySelectTemplateStep = new SelectTemplateStep(context, sequence);
     sequence.addCommonStep(mySelectTemplateStep);
-    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence, ModuleBuilder.getAllBuilders());
+    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence, context.getAllBuilders());
   }
 
   @Nullable
@@ -67,6 +67,11 @@ public class CreateFromTemplateMode extends WizardMode {
       return null;
     }
     return template.createModuleBuilder();
+  }
+
+  @Override
+  public String getShortName() {
+    return "Create from Template";
   }
 
   @Override

@@ -229,6 +229,9 @@ public abstract class InputTool {
   protected void handleDragInProgress() {
   }
 
+  protected void handlePopup() {
+  }
+
   protected void handleDoubleClick(int button) {
   }
 
@@ -273,6 +276,12 @@ public abstract class InputTool {
       }
       handleDragInProgress();
     }
+  }
+
+  public void mousePopup(MouseEvent event, EditableArea area) throws Exception {
+    setArea(area);
+    setEvent(event);
+    handlePopup();
   }
 
   public void mouseDoubleClick(MouseEvent event, EditableArea area) throws Exception {

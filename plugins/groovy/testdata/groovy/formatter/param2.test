@@ -4,8 +4,8 @@ def boo = {def a,
       a+b+c
 }
 -----
-def boo = {def a,
-           def int b,
-           def final c ->
+def boo = { def a,
+            def int b,
+            def final c ->
   a + b + c
 }

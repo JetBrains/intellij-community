@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
@@ -31,15 +31,13 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "equals.hashcode.called.on.url.display.name");
+    return InspectionGadgetsBundle.message("equals.hashcode.called.on.url.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "equals.hashcode.called.on.url.problem.descriptor");
+    return InspectionGadgetsBundle.message("equals.hashcode.called.on.url.problem.descriptor");
   }
 
   @Override
@@ -47,22 +45,17 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
     return new EqualsHashCodeCalledOnUrlVisitor();
   }
 
-  private static class EqualsHashCodeCalledOnUrlVisitor
-    extends BaseInspectionVisitor {
+  private static class EqualsHashCodeCalledOnUrlVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiMethod method = expression.resolveMethod();
-      if (!MethodUtils.isEquals(method) &&
-          !MethodUtils.isHashCode(method)) {
+      if (!MethodUtils.isEquals(method) && !MethodUtils.isHashCode(method)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!TypeUtils.expressionHasType(qualifier, "java.net.URL")) {
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (!ExpressionUtils.hasType(qualifier, "java.net.URL")) {
         return;
       }
       registerMethodCallError(expression);

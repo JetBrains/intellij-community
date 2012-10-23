@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
@@ -54,7 +53,7 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    ModuleBuilder[] builders = context.getAllBuilders();
     for (ModuleBuilder builder : builders) {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
@@ -65,8 +64,10 @@ public class CreateFromScratchMode extends WizardMode {
   static StepSequence addSteps(WizardContext context,
                                ModulesProvider modulesProvider,
                                WizardMode mode,
-                               StepSequence sequence, List<ModuleBuilder> builders) {
-    sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
+                               StepSequence sequence, ModuleBuilder[] builders) {
+    if (!(mode instanceof CreateFromTemplateMode)) {
+      sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
+    }
     for (ModuleBuilder builder : builders) {
       context.setTemplateMode(mode instanceof CreateFromTemplateMode);
       addStepsForBuilder(builder, context, modulesProvider, sequence);
@@ -94,6 +95,11 @@ public class CreateFromScratchMode extends WizardMode {
 
   public void onChosen(final boolean enabled) {
     
+  }
+
+  @Override
+  public String getShortName() {
+    return "Create from Scratch";
   }
 
   public void dispose() {

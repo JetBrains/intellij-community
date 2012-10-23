@@ -30,7 +30,7 @@ public abstract class MacMessages {
                                             String defaultButton,
                                             String alternateButton,
                                             String otherButton,
-                                            Window window,
+                                            @Nullable Window window,
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
 
   public static MacMessages getInstance() {

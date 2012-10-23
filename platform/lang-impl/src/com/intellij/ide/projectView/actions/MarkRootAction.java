@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.projectView.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class MarkRootAction extends AnAction {
+public class MarkRootAction extends DumbAwareAction {
   private final boolean myMarkAsTestSources;
   private final boolean myMarkAsExcluded;
   private final boolean myUnmark;

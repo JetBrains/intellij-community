@@ -28,8 +28,8 @@ import java.awt.*;
 public class BaseLabel extends JLabel {
 
   protected static final int TAB_SHIFT = 1;
-  private static final Color DEFAULT_ACTIVE_FORE = Color.black;
-  private static final Color DEFAULT_PASSIVE_FORE = Gray._75;
+  private static final Color DEFAULT_ACTIVE_FORE = UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black;
+  private static final Color DEFAULT_PASSIVE_FORE = UIUtil.isUnderDarcula()? UIUtil.getLabelDisabledForeground() : Gray._75;
 
   protected ToolWindowContentUi myUi;
 

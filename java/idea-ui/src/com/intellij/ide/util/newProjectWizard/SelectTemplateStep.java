@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -26,10 +29,10 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -77,10 +80,12 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   private final WizardContext myContext;
   private final StepSequence mySequence;
+  private ModuleWizardStep mySettingsStep;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myBuilder;
   private MinusculeMatcher[] myMatchers;
+  private ModuleBuilder myModuleBuilder;
 
   public SelectTemplateStep(WizardContext context, StepSequence sequence) {
 
@@ -89,19 +94,29 @@ public class SelectTemplateStep extends ModuleWizardStep {
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
-    final MultiMap<String, ProjectTemplatesFactory> groups = new MultiMap<String, ProjectTemplatesFactory>();
+    final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
       for (String string : factory.getGroups()) {
-        groups.putValue(string, factory);
+        groups.putValues(string, Arrays.asList(factory.createTemplates(string, context)));
+      }
+    }
+    final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
+    // put single leafs under "Other"
+    for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
+      if (entry.getValue().size() > 1 || ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+        sorted.put(entry.getKey(), entry.getValue());
+      }
+      else  {
+        sorted.putValues("Other", entry.getValue());
       }
     }
 
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
       public SimpleNode[] getChildren() {
-        return ContainerUtil.map2Array(groups.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplatesFactory>>, SimpleNode>() {
+        return ContainerUtil.map2Array(sorted.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
           @Override
-          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplatesFactory>> entry) {
+          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
             return new GroupNode(entry.getKey(), entry.getValue());
           }
         });
@@ -171,33 +186,15 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myTemplatesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (mySettingsPanel.getComponentCount() > 0) {
-          mySettingsPanel.remove(0);
-        }
         ProjectTemplate template = getSelectedTemplate();
-        if (template != null) {
-          JComponent settingsPanel = template.getSettingsPanel();
-          if (settingsPanel != null) {
-            mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
-          }
-          mySettingsPanel.setVisible(settingsPanel != null);
-          String description = template.getDescription();
-          if (description != null) {
-            StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
-            sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
-            sb.append(description).append("</font></body></html>");
-            description = sb.toString();
-          }
-
-          myDescriptionPane.setText(description);
-          myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
+        myModuleBuilder = template == null ? null : template.createModuleBuilder();
+        mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.createSettingsStep(myContext);
+        if (mySettingsStep == null) {
+          mySettingsStep = ProjectWizardStepFactory.getInstance().createNameAndLocationStep(myContext);
         }
-        else {
-          mySettingsPanel.setVisible(false);
-          myDescriptionPanel.setVisible(false);
-        }
-        mySettingsPanel.revalidate();
-        mySettingsPanel.repaint();
+        setupPanels(template);
+        mySequence.setType(myModuleBuilder == null ? null : myModuleBuilder.getBuilderId());
+        myContext.requestWizardButtonsUpdate();
       }
     });
 
@@ -213,13 +210,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
 
-    TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-    if (state != null) {
-      state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    }
-    else {
-      myBuilder.expandAll(null);
-    }
 
     new AnAction() {
       @Override
@@ -234,23 +224,57 @@ public class SelectTemplateStep extends ModuleWizardStep {
             case KeyEvent.VK_DOWN:
               myTemplatesTree.setSelectionRow(row < myTemplatesTree.getRowCount() - 1 ? row + 1 : 0);
               break;
-            case KeyEvent.VK_ENTER:
-              myTemplatesTree.expandRow(row);
           }
         }
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_ENTER), mySearchField);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        TreeState state = SelectTemplateSettings.getInstance().getTreeState();
+       if (state != null) {
+         state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+       }
+       else {
+         myBuilder.expandAll(null);
+       }
+      }
+    });
+
+  }
+
+  private void setupPanels(@Nullable ProjectTemplate template) {
+    if (mySettingsPanel.getComponentCount() > 0) {
+      mySettingsPanel.remove(0);
+    }
+    if (template != null) {
+      if (mySettingsStep != null) {
+        mySettingsPanel.add(mySettingsStep.getComponent(), BorderLayout.NORTH);
+      }
+      mySettingsPanel.setVisible(mySettingsStep != null);
+      String description = template.getDescription();
+      if (StringUtil.isNotEmpty(description)) {
+        StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
+        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        sb.append(description).append("</font></body></html>");
+        description = sb.toString();
+      }
+
+      myDescriptionPane.setText(description);
+      myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
+    }
+    else {
+      mySettingsPanel.setVisible(false);
+      myDescriptionPanel.setVisible(false);
+    }
+    mySettingsPanel.revalidate();
+    mySettingsPanel.repaint();
   }
 
   @Override
   public void updateStep() {
     myBuilder.queueUpdate();
-    setModuleType();
-  }
-
-  private void setModuleType() {
-    ProjectTemplate template = getSelectedTemplate();
-    mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
   }
 
   @Override
@@ -265,9 +289,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     if (template == null) {
       throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
     }
-    ValidationInfo info = template.validateSettings();
-    if (info != null) {
-      throw new ConfigurationException(info.message);
+    if (mySettingsStep != null) {
+      return mySettingsStep.validate();
     }
     return true;
   }
@@ -351,7 +374,18 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    setModuleType();
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
+    }
+    final ModuleBuilder builder = myModuleBuilder;
+    if (builder != null) {
+      String name = myContext.getProjectName();
+      builder.setName(name);
+      String directory = myContext.getProjectFileDirectory();
+      builder.setModuleFilePath(
+        FileUtil.toSystemIndependentName(directory + "/" + name + ModuleFileType.DOT_DEFAULT_EXTENSION));
+      builder.setContentEntryPath(directory);
+    }
   }
 
   @Override
@@ -359,27 +393,29 @@ public class SelectTemplateStep extends ModuleWizardStep {
     Disposer.dispose(myBuilder);
   }
 
+  @Override
+  public String getName() {
+    return "Template Type";
+  }
+
   private void createUIComponents() {
     mySearchField = new SearchTextField(false);
   }
 
-  private class GroupNode extends SimpleNode {
+  private static class GroupNode extends SimpleNode {
     private final String myGroup;
-    private final Collection<ProjectTemplatesFactory> myFactories;
+    private final Collection<ProjectTemplate> myTemplates;
 
-    public GroupNode(String group, Collection<ProjectTemplatesFactory> factories) {
+    public GroupNode(String group, Collection<ProjectTemplate> templates) {
       myGroup = group;
-      myFactories = factories;
+      myTemplates = templates;
     }
 
     @Override
     public SimpleNode[] getChildren() {
       List<SimpleNode> children = new ArrayList<SimpleNode>();
-      for (ProjectTemplatesFactory factory : myFactories) {
-        ProjectTemplate[] templates = factory.createTemplates(myGroup, myContext);
-        for (ProjectTemplate template : templates) {
-          children.add(new TemplateNode(template));
-        }
+      for (ProjectTemplate template : myTemplates) {
+        children.add(new TemplateNode(template));
       }
       return children.toArray(new SimpleNode[children.size()]);
     }

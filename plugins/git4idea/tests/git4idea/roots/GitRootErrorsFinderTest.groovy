@@ -19,13 +19,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootError
 import git4idea.test.GitMockVcsManager
-import git4idea.test.GitTestPlatformFacade
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
 import static junit.framework.Assert.assertEquals
-
 /**
  * 
  * @author Kirill Likhodedov
@@ -35,12 +34,16 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
 
   Project myProject
-  GitTestPlatformFacade myPlatformFacade
   GitMockVcsManager myVcsManager
 
   @Before
   void setUp() {
-    myPlatformFacade = new GitTestPlatformFacade()
+    super.setUp()
+  }
+
+  @After
+  void tearDown() {
+    super.tearDown();
   }
 
   @Test

@@ -37,12 +37,10 @@ public class Pair<A, B> {
     };
   }
 
-  @Nullable
   public static <T> T getFirst(@Nullable Pair<T, ?> pair) {
     return pair != null ? pair.first : null;
   }
 
-  @Nullable
   public static <T> T getSecond(@Nullable Pair<?, T> pair) {
     return pair != null ? pair.second : null;
   }
@@ -55,15 +53,17 @@ public class Pair<A, B> {
     return EMPTY;
   }
 
-  public Pair(A first, B second) {
+  public Pair(@Nullable A first, @Nullable B second) {
     this.first = first;
     this.second = second;
   }
 
+  @SuppressWarnings("ConstantConditions")
   public final A getFirst() {
     return first;
   }
 
+  @SuppressWarnings("ConstantConditions")
   public final B getSecond() {
     return second;
   }

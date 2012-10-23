@@ -28,7 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
@@ -68,7 +68,7 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushDialog(@NotNull Project project) {
     super(project);
     myProject = project;
-    myPusher = new GitPusher(myProject, ServiceManager.getService(project, PlatformFacade.class), new EmptyProgressIndicator());
+    myPusher = new GitPusher(myProject, ServiceManager.getService(project, GitPlatformFacade.class), new EmptyProgressIndicator());
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
     myRepositories = getRepositoriesWithRemotes();
@@ -177,7 +177,7 @@ public class GitPushDialog extends DialogWrapper {
         }
         String remoteName;
         try {
-          remoteName = currentBranch.getTrackedRemoteName(myProject, repository.getRoot());
+          remoteName = GitBranchUtil.getTrackedRemoteName(myProject, repository.getRoot(), currentBranch.getName());
           if (remoteName == null) {
             remoteName = DEFAULT_REMOTE;
           }
@@ -225,8 +225,8 @@ public class GitPushDialog extends DialogWrapper {
       if (currentBranch == null) {
         continue;
       }
-      String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
-      String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
+      String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), currentBranch.getName());
+      String trackedBranchName = GitBranchUtil.getTrackedBranchName(repository.getProject(), repository.getRoot(), currentBranch.getName());
       GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
       GitBranch targetBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, trackedBranchName);
       if (remote == null || targetBranch == null) {
@@ -248,7 +248,7 @@ public class GitPushDialog extends DialogWrapper {
           if (!manualBranchName.startsWith("refs/remotes/")) {
             manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
           }
-          manualBranch = new GitBranch(manualBranchName, false, true);
+          manualBranch = new GitBranch(manualBranchName, GitBranch.DUMMY_HASH, true);
         }
         targetBranch = manualBranch;
       }

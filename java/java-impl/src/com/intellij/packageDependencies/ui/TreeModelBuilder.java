@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,8 +103,8 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_ICON, project);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Nodes.TestSourceFolder, project);
+      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, AllIcons.Modules.SourceFolder, project);
+      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Modules.TestSourceFolder, project);
       myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);

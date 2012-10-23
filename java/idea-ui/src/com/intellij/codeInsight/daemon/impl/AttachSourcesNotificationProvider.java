@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -60,7 +61,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class AttachSourcesNotificationProvider implements EditorNotifications.Provider<EditorNotificationPanel> {
+public class AttachSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME
     = new ExtensionPointName<AttachSourcesProvider>("com.intellij.attachSourcesProvider");
 
@@ -81,7 +82,7 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
     return KEY;
   }
 
-  public EditorNotificationPanel createNotificationPanel(final VirtualFile file) {
+  public EditorNotificationPanel createNotificationPanel(final VirtualFile file, FileEditor fileEditor) {
     if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
     final List<LibraryOrderEntry> libraries = findOrderEntriesContainingFile(file);
     if (libraries == null) return null;

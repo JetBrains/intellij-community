@@ -20,11 +20,11 @@ import git4idea.history.browser.GitCherryPicker
 import git4idea.history.browser.GitCommit
 import git4idea.test.GitLightRepository
 import git4idea.test.MockGit
-import git4idea.test.MockVcsHelper
+import com.intellij.dvcs.test.MockVcsHelper
 import org.junit.Before
 import org.junit.Test
 
-import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.*
 
 /**

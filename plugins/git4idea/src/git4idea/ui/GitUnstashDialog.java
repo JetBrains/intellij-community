@@ -36,10 +36,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
 import git4idea.*;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
+import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
 import git4idea.validators.GitBranchNameValidator;
@@ -52,7 +54,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -306,18 +311,20 @@ public class GitUnstashDialog extends DialogWrapper {
   private void refreshStashList() {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
-    GitStashUtils.loadStashStack(myProject, getGitRoot(), new Consumer<StashInfo>() {
+    VirtualFile root = getGitRoot();
+    GitStashUtils.loadStashStack(myProject, root, new Consumer<StashInfo>() {
       @Override
       public void consume(StashInfo stashInfo) {
         listModel.addElement(stashInfo);
       }
     });
     myBranches.clear();
-    try {
-      GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranches, null);
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    if (repository != null) {
+      myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
     }
-    catch (VcsException e) {
-      // ignore error
+    else {
+      LOG.error("Repository is null for root " + root);
     }
     myStashList.setSelectedIndex(0);
   }
@@ -422,7 +429,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class),
+      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(GitPlatformFacade.class),
             Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;

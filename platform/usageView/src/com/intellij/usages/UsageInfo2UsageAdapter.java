@@ -30,11 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ComputableIcon;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
@@ -67,63 +67,63 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   private final UsageInfo myUsageInfo;
   private final List<UsageInfo> myMergedUsageInfos = new SmartList<UsageInfo>(); // contains all merged infos, including myUsageInfo
-  private int myLineNumber;
-  private int myOffset = -1;
-  protected ComputableIcon myIcon;
-  private String myTooltipText;
+  private final int myLineNumber;
+  private final int myOffset;
+  protected Icon myIcon;
   private Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
 
   public UsageInfo2UsageAdapter(@NotNull final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos.add(usageInfo);
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    Pair<Integer,Integer> data =
+    ApplicationManager.getApplication().runReadAction(new Computable<Pair<Integer,Integer>>() {
       @Override
-      public void run() {
+      public Pair<Integer, Integer> compute() {
         PsiElement element = getElement();
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(element.getContainingFile());
-        int startOffset = myUsageInfo.getNavigationOffset();
+        PsiFile psiFile = usageInfo.getFile();
+        Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
 
-        if (document != null) {
-          myLineNumber = getLineNumber(document, startOffset);
-          initChunks();
-        }
-        else {  // element over light virtual file
-          TextChunk[] chunks = {
-            new TextChunk(new TextAttributes(), element.getText())
-          };
-          myTextChunks = new SoftReference<TextChunk[]>(chunks);
-          myOffset = element.getTextOffset();
-        }
-
-        if (element instanceof PsiFile) {
-          myIcon = null;
+        int offset;
+        int lineNumber;
+        if (document == null) {
+          // element over light virtual file
+          offset = element.getTextOffset();
+          lineNumber = -1;
         }
         else {
-          myIcon = new ComputableIcon(new Computable<Icon>() {
-            @Override
-            public Icon compute() {
-              PsiElement psiElement = getElement();
-              return psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
-            }
-          });
+          offset = -1;
+          int startOffset = myUsageInfo.getNavigationOffset();
+          lineNumber = getLineNumber(document, startOffset);
         }
-
-        myTooltipText = usageInfo.getTooltipText();
+        return Pair.create(offset, lineNumber);
       }
     });
+    myOffset = data.first;
+    myLineNumber = data.second;
     myModificationStamp = getCurrentModificationStamp();
   }
 
-  private static int getLineNumber(final Document document, final int startOffset) {
+  private static int getLineNumber(@NotNull Document document, final int startOffset) {
     if (document.getTextLength() == 0) return 0;
     if (startOffset >= document.getTextLength()) return document.getLineCount();
     return document.getLineNumber(startOffset);
   }
 
+  @NotNull
   private TextChunk[] initChunks() {
-    PsiFile file = getPsiFile();
-    TextChunk[] chunks = file == null ? TextChunk.EMPTY_ARRAY : ChunkExtractor.extractChunks(file, this);
+    PsiFile psiFile = getPsiFile();
+    Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    TextChunk[] chunks;
+    if (document == null) {
+      // element over light virtual file
+      PsiElement element = getElement();
+      chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+    }
+    else {
+      chunks = ChunkExtractor.extractChunks(psiFile, this);
+    }
+
     myTextChunks = new SoftReference<TextChunk[]>(chunks);
     return chunks;
   }
@@ -159,7 +159,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
     if (!(editor instanceof TextEditor)) return null;
 
-    return new TextEditorLocation(getUsageInfo().getSegment().getStartOffset(), (TextEditor)editor);
+    Segment segment = getUsageInfo().getSegment();
+    if (segment == null) return null;
+    return new TextEditorLocation(segment.getStartOffset(), (TextEditor)editor);
   }
 
   @Override
@@ -183,7 +185,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   // must iterate in start offset order
-  public boolean processRangeMarkers(Processor<Segment> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<Segment> processor) {
     for (UsageInfo usageInfo : myMergedUsageInfos) {
       Segment segment = usageInfo.getSegment();
       if (segment != null && !processor.process(segment)) {
@@ -242,6 +244,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return offset;
   }
 
+  @NotNull
   private Project getProject() {
     return getUsageInfo().getProject();
   }
@@ -304,7 +307,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
-  public boolean merge(MergeableUsage other) {
+  public boolean merge(@NotNull MergeableUsage other) {
     if (!(other instanceof UsageInfo2UsageAdapter)) return false;
     UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
     assert u2 != this;
@@ -374,13 +377,19 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
+  @Override
   public void rename(String newName) throws IncorrectOperationException {
     final PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
     reference.handleElementRename(newName);
   }
 
-  public static UsageInfo2UsageAdapter[] convert(UsageInfo[] usageInfos) {
+  @NotNull
+  public static UsageInfo2UsageAdapter[] convert(@NotNull UsageInfo[] usageInfos) {
     UsageInfo2UsageAdapter[] result = new UsageInfo2UsageAdapter[usageInfos.length];
     for (int i = 0; i < result.length; i++) {
       result[i] = new UsageInfo2UsageAdapter(usageInfos[i]);
@@ -400,6 +409,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
   }
 
+  @NotNull
   private List<UsageInfo> getSelectedInfoList() {
     return myMergedUsageInfos;
   }
@@ -413,7 +423,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
-    TextChunk[] chunks = myTextChunks.get();
+    Reference<TextChunk[]> reference = myTextChunks;
+    TextChunk[] chunks = reference == null ? null : reference.get();
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (chunks == null || isValid() && isModified) {
@@ -427,10 +438,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public String getPlainText() {
-    //if (myRangeMarkers.isEmpty()) { // element over light virtual file
-    //  return myTextChunks[0].getText();
-    //}
-
     int startOffset = getNavigationOffset();
     final PsiElement element = getElement();
     if (element != null && startOffset != -1) {
@@ -456,11 +463,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @Override
   public Icon getIcon() {
-    return myIcon != null ? myIcon.getIcon() : null;
+    Icon icon = myIcon;
+    if (icon == null) {
+      PsiElement psiElement = getElement();
+      myIcon = icon = psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
+    }
+    return icon;
   }
 
   @Override
   public String getTooltipText() {
-    return myTooltipText;
+    return myUsageInfo.getTooltipText();
   }
 }

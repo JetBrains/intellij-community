@@ -199,7 +199,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   protected void loadModules(final ModuleModelImpl moduleModel) {
     if (myModulePaths != null && myModulePaths.size() > 0) {
-      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getInstance().getProgressIndicator();
+      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setText("Loading modules...");
         progressIndicator.setText2("");

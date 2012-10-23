@@ -27,7 +27,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
@@ -50,6 +53,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -158,6 +162,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
+      if (newName == null) continue;
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
       allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
@@ -402,18 +407,26 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Nullable
   private String getNewQName(PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
+    final String newQName;
+    final String oldQName;
     if (element instanceof PsiClass) {
-      return qualifiedName + (qualifiedName.length() == 0 ? "" : ".") + ((PsiClass)element).getName();
+      newQName = StringUtil.getQualifiedName(qualifiedName, ((PsiClass)element).getName());
+      oldQName = ((PsiClass)element).getQualifiedName();
     }
     else if (element instanceof PsiPackage) {
-      return qualifiedName + (qualifiedName.length() == 0 ? "" : ".") + ((PsiPackage)element).getName();
+      newQName = StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
+      oldQName = ((PsiPackage)element).getQualifiedName();
     }
     else {
       LOG.assertTrue(false);
-      return null;
+      newQName = null;
+      oldQName = null;
     }
+    if (Comparing.strEqual(newQName, oldQName)) return null;
+    return newQName;
   }
 
   protected void refreshElements(PsiElement[] elements) {

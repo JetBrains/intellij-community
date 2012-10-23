@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +36,10 @@ class GitBrancherImpl implements GitBrancher {
 
 
   @NotNull private final Project myProject;
-  @NotNull private final PlatformFacade myFacade;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
 
-  GitBrancherImpl(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git) {
+  GitBrancherImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git) {
     myProject = project;
     myFacade = facade;
     myGit = git;

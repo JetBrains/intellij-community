@@ -17,6 +17,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +27,7 @@ import com.intellij.openapi.project.Project;
  * To change this template use Options | File Templates.
  */
 public class EditMacrosDialog extends SingleConfigurableEditor {
-  public EditMacrosDialog(Project project) {
+  public EditMacrosDialog(@Nullable Project project) {
     super(project, new ActionMacroConfigurable());
   }
 

@@ -633,11 +633,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           handleUpdateException(e);
         }
       }
+    } catch (ProcessCanceledException ignore) {
     } catch (Throwable t) {
       LOG.debug(t);
       Rethrow.reThrowRuntime(t);
     } finally {
-      if (! myUpdater.isStopped()) {
+      if (!myUpdater.isStopped()) {
         dataHolder.notifyDoneProcessingChanges();
       }
     }

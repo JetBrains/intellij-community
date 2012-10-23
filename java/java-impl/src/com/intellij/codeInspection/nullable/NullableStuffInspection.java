@@ -174,13 +174,25 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                          new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
                 }
                 else if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
-                  final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
-                  assert nameIdentifier2 != null : parameter;
-                  holder.registerProblem(nameIdentifier2, InspectionsBundle.message(
-                    "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", StringUtil.getShortName(anno),
-                    notNullSimpleName),
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                         new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
+                  boolean usedAsQualifier = !ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
+                    @Override
+                    public boolean process(PsiReference reference) {
+                      final PsiElement element = reference.getElement();
+                      if (element instanceof PsiReferenceExpression && element.getParent() instanceof PsiReferenceExpression) {
+                        return false;
+                      }
+                      return true;
+                    }
+                  });
+                  if (!usedAsQualifier) {
+                    final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
+                    assert nameIdentifier2 != null : parameter;
+                    holder.registerProblem(nameIdentifier2, InspectionsBundle.message(
+                      "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", StringUtil.getShortName(anno),
+                      notNullSimpleName),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                           new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
+                  }
                 }
 
               }
@@ -345,7 +357,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] && !nullableManager.isNotNull(parameter, false)) {
+              if (parameterAnnotated[i] && !nullableManager.isNotNull(parameter, false) && !nullableManager.isNullable(parameter, false)) {
                 parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 holder.registerProblem(annotation,

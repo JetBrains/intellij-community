@@ -86,3 +86,12 @@ class ABIllegal extends <error descr="No enclosing instance of type 'A' is in sc
     this(new A());
   }
 }
+
+
+public class A42 {
+  class B {}
+}
+
+class D42 extends A42.B {
+  D42() {new A42().super();}
+}

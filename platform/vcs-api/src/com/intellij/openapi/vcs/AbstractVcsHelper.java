@@ -59,8 +59,8 @@ public abstract class AbstractVcsHelper {
    */
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
-  public void showError(final VcsException e, final String s) {
-    showErrors(Arrays.asList(e), s);
+  public void showError(final VcsException e, final String tabDisplayName) {
+    showErrors(Arrays.asList(e), tabDisplayName);
   }
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs);

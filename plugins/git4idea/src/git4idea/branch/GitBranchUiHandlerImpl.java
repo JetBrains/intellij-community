@@ -55,10 +55,10 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final PlatformFacade myFacade;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
-  GitBranchUiHandlerImpl(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+  GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myGit = git;
     myFacade = facade;
@@ -144,7 +144,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
                                                              untrackedFiles, operationName, null);
   }
 
@@ -173,7 +173,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force) {
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, "checkout", true);
+    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, operation, true);
   }
 
   @Override

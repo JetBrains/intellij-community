@@ -94,7 +94,7 @@ public final class QuickFixAction {
     doRegister(info, action, null, null, fixRange, null);
   }
 
-  public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {
+  public static void unregisterQuickFixAction(@NotNull HighlightInfo info, Condition<IntentionAction> condition) {
     for (Iterator<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> it = info.quickFixActionRanges.iterator(); it.hasNext();) {
       Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair = it.next();
       if (condition.value(pair.first.getAction())) {

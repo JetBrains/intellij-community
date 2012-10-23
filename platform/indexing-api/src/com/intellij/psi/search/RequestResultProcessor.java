@@ -39,9 +39,7 @@ public abstract class RequestResultProcessor {
 
     RequestResultProcessor that = (RequestResultProcessor)o;
 
-    if (!myEquality.equals(that.myEquality)) return false;
-
-    return true;
+    return myEquality.equals(that.myEquality);
   }
 
   @Override
@@ -49,6 +47,5 @@ public abstract class RequestResultProcessor {
     return myEquality.hashCode();
   }
 
-  public abstract boolean processTextOccurrence(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer);
-
+  public abstract boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<PsiReference> consumer);
 }

@@ -42,11 +42,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -56,7 +58,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private final Project myCurrentProject;
   private final ModulesProvider myModulesProvider;
   private WizardContext myWizardContext;
-  private ProjectCreateModeStep myRootStep;
+  protected ProjectCreateModeStep myRootStep;
 
 
   /**
@@ -115,6 +117,13 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     }
   }
 
+  @Override
+  protected String addStepComponent(Component component) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(8, 8, 0, 0));
+    }
+    return super.addStepComponent(component);
+  }
 
   protected void updateStep() {
     final ModuleWizardStep currentStep = getCurrentStepObject();
@@ -166,7 +175,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     super.doOKAction();
   }
 
-  private boolean commitStepData(final ModuleWizardStep step) {
+  protected boolean commitStepData(final ModuleWizardStep step) {
     try {
       if (!step.validate()) {
         return false;

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="myStyle"><item name="android:background">1</item><item name="android:color">2</item></style><string name="app_name">untitled</string><string name="app_name">untitled</string><style name="myStyle"><item name="android:background">1</item><item name="android:color">2</item></style>
+</resources>

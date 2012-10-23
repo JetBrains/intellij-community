@@ -736,11 +736,11 @@ public class AbstractTreeUi {
           expand(getRootNode(), true);
         }
         ActionCallback callback;
-        if (!willUpdate) {
-          callback = updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
+        if (willUpdate) {
+          callback = new ActionCallback.Done();
         }
         else {
-          callback = new ActionCallback.Done();
+          callback = updateNodeChildren(getRootNode(), pass, null, false, false, false, true, true);
         }
         callback.doWhenDone(new Runnable() {
           @Override
@@ -2177,11 +2177,6 @@ public class AbstractTreeUi {
     }
   }
 
-  private void scheduleMaybeReady() {
-    myMaybeReady.cancelAllRequests();
-    myMaybeReady.addRequest(myMaybeReadyRunnable, Registry.intValue("ide.tree.waitForReadySchedule"));
-  }
-
   private void flushPendingNodeActions() {
     final DefaultMutableTreeNode[] nodes = myPendingNodeActions.toArray(new DefaultMutableTreeNode[myPendingNodeActions.size()]);
     myPendingNodeActions.clear();
@@ -3520,18 +3515,22 @@ public class AbstractTreeUi {
   }
 
   private void updateNodeImageAndPosition(@NotNull final DefaultMutableTreeNode node, boolean updatePosition, boolean nodeChanged) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (getElementFromDescriptor(descriptor) == null) return;
 
     if (updatePosition) {
       DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
-      if (parentNode != null) {
+      if (parentNode == null) {
+        nodeChanged(node);
+      }
+      else {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+
         int oldIndex = parentNode.getIndex(node);
         int newIndex = oldIndex;
         if (isLoadingChildrenFor(node.getParent()) || getBuilder().isChildrenResortingNeeded(descriptor)) {
-          final List<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
+          List<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
           for (int i = 0; i < parentNode.getChildCount(); i++) {
             TreeNode child = parentNode.getChildAt(i);
             LOG.assertTrue(child != null);
@@ -3553,10 +3552,8 @@ public class AbstractTreeUi {
           nodeChanged(node);
         }
       }
-      else {
-        nodeChanged(node);
-      }
-    } else if (nodeChanged) {
+    }
+    else if (nodeChanged) {
       nodeChanged(node);
     }
   }
@@ -4020,10 +4017,6 @@ public class AbstractTreeUi {
 
     myRevalidatedObjects.add(element);
     AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
-    if (revalidated == null) {
-      runDone(onDone);
-      return;
-    }
 
     revalidated.doWhenDone(new AsyncResult.Handler<Object>() {
       @Override

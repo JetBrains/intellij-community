@@ -167,9 +167,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
     PsiElement parent = methodRef.getParent();
-    LOG.assertTrue(parent instanceof PsiMethodCallExpression);
 
-    PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
     PsiExpression instanceRef;
 
     instanceRef = methodRef.getQualifierExpression();
@@ -192,21 +190,25 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     if (mySettings.getNewParametersNumber() > 1) {
       int copyingSafetyLevel = RefactoringUtil.verifySafeCopyExpression(instanceRef);
       if (copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {
-        String tempVar = RefactoringUtil.createTempVar(instanceRef, methodCall, true);
+        String tempVar = RefactoringUtil.createTempVar(instanceRef, parent, true);
         instanceRef = factory.createExpressionFromText(tempVar, null);
       }
     }
 
 
     PsiElement anchor = null;
-    PsiExpressionList argList = methodCall.getArgumentList();
-    PsiExpression[] exprs = argList.getExpressions();
-    if (mySettings.isMakeClassParameter()) {
-      if (exprs.length > 0) {
-        anchor = argList.addBefore(instanceRef, exprs[0]);
-      }
-      else {
-        anchor = argList.add(instanceRef);
+    PsiExpressionList argList = null;
+    PsiExpression[] exprs = new PsiExpression[0];
+    if (parent instanceof PsiMethodCallExpression) {
+      argList = ((PsiMethodCallExpression)parent).getArgumentList();
+      exprs = argList.getExpressions();
+      if (mySettings.isMakeClassParameter()) {
+        if (exprs.length > 0) {
+          anchor = argList.addBefore(instanceRef, exprs[0]);
+        }
+        else {
+          anchor = argList.add(instanceRef);
+        }
       }
     }
 

@@ -23,7 +23,7 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFreezingProcess;
@@ -59,7 +59,7 @@ public class GitComplexProcess {
 
   private final TaskDescriptor BLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
-      GitFreezingProcess.saveAndBlock(ServiceManager.getService(myProject, PlatformFacade.class));
+      GitFreezingProcess.saveAndBlock(ServiceManager.getService(myProject, GitPlatformFacade.class));
     }
   };
 
@@ -77,7 +77,7 @@ public class GitComplexProcess {
 
   private final TaskDescriptor UNBLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
-      GitFreezingProcess.unblock(ServiceManager.getService(myProject, PlatformFacade.class));
+      GitFreezingProcess.unblock(ServiceManager.getService(myProject, GitPlatformFacade.class));
     }
 
     @Override public boolean isHaveMagicCure() {

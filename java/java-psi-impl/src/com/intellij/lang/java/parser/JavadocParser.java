@@ -51,7 +51,7 @@ public class JavadocParser {
   private JavadocParser() { }
 
   public static void parseJavadocReference(@NotNull final PsiBuilder builder) {
-    JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false, false);
+    JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false);
     swallowTokens(builder);
   }
 

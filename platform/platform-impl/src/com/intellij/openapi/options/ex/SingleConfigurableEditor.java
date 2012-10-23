@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private final boolean myShowApplyButton;
   private boolean myChangesWereApplied;
 
-  public SingleConfigurableEditor(Project project,
+  public SingleConfigurableEditor(@Nullable Project project,
                                   Configurable configurable,
                                   @NonNls String dimensionKey,
                                   final boolean showApplyButton) {
@@ -78,7 +79,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
-  public SingleConfigurableEditor(Project project, Configurable configurable, @NonNls String dimensionKey) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey) {
     this(project, configurable, dimensionKey, true);
   }
 
@@ -86,7 +87,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     this(parent, configurable, dimensionServiceKey, true);
   }
 
-  public SingleConfigurableEditor(Project project, Configurable configurable) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable) {
     this(project, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable));
   }
 

@@ -122,7 +122,7 @@ public class Messages {
     return showIdeaMessageDialog(project, message, title, options, defaultOptionIndex, icon, doNotAskOption);
   }
 
-  public static int showIdeaMessageDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon,
+  public static int showIdeaMessageDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
     dialog.show();
@@ -156,7 +156,7 @@ public class Messages {
     return (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment()));
   }
 
-  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
@@ -217,7 +217,7 @@ public class Messages {
   /**
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
-  public static void showMessageDialog(Project project, String message, String title, @Nullable Icon icon) {
+  public static void showMessageDialog(@Nullable Project project, String message, String title, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
@@ -535,7 +535,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, String, String, String, Icon)
    */
   public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon,
-                                          DialogWrapper.DoNotAskOption doNotAskOption) {
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel, null, doNotAskOption);
     }
@@ -602,7 +602,7 @@ public class Messages {
    * @return trimmed input string or <code>null</code> if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(Project project, String message, String title, @Nullable Icon icon) {
+  public static String showInputDialog(@Nullable Project project, String message, String title, @Nullable Icon icon) {
     return showInputDialog(project, message, title, icon, null, null);
   }
 
@@ -626,7 +626,7 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(Project project,
+  public static String showInputDialog(@Nullable Project project,
                                        @Nls String message,
                                        @Nls String title,
                                        @Nullable Icon icon,
@@ -819,7 +819,7 @@ public class Messages {
   /**
    * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
-  public static void showInfoMessage(Project project, @Nls String message, @Nls String title) {
+  public static void showInfoMessage(@Nullable Project project, @Nls String message, @Nls String title) {
     if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
@@ -927,17 +927,17 @@ public class Messages {
     protected int myFocusedOptionIndex;
     protected Icon myIcon;
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+    public MessageDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
       this(project, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
+    public MessageDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
                          @Nullable DoNotAskOption doNotAskOption, boolean canBeParent) {
       super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
-    public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
+    public MessageDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
                          boolean canBeParent) {
       super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
@@ -966,7 +966,7 @@ public class Messages {
       _init(title, message, options, defaultOptionIndex, -1, icon, null);
     }
 
-    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon, @Nullable DoNotAskOption doNotAskOption) {
       super(false);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
@@ -990,7 +990,7 @@ public class Messages {
       myDefaultOptionIndex = defaultOptionIndex;
       myFocusedOptionIndex = focusedOptionIndex;
       myIcon = icon;
-      setButtonsAlignment(SwingUtilities.CENTER);
+      setButtonsAlignment(SwingConstants.CENTER);
       setDoNotAskOption(doNotAskOption);
       init();
     }
@@ -1055,9 +1055,9 @@ public class Messages {
         if (myMessage.length() > 100) {
           final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-          final int scrollSize = (int)new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().getWidth();
+          pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+          pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+          final int scrollSize = (int)new JScrollBar(Adjustable.VERTICAL).getPreferredSize().getWidth();
           final Dimension preferredSize =
             new Dimension(Math.min(textSize.width, screenSize.width / 2) + scrollSize,
                           Math.min(textSize.height, screenSize.height / 3) + scrollSize);
@@ -1191,7 +1191,7 @@ public class Messages {
     protected JTextComponent myField;
     private final InputValidator myValidator;
 
-    public InputDialog(Project project,
+    public InputDialog(@Nullable Project project,
                        String message,
                        String title,
                        @Nullable Icon icon,
@@ -1204,7 +1204,7 @@ public class Messages {
       myField.setText(initialValue);
     }
 
-    public InputDialog(Project project,
+    public InputDialog(@Nullable Project project,
                        String message,
                        String title,
                        @Nullable Icon icon,
@@ -1556,7 +1556,7 @@ public class Messages {
       return myComboBox;
     }
 
-    public void setValidator(InputValidator validator) {
+    public void setValidator(@Nullable InputValidator validator) {
       myValidator = validator;
     }
   }

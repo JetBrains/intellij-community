@@ -122,7 +122,7 @@ public class FileParser {
       }
     }
 
-    final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false, false);
+    final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;

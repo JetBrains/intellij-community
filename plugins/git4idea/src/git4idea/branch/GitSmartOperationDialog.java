@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ class GitSmartOperationDialog extends DialogWrapper {
       @Override
       public void run() {
         GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, forceButton);
-        ServiceManager.getService(project, PlatformFacade.class).showDialog(dialog);
+        ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
         exitCode.set(dialog.getExitCode());
       }
     });

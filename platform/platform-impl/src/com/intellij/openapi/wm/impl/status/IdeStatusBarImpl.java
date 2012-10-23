@@ -156,7 +156,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return this;
   }
 
-  IdeStatusBarImpl(IdeStatusBarImpl master) {
+  IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
     setLayout(new BorderLayout(2, 0));
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
@@ -365,7 +365,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
-  private void updateBorder(final int ndx) {
+  private void updateBorder(int ndx) {
+    if (myRightPanel.getComponentCount() == 0) return;
+    if (ndx >= myRightPanel.getComponentCount()) ndx--;
+    if (ndx < 0) ndx++;
     final JComponent self = (JComponent)myRightPanel.getComponent(ndx);
     if (self instanceof IconPresentationWrapper || self instanceof IconLikeCustomStatusBarWidget) {
       final int prev = ndx - 1;

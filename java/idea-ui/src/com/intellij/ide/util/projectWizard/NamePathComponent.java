@@ -213,6 +213,17 @@ public class NamePathComponent extends JPanel{
     if (b) ((PathFieldDocument)myTfPath.getDocument()).syncPathAndName();
   }
 
+  public void addChangeListener(final Runnable callback) {
+    DocumentAdapter adapter = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        callback.run();
+      }
+    };
+    myTfName.getDocument().addDocumentListener(adapter);
+    myTfPath.getDocument().addDocumentListener(adapter);
+  }
+
   private class NameFieldDocument extends PlainDocument {
     public NameFieldDocument() {
       addDocumentListener(new DocumentAdapter() {

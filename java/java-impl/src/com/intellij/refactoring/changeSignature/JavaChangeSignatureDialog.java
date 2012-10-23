@@ -94,6 +94,24 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     super(project, descriptor, allowDelegation, context);
   }
 
+  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
+                                                                final PsiMethod method,
+                                                                final List<ParameterInfoImpl> parameterInfos,
+                                                                final boolean allowDelegation, final PsiReferenceExpression refExpr) {
+    return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
+      @Override
+      protected int getSelectedIdx() {
+        for (int i = 0; i < parameterInfos.size(); i++) {
+          ParameterInfoImpl info = parameterInfos.get(i);
+          if (info.oldParameterIndex < 0) {
+            return i;
+          }
+        }
+        return super.getSelectedIdx();
+      }
+    };
+  }
+
   @Override
   protected VisibilityPanelBase<String> createVisibilityControl() {
     return new JavaComboBoxVisibilityPanel();

@@ -133,6 +133,7 @@ public class GitResetDialog extends DialogWrapper {
     if (commit.length() != 0) {
       handler.addParameters(commit);
     }
+    handler.endOptions();
     return handler;
   }
 

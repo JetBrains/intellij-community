@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ public class RunContentDescriptor implements Disposable {
   private JComponent myComponent;
   private final String myDisplayName;
   private final Icon myIcon;
+  private final String myHelpId;
 
   /**
    * Used to hack {@link com.intellij.execution.runners.RestartAction}
@@ -51,6 +53,7 @@ public class RunContentDescriptor implements Disposable {
     myComponent = component;
     myDisplayName = displayName;
     myIcon = icon;
+    myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     DataManager.registerDataProvider(myComponent, new DataProvider() {
 
       @Override
@@ -108,6 +111,10 @@ public class RunContentDescriptor implements Disposable {
 
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  public String getHelpId() {
+    return myHelpId;
   }
 
   /**

@@ -42,7 +42,7 @@ public class HelpManagerImpl extends HelpManager {
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
 
-  public void invokeHelp(String id) {
+  public void invokeHelp(@Nullable String id) {
     if (MacHelpUtil.isApplicable()) {
       if (MacHelpUtil.invokeHelp(id)) return;
     }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,15 @@ public class WizardContext {
   private ProjectBuilder myProjectBuilder;
   private final List<Listener> myListeners = new ArrayList<Listener>();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
+
+  private final NotNullLazyValue<ModuleBuilder[]> myAllBuilders = new NotNullLazyValue<ModuleBuilder[]>() {
+    @NotNull
+    @Override
+    protected ModuleBuilder[] compute() {
+      List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+      return builders.toArray(new ModuleBuilder[builders.size()]);
+    }
+  };
 
   private ModuleWizardStep myProjectSdkStep;
 
@@ -183,5 +193,9 @@ public class WizardContext {
 
   public void setTemplateMode(boolean templateMode) {
     myTemplateMode = templateMode;
+  }
+
+  public ModuleBuilder[] getAllBuilders() {
+    return myAllBuilders.getValue();
   }
 }

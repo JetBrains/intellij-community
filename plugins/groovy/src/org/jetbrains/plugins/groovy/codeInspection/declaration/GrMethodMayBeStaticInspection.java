@@ -144,6 +144,12 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     if (method.getName().equals("propertyMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
     if (method.getName().equals("methodMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
 
+    for (GrMethodMayBeStaticInspectionFilter filter : GrMethodMayBeStaticInspectionFilter.EP_NAME.getExtensions()) {
+      if (filter.isIgnored(method)) {
+        return true;
+      }
+    }
+
     return false;
   }
 

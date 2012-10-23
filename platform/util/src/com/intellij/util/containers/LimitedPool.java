@@ -57,7 +57,7 @@ public class LimitedPool<T> {
   }
 
   private void ensureCapacity() {
-    if (storage.length <= index + 1) {
+    if (storage.length <= index) {
       int newCapacity = Math.min(capacity, storage.length * 3 / 2);
       Object[] newStorage = new Object[newCapacity];
       System.arraycopy(storage, 0, newStorage, 0, storage.length);

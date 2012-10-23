@@ -87,7 +87,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
    *                    by <code>WindowManager</code>.
    */
-  protected DialogWrapperPeerImpl(DialogWrapper wrapper, Project project, boolean canBeParent) {
+  protected DialogWrapperPeerImpl(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
     myWrapper = wrapper;
     myTypeAheadCallback = myWrapper.isTypeAheadEnabled() ? new ActionCallback() : (ActionCallback)null;
     myWindowManager = null;
@@ -205,7 +205,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.addKeyListener(listener);
   }
 
-  private void createDialog(Window owner, boolean canBeParent) {
+  private void createDialog(@Nullable Window owner, boolean canBeParent) {
     if (isHeadless()) {
       myDialog = new HeadlessDialog();
       return;

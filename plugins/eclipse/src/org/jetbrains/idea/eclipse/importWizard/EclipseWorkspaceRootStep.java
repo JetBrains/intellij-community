@@ -86,6 +86,11 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     return super.validate() && getContext().setRootDirectory(myWorkspaceRootComponent.getText());
   }
 
+  @Override
+  public String getName() {
+    return "Eclipse Projects Root";
+  }
+
   public void updateDataModel() {
     final String projectFilesDir;
     if (myDirComponent.isEnabled()) {

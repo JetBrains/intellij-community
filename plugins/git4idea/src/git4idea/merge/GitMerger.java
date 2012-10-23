@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.repo.GitRepositoryFiles;
@@ -69,7 +70,7 @@ public class GitMerger {
     File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
     File messageFile = new File(gitDir, GitRepositoryFiles.MERGE_MSG);
     if (!messageFile.exists()) {
-      final GitBranch branch = GitBranch.current(myProject, root);
+      final GitBranch branch = GitBranchUtil.getCurrentBranch(myProject, root);
       final String branchName = branch != null ? branch.getName() : "";
       handler.addParameters("-m", "Merge branch '" + branchName + "' of " + root.getPresentableUrl() + " with conflicts.");
     } else {

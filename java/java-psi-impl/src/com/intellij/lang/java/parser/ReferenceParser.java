@@ -88,18 +88,15 @@ public class ReferenceParser {
 
     final TypeInfo typeInfo = new TypeInfo();
 
-    final boolean annotationsSupported = areTypeAnnotationsSupported(builder);
     PsiBuilder.Marker type = builder.mark();
-    if (annotationsSupported) {
-      myParser.getDeclarationParser().parseAnnotations(builder);
-    }
+    myParser.getDeclarationParser().parseAnnotations(builder);
 
     final IElementType tokenType = builder.getTokenType();
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, eatLastDot, true, annotationsSupported, false, false, false, diamonds, typeInfo);
+      parseJavaCodeReference(builder, eatLastDot, true, false, false, false, diamonds, typeInfo);
     }
     else if ((wildcard || badWildcard) && tokenType == JavaTokenType.QUEST) {
       type.drop();
@@ -119,9 +116,7 @@ public class ReferenceParser {
 
     while (true) {
       type.done(JavaElementType.TYPE);
-      if (annotationsSupported) {
-        myParser.getDeclarationParser().parseAnnotations(builder);
-      }
+      myParser.getDeclarationParser().parseAnnotations(builder);
 
       final PsiBuilder.Marker bracket = builder.mark();
       if (!expect(builder, JavaTokenType.LBRACKET)) {
@@ -171,25 +166,23 @@ public class ReferenceParser {
 
   @Nullable
   public PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                  final boolean annotations, final boolean isNew, final boolean diamonds) {
-    return parseJavaCodeReference(builder, eatLastDot, parameterList, annotations, false, false, isNew, diamonds, new TypeInfo());
+                                                  final boolean isNew, final boolean diamonds) {
+    return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
   public boolean parseImportCodeReference(final PsiBuilder builder, final boolean isStatic) {
     final TypeInfo typeInfo = new TypeInfo();
-    parseJavaCodeReference(builder, true, false, false, true, isStatic, false, false, typeInfo);
+    parseJavaCodeReference(builder, true, false, true, isStatic, false, false, typeInfo);
     return !typeInfo.hasErrors;
   }
 
   @Nullable
   private PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                   final boolean annotations, final boolean isImport, final boolean isStaticImport,
-                                                   final boolean isNew, final boolean diamonds, final TypeInfo typeInfo) {
+                                                   final boolean isImport, final boolean isStaticImport, final boolean isNew,
+                                                   final boolean diamonds, final TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
-    if (annotations) {
-      myParser.getDeclarationParser().parseAnnotations(builder);
-    }
+    myParser.getDeclarationParser().parseAnnotations(builder);
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       refElement.rollbackTo();
@@ -277,7 +270,7 @@ public class ReferenceParser {
       }
       else {
         final IElementType tokenType = builder.getTokenType();
-        if (WILDCARD_KEYWORD_SET.contains(tokenType)) {
+        if (WILDCARD_KEYWORD_SET.contains(tokenType) && tokenType != null) {
           parseReferenceList(builder, tokenType, null, JavaTokenType.AND);
         }
       }
@@ -365,7 +358,7 @@ public class ReferenceParser {
 
     if (expect(builder, start)) {
       while (true) {
-        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, true, false, false);
+        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, false, false);
         if (classReference == null) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
         }

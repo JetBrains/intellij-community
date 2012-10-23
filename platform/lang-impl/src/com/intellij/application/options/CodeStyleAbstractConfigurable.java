@@ -62,14 +62,16 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
 
   @Override
   public void reset() {
-    if (myPanel != null) {
-      myPanel.reset(mySettings);
-    }
+    reset(mySettings);
   }
 
   public void resetFromClone(){
+    reset(myCloneSettings);
+  }
+
+  public void reset(CodeStyleSettings settings) {
     if (myPanel != null) {
-      myPanel.reset(myCloneSettings);
+      myPanel.reset(settings);
     }
   }
 

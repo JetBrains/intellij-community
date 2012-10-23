@@ -29,10 +29,11 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
     mySubstitutor = substitutor;
+    assert substitutor.isValid();
     myParameterTypes = parameterTypes.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameterTypes.length];
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
-      assert type.isValid();
+      assert type == null || type.isValid();
       if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType) type).toArrayType();
       myParameterTypes[i] = substitutor.substitute(type);
     }

@@ -120,8 +120,10 @@ public class ParametersFolder {
       PsiExpression expression = mentionedInExpressions.get(i);
       if (expression instanceof PsiArrayAccessExpression) {
         mostRanked = expression;
-        myFoldingSelectedByDefault = true;
-        break;
+        if (!isConditional(expression, scope)) {
+          myFoldingSelectedByDefault = true;
+          break;
+        }
       }
       final int r = findUsedVariables(data, inputVariables, expression).size();
       if (currentRank < r) {
@@ -144,6 +146,25 @@ public class ParametersFolder {
     return mostRanked != null;
   }
 
+  private static boolean isConditional(PsiElement expr, LocalSearchScope scope) {
+    while (expr != null) {
+      final PsiElement parent = expr.getParent();
+      if (parent != null && scope.containsRange(parent.getContainingFile(), parent.getTextRange())) {
+        if (parent instanceof PsiIfStatement) {
+          if (((PsiIfStatement)parent).getCondition() != expr) return true;
+        } else if (parent instanceof PsiConditionalExpression) {
+          if (((PsiConditionalExpression)parent).getCondition() != expr) return true;
+        } else if (parent instanceof PsiSwitchStatement) {
+          if (((PsiSwitchStatement)parent).getExpression() != expr) return true;
+        }
+      } else {
+        return false;
+      }
+      expr = parent;
+    }
+    return false;
+  }
+  
   private void setUniqueName(ParameterTablePanel.VariableData data) {
     int idx = 1;
     while (myUsedNames.contains(data.name)) {

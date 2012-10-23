@@ -55,16 +55,20 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
 
   protected JComponent createItemComponent() {
-    JPanel result = new OpaquePanel(new BorderLayout(4, 4), Color.white);
-
     myTextLabel = new ErrorLabel();
     myTextLabel.setOpaque(true);
     myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
+    return layoutComponent(myTextLabel);
+  }
+
+  protected final JComponent layoutComponent(JComponent middleItemComponent) {
+    JPanel result = new OpaquePanel(new BorderLayout(4, 4), Color.white);
+
     myNextStepLabel = new JLabel();
     myNextStepLabel.setOpaque(true);
 
-    result.add(myTextLabel, BorderLayout.CENTER);
+    result.add(middleItemComponent, BorderLayout.CENTER);
     result.add(myNextStepLabel, BorderLayout.EAST);
 
     result.setBorder(getDefaultItemComponentBorder());

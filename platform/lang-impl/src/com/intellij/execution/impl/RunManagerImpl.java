@@ -293,13 +293,18 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (profile instanceof RunConfiguration && isTemporary((RunConfiguration)profile)) {
       myRecentlyUsedTemporaries.remove((RunConfiguration)profile);
       myRecentlyUsedTemporaries.add(0, (RunConfiguration)profile);
-      while(myRecentlyUsedTemporaries.size() > getConfig().getRecentsLimit()) {
-        myRecentlyUsedTemporaries.remove(myRecentlyUsedTemporaries.size() - 1);
-      }
+      trimUsagesListToLimit();
+    }
+  }
+
+  private void trimUsagesListToLimit() {
+    while(myRecentlyUsedTemporaries.size() > getConfig().getRecentsLimit()) {
+      myRecentlyUsedTemporaries.remove(myRecentlyUsedTemporaries.size() - 1);
     }
   }
 
   void checkRecentsLimit() {
+    trimUsagesListToLimit();
     List<RunnerAndConfigurationSettings> removed = new ArrayList<RunnerAndConfigurationSettings>();
     while (getTempConfigurations().length > getConfig().getRecentsLimit()) {
       for (Iterator<Map.Entry<Integer, RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext(); ) {

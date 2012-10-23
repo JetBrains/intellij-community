@@ -30,14 +30,6 @@ public class TypeUtils {
   private TypeUtils() {
   }
 
-  public static boolean expressionHasType(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
-    if (expression == null) {
-      return false;
-    }
-    final PsiType type = expression.getType();
-    return typeEquals(typeName, type);
-  }
-
   public static boolean typeEquals(@NonNls @NotNull String typeName, @Nullable PsiType targetType) {
     return targetType != null && targetType.equalsToText(typeName);
   }

@@ -58,6 +58,10 @@ public abstract class ModuleWizardStep extends StepAdapter{
     return true;
   }
 
+  public String getName() {
+    return getClass().getName();
+  }
+
   public void disposeUIResources() {
   }
 

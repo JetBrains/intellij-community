@@ -4,7 +4,7 @@
 try {foo()} catch (E e) {} finally {bar()}
 -----
 try
-{foo()} catch (E e)
+{ foo() } catch (E e)
 {}
 finally
-{bar()}
+{ bar() }

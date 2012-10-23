@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
@@ -52,7 +52,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   @NotNull private final String myStartPointReference;
   @Nullable private final String myNewBranch;
 
-  GitCheckoutOperation(@NotNull Project project, PlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitCheckoutOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                        @NotNull Collection<GitRepository> repositories,
                        @NotNull String startPointReference, @Nullable String newBranch) {
     super(project, facade, git, uiHandler, repositories);

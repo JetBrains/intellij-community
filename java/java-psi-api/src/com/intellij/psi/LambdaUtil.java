@@ -637,7 +637,7 @@ public class LambdaUtil {
         if (interfaceReturnType != null) {
           if (interfaceReturnType == PsiType.VOID) return true;
           final PsiClassType classType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType((PsiClass)resolve, result.getSubstitutor());
-          if (TypeConversionUtil.isAssignable(interfaceReturnType, classType, false)) {
+          if (TypeConversionUtil.isAssignable(interfaceReturnType, classType, !((PsiClass)resolve).hasTypeParameters())) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             if (parameters.length == 0) return true;
             if (parameters.length == 1) {

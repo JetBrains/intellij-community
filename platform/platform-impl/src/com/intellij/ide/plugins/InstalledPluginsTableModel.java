@@ -105,7 +105,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return false;
   }
 
-  public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, IdeaPluginDescriptor existing) {
+  public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor existing) {
     if (existing != null) {
       updateExistingPluginInfo(descriptor, existing);
       updatedPlugins.add(existing.getPluginId());

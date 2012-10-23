@@ -18,17 +18,22 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -57,7 +62,10 @@ public abstract class GroovySpacingProcessorBasic {
   private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
   private static final Spacing LAZY_SPACING = Spacing.createSpacing(0, 239, 0, true, 100);
 
-  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CommonCodeStyleSettings settings) {
+  public static Spacing getSpacing(GroovyBlock child1,
+                                   GroovyBlock child2,
+                                   CommonCodeStyleSettings settings,
+                                   GroovyCodeStyleSettings groovySettings) {
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
@@ -69,12 +77,20 @@ public abstract class GroovySpacingProcessorBasic {
 
     //Braces Placement
     // For multi-line strings
-    if (!mirrorsAst(child1) || !mirrorsAst(child2)) {
+    if (!(mirrorsAst(child1) && mirrorsAst(child2))) {
       return NO_SPACING;
     }
 
-    if (leftType == mGDOC_COMMENT_START && rightType == mGDOC_COMMENT_DATA
-        || leftType == mGDOC_COMMENT_DATA && rightType == mGDOC_COMMENT_END) {
+    if (child2 instanceof ClosureBodyBlock) {
+      return settings.SPACE_WITHIN_BRACES ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+    }
+
+    if (child1 instanceof ClosureBodyBlock) {
+      return createDependentSpacingForClosure(settings, groovySettings, (GrClosableBlock)left.getParent(), false);
+    }
+
+    if (leftType == mGDOC_COMMENT_START && rightType == mGDOC_COMMENT_DATA ||
+        leftType == mGDOC_COMMENT_DATA && rightType == mGDOC_COMMENT_END) {
       return LAZY_SPACING;
     }
 
@@ -240,7 +256,26 @@ public abstract class GroovySpacingProcessorBasic {
     return COMMON_SPACING;
   }
 
+  static Spacing createDependentSpacingForClosure(CommonCodeStyleSettings settings,
+                                                  GroovyCodeStyleSettings groovySettings, GrClosableBlock closure,
+                                                  final boolean forArrow) {
+    boolean spaceWithinBraces = closure.getParent() instanceof GrStringInjection
+                                ? groovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
+                                : settings.SPACE_WITHIN_BRACES;
+    GrStatement[] statements = closure.getStatements();
+    if (statements.length > 0) {
+      int start = statements[0].getTextRange().getStartOffset();
+      int end = statements[statements.length - 1].getTextRange().getEndOffset();
+      TextRange range = new TextRange(start, end);
+
+      int minSpaces = spaceWithinBraces || forArrow ? 1 : 0;
+      int maxSpaces = spaceWithinBraces || forArrow ? 1 : 0;
+      return Spacing.createDependentLFSpacing(minSpaces, maxSpaces, range, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    return spaceWithinBraces || forArrow ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+  }
+
   private static boolean mirrorsAst(GroovyBlock block) {
-    return block.getNode().getTextRange().equals(block.getTextRange()) || block instanceof MethodCallWithoutQualifierBlock;
+    return block.getNode().getTextRange().equals(block.getTextRange()) || block instanceof MethodCallWithoutQualifierBlock || block instanceof ClosureBodyBlock;
   }
 }

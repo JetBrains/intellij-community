@@ -66,7 +66,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     });
 
-    final ProgressIndicator indicator = ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }

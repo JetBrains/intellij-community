@@ -240,11 +240,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       });
     }
     else {
-      List<ParameterInfoImpl> parameterInfos = newParametersInfo != null
-                                               ? new ArrayList<ParameterInfoImpl>(Arrays.asList(newParametersInfo))
-                                               : new ArrayList<ParameterInfoImpl>();
+      final List<ParameterInfoImpl> parameterInfos = newParametersInfo != null
+                                                     ? new ArrayList<ParameterInfoImpl>(Arrays.asList(newParametersInfo))
+                                                     : new ArrayList<ParameterInfoImpl>();
       final PsiReferenceExpression refExpr = TargetElementUtil.findReferenceExpression(editor);
-      JavaChangeSignatureDialog dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr);
+      JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
       return dialog.getParameters();

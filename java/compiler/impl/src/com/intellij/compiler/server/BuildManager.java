@@ -360,7 +360,8 @@ public class BuildManager implements ApplicationComponent{
 
   private void addMakeRequest(Runnable runnable) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(runnable, MAKE_TRIGGER_DELAY);
+    final int delay = Math.max(50, Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY));
+    myAlarm.addRequest(runnable, delay);
   }
 
   private void runAutoMake() {
@@ -529,7 +530,7 @@ public class BuildManager implements ApplicationComponent{
                   }
                   myBuildsInProgress.put(projectPath, future);
                   final Process process = launchBuildProcess(project, myListenPort, sessionId);
-                  final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+                  final OSProcessHandler processHandler = new OSProcessHandler(process) {
                     @Override
                     protected boolean shouldDestroyProcessRecursively() {
                       return true;

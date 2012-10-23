@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -30,6 +31,7 @@ import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -58,6 +60,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private boolean myCancelOnClickOutside;
 
   private final DetailController myDetailController = new DetailController(this);
+  private JSplitPane mySplitPane;
 
 
   public String getDimensionServiceKey() {
@@ -152,11 +155,6 @@ public class MasterDetailPopupBuilder implements MasterController {
       setCancelOnClickOutside(myCancelOnClickOutside);
 
 
-    if (myAddDetailViewToEast) {
-      builder.
-        setEastComponent((JComponent)myDetailView);
-    }
-
     if (myDoneRunnable != null) {
 
       ActionListener actionListener = new ActionListener() {
@@ -220,6 +218,11 @@ public class MasterDetailPopupBuilder implements MasterController {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         myDetailView.clearEditor();
+        if (mySplitPane != null) {
+          final DimensionService dimensionService = DimensionService.getInstance();
+          dimensionService.setSize(getSplitterDimensionKey(),
+                                   new Dimension(mySplitPane.getDividerLocation(), 0));
+        }
       }
     });
 
@@ -244,10 +247,10 @@ public class MasterDetailPopupBuilder implements MasterController {
 
   private PopupChooserBuilder createInnerBuilder() {
     if (myChooserComponent instanceof JList) {
-      return new PopupChooserBuilder((JList)myChooserComponent);
+      return new MyPopupChooserBuilder((JList)myChooserComponent);
     }
     else if (myChooserComponent instanceof JTree) {
-      return new PopupChooserBuilder((JTree)myChooserComponent);
+      return new MyPopupChooserBuilder((JTree)myChooserComponent);
     }
     return null;
   }
@@ -338,6 +341,9 @@ public class MasterDetailPopupBuilder implements MasterController {
       }
     }
     else {
+      if (!allowedToRemoveItems(getSelectedItems()) ) {
+        return;
+      }
       final Object[] items = getSelectedItems();
       JTree tree = (JTree)myChooserComponent;
       TreeUtil.removeSelected(tree);
@@ -444,5 +450,41 @@ public class MasterDetailPopupBuilder implements MasterController {
 
       return this;
     }
+  }
+
+  private class MyPopupChooserBuilder extends PopupChooserBuilder {
+    public MyPopupChooserBuilder(@NotNull JList list) {
+      super(list);
+    }
+
+    private MyPopupChooserBuilder(@NotNull JTree tree) {
+      super(tree);
+    }
+
+    @Override
+    protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
+      if (myAddDetailViewToEast) {
+        mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, component, (JComponent)myDetailView);
+
+        final DimensionService dimensionService = DimensionService.getInstance();
+        Dimension size = dimensionService.getSize(getSplitterDimensionKey());
+        if (size != null) {
+          mySplitPane.setDividerLocation((int)size.getWidth());
+        }
+
+        mySplitPane.setResizeWeight(0.5);
+        mySplitPane.setOneTouchExpandable(true);
+        mySplitPane.setContinuousLayout(true);
+
+        contentPane.add(mySplitPane, BorderLayout.CENTER);
+      }
+      else {
+        super.addCenterComponentToContentPane(contentPane, component);
+      }
+    }
+  }
+
+  private String getSplitterDimensionKey() {
+    return myDimensionServiceKey + ".splitter";
   }
 }

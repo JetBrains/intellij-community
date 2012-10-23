@@ -56,7 +56,7 @@ public class Comparing {
     return equal(s1, s2, true);
   }
 
-  public static boolean equal(String arg1, String arg2) {
+  public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
     return equal(arg1, arg2, true);
   }
 

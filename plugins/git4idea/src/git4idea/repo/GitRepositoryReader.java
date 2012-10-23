@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
+import git4idea.Hash;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -123,8 +121,8 @@ class GitRepositoryReader {
     Head head = readHead();
     if (head.isBranch) {
       String branchName = head.ref;
-      String hash = readCurrentRevision();  // TODO make this faster, because we know the branch name
-      return new GitBranch(branchName, hash == null ? "" : hash, true, false);
+      String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
+      return new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false);
     }
     if (isRebaseInProgress()) {
       GitBranch branch = readRebaseBranch("rebase-apply");
@@ -151,10 +149,15 @@ class GitRepositoryReader {
       return null;
     }
     String branchName = tryLoadFile(headName).trim();
+    Hash hash = Hash.create(readBranchFile(findBranchFile(branchName)));
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
-    return new GitBranch(branchName, true, false);
+    return new GitBranch(branchName, hash, false);
+  }
+
+  private File findBranchFile(@NotNull String branchName) {
+    return new File(myGitDir.getPath() + File.separator + branchName);
   }
 
   private boolean isMergeInProgress() {
@@ -249,30 +252,28 @@ class GitRepositoryReader {
     Set<GitBranch> localBranches = readUnpackedLocalBranches();
     Set<GitBranch> remoteBranches = readUnpackedRemoteBranches();
     GitBranchesCollection packedBranches = readPackedBranches();
-    localBranches.addAll(packedBranches.getLocalBranches());
-    remoteBranches.addAll(packedBranches.getRemoteBranches());
-    
-    // note that even the active branch may be packed. So at first we collect branches, then we find the active.
-    GitBranch currentBranch = readCurrentBranch();
-    markActiveBranch(localBranches, currentBranch);
-
+    addPackedBranches(packedBranches.getLocalBranches(), localBranches);
+    addPackedBranches(packedBranches.getRemoteBranches(), remoteBranches);
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
-  
-  /**
-   * Sets the 'active' flag to the current branch if it is contained in the specified collection.
-   * @param branches      branches to be walked through.
-   * @param currentBranch current branch.
-   */
-  private static void markActiveBranch(@NotNull Set<GitBranch> branches, @Nullable GitBranch currentBranch) {
-    if (currentBranch == null) {
-      return;
-    }
-    for (GitBranch branch : branches) {
-      if (branch.getName().equals(currentBranch.getName())) {
-        branch.setActive(true);
+
+  // this is to avoid hash comparison in GitBranch.equals that leads to a log error.
+  // the algorithm is N^2 instead of N, but the number of branches rarely exceeds even 100, so that shouldn't be a problem.
+  private static void addPackedBranches(@NotNull Collection<GitBranch> packedBranches, @NotNull Set<GitBranch> branchesCollection) {
+    Set<GitBranch> branchesToAdd = new HashSet<GitBranch>();
+    for (GitBranch packedBranch : packedBranches) {
+      boolean found = false;
+      for (GitBranch branch : branchesCollection) {
+        if (branch.getName().equals(packedBranch.getName())) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        branchesToAdd.add(packedBranch);
       }
     }
+    branchesCollection.addAll(branchesToAdd);
   }
 
   /**
@@ -285,7 +286,7 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitBranch(branchName, hash == null ? "" : hash, false, false));
+      branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false));
     }
     return branches;
   }
@@ -293,7 +294,7 @@ class GitRepositoryReader {
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
     try {
-      return tryLoadFile(branchFile);
+      return tryLoadFile(branchFile).trim();
     }
     catch (GitRepoStateException e) {  // notify about error but don't break the process
       LOG.error("Couldn't read " + branchFile, e);
@@ -317,7 +318,7 @@ class GitRepositoryReader {
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            branches.add(new GitBranch(branchName, hash == null ? "": hash, false, true));
+            branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), true));
           }
         }
         return true;
@@ -345,9 +346,9 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), hash, false, false));
+            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), Hash.create(hash), false));
           } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), hash, false, true));
+            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), Hash.create(hash), true));
           }
         }
       });
@@ -463,7 +464,7 @@ class GitRepositoryReader {
       }
 
       if (hash != null && branch != null) {
-        resultHandler.handleResult(hash, branch);
+        resultHandler.handleResult(hash.trim(), branch);
       }
       else {
         LOG.info("Ignoring invalid packed-refs line: [" + line + "]");

@@ -52,7 +52,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     final HttpClient httpClient = getHttpClient();
 
     if (!isLoginAnonymously()) login(httpClient);
@@ -83,7 +83,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
     tasks = tasks.subList(0, Math.min(max, tasks.size()));
 
-    return tasks;
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   private void login(final HttpClient httpClient) throws Exception {
@@ -167,8 +167,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
-        final List<Task> issues = getIssues("", 1, 0);
-        if (issues.size() == 0) throw new Exception("Tasks not found. Probably, you don't login.");
+        final Task[] issues = getIssues("", 1, 0);
+        if (issues.length == 0) throw new Exception("Tasks not found. Probably, you don't login.");
       }
 
       @Override

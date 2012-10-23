@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,15 +47,13 @@ public class MalformedXPathInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "malformed.xpath.expression.display.name");
+    return InspectionGadgetsBundle.message("malformed.xpath.expression.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "malformed.xpath.expression.problem.description");
+    return InspectionGadgetsBundle.message("malformed.xpath.expression.problem.description");
   }
 
   @Override
@@ -71,8 +69,7 @@ public class MalformedXPathInspection extends BaseInspection {
   private static class MalformedXPathVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
@@ -80,17 +77,17 @@ public class MalformedXPathInspection extends BaseInspection {
         return;
       }
       final PsiExpression xpathArgument = arguments[0];
-      if (!TypeUtils.expressionHasType(xpathArgument,
-                                       CommonClassNames.JAVA_LANG_STRING)) {
+      if (!ExpressionUtils.hasStringType(xpathArgument)) {
         return;
       }
       if (!PsiUtil.isConstantExpression(xpathArgument)) {
         return;
       }
       final PsiType type = xpathArgument.getType();
-      final String value =
-        (String)ConstantExpressionUtil.computeCastTo(xpathArgument,
-                                                     type);
+      if (type == null) {
+        return;
+      }
+      final String value = (String)ConstantExpressionUtil.computeCastTo(xpathArgument, type);
       if (value == null) {
         return;
       }
@@ -108,10 +105,8 @@ public class MalformedXPathInspection extends BaseInspection {
       }
     }
 
-    private static boolean callTakesXPathExpression(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+    private static boolean callTakesXPathExpression(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (!xpathMethodNames.contains(name)) {
         return false;

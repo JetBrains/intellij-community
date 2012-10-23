@@ -45,6 +45,12 @@ public class HgLogCommand extends HgRevisionsCommand {
   @Override
   public HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
     String template, int limit, HgFile hgFile) {
+    return execute(executor, repo, template, limit, hgFile,null);
+  }
+
+  @Override
+  public HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
+                                 String template, int limit, HgFile hgFile, List<String> argsForCmd) {
     List<String> arguments = new LinkedList<String>();
     if (followCopies) {
       arguments.add("--follow");
@@ -62,6 +68,9 @@ public class HgLogCommand extends HgRevisionsCommand {
     if (limit != -1) {
       arguments.add("--limit");
       arguments.add(String.valueOf(limit));
+    }
+    if (argsForCmd != null) {
+      arguments.addAll(argsForCmd);
     }
     if (logFile) {
       arguments.add(hgFile.getRelativePath());

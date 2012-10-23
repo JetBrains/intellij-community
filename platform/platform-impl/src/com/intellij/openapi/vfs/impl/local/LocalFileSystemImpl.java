@@ -47,6 +47,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private final Object myLock = new Object();
   private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
   private TreeNode myNormalizedTree = null;
+  private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
@@ -109,11 +110,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private Map<String, TreeNode> nodes = new HashMap<String, TreeNode>();
   }
 
-  public LocalFileSystemImpl() {
-    myWatcher = FileWatcher.getInstance();
+  public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
+    myManagingFS = managingFS;
+    myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
       new StoreRefreshStatusThread().start();
     }
+  }
+
+  @NotNull
+  public FileWatcher getFileWatcher() {
+    return myWatcher;
   }
 
   @Override
@@ -122,6 +129,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @Override
   public void disposeComponent() {
+    myWatcher.dispose();
   }
 
   @Override
@@ -140,7 +148,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     });
     PersistentFS.getInstance().clearIdCache();
 
-    for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
+    for (VirtualFile root : myManagingFS.getRoots(this)) {
       if (root instanceof VirtualDirectoryImpl) {
         ((VirtualDirectoryImpl)root).cleanupCachedChildren(survivors);
       }
@@ -263,9 +271,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
       // TODO: different ways to mark dirty for all these cases
-      markPathsDirty(myWatcher.getDirtyPaths());
-      markFlatDirsDirty(myWatcher.getDirtyDirs());
-      markRecursiveDirsDirty(myWatcher.getDirtyRecursivePaths());
+      final FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
+      markPathsDirty(dirtyPaths.dirtyPaths);
+      markFlatDirsDirty(dirtyPaths.dirtyDirectories);
+      markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
     }
   }
 
@@ -515,7 +524,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     Runnable heavyRefresh = new Runnable() {
       @Override
       public void run() {
-        for (VirtualFile root : ManagingFS.getInstance().getRoots(LocalFileSystemImpl.this)) {
+        for (VirtualFile root : myManagingFS.getRoots(LocalFileSystemImpl.this)) {
           ((NewVirtualFile)root).markDirtyRecursively();
         }
 
@@ -524,7 +533,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     };
 
     if (asynchronous && myWatcher.isOperational()) {
-      RefreshQueue.getInstance().refresh(true, true, heavyRefresh, ManagingFS.getInstance().getRoots(this));
+      RefreshQueue.getInstance().refresh(true, true, heavyRefresh, myManagingFS.getRoots(this));
     }
     else {
       heavyRefresh.run();

@@ -294,6 +294,8 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       };
 
       myExcludedTable = new JBTable(dataModel);
+      myExcludedTable.setEnableAntialiasing(true);
+
       myExcludedTable.getEmptyText().setText(CompilerBundle.message("no.excludes"));
       myExcludedTable.setPreferredScrollableViewportSize(new Dimension(300, myExcludedTable.getRowHeight() * 6));
       myExcludedTable.setDefaultRenderer(Boolean.class, new BooleanRenderer());

@@ -193,7 +193,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (panel != null) {
       if (myDetailPanelWrapper == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 30));
+        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 5));
         myDetailPanelWrapper.add(panel);
 
         add(myDetailPanelWrapper, BorderLayout.NORTH);

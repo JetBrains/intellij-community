@@ -254,6 +254,7 @@ public class ExecutionHelper {
     }
   }
 
+  /** @deprecated use lookup by user data (to remove in IDEA 13) */
   public static Collection<RunContentDescriptor> findRunningConsoleByCmdLine(final Project project,
                                                                              @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
     return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {

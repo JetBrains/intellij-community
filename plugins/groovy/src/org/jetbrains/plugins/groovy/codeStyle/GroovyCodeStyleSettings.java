@@ -48,6 +48,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
   public boolean ALIGN_NAMED_ARGS_IN_MAP = false;
   public boolean SPACE_BEFORE_CLOSURE_LBRACE = true;
+  public boolean SPACE_WITHIN_GSTRING_INJECTION_BRACES = false;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;

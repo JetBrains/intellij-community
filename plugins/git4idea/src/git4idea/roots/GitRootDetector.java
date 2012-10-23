@@ -17,8 +17,8 @@ package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,9 @@ public class GitRootDetector {
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public GitRootDetector(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  public GitRootDetector(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
   }

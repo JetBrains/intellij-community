@@ -61,6 +61,11 @@ public class AndroidResourceFileSafeDeleteProcessor extends SafeDeleteProcessorD
   public Collection<PsiElement> getAdditionalElementsToDelete(PsiElement element,
                                                               Collection<PsiElement> allElementsToDelete,
                                                               boolean askUser) {
+    if (allElementsToDelete.size() > 1) {
+      // todo: support this case (we should ask once)
+      return Collections.emptyList();
+    }
+
     if (askUser) {
       final int r = Messages
         .showYesNoDialog(element.getProject(), "Delete alternative resource files for other configurations?",

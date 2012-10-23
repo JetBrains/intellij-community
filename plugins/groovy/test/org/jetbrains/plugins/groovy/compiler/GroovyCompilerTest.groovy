@@ -724,7 +724,6 @@ public class Main {
 
     def messages = make()
     assert messages 
-    println messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)

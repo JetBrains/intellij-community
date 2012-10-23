@@ -66,14 +66,15 @@ public class RedmineRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     @SuppressWarnings({"unchecked"}) List<Object> children = getIssues(query, max);
 
-    return ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
       public Task fun(Object o) {
         return createIssue((Element)o);
       }
     });
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   @Nullable

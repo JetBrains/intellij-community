@@ -5,7 +5,8 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
@@ -34,7 +35,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
   private final ProjectPaths myProjectPaths;
-  private final long myCompilationStartStamp;
+  private volatile long myCompilationStartStamp;
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
@@ -62,6 +63,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public long getCompilationStartStamp() {
     return myCompilationStartStamp;
+  }
+
+  @Override
+  public void updateCompilationStartStamp() {
+    myCompilationStartStamp = System.currentTimeMillis();
   }
 
   @Override

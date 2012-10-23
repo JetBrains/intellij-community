@@ -44,14 +44,12 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceElement(
-    @NotNull PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     followReferenceToImport(reference);
     super.visitReferenceElement(reference);
   }
 
-  private void followReferenceToImport(
-    PsiJavaCodeReferenceElement reference) {
+  private void followReferenceToImport(PsiJavaCodeReferenceElement reference) {
     if (reference.getQualifier() != null) {
       // it's already fully qualified, so the import statement wasn't
       // responsible
@@ -89,8 +87,14 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     final String referenceName;
     if (element instanceof PsiMember) {
       final PsiMember member = (PsiMember)element;
-      referenceClass = member.getContainingClass();
-      referenceName = member.getName();
+      if (member instanceof PsiClass && !member.hasModifierProperty(PsiModifier.STATIC)) {
+        referenceClass = null;
+        referenceName = null;
+      }
+      else {
+        referenceClass = member.getContainingClass();
+        referenceName = member.getName();
+      }
     }
     else {
       referenceClass = null;

@@ -139,7 +139,23 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   protected String getProjectDisplayName(Project project) {
     return "";
   }
-  
+
+  private static Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
+    Set<String> names = ContainerUtil.newHashSet();
+    Set<String> duplicates = ContainerUtil.newHashSet();
+    for (String path : openedPaths) {
+      if (!names.add(getProjectName(path))) {
+        duplicates.add(path);
+      }
+    }
+    for (String path : recentPaths) {
+      if (!names.add(getProjectName(path))) {
+        duplicates.add(path);
+      }
+    }
+
+    return duplicates;
+  }
 
   /**
    * @param addClearListItem - used for detecting whether the "Clear List" action should be added
@@ -149,35 +165,25 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
     validateRecentProjects();
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-
-    ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    final Map<String, Integer> map = new LinkedHashMap<String, Integer>();
-    final List<String> paths = new ArrayList<String>();
-    synchronized (myState) {
-      outer: for (String recentPath : myState.recentPaths) {
-        if (recentPath == null) {
-          continue;
-        }
-
-        for (Project openProject : openProjects) {
-          final String path = getProjectPath(openProject);
-          if (path == null || recentPath.equals(path)) {
-            continue outer;
-          }
-        }
-
-        final String projectName = getProjectName(recentPath);
-        map.put(projectName, map.containsKey(projectName) ? map.get(projectName) + 1 : 1);
-        paths.add(recentPath);
-      }
+    final Set<String> openedPaths = ContainerUtil.newHashSet();
+    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+      ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject));
     }
 
+    final LinkedHashSet<String> paths;
+    synchronized (myState) {
+      paths = ContainerUtil.newLinkedHashSet(myState.recentPaths);
+    }
+    paths.remove(null);
+    paths.removeAll(openedPaths);
+
+    ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     for (final String path : paths) {
       final String projectName = getProjectName(path);
       String displayName = myState.names.get(path);
       if (StringUtil.isEmptyOrSpaces(displayName)) {
-        displayName = map.get(projectName) > 1 ? path : projectName;
+        displayName = duplicates.contains(path) ? path : projectName;
       }
       actions.add(new ReopenProjectAction(path, projectName, displayName));
     }

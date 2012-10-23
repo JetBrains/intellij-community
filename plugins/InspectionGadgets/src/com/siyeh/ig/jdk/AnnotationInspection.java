@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("annotation.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("annotation.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryInterfaceModifierVisitor();
+    return new AnnotationVisitor();
   }
 
-  private static class UnnecessaryInterfaceModifierVisitor
-    extends BaseInspectionVisitor {
+  private static class AnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {

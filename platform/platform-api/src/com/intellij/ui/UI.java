@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +73,12 @@ public class UI {
   }
 
   public static Color getColor(@NonNls String id) {
+    if (UIUtil.isUnderDarcula()) {
+      final Color color = UIManager.getColor(id);
+      if (color != null) {
+        return color;
+      }
+    }
     return ourColors.get(id);
   }
 }

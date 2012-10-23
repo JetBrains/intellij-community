@@ -48,7 +48,7 @@ public class PsiMethodUtil {
         return provider.findMainInClass(aClass);
       }
     }
-    final PsiMethod[] mainMethods = aClass.findMethodsByName("main", false);
+    final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
     return findMainMethod(mainMethods);
   }
 

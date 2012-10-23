@@ -116,7 +116,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
 
       final String path = readNext(false);
       if (path == null) return null;
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
       if (file == null) return null;
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;

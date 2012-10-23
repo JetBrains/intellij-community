@@ -34,9 +34,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.checkin.GitCheckinEnvironment;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitSimpleEventDetector;
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -68,11 +71,11 @@ public class GitCherryPicker {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final ChangeListManager myChangeListManager;
   private final boolean myAutoCommit;
 
-  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade, boolean autoCommit) {
+  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade, boolean autoCommit) {
     myProject = project;
     myGit = git;
     myPlatformFacade = platformFacade;
@@ -368,7 +371,7 @@ public class GitCherryPicker {
 
   private static class CherryPickConflictResolver extends GitConflictResolver {
 
-    public CherryPickConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade facade, @NotNull VirtualFile root,
+    public CherryPickConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade facade, @NotNull VirtualFile root,
                                       @NotNull String commitHash, @NotNull String commitAuthor, @NotNull String commitMessage) {
       super(project, git, facade, Collections.singleton(root), makeParams(commitHash, commitAuthor, commitMessage));
     }
@@ -390,13 +393,13 @@ public class GitCherryPicker {
   private static class ResolveLinkListener implements NotificationListener {
     @NotNull private final Project myProject;
     @NotNull private final Git myGit;
-    @NotNull private final PlatformFacade myFacade;
+    @NotNull private final GitPlatformFacade myFacade;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final String myHash;
     @NotNull private final String myAuthor;
     @NotNull private final String myMessage;
 
-    public ResolveLinkListener(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade facade, @NotNull VirtualFile root,
+    public ResolveLinkListener(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade facade, @NotNull VirtualFile root,
                                @NotNull String commitHash, @NotNull String commitAuthor, @NotNull String commitMessage) {
 
       myProject = project;
@@ -458,14 +461,14 @@ public class GitCherryPicker {
   private static class CherryPickCommitExecutor implements CommitExecutor {
 
     @NotNull private final Project myProject;
-    @NotNull private final PlatformFacade myPlatformFacade;
+    @NotNull private final GitPlatformFacade myPlatformFacade;
     @NotNull private final List<Change> myChanges;
     @NotNull private final String myOriginalCommitMessage;
     private boolean myCommitFailed;
 
     @Nullable private CherryPickCommitExecutor.CherryPickCommitSession myCommitSession;
 
-    CherryPickCommitExecutor(@NotNull Project project, @NotNull PlatformFacade platformFacade,
+    CherryPickCommitExecutor(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                              @NotNull List<Change> changes, @NotNull String originalCommitMessage) {
       myProject = project;
       myPlatformFacade = platformFacade;

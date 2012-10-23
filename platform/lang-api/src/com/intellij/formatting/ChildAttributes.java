@@ -15,6 +15,8 @@
  */
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Defines the indent and alignment settings which are applied to a new child block
  * added to a formatting model block. Used for auto-indenting when the Enter key is pressed.
@@ -35,7 +37,7 @@ public class ChildAttributes {
    * @param childIndent the indent for the child block.
    * @param alignment   the alignment for the child block.
    */
-  public ChildAttributes(final Indent childIndent, final Alignment alignment) {
+  public ChildAttributes(@Nullable final Indent childIndent, @Nullable final Alignment alignment) {
     myChildIndent = childIndent;
     myAlignment = alignment;
   }
@@ -45,6 +47,7 @@ public class ChildAttributes {
    *
    * @return the indent setting.
    */
+  @Nullable
   public Indent getChildIndent() {
     return myChildIndent;
   }
@@ -54,6 +57,7 @@ public class ChildAttributes {
    *
    * @return the alignment setting.
    */
+  @Nullable
   public Alignment getAlignment() {
     return myAlignment;
   }

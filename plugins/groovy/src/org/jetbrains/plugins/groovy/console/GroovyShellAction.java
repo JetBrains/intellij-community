@@ -172,7 +172,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
         @Override
         protected OSProcessHandler createProcessHandler(Process process) {
-          return new OSProcessHandler(process, null);
+          return new OSProcessHandler(process);
         }
 
         @NotNull

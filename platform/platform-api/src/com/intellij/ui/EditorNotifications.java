@@ -40,13 +40,13 @@ public class EditorNotifications extends AbstractProjectComponent {
 
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = new ExtensionPointName<Provider>("com.intellij.editorNotificationProvider");
 
-  public interface Provider<T extends JComponent> {
+  public abstract static class Provider<T extends JComponent> {
 
-    Key<T> getKey();
+    public abstract Key<T> getKey();
 
 
     @Nullable
-    T createNotificationPanel(VirtualFile file);
+    public abstract T createNotificationPanel(VirtualFile file, FileEditor fileEditor);
 
   }
 
@@ -82,7 +82,7 @@ public class EditorNotifications extends AbstractProjectComponent {
         FileEditor[] editors = myFileEditorManager.getAllEditors(file);
         for (FileEditor editor : editors) {
           for (Provider<?> provider : PROVIDERS.getValue()) {
-            JComponent component = provider.createNotificationPanel(file);
+            JComponent component = provider.createNotificationPanel(file, editor);
             Key<? extends JComponent> key = provider.getKey();
             updateNotification(editor, key, component);
           }

@@ -48,7 +48,6 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -268,7 +267,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
-  private boolean isConsoleEditorEnabled() {
+  public boolean isConsoleEditorEnabled() {
     return myPanel.getComponentCount() > 1;
   }
 
@@ -645,19 +644,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setLanguage(Language language) {
-    int offset = getCurrentEditor().getCaretModel().getOffset();
     myVirtualFile.setLanguage(language);
     // setViewProvider() call is required otherwise psiFile will stay the same!
     FileManager fileManager = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager();
     fileManager.setViewProvider(myVirtualFile, fileManager.createFileViewProvider(myVirtualFile, true));
     reparsePsiFile();
-    if (!isConsoleEditorEnabled()) {
-      FileEditorManagerEx editorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-      for (EditorWindow window : editorManagerEx.getWindows()) {
-        editorManagerEx.closeFile(myVirtualFile, window);
-      }
-      editorManagerEx.openTextEditor(new OpenFileDescriptor(myProject, myVirtualFile, offset), true);
-    }
   }
 
   public void setInputText(final String query) {

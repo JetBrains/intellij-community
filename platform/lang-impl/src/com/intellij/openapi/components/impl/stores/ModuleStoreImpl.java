@@ -71,7 +71,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     super.load();
 
     final ModuleFileData storageData = getMainStorageData();
-    final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
+    final String moduleTypeId = storageData.myOptions.get(Module.ELEMENT_TYPE);
     myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return;

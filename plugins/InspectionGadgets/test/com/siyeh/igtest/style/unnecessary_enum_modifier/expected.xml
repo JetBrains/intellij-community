@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessaryEnumModifier.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary enum modifier</problem_class>
+    <description>Modifier &lt;code&gt;static&lt;/code&gt; is redundant for inner enums #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessaryEnumModifier.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary enum modifier</problem_class>
+    <description>Modifier &lt;code&gt;private&lt;/code&gt; is redundant for enum constructors #loc</description>
+  </problem>
+</problems>

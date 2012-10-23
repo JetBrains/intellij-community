@@ -60,6 +60,11 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return PsiUtil.resolveClassInType(myType);
   }
 
+  @Override
+  public boolean isValid() {
+    return myType.isValid() && super.isValid();
+  }
+
   public PsiType getPsiType() {
     return myType;
   }

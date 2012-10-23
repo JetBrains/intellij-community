@@ -60,21 +60,21 @@ public class LowLevelSearchUtil {
     return Boolean.TRUE;
   }
 
-  private static boolean processTreeUp(final TextOccurenceProcessor processor,
-                                       final PsiElement scope,
-                                       final StringSearcher searcher,
+  private static boolean processTreeUp(@NotNull TextOccurenceProcessor processor,
+                                       @NotNull PsiElement scope,
+                                       @NotNull StringSearcher searcher,
                                        final int offset,
                                        final boolean processInjectedPsi,
                                        ProgressIndicator progress) {
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
-    PsiElement leafElement = null;
-    TreeElement leafNode = null;
     ASTNode scopeNode = scope.getNode();
     boolean useTree = scopeNode != null;
     assert scope.isValid();
 
     int start;
+    TreeElement leafNode = null;
+    PsiElement leafElement = null;
     if (useTree) {
       leafNode = (LeafElement)scopeNode.findLeafElementAt(offset);
       if (leafNode == null) return true;
