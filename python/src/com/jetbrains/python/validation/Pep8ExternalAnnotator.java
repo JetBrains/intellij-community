@@ -79,7 +79,11 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Nullable
   @Override
   public State collectionInformation(@NotNull PsiFile file) {
-    final Sdk sdk = PythonSdkType.findLocalPython(ModuleUtilCore.findModuleForPsiElement(file));
+    Sdk sdk = PythonSdkType.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(file));
+
+    if (PythonSdkType.isRemote(sdk)) {
+      sdk = PythonSdkType.findLocalPython(ModuleUtilCore.findModuleForPsiElement(file));
+    }
     if (sdk == null) return null;
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;
@@ -90,7 +94,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
     final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(
       PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-    final List<String> ignoredErrors = ((PyPep8Inspection) profileEntry.getTool()).ignoredErrors;
+    final List<String> ignoredErrors = ((PyPep8Inspection)profileEntry.getTool()).ignoredErrors;
     final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().RIGHT_MARGIN;
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
   }
@@ -127,8 +131,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   public void apply(@NotNull PsiFile file, State annotationResult, @NotNull AnnotationHolder holder) {
     if (annotationResult == null) return;
     final String text = file.getText();
-    for (Problem problem: annotationResult.problems) {
-      int offset = StringUtil.lineColToOffset(text, problem.myLine-1, problem.myColumn-1);
+    for (Problem problem : annotationResult.problems) {
+      int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
         final PsiElement elementAfter = file.findElementAt(offset + 1);
