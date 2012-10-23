@@ -1,7 +1,9 @@
 package org.hanuna.gitalk.common;
 
-import com.sun.istack.internal.NotNull;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,12 +11,16 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleReadOnlyList<T> implements ReadOnlyList<T> {
-    @NotNull
-    private final List<T> elements;
+    public static <T> SimpleReadOnlyList<T> getEmpty() {
+        return new SimpleReadOnlyList<T>(Collections.<T>emptyList());
+    }
 
-    public SimpleReadOnlyList(List<T> elements) {
+    public SimpleReadOnlyList(@NotNull List<T> elements) {
         this.elements = elements;
     }
+
+    @NotNull
+    private final List<T> elements;
 
     @Override
     public int size() {

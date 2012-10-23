@@ -11,23 +11,21 @@ import org.jetbrains.annotations.NotNull;
  */
 class MutableCommit implements Commit {
     private final Hash hash;
+    private boolean wasRead = false;
     private ReadOnlyList<Commit> parents;
-    private boolean hasChildren;
     private String author;
     private String message;
     private long timeStamp;
     private int index = -1;
-    private int countNewUniqueCommitsAmongParents;
 
     public MutableCommit(Hash hash) {
         this.hash = hash;
     }
 
-    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, boolean hasChildren,
-                    int countNewUniqueCommitsAmongParents, int index) {
+    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, int index) {
+        assert !wasRead : "double set commit data";
+        wasRead = true;
         this.parents = parents;
-        this.hasChildren = hasChildren;
-        this.countNewUniqueCommitsAmongParents = countNewUniqueCommitsAmongParents;
         this.author = data.getAuthor();
         this.message = data.getCommitMessage();
         this.timeStamp = data.getTimeStamp();
@@ -41,20 +39,15 @@ class MutableCommit implements Commit {
         return hash;
     }
 
+    @Override
+    public boolean wasRead() {
+        return wasRead;
+    }
+
     @NotNull
     @Override
     public ReadOnlyList<Commit> getParents() {
         return parents;
-    }
-
-    @Override
-    public boolean hasChildren() {
-        return hasChildren;
-    }
-
-    @Override
-    public int countNewUniqueCommitsAmongParents() {
-        return countNewUniqueCommitsAmongParents;
     }
 
     @NotNull
@@ -89,7 +82,7 @@ class MutableCommit implements Commit {
 
     @Override
     public int index() {
-        assert index != -1 : "index undefined";
+        assert !wasRead : "index undefined";
         return index;
     }
 

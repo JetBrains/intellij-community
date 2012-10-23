@@ -38,8 +38,6 @@ public class TestUtils {
         sb.append(node.getMessage()).append("|-");
         sb.append(node.getAuthor()).append("|-");
         sb.append(node.getTimeStamp()).append("|-");
-        sb.append(node.hasChildren()).append("|-");
-        sb.append(node.countNewUniqueCommitsAmongParents());
         return sb.toString();
     }
 

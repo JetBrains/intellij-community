@@ -1,7 +1,6 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
-import org.hanuna.gitalk.commitgraph.builder.Node;
 import org.hanuna.gitalk.commitgraph.builder.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
@@ -13,8 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.List;
-
-import static org.hanuna.gitalk.TestUtils.toStr;
 
 /**
  * @author erokhins
@@ -31,7 +28,29 @@ public class RunUI {
         ReadOnlyList<Commit> list = GitLogParser.parseCommitLog(r);
         date = new Date();
         System.out.println(date.getTime() - time);
+        time = date.getTime();
 
+        Commit[] ar = new Commit[list.size()];
+        int k = 0;
+        int count = 0;
+        for (Commit c : list) {
+            for (Commit par : c.getParents()) {
+                int l = par.index() - c.index();
+                if (l > 10) {
+                    ar[par.index() - 5] = list.get(par.index() - 5);
+                    count++;
+                }
+                if (k < l) {
+                    k = l;
+                }
+            }
+        }
+        System.out.println("max r:" + k);
+
+        System.out.println("count:" + count);
+
+        date = new Date();
+        System.out.println(date.getTime() - time);
 
 
         CommitRowListBuilder builder = new CommitRowListBuilder(list);
@@ -43,7 +62,8 @@ public class RunUI {
         System.out.println(list.size());
 
         new GitAlkUI(builder.build(), list);
-        if (1 == 1) {
+        /*
+        if (1 == 0) {
             for (int i = 0; i < list.size(); i++) {
                 Commit node = list.get(i);
                 System.out.println(toStr(node));
@@ -55,6 +75,6 @@ public class RunUI {
                 }
                 System.out.println(line.getStartIndexColor() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
             }
-        }
+        }*/
     }
 }
