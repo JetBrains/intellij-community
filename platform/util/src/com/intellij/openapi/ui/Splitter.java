@@ -64,6 +64,7 @@ public class Splitter extends JPanel {
   private boolean myShowDividerControls;
   private boolean mySkipNextLayouting;
   private static final Rectangle myNullBounds = new Rectangle();
+  private String myDimensionSerivceKey;
 
 
   /**

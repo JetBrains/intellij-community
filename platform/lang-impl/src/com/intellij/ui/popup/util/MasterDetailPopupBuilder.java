@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -60,7 +61,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private boolean myCancelOnClickOutside;
 
   private final DetailController myDetailController = new DetailController(this);
-  private JSplitPane mySplitPane;
+  private Splitter mySplitPane;
 
 
   public String getDimensionServiceKey() {
@@ -220,8 +221,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         myDetailView.clearEditor();
         if (mySplitPane != null) {
           final DimensionService dimensionService = DimensionService.getInstance();
-          dimensionService.setSize(getSplitterDimensionKey(),
-                                   new Dimension(mySplitPane.getDividerLocation(), 0));
+          dimensionService.setFloat(getSplitterDimensionKey(), mySplitPane.getProportion());
         }
       }
     });
@@ -464,17 +464,14 @@ public class MasterDetailPopupBuilder implements MasterController {
     @Override
     protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
       if (myAddDetailViewToEast) {
-        mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, component, (JComponent)myDetailView);
+        mySplitPane = new Splitter(false);
+        mySplitPane.setFirstComponent(component);
+        mySplitPane.setSecondComponent((JComponent)myDetailView);
 
         final DimensionService dimensionService = DimensionService.getInstance();
-        Dimension size = dimensionService.getSize(getSplitterDimensionKey());
-        if (size != null) {
-          mySplitPane.setDividerLocation((int)size.getWidth());
-        }
+        float proportion = dimensionService.getFloat(getSplitterDimensionKey(), 0.3f);
 
-        mySplitPane.setResizeWeight(0.5);
-        mySplitPane.setOneTouchExpandable(true);
-        mySplitPane.setContinuousLayout(true);
+        mySplitPane.setProportion(proportion);
 
         contentPane.add(mySplitPane, BorderLayout.CENTER);
       }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
+import gnu.trove.TObjectFloatHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -49,11 +50,15 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
   private final Map<String,Point> myKey2Location;
   private final Map<String,Dimension> myKey2Size;
   private final TObjectIntHashMap<String> myKey2ExtendedState;
+  private final TObjectFloatHashMap<String> myKey2Float;
+
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
   @NonNls private static final String ELEMENT_LOCATION = "location";
   @NonNls private static final String ELEMENT_SIZE = "size";
+  @NonNls private static final String ELEMENT_FLOAT = "float";
+  @NonNls private static final String ATTRIBUTE_FLOAT = "value";
   @NonNls private static final String ATTRIBUTE_X = "x";
   @NonNls private static final String ATTRIBUTE_Y = "y";
   @NonNls private static final String ATTRIBUTE_WIDTH = "width";
@@ -68,11 +73,33 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     myKey2Location=new HashMap<String, Point>();
     myKey2Size=new HashMap<String, Dimension>();
     myKey2ExtendedState = new TObjectIntHashMap<String>();
+    myKey2Float = new TObjectFloatHashMap<String>();
   }
 
   public void initComponent() {}
 
-  public void disposeComponent() {}
+  public void disposeComponent(){}
+
+  public synchronized float getFloat(String key, float defaultValue) {
+    return getFloat(key, guessProject(), defaultValue);
+  }
+
+  private float getFloat(String key, Project project, float defaultValue) {
+    final String k = realKey(key, project);
+    if (!myKey2Float.containsKey(k)) {
+      return defaultValue;
+    }
+    return myKey2Float.get(k);
+  }
+
+  public void setFloat(String key, float value, Project project) {
+    final String k = realKey(key, project);
+    myKey2Float.put(k, value);
+  }
+
+  public void setFloat(String key, float value) {
+    setFloat(key, value, guessProject());
+  }
 
   /**
    * @return point stored under the specified <code>key</code>. The method returns
@@ -201,6 +228,13 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
       e.setAttribute(STATE, String.valueOf(myKey2ExtendedState.get(key)));
       element.addContent(e);
     }
+
+    for (Object key : myKey2Float.keys()) {
+      final float v = myKey2Float.get(((String)key));
+      Element e = new Element(ELEMENT_FLOAT);
+      e.setAttribute(KEY, (String)key);
+      e.setAttribute(ATTRIBUTE_FLOAT, String.valueOf(v));
+    }
     return element;
   }
 
@@ -208,6 +242,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     myKey2Location.clear();
     myKey2Size.clear();
     myKey2ExtendedState.clear();
+    myKey2Float.clear();
 
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
@@ -232,6 +267,14 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
       else if (EXTENDED_STATE.equals(e.getName())) {
         try {
           myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
+      }
+      else if (ELEMENT_FLOAT.equals(e.getName())) {
+        try {
+          myKey2Float.put(e.getAttributeValue(KEY), Float.parseFloat(e.getAttributeValue(ATTRIBUTE_FLOAT)));
         }
         catch (NumberFormatException ignored) {
           // ignored
