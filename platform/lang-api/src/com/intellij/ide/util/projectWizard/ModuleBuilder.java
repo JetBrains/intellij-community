@@ -90,6 +90,12 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
 
+  @Nullable
+  public ModuleWizardStep createSettingsStep(WizardContext wizardContext) {
+    ModuleType type = getModuleType();
+    return type == null ? null : type.createSettingsStep(wizardContext);
+  }
+
   public void setName(String name) {
     myName = acceptParameter(name);
   }

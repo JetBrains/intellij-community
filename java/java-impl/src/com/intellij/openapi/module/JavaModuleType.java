@@ -82,15 +82,17 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                               final ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        //final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
-        //return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
-        return Boolean.TRUE;
-      }
-    }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
+    if (!wizardContext.isTemplateMode()) {
+      steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
+      steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          //final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
+          //return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
+          return Boolean.TRUE;
+        }
+      }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
+    }
     final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
     if (supportForFrameworksStep != null) {
       steps.add(supportForFrameworksStep);
@@ -102,7 +104,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public ModuleWizardStep createSettingsStep(WizardContext context) {
-    return null; //ProjectWizardStepFactory.getInstance().createNameAndLocationStep(context);
+    return ProjectWizardStepFactory.getInstance().createNameAndLocationStep(context);
   }
 
   private static Icon getJavaModuleIcon() {

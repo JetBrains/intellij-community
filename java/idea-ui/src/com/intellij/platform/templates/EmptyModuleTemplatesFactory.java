@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -51,9 +50,8 @@ public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-    for (ModuleBuilder builder : builders) {
-      if (getGroupName(builder).equals(group)) return new ProjectTemplate[] {new EmptyModuleTemplate(builder)};
+    for (ModuleBuilder builder : context.getAllBuilders()) {
+      if (getGroupName(builder).equals(group)) return new ProjectTemplate[] {new EmptyModuleTemplate(builder, context)};
     }
     return new ProjectTemplate[0];
   }
@@ -65,9 +63,11 @@ public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
 
   private static class EmptyModuleTemplate implements ProjectTemplate {
     private final ModuleBuilder myBuilder;
+    private final WizardContext myContext;
 
-    public EmptyModuleTemplate(ModuleBuilder builder) {
+    public EmptyModuleTemplate(ModuleBuilder builder, WizardContext context) {
       myBuilder = builder;
+      myContext = context;
     }
 
     @NotNull
@@ -80,12 +80,6 @@ public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
     @Override
     public String getDescription() {
       return myBuilder.getDescription();
-    }
-
-    @Nullable
-    @Override
-    public JComponent getSettingsPanel() {
-      return null;
     }
 
     @NotNull
