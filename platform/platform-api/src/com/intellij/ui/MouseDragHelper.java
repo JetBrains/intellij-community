@@ -186,15 +186,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         }
       }
 
-      boolean needConsume = true;
       if (myDetachingMode) {
         processDragOut(e, draggedTo, (Point)myPressPointScreen.clone(), dragOutStarted);
       } else {
-        needConsume = processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
-      }
-
-      if (needConsume) {
-        e.consume();
+        processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
       }
     }
   }
@@ -232,14 +227,14 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return myDragJustStarted;
   }
 
-  protected abstract boolean processDrag(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint);
+  protected abstract void processDrag(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint);
 
   protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
     return false;
   }
 
   protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
-
+    event.consume();
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
