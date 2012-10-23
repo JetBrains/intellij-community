@@ -47,6 +47,16 @@ public class
   }
 
   @Override
+  public boolean useSmallLabels() {
+    return true;
+  }
+
+  @Override
+  public boolean hasUnderline() {
+    return true;
+  }
+
+  @Override
   protected void paintFirstGhost(Graphics2D g2d) {}
 
   @Override
@@ -255,8 +265,7 @@ public class
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
       setBorder(new EmptyBorder(5, 5, 7, 5));
-      myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    }                                                                                            
+    }
 
     @Override
     public void setTabActionsAutoHide(boolean autoHide) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
@@ -67,8 +68,24 @@ public class JBEditorTabs extends JBTabsImpl {
   protected void paintLastGhost(Graphics2D g2d) {
   }
 
+  @Override
   public boolean isGhostsAlwaysVisible() {
     return false;
+  }
+
+  @Override
+  public boolean useSmallLabels() {
+    return SystemInfo.isMac;
+  }
+
+  @Override
+  public boolean useBoldLabels() {
+    return false && SystemInfo.isMac;
+  }
+
+  @Override
+  public boolean hasUnderline() {
+    return true;
   }
 
   protected void doPaintInactive(Graphics2D g2d,
