@@ -836,11 +836,15 @@ public class HighlightClassUtil {
     PsiClass targetClass = aClass.getSuperClass();
     if (targetClass == null) return null;
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
-      PsiClass outerClass = targetClass.getContainingClass();
-      if (outerClass != null) {
-        PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
-        return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+    if (qualifier != null) {
+      if (PsiUtil.isInnerClass(targetClass)) {
+        PsiClass outerClass = targetClass.getContainingClass();
+        if (outerClass != null) {
+          PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
+          return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+        }
+      } else {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, "'" + HighlightUtil.formatClass(targetClass) + "' is not an inner class");
       }
     }
     return null;

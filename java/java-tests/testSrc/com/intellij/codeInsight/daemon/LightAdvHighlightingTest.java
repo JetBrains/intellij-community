@@ -358,4 +358,5 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testRegexp() throws Exception { doTest(false, false); }
   public void testUnsupportedFeatures() throws Exception { doTest(false, false); }
   public void testThisBeforeSuper() throws Exception { doTest(false, false); }
+  public void testExplicitConstructorInvocation() throws Exception { doTest(false, false); }
 }
