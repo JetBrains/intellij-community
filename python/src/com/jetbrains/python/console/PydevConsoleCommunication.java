@@ -37,12 +37,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * XML-RPC client for sending messages to the server.
    */
-  private IPydevXmlRpcClient client;
+  private IPydevXmlRpcClient myClient;
 
   /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
-  private WebServer webServer;
+  private WebServer myWebServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
 
@@ -78,16 +78,16 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     super(project);
 
     //start the server that'll handle input requests
-    webServer = new IdeaAwareWebServer(clientPort, null, new IdeaAwareXmlRpcServer());
-    webServer.addHandler("$default", this);
-    this.webServer.start();
+    myWebServer = new IdeaAwareWebServer(clientPort, null, new IdeaAwareXmlRpcServer());
+    myWebServer.addHandler("$default", this);
+    this.myWebServer.start();
 
-    this.client = new PydevXmlRpcClient(process, port);
+    this.myClient = new PydevXmlRpcClient(process, port);
   }
 
   public boolean handshake() throws XmlRpcException {
-    if (client != null) {
-      Object ret = client.execute(HANDSHAKE, new Object[]{});
+    if (myClient != null) {
+      Object ret = myClient.execute(HANDSHAKE, new Object[]{});
       if (ret instanceof String) {
         String retVal = (String)ret;
         return "PyCharm".equals(retVal);
@@ -99,25 +99,25 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Stops the communication with the client (passes message for it to quit).
    */
-  public void close() {
-    if (this.client != null) {
+  public synchronized void close() {
+    if (this.myClient != null) {
       new Task.Backgroundable(myProject, "Close console communication", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            PydevConsoleCommunication.this.client.execute(CLOSE, new Object[0]);
+            PydevConsoleCommunication.this.myClient.execute(CLOSE, new Object[0]);
           }
           catch (Exception e) {
             //Ok, we can ignore this one on close.
           }
-          PydevConsoleCommunication.this.client = null;
+          PydevConsoleCommunication.this.myClient = null;
         }
       }.queue();
     }
 
-    if (this.webServer != null) {
-      this.webServer.shutdown();
-      this.webServer = null;
+    if (myWebServer != null) {
+      myWebServer.shutdown();
+      myWebServer = null;
     }
   }
 
@@ -236,7 +236,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   protected Pair<String, Boolean> exec(final String command) throws XmlRpcException {
     setExecuting(true);
-    Object execute = client.execute(EXEC_LINE, new Object[]{command});
+    Object execute = myClient.execute(EXEC_LINE, new Object[]{command});
 
     Object object;
     if (execute instanceof Vector) {
@@ -264,7 +264,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return Collections.emptyList();
     }
-    final Object fromServer = client.execute(GET_COMPLETIONS, new Object[]{text, actTok});
+    final Object fromServer = myClient.execute(GET_COMPLETIONS, new Object[]{text, actTok});
 
     return PydevXmlUtils.decodeCompletions(fromServer);
   }
@@ -276,7 +276,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return client.execute(GET_DESCRIPTION, new Object[]{text}).toString();
+    return myClient.execute(GET_DESCRIPTION, new Object[]{text}).toString();
   }
 
   /**
@@ -395,7 +395,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Override
   public void interrupt() {
     try {
-      client.execute("interrupt", new Object[]{});
+      myClient.execute("interrupt", new Object[]{});
     }
     catch (XmlRpcException e) {
       LOG.error(e);

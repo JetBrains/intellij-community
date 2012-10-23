@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -40,8 +39,8 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
 import com.jetbrains.plugins.remotesdk.RemoteSdkData;
@@ -50,7 +49,6 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -485,21 +483,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   private void closeCommunication() {
-    if (myPydevConsoleCommunication.isExecuting()) {
-      final Semaphore s = new Semaphore(); //TODO: test me
-      myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
-        @Override
-        public void executionFinished() {
-          s.up();
-        }
-
-        @Override
-        public void inputRequested() {
-        }
-      });
+    if (!myProcessHandler.isProcessTerminated()) {
       myPydevConsoleCommunication.close();
-
-      s.waitFor();
     }
   }
 
@@ -594,9 +579,29 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myConsoleRunner.closeCommunication();
-
-      myConsoleRunner.run();
+      myConsoleRunner.rerun();
     }
+  }
+
+  private void rerun() {
+    new Task.Backgroundable(getProject(), "Restarting console", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            PydevConsoleRunner.this.closeCommunication();
+          }
+        });
+
+        myProcessHandler.waitFor();
+
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            PydevConsoleRunner.this.run();
+          }
+        });
+      }
+    }.queue();
   }
 }
