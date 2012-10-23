@@ -44,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -163,7 +163,7 @@ public class CodeBlockGenerator extends Generator {
     GenerationUtil.writeStatement(builder, context, invocation, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
-        final GrThisSuperReferenceExpression thisOrSuperKeyword = invocation.getThisOrSuperKeyword();
+        final GrReferenceExpression thisOrSuperKeyword = invocation.getInvokedExpression();
         final GrArgumentList argumentList = invocation.getArgumentList();
         final GroovyResolveResult resolveResult = invocation.advancedResolve();
         if (thisOrSuperKeyword.getQualifier() == null) {

@@ -345,6 +345,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (!method.isConstructor()) {
         PsiType returnType = method.getReturnType();
         if (substitutor != null) {
+          assert substitutor.isValid();
           returnType = substitutor.substitute(returnType);
         }
 
@@ -372,6 +373,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           PsiType paramType = param.getType();
           assert paramType.isValid();
           if (substitutor != null) {
+            assert substitutor.isValid();
             paramType = substitutor.substitute(paramType);
           }
           appendModifierList(buffer, param);

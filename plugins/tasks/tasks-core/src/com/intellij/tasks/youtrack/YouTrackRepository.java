@@ -54,7 +54,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     myDefaultSearch = other.getDefaultSearch();
   }
 
-  public List<Task> getIssues(@Nullable String request, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
 
     String query = getDefaultSearch();
     if (request != null) {
@@ -64,7 +64,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
 
-    // workaround for http://youtrack.jetbrains.net/issue/JT-7984
+    // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
     String s = StreamUtil.readText(stream, "UTF-8");
     for (int i = 0; i < s.length(); i++) {
       if (!XMLChar.isValid(s.charAt(i))) {
@@ -89,11 +89,12 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     @SuppressWarnings({"unchecked"})
     List<Object> children = element.getChildren("issue");
 
-    return ContainerUtil.mapNotNull(children, new Function<Object, Task>() {
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, new Function<Object, Task>() {
       public Task fun(Object o) {
         return createIssue((Element)o);
       }
     });
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   @Nullable

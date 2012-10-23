@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
@@ -49,6 +46,11 @@ public class TabLabel extends JPanel {
     @Override
     protected boolean shouldDrawMacShadow() {
       return SystemInfo.isMac && !UIUtil.isUnderDarcula();
+    }
+
+    @Override
+    protected boolean shouldDrawDimmed() {
+      return myTabs.useBoldLabels();
     }
   };
   
@@ -75,6 +77,7 @@ public class TabLabel extends JPanel {
     myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
+    if (myTabs.useSmallLabels()) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     setOpaque(false);
     setLayout(new BorderLayout());
 
@@ -233,25 +236,20 @@ public class TabLabel extends JPanel {
   }
 
   protected int getNonSelectedOffset() {
-    if (myTabs.isEditorTabs()) {
-      int offset = (TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2);
-      if (myTabs.isSingleRow()) {
-        return myTabs.getTabsPosition() == JBTabsPosition.bottom ? -(offset + 1) : -offset + 1;
-      } else {
-        return ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()) ? -offset + 1 : offset - 1;        
-      }
+    if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
+      return -TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2 + 1;
     }
-    
-    return 2;
+    return 1;
   }
 
   protected int getSelectedOffset() {
-    return  myTabs.isEditorTabs() ? -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2) + 1 : 1;
+    return getNonSelectedOffset();
   }
 
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
+    size.height = TabsUtil.getTabsHeight();
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
       size.width += actionPanelSize.width;
@@ -259,7 +257,10 @@ public class TabLabel extends JPanel {
 
     final JBTabsPosition pos = myTabs.getTabsPosition();
     switch (pos) {
-      case top: case bottom: size.height += myTabs.isEditorTabs() ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT : getSelectedOffset(); break;
+      case top:
+      case bottom:
+        if (myTabs.hasUnderline()) size.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1;
+        break;
       case left: case right: size.width += getSelectedOffset(); break;
     }
 
@@ -303,11 +304,11 @@ public class TabLabel extends JPanel {
         myLabel.setIcon(hasIcons() ? myIcon : null);
 
         if (text != null) {
-          text.appendToComponent(myLabel);
+          SimpleColoredText derive = myTabs.useBoldLabels() ? text.derive(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true) : text;
+          derive.appendToComponent(myLabel);
         }
       }
     }, false);
-
 
     invalidateIfNeeded();
   }

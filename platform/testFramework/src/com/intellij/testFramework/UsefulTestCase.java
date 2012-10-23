@@ -378,16 +378,50 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertSameElements(Collection<? extends T> collection, Collection<T> expected) {
+    assertSameElements(null, collection, expected);
+  }
+  
+  public static <T> void assertSameElements(String message, Collection<? extends T> collection, Collection<T> expected) {
     assertNotNull(collection);
     assertNotNull(expected);
     if (collection.size() != expected.size() || !new HashSet<T>(expected).equals(new HashSet<T>(collection))) {
-      Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
-      Assert.assertEquals(new HashSet<T>(expected), new HashSet<T>(collection));
+      Assert.assertEquals(message, toString(expected, "\n"), toString(collection, "\n"));
+      Assert.assertEquals(message, new HashSet<T>(expected), new HashSet<T>(collection));
     }
+  }
+  
+  public <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
+    assertContainsOrdered(collection, Arrays.asList(expected));
+  }
+    
+  public <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
+    ArrayList<T> copy = new ArrayList<T>(collection);
+    copy.retainAll(expected);
+    assertOrderedEquals(toString(collection), copy, expected);
+  }
+
+  public <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
+    assertContainsElements(collection, Arrays.asList(expected));
+  }
+    
+  public <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
+    ArrayList<T> copy = new ArrayList<T>(collection);
+    copy.retainAll(expected);
+    assertSameElements(toString(collection), copy, expected);
   }
 
   public static String toString(Object[] collection, String separator) {
     return toString(Arrays.asList(collection), separator);
+  }
+
+  public <T> void assertDoesntContain(Collection<? extends T> collection, T... notExpected) {
+    assertDoesntContain(collection, Arrays.asList(notExpected));
+  }
+
+  public <T> void assertDoesntContain(Collection<? extends T> collection, Collection<T> notExpected) {
+    ArrayList<T> copy = new ArrayList<T>(collection);
+    copy.retainAll(notExpected);
+    assertEmpty(copy);
   }
 
   public static String toString(Collection<?> collection, String separator) {

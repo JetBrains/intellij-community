@@ -228,7 +228,7 @@ public class EditorUtil {
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
     int startToUse = start;
-    int x = editor.getPrefixTextWidthInPixels();
+    int x = editor.getDocument().getLineNumber(start) == 0 ? editor.getPrefixTextWidthInPixels() : 0;
     int[] currentColumn = {0};
     for (SoftWrap softWrap : softWraps) {
       // There is a possible case that target column points inside soft wrap-introduced virtual space.

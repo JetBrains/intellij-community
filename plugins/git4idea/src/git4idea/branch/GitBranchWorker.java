@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitExecutionException;
-import git4idea.PlatformFacade;
+import git4idea.GitPlatformFacade;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
@@ -50,11 +50,11 @@ final class GitBranchWorker {
   private static final Logger LOG = Logger.getInstance(GitBranchWorker.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final PlatformFacade myFacade;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
   @NotNull private final GitBranchUiHandler myUiHandler;
 
-  GitBranchWorker(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
+  GitBranchWorker(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
     myProject = project;
     myFacade = facade;
     myGit = git;

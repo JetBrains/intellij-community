@@ -149,7 +149,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByModuleTypeAction extends RuleAction {
     private GroupByModuleTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.module"), AllIcons.ObjectBrowser.ShowModules);
+      super(view, UsageViewBundle.message("action.group.by.module"), AllIcons.Actions.GroupByModule);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByPackageAction extends RuleAction {
     private GroupByPackageAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.package"), PlatformIcons.GROUP_BY_PACKAGES);
+      super(view, UsageViewBundle.message("action.group.by.package"), AllIcons.Actions.GroupByPackage);
     }
     @Override
     protected boolean getOptionValue() {

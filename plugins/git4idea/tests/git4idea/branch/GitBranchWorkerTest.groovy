@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package git4idea.branch
+
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -34,7 +36,6 @@ import git4idea.history.browser.GitCommit
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor
 import git4idea.test.GitLightTest
-import git4idea.test.GitMockVirtualFile
 import git4idea.test.GitScenarios
 import org.jetbrains.annotations.NotNull
 import org.junit.After
@@ -43,7 +44,8 @@ import org.junit.Test
 
 import java.util.regex.Matcher
 
-import static groovy.util.GroovyTestCase.*
+import static groovy.util.GroovyTestCase.assertEquals
+import static junit.framework.Assert.*
 
 /**
  *
@@ -304,7 +306,7 @@ class GitBranchWorkerTest extends GitLightTest {
 
   Change toChange(String relPath) {
     // we don't care about the before revision
-    new Change(null, CurrentContentRevision.create(new FilePathImpl(new GitMockVirtualFile(myProjectRoot + "/" + relPath))))
+    new Change(null, CurrentContentRevision.create(new FilePathImpl(new MockVirtualFile(myProjectRoot + "/" + relPath))))
   }
 
   @Test

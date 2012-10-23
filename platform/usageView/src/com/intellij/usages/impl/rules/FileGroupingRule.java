@@ -15,17 +15,16 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ComputableIcon;
 import com.intellij.usages.NamedPresentably;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -33,7 +32,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
-import com.intellij.injected.editor.VirtualFileWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +60,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
-    private ComputableIcon myIcon;
+    private Icon myIcon;
 
     public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file) {
       myProject = project;
@@ -78,12 +76,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     @Override
     public void update() {
       if (isValid()) {
-        myIcon = new ComputableIcon(new Computable<Icon>() {
-          @Override
-          public Icon compute() {
-            return getIconImpl();
-          }
-        });
+        myIcon = getIconImpl();
         myPresentableName = myFile.getName();
       }
     }
@@ -103,7 +96,7 @@ public class FileGroupingRule implements UsageGroupingRule {
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return myIcon.getIcon();
+      return myIcon;
     }
 
     @Override

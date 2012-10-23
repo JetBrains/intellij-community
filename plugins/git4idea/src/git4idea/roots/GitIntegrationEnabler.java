@@ -22,9 +22,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.Notificator;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +41,11 @@ public class GitIntegrationEnabler {
 
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
-  private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull GitPlatformFacade myPlatformFacade;
 
   private static final Logger LOG = Logger.getInstance(GitIntegrationEnabler.class);
 
-  public GitIntegrationEnabler(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade) {
+  public GitIntegrationEnabler(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade) {
     myProject = project;
     myGit = git;
     myPlatformFacade = platformFacade;

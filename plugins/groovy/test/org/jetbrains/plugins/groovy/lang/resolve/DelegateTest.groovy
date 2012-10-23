@@ -135,7 +135,8 @@ class B {
 new B().fo<caret>o([''])
 ''')
 
-    def parameters = resolved.parameterList.parameters
+    assertInstanceOf(resolved, PsiMethod)
+    def parameters = (resolved as PsiMethod).parameterList.parameters
     assertEquals 'java.util.List<java.lang.String>', parameters[0].type.canonicalText
   }
 

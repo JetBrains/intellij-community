@@ -37,7 +37,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -62,7 +65,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrCodeReferenceElement createCodeReferenceElementFromText(String text);
 
-  public abstract GrThisReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
+  public abstract GrReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
 
   public abstract GrBlockStatement createBlockStatementFromText(String text, @Nullable PsiElement context);
 
@@ -90,7 +93,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
    * @param alias
    * @return import statement for given class
    */
-  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, @Nullable String alias);
+  public abstract GrImportStatement createImportStatementFromText(@NotNull String qName, boolean isStatic, boolean isOnDemand, @Nullable String alias);
 
   public abstract GrImportStatement createImportStatementFromText(String text);
 
@@ -106,8 +109,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrNamedArgument createNamedArgument(String name, GrExpression expression);
 
-  public abstract GrStatement createStatementFromText(String text);
-  public abstract GrStatement createStatementFromText(String text, @Nullable PsiElement context);
+  public abstract GrStatement createStatementFromText(CharSequence text);
+  public abstract GrStatement createStatementFromText(CharSequence text, @Nullable PsiElement context);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 
@@ -125,8 +128,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrCodeReferenceElement createReferenceElementFromText(String refName, @Nullable PsiElement context);
 
-  public GrExpression createExpressionFromText(String exprText) {
-    return createExpressionFromText(exprText, null);
+  public GrExpression createExpressionFromText(CharSequence exprText) {
+    return createExpressionFromText(exprText.toString(), null);
   }
 
   @NotNull
@@ -201,13 +204,13 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrMethod createMethodFromSignature(String name, GrClosureSignature signature);
 
-  public GrMethod createMethodFromText(String methodText) {
-    return createMethodFromText(methodText, null);
+  public GrMethod createMethodFromText(CharSequence methodText) {
+    return createMethodFromText(methodText.toString(), null);
   }
 
   public abstract GrAnnotation createAnnotationFromText(String annoText);
 
-  public abstract GroovyFile createGroovyFile(String text, boolean isPhysical, @Nullable PsiElement context);
+  public abstract GroovyFile createGroovyFile(CharSequence idText, boolean isPhysical, @Nullable PsiElement context);
 
   public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, @Nullable PsiElement context);
 
@@ -221,7 +224,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
     return createConstructorFromText(constructorName, paramTypes, paramNames, body, null);
   }
 
-  public abstract GrMethod createConstructorFromText(String constructorName, String text, @Nullable PsiElement context);
+  public abstract GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context);
 
   public abstract GrLabel createLabel(@NotNull String name);
 

@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-import com.intellij.pom.java.LanguageLevel;
 
 public class DeclarationParserTest extends JavaParsingTestCase {
   public DeclarationParserTest() {
@@ -40,16 +39,14 @@ public class DeclarationParserTest extends JavaParsingTestCase {
                                                            "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
                                                            "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }", false, false); }
   public void testTypeAnno() {
-    withLevel(LanguageLevel.JDK_1_8, new Runnable() { @Override public void run() {
-      doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
-                   "  @F int @F[] method() @F throws @F Exception {\n" +
-                   "    a = this instanceof @F C;\n" +
-                   "    C<@F @G C> c = new @Q C<@F C>();\n" +
-                   "    c = (@F Object)c;\n" +
-                   "    Class c = @TA String.class;\n" +
-                   "    @F C.field++;\n" +
-                   "  }\n} }", false, false);
-    }});
+    doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
+                 "  @F int @F[] method() @F throws @F Exception {\n" +
+                 "    a = this instanceof @F C;\n" +
+                 "    C<@F @G C> c = new @Q C<@F C>();\n" +
+                 "    c = (@F Object)c;\n" +
+                 "    Class c = @TA String.class;\n" +
+                 "    @F C.field++;\n" +
+                 "  }\n} }", false, false);
   }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }

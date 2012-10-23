@@ -32,7 +32,7 @@ Groovy script
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
           Constructor invocation
-            'this' reference expression
+            Reference expression
               PsiElement(this)('this')
             Arguments
               PsiElement(()('(')

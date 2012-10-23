@@ -34,7 +34,7 @@ Groovy script
           PsiWhiteSpace('\n        ')
           Method call
             Reference expression
-              'this' reference expression
+              Reference expression
                 PsiElement(this)('this')
               PsiElement(.)('.')
               PsiElement(identifier)('doo')

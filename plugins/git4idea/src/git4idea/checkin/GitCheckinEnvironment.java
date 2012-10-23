@@ -42,8 +42,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -211,7 +211,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // push
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          GitPusher.showPushDialogAndPerformPush(myProject, ServiceManager.getService(myProject, PlatformFacade.class));
+          GitPusher.showPushDialogAndPerformPush(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class));
         }
       });
     }

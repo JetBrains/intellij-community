@@ -115,6 +115,12 @@ public class GitBranch extends GitReference {
 
     // Reusing equals from super: only the name is important:
     // branches are considered equal even if they point to different commits.
+
+    /*
+      Commenting this for a while, because GitRepository has different update() methods: thus in certain cases only current branch is
+      updated => this branch in the branches collection has different hash.
+      Need either to update everything always, either to have a GitBranches collection in GitRepository and not recreate it.
+
     // But if equal branches point to different commits (or have different local/remote nature), then it is a programmer bug:
     // one if GitBranch instances in the calling code is out-of-date.
     // throwing assertion in that case forcing the programmer to update before comparing.
@@ -125,6 +131,7 @@ public class GitBranch extends GitReference {
     else if (myRemote != that.myRemote) {
       LOG.error("Branches have equal names, but different local/remote type. This: " + toLogString() + ", that: " + that.toLogString());
     }
+    */
 
     return true;
   }

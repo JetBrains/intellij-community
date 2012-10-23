@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
     if (context instanceof PsiTypeParameterListOwner) {
       List<PsiNamedElement> result = new ArrayList<PsiNamedElement>(Arrays.asList(((PsiTypeParameterListOwner)context).getTypeParameters()));
 
-      if ((PsiTypeParameterListOwner)context instanceof PsiMethod) {
+      if (context instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)context;
         ContainerUtil.addAll(result, method.getParameterList().getParameters());
       }
@@ -61,7 +61,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
   @Override
   public String checkTagValue(PsiDocTagValue value) {
-    if (value == null) return JavaErrorMessages.message("javadoc.param.tag.paramter.name.expected");
+    if (value == null) return JavaErrorMessages.message("javadoc.param.tag.parameter.name.expected");
     final ASTNode firstChildNode = value.getNode().getFirstChildNode();
     if (firstChildNode != null &&
         firstChildNode.getElementType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {

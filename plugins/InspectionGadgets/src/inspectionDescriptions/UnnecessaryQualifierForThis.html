@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports on any unnecessary qualification of <b>this</b> in the code.
+Reports on any unnecessary qualification of <b>this</b>.
 Using a qualifier on <b>this</b> to
 disambiguate a code reference may easily become unnecessary via automatic refactorings, and should be deleted for clarity.
 <p>
-Sample:
-<code>OuterClass.this.foo();</code>
+For example:
+<pre><code>OuterClass.<b>this</b>.foo();</code></pre>
   <!-- tooltip end -->
 <p>
 <small>Powered by InspectionGadgets</small>

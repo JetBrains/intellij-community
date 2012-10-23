@@ -25,9 +25,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.Notificator;
-import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
@@ -120,7 +120,7 @@ public class GitRebaseUpdater extends GitUpdater {
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
                                                                untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
       return GitUpdateResult.ERROR;
     } else {
@@ -212,7 +212,7 @@ public class GitRebaseUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
-      super(project, git, ServiceManager.getService(PlatformFacade.class), Collections.singleton(root), makeParams());
+      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
       myRebaser = rebaser;
       myRoot = root;
     }

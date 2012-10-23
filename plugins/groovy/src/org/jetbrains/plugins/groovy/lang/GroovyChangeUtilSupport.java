@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Map;
 
@@ -67,16 +68,20 @@ public class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   public void encodeInformation(final TreeElement element, final ASTNode original, final Map<Object, Object> encodingState) {
     if (original instanceof CompositeElement) {
-      if (original.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT || original.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
-        final GroovyResolveResult result = ((GrReferenceElement)original.getPsi()).advancedResolve();
-        if (result != null) {
-          final PsiElement target = result.getElement();
+      if (original.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT ||
+          original.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
+        PsiElement psi = original.getPsi();
+        if (!PsiUtil.isThisOrSuperRef(psi)) {
+          final GroovyResolveResult result = ((GrReferenceElement)psi).advancedResolve();
+          if (result != null) {
+            final PsiElement target = result.getElement();
 
-          if (target instanceof PsiClass ||
-            (target instanceof PsiMethod || target instanceof PsiField) &&
-                   ((PsiMember) target).hasModifierProperty(PsiModifier.STATIC) &&
-                    result.getCurrentFileResolveContext() instanceof GrImportStatement) {
-            element.putCopyableUserData(REFERENCED_MEMBER_KEY, (PsiMember) target);
+            if (target instanceof PsiClass ||
+                (target instanceof PsiMethod || target instanceof PsiField) &&
+                ((PsiMember)target).hasModifierProperty(PsiModifier.STATIC) &&
+                result.getCurrentFileResolveContext() instanceof GrImportStatement) {
+              element.putCopyableUserData(REFERENCED_MEMBER_KEY, (PsiMember)target);
+            }
           }
         }
       }

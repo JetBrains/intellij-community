@@ -159,11 +159,11 @@ public class ChunkExtractor {
       List<TextRange> editable = InjectedLanguageManager.getInstance(file.getProject())
         .intersectWithAllEditableFragments(file, new TextRange(lineStartOffset, lineEndOffset));
       for (TextRange range : editable) {
-        createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), result);
+        createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), true, result);
       }
       return result.toArray(new TextChunk[result.size()]);
     }
-    return createTextChunks(usageInfo2UsageAdapter, chars, lineStartOffset, lineEndOffset, result);
+    return createTextChunks(usageInfo2UsageAdapter, chars, lineStartOffset, lineEndOffset, true, result);
   }
 
   @NotNull
@@ -171,6 +171,7 @@ public class ChunkExtractor {
                                       @NotNull CharSequence chars,
                                       int start,
                                       int end,
+                                      boolean selectUsageWithBold,
                                       @NotNull List<TextChunk> result) {
     final Lexer lexer = myLexer;
     final SyntaxHighlighter highlighter = myHighlighter;
@@ -202,7 +203,7 @@ public class ChunkExtractor {
         IElementType tokenType = lexer.getTokenType();
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
 
-        processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, result);
+        processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
       }
       finally {
         lexer.advance();
@@ -217,8 +218,13 @@ public class ChunkExtractor {
                                         int hiStart,
                                         final int hiEnd,
                                         @NotNull TextAttributesKey[] tokenHighlights,
+                                        final boolean selectUsageWithBold,
                                         @NotNull final List<TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
+    if (selectUsageWithBold) {
+      originalAttrs.setFontType(Font.PLAIN);
+    }
+
     final int[] lastOffset = {hiStart};
     usageInfo2UsageAdapter.processRangeMarkers(new Processor<Segment>() {
       @Override
@@ -227,7 +233,7 @@ public class ChunkExtractor {
         int usageEnd = segment.getEndOffset();
         if (rangeIntersect(lastOffset[0], hiEnd, usageStart, usageEnd)) {
           addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, result);
-          addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, true, result);
+          addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, result);
           lastOffset[0] = usageEnd;
           if (usageEnd > hiEnd) {
             return false;
@@ -273,7 +279,6 @@ public class ChunkExtractor {
     }
 
     attrs = attrs.clone();
-    attrs.setFontType(Font.PLAIN);
     return attrs;
   }
 

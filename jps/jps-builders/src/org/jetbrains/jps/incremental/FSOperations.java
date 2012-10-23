@@ -128,7 +128,9 @@ public class FSOperations {
 
   static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles, final Set<File> excludes) throws IOException {
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
-      if (!rd.getRootFile().exists()) {
+      if (!rd.getRootFile().exists() ||
+          //temp roots are managed by compilers themselves
+          (rd instanceof JavaSourceRootDescriptor && ((JavaSourceRootDescriptor)rd).isTemp)) {
         continue;
       }
       context.getProjectDescriptor().fsState.clearRecompile(rd);

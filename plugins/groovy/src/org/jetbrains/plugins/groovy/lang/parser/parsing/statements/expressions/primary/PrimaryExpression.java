@@ -47,21 +47,13 @@ public class PrimaryExpression implements GroovyElementTypes {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
       return BUILT_IN_TYPE_EXPRESSION;
     }
-    if (kTHIS == tokenType) {
-      ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
-      return THIS_REFERENCE_EXPRESSION;
-    }
-    if (kSUPER == tokenType) {
-      ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
-      return SUPER_REFERENCE_EXPRESSION;
-    }
     if (kNEW == tokenType) {
       PsiBuilder.Marker marker = builder.mark();
       final GroovyElementType type = newExprParse(builder, parser);
       marker.done(type);
       return type;
     }
-    if (mIDENT == tokenType) {
+    if (mIDENT == tokenType || kSUPER == tokenType || kTHIS == tokenType) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
       return REFERENCE_EXPRESSION;
     }

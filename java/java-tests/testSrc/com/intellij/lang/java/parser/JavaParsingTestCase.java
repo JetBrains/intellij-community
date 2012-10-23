@@ -49,17 +49,6 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     IdeaTestCase.initPlatformPrefix();
   }
 
-  protected void withLevel(final LanguageLevel level, final Runnable r) {
-    LanguageLevel prev = myLanguageLevel;
-    myLanguageLevel = level;
-    try {
-      r.run();
-    }
-    finally {
-      myLanguageLevel = prev;
-    }
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

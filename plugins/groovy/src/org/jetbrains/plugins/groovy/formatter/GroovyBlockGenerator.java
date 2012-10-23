@@ -57,14 +57,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -77,10 +75,12 @@ import java.util.List;
  */
 public class GroovyBlockGenerator implements GroovyElementTypes {
 
-  private static final TokenSet NESTED = TokenSet.create(REFERENCE_EXPRESSION,
-      PATH_INDEX_PROPERTY,
-      PATH_METHOD_CALL,
-      PATH_PROPERTY_REFERENCE);
+  private static final TokenSet NESTED = TokenSet.create(
+    REFERENCE_EXPRESSION,
+    PATH_INDEX_PROPERTY,
+    PATH_METHOD_CALL,
+    PATH_PROPERTY_REFERENCE
+  );
 
   private static final Logger LOG = Logger.getInstance(GroovyBlockGenerator.class);
 
@@ -604,7 +604,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         if (nameElement != null) {
           List<ASTNode> grandChildren = visibleChildren(invokedExpression.getNode());
           int i = 0;
-          while (i < grandChildren.size() && nameElement != grandChildren.get(i).getPsi()) { i++; }
+          while (i < grandChildren.size() && nameElement != grandChildren.get(i).getPsi()) i++;
           if (i > 0) {
             processNestedChildrenPrefix(list, aligner, false, grandChildren, i);
           }
@@ -615,11 +615,22 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           return;
         }
       }
-
     }
 
 
     processNestedChildrenPrefix(list, aligner, topLevel, children, children.size());
+  }
+
+  private static boolean isAfterClosure(ASTNode dot) {
+    PsiElement dotPsi = dot.getPsi();
+    PsiElement prev = PsiUtil.skipWhitespaces(dotPsi.getPrevSibling(), false);
+    if (prev != null) {
+      if (prev instanceof GrMethodCall) {
+        return ((GrMethodCall)prev).getClosureArguments().length > 0;
+      }
+    }
+
+    return false;
   }
 
   private void processNestedChildrenPrefix(List<Block> list, @Nullable AlignmentProvider.Aligner aligner, boolean topLevel, List<ASTNode> children, int limit) {
@@ -640,7 +651,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode childNode = children.get(i);
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
-        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) ?
+        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) && !isAfterClosure(childNode) ?
                         Indent.getContinuationWithoutFirstIndent() :
                         Indent.getNoneIndent();
 

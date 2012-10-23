@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -76,15 +77,13 @@ import java.util.Map;
  */
 @SuppressWarnings("ConstantConditions")
 public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(GroovyPsiElementFactoryImpl.class);
 
-  Project myProject;
+  private final Project myProject;
 
   public GroovyPsiElementFactoryImpl(Project project) {
     myProject = project;
   }
-
-  private static final String DUMMY = "dummy.";
 
   @NotNull
   public PsiElement createReferenceNameFromText(String refName) {
@@ -206,10 +205,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
     builder.append("> void foo(){}");
     try {
-      return createMethodFromText(builder.toString()).getTypeParameters()[0];
+      return createMethodFromText(builder).getTypeParameters()[0];
     }
     catch (RuntimeException e) {
-      throw new IncorrectOperationException("type parameter text: " + builder.toString());
+      throw new IncorrectOperationException("type parameter text: " + builder);
     }
   }
 
@@ -249,7 +248,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(" = ").append(initializer.getText());
     }
 
-    GrTopStatement[] topStatements = createGroovyFile(text.toString()).getTopStatements();
+    GrTopStatement[] topStatements = createGroovyFile(text).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       topStatements = createGroovyFile("def " + text).getTopStatements();
     }
@@ -312,7 +311,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Nullable
   public GrTopStatement createTopElementFromText(String text) {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
+    PsiFile dummyFile = createDummyFile(text, false);
     final GrTopStatement[] topStatements = ((GroovyFileBase)dummyFile).getTopStatements();
     LOG.assertTrue(topStatements.length == 1);
     return topStatements[0];
@@ -327,14 +326,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return ((GrClosableBlock)initializer);
   }
 
-  private GroovyFileImpl createDummyFile(String text, boolean physical) {
+  private GroovyFileImpl createDummyFile(CharSequence text, boolean physical) {
     final String fileName = DUMMY_FILE_NAME + '.' + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
     final long stamp = System.currentTimeMillis();
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     return (GroovyFileImpl) factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text, stamp, physical);
   }
 
-  private GroovyFileImpl createDummyFile(String s) {
+  private GroovyFileImpl createDummyFile(CharSequence s) {
     return createDummyFile(s, false);
   }
 
@@ -356,7 +355,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         fileText.append(" = ").append(initializer);
       }
       fileText.append("){}");
-      GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
+      GroovyFileImpl groovyFile = createDummyFile(fileText);
       groovyFile.setContext(context);
 
       ASTNode node = groovyFile.getFirstChild().getNode();
@@ -463,11 +462,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                      String[] paramNames,
                                                      String body,
                                                      PsiElement context) {
-    final String text = generateMethodText(null, constructorName, null, paramTypes, paramNames, body, true);
+    final CharSequence text = generateMethodText(null, constructorName, null, paramTypes, paramNames, body, true);
     return createConstructorFromText(constructorName, text, context);
   }
 
-  public GrMethod createConstructorFromText(String constructorName, String constructorText, @Nullable PsiElement context) {
+  public GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + constructorText + "}");
     file.setContext(context);
     GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
@@ -496,11 +495,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (context != null) {
       file.setContext(context);
     }
-    GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
+    if (ErrorUtil.containsError(file)) throw new IncorrectOperationException("Can't create method from text: " + file.getText());
+
+    GrTopStatement[] definitions = file.getTopStatements();
     if (definitions.length != 1) {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
-    GrTopLevelDefinition definition = definitions[0];
+    GrTopStatement definition = definitions[0];
     if (!(definition instanceof GrMethod)) {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
@@ -542,7 +543,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
 
     builder.append("){}");
-    return createMethodFromText(builder.toString());
+    return createMethodFromText(builder);
   }
 
   @Override
@@ -550,19 +551,18 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createAnnotationFromText(annoText, null);
   }
 
-  public GroovyFile createGroovyFile(String idText) {
+  public GroovyFile createGroovyFile(CharSequence idText) {
     return createGroovyFile(idText, false, null);
   }
 
-  public GroovyFile createGroovyFile(String idText, boolean isPhysical, @Nullable PsiElement context) {
+  public GroovyFile createGroovyFile(CharSequence idText, boolean isPhysical, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile(idText, isPhysical);
     file.setContext(context);
     return file;
   }
 
   public PsiElement createWhiteSpace() {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        " ");
+    PsiFile dummyFile = createDummyFile(" ", false);
     return dummyFile.getFirstChild();
   }
 
@@ -579,7 +579,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public PsiElement createLineTerminator(String text) {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
+    PsiFile dummyFile = createDummyFile(text, false);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;
@@ -595,7 +595,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.delete(text.length() - 2, text.length());
     }
     text.append(')');
-    PsiFile file = createGroovyFile(text.toString());
+    PsiFile file = createGroovyFile(text);
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
   }
@@ -607,12 +607,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return call.getArgumentList().getNamedArguments()[0];
   }
 
-  public GrStatement createStatementFromText(String text) {
+  public GrStatement createStatementFromText(CharSequence text) {
     return createStatementFromText(text, null);
   }
 
   @Override
-  public GrStatement createStatementFromText(String text, @Nullable PsiElement context) {
+  public GrStatement createStatementFromText(CharSequence text, @Nullable PsiElement context) {
     GroovyFile file = createGroovyFile(text, false, context);
     GrTopStatement[] statements = file.getTopStatements();
     if (statements.length != 1) {
@@ -631,7 +631,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(statement.getText()).append("\n");
     }
     text.append("}");
-    PsiFile file = createGroovyFile(text.toString());
+    PsiFile file = createGroovyFile(text);
     LOG.assertTrue(file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement), text);
     return (GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody();
   }
@@ -643,7 +643,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final GrCommandArgumentList argumentList = callExpr.getArgumentList();
     if (argumentList != null) text.append(argumentList.getText());
     text.append(")");
-    PsiFile file = createGroovyFile(text.toString());
+    PsiFile file = createGroovyFile(text);
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return ((GrMethodCallExpression)file.getChildren()[0]);
   }
@@ -671,7 +671,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrThisReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+  public GrReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
     final String text;
     if (psiClass == null) {
       text = "this";
@@ -679,8 +679,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     else {
       text = psiClass.getQualifiedName() + ".this";
     }
-    final GroovyFileImpl dummy = createDummyFile(text);
-    return (GrThisReferenceExpression)dummy.getStatements()[0];
+    return createReferenceExpressionFromText(text);
   }
 
   @Override
@@ -712,31 +711,40 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return sections[0];
   }
 
-  public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {
-    final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
-        (alias != null && alias.length() > 0 ? " as " + alias : "");
+  public GrImportStatement createImportStatementFromText(@NotNull String qName, boolean isStatic, boolean isOnDemand, String alias) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("import ");
+    if (isStatic) {
+      builder.append("static ");
+    }
+    builder.append(qName);
+    if (isOnDemand) {
+      builder.append(".*");
+    }
+    if (StringUtil.isNotEmpty(alias)) {
+      builder.append(" as ").append(alias);
+    }
 
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        text);
-    return ((GrImportStatement) dummyFile.getFirstChild());
+    PsiFile dummyFile = createDummyFile(builder, false);
+    return ((GrImportStatement)dummyFile.getFirstChild());
   }
 
   public GrImportStatement createImportStatementFromText(@NotNull String text) {
-    PsiFile dummyFile = PsiFileFactory.getInstance(myProject).createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), text);
+    PsiFile dummyFile = createDummyFile(text, false);
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
 
 
-  private static String generateMethodText(@Nullable String modifier,
-                                           String name,
-                                           @Nullable String type,
-                                           String[] paramTypes,
-                                           String[] paramNames,
-                                           @Nullable String body,
-                                           boolean isConstructor) {
+  private static CharSequence generateMethodText(@Nullable String modifier,
+                                                 String name,
+                                                 @Nullable String type,
+                                                 String[] paramTypes,
+                                                 String[] paramNames,
+                                                 @Nullable String body,
+                                                 boolean isConstructor) {
     StringBuilder builder = new StringBuilder();
 
-    if (modifier != null){
+    if (modifier != null) {
       builder.append(modifier);
       builder.append(" ");
     }
@@ -769,12 +777,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     builder.append(")");
     if (body != null) {
       builder.append(body);
-    } else {
+    }
+    else {
       builder.append("{");
       builder.append("}");
     }
 
-    return builder.toString();
+    return builder;
   }
 
   public GrMethod createMethodFromText(String modifier, String name, @Nullable String type, String[] paramTypes, PsiElement context) {
@@ -793,8 +802,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
 
     String[] paramNames = QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(new PsiType[res.size()]));
-    final String text = generateMethodText(modifier, name, type, paramTypes, paramNames, null, false);
-    return createMethodFromText(text, context);
+    final CharSequence text = generateMethodText(modifier, name, type, paramTypes, paramNames, null, false);
+    return createMethodFromText(text.toString(), context);
   }
 
   public GrDocComment createDocCommentFromText(String text) {
@@ -841,7 +850,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       buffer.append(type.getCanonicalText()).append(" ");
     }
     buffer.append(parameterName).append("){\n}");
-    final GrTryCatchStatement statement = (GrTryCatchStatement)createStatementFromText(buffer.toString());
+    final GrTryCatchStatement statement = (GrTryCatchStatement)createStatementFromText(buffer);
     return statement.getCatchClauses()[0];
   }
 
@@ -887,10 +896,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       }
       else {
         buffer.append("'");
-        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, true, buffer);
+        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "'", false, true, buffer);
         buffer.append("'");
       }
-      final GrExpression expr = createExpressionFromText(buffer.toString());
+      final GrExpression expr = createExpressionFromText(buffer);
       LOG.assertTrue(expr instanceof GrLiteral, "value = " + value);
       return (GrLiteral)expr;
     }
@@ -943,7 +952,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         builder.append("def");
       }
       builder.append(' ').append(name).append("(){}");
-      return createMethodFromText(builder.toString());
+      return createMethodFromText(builder);
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
@@ -988,7 +997,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       builder.delete(builder.length() - 1, builder.length());
     }
     builder.append("){}");
-    final GrMethod method = createMethodFromText(builder.toString());
+    final GrMethod method = createMethodFromText(builder);
     return method.getParameterList();
   }
 

@@ -209,7 +209,9 @@ public class GroovyAccessibilityInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(GrReferenceExpression ref) {
       super.visitReferenceExpression(ref);
-      checkRef(ref);
+      if (!(ref.getParent() instanceof GrConstructorInvocation))  { //constructor invocation is checked in separate place
+        checkRef(ref);
+      }
     }
 
     @Override
@@ -229,7 +231,7 @@ public class GroovyAccessibilityInspection extends BaseInspection {
           refElement = ((GrNewExpression)call).getReferenceElement();
         }
         else if (call instanceof GrConstructorInvocation) {
-          refElement = ((GrConstructorInvocation)call).getThisOrSuperKeyword();
+          refElement = ((GrConstructorInvocation)call).getInvokedExpression();
         }
         if (refElement == null) {
           refElement = call;

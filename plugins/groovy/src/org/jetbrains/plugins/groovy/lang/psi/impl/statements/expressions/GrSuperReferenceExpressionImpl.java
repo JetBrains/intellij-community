@@ -76,7 +76,6 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitSuperExpression(this);
   }
 
   public String toString() {

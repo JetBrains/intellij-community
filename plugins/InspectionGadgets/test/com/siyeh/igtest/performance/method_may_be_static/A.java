@@ -29,3 +29,11 @@ public class A implements Serializable {
         System.out.println("boo!");
     }
 }
+class C {
+  public int getInt() { return 5; }
+}
+class D extends C implements Surprise {
+}
+interface Surprise {
+  int getInt();
+}

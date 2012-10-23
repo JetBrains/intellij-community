@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,30 +25,25 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class ParameterHidingMemberVariableInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreForConstructors = false;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreForPropertySetters = false;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreForAbstractMethods = false;
 
   @NotNull
@@ -59,8 +53,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.display.name");
+    return InspectionGadgetsBundle.message("parameter.hides.member.variable.display.name");
   }
 
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -73,27 +66,21 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.problem.descriptor");
+    final PsiClass aClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor", aClass.getName());
   }
 
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.ignore.setters.option"),
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
                              "m_ignoreForPropertySetters");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.ignore.superclass.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
                              "m_ignoreInvisibleFields");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.ignore.constructors.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option"),
                              "m_ignoreForConstructors");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.ignore.abstract.methods.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option"),
                              "m_ignoreForAbstractMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "parameter.hides.member.variable.ignore.static.parameters.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option"),
                              "m_ignoreStaticMethodParametersHidingInstanceFields");
     return optionsPanel;
   }
@@ -102,21 +89,16 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     return new ParameterHidingMemberVariableVisitor();
   }
 
-  private class ParameterHidingMemberVariableVisitor
-    extends BaseInspectionVisitor {
+  private class ParameterHidingMemberVariableVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
       super.visitParameter(variable);
-      if (variable.getDeclarationScope() instanceof PsiCatchSection) {
+      final PsiElement declarationScope = variable.getDeclarationScope();
+      if (!(declarationScope instanceof PsiMethod)) {
         return;
       }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiMethod.class);
-      if (method == null) {
-        return;
-      }
+      final PsiMethod method = (PsiMethod)declarationScope;
       if (m_ignoreForConstructors && method.isConstructor()) {
         return;
       }
@@ -125,51 +107,49 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
           return;
         }
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass.isInterface()) {
+        if (containingClass != null && containingClass.isInterface()) {
           return;
         }
       }
       if (m_ignoreForPropertySetters) {
         final String methodName = method.getName();
         final PsiType returnType = method.getReturnType();
-        if (methodName.startsWith(HardcodedMethodConstants.SET) &&
-            PsiType.VOID.equals(returnType)) {
+        if (methodName.startsWith(HardcodedMethodConstants.SET) && PsiType.VOID.equals(returnType)) {
           return;
         }
       }
-      final PsiClass aClass =
-        ClassUtils.getContainingClass(variable);
-      if (aClass == null) {
+      final PsiClass aClass = checkFieldName(variable, method);
+      if (aClass ==  null) {
         return;
       }
+      registerVariableError(variable, aClass);
+    }
+
+    @Nullable
+    private PsiClass checkFieldName(PsiVariable variable, PsiMethod method) {
       final String variableName = variable.getName();
-      final PsiField[] fields = aClass.getAllFields();
-      for (final PsiField field : fields) {
-        if (checkFieldName(field, variableName, aClass)) {
-          if (m_ignoreStaticMethodParametersHidingInstanceFields &&
-              !field.hasModifierProperty(PsiModifier.STATIC) &&
+      if (variableName == null) {
+        return null;
+      }
+      PsiClass aClass = ClassUtils.getContainingClass(variable);
+      while (aClass != null) {
+        final PsiField[] fields = aClass.getAllFields();
+        for (PsiField field : fields) {
+          final String fieldName = field.getName();
+          if (!variableName.equals(fieldName)) {
+            continue;
+          }
+          if (m_ignoreStaticMethodParametersHidingInstanceFields && !field.hasModifierProperty(PsiModifier.STATIC) &&
               method.hasModifierProperty(PsiModifier.STATIC)) {
             continue;
           }
-          registerVariableError(variable);
+          if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
+            return aClass;
+          }
         }
+        aClass = ClassUtils.getContainingClass(aClass);
       }
-    }
-
-    private boolean checkFieldName(PsiField field, String variableName,
-                                   PsiClass aClass) {
-      if (field == null) {
-        return false;
-      }
-      final String fieldName = field.getName();
-      if (fieldName == null) {
-        return false;
-      }
-      if (!fieldName.equals(variableName)) {
-        return false;
-      }
-      return !m_ignoreInvisibleFields ||
-             ClassUtils.isFieldVisible(field, aClass);
+      return null;
     }
   }
 }

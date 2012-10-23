@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -69,19 +68,13 @@ public class ConsoleHistoryController {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
-  private final String myType;
-  private final String myId;
   private final LanguageConsoleImpl myConsole;
-  private final ConsoleHistoryModel myModel;
   private final AnAction myHistoryNext = new MyAction(true);
   private final AnAction myHistoryPrev = new MyAction(false);
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
+  private ModelHelper myHelper;
   private long myLastSaveStamp;
-
-  private String myUserValue;
-  @NotNull
-  private final Charset myCharset;
 
   public ConsoleHistoryController(@NotNull final String type,
                                   @Nullable final String persistenceId,
@@ -95,11 +88,9 @@ public class ConsoleHistoryController {
                                   @NotNull final ConsoleHistoryModel model,
                                   @NotNull final Charset charset)
   {
-    myType = type;
-    myId = StringUtil.isEmpty(persistenceId)? console.getProject().getPresentableUrl() : persistenceId;
+    String id = persistenceId == null || StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
+    myHelper = new ModelHelper(type, id, model, charset);
     myConsole = console;
-    myModel = model;
-    myCharset = charset;
   }
 
   public boolean isMultiline() {
@@ -112,32 +103,32 @@ public class ConsoleHistoryController {
   }
 
   public ConsoleHistoryModel getModel() {
-    return myModel;
+    return myHelper.getModel();
   }
 
   public void install() {
-    if (myId != null) {
+    if (myHelper.getId() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(
         ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-          @Override
-          public void saved(@NotNull final Project project) {
-            saveHistory();
-          }
-        });
+        @Override
+        public void saved(@NotNull final Project project) {
+          saveHistory();
+        }
+      });
       Disposer.register(myConsole, new Disposable() {
         @Override
         public void dispose() {
           saveHistory();
         }
       });
-      loadHistory(myId);
+      loadHistory(myHelper.getId());
     }
     configureActions();
     myLastSaveStamp = getCurrentTimeStamp();
   }
 
   private long getCurrentTimeStamp() {
-    return myModel.getModificationCount() + myConsole.getEditorDocument().getModificationStamp();
+    return getModel().getModificationCount() + myConsole.getEditorDocument().getModificationStamp();
   }
 
   private void configureActions() {
@@ -154,75 +145,26 @@ public class ConsoleHistoryController {
     myBrowseHistory.registerCustomShortcutSet(myBrowseHistory.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
   }
 
-  private String getHistoryFilePath(final String id) {
-    return PathManager.getSystemPath() + File.separator +
-           "userHistory" + File.separator +
-           myType + Long.toHexString(StringHash.calc(id)) + ".hist.xml";
-  }
-
   /**
    * Use this method if you decided to change the id for your console but don't want your users to loose their current histories
    * @param id previous id id
    * @return true if some text has been loaded; otherwise false
    */
   public boolean loadHistory(String id) {
-    File file = new File(getHistoryFilePath(id));
-    if (!file.exists()) return false;
-    HierarchicalStreamReader xmlReader = null;
-    try {
-      xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
-      String text = loadHistory(xmlReader, id);
-      if (text != null) {
-        setConsoleText(text, false, false);
-        return true;
-      }
+    boolean result = myHelper.loadHistory(id);
+    String prev = myHelper.getContent();
+    String userValue = myHelper.getContent();
+    if (prev != userValue && userValue != null) {
+      setConsoleText(userValue, false, false);
     }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    finally {
-      if (xmlReader != null) {
-        xmlReader.close();
-      }
-    }
-    return false;
+    return result;
   }
 
   private void saveHistory() {
     if (myLastSaveStamp == getCurrentTimeStamp()) return;
-
-    final File file = new File(getHistoryFilePath(myId));
-    final File dir = file.getParentFile();
-    if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-      LOG.error("failed to create folder: "+dir.getAbsolutePath());
-      return;
-    }
-
-    OutputStream os = null;
-    try {
-      final XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
-      try {
-        serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
-      }
-      catch (Exception e) {
-        // not recognized
-      }
-      serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
-      saveHistory(serializer);
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    finally {
-      try {
-        os.close();
-      }
-      catch (Exception e) {
-        // nothing
-      }
-    }
+    myHelper.setContent(myConsole.getEditorDocument().getText());
+    myHelper.saveHistory();
     myLastSaveStamp = getCurrentTimeStamp();
-    cleanupOldFiles(dir);
   }
 
   private static void cleanupOldFiles(final File dir) {
@@ -257,7 +199,7 @@ public class ConsoleHistoryController {
       @Override
       public void run() {
         if (storeUserText) {
-          myUserValue = document.getText();
+          myHelper.setContent(document.getText());
         }
         String text = StringUtil.notNullize(command);
         int offset;
@@ -274,7 +216,7 @@ public class ConsoleHistoryController {
             if (StringUtil.findFirst(trimmedLine, new CharFilter() {
               @Override
               public boolean accept(char ch) {
-                return ch =='\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
+                return ch == '\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
               }
             }) > -1) {
               text += "\n";
@@ -316,8 +258,10 @@ public class ConsoleHistoryController {
     @Override
     public void actionPerformed(final AnActionEvent e) {
       final String command;
-      command = myNext ? myModel.getHistoryNext() : StringUtil.notNullize(myModel.getHistoryPrev(), myMultiline? "" : StringUtil.notNullize(myUserValue));
-      setConsoleText(command, myNext && myModel.getHistoryCursor() == 0, true);
+      command = myNext?
+                getModel().getHistoryNext()
+                : StringUtil.notNullize(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
+      setConsoleText(command, myNext && getModel().getHistoryCursor() == 0, true);
     }
 
     @Override
@@ -345,54 +289,12 @@ public class ConsoleHistoryController {
   }
 
 
-  @Nullable
-  private String loadHistory(final HierarchicalStreamReader in, final String expectedId) {
-    if (!in.getNodeName().equals("console-history")) return null;
-    final String id = in.getAttribute("id");
-    if (!expectedId.equals(id)) return null;
-    final ArrayList<String> entries = new ArrayList<String>();
-    String consoleContent = null;
-    while (in.hasMoreChildren()) {
-      in.moveDown();
-      if ("history-entry".equals(in.getNodeName())) {
-        entries.add(in.getValue());
-      }
-      else if ("console-content".equals(in.getNodeName())) {
-        consoleContent = in.getValue();
-      }
-      in.moveUp();
-    }
-    for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
-      final String entry = iterator.previous();
-      myModel.addToHistory(entry);
-    }
-    return consoleContent;
-  }
-
-  private void saveHistory(final XmlSerializer out) throws IOException {
-    out.startDocument(CharsetToolkit.UTF8, null);
-    out.startTag(null, "console-history");
-    out.attribute(null, "id", myId);
-    for (String s : myModel.getHistory()) {
-      out.startTag(null, "history-entry");
-      out.text(s);
-      out.endTag(null, "history-entry");
-    }
-    String current = myConsole.getEditorDocument().getText();
-    if (StringUtil.isNotEmpty(current)) {
-      out.startTag(null, "console-content");
-      out.text(current);
-      out.endTag(null, "console-content");
-    }
-    out.endTag(null, "console-history");
-    out.endDocument();
-  }
 
   private class MyBrowseAction extends AnAction {
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myModel.getHistorySize() > 0);
+      e.getPresentation().setEnabled(getModel().getHistorySize() > 0);
     }
 
     @Override
@@ -401,7 +303,7 @@ public class ConsoleHistoryController {
 
         @Override
         protected void removeContentAt(String content) {
-          myModel.removeFromHistory(content);
+          getModel().removeFromHistory(content);
         }
 
         @Override
@@ -411,7 +313,7 @@ public class ConsoleHistoryController {
 
         @Override
         protected List<String> getContents() {
-          return myModel.getHistory();
+          return getModel().getHistory();
         }
 
         @Override
@@ -440,11 +342,150 @@ public class ConsoleHistoryController {
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
-      chooser.setSelectedIndex(Math.max(myModel.getHistoryCursor(), 0));
+      chooser.setSelectedIndex(Math.max(getModel().getHistoryCursor(), 0));
       chooser.show();
       if (chooser.isOK()) {
         setConsoleText(chooser.getSelectedText(), false, true);
       }
     }
   }
+  
+  public static class ModelHelper {
+    private final String myType;
+    private final String myId;
+    private final ConsoleHistoryModel myModel;
+    private String myContent;
+    @NotNull
+    private final Charset myCharset;
+
+    public ModelHelper(String type, String id, ConsoleHistoryModel model, @NotNull Charset charset) {
+      myType = type;
+      myId = id;
+      myModel = model;
+      myCharset = charset;
+    }
+
+    public ConsoleHistoryModel getModel() {
+      return myModel;
+    }
+
+    public void setContent(String userValue) {
+      myContent = userValue;
+    }
+
+    public String getId() {
+      return myId;
+    }
+
+    public String getContent() {
+      return myContent;
+    }
+
+    private String getHistoryFilePath(final String id) {
+      return PathManager.getSystemPath() + File.separator +
+             "userHistory" + File.separator +
+             myType + Long.toHexString(StringHash.calc(id)) + ".hist.xml";
+    }
+
+    public boolean loadHistory(String id) {
+      File file = new File(getHistoryFilePath(id));
+      if (!file.exists()) return false;
+      HierarchicalStreamReader xmlReader = null;
+      try {
+        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
+        String text = loadHistory(xmlReader, id);
+        if (text != null) {
+          myContent = text;
+          return true;
+        }
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
+      finally {
+        if (xmlReader != null) {
+          xmlReader.close();
+        }
+      }
+      return false;
+    }
+
+    private void saveHistory() {
+      final File file = new File(getHistoryFilePath(myId));
+      final File dir = file.getParentFile();
+      if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
+        LOG.error("failed to create folder: " + dir.getAbsolutePath());
+        return;
+      }
+
+      OutputStream os = null;
+      try {
+        final XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
+        try {
+          serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
+        }
+        catch (Exception e) {
+          // not recognized
+        }
+        serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
+        saveHistory(serializer);
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
+      finally {
+        try {
+          os.close();
+        }
+        catch (Exception e) {
+          // nothing
+        }
+      }
+      cleanupOldFiles(dir);
+    }
+
+    @Nullable
+    private String loadHistory(final HierarchicalStreamReader in, final String expectedId) {
+      if (!in.getNodeName().equals("console-history")) return null;
+      final String id = in.getAttribute("id");
+      if (!expectedId.equals(id)) return null;
+      final ArrayList<String> entries = new ArrayList<String>();
+      String consoleContent = null;
+      while (in.hasMoreChildren()) {
+        in.moveDown();
+        if ("history-entry".equals(in.getNodeName())) {
+          entries.add(in.getValue());
+        }
+        else if ("console-content".equals(in.getNodeName())) {
+          consoleContent = in.getValue();
+        }
+        in.moveUp();
+      }
+      for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
+        final String entry = iterator.previous();
+        getModel().addToHistory(entry);
+      }
+      return consoleContent;
+    }
+
+    private void saveHistory(final XmlSerializer out) throws IOException {
+      out.startDocument(CharsetToolkit.UTF8, null);
+      out.startTag(null, "console-history");
+      out.attribute(null, "id", myId);
+      for (String s : getModel().getHistory()) {
+        out.startTag(null, "history-entry");
+        out.text(s);
+        out.endTag(null, "history-entry");
+      }
+      String current = myContent;
+      if (StringUtil.isNotEmpty(current)) {
+        out.startTag(null, "console-content");
+        out.text(current);
+        out.endTag(null, "console-content");
+      }
+      out.endTag(null, "console-history");
+      out.endDocument();
+    }
+  }
+
 }

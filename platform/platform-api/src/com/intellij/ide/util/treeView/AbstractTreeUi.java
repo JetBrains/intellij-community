@@ -912,7 +912,7 @@ public class AbstractTreeUi {
       @Override
       public void run(final Boolean changes) {
         if (changes) {
-          invokeLaterIfNeeded(true, new Runnable() {
+          invokeLaterIfNeeded(false, new Runnable() {
             @Override
             public void run() {
               Object element = nodeDescriptor.getElement();
@@ -3515,18 +3515,22 @@ public class AbstractTreeUi {
   }
 
   private void updateNodeImageAndPosition(@NotNull final DefaultMutableTreeNode node, boolean updatePosition, boolean nodeChanged) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (getElementFromDescriptor(descriptor) == null) return;
 
     if (updatePosition) {
       DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
-      if (parentNode != null) {
+      if (parentNode == null) {
+        nodeChanged(node);
+      }
+      else {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+
         int oldIndex = parentNode.getIndex(node);
         int newIndex = oldIndex;
         if (isLoadingChildrenFor(node.getParent()) || getBuilder().isChildrenResortingNeeded(descriptor)) {
-          final List<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
+          List<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
           for (int i = 0; i < parentNode.getChildCount(); i++) {
             TreeNode child = parentNode.getChildAt(i);
             LOG.assertTrue(child != null);
@@ -3548,10 +3552,8 @@ public class AbstractTreeUi {
           nodeChanged(node);
         }
       }
-      else {
-        nodeChanged(node);
-      }
-    } else if (nodeChanged) {
+    }
+    else if (nodeChanged) {
       nodeChanged(node);
     }
   }

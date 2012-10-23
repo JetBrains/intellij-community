@@ -17,6 +17,8 @@ import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-
-import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.
@@ -82,17 +81,9 @@ class HgCommandAuthenticator {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path);
     // Don't use Application#invokeAndWait here, as IntelliJ 
     // may already be showing a dialog (such as the clone dialog)
-    try {
-      EventQueue.invokeAndWait(runnable); // TODO: use ApplicationManager.getApplication() with correct modality state.
-      myRunnable = runnable;
-      return runnable.isOk();
-    }
-    catch (InterruptedException e) {
-      return false;
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    myRunnable = runnable;
+    return runnable.isOk();
   }
 
   public String getUserName() {

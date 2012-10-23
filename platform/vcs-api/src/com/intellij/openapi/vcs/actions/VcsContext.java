@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PlaceProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -34,6 +35,7 @@ public interface VcsContext extends PlaceProvider<String> {
   @Nullable
   VirtualFile getSelectedFile();
 
+  @NotNull
   VirtualFile[] getSelectedFiles();
 
   Editor getEditor();

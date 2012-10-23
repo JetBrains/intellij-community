@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.VcsRootError;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -35,7 +35,7 @@ public class GitRootChecker implements VcsRootChecker {
   @NotNull private final Collection<VcsRootError> myErrors;
   private final boolean myProjectMappingIsInvalid;
 
-  public GitRootChecker(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  public GitRootChecker(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
     myErrors = new GitRootErrorsFinder(project, platformFacade).find();
     myProjectMappingIsInvalid = isProjectMappingInvalid();
   }

@@ -47,9 +47,9 @@
     <action id="Android.RunDdms" class="org.jetbrains.android.actions.AndroidRunDdmsAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
-    <action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
+    <!--<action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
-    </action>
+    </action>-->
     <action id="Android.RunDraw9Patch" class="org.jetbrains.android.actions.AndroidRunDraw9PatchAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>

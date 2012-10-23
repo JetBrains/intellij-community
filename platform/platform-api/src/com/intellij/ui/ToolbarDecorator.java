@@ -109,7 +109,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return createDecorator(tree, null);
   }
 
-  private static ToolbarDecorator createDecorator(@Nullable JTree tree, @Nullable ElementProducer<?> producer) {
+  private static ToolbarDecorator createDecorator(@NotNull JTree tree, @Nullable ElementProducer<?> producer) {
     return new TreeToolbarDecorator(tree, producer).initPosition();
   }
 
@@ -399,7 +399,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
     for (CommonActionsPanel.Buttons button : CommonActionsPanel.Buttons.values()) {
       final Pair<Boolean, AnActionButtonRunnable> action = map.get(button);
-      if (action != null && action.first && action.second != null) {
+      if (action != null && action.first != null && action.first && action.second != null) {
         buttons.add(button);
       }
     }

@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
+import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.Notificator;
-import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
 
-  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull Git git,
+  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
                                         @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
                                         @NotNull String name) {
     super(project, facade, git, handler, repositories);

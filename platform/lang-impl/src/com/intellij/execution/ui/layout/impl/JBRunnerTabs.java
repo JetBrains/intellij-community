@@ -47,6 +47,16 @@ public class
   }
 
   @Override
+  public boolean useSmallLabels() {
+    return true;
+  }
+
+  @Override
+  public boolean hasUnderline() {
+    return true;
+  }
+
+  @Override
   protected void paintFirstGhost(Graphics2D g2d) {}
 
   @Override
@@ -207,7 +217,7 @@ public class
     if (label == null || point == null) {
       return true;
     }
-    final Rectangle bounds = label.getBounds();
+    final Rectangle bounds = label.getBounds();                                                 
     return point.y <= bounds.y + bounds.height;
   }
 
@@ -254,8 +264,6 @@ public class
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       setBorder(new EmptyBorder(5, 5, 7, 5));
     }
 
@@ -276,8 +284,10 @@ public class
     }
 
     @Override
-    protected int getSelectedOffset() {
-      return getNonSelectedOffset();
+    public Dimension getPreferredSize() {
+      Dimension result = super.getPreferredSize();
+      result.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+      return result;
     }
   }
 }

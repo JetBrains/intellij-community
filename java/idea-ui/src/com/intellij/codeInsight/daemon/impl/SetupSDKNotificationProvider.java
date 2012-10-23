@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Danila Ponomarenko
  */
-public class SetupSDKNotificationProvider implements EditorNotifications.Provider<EditorNotificationPanel> {
+public class SetupSDKNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("Setup SDK");
 
   private final Project myProject;
@@ -57,7 +58,7 @@ public class SetupSDKNotificationProvider implements EditorNotifications.Provide
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file) {
+  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
     if (file.getFileType() == JavaClassFileType.INSTANCE) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.intentions.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -38,7 +39,7 @@ public class BoolUtils {
     return GroovyTokenTypes.mBNOT.equals(sign);
   }
 
-  public static boolean isTrue(GrCondition condition) {
+  public static boolean isTrue(@Nullable GrCondition condition) {
     if (condition == null) {
       return false;
     }
@@ -68,7 +69,7 @@ public class BoolUtils {
       final GrExpression rhs = binaryExpression.getRightOperand();
       assert rhs != null;
       return lhs.getText() + negatedComparison + rhs.getText();
-    } else if (ParenthesesUtils.getPrecendence(condition) >
+    } else if (ParenthesesUtils.getPrecedence(condition) >
         ParenthesesUtils.PREFIX_PRECEDENCE) {
       return "!(" + condition.getText() + ')';
     } else {

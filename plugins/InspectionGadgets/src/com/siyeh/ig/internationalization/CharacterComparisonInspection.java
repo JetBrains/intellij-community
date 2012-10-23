@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CharacterComparisonInspection extends BaseInspection {
 
@@ -70,9 +71,9 @@ public class CharacterComparisonInspection extends BaseInspection {
       registerError(expression);
     }
 
-    private static boolean isCharacter(PsiExpression expression) {
-      return TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
-             TypeUtils.expressionHasType(expression, CommonClassNames.JAVA_LANG_CHARACTER);
+    private static boolean isCharacter(@Nullable PsiExpression expression) {
+      return ExpressionUtils.hasType(expression, PsiKeyword.CHAR) ||
+             ExpressionUtils.hasType(expression, CommonClassNames.JAVA_LANG_CHARACTER);
     }
   }
 }

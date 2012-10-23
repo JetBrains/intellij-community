@@ -6,8 +6,8 @@ setProperty("testcases", ["com.intellij.AllTests"])
 
 def isMac = System.getProperty("os.name").toLowerCase().startsWith("mac")
 def args = [
-        "-Xmx350m",
-        "-XX:MaxPermSize=320m",
+        "-Xmx450m",
+        "-XX:MaxPermSize=430m",
 ]
 if (isMac) args << "-d32";
 

@@ -34,7 +34,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.tests.GitTest;
+import git4idea.test.GitTest;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -45,7 +45,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static git4idea.GitUtil.getShortHash;
-import static git4idea.tests.GitTestRepository.createFile;
+import static git4idea.test.GitTestRepository.createFile;
 import static org.testng.Assert.*;
 
 /**

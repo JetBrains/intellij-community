@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,16 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LocalVariableHidingMemberVariableInspection
-  extends BaseInspection {
+public class LocalVariableHidingMemberVariableInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreStaticMethods = true;
 
   @NotNull
@@ -47,8 +44,7 @@ public class LocalVariableHidingMemberVariableInspection
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "local.variable.hides.member.variable.display.name");
+    return InspectionGadgetsBundle.message("local.variable.hides.member.variable.display.name");
   }
 
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -61,19 +57,14 @@ public class LocalVariableHidingMemberVariableInspection
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "local.variable.hides.member.variable.problem.descriptor");
+    final PsiClass aClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message("local.variable.hides.member.variable.problem.descriptor", aClass.getName());
   }
 
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "field.name.hides.in.superclass.ignore.option"),
-                             "m_ignoreInvisibleFields");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "local.variable.hides.member.variable.ignore.option"),
-                             "m_ignoreStaticMethods");
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"), "m_ignoreInvisibleFields");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option"), "m_ignoreStaticMethods");
     return optionsPanel;
   }
 
@@ -81,71 +72,65 @@ public class LocalVariableHidingMemberVariableInspection
     return new LocalVariableHidingMemberVariableVisitor();
   }
 
-  private class LocalVariableHidingMemberVariableVisitor
-    extends BaseInspectionVisitor {
+  private class LocalVariableHidingMemberVariableVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (m_ignoreStaticMethods) {
-        final PsiMethod aMethod =
-          PsiTreeUtil.getParentOfType(variable,
-                                      PsiMethod.class);
-        if (aMethod == null) {
-          return;
-        }
-        if (aMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiClassInitializer.class);
+        if (member != null && member.hasModifierProperty(PsiModifier.STATIC)) {
           return;
         }
       }
-      final PsiClass aClass =
-        ClassUtils.getContainingClass(variable);
+      final PsiClass aClass = checkFieldNames(variable);
       if (aClass == null) {
         return;
       }
-      final String variableName = variable.getName();
-      final PsiField[] fields = aClass.getAllFields();
-      for (final PsiField field : fields) {
-        if (checkFieldName(field, variableName, aClass)) {
-          registerVariableError(variable);
-        }
-      }
+      registerVariableError(variable, aClass);
     }
 
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
       super.visitParameter(variable);
-      if (!(variable.getDeclarationScope() instanceof PsiCatchSection)) {
+      final PsiElement declarationScope = variable.getDeclarationScope();
+      if (!(declarationScope instanceof PsiCatchSection) && !(declarationScope instanceof PsiForeachStatement)) {
         return;
       }
-      final PsiClass aClass =
-        ClassUtils.getContainingClass(variable);
+      if (m_ignoreStaticMethods) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiClassInitializer.class);
+        if (member != null && member.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+      }
+      final PsiClass aClass = checkFieldNames(variable);
       if (aClass == null) {
         return;
       }
-      final String variableName = variable.getName();
-      final PsiField[] fields = aClass.getAllFields();
-      for (final PsiField field : fields) {
-        if (checkFieldName(field, variableName, aClass)) {
-          registerVariableError(variable);
-        }
-      }
+      registerVariableError(variable, aClass);
     }
 
-    private boolean checkFieldName(PsiField field, String variableName,
-                                   PsiClass aClass) {
-      if (field == null) {
-        return false;
+    @Nullable
+    private PsiClass checkFieldNames(PsiVariable variable) {
+      PsiClass aClass = ClassUtils.getContainingClass(variable);
+      final String variableName = variable.getName();
+      if (variableName == null) {
+        return null;
       }
-      final String fieldName = field.getName();
-      if (fieldName == null) {
-        return false;
+      while (aClass != null) {
+        final PsiField[] fields = aClass.getAllFields();
+        for (PsiField field : fields) {
+          final String fieldName = field.getName();
+          if (!variableName.equals(fieldName)) {
+            continue;
+          }
+          if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
+            return aClass;
+          }
+        }
+        aClass = ClassUtils.getContainingClass(aClass);
       }
-      if (!fieldName.equals(variableName)) {
-        return false;
-      }
-      return !m_ignoreInvisibleFields ||
-             ClassUtils.isFieldVisible(field, aClass);
+      return null;
     }
   }
 }

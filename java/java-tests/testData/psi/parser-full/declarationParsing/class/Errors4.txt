@@ -69,36 +69,34 @@ PsiJavaFile:Errors4.java
               <empty list>
         PsiWhiteSpace('\n        ')
         PsiDeclarationStatement
-          PsiErrorElement:Identifier expected
-            <empty list>
-          PsiJavaToken:AT('@')
-        PsiDeclarationStatement
-          PsiLocalVariable:List
-            PsiModifierList:
-              <empty list>
-            PsiTypeElement:Deprecated
+          PsiTypeElement:@Deprecated List<Object>
+            PsiAnnotation
+              PsiJavaToken:AT('@')
               PsiJavaCodeReferenceElement:Deprecated
                 PsiIdentifier:Deprecated('Deprecated')
                 PsiReferenceParameterList
                   <empty list>
+              PsiAnnotationParameterList
+                <empty list>
             PsiWhiteSpace(' ')
-            PsiIdentifier:List('List')
-            PsiErrorElement:';' expected
-              <empty list>
-        PsiErrorElement:Unexpected token
-          PsiJavaToken:LT('<')
-        PsiExpressionStatement
-          PsiBinaryExpression:Object>()
-            PsiReferenceExpression:Object
+            PsiJavaCodeReferenceElement:List<Object>
+              PsiIdentifier:List('List')
               PsiReferenceParameterList
-                <empty list>
-              PsiIdentifier:Object('Object')
-            PsiJavaToken:GT('>')
-            PsiParenthesizedExpression:()
-              PsiJavaToken:LPARENTH('(')
-              PsiErrorElement:Expression expected
-                <empty list>
-              PsiJavaToken:RPARENTH(')')
+                PsiJavaToken:LT('<')
+                PsiTypeElement:Object
+                  PsiJavaCodeReferenceElement:Object
+                    PsiIdentifier:Object('Object')
+                    PsiReferenceParameterList
+                      <empty list>
+                PsiJavaToken:GT('>')
+          PsiErrorElement:Identifier expected
+            <empty list>
+        PsiExpressionStatement
+          PsiParenthesizedExpression:()
+            PsiJavaToken:LPARENTH('(')
+            PsiErrorElement:Expression expected
+              <empty list>
+            PsiJavaToken:RPARENTH(')')
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiJavaToken:RBRACE('}')

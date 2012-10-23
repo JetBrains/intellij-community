@@ -17,11 +17,12 @@ package com.intellij.openapi.help;
 
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class HelpManager {
   public static HelpManager getInstance() {
     return ServiceManager.getService(HelpManager.class);
   }
 
-  public abstract void invokeHelp(@NonNls String id);
+  public abstract void invokeHelp(@Nullable @NonNls String id);
 }

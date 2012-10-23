@@ -20,11 +20,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
-  public DialogWrapperPeer createPeer(DialogWrapper wrapper, Project project, boolean canBeParent) {
+  public DialogWrapperPeer createPeer(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, project, canBeParent);
   }
 

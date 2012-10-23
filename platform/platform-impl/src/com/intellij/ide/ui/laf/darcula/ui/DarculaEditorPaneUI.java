@@ -15,14 +15,15 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.DarculaColors;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicEditorPaneUI;
 import javax.swing.text.EditorKit;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
@@ -52,8 +53,9 @@ public class DarculaEditorPaneUI extends BasicEditorPaneUI {
           myEditorPane.setForeground(UIManager.getColor(getPropertyPrefix() + ".foreground"));
           final EditorKit kit = myEditorPane.getEditorKit();
           if (kit instanceof HTMLEditorKit) {
-            ((HTMLEditorKit)kit).getStyleSheet().getRule("body").addAttribute(StyleConstants.Foreground, Color.white);
-            ((HTMLEditorKit)kit).getStyleSheet().getRule("a").addAttribute(StyleConstants.Foreground, DarculaColors.BLUE);
+            ((HTMLEditorKit)kit).getStyleSheet().addRule("body {color: #" + ColorUtil.toHex(UIUtil.getLabelForeground()) + ";}");
+            ((HTMLEditorKit)kit).getStyleSheet().addRule("a {color: #" + ColorUtil.toHex(DarculaColors.BLUE) + ";}");
+            //((HTMLEditorKit)kit).getStyleSheet().getRule("a").addAttribute(StyleConstants.Foreground, DarculaColors.BLUE);
           }
         }
       }

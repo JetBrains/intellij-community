@@ -633,7 +633,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else {
         actualArg = changeInfo.getValue(i, callExpression);
       }
-      JavaCodeStyleManager.getInstance(callExpression.getProject()).shortenClassReferences(callExpression.getArgumentList().add(actualArg));
+      final PsiExpressionList argumentList = callExpression.getArgumentList();
+      if (actualArg != null && argumentList != null) {
+        JavaCodeStyleManager.getInstance(callExpression.getProject()).shortenClassReferences(argumentList.add(actualArg));
+      }
     }
   }
 

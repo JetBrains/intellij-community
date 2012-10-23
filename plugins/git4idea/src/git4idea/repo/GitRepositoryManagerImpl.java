@@ -27,8 +27,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.PlatformFacade;
 import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +50,9 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @NotNull private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public GitRepositoryManagerImpl(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  public GitRepositoryManagerImpl(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
     super(project);
     myPlatformFacade = platformFacade;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

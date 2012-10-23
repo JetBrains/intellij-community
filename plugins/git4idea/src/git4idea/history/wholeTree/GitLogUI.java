@@ -59,9 +59,9 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.PlatformFacade;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -1680,7 +1680,7 @@ public class GitLogUI implements Disposable {
         public void run(@NotNull ProgressIndicator indicator) {
           boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
           Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
-          new GitCherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit)
+          new GitCherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(GitPlatformFacade.class), autoCommit)
             .cherryPick(commitsInRoots);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {

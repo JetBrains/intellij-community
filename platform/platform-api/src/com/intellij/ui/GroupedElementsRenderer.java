@@ -63,22 +63,31 @@ public abstract class GroupedElementsRenderer {
       myComponent.setBorder(getSelectedBorder());
       setSelected(myComponent);
       setSelected(myTextLabel);
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
-        myTextLabel.setOpaque(true);
-      }
     }
     else {
       myComponent.setBorder(getBorder());
       setDeselected(myComponent);
       setDeselected(myTextLabel);
-      if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
-        myTextLabel.setOpaque(false);
-      }
     }
+
+    adjustOpacity(myTextLabel, isSelected);
 
     myRendererComponent.setPrefereedWidth(preferredForcedWidth);
 
     return myRendererComponent;
+  }
+
+  protected static void adjustOpacity(JComponent component, boolean selected) {
+    if (selected) {
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        component.setOpaque(true);
+      }
+    }
+    else {
+      if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
+        component.setOpaque(false);
+      }
+    }
   }
 
   protected final void setSelected(JComponent aComponent) {

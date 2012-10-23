@@ -25,6 +25,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcsUtil.VcsUtil;
@@ -380,5 +384,26 @@ public abstract class HgUtil {
     } else {
       runnable.run();
     }
+  }
+
+  /**
+   * Convert {@link VcsVirtualFile} to the {@link LocalFileSystem local} Virtual File.
+   *
+   * TODO
+   * It is a workaround for the following problem: VcsVirtualFiles returned from the {@link FileHistoryPanelImpl} contain the current path
+   * of the file, not the path that was in certain revision. This has to be fixed by making {@link HgFileRevision} implement
+   * {@link VcsFileRevisionEx}.
+   */
+  @Nullable
+  public static VirtualFile convertToLocalVirtualFile(@Nullable VirtualFile file) {
+    if (!(file instanceof VcsVirtualFile)) {
+      return file;
+    }
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile resultFile = lfs.findFileByPath(file.getPath());
+    if (resultFile == null) {
+      resultFile = lfs.refreshAndFindFileByPath(file.getPath());
+    }
+    return resultFile;
   }
 }

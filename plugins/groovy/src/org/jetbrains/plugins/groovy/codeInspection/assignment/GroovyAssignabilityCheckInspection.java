@@ -548,7 +548,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     @Override
     public void visitConstructorInvocation(GrConstructorInvocation invocation) {
       super.visitConstructorInvocation(invocation);
-      checkConstructorCall(invocation, invocation.getThisOrSuperKeyword());
+      checkConstructorCall(invocation, invocation.getInvokedExpression());
     }
 
     @Override

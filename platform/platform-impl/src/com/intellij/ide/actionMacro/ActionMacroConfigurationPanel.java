@@ -18,10 +18,12 @@ package com.intellij.ide.actionMacro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.HashSet;
@@ -29,7 +31,9 @@ import com.intellij.util.containers.HashSet;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,11 +43,12 @@ import java.util.Enumeration;
  * To change this template use Options | File Templates.
  */
 public class ActionMacroConfigurationPanel implements Disposable {
+  private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
   private Splitter mySplitter;
   private JList myMacrosList;
   private JList myMacroActionsList;
   final DefaultListModel myMacrosModel = new DefaultListModel();
-  private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
+  private List<Pair<String, String>> myRenamingList;
 
 
   public ActionMacroConfigurationPanel() {
@@ -56,8 +61,9 @@ public class ActionMacroConfigurationPanel implements Disposable {
       public void valueChanged(ListSelectionEvent e) {
         final int selIndex = myMacrosList.getSelectedIndex();
         if (selIndex == -1) {
-          ((DefaultListModel) myMacroActionsList.getModel()).removeAllElements();
-        } else {
+          ((DefaultListModel)myMacroActionsList.getModel()).removeAllElements();
+        }
+        else {
           initActionList((ActionMacro)myMacrosModel.getElementAt(selIndex));
         }
       }
@@ -74,6 +80,19 @@ public class ActionMacroConfigurationPanel implements Disposable {
   }
 
   public void apply() {
+    if (myRenamingList != null) {
+      for (Pair<String, String> pair : myRenamingList) {
+        Keymap[] allKeymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
+        for (Keymap keymap : allKeymaps) {
+          keymap.removeAllActionShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getSecond());
+          for(Shortcut shortcut : keymap.getShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getFirst())) {
+            keymap.addShortcut(ActionMacro.MACRO_ACTION_PREFIX + pair.getSecond(), shortcut);
+          }
+          keymap.removeAllActionShortcuts(ActionMacro.MACRO_ACTION_PREFIX + pair.getFirst());
+        }
+      }
+    }
+
     final ActionMacroManager manager = ActionMacroManager.getInstance();
     ActionMacro[] macros = manager.getAllMacros();
     HashSet<String> removedIds = new HashSet<String>();
@@ -136,13 +155,36 @@ public class ActionMacroConfigurationPanel implements Disposable {
               final int selIndex = myMacrosList.getSelectedIndex();
               if (selIndex == -1) return;
               final ActionMacro macro = (ActionMacro)myMacrosModel.getElementAt(selIndex);
-              final String newName = Messages.showInputDialog(mySplitter, IdeBundle.message("prompt.enter.new.name"),
-                                                              IdeBundle.message("title.rename.macro"),
-                                                              Messages.getQuestionIcon(), macro.getName(), null);
-              if (newName != null) {
-                macro.setName(newName);
-                myMacrosList.repaint();
+              String newName;
+              do {
+                newName = Messages.showInputDialog(mySplitter, IdeBundle.message("prompt.enter.new.name"),
+                                                   IdeBundle.message("title.rename.macro"),
+                                                   Messages.getQuestionIcon(), macro.getName(), null);
+                if (newName == null || macro.getName().equals(newName)) return;
               }
+              while (!canRenameMacro(newName));
+
+              if (myRenamingList == null) myRenamingList = new ArrayList<Pair<String, String>>();
+              myRenamingList.add(new Pair<String, String>(macro.getName(), newName));
+              macro.setName(newName);
+              myMacrosList.repaint();
+            }
+
+            private boolean canRenameMacro(final String name) {
+              final Enumeration elements = myMacrosModel.elements();
+              while (elements.hasMoreElements()) {
+                final ActionMacro macro = (ActionMacro)elements.nextElement();
+                if (macro.getName().equals(name)) {
+                  if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
+                                               IdeBundle.message("title.macro.name.already.used"),
+                                               Messages.getWarningIcon()) != 0) {
+                    return false;
+                  }
+                  myMacrosModel.removeElement(macro);
+                  break;
+                }
+              }
+              return true;
             }
           }).disableAddAction().disableUpDownActions().createPanel());
 

@@ -87,14 +87,14 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   public static final JavaParserUtil.ParserWrapper REFERENCE = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
+      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
     }
   };
 
   public static final JavaParserUtil.ParserWrapper DIAMOND_REF = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, true);
+      JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, true);
     }
   };
 

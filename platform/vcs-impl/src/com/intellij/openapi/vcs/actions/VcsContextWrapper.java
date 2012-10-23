@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -73,6 +74,7 @@ public class VcsContextWrapper implements VcsContext {
     return files[0];
   }
 
+  @NotNull
   public VirtualFile[] getSelectedFiles() {
     VirtualFile[] fileArray = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {

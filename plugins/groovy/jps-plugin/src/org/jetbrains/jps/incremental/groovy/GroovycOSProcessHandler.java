@@ -44,7 +44,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
   private final Consumer<String> myStatusUpdater;
 
   public GroovycOSProcessHandler(Process process, Consumer<String> statusUpdater) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.usages;
 
-import com.intellij.ui.ComputableIcon;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PlatformIcons;
 
@@ -32,13 +31,13 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
     myAccessedForReading = accessedForReading;
     myAccessedForWriting = accessedForWriting;
     if (myAccessedForReading && myAccessedForWriting) {
-      myIcon = ComputableIcon.create(PlatformIcons.VARIABLE_RW_ACCESS);
+      myIcon = PlatformIcons.VARIABLE_RW_ACCESS;
     }
     else if (myAccessedForWriting) {
-      myIcon = ComputableIcon.create(PlatformIcons.VARIABLE_WRITE_ACCESS);           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
+      myIcon = PlatformIcons.VARIABLE_WRITE_ACCESS;           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
     }
     else if (myAccessedForReading){
-      myIcon = ComputableIcon.create(PlatformIcons.VARIABLE_READ_ACCESS);            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
+      myIcon = PlatformIcons.VARIABLE_READ_ACCESS;            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
     }
   }
 

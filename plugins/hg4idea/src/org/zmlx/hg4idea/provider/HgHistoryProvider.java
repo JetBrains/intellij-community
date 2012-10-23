@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ColumnInfo;
@@ -50,7 +51,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(Runnable runnable) {
-    return new AnAction[]{new HgCopyHistoryRevisionNumberAction()};
+    return new AnAction[]{ShowAllAffectedGenericAction.getInstance(), new HgCopyHistoryRevisionNumberAction()};
   }
 
   public boolean isDateOmittable() {

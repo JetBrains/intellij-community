@@ -117,6 +117,7 @@ class AddHandler {
         return first.hasNext() ? first.next() : null;
       }
 
+      @NotNull
       public VirtualFile[] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(files);
       }

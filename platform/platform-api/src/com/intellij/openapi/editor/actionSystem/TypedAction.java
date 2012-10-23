@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -97,7 +98,7 @@ public class TypedAction {
     return tmp;
   }
 
-  public final void actionPerformed(final Editor editor, final char charTyped, final DataContext dataContext) {
+  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
     if (editor == null) return;
 
     Runnable command = new TypingCommand(editor, charTyped, dataContext);

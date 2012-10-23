@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -63,10 +64,8 @@ public abstract class BaseOutputReader {
           break;
         }
 
-        Thread.sleep(read ? 1 : 5); // give other threads a chance
+        TimeoutUtil.sleep(read ? 1 : 5); // give other threads a chance
       }
-    }
-    catch (InterruptedException ignore) {
     }
     catch (IOException e) {
       LOG.info(e);

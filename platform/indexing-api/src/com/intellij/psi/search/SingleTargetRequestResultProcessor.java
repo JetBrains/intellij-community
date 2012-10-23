@@ -36,7 +36,7 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
     myTarget = target;
   }
 
-  public boolean processTextOccurrence(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer) {
+  public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<PsiReference> consumer) {
     final List<PsiReference> references = ourReferenceService.getReferences(element,
                                                                             new PsiReferenceService.Hints(myTarget, offsetInElement));
     for (PsiReference ref : references) {

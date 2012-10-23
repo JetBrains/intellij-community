@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class StubBuildingVisitor<T> extends ClassVisitor {
-  private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$])\\${1}(?=[^\\$])");
+  private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$\\.])\\${1}(?=[^\\$])"); // disallow .$ or $$
 
   public static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
   public static final String DOUBLE_NEGATIVE_INF = "-1.0 / 0.0";

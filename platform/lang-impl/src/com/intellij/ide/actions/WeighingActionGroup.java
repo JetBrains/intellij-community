@@ -22,9 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -43,7 +43,8 @@ public abstract class WeighingActionGroup extends ActionGroup {
   private static void getAllChildren(@Nullable AnActionEvent e, ActionGroup group, List<AnAction> result) {
     for (final AnAction action : group.getChildren(e)) {
       if (action == null) {
-        LOG.error("Null child for " + group);
+        LOG.error("Null child for " + group + " of class " + group.getClass());
+        continue;
       }
       if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
         getAllChildren(e, (ActionGroup)action, result);

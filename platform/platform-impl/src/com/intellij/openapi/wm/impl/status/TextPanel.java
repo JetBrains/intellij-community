@@ -131,7 +131,7 @@ public class TextPanel extends JComponent {
     return result.toString();
   }
 
-  public final void setText(final String text) {
+  public final void setText(@Nullable final String text) {
     myText = text == null ? "" : text;
     repaint();
   }
@@ -159,6 +159,7 @@ public class TextPanel extends JComponent {
   /**
    * @return the text that is used to calculate the preferred size
    */
+  @Nullable
   protected String getTextForPreferredSize() {
     return myMaxPossibleString;
   }

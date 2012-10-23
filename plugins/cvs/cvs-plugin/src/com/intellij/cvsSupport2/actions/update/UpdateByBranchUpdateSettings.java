@@ -32,7 +32,7 @@ public class UpdateByBranchUpdateSettings implements UpdateSettings{
   }
 
   public boolean getPruneEmptyDirectories() {
-    return false;
+    return true;
   }
 
   public String getBranch1ToMergeWith() {

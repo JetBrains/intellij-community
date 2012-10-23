@@ -26,14 +26,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimplifyBooleanExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -254,27 +259,62 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiExpression[] operands = expression.getOperands();
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
-      for (int i = 1; i < operands.length; i++) {
-        Boolean l = getConstBoolean(lExpr);
-        PsiExpression operand = operands[i];
-        Boolean r = getConstBoolean(operand);
-        if (l != null) {
-          simplifyBinary(tokenType, l, operand);
+      if (JavaTokenType.XOR == tokenType) {
+       
+        boolean negate = false;
+        List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+        for (PsiExpression operand : operands) {
+          final Boolean constBoolean = getConstBoolean(operand);
+          if (constBoolean != null) {
+            markAndCheckCreateResult();
+            if (constBoolean == Boolean.TRUE) {
+              negate = !negate;
+            }
+            continue;
+          }
+          expressions.add(operand);
         }
-        else if (r != null) {
-          simplifyBinary(tokenType, r, lExpr);
+        if (expressions.isEmpty()) {
+          resultExpression = negate ? trueExpression : falseExpression;
+        } else {
+          String simplifiedText = StringUtil.join(expressions, new Function<PsiExpression, String>() {
+            @Override
+            public String fun(PsiExpression expression) {
+              return expression.getText();
+            }
+          }, " ^ ");
+          if (negate) {
+            if (expressions.size() > 1) {
+              simplifiedText = "!(" + simplifiedText + ")";
+            } else {
+              simplifiedText = "!" + simplifiedText;
+            }
+          }
+          resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedText, expression);
         }
-        else {
-          final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
-          if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
-            resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+      } else {
+        for (int i = 1; i < operands.length; i++) {
+          Boolean l = getConstBoolean(lExpr);
+          PsiExpression operand = operands[i];
+          Boolean r = getConstBoolean(operand);
+          if (l != null) {
+            simplifyBinary(tokenType, l, operand);
+          }
+          else if (r != null) {
+            simplifyBinary(tokenType, r, lExpr);
           }
           else {
-            resultExpression = null;
+            final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
+            if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
+              resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
+            }
+            else {
+              resultExpression = null;
+            }
           }
-        }
-        if (resultExpression != null) {
-          lExpr = resultExpression;
+          if (resultExpression != null) {
+            lExpr = resultExpression;
+          }
         }
       }
     }

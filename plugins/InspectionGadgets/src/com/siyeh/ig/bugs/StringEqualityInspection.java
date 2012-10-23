@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualityToEqualsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualityInspection extends BaseInspection {
@@ -58,11 +58,11 @@ public class StringEqualityInspection extends BaseInspection {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
-      if (!isStringType(lhs)) {
+      if (!ExpressionUtils.hasStringType(lhs)) {
         return;
       }
       final PsiExpression rhs = expression.getROperand();
-      if (rhs == null || !isStringType(rhs)) {
+      if (rhs == null || !ExpressionUtils.hasStringType(rhs)) {
         return;
       }
       final String lhsText = lhs.getText();
@@ -75,17 +75,6 @@ public class StringEqualityInspection extends BaseInspection {
       }
       final PsiJavaToken sign = expression.getOperationSign();
       registerError(sign);
-    }
-
-    private static boolean isStringType(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      final PsiType lhsType = expression.getType();
-      if (lhsType == null) {
-        return false;
-      }
-      return TypeUtils.isJavaLangString(lhsType);
     }
   }
 }

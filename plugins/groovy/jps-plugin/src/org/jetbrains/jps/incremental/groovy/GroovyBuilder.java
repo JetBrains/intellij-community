@@ -19,6 +19,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -73,98 +74,44 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
-      if (Utils.IS_TEST_MODE) {
+      if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("forStubs=" + myForStubs);
-        LOG.info("toCompile: " + toCompile);
       }
 
       Map<ModuleBuildTarget, String> finalOutputs = getCanonicalModuleOutputs(context, chunk);
       if (finalOutputs == null) {
         return ExitCode.ABORT;
       }
-      Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
 
-      final Set<String> toCompilePaths = new LinkedHashSet<String>();
-      for (File file : toCompile) {
-        toCompilePaths.add(FileUtil.toSystemIndependentName(file.getPath()));
-      }
+      final Set<String> toCompilePaths = getPathsToCompile(toCompile);
       
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
       final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
       List<String> patchers = Collections.emptyList(); //todo patchers
+
+      Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
+
+      String finalOutput = FileUtil.toSystemDependentName(finalOutputs.get(chunk.representativeTarget()));
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, FileUtil.toSystemDependentName(finalOutputs.get(chunk.representativeTarget())), class2Src, encoding, patchers
+        compilerOutput, toCompilePaths, finalOutput, class2Src, encoding, patchers
       );
+      final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile);
 
-      //todo xmx
-      final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
-        getJavaExecutable(chunk),
-        "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-        Collections.<String>emptyList(), new ArrayList<String>(generateClasspath(context, chunk)),
-        Arrays.asList("-Xmx384m",
-                      "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
-                      "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
-        Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
-                              tempFile.getPath())
-      );
+      List<GroovycOSProcessHandler.OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, handler);
 
-      final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-      final Consumer<String> updater = new Consumer<String>() {
-        public void consume(String s) {
-          context.processMessage(new ProgressMessage(s));
-        }
-      };
-      final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
-        @Override
-        protected Future<?> executeOnPooledThread(Runnable task) {
-          return SharedThreadPool.getInstance().executeOnPooledThread(task);
-        }
-      };
-
-      handler.startNotify();
-      handler.waitFor();
-
-      if (!context.isProjectRebuild() && handler.shouldRetry()) {
-        if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-          CHUNK_REBUILD_ORDERED.set(context, null);
-        } else {
-          CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
-          LOG.info("Order chunk rebuild");
-          return ExitCode.CHUNK_REBUILD_REQUIRED;
-        }
+      if (checkChunkRebuildNeeded(context, handler)) {
+        return ExitCode.CHUNK_REBUILD_REQUIRED;
       }
 
       if (myForStubs) {
-        final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-        for (ModuleBuildTarget target : generationOutputs.keySet()) {
-          File root = new File(generationOutputs.get(target));
-          rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, ""));
-        }
+        addStubRootsToJavacSourcePath(context, generationOutputs);
+        rememberStubSources(context, compiled);
       }
 
       for (CompilerMessage message : handler.getCompilerMessages()) {
         context.processMessage(message);
-      }
-
-
-      List<GroovycOSProcessHandler.OutputItem> compiled = new ArrayList<GroovycOSProcessHandler.OutputItem>();
-      for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("compiled=" + item);
-        }
-        compiled.add(ensureCorrectOutput(context, chunk, item, generationOutputs, compilerOutput));
-      }
-
-      if (myForStubs) {
-        Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
-        if (stubToSrc == null) {
-          STUB_TO_SRC.set(context, stubToSrc = new ConcurrentHashMap<String, String>());
-        }
-        for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
-          stubToSrc.put(FileUtil.toSystemIndependentName(item.outputPath), item.sourcePath);
-        }
       }
 
       if (!myForStubs && updateDependencies(context, chunk, toCompile, generationOutputs, compiled)) {
@@ -175,6 +122,108 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       throw new ProjectBuildException(e);
     }
+  }
+
+  private static Set<String> getPathsToCompile(List<File> toCompile) {
+    final Set<String> toCompilePaths = new LinkedHashSet<String>();
+    for (File file : toCompile) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Path to compile: " + file.getPath());
+      }
+      toCompilePaths.add(FileUtil.toSystemIndependentName(file.getPath()));
+    }
+    return toCompilePaths;
+  }
+
+  private GroovycOSProcessHandler runGroovyc(final CompileContext context, ModuleChunk chunk, File tempFile) throws IOException {
+    //todo xmx
+    final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
+      getJavaExecutable(chunk),
+      "org.jetbrains.groovy.compiler.rt.GroovycRunner",
+      Collections.<String>emptyList(), new ArrayList<String>(generateClasspath(context, chunk)),
+      Arrays.asList("-Xmx384m",
+                    "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
+                    "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
+      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
+                            tempFile.getPath())
+    );
+
+    final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
+    final Consumer<String> updater = new Consumer<String>() {
+      public void consume(String s) {
+        context.processMessage(new ProgressMessage(s));
+      }
+    };
+    final GroovycOSProcessHandler handler = new GroovycOSProcessHandler(process, updater) {
+      @Override
+      protected Future<?> executeOnPooledThread(Runnable task) {
+        return SharedThreadPool.getInstance().executeOnPooledThread(task);
+      }
+    };
+
+    handler.startNotify();
+    handler.waitFor();
+    return handler;
+  }
+
+  private static boolean checkChunkRebuildNeeded(CompileContext context, GroovycOSProcessHandler handler) {
+    if (context.isProjectRebuild() || !handler.shouldRetry()) {
+      return false;
+    }
+
+    if (CHUNK_REBUILD_ORDERED.get(context) != null) {
+      CHUNK_REBUILD_ORDERED.set(context, null);
+      return false;
+    }
+
+    CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
+    LOG.info("Order chunk rebuild");
+    return true;
+  }
+
+  private static void rememberStubSources(CompileContext context, List<GroovycOSProcessHandler.OutputItem> compiled) {
+    Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+    if (stubToSrc == null) {
+      STUB_TO_SRC.set(context, stubToSrc = new ConcurrentHashMap<String, String>());
+    }
+    for (GroovycOSProcessHandler.OutputItem item : compiled) {
+      stubToSrc.put(FileUtil.toSystemIndependentName(item.outputPath), item.sourcePath);
+    }
+  }
+
+  private static void addStubRootsToJavacSourcePath(CompileContext context, Map<ModuleBuildTarget, String> generationOutputs) {
+    final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
+    for (ModuleBuildTarget target : generationOutputs.keySet()) {
+      File root = new File(generationOutputs.get(target));
+      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, ""));
+    }
+  }
+
+  private static List<GroovycOSProcessHandler.OutputItem> processCompiledFiles(CompileContext context,
+                                                                               ModuleChunk chunk,
+                                                                               Map<ModuleBuildTarget, String> generationOutputs,
+                                                                               String compilerOutput, GroovycOSProcessHandler handler)
+    throws IOException {
+    ProjectDescriptor pd = context.getProjectDescriptor();
+
+    List<GroovycOSProcessHandler.OutputItem> compiled = new ArrayList<GroovycOSProcessHandler.OutputItem>();
+    for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
+      if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+        LOG.info("compiled=" + item);
+      }
+      final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
+
+      JavaSourceRootDescriptor rootDescriptor = pd.getBuildRootIndex().findJavaRootDescriptor(context, new File(sourcePath));
+      if (rootDescriptor != null) {
+        ModuleBuildTarget target = rootDescriptor.target;
+        String outputPath = ensureCorrectOutput(chunk, item, generationOutputs, compilerOutput, target);
+        pd.dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, FileUtil.toSystemIndependentName(outputPath));
+        item = new GroovycOSProcessHandler.OutputItem(outputPath, item.sourcePath);
+      }
+
+      compiled.add(item);
+    }
+    return compiled;
   }
 
   @Override
@@ -215,27 +264,22 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return finalOutputs;
   }
 
-  private static GroovycOSProcessHandler.OutputItem ensureCorrectOutput(CompileContext context,
-                                                                        ModuleChunk chunk,
-                                                                        GroovycOSProcessHandler.OutputItem item, Map<ModuleBuildTarget, String> generationOutputs, String compilerOutput) throws IOException {
-    if (chunk.getModules().size() > 1) {
-      final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-      JavaSourceRootDescriptor descriptor = rootsIndex.findJavaRootDescriptor(context, new File(item.sourcePath));
-      if (descriptor != null) {
-        ModuleBuildTarget srcTarget = descriptor.target;
-        if (!srcTarget.equals(chunk.representativeTarget())) {
-          File output = new File(item.outputPath);
+  private static String ensureCorrectOutput(ModuleChunk chunk,
+                                            GroovycOSProcessHandler.OutputItem item,
+                                            Map<ModuleBuildTarget, String> generationOutputs,
+                                            String compilerOutput,
+                                            ModuleBuildTarget srcTarget) throws IOException {
+    if (chunk.getModules().size() > 1 && !srcTarget.equals(chunk.representativeTarget())) {
+      File output = new File(item.outputPath);
 
-          //todo honor package prefixes
-          File correctRoot = new File(generationOutputs.get(srcTarget));
-          File correctOutput = new File(correctRoot, FileUtil.getRelativePath(new File(compilerOutput), output));
+      //todo honor package prefixes
+      File correctRoot = new File(generationOutputs.get(srcTarget));
+      File correctOutput = new File(correctRoot, FileUtil.getRelativePath(new File(compilerOutput), output));
 
-          FileUtil.rename(output, correctOutput);
-          return new GroovycOSProcessHandler.OutputItem(correctOutput.getPath(), item.sourcePath);
-        }
-      }
+      FileUtil.rename(output, correctOutput);
+      return correctOutput.getPath();
     }
-    return item;
+    return item.outputPath;
   }
 
   private static String getJavaExecutable(ModuleChunk chunk) {
@@ -287,9 +331,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                                                                                                  new File(
                                                                                                                                    sourcePath));
         if (moduleAndRoot != null) {
-          final ModuleBuildTarget target = moduleAndRoot.target;
-          context.getProjectDescriptor().dataManager.getSourceToOutputMap(target).appendOutput(sourcePath, outputPath);
-          String moduleOutputPath = generationOutputs.get(target);
+          String moduleOutputPath = generationOutputs.get(moduleAndRoot.target);
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));

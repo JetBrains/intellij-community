@@ -79,7 +79,7 @@ public class ExpressionParser {
     if (left == null) return null;
 
     final IElementType tokenType = getGtTokenType(builder);
-    if (ASSIGNMENT_OPS.contains(tokenType)) {
+    if (ASSIGNMENT_OPS.contains(tokenType) && tokenType != null) {
       final PsiBuilder.Marker assignment = left.precede();
       advanceGtToken(builder, tokenType);
 
@@ -211,10 +211,10 @@ public class ExpressionParser {
     PsiBuilder.Marker left = parseExpression(builder, ExprType.SHIFT);
     if (left == null) return null;
 
-    while (true) {
+    IElementType tokenType;
+    while ((tokenType = getGtTokenType(builder)) != null) {
       final IElementType toCreate;
       final ExprType toParse;
-      final IElementType tokenType = getGtTokenType(builder);
       if (RELATIONAL_OPS.contains(tokenType)) {
         toCreate = JavaElementType.BINARY_EXPRESSION;
         toParse = ExprType.SHIFT;
@@ -367,7 +367,7 @@ public class ExpressionParser {
           final int offset = builder.getCurrentOffset();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
+          final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT || builder.getCurrentOffset() != dotOffset) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P2, offset);
@@ -687,11 +687,10 @@ public class ExpressionParser {
     myParser.getReferenceParser().parseReferenceParameterList(builder, false, true);
 
     final PsiBuilder.Marker refOrType;
-    final boolean parseAnnotations = areTypeAnnotationsSupported(builder) && builder.getTokenType() == JavaTokenType.AT;
 
     final IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.IDENTIFIER || parseAnnotations) {
-      refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, parseAnnotations, true, true);
+    if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
+      refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);

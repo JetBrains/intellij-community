@@ -9,8 +9,6 @@ import com.intellij.tasks.mantis.MantisRepositoryType;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 
-import java.util.List;
-
 /**
  * User: evgeny.zakrevsky
  * Date: 10/12/12
@@ -32,9 +30,9 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
     assertEquals(mantisFilter.getName(), "Mantis 1.2 Filter 1");
     mantisRepository.setFilter(mantisFilter);
 
-    final List<Task> issues = mantisRepository.getIssues("", 1, 0);
-    assertTrue(issues.size() >= 1);
-    final Task task = issues.get(0);
+    final Task[] issues = mantisRepository.getIssues("", 1, 0);
+    assertTrue(issues.length >= 1);
+    final Task task = issues[0];
     assertEquals(task.getId(), "1");
     assertEquals(task.getProject(), "Mantis 1.2 project 1");
     assertEquals(task.getNumber(), "1");

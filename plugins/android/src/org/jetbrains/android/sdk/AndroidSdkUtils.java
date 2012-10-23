@@ -494,7 +494,7 @@ public class AndroidSdkUtils {
       final OSProcessHandler ddmsProcessHandler = AndroidRunDdmsAction.getDdmsProcessHandler();
       if (ddmsProcessHandler != null) {
         final int r = Messages
-          .showYesNoDialog(project, "DDMS will be closed to activate ADB service. Continue?", "ADB activation", Messages.getQuestionIcon());
+          .showYesNoDialog(project, "Monitor will be closed to activate ADB service. Continue?", "ADB activation", Messages.getQuestionIcon());
 
         if (r != Messages.YES) {
           return false;
@@ -509,7 +509,7 @@ public class AndroidSdkUtils {
             }
           }
         };
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(destroyingRunnable, "Closing DDMS", true, project)) {
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(destroyingRunnable, "Closing Monitor", true, project)) {
           return false;
         }
 

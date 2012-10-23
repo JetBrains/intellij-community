@@ -21,8 +21,6 @@ import javax.swing.*;
  * @author pegov
  */
 public class TabsUtil {
-  
-  
   public static final int TAB_VERTICAL_PADDING = 2;
   public static final int TABS_BORDER = 1;
   
@@ -32,7 +30,7 @@ public class TabsUtil {
   }
 
   public static int getTabsHeight() {
-    return TAB_VERTICAL_PADDING * 2 + new JLabel("XXX").getPreferredSize().height + 1 /* +1 ??? */; 
+    return new JLabel("XXX").getPreferredSize().height + 2 + TAB_VERTICAL_PADDING * 2 + TABS_BORDER * 2; 
   }
   
 }

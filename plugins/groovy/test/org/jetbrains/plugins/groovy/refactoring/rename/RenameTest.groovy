@@ -100,7 +100,7 @@ class Foo {
     setProp(2)
   }
 }""")
-    PsiElement field = myFixture.getElementAtCaret()
+    PsiElement field = myFixture.elementAtCaret
     myFixture.renameElement field, "newName"
 
     myFixture.checkResult """
@@ -133,7 +133,7 @@ class Foo {
     print newName
   }
 }""")
-    PsiElement field = myFixture.getElementAtCaret()
+    PsiElement field = myFixture.elementAtCaret
     myFixture.renameElement field, "newName"
 
     myFixture.checkResult """
@@ -170,7 +170,7 @@ class A {
     }
   }
 }""")
-    PsiElement field = myFixture.getElementAtCaret()
+    PsiElement field = myFixture.elementAtCaret
     myFixture.renameElement field, "ndame"
 
     myFixture.checkResult """class A {
@@ -242,36 +242,38 @@ print new Foo(1)
 
   public void doTest() {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
-    final List<String> list = TestUtils.readInput(TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/rename/" + testFile);
+    final List<String> list = TestUtils.readInput(TestUtils.absoluteTestDataPath + "groovy/refactoring/rename/" + testFile);
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, list.get(0));
 
-    PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+    PsiReference ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset);
     final PsiElement resolved = ref == null ? null : ref.resolve();
     if (resolved instanceof PsiMethod && !(resolved instanceof GrAccessorMethod)) {
       PsiMethod method = (PsiMethod)resolved;
-      String name = method.getName();
+      String name = method.name;
       String newName = createNewNameForMethod(name);
       myFixture.renameElementAtCaret(newName);
     } else if (resolved instanceof GrAccessorMethod) {
-      GrField field = ((GrAccessorMethod)resolved).getProperty();
-      RenameProcessor processor = new RenameProcessor(myFixture.getProject(), field, "newName", true, true);
-      processor.addElement(resolved, createNewNameForMethod(((GrAccessorMethod)resolved).getName()));
+      GrField field = ((GrAccessorMethod)resolved).property;
+      RenameProcessor processor = new RenameProcessor(myFixture.project, field, "newName", true, true);
+      processor.addElement(resolved, createNewNameForMethod(((GrAccessorMethod)resolved).name));
       processor.run();
     } else {
       myFixture.renameElementAtCaret("newName");
     }
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     myFixture.checkResult(list.get(1));
   }
 
-  private String createNewNameForMethod(final String name) {
+  private static String createNewNameForMethod(final String name) {
     String newName = "newName";
     if (name.startsWith("get")) {
       newName = "get" + StringUtil.capitalize(newName);
-    } else if (name.startsWith("is")) {
+    }
+    else if (name.startsWith("is")) {
       newName = "is" + StringUtil.capitalize(newName);
-    } else if (name.startsWith("set")) {
+    }
+    else if (name.startsWith("set")) {
       newName = "set" + StringUtil.capitalize(newName);
     }
     return newName;
@@ -332,7 +334,7 @@ print getFoo()
 setFoo(2)
 foo = 4""")
 
-    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.renameElement myFixture.findClass("Foo").fields[0], "newName"
     myFixture.checkResult """
 import static Foo.newName as foo
 
@@ -384,7 +386,7 @@ import static Foo.ba<caret>r as foo
 print foo
 foo = 4""")
 
-    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.renameElement myFixture.findClass("Foo").fields[0], "newName"
     myFixture.checkResult """
 import static Foo.newName as foo
 
@@ -446,9 +448,9 @@ class Foo {
   def foo() {}
 }"""
     try {
-      myFixture.renameElement myFixture.findClass("Foo").getMethods()[0], "'newName'"
+      myFixture.renameElement myFixture.findClass("Foo").methods[0], "'newName'"
     } catch (ConflictsInTestsException e) {
-      assertEquals "<b><code>'newName'</code></b> is not a correct identifier to use in <b><code>new Foo().foo</code></b>", e.getMessage()
+      assertEquals "<b><code>'newName'</code></b> is not a correct identifier to use in <b><code>new Foo().foo</code></b>", e.message
       return;
     }
     assertTrue false
@@ -602,6 +604,40 @@ class Foo {
       checkResult('''\
 class Bar {
   def Ba<caret>r() {}
+}
+''')
+    }
+  }
+
+  void testStringNameForMethod() {
+    myFixture.with {
+      configureByText(GroovyFileType.GROOVY_FILE_TYPE, 'def fo<caret>o() {}')
+      renameElementAtCaret('import')
+      checkResult("def 'import'() {}")
+    }
+  }
+
+  void testConstructorAndSuper() {
+    myFixture.with {
+      configureByText(GroovyFileType.GROOVY_FILE_TYPE, '''\
+class B<caret>ase {
+  def Base() {}
+}
+class Inheritor extends Base {
+  def Inheritor() {
+    super()
+  }
+}
+''')
+      renameElementAtCaret('Bassse')
+      checkResult('''\
+class Bassse {
+  def Bassse() {}
+}
+class Inheritor extends Bassse {
+  def Inheritor() {
+    super()
+  }
 }
 ''')
     }

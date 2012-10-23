@@ -75,9 +75,9 @@ public final class GitPusher {
   @NotNull private final GitVcsSettings mySettings;
   @NotNull private final GitPushSettings myPushSettings;
   @NotNull private final Git myGit;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull PlatformFacade facade) {
+  public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull GitPlatformFacade facade) {
     final GitPushDialog dialog = new GitPushDialog(project);
     dialog.show();
     if (dialog.isOK()) {
@@ -85,7 +85,7 @@ public final class GitPusher {
     }
   }
 
-  private static void runPushInBackground(@NotNull final Project project, @NotNull final PlatformFacade facade,
+  private static void runPushInBackground(@NotNull final Project project, @NotNull final GitPlatformFacade facade,
                                           @NotNull final GitPushDialog dialog) {
     Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
       @Override
@@ -124,7 +124,7 @@ public final class GitPusher {
     }
   }
 
-  public GitPusher(@NotNull Project project, @NotNull PlatformFacade facade, @NotNull ProgressIndicator indicator) {
+  public GitPusher(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myPlatformFacade = facade;
     myProgressIndicator = indicator;
