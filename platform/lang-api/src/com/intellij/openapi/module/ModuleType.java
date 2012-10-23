@@ -51,7 +51,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   @Nullable
   public SettingsStep createSettingsStep(WizardContext context) {
-    return CommonWizardStepFactory.getFactory().createSettingsStep(context);
+    return null;
   }
 
   public final String getId() {
