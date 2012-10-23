@@ -80,7 +80,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useBoldLabels() {
-    return false && SystemInfo.isMac;
+    return false; // SystemInfo.isMac;
   }
 
   @Override

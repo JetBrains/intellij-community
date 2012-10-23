@@ -81,8 +81,15 @@ class Win7TaskBar {
     }
   }
 
+  private static boolean ourInitialized = true;
   static {
-    initialize();
+    try {
+      initialize();
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      ourInitialized = false;
+    }
   }
 
   private static void initialize() {
@@ -109,7 +116,7 @@ class Win7TaskBar {
   }
 
   static void setProgress(IdeFrame frame, double value, boolean isOk) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isEnabled()) {
       return;
     }
 
@@ -118,8 +125,12 @@ class Win7TaskBar {
     mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
+  private static boolean isEnabled() {
+    return !ApplicationManager.getApplication().isUnitTestMode() && ourInitialized;
+  }
+
   static void hideProgress(IdeFrame frame) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isEnabled()) {
       return;
     }
 
@@ -127,7 +138,7 @@ class Win7TaskBar {
   }
 
   static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isEnabled()) {
       return;
     }
 
@@ -141,7 +152,7 @@ class Win7TaskBar {
   }
 
   static Object createIcon(byte[] ico) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isEnabled()) {
       return new Object();
     }
 
@@ -163,7 +174,7 @@ class Win7TaskBar {
   }
 
   static void attention(IdeFrame frame, boolean critical) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isEnabled()) {
       return;
     }
 
