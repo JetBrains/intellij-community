@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * @author max
+ */
 public class StringRef {
   public static final StringRef[] EMPTY_ARRAY = new StringRef[0];
-  
+
   private int id;
   private String name;
   private final AbstractStringEnumerator store;
@@ -92,16 +92,16 @@ public class StringRef {
     return that == this || that instanceof StringRef && toString().equals(that.toString());
   }
 
-  public static String toString(StringRef ref) {
-    return ref != null ? ref.getString(): null;
+  public static String toString(@Nullable StringRef ref) {
+    return ref != null ? ref.getString() : null;
   }
 
-  public static StringRef fromString(String source) {
+  public static StringRef fromString(@Nullable String source) {
     return source == null ? null : new StringRef(source);
   }
 
   @NotNull
-  public static StringRef fromNullableString(String source) {
+  public static StringRef fromNullableString(@Nullable String source) {
     return source == null ? new StringRef("") : new StringRef(source);
   }
 
@@ -114,5 +114,4 @@ public class StringRef {
   public static StringRef[] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];
   }
-
 }
