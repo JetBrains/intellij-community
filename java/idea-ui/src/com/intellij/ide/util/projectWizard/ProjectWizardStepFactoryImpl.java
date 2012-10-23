@@ -20,20 +20,14 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Computable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -149,27 +143,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public SettingsStep createJavaSettingsStep(final WizardContext context) {
-
-    ProjectSdksModel model = new ProjectSdksModel();
-    model.reset(context.getProject());
-    final JdkComboBox jdkComboBox = new JdkComboBox(model);
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    JBCheckBox checkBox = new JBCheckBox("_Create source root:");
-    checkBox.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    JBTextField field = new JBTextField();
-    checkBox.setAnchor(field);
-    panel.add(checkBox, BorderLayout.WEST);
-    panel.add(field, BorderLayout.CENTER);
-
-    return new ProjectSettingsStep(context) {
-      @Override
-      public void updateDataModel() {
-        super.updateDataModel();
-        context.setProjectJdk(jdkComboBox.getSelectedJdk());
-      }
-    }.addField("Project &SDK:", jdkComboBox).addExpertPanel(panel);
+  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder) {
+   return new JavaSettingsStep(context, moduleBuilder);
   }
 }

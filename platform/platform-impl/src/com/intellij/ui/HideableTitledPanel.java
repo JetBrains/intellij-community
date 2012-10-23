@@ -59,6 +59,7 @@ public class HideableTitledPanel extends JPanel {
     }
     myContent = content;
     if (myContent != null) {
+      myContent.setVisible(myOn);
       add(myContent, BorderLayout.CENTER);
     }
   }

@@ -206,7 +206,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
     myExpertPanel.setVisible(false);
-    myExpertPanel.setOn(false);
 
     new AnAction() {
       @Override
@@ -254,7 +253,6 @@ public class SelectTemplateStep extends ModuleWizardStep {
         if (expertSettingsPanel != null) {
           expertSettingsPanel.setBorder(IdeBorderFactory.createEmptyBorder(5, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
           myExpertPanel.setContentComponent(expertSettingsPanel);
-          myExpertPanel.setOn(false);
         }
       }
       description = template.getDescription();
@@ -277,12 +275,15 @@ public class SelectTemplateStep extends ModuleWizardStep {
   @Override
   public void updateStep() {
     myBuilder.queueUpdate();
+    myExpertPanel.setOn(SelectTemplateSettings.getInstance().EXPERT_MODE);
   }
 
   @Override
   public void onStepLeaving() {
     TreeState state = TreeState.createOn(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    SelectTemplateSettings.getInstance().setTreeState(state);
+    SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
+    settings.setTreeState(state);
+    settings.EXPERT_MODE = myExpertPanel.isExpanded();
   }
 
   @Override

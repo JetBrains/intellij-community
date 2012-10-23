@@ -249,8 +249,9 @@ public class FileChooserDescriptor implements Cloneable {
     return myIsTreeRootVisible;
   }
 
-  public void setIsTreeRootVisible(boolean isTreeRootVisible) {
+  public FileChooserDescriptor setIsTreeRootVisible(boolean isTreeRootVisible) {
     myIsTreeRootVisible = isTreeRootVisible;
+    return this;
   }
 
   public final Object clone() {

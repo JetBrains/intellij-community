@@ -73,5 +73,5 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract SettingsStep createSettingsStep(WizardContext context);
 
-  public abstract SettingsStep createJavaSettingsStep(WizardContext context);
+  public abstract SettingsStep createJavaSettingsStep(WizardContext context, ModuleBuilder moduleBuilder);
 }

@@ -114,7 +114,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   public void setSetupButton(final JButton setUpButton,
-                                final Project project,
+                                @Nullable final Project project,
                                 final ProjectSdksModel jdksModel,
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<Sdk> additionalSetup,
@@ -124,7 +124,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   public void setSetupButton(final JButton setUpButton,
-                                final Project project,
+                                @Nullable final Project project,
                                 final ProjectSdksModel jdksModel,
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<Sdk> additionalSetup,
@@ -132,13 +132,15 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     setUpButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
         DefaultActionGroup group = new DefaultActionGroup();
         jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<Sdk>() {
           @Override
           public void consume(final Sdk jdk) {
-            configurable.addJdkNode(jdk, false);
-            reloadModel(firstItem, project);
+            if (project != null) {
+              final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
+              configurable.addJdkNode(jdk, false);
+            }
+            reloadModel(new JdkComboBoxItem(jdk), project);
             setSelectedJdk(jdk); //restore selection
             if (additionalSetup != null) {
               if (additionalSetup.value(jdk)) { //leave old selection
@@ -241,8 +243,12 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
   }
 
-  public void reloadModel(JdkComboBoxItem firstItem, Project project) {
+  public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
+    if (project == null) {
+      model.addElement(firstItem);
+      return;
+    }
     model.removeAllElements();
     model.addElement(firstItem);
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();

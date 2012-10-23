@@ -93,8 +93,10 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
       if (sourcePaths != null) {
         for (final Pair<String, String> sourcePath : sourcePaths) {
+          String first = sourcePath.first;
+          new File(first).mkdirs();
           final VirtualFile sourceRoot = LocalFileSystem.getInstance()
-            .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath.first));
+            .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(first));
           if (sourceRoot != null) {
             contentEntry.addSourceFolder(sourceRoot, false, sourcePath.second);
           }

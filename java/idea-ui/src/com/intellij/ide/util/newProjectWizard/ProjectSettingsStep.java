@@ -23,7 +23,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -113,10 +112,10 @@ public class ProjectSettingsStep extends ProjectNameStep {
           myContentRootChangedByUser = true;
         }
         if (!myImlLocationChangedByUser) {
-          setImlFileLocation(myModuleContentRoot.getText());
+          setImlFileLocation(getModuleContentRoot());
         }
         if (!myModuleNameChangedByUser) {
-          final String path = FileUtil.toSystemIndependentName(myModuleContentRoot.getText());
+          final String path = FileUtil.toSystemIndependentName(getModuleContentRoot());
           final int idx = path.lastIndexOf("/");
 
           boolean f = myContentRootChangedByUser;
@@ -173,6 +172,10 @@ public class ProjectSettingsStep extends ProjectNameStep {
     }
   }
 
+  protected String getModuleContentRoot() {
+    return myModuleContentRoot.getText();
+  }
+
   private boolean isCreateFromTemplateMode() {
     return myMode instanceof CreateFromTemplateMode;
   }
@@ -223,7 +226,7 @@ public class ProjectSettingsStep extends ProjectNameStep {
     builder.setName(moduleName);
     builder.setModuleFilePath(
       FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    builder.setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
+    builder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
   }
 
   public boolean validate() throws ConfigurationException {
@@ -241,7 +244,7 @@ public class ProjectSettingsStep extends ProjectNameStep {
                                                         myImlLocationChangedByUser)) {
         return false;
       }
-      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
+      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), getModuleContentRoot(),
                                                         myContentRootChangedByUser)) {
         return false;
       }
@@ -290,7 +293,6 @@ public class ProjectSettingsStep extends ProjectNameStep {
   @Override
   public SettingsStep addField(String label, JComponent field) {
     JComponent settingsPanel = getSettingsPanel();
-    new MnemonicHelper().register(settingsPanel);
 
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
@@ -304,7 +306,6 @@ public class ProjectSettingsStep extends ProjectNameStep {
   @Override
   public SettingsStep addExpertPanel(JComponent panel) {
     JComponent settingsPanel = myExpertPanel;
-    new MnemonicHelper().register(settingsPanel);
     settingsPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     return this;

@@ -100,8 +100,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public SettingsStep createSettingsStep(WizardContext context) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context);
+  public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder);
   }
 
   private static Icon getJavaModuleIcon() {
