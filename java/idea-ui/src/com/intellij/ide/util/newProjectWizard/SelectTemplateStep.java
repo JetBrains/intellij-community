@@ -377,6 +377,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
+    myContext.setProjectBuilder(myModuleBuilder);
     if (mySettingsStep != null) {
       mySettingsStep.updateDataModel();
     }
