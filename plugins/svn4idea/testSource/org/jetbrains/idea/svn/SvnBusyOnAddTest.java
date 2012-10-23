@@ -108,8 +108,8 @@ public class SvnBusyOnAddTest extends TestCase {
     final File ioFile = new File(myWorkingCopyRoot, filename);
     ioFile.getParentFile().mkdirs();
 
-    SVNWCClient client11 = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
-    client11.doAdd(ioFile.getParentFile(), true, false, true, true);
+    /*SVNWCClient client11 = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+    client11.doAdd(ioFile.getParentFile(), true, false, true, true);*/
 
     ioFile.createNewFile();
     try {
@@ -153,7 +153,7 @@ public class SvnBusyOnAddTest extends TestCase {
         //
       }
       SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
-      client.doAdd(ioFile, true, false, true, true);
+      client.doAdd(ioFile.getParentFile(), true, false, true, true);
       semaphore.up();
       semaphoreWokeUp.waitFor();
 

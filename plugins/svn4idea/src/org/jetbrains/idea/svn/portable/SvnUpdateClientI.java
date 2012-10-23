@@ -29,7 +29,7 @@ import java.io.File;
  * Date: 2/1/12
  * Time: 11:59 AM
  */
-public interface SvnUpdateClientI {
+public interface SvnUpdateClientI extends SvnMarkerInterface {
   long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException;
 
   long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException;

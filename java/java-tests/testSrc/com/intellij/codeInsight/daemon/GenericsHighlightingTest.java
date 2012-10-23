@@ -150,11 +150,21 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA89771() throws Exception { doTest(false); }
   public void testIDEA89801() throws Exception { doTest(false); }
   public void testIDEA67681() throws Exception { doTest(false); }
+  public void testIDEA67599() throws Exception { doTest(false); }
+  public void testIDEA57668() throws Exception { doTest(false); }
+  public void testIDEA57667() throws Exception { doTest(false); }
+  public void testIDEA57650() throws Exception { doTest(false); }
+  public void testIDEA57378() throws Exception { doTest(false); }
+  public void testIDEA57557() throws Exception { doTest(false); }
+  public void testIDEA57563() throws Exception { doTest(false); }
+  public void testIDEA57275() throws Exception { doTest(false); }
+  public void testIDEA57533() throws Exception { doTest(false); }
   public void testInconvertibleTypes() throws Exception { doTest(false); }
   public void testIncompatibleReturnType() throws Exception { doTest(false); }
   public void testContinueInferenceAfterFirstRawResult() throws Exception { doTest(false); }
   public void testStaticOverride() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
+  public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

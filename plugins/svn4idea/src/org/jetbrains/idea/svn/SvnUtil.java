@@ -583,6 +583,10 @@ public class SvnUtil {
     }
   }
 
+  public static File getWcDb(final File file) {
+    return new File(file, ".svn/wc.db");
+  }
+
   @Nullable
   public static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
     File current = file;
