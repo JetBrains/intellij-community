@@ -51,7 +51,7 @@ public class TabLabel extends JPanel {
 
     @Override
     protected boolean shouldDrawDimmed() {
-      return myTabs.useBoldLabels();
+      return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
     }
 
     @Override

@@ -61,6 +61,11 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     return myBaseList;
   }
 
+  @Override
+  public void setDescription(String newMessage) {
+    myBaseList.setDescription(newMessage);
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

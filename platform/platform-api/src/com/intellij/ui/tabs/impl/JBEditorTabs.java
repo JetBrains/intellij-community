@@ -81,7 +81,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useBoldLabels() {
-    return false; // SystemInfo.isMac;
+    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override
@@ -93,7 +93,7 @@ public class JBEditorTabs extends JBTabsImpl {
                                  boolean leftGhostExists,
                                  TabLabel label,
                                  Rectangle effectiveBounds,
-                                 boolean rightGhostExists) {
+                                 boolean rightGhostExists, int row, int column) {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     int _x = effectiveBounds.x + insets.left;
@@ -117,8 +117,9 @@ public class JBEditorTabs extends JBTabsImpl {
       }
     }
 
+    final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
     final Color tabColor = label.getInfo().getTabColor();
-    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor);
+    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column, vertical);
   }
 
   JBEditorTabsPainter getPainter() {

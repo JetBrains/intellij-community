@@ -440,11 +440,6 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
   }
 
   @Override
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-
-  @Override
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }

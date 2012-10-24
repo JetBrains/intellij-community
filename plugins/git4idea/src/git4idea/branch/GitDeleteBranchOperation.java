@@ -106,7 +106,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   private static void refresh(@NotNull GitRepository... repositories) {
     for (GitRepository repository : repositories) {
-      repository.update(GitRepository.TrackedTopic.BRANCHES, GitRepository.TrackedTopic.CONFIG);
+      repository.update();
     }
   }
 

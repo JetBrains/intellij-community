@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.history;
+package com.intellij.ide.util.projectWizard;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/23/12
- * Time: 7:24 PM
+ * @author Dmitry Avdeev
+ *         Date: 10/23/12
  */
-public class SvnRevisionComment {
+public abstract class SettingsStep extends ModuleWizardStep {
+
+  @NotNull
+  public abstract JComponent getSettingsPanel();
+
+  @Nullable
+  public abstract JComponent getExpertSettingsPanel();
+
+  public abstract SettingsStep addField(String label, JComponent field);
+
+  public abstract SettingsStep addExpertPanel(JComponent panel);
 }

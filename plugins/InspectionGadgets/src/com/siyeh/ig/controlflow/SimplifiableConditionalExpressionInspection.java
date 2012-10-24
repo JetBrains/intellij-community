@@ -95,7 +95,7 @@ public class SimplifiableConditionalExpressionInspection
     assert elseExpression != null;
 
     final String elseText = elseExpression.getText();
-    final String conditionText = condition.getText();
+    String conditionText = condition.getText();
     if (BoolUtils.isTrue(thenExpression)) {
       @NonNls final String elseExpressionText;
       if (ParenthesesUtils.getPrecedence(elseExpression) >
@@ -104,6 +104,9 @@ public class SimplifiableConditionalExpressionInspection
       }
       else {
         elseExpressionText = elseText;
+      }
+      if (ParenthesesUtils.getPrecedence(condition) > ParenthesesUtils.OR_PRECEDENCE) {
+        conditionText = "(" + conditionText + ")";
       }
       return conditionText + " || " + elseExpressionText;
     }
@@ -128,6 +131,9 @@ public class SimplifiableConditionalExpressionInspection
       }
       else {
         thenExpressionText = thenText;
+      }
+      if (ParenthesesUtils.getPrecedence(condition) > ParenthesesUtils.AND_PRECEDENCE) {
+        conditionText = "(" + conditionText + ")";
       }
       return conditionText + " && " + thenExpressionText;
     }

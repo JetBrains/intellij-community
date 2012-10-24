@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
@@ -32,7 +33,7 @@ public class ElementStub extends DomStub {
   private final List<DomStub> myChildren = new SmartList<DomStub>();
   private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, StringRef namespace, boolean custom) {
+  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, @Nullable StringRef namespace, boolean custom) {
     super(parent, name, namespace);
     myCustom = custom;
   }
@@ -53,7 +54,8 @@ public class ElementStub extends DomStub {
 
   @Override
   public String toString() {
-    return getName();
+    String key = getNamespaceKey();
+    return StringUtil.isEmpty(key) ? getName() : key + ":" + getName();
   }
 
   @Override

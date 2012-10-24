@@ -139,7 +139,7 @@ public class DomSemContributor extends SemContributor {
         if (description != null) {
           DomStub parentStub = parent.getStub();
           if (parentStub != null) {
-            int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getLocalName(), tag.getNamespace()), tag);
+            int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getName(), tag.getNamespace()), tag);
             ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
             if (stub != null) {
               XmlName name = description.getXmlName();

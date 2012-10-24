@@ -14,33 +14,30 @@
  * limitations under the License.
  */
 package git4idea.roots
-
 import com.intellij.dvcs.test.MockProject
 import com.intellij.dvcs.test.MockProjectRootManager
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.test.GitTestPlatformFacade
+import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
 /**
  * 
  * @author Kirill Likhodedov
- * TODO Inherit GitLightTest
  */
-class AbstractGitRootTest {
+class AbstractGitRootTest extends GitLightTest {
 
-  GitTestPlatformFacade myPlatformFacade
   static File baseDir
 
   @Before
   void setUp() {
-    myPlatformFacade = new GitTestPlatformFacade()
+    super.setUp();
   }
 
   @After
   void tearDown() {
-    FileUtil.delete(baseDir)
+    super.tearDown();
   }
 
   /**

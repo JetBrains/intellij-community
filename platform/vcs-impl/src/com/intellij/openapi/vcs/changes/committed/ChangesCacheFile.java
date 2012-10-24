@@ -56,21 +56,18 @@ public class ChangesCacheFile {
   private final RepositoryLocation myLocation;
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
-  private long myFirstCachedChangelist = Long.MAX_VALUE;
-  private long myLastCachedChangelist = -1;
-  private int myIncomingCount = 0;
-  private boolean myHaveCompleteHistory = false;
-  private boolean myHeaderLoaded = false;
+  private long myFirstCachedChangelist;
+  private long myLastCachedChangelist;
+  private int myIncomingCount;
+  private boolean myHaveCompleteHistory;
+  private boolean myHeaderLoaded;
   @NonNls private static final String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 46;
 
   public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
-    final Calendar date = Calendar.getInstance();
-    date.set(2020, Calendar.FEBRUARY, 2);
-    myFirstCachedDate = date.getTime();
-    date.set(1970, Calendar.FEBRUARY, 2);
-    myLastCachedDate = date.getTime();
+    reset();
+
     myProject = project;
     myPath = path;
     myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
@@ -79,6 +76,19 @@ public class ChangesCacheFile {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRootPath = new FilePathImpl(root);
     myLocation = location;
+  }
+
+  private void reset() {
+    final Calendar date = Calendar.getInstance();
+    date.set(2020, Calendar.FEBRUARY, 2);
+    myFirstCachedDate = date.getTime();
+    date.set(1970, Calendar.FEBRUARY, 2);
+    myLastCachedDate = date.getTime();
+    myIncomingCount = 0;
+    myLastCachedChangelist = -1;
+    myFirstCachedChangelist = Long.MAX_VALUE;
+    myHaveCompleteHistory = false;
+    myHeaderLoaded = false;
   }
 
   public RepositoryLocation getLocation() {
@@ -113,9 +123,27 @@ public class ChangesCacheFile {
   public void delete() {
     FileUtil.delete(myPath);
     FileUtil.delete(myIndexPath);
+    try {
+      closeStreams();
+    }
+    catch (IOException e) {
+      //
+    }
   }
 
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
+    // the list and index are sorted in direct chronological order
+    Collections.sort(changes, new Comparator<CommittedChangeList>() {
+      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+        return Comparing.compare(o1.getCommitDate(), o2.getCommitDate());
+      }
+    });
+    return writeChanges(changes, null);
+  }
+
+  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, @Nullable final List<Boolean> present) throws IOException {
+    assert present == null || present.size() == changes.size();
+
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changes.size());
     boolean wasEmpty = isEmpty();
     openStreams();
@@ -126,12 +154,8 @@ public class ChangesCacheFile {
       }
       myStream.seek(myStream.length());
       IndexEntry[] entries = readLastIndexEntries(0, changes.size());
-      // the list and index are sorted in direct chronological order
-      Collections.sort(changes, new Comparator<CommittedChangeList>() {
-        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          return Comparing.compare(o1.getCommitDate(), o2.getCommitDate());
-        }
-      });
+
+      final Iterator<Boolean> iterator = present == null ? null : present.iterator();
       for(CommittedChangeList list: changes) {
         boolean duplicate = false;
         for(IndexEntry entry: entries) {
@@ -150,7 +174,7 @@ public class ChangesCacheFile {
         //noinspection unchecked
         myChangesProvider.writeChangeList(myStream, list);
         updateCachedRange(list);
-        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, false);
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present == null ? false : iterator.next());
         myIncomingCount++;
       }
       writeHeader();
@@ -316,6 +340,44 @@ public class ChangesCacheFile {
 
   public Iterator<ChangesBunch> getBackBunchedIterator(final int bunchSize) {
     return new BackIterator(bunchSize);
+  }
+
+  private List<Boolean> loadAllData(final List<CommittedChangeList> lists) throws IOException {
+    List<Boolean> idx = new ArrayList<Boolean>();
+    openStreams();
+
+    try {
+      loadHeader();
+      final long length = myIndexStream.length();
+      long totalCount = length / INDEX_ENTRY_SIZE;
+      for(int i=0; i<totalCount; i++) {
+        final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+        myIndexStream.seek(indexOffset);
+        IndexEntry e = new IndexEntry();
+        readIndexEntry(e);
+        final CommittedChangeList list = loadChangeListAt(e.offset);
+        lists.add(list);
+        idx.add(e.completelyDownloaded);
+      }
+    } finally {
+      closeStreams();
+    }
+    return idx;
+  }
+
+  public void editChangelist(long number, String message) throws IOException {
+    final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+    final List<Boolean> present = loadAllData(lists);
+    for (CommittedChangeList list : lists) {
+      if (list.getNumber() == number) {
+        list.setDescription(message);
+        break;
+      }
+    }
+    delete();
+    Collections.reverse(lists);
+    Collections.reverse(present);
+    writeChanges(lists, present);
   }
 
   private class BackIterator implements Iterator<ChangesBunch> {

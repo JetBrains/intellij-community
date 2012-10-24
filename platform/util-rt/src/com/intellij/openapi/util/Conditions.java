@@ -17,6 +17,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ArrayUtilRt;
 
 import java.util.HashMap;
 
@@ -31,6 +32,24 @@ public class Conditions {
   }
   public static <T> Condition<T> alwaysFalse() {
     return (Condition<T>)FALSE;
+  }
+
+  public static <T> Condition<T> is(final T option) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return t == option;
+      }
+    };
+  }
+
+  public static <T> Condition<T> oneOf(final T... options) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return ArrayUtilRt.find(options, t) >= 0;
+      }
+    };
   }
 
   public static <T> Condition<T> not(Condition<T> c) {

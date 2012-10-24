@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2012 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,7 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     }
     final PsiIfStatement childIfStatement = (PsiIfStatement)elseBranch;
     final PsiStatement childThenBranch = childIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch,
-                                                      childThenBranch);
+    return EquivalenceChecker.statementsAreEquivalent(thenBranch, childThenBranch);
   }
 
   private static boolean isMergableImplicitIf(PsiElement element) {
@@ -80,15 +79,12 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
       return false;
     }
-    final PsiElement nextStatement =
-      PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                      PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
     if (!(nextStatement instanceof PsiIfStatement)) {
       return false;
     }
-    final PsiIfStatement childIfStatement = (PsiIfStatement)nextStatement;
-    final PsiStatement childThenBranch = childIfStatement.getThenBranch();
-    return EquivalenceChecker.statementsAreEquivalent(thenBranch,
-                                                      childThenBranch);
+    final PsiIfStatement nextIfStatement = (PsiIfStatement)nextStatement;
+    final PsiStatement nextThenBranch = nextIfStatement.getThenBranch();
+    return EquivalenceChecker.statementsAreEquivalent(thenBranch, nextThenBranch);
   }
 }

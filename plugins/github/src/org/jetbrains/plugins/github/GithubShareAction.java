@@ -222,7 +222,7 @@ public class GithubShareAction extends DumbAwareAction {
     addRemoteHandler.addParameters("add", "origin", remoteUrl);
     try {
       addRemoteHandler.run();
-      repository.update(GitRepository.TrackedTopic.CONFIG);
+      repository.update();
       if (addRemoteHandler.getExitCode() != 0) {
         Messages.showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
         return;

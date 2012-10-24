@@ -15,7 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,7 +33,7 @@ import com.intellij.util.continuation.ContinuationFinalTasksInserter;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import com.intellij.util.text.DateFormatUtil;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
@@ -310,7 +309,7 @@ public class GitUpdateProcess {
     LOG.info("checking tracked branch configuration...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
-      final GitBranch branch = repository.getCurrentBranch();
+      final GitLocalBranch branch = repository.getCurrentBranch();
       if (branch == null) {
         LOG.info("checkTrackedBranchesConfigured: current branch is null in " + repository);
         notifyImportantError(myProject, "Can't update: no current branch",
@@ -330,17 +329,7 @@ public class GitUpdateProcess {
                              "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
         return false;
       }
-      GitBranch tracked = GitBranchUtil.findRemoteBranchByName(repository, trackInfo.getRemote(), trackInfo.getRemoteBranch());
-      if (tracked == null) {
-        LOG.info(String.format("checkTrackedBranchesConfigured: tracked branch %s not found in %s", tracked, repository));
-        notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
-                      "Tracked branch <code>" + trackInfo.getRemoteBranch() + "</code> doesn't exist" +
-                      rootStringIfNeeded(root) +
-                      "The branch will be automatically created when you push to it.",
-                      NotificationType.WARNING, true, null);
-        return false;
-      }
-      myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
+      myTrackedBranches.put(root, new GitBranchPair(branch, trackInfo.getRemoteBranch()));
     }
     return true;
   }

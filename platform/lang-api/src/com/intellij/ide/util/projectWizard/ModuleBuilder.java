@@ -91,9 +91,9 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   @Nullable
-  public ModuleWizardStep createSettingsStep(WizardContext wizardContext) {
+  public SettingsStep createSettingsStep(WizardContext wizardContext) {
     ModuleType type = getModuleType();
-    return type == null ? null : type.createSettingsStep(wizardContext);
+    return type == null ? null : type.createSettingsStep(wizardContext, this);
   }
 
   public void setName(String name) {
@@ -146,6 +146,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   protected @Nullable ContentEntry doAddContentEntry(ModifiableRootModel modifiableRootModel) {
     final String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return null;
+    new File(contentEntryPath).mkdirs();
     final VirtualFile moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath.replace('\\', '/'));
     if (moduleContentRoot == null) return null;
     return modifiableRootModel.addContentEntry(moduleContentRoot);
