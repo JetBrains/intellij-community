@@ -126,7 +126,12 @@ public class CoreApplicationEnvironment {
 
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
-    myApplication.registerService(JobLauncher.class, new JobLauncher() {
+    myApplication.registerService(JobLauncher.class, createJobLauncher());
+
+  }
+
+  protected JobLauncher createJobLauncher() {
+    return new JobLauncher() {
       @Override
       public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
                                                          ProgressIndicator progress,
@@ -186,8 +191,7 @@ public class CoreApplicationEnvironment {
           });
         return null;
       }
-    });
-
+    };
   }
 
   protected ProgressIndicatorProvider createProgressIndicatorProvider() {
