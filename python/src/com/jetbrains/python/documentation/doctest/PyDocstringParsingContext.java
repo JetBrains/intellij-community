@@ -49,10 +49,6 @@ public class PyDocstringParsingContext extends ParsingContext {
 
   private static class PyDocstringStatementParsing extends StatementParsing {
 
-    protected IElementType getReferenceType() {
-      return PyDocstringTokenTypes.DOC_REFERENCE;
-    }
-
     protected PyDocstringStatementParsing(ParsingContext context,
                                           @Nullable FUTURE futureFlag) {
       super(context, futureFlag);

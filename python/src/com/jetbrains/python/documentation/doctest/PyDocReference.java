@@ -43,7 +43,6 @@ public class PyDocReference extends PyReferenceImpl {
       if (ret.size() > 0) {
         return ret.toArray(new RatedResolveResult[ret.size()]);
       }
-      return new ResolveResult[] { new PsiElementResolveResult(myElement) };
     }
     return results;
   }
