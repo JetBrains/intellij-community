@@ -66,6 +66,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.class"), CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.interface"), CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.enum"), CodeInsightColors.ENUM_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.local.variable"), CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
@@ -116,6 +117,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("typeParameter", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
     ourTags.put("abstractClass", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
     ourTags.put("interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
+    ourTags.put("enum", CodeInsightColors.ENUM_NAME_ATTRIBUTES);
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   }
@@ -182,6 +184,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "    <reassignedParameter>reassignedParam</reassignedParameter> = new int[2];\n" +
       "  }\n" +
       "}\n" +
+      "enum <enum>AnEnum</enum> { <static>CONST1</static>, <static>CONST2</static> }\n"+
       "interface <interface>AnInterface</interface> {\n" +
       "  int <static>CONSTANT</static> = 2;\n" +
       "  void <methodDeclaration>method</methodDeclaration>();\n" +

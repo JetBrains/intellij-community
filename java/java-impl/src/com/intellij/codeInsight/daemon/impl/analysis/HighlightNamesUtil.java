@@ -187,6 +187,7 @@ public class HighlightNamesUtil {
     if (aClass != null) {
       if (aClass.isAnnotationType()) return HighlightInfoType.ANNOTATION_NAME;
       if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;
+      if (aClass.isEnum()) return HighlightInfoType.ENUM_NAME;
       if (aClass instanceof PsiTypeParameter) return HighlightInfoType.TYPE_PARAMETER_NAME;
       final PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return HighlightInfoType.ABSTRACT_CLASS_NAME;

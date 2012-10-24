@@ -454,6 +454,13 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
+      <option name="ENUM_NAME_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
 
       <option name="METHOD_CALL_ATTRIBUTES">
         <value>

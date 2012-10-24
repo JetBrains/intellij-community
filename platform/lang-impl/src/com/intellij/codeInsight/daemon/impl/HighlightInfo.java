@@ -296,6 +296,7 @@ public class HighlightInfo implements Segment {
     if (type == HighlightInfoType.CONSTRUCTOR_DECLARATION) return false;
     if (type == HighlightInfoType.INTERFACE_NAME) return false;
     if (type == HighlightInfoType.ABSTRACT_CLASS_NAME) return false;
+    if (type == HighlightInfoType.ENUM_NAME) return false;
     if (type == HighlightInfoType.CLASS_NAME) return false;
     if (type == HighlightInfoType.ANONYMOUS_CLASS_NAME) return false;
     return true;
