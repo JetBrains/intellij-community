@@ -71,10 +71,6 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return myModule;
   }
 
-  public boolean isImplicit() {
-    return false;
-  }
-
   public boolean isDisposed() {
     return isDisposed;
   }

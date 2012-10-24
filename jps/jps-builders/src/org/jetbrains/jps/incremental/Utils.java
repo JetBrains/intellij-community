@@ -39,6 +39,10 @@ public class Utils {
 
   @Nullable
   public static File getDataStorageRoot(String projectPath) {
+    return getDataStorageRoot(ourSystemRoot, projectPath);
+  }
+
+  public static File getDataStorageRoot(final File systemRoot, String projectPath) {
     projectPath = FileUtil.toCanonicalPath(projectPath);
     if (projectPath == null) {
       return null;
@@ -76,7 +80,7 @@ public class Utils {
       locationHash = directoryBased.getPath().hashCode();
     }
 
-    return new File(ourSystemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
+    return new File(systemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
   }
 
   private static String getDirectoryBaseProjectName(File dir) throws IOException {

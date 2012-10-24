@@ -85,6 +85,7 @@ import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;
 import java.io.File;
@@ -806,6 +807,12 @@ public class BuildManager implements ApplicationComponent{
 
   public File getBuildSystemDirectory() {
     return new File(mySystemDirectory, SYSTEM_ROOT);
+  }
+
+  @Nullable
+  public File getProjectSystemDirectory(Project project) {
+    final String projectPath = getProjectPath(project);
+    return projectPath != null? Utils.getDataStorageRoot(getBuildSystemDirectory(), projectPath) : null;
   }
 
   private static int getMinorVersion(String vs) {

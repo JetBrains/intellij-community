@@ -315,9 +315,9 @@ public class IncProjectBuilder {
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-      File outputDir = target.getOutputDir(projectDescriptor.dataManager.getDataPaths());
-      if (outputDir != null) {
-        rootsToDelete.putValue(outputDir, target);
+      final Collection<File> outputs = target.getOutputDirs(projectDescriptor.dataManager.getDataPaths());
+      for (File file : outputs) {
+        rootsToDelete.putValue(file, target);
       }
     }
 
@@ -1128,23 +1128,28 @@ public class IncProjectBuilder {
     private final BuildTarget<?> myTarget;
     private final CompileContext myContext;
     private FileGeneratedEvent myFileGeneratedEvent;
-    private File myOutputDir;
+    private Collection<File> myOutputs;
 
     public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
       myTarget = target;
       myContext = context;
       myFileGeneratedEvent = new FileGeneratedEvent();
-      myOutputDir = myTarget.getOutputDir(myContext.getProjectDescriptor().dataManager.getDataPaths());
+      myOutputs = myTarget.getOutputDirs(myContext.getProjectDescriptor().dataManager.getDataPaths());
     }
 
     @Override
     public void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException {
-      String relativePath = FileUtil.getRelativePath(myOutputDir, new File(outputFilePath));
-      if (myOutputDir != null && relativePath != null) {
-        myFileGeneratedEvent.add(myOutputDir.getAbsolutePath(), relativePath);
+      if (myOutputs.size() == 1) {
+        // todo: multiple outputs case?
+        final File outputDir = myOutputs.iterator().next();
+        final String relativePath = FileUtil.getRelativePath(outputDir, new File(outputFilePath));
+        if (relativePath != null) {
+          myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputDir.getPath()), FileUtil.toSystemIndependentName(relativePath));
+        }
       }
+      final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
       for (String sourceFile : sourceFiles) {
-        myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget).appendOutput(sourceFile, outputFilePath);
+        mapping.appendOutput(sourceFile, outputFilePath);
       }
     }
 

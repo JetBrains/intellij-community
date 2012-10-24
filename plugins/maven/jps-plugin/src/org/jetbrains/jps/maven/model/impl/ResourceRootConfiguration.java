@@ -18,6 +18,7 @@ package org.jetbrains.jps.maven.model.impl;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,12 +29,12 @@ import java.util.List;
  *         Date: 10/20/12
  */
 @Tag("resource")
-public class ResourceProperties {
-  @Attribute("directory")
-  @Nullable
+public class ResourceRootConfiguration {
+  @Tag("directory")
+  @NotNull
   public String directory;
 
-  @Attribute("targetPath")
+  @Tag("targetPath")
   @Nullable
   public String targetPath;
 

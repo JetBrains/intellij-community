@@ -129,8 +129,6 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
 
-    <facetType implementation="org.jetbrains.idea.maven.project.MavenFacetType"/>
-
   </extensions>
 
   <application-components>
