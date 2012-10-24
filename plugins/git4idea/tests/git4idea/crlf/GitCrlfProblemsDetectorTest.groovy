@@ -36,7 +36,7 @@ class GitCrlfProblemsDetectorTest extends GitLightTest {
   private String myOldCoreAutoCrlfValue
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp();
     cd myProjectRoot
     if (isGlobalCommandPossible()) {
@@ -48,7 +48,7 @@ class GitCrlfProblemsDetectorTest extends GitLightTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     if (!StringUtil.isEmptyOrSpaces(myOldCoreAutoCrlfValue)) {
       git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
     }
