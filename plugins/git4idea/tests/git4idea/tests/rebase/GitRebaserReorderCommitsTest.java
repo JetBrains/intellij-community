@@ -34,7 +34,9 @@ import static org.testng.Assert.assertEquals;
  * NB: we don't test merge commits here, since {@link GitRebaser#reoderCommitsIfNeeded(com.intellij.openapi.vfs.VirtualFile, String, java.util.List)}
  * is not suitable for this.
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitRebaserReorderCommitsTest extends GitTest {
 
   private GitRebaser myRebaser;

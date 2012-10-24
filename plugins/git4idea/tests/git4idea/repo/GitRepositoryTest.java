@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitBranch;
 import git4idea.GitPlatformFacade;
+import git4idea.test.GitLightTest;
 import git4idea.test.GitTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,9 @@ import static org.testng.Assert.*;
  * <li>Checks that {@link GitRepository} is updated and a listener is notified about the change.</li>
  * </ol>
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitRepositoryTest extends GitTest {
 
   private GitRepositoryReader myReader;
