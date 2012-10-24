@@ -13,6 +13,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -35,7 +36,7 @@ public class WebServer {
     final Application application = ApplicationManager.getApplication();
     final Executor pooledThreadExecutor = new Executor() {
       @Override
-      public void execute(Runnable command) {
+      public void execute(@NotNull Runnable command) {
         application.executeOnPooledThread(command);
       }
     };
