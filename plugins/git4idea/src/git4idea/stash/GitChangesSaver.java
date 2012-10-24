@@ -154,6 +154,22 @@ public abstract class GitChangesSaver {
    */
   protected abstract void showSavedChanges();
 
+  /**
+   * The right panel title of the merge conflict dialog: changes that came from update.
+   */
+  @NotNull
+  protected static String getConflictRightPanelTitle() {
+    return "Changes from remote";
+  }
+
+  /**
+   * The left panel title of the merge conflict dialog: changes that were preserved in this saver during update.
+   */
+  @NotNull
+  protected static String getConflictLeftPanelTitle() {
+    return "Your uncommitted changes";
+  }
+
   protected class ShowSavedChangesNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
