@@ -82,8 +82,7 @@ import javax.swing.*;
 
 import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.isCall;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.MAP_KEY_ATTRIBUTES;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.UNRESOLVED_ACCESS_ATTRIBUTES;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.UNRESOLVED_ACCESS;
 
 /**
  * @author Maxim.Medvedev
@@ -208,7 +207,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     if (ResolveUtil.isKeyOfMap(ref)) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, MAP_KEY_ATTRIBUTES);
+      return null;
     }
 
     if (!cannotBeDynamic) {
@@ -371,7 +370,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       HighlightInfoType infotype = isTestMode ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
 
-      return HighlightInfo.createHighlightInfo(infotype, refNameElement, message, UNRESOLVED_ACCESS_ATTRIBUTES);
+      return HighlightInfo.createHighlightInfo(infotype, refNameElement, message, UNRESOLVED_ACCESS);
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
@@ -388,7 +387,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   private static void registerReferenceFixes(GrReferenceExpression refExpr,
                                              HighlightInfo info,
-                                             boolean compileStatic, final HighlightDisplayKey key) {
+                                             boolean compileStatic,
+                                             final HighlightDisplayKey key) {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
     if (targetClass == null) return;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 
 /**
@@ -49,9 +48,5 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
-  }
-
-  protected static void withLevel(final LanguageLevel level, final Runnable r) {
-    IdeaTestUtil.withLevel(getModule(), level, r);
   }
 }

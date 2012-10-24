@@ -53,7 +53,7 @@ public class GitRevert extends BasicAction {
     for (VirtualFile conflictedFile : affectedFiles) {
       final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForFile(conflictedFile);
       if (repo != null) {
-        repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+        repo.update();
       }
     }
     return false;

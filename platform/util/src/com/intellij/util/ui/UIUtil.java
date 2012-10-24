@@ -200,6 +200,7 @@ public class UIUtil {
 
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
 
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   public static boolean isRetina() {
     synchronized (ourRetina) {
       if (ourRetina.isNull()) {
@@ -207,7 +208,8 @@ public class UIUtil {
 
         String vendor = SystemProperties.getJavaVmVendor();
         if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple")) {
-          if (!Registry.is("ide.mac.disableRetina", false)) {
+          String key = "ide.mac.disableRetina";
+          if (!Registry.is(key, false) && !Boolean.getBoolean(key)) {
             ourRetina.set(IsRetina.isRetina());
           }
         }

@@ -19,7 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.Hash;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +74,11 @@ class GitRepositoryReader {
   }
 
   @NotNull
+  private static Hash createHash(@Nullable String hash) {
+    return hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash);
+  }
+
+  @NotNull
   GitRepository.State readState() {
     if (isMergeInProgress()) {
       return GitRepository.State.MERGING;
@@ -117,15 +125,15 @@ class GitRepositoryReader {
    * In other cases of the detached HEAD returns {@code null}.
    */
   @Nullable
-  GitBranch readCurrentBranch() {
+  GitLocalBranch readCurrentBranch() {
     Head head = readHead();
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
-      return new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false);
+      return new GitLocalBranch(branchName, createHash(hash));
     }
     if (isRebaseInProgress()) {
-      GitBranch branch = readRebaseBranch("rebase-apply");
+      GitLocalBranch branch = readRebaseBranch("rebase-apply");
       if (branch == null) {
         branch = readRebaseBranch("rebase-merge");
       }
@@ -139,7 +147,7 @@ class GitRepositoryReader {
    * and returns the {@link GitBranch} for the branch name written there, or null if these files don't exist.
    */
   @Nullable
-  private GitBranch readRebaseBranch(@NonNls String rebaseDirName) {
+  private GitLocalBranch readRebaseBranch(@NonNls String rebaseDirName) {
     File rebaseDir = new File(myGitDir, rebaseDirName);
     if (!rebaseDir.exists()) {
       return null;
@@ -153,7 +161,7 @@ class GitRepositoryReader {
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
-    return new GitBranch(branchName, hash, false);
+    return new GitLocalBranch(branchName, hash);
   }
 
   private File findBranchFile(@NotNull String branchName) {
@@ -246,47 +254,29 @@ class GitRepositoryReader {
   }
 
   /**
-   * @return all branches in this repository. local/remote/active information is stored in branch objects themselves. 
+   * @return all branches in this repository. local/remote/active information is stored in branch objects themselves.
+   * @param remotes
    */
-  GitBranchesCollection readBranches() {
-    Set<GitBranch> localBranches = readUnpackedLocalBranches();
-    Set<GitBranch> remoteBranches = readUnpackedRemoteBranches();
-    GitBranchesCollection packedBranches = readPackedBranches();
-    addPackedBranches(packedBranches.getLocalBranches(), localBranches);
-    addPackedBranches(packedBranches.getRemoteBranches(), remoteBranches);
+  GitBranchesCollection readBranches(@NotNull Collection<GitRemote> remotes) {
+    Set<GitLocalBranch> localBranches = readUnpackedLocalBranches();
+    Set<GitRemoteBranch> remoteBranches = readUnpackedRemoteBranches(remotes);
+    GitBranchesCollection packedBranches = readPackedBranches(remotes);
+    localBranches.addAll(packedBranches.getLocalBranches());
+    remoteBranches.addAll(packedBranches.getRemoteBranches());
     return new GitBranchesCollection(localBranches, remoteBranches);
-  }
-
-  // this is to avoid hash comparison in GitBranch.equals that leads to a log error.
-  // the algorithm is N^2 instead of N, but the number of branches rarely exceeds even 100, so that shouldn't be a problem.
-  private static void addPackedBranches(@NotNull Collection<GitBranch> packedBranches, @NotNull Set<GitBranch> branchesCollection) {
-    Set<GitBranch> branchesToAdd = new HashSet<GitBranch>();
-    for (GitBranch packedBranch : packedBranches) {
-      boolean found = false;
-      for (GitBranch branch : branchesCollection) {
-        if (branch.getName().equals(packedBranch.getName())) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        branchesToAdd.add(packedBranch);
-      }
-    }
-    branchesCollection.addAll(branchesToAdd);
   }
 
   /**
    * @return list of branches from refs/heads. active branch is not marked as active - the caller should do this.
    */
   @NotNull
-  private Set<GitBranch> readUnpackedLocalBranches() {
-    Set<GitBranch> branches = new HashSet<GitBranch>();
+  private Set<GitLocalBranch> readUnpackedLocalBranches() {
+    Set<GitLocalBranch> branches = new HashSet<GitLocalBranch>();
     for (Map.Entry<String, File> entry : readLocalBranches().entrySet()) {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), false));
+      branches.add(new GitLocalBranch(branchName, createHash(hash)));
     }
     return branches;
   }
@@ -304,9 +294,10 @@ class GitRepositoryReader {
 
   /**
    * @return list of branches from refs/remotes.
+   * @param remotes
    */
-  private Set<GitBranch> readUnpackedRemoteBranches() {
-    final Set<GitBranch> branches = new HashSet<GitBranch>();
+  private Set<GitRemoteBranch> readUnpackedRemoteBranches(@NotNull final Collection<GitRemote> remotes) {
+    final Set<GitRemoteBranch> branches = new HashSet<GitRemoteBranch>();
     if (!myRefsRemotesDir.exists()) {
       return branches;
     }
@@ -314,11 +305,14 @@ class GitRepositoryReader {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory()) {
-          final String relativePath = FileUtil.getRelativePath(myRefsRemotesDir, file);
+          final String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            branches.add(new GitBranch(branchName, hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash), true));
+            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, createHash(hash), remotes);
+            if (remoteBranch != null) {
+              branches.add(remoteBranch);
+            }
           }
         }
         return true;
@@ -329,11 +323,12 @@ class GitRepositoryReader {
 
   /**
    * @return list of local and remote branches from packed-refs. Active branch is not marked as active.
+   * @param remotes
    */
   @NotNull
-  private GitBranchesCollection readPackedBranches() {
-    final Set<GitBranch> localBranches = new HashSet<GitBranch>();
-    final Set<GitBranch> remoteBranches = new HashSet<GitBranch>();
+  private GitBranchesCollection readPackedBranches(@NotNull final Collection<GitRemote> remotes) {
+    final Set<GitLocalBranch> localBranches = new HashSet<GitLocalBranch>();
+    final Set<GitRemoteBranch> remoteBranches = new HashSet<GitRemoteBranch>();
     if (!myPackedRefsFile.exists()) {
       return GitBranchesCollection.EMPTY;
     }
@@ -346,9 +341,13 @@ class GitRepositoryReader {
             return;
           }
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitBranch(branchName.substring(REFS_HEADS_PREFIX.length()), Hash.create(hash), false));
-          } else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            remoteBranches.add(new GitBranch(branchName.substring(REFS_REMOTES_PREFIX.length()), Hash.create(hash), true));
+            localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
+          }
+          else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
+            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.create(hash), remotes);
+            if (remoteBranch != null) {
+              remoteBranches.add(remoteBranch);
+            }
           }
         }
       });

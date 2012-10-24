@@ -473,7 +473,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MySaveAsAction extends AnAction {
     public MySaveAsAction() {
       super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
-            AllIcons.RunConfigurations.SaveTempConfig);
+            AllIcons.Actions.Menu_saveall);
     }
 
     public void actionPerformed(AnActionEvent e) {

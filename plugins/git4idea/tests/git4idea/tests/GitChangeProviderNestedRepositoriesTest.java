@@ -40,7 +40,9 @@ import java.util.Map;
  * User: Irina.Chernushina
  * Date: 9/5/12
  * Time: 10:32 AM
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTest {
   private File myChildRepoDir;
   private GitTestRepository myChildRepo;

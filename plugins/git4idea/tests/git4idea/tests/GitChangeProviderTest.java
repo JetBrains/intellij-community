@@ -44,7 +44,9 @@ import static org.testng.Assert.*;
  * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitChangeProviderTest extends GitTest {
 
   protected GitChangeProvider myChangeProvider;

@@ -32,7 +32,9 @@ import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitMergeTest extends GitTest {
 
   /**

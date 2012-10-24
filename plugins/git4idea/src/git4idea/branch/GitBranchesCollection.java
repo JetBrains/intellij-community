@@ -15,7 +15,8 @@
  */
 package git4idea.branch;
 
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -35,12 +36,13 @@ import java.util.HashSet;
  */
 public final class GitBranchesCollection {
   
-  public static final GitBranchesCollection EMPTY = new GitBranchesCollection(Collections.<GitBranch>emptyList(), Collections.<GitBranch>emptyList());
+  public static final GitBranchesCollection EMPTY = new GitBranchesCollection(Collections.<GitLocalBranch>emptyList(),
+                                                                              Collections.<GitRemoteBranch>emptyList());
 
-  private final Collection<GitBranch> myLocalBranches;
-  private final Collection<GitBranch> myRemoteBranches;
+  private final Collection<GitLocalBranch> myLocalBranches;
+  private final Collection<GitRemoteBranch> myRemoteBranches;
 
-  public GitBranchesCollection(@NotNull Collection<GitBranch> localBranches, @NotNull Collection<GitBranch> remoteBranches) {
+  public GitBranchesCollection(@NotNull Collection<GitLocalBranch> localBranches, @NotNull Collection<GitRemoteBranch> remoteBranches) {
     myRemoteBranches = remoteBranches;
     myLocalBranches = localBranches;
   }
@@ -56,16 +58,16 @@ public final class GitBranchesCollection {
    * @return the copy of local branches set.
    */
   @NotNull
-  public Collection<GitBranch> getLocalBranches() {
-    return new HashSet<GitBranch>(myLocalBranches);
+  public Collection<GitLocalBranch> getLocalBranches() {
+    return new HashSet<GitLocalBranch>(myLocalBranches);
   }
 
   /**
    * @return the copy of remote branches set.
    */
   @NotNull
-  public Collection<GitBranch> getRemoteBranches() {
-    return new HashSet<GitBranch>(myRemoteBranches);
+  public Collection<GitRemoteBranch> getRemoteBranches() {
+    return new HashSet<GitRemoteBranch>(myRemoteBranches);
   }
 
 }

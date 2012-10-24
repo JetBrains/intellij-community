@@ -38,6 +38,7 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -184,7 +185,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     MemberOrderService service = ServiceManager.getService(MemberOrderService.class);
     PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
 
-    if (anchor != null && anchor.getNextSibling() == aClass.getRBrace()) {
+    if (anchor != null && PsiTreeUtil.skipSiblingsForward(anchor, PsiWhiteSpace.class) == aClass.getRBrace()) {
       // Given member should be inserted as the last child.
       return aClass.getRBrace();
     }
