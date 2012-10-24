@@ -19,10 +19,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -101,7 +104,12 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder);
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder, new Condition<SdkType>() {
+          @Override
+          public boolean value(SdkType sdk) {
+            return sdk instanceof JavaSdkType;
+          }
+        });
   }
 
   private static Icon getJavaModuleIcon() {

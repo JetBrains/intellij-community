@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,7 +144,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder) {
-   return new JavaSettingsStep(context, moduleBuilder);
+  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+   return new JavaSettingsStep(context, moduleBuilder, sdkFilter);
   }
 }

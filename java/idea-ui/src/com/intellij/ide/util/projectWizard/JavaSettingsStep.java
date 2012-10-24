@@ -19,8 +19,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.ProjectSettingsStep;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
@@ -51,24 +52,20 @@ public class JavaSettingsStep extends ProjectSettingsStep {
   private JPanel myPanel;
   private final JdkComboBox myJdkComboBox;
 
-  public JavaSettingsStep(WizardContext wizardContext, ModuleBuilder moduleBuilder) {
+  public JavaSettingsStep(WizardContext wizardContext, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
     super(wizardContext);
     myModuleBuilder = moduleBuilder;
 
     ProjectSdksModel model = new ProjectSdksModel();
     Project project = wizardContext.getProject();
-    model.reset(project, new Condition<Sdk>() {
-      @Override
-      public boolean value(Sdk sdk) {
-        return sdk.getSdkType() instanceof JavaSdkType;
-      }
-    });
-    myJdkComboBox = new JdkComboBox(model);
+    model.reset(project, sdkFilter);
+    myJdkComboBox = new JdkComboBox(model, sdkFilter);
     JButton button = new JButton("\u001BNew...");
     myJdkComboBox.setSetupButton(button, project, model,
-                                 project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(), null,
+                                 project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
+                                 null,
                                  false);
-    JPanel jdkPanel = new JPanel(new BorderLayout());
+    JPanel jdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
     jdkPanel.add(myJdkComboBox);
     jdkPanel.add(button, BorderLayout.EAST);
     addField("Project \u001BSDK:", jdkPanel);

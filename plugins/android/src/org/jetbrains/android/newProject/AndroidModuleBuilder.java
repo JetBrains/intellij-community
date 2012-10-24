@@ -42,12 +42,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,6 +73,7 @@ import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -739,6 +742,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   @Override
   public String getBuilderId() {
     return getClass().getName();
+  }
+
+  @Nullable
+  @Override
+  public SettingsStep createSettingsStep(WizardContext wizardContext) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(wizardContext, this, Conditions.<SdkType>is(AndroidSdkType.getInstance()));
   }
 
   private static boolean hasAppropriateJdk() {
