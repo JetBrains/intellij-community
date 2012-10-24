@@ -25,7 +25,7 @@ import java.awt.*;
  */
 class DarculaEditorTabsPainter implements JBEditorTabsPainter {
   @Override
-  public void doPaintInactive(Graphics2D g2d, Rectangle effectiveBounds, int x, int y, int w, int h, Color tabColor) {
+  public void doPaintInactive(Graphics2D g2d, Rectangle effectiveBounds, int x, int y, int w, int h, Color tabColor, int row, int column) {
     if (tabColor != null) {
       g2d.setColor(tabColor);
       g2d.fillRect(x, y, w, h);

@@ -93,7 +93,7 @@ public class JBEditorTabs extends JBTabsImpl {
                                  boolean leftGhostExists,
                                  TabLabel label,
                                  Rectangle effectiveBounds,
-                                 boolean rightGhostExists) {
+                                 boolean rightGhostExists, int row, int column) {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     int _x = effectiveBounds.x + insets.left;
@@ -118,7 +118,7 @@ public class JBEditorTabs extends JBTabsImpl {
     }
 
     final Color tabColor = label.getInfo().getTabColor();
-    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor);
+    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column);
   }
 
   JBEditorTabsPainter getPainter() {
