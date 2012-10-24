@@ -227,10 +227,6 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getHierarchicalMethodSignature();
   }
 
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-
   public PsiType getReturnTypeNoResolve() {
     return myMethod.getReturnTypeNoResolve();
   }

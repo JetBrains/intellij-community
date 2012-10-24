@@ -40,6 +40,14 @@ public class ColorUtil {
     return Color.getHSBColor(hsb[0], 0.6f *hsb[1], hsb[2]);
   }
 
+  public static Color dimmer(@NotNull Color color) {
+    float[] rgb = color.getRGBColorComponents(null);
+
+    float alpha = 0.80f;
+    float rem = 1 - alpha;
+    return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
+  }
+
   private static int shift(int colorComponent, double d) {
     final int n = (int)(colorComponent * d);
     return n > 255 ? 255 : n < 0 ? 0 : n;

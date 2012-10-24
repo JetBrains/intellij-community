@@ -1884,14 +1884,18 @@ public class JBTabsImpl extends JComponent
         if (getSelectedInfo() == each) {
           continue;
         }
-        paintNonSelected(g2d, each, leftGhostExists, rightGhostExists);
+        paintNonSelected(g2d, each, leftGhostExists, rightGhostExists, eachRow, eachColumn);
       }
     }
 
     myLastPaintedSelection = selected;
   }
 
-  private void paintNonSelected(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists, final boolean rightGhostExists) {
+  private void paintNonSelected(final Graphics2D g2d,
+                                final TabInfo each,
+                                final boolean leftGhostExists,
+                                final boolean rightGhostExists,
+                                int row, int column) {
     if (myDropInfo == each) return;
 
     final TabLabel label = myInfo2Label.get(each);
@@ -1914,7 +1918,7 @@ public class JBTabsImpl extends JComponent
         Graphics2D imgG2d = img.createGraphics();
         imgG2d.addRenderingHints(g2d.getRenderingHints());
         doPaintInactive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()),
-                        rightGhostExists);
+                        rightGhostExists, row, column);
         imgG2d.dispose();
       }
 
@@ -1922,7 +1926,7 @@ public class JBTabsImpl extends JComponent
 
       label.setInactiveStateImage(img);
     } else {
-      doPaintInactive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists);
+      doPaintInactive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists, row, column);
       label.setInactiveStateImage(null);
     }
   }
@@ -1948,7 +1952,7 @@ public class JBTabsImpl extends JComponent
                                  boolean leftGhostExists,
                                  TabLabel label,
                                  Rectangle effectiveBounds,
-                                 boolean rightGhostExists) {
+                                 boolean rightGhostExists, int row, int column) {
     int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();

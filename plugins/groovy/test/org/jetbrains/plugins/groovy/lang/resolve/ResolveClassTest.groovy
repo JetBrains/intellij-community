@@ -29,51 +29,51 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class ResolveClassTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "resolve/class/";
+    return TestUtils.testDataPath + "resolve/class/";
   }
 
   public void testInnerJavaClass() throws Exception {
-    doTest("innerJavaClass/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testSamePackage() throws Exception {
-    doTest("samePackage/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testImplicitImport() throws Exception {
-    doTest("implicitImport/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testOnDemandImport() throws Exception {
-    doTest("onDemandImport/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testSimpleImport() throws Exception {
-    doTest("simpleImport/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testQualifiedName() throws Exception {
-    doTest("qualifiedName/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testImportAlias() throws Exception {
-    doTest("importAlias/B.groovy");
+    doTest("B.groovy");
   }
 
   public void testQualifiedRefExpr() throws Exception {
-    doTest("qualifiedRefExpr/A.groovy");
+    doTest("A.groovy");
   }
 
   public void testGrvy102() throws Exception {
-    doTest("grvy102/Test.groovy");
+    doTest("Test.groovy");
   }
 
   public void testClassVsProperty() throws Exception {
-    doTest("classVsProperty/Test.groovy");
+    doTest("Test.groovy");
   }
 
   public void testGrvy901() throws Exception {
-    doTest("grvy901/Test.groovy");
+    doTest("Test.groovy");
   }
 
   public void testGrvy641() throws Exception {
@@ -81,7 +81,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     PsiClass resolved = assertInstanceOf(ref.resolve(), PsiClass)
     if (!"List".equals(resolved.qualifiedName)) {
       println(myFixture.file.virtualFile.parent.children as List);
-      println JavaPsiFacade.getInstance(project).findClass("List")
+      println JavaPsiFacade.getInstance(project).findClass("List", ref.resolveScope)
       fail(resolved.qualifiedName);
     }
   }
@@ -116,7 +116,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiClass.class);
-    assertEquals("java.util.ArrayList", ((PsiClass)resolved).getQualifiedName());
+    assertEquals("java.util.ArrayList", ((PsiClass)resolved).qualifiedName);
   }
 
   public void testNotQualifiedStaticImport() throws Exception {
@@ -224,7 +224,7 @@ public class Test extends MyMap {
     public void m(E<caret>ntry<String, String> o) {}
 }
 """)
-    def target = myFixture.getFile().findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    def target = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
     assert assertInstanceOf(target, PsiClass).qualifiedName == 'java.util.MainMap.Entry'
   }
 
@@ -271,17 +271,22 @@ import java.util.List
 print Component
 print Li<caret>st
 ''')
-    def target = myFixture.getFile().findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    def target = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
     assertEquals('java.util.List', target.getQualifiedName())
   }
 
-  private void doTest() {
-    doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
+  void testSuper() {
+    resolveByText('''\
+class Base {
+}
+
+class Inheritor {
+  class Inner {
+    def f = Inheritor.su<caret>per.className
+  }
+}
+''', PsiClass)
   }
 
-  private void doTest(String fileName) {
-    PsiReference ref = configureByFile(fileName);
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiClass);
-  }
+  private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

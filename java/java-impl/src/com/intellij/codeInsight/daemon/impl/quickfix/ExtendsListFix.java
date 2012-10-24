@@ -61,7 +61,8 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       messageKey = toAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
     }
 
-    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom.getQualifiedName());
+    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom instanceof PsiTypeParameter ? classToExtendFrom.getName() 
+                                                                                                                                                 : classToExtendFrom.getQualifiedName());
   }
 
 

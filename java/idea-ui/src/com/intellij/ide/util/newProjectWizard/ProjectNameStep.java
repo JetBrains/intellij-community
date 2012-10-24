@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectNameStep extends ModuleWizardStep {
+public class ProjectNameStep extends SettingsStep {
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
@@ -168,5 +169,26 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
 
     return shouldContinue;
+  }
+
+  @NotNull
+  @Override
+  public JComponent getSettingsPanel() {
+    return getComponent();
+  }
+
+  @Override
+  public JComponent getExpertSettingsPanel() {
+    return null;
+  }
+
+  @Override
+  public SettingsStep addField(String label, JComponent field) {
+    return this;
+  }
+
+  @Override
+  public SettingsStep addExpertPanel(JComponent panel) {
+    return this;
   }
 }

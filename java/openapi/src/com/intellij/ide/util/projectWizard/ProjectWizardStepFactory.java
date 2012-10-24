@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,4 +71,8 @@ public abstract class ProjectWizardStepFactory {
 
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider);
+
+  public abstract SettingsStep createSettingsStep(WizardContext context);
+
+  public abstract SettingsStep createJavaSettingsStep(WizardContext context, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter);
 }

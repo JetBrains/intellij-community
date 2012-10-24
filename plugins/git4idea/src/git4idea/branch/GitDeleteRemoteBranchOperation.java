@@ -123,18 +123,29 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<GitRepository> repositories) {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      Pair<String, String> pair = GitBranch.splitNameOfRemoteBranch(branchName);
+      Pair<String, String> pair = splitNameOfRemoteBranch(branchName);
       String remote = pair.getFirst();
       String branch = pair.getSecond();
       GitCommandResult res = pushDeletion(repository, remote, branch);
       result.append(repository, res);
-      repository.update(GitRepository.TrackedTopic.BRANCHES);
+      repository.update();
     }
     if (!result.totalSuccess()) {
       Notificator.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
                                                              result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
+  }
+
+  /**
+   * Returns the remote and the "local" name of a remote branch.
+   * Expects branch in format "origin/master", i.e. remote/branch
+   */
+  private static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
+    int firstSlash = branchName.indexOf('/');
+    String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
+    String remoteBranchName = branchName.substring(firstSlash + 1);
+    return Pair.create(remoteName, remoteBranchName);
   }
 
   @NotNull

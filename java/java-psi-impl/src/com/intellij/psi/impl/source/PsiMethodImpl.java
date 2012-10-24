@@ -32,7 +32,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -157,13 +156,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
-  }
-
-  @Override
-  public PsiMethodReceiver getMethodReceiver() {
-    ASTNode node = getNode().findChildByType(JavaElementType.METHOD_RECEIVER);
-    if (node == null) return null;
-    return (PsiMethodReceiver)node.getPsi();
   }
 
   @Override

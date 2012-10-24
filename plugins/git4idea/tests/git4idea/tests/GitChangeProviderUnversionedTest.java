@@ -45,7 +45,9 @@ import static org.testng.Assert.*;
  * untracked files are handled separately by the {@link git4idea.repo.GitUntrackedFilesHolder}.
  *
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
 
   @BeforeMethod

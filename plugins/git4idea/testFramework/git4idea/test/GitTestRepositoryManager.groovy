@@ -69,12 +69,12 @@ public class GitTestRepositoryManager implements GitRepositoryManager {
   }
 
   @Override
-  public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
+  public void updateRepository(VirtualFile root) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
+  public void updateAllRepositories() {
     throw new UnsupportedOperationException();
   }
 }

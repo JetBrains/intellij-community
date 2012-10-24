@@ -42,9 +42,12 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     }
   }
 
-  protected PsiReference configureByFile(@NonNls String filePath, @Nullable String newFilePath) {
-    filePath = StringUtil.trimStart(filePath, getTestName(true) + "/");
-    final VirtualFile vFile = myFixture.tempDirFixture.getFile(filePath);
+  protected <T extends PsiReference> T configureByFile(@NonNls String filePath, @Nullable String newFilePath = null, Class<T> refType = PsiReference) {
+    def trimmedFilePath = StringUtil.trimStart(filePath, getTestName(true) + "/");
+    VirtualFile vFile = myFixture.tempDirFixture.getFile(filePath);
+    if (vFile == null) {
+      vFile = myFixture.tempDirFixture.getFile(trimmedFilePath)
+    }
     assertNotNull("file $filePath not found", vFile);
 
     String fileText;
@@ -67,27 +70,33 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     }
 
     PsiReference ref = myFixture.file.findReferenceAt(offset);
-    assertNotNull(ref);
+    assertInstanceOf(ref, refType);
     return ref;
   }
 
-  protected PsiReference configureByFile(@NonNls String filePath) {
-    return configureByFile(filePath, null);
-  }
-
-  protected PsiReference configureByText(String text) {
-    configureByText('_a.groovy', text);
-  }
-
-  protected PsiReference configureByText(String fileName, String text) {
+  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', String text, Class<T> refType = PsiReference) {
     myFixture.configureByText fileName, text
-    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertInstanceOf(ref, refType)
+    return ref
   }
 
   @Nullable
-  protected PsiElement resolve(String fileName) {
+  protected <T extends PsiElement> T resolve(String fileName, Class<T> type = null) {
     PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
-    return ref.resolve();
+    assertNotNull(ref)
+    final resolved = ref.resolve()
+    if (type != null) assertInstanceOf(resolved, type)
+    return resolved
+  }
+
+  @Nullable
+  protected <T extends PsiElement> T resolveByText(String text, Class<T> type = null) {
+    final ref = configureByText(text)
+    assertNotNull(ref)
+    final resolved = ref.resolve()
+    assertInstanceOf(resolved, type)
+    return resolved
   }
 
   @Nullable

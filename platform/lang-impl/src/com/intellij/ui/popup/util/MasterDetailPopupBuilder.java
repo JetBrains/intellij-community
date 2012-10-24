@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -60,7 +59,6 @@ public class MasterDetailPopupBuilder implements MasterController {
   private boolean myCancelOnClickOutside;
 
   private final DetailController myDetailController = new DetailController(this);
-  private JSplitPane mySplitPane;
 
 
   public String getDimensionServiceKey() {
@@ -172,7 +170,6 @@ public class MasterDetailPopupBuilder implements MasterController {
         builder.setCommandButton(new ActiveComponent() {
           @Override
           public void setActive(boolean active) {
-            //To change body of implemented methods use File | Settings | File Templates.
           }
 
           @Override
@@ -212,17 +209,11 @@ public class MasterDetailPopupBuilder implements MasterController {
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
       }
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
         myDetailView.clearEditor();
-        if (mySplitPane != null) {
-          final DimensionService dimensionService = DimensionService.getInstance();
-          dimensionService.setSize(getSplitterDimensionKey(),
-                                   new Dimension(mySplitPane.getDividerLocation(), 0));
-        }
       }
     });
 
@@ -464,19 +455,12 @@ public class MasterDetailPopupBuilder implements MasterController {
     @Override
     protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
       if (myAddDetailViewToEast) {
-        mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, component, (JComponent)myDetailView);
+        JBSplitter splitPane = new JBSplitter(false, 0.3f);
+        splitPane.setSplitterProportionKey(getSplitterProportionKey());
+        splitPane.setFirstComponent(component);
+        splitPane.setSecondComponent((JComponent)myDetailView);
 
-        final DimensionService dimensionService = DimensionService.getInstance();
-        Dimension size = dimensionService.getSize(getSplitterDimensionKey());
-        if (size != null) {
-          mySplitPane.setDividerLocation((int)size.getWidth());
-        }
-
-        mySplitPane.setResizeWeight(0.5);
-        mySplitPane.setOneTouchExpandable(true);
-        mySplitPane.setContinuousLayout(true);
-
-        contentPane.add(mySplitPane, BorderLayout.CENTER);
+        contentPane.add(splitPane, BorderLayout.CENTER);
       }
       else {
         super.addCenterComponentToContentPane(contentPane, component);
@@ -484,7 +468,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
   }
 
-  private String getSplitterDimensionKey() {
+  private String getSplitterProportionKey() {
     return myDimensionServiceKey + ".splitter";
   }
 }

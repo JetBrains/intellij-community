@@ -550,9 +550,8 @@ class RunConfigurable extends BaseConfigurable {
       applyByType(configurationType);
     }
 
-    String recentsLimit = myRecentsLimit.getText();
     try {
-      int i = Integer.parseInt(recentsLimit);
+      int i = Math.max(1, Integer.parseInt(myRecentsLimit.getText()));
       int oldLimit = manager.getConfig().getRecentsLimit();
       if (oldLimit != i) {
         manager.getConfig().setRecentsLimit(i);
@@ -1154,7 +1153,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MySaveAction extends AnAction {
 
     public MySaveAction() {
-      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.RunConfigurations.SaveTempConfig);
+      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.Actions.Menu_saveall);
     }
 
     public void actionPerformed(final AnActionEvent e) {

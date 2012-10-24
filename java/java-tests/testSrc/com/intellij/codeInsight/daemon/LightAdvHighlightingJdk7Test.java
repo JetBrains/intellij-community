@@ -149,6 +149,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testTryWithResourcesWarn() throws Exception { doTest(true, false, new DefUseInspection()); }
   public void testSafeVarargsApplicability() throws Exception { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
+  public void testGenericsArrayCreation() throws Exception { doTest(false, false); }
   public void testPreciseRethrow() throws Exception { doTest(false, false); }
   public void testImprovedCatchAnalysis() throws Exception { doTest(true, false); }
   public void testPolymorphicTypeCast() throws Exception { doTest(true, false); }

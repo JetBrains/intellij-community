@@ -182,7 +182,7 @@ public class GithubRebaseAction extends DumbAwareAction {
             }
 
             // catch newly added remote
-            gitRepository.update(GitRepository.TrackedTopic.CONFIG);
+            gitRepository.update();
           }
           catch (VcsException e1) {
             final String message = "Error happened during git operation: " + e1.getMessage();

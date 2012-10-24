@@ -528,10 +528,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return visitor.getResult();
   }
 
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-
   public PsiType getReturnTypeNoResolve() {
     if (isConstructor()) return null;
 

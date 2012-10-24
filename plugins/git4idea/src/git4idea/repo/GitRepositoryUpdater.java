@@ -41,10 +41,12 @@ import java.util.List;
 final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   private final GitRepositoryFiles myRepositoryFiles;
   private final MessageBusConnection myMessageBusConnection;
-  private final QueueProcessor<GitRepository.TrackedTopic> myUpdateQueue;
+  private final QueueProcessor<Object> myUpdateQueue;
+  private final Object DUMMY_UPDATE_OBJECT = new Object();
   private final VirtualFile myRemotesDir;
   private final VirtualFile myHeadsDir;
   private final LocalFileSystem.WatchRequest myWatchRequest;
+
 
   GitRepositoryUpdater(GitRepository repository) {
     VirtualFile gitDir = repository.getGitDir();
@@ -56,7 +58,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
 
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(repository), project.getDisposed());
+    myUpdateQueue = new QueueProcessor<Object>(new Updater(repository), project.getDisposed());
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -122,7 +124,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isHeadFile(filePath)) {
         headChanged = true;
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
-        // it is also possible, that a local branch with complex name ("myfolder/mybranch") was created => the folder also to be watched.
+        // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
         branchFileChanged = true;   
         visitAllChildrenRecursively(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
@@ -138,47 +140,12 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       }
     }
 
-    // what should be updated in GitRepository
-    boolean updateCurrentBranch = false;
-    boolean updateCurrentRevision = false;
-    boolean updateState = false;
-    boolean updateBranches = false;
-    if (headChanged) {
-      updateCurrentBranch = true;
-      updateCurrentRevision = true;
-      updateState = true;
-    }
-    if (branchFileChanged) {
-      updateCurrentRevision = true;
-      updateBranches = true;
-    }
-    if (rebaseFileChanged || mergeFileChanged) {
-      updateState = true;
-    }
-    if (packedRefsChanged) {
-      updateCurrentBranch = true;
-      updateBranches = true;
-    }
-
-    // update GitRepository on pooled thread, because it requires reading from disk and parsing data.
-    if (updateCurrentBranch) {
-      myUpdateQueue.add(GitRepository.TrackedTopic.CURRENT_BRANCH);
-    }
-    if (updateCurrentRevision) {
-      myUpdateQueue.add(GitRepository.TrackedTopic.CURRENT_REVISION);
-    }
-    if (updateState) {
-      myUpdateQueue.add(GitRepository.TrackedTopic.STATE);
-    }
-    if (updateBranches) {
-      myUpdateQueue.add(GitRepository.TrackedTopic.BRANCHES);
-    }
-    if (configChanged) {
-      myUpdateQueue.add(GitRepository.TrackedTopic.CONFIG);
+    if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
+      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
     }
   }
 
-  private static class Updater implements Consumer<GitRepository.TrackedTopic> {
+  private static class Updater implements Consumer<Object> {
     private final GitRepository myRepository;
 
     public Updater(GitRepository repository) {
@@ -186,8 +153,8 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
 
     @Override
-    public void consume(GitRepository.TrackedTopic trackedTopic) {
-      myRepository.update(trackedTopic);
+    public void consume(Object dummy) {
+      myRepository.update();
     }
   }
 }

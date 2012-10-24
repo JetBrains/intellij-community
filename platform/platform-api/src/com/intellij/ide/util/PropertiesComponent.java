@@ -131,4 +131,14 @@ public abstract class PropertiesComponent {
       return false;
     }
   }
+
+  public float getFloat(String name, float defaultValue) {
+    if (isValueSet(name)) {
+      try {
+        return Float.parseFloat(getValue(name));
+      }
+      catch (NumberFormatException ignore) {}
+    }
+    return defaultValue;
+  }
 }
