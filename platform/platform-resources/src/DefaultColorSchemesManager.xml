@@ -762,6 +762,14 @@
           <option name="FOREGROUND" value="660e7a"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+      <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="3"/>
         </value>
       </option>

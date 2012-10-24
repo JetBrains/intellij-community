@@ -286,6 +286,7 @@ public class HighlightInfo implements Segment {
     if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
     if (type == HighlightInfoType.INSTANCE_FIELD) return false;
     if (type == HighlightInfoType.STATIC_FIELD) return false;
+    if (type == HighlightInfoType.STATIC_FINAL_FIELD) return false;
     if (type == HighlightInfoType.PARAMETER) return false;
     if (type == HighlightInfoType.METHOD_CALL) return false;
     if (type == HighlightInfoType.METHOD_DECLARATION) return false;
