@@ -156,7 +156,7 @@ class InterpreterInterface(BaseInterpreterInterface):
             completer = Completer(self.namespace, None)
             return completer.complete(act_tok)
         except:
-            import traceback;
+            import traceback
 
             traceback.print_exc()
             return []
@@ -183,15 +183,8 @@ def process_exec_queue(interpreter):
             raise
         except:
             type, value, tb = sys.exc_info()
-            try:
-                print_exception()
-                rpc.response_queue.put((seq, None))
-            except:
-                # Link didn't work, print same exception to __stderr__
-                traceback.print_exception(type, value, tb, file=sys.__stderr__)
-                exit()
-            else:
-                continue
+            traceback.print_exception(type, value, tb, file=sys.__stderr__)
+            exit()
 
 
 try:
