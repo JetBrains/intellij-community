@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.concurrency.AsyncFuture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,8 @@ public interface Query<Result> extends Iterable<Result> {
    *         <code>false</code> if the occurrence processing was cancelled by the processor.
    */
   boolean forEach(@NotNull Processor<Result> consumer);
+
+  AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer);
 
   Result[] toArray(Result[] a);
 }
