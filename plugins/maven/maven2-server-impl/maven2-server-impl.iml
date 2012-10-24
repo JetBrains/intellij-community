@@ -71,17 +71,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="Maven Embedder">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib-src/maven-embedder-1.1-SNAPSHOT-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />

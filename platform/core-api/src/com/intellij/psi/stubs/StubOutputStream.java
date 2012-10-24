@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,11 +34,11 @@ public class StubOutputStream extends DataOutputStream {
     myNameStorage = nameStorage;
   }
 
-  public void writeUTFFast(final String arg) throws IOException {
+  public void writeUTFFast(@NotNull final String arg) throws IOException {
     IOUtil.writeUTFFast(myStringIOBuffer, this, arg);
   }
 
-  public void writeName(final String arg) throws IOException {
+  public void writeName(@Nullable final String arg) throws IOException {
     DataInputOutputUtil.writeNAME(this, arg, myNameStorage);
   }
 

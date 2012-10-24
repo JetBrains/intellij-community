@@ -71,6 +71,7 @@ class DragHelper extends MouseDragHelper {
     } else {
       delegate.processDragOut(event, myDragOutSource);
     }
+    event.consume();
   }
 
   @Override
@@ -163,6 +164,7 @@ class DragHelper extends MouseDragHelper {
       headerRec.height += border * 2;
       myTabs.repaint(headerRec);
     }
+    event.consume();
   }
 
   private boolean isDragSource(MouseEvent event) {

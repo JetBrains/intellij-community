@@ -38,6 +38,8 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

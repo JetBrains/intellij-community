@@ -18,8 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -933,7 +932,9 @@ public class TypeConversionUtil {
     return true;
   }
 
-  public static boolean typesAgree(PsiType typeLeft, PsiType typeRight, boolean allowUncheckedConversion) {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("isAssignable");
+  
+  public static boolean typesAgree(PsiType typeLeft, PsiType typeRight, final boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
@@ -949,7 +950,18 @@ public class TypeConversionUtil {
           return rightWildcard.isExtends() && isAssignable(leftBound, rightWildcard.getBound(), allowUncheckedConversion);
         }
         else { //isSuper
-          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion);
+          if (rightWildcard.isSuper()) {
+            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true, new NotNullComputable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion);
+              }
+            });
+            if (assignable != null && assignable.booleanValue()) {
+              return true;
+            }
+          }
+          return false;
         }
       }
       else {

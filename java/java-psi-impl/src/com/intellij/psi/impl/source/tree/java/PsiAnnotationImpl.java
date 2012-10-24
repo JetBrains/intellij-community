@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,9 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     if (parent instanceof PsiTypeElement) {
       return ((PsiTypeElement)parent).getOwner(this);
     }
-    if (parent instanceof PsiMethodReceiver || parent instanceof PsiTypeParameter) return (PsiAnnotationOwner)parent;
+    if (parent instanceof PsiTypeParameter) {
+      return (PsiAnnotationOwner)parent;
+    }
     PsiElement member = parent.getParent();
     String[] elementTypeFields = getApplicableElementTypeFields(member);
     if (elementTypeFields == null) return null;

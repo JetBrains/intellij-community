@@ -76,7 +76,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("forStubs=" + myForStubs);
-        LOG.info("toCompile: " + toCompile);
       }
 
       Map<ModuleBuildTarget, String> finalOutputs = getCanonicalModuleOutputs(context, chunk);
@@ -128,6 +127,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static Set<String> getPathsToCompile(List<File> toCompile) {
     final Set<String> toCompilePaths = new LinkedHashSet<String>();
     for (File file : toCompile) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Path to compile: " + file.getPath());
+      }
       toCompilePaths.add(FileUtil.toSystemIndependentName(file.getPath()));
     }
     return toCompilePaths;

@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,7 +98,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     if (mySettings.getExpression() != null && !toReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {
       final AnySupers anySupers = new AnySupers();
       mySettings.getExpression().accept(anySupers);
-      if (anySupers.isResult()) {
+      if (anySupers.containsSupers()) {
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(toReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {

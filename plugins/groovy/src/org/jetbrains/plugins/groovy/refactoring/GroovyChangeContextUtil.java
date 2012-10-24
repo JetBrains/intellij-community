@@ -24,8 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -45,8 +45,8 @@ public class GroovyChangeContextUtil {
 
   public static void encodeContextInfo(PsiElement element, PsiElement scope) {
     if (!(element instanceof GroovyPsiElement)) return;
-    if (element instanceof GrThisReferenceExpression) {
-      GrThisReferenceExpression thisExpr = (GrThisReferenceExpression)element;
+    if (PsiUtil.isThisReference(element)) {
+      GrReferenceExpression thisExpr = (GrReferenceExpression)element;
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(thisExpr, PsiClass.class);
       element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
       thisExpr.putCopyableUserData(QUALIFIER_CLASS_KEY, containingClass);
@@ -94,7 +94,7 @@ public class GroovyChangeContextUtil {
     if (element.getCopyableUserData(KEY_ENCODED) != null) {
       element.putCopyableUserData(KEY_ENCODED, null);
       final PsiManager manager = element.getManager();
-      if (element instanceof GrThisReferenceExpression) {
+      if (PsiUtil.isThisReference(element)) {
         final PsiClass thisQualClass = element.getCopyableUserData(QUALIFIER_CLASS_KEY);
         element.putCopyableUserData(QUALIFIER_CLASS_KEY, null);
         if (thisAccessExpr != null && !manager.areElementsEquivalent(thisClass, thisQualClass)) {

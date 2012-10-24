@@ -15,7 +15,6 @@
  */
 package git4idea.roots
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootError
 import git4idea.test.GitMockVcsManager
@@ -33,7 +32,6 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
 
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
 
-  Project myProject
   GitMockVcsManager myVcsManager
 
   @Before

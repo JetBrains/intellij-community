@@ -64,7 +64,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
 
-    // workaround for http://youtrack.jetbrains.net/issue/JT-7984
+    // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
     String s = StreamUtil.readText(stream, "UTF-8");
     for (int i = 0; i < s.length(); i++) {
       if (!XMLChar.isValid(s.charAt(i))) {

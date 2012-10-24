@@ -54,10 +54,8 @@ public class EquivalenceChecker {
     super();
   }
 
-  private static final int THIS_EXPRESSION = 0;
   private static final int LITERAL_EXPRESSION = 1;
   private static final int REFERENCE_EXPRESSION = 3;
-  private static final int SUPER_EXPRESSION = 4;
   private static final int CALL_EXPRESSION = 5;
   private static final int NEW_EXPRESSION = 6;
   private static final int ARRAY_LITERAL_EXPRESSION = 7;
@@ -355,7 +353,9 @@ public class EquivalenceChecker {
     return openBlocksAreEquivalent(block1, block2);
   }
 
-  private static boolean openBlocksAreEquivalent(GrOpenBlock block1, GrOpenBlock block2) {
+  private static boolean openBlocksAreEquivalent(@Nullable GrOpenBlock block1, @Nullable GrOpenBlock block2) {
+    if (block1 == null || block2 == null) return false;
+
     final GrStatement[] statements1 = block1.getStatements();
     final GrStatement[] statements2 = block2.getStatements();
     if (statements1.length != statements2.length) {
@@ -418,9 +418,6 @@ public class EquivalenceChecker {
       return false;
     }
     switch (type1) {
-      case THIS_EXPRESSION:
-      case SUPER_EXPRESSION:
-        return true;
       case LITERAL_EXPRESSION:
       case REFERENCE_EXPRESSION:
         final String text1 = expToCompare1.getText();
@@ -460,8 +457,8 @@ public class EquivalenceChecker {
         return typecastExpressionsAreEquivalent((GrTypeCastExpression) expToCompare1,
             (GrTypeCastExpression) expToCompare2);
       case SAFE_CAST_EXPRESSION:
-        return safecastExpressionsAreEquivalent((GrSafeCastExpression) expToCompare1,
-            (GrSafeCastExpression) expToCompare2);
+        return safeCastExpressionsAreEquivalent((GrSafeCastExpression)expToCompare1,
+                                                (GrSafeCastExpression)expToCompare2);
       case INSTANCEOF_EXPRESSION:
         return instanceofExpressionsAreEquivalent((GrInstanceOfExpression) expToCompare1,
             (GrInstanceOfExpression) expToCompare2);
@@ -538,8 +535,12 @@ public class EquivalenceChecker {
     if (!expressionsAreEquivalent(operand1, operand2)) {
       return false;
     }
-    final PsiType type1 = expression1.getTypeElement().getType();
-    final PsiType type2 = expression2.getTypeElement().getType();
+    GrTypeElement typeElement1 = expression1.getTypeElement();
+    GrTypeElement typeElement2 = expression2.getTypeElement();
+    if (typeElement1 == null || typeElement2 == null) return false;
+
+    final PsiType type1 = typeElement1.getType();
+    final PsiType type2 = typeElement2.getType();
     return typesAreEquivalent(type1, type2);
   }
 
@@ -561,7 +562,7 @@ public class EquivalenceChecker {
     return typesAreEquivalent(type1, type2);
   }
 
-  private static boolean safecastExpressionsAreEquivalent(GrSafeCastExpression expression1,
+  private static boolean safeCastExpressionsAreEquivalent(GrSafeCastExpression expression1,
                                                           GrSafeCastExpression expression2) {
     final GrExpression operand1 = expression1.getOperand();
     final GrExpression operand2 = expression2.getOperand();
@@ -591,7 +592,7 @@ public class EquivalenceChecker {
     return argumentListsAreEquivalent(methodExp1.getArgumentList(), methodExp2.getArgumentList());
   }
 
-  private static boolean argumentListsAreEquivalent(GrArgumentList list1, GrArgumentList list2) {
+  private static boolean argumentListsAreEquivalent(@Nullable GrArgumentList list1, @Nullable GrArgumentList list2) {
     if (list1 == null && list2 == null) {
       return true;
     }
@@ -773,12 +774,6 @@ public class EquivalenceChecker {
   }
 
   private static int getExpressionType(@Nullable GrExpression exp) {
-    if (exp instanceof GrThisReferenceExpression) {
-      return THIS_EXPRESSION;
-    }
-    if (exp instanceof GrSuperReferenceExpression) {
-      return SUPER_EXPRESSION;
-    }
     if (exp instanceof GrArrayDeclaration) {
       return ARRAY_LITERAL_EXPRESSION;
     }
@@ -830,7 +825,7 @@ public class EquivalenceChecker {
     if (exp instanceof GrClosableBlock) {
       return CLOSABLE_BLOCK_EXPRESSION;
     }
-    return -1; // Type of expression can be defined in thirdparty plugins. See issue #IDEA-59846
+    return -1; // Type of expression can be defined in third party plugins. See issue #IDEA-59846
   }
 
   private static int getStatementType(@Nullable GrStatement statement) {
@@ -880,6 +875,6 @@ public class EquivalenceChecker {
       return ASSERT_STATEMENT;
     }
 
-    return -1; // Type of expression can be defined in thirdparty plugins. See issue #IDEA-59846
+    return -1; // Type of expression can be defined in third party plugins. See issue #IDEA-59846
   }
 }

@@ -76,7 +76,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   }
 
   private static void refresh(@NotNull GitRepository repository) {
-    repository.update(GitRepository.TrackedTopic.ALL_CURRENT, GitRepository.TrackedTopic.CONFIG, GitRepository.TrackedTopic.BRANCHES);
+    repository.update();
   }
 
   @NotNull

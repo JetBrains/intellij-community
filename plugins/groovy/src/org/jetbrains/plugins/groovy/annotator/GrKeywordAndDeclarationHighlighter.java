@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -101,7 +102,10 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         return false; //It is allowed to name packages 'as', 'in' or 'def'
       }
     }
+    else if (token == GroovyTokenTypes.kDEF && element.getParent() instanceof GrAnnotationNameValuePair) return false;
     else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
+      if (token == GroovyTokenTypes.kSUPER && ((GrReferenceExpression)parent).getQualifier() == null) return true;
+      if (token == GroovyTokenTypes.kTHIS && ((GrReferenceExpression)parent).getQualifier() == null) return true;
       return false; //don't highlight foo.def
     }
 

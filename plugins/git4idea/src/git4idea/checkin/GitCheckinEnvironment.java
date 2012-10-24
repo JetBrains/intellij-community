@@ -51,7 +51,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
-import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -335,7 +334,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.run();
       GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
       if (manager != null) {
-        manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
+        manager.updateRepository(root);
       }
     }
     catch (VcsException ex) {
@@ -481,9 +480,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!project.isDisposed()) {
       GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-      if (manager != null) {
-        manager.updateRepository(root, GitRepository.TrackedTopic.CURRENT_REVISION, GitRepository.TrackedTopic.STATE);
-      }
+      manager.updateRepository(root);
     }
   }
 

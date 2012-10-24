@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -60,17 +61,12 @@ public class StringConstructorExpression implements GroovyElementTypes {
     final Marker injection = builder.mark();
     ParserUtils.getToken(builder, mDOLLAR);
     ParserUtils.getToken(builder, mSTAR);
-    if (mIDENT.equals(builder.getTokenType())) {
+    IElementType tokenType = builder.getTokenType();
+    if (mIDENT == tokenType || kTHIS==tokenType || kSUPER==tokenType) {
       PathExpression.parse(builder, parser);
     }
-    else if (mLCURLY.equals(builder.getTokenType())) {
+    else if (mLCURLY == tokenType) {
       OpenOrClosableBlock.parseClosableBlock(builder, parser);
-    }
-    else if (kTHIS.equals(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
-    }
-    else if (kSUPER.equals(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
     }
     else {
       ParserUtils.wrapError(builder, GroovyBundle.message("identifier.or.block.expected"));

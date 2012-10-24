@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.io;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * @author max
+ */
 public class DataInputOutputUtil {
   public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
 
   private DataInputOutputUtil() {}
 
+  @SuppressWarnings("UnusedDeclaration")
+  /** @deprecated obsolete (use {@link IOUtil} methods) (to remove in IDEA 13) */
   public static void skipUTF(DataInput record) throws IOException {
     record.skipBytes(record.readUnsignedShort());
   }
@@ -36,15 +39,19 @@ public class DataInputOutputUtil {
     return StringRef.fromStream(record, nameStore);
   }
 
-  public static void writeNAME(DataOutput record, final String name, AbstractStringEnumerator nameStore) throws IOException {
+  public static void writeNAME(DataOutput record, @Nullable String name, AbstractStringEnumerator nameStore) throws IOException {
     final int nameId = name != null ? nameStore.enumerate(name) : 0;
     writeINT(record, nameId);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  /** @deprecated use {@linkplain #readNAME(java.io.DataInput, AbstractStringEnumerator)} (to remove in IDEA 13) */
   public static void skipNAME(DataInput record) throws IOException {
     readINT(record);
   }
 
+  /** @deprecated use {@linkplain #readINT(java.io.DataInput)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void skipINT(DataInput record) throws IOException {
     readINT(record);
   }
@@ -66,14 +73,6 @@ public class DataInputOutputUtil {
   }
 
   public static void writeINT(DataOutput record, int val) throws IOException {
-    /*
-    if (0 <= val && val < 255)
-      record.writeByte(val);
-    else {
-      record.writeByte(255);
-      record.writeInt(val);
-    }
-    */
     if (0 <= val && val < 192) {
       record.writeByte(val);
     }
@@ -88,6 +87,8 @@ public class DataInputOutputUtil {
     }
   }
 
+  /** @deprecated use {@linkplain #readSINT(java.io.DataInput)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void skipSINT(DataInput record) throws IOException {
     readSINT(record);
   }
@@ -111,7 +112,7 @@ public class DataInputOutputUtil {
       record.writeByte((int)(relStamp >> 24));
       record.writeByte((int)(relStamp >> 16));
       record.writeByte((int)(relStamp >> 8));
-      record.writeByte((int)(relStamp >> 0));
+      record.writeByte((int)(relStamp));
     }
   }
 

@@ -114,14 +114,14 @@ public class GitPull extends GitRepositoryAction {
           protected void onSuccess() {
             root.refresh(false, true);
             GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
-            repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
+            repositoryManager.updateRepository(root);
             runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
           }
     
           @Override
           protected void onFailure() {
             GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handlerReference.get().errors());
-            repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
+            repositoryManager.updateRepository(root);
           }
         });
       }

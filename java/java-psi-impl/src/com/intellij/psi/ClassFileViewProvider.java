@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -28,6 +24,9 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author max
+ */
 public class ClassFileViewProvider extends SingleRootFileViewProvider {
   public ClassFileViewProvider(@NotNull final PsiManager manager, @NotNull final VirtualFile file) {
     super(manager, file);
@@ -47,7 +46,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
       int dotIndex = name.lastIndexOf('.');
       if (dotIndex < 0) dotIndex = name.length();
       int index = name.lastIndexOf('$', dotIndex);
-      if (index >= 0) return null;
+      if (index > 0) return null;  // todo: read actual class name from file
 
       return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
     }

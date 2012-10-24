@@ -239,7 +239,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       refreshRoot(repository);
       // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
       // but to avoid problems of the asynchronous refresh, let's force update the repository info.
-      repository.update(GitRepository.TrackedTopic.CURRENT_BRANCH, GitRepository.TrackedTopic.CURRENT_REVISION);
+      repository.update();
     }
   }
 

@@ -35,12 +35,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 
@@ -172,8 +172,14 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
 
     @Override
     public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      if (PsiUtil.isThisOrSuperRef(referenceExpression)) {
+        if (referenceExpression.getParent() instanceof GrReferenceExpression) return;
+        registerInstanceRefs();
+        return;
+      }
+
       GrExpression qualifier = referenceExpression.getQualifierExpression();
-      if (qualifier == null || qualifier instanceof GrThisSuperReferenceExpression) {
+      if (qualifier == null || PsiUtil.isThisOrSuperRef(qualifier)) {
         GroovyResolveResult result = referenceExpression.advancedResolve();
         PsiElement element = result.getElement();
         if (isPrintOrPrintln(element)) return; //print & println are resolved in all places
@@ -188,13 +194,6 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       else {
         super.visitReferenceExpression(referenceExpression);
       }
-    }
-
-    @Override
-    public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expression) {
-      if (expression.getParent() instanceof GrReferenceExpression) return;
-
-      registerInstanceRefs();
     }
 
     private void registerInstanceRefs() {

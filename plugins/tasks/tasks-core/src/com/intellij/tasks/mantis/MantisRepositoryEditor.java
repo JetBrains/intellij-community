@@ -80,7 +80,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   @Override
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
-    myProjectCombobox = new ComboBox(-1);
+    myProjectCombobox = new ComboBox(200);
     myProjectCombobox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
@@ -89,7 +89,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     });
     installListener(myProjectCombobox);
     myFilterLabel = new JBLabel("Filter:", SwingConstants.RIGHT);
-    myFilterCombobox = new ComboBox(-1);
+    myFilterCombobox = new ComboBox(200);
     installListener(myFilterCombobox);
     updateProjects();
     return FormBuilder.createFormBuilder().addLabeledComponent(myProjectLabel, myProjectCombobox)

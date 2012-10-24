@@ -34,7 +34,7 @@ Groovy script
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
           Constructor invocation
-            'super' reference expression
+            Reference expression
               PsiElement(super)('super')
             Arguments
               PsiElement(()('(')

@@ -315,7 +315,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
 
-  private String addStepComponent(final Component component) {
+  protected String addStepComponent(final Component component) {
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());

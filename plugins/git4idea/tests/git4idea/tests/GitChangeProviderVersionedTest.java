@@ -30,7 +30,9 @@ import static com.intellij.openapi.vcs.FileStatus.MODIFIED;
 
 /**
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test

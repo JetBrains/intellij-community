@@ -185,11 +185,11 @@ public class DetailsCache {
       final Set<Pair<VirtualFile, AbstractHash>> forDeletion = new HashSet<Pair<VirtualFile, AbstractHash>>();
       final Set<String> hashes = new HashSet<String>();
       AbstractHash headHash = refs.getHeadHash();
-      Collection<GitBranch> local = refs.getLocal();
+      Collection<? extends GitBranch> local = refs.getLocal();
       for (GitBranch branch : local) {
         hashes.add(branch.getHash());
       }
-      Collection<GitBranch> remote = refs.getRemote();
+      Collection<? extends GitBranch> remote = refs.getRemote();
       for (GitBranch branch : remote) {
         hashes.add(branch.getHash());
       }

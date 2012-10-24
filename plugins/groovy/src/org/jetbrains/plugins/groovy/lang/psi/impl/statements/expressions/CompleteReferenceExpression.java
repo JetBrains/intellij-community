@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -133,8 +132,8 @@ public class CompleteReferenceExpression {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
 
-        if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
-            qualifier instanceof GrThisReferenceExpression) {
+        if (qualifier instanceof GrReferenceExpression &&
+            ("class".equals(((GrReferenceExpression)qualifier).getReferenceName()) || PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier))) {
           processIfJavaLangClass(refExpr, processor, qualifier.getType());
         }
       }
@@ -261,7 +260,7 @@ public class CompleteReferenceExpression {
     }
     else {
       getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
-      if (qualifier instanceof GrReferenceExpression) {
+      if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiClass) { ////omitted .class
           GlobalSearchScope scope = refExpr.getResolveScope();

@@ -210,12 +210,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     public String getLeftPanelTitle(VirtualFile file) {
-      return "Your uncommitted changes";
+      return getConflictLeftPanelTitle();
     }
 
     @Override
     public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-      return "Changes from remote";
+      return getConflictRightPanelTitle();
     }
   }
 }

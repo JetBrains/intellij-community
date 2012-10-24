@@ -73,7 +73,7 @@ public class GitResolveConflictsAction extends GitAction {
     for (VirtualFile conflictedFile : conflictedFiles) {
       final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForFile(conflictedFile);
       if (repo != null) {
-        repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+        repo.update();
       }
     }
   }

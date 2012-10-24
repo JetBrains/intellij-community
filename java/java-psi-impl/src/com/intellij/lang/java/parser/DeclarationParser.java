@@ -333,7 +333,7 @@ public class DeclarationParser {
     }
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-      if ((context == Context.CODE_BLOCK) && modListInfo.second) {
+      if ((context == Context.CODE_BLOCK) && Boolean.TRUE.equals(modListInfo.second)) {
         declaration.rollbackTo();
         return null;
       }
@@ -407,17 +407,6 @@ public class DeclarationParser {
     parseParameterList(builder);
 
     eatBrackets(builder, constructor, "expected.semicolon");
-
-    if (builder.getTokenType() == JavaTokenType.AT) {
-      final PsiBuilder.Marker receiver = builder.mark();
-      final PsiBuilder.Marker annotations = parseAnnotations(builder);
-      if (annotations != null) {
-        done(receiver, JavaElementType.METHOD_RECEIVER);
-      }
-      else {
-        receiver.drop();
-      }
-    }
 
     myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
@@ -565,8 +554,6 @@ public class DeclarationParser {
       }
     }
 
-    // todo: false positive
-    //noinspection ConstantConditions
     if (invalidElements != null) {
       invalidElements.error(errorMessage);
     }
@@ -608,7 +595,7 @@ public class DeclarationParser {
       typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (typeInfo == null) {
-        if (modListInfo.second) {
+        if (Boolean.TRUE.equals(modListInfo.second)) {
           param.rollbackTo();
           return null;
         }

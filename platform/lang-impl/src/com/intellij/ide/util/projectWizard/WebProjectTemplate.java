@@ -30,7 +30,6 @@ import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -46,11 +45,6 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       return createPeer();
     }
   };
-
-  @Override
-  public JComponent getSettingsPanel() {
-    return myPeer.getValue().getComponent();
-  }
 
   @NotNull
   @Override

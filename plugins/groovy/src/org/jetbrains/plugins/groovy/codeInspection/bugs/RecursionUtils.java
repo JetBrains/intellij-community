@@ -19,6 +19,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 @SuppressWarnings({"OverlyComplexClass"})
 class RecursionUtils {
@@ -45,7 +47,7 @@ class RecursionUtils {
   }
 
   public static boolean statementMayReturnBeforeRecursing(
-      GrStatement statement, GrMethod method) {
+      @Nullable GrStatement statement, GrMethod method) {
     if (statement == null) {
       return true;
     }
@@ -183,7 +185,7 @@ class RecursionUtils {
   }
 
   private static boolean codeBlockMayReturnBeforeRecursing(
-      GrCodeBlock block, GrMethod method, boolean endsInImplicitReturn) {
+      @Nullable GrCodeBlock block, GrMethod method, boolean endsInImplicitReturn) {
     if (block == null) {
       return true;
     }
@@ -205,14 +207,12 @@ class RecursionUtils {
     return recursionVisitor.isRecursive();
   }
 
-  private static boolean expressionDefinitelyRecurses(GrExpression exp,
+  private static boolean expressionDefinitelyRecurses(@Nullable GrExpression exp,
                                                       GrMethod method) {
     if (exp == null) {
       return false;
     }
-    if (exp instanceof GrLiteral ||
-        exp instanceof GrThisReferenceExpression ||
-        exp instanceof GrSuperReferenceExpression) {
+    if (exp instanceof GrLiteral) {
       return false;
     }
     if (exp instanceof GrMethodCallExpression) {
@@ -399,7 +399,7 @@ class RecursionUtils {
             method.hasModifierProperty(PsiModifier.PRIVATE)) {
           return true;
         }
-        if (qualifier == null || qualifier instanceof GrThisReferenceExpression) {
+        if (qualifier == null || qualifier instanceof GrReferenceExpression && PsiUtil.isThisReference(qualifier)) {
           return true;
         }
       }
@@ -410,7 +410,7 @@ class RecursionUtils {
     return callExpressionDefinitelyRecurses(exp, method);
   }
 
-  private static boolean statementDefinitelyRecurses(GrStatement statement,
+  private static boolean statementDefinitelyRecurses(@Nullable GrStatement statement,
                                                      GrMethod method) {
     if (statement == null) {
       return false;

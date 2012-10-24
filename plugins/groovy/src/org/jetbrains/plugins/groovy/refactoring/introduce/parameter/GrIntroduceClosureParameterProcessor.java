@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
+import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -125,7 +126,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (expression != null && toSearchFor instanceof PsiMember) {
       final AnySupers anySupers = new AnySupers();
       expression.accept(anySupers);
-      if (anySupers.isResult()) {
+      if (anySupers.containsSupers()) {
         final PsiElement containingClass = PsiUtil.getFileOrClassContext(toReplaceIn);
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {

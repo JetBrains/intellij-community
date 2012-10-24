@@ -8,8 +8,14 @@
 	remote = origin
 	merge = refs/heads/master
 [remote "origin"]
-	url = /Users/loki/sandbox/git/parent.git/
+	url = git@git.server.example.com:server/origin
 	fetch = +refs/heads/*:refs/remotes/origin/*
+[remote "smallteam"]
+	url = http://github.com/smallteam/team.git
+	fetch = +refs/heads/*:refs/remotes/smallteam/*
+[remote "brother"]
+	url = /Users/loki/sandbox/git/bro
+	fetch = +refs/heads/*:refs/remotes/bro/*
 [branch "newBranch"]
 	remote = origin
 	merge = refs/heads/newBranch

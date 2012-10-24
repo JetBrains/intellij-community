@@ -292,8 +292,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    */
   public Color getFileColor(@NotNull final VirtualFile file) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : Color.BLACK;
-    if (statusColor == null) statusColor = Color.BLACK;
+    Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
+    if (statusColor == null) statusColor = UIUtil.getLabelForeground();
     return statusColor;
   }
 
