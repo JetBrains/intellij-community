@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -44,10 +43,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @State(
   name = "SvnFileUrlMappingImpl",
@@ -395,10 +398,16 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
           return root;
         }
       }
-      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, url);
-      if (newUrl != null) {
-        myRoots.add(newUrl);
-        return newUrl;
+      final SVNURL newUrl;
+      try {
+        newUrl = SvnUtil.getRepositoryRoot(myVcs, url);
+        if (newUrl != null) {
+          myRoots.add(newUrl);
+          return newUrl;
+        }
+      }
+      catch (SVNException e) {
+        //
       }
       return null;
     }

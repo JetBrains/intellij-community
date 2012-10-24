@@ -366,14 +366,10 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) {
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SVNException {
     final SVNWCClient client = vcs.createWCClient();
-    try {
-      SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      return (info == null) ? null : info.getRepositoryRootURL();
-    } catch (SVNException e) {
-      return null;
-    }
+    SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    return (info == null) ? null : info.getRepositoryRootURL();
   }
 
   public static boolean isWorkingCopyRoot(final File file) {

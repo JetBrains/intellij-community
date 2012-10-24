@@ -36,6 +36,10 @@ public class CommittedChangesAdapter implements CommittedChangesListener {
   public void changesCleared() {
   }
 
+  @Override
+  public void presentationChanged() {
+  }
+
   public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
   }
 }
