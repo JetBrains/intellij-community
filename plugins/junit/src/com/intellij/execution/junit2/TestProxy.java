@@ -267,8 +267,8 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public Integer getDuration() {
-    return getStatistics().getTime();
+  public Long getDuration() {
+    return (long) getStatistics().getTime();
   }
 
   @Override

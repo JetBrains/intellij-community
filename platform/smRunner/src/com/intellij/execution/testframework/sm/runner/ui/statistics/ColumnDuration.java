@@ -44,8 +44,8 @@ public class ColumnDuration extends BaseColumn implements Comparator<SMTestProxy
   }
 
   public int compare(final SMTestProxy proxy1, final SMTestProxy proxy2) {
-    final Integer duration1 = proxy1.getDuration();
-    final Integer duration2 = proxy2.getDuration();
+    final Long duration1 = proxy1.getDuration();
+    final Long duration2 = proxy2.getDuration();
 
     if (duration1 == null) {
       return duration2 == null ? 0 : -1;
