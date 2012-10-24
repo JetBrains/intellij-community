@@ -183,7 +183,7 @@ public class GitBranchUtil {
   @Nullable
   public static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName, @NotNull Hash hash,
                                                   @NotNull Collection<GitRemote> remotes) {
-    String stdName = fullBranchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
+    String stdName = stripRefsPrefix(fullBranchName);
 
     int slash = stdName.indexOf('/');
     if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
