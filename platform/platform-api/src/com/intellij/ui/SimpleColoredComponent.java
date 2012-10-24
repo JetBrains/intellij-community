@@ -625,9 +625,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
           g.drawString(fragment, offset, textBaseline + 1);
         }
 
+        if (shouldDrawDimmed()) {
+          color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 190);
+        }
+
         g.setColor(color);
         g.drawString(fragment, offset, textBaseline);
 
+        /*
         if (shouldDrawDimmed()) {
           float rgb[] = new float[3];
           color.getColorComponents(rgb);
@@ -639,6 +644,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
           }
           g.drawString(fragment, offset, textBaseline);
         }
+        */
       }
 
       // 1. Strikeout effect
