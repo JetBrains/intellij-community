@@ -32,13 +32,15 @@ public class CommitsModel implements ReadOnlyList<Commit> {
         for (int i = 0; i < commits.size(); i++) {
             Commit commit = commits.get(i);
             for (Commit parent : commit.getParents()) {
-                if (parent.wasRead()) {
-                    if (parent.index() - i > HIDE_LIMIT) {
+                if (parent.getChildren().size() == 1) {
+                    if (parent.wasRead()) {
+                        if (parent.index() - i > HIDE_LIMIT) {
+                            commitsHide.add(i + COUNT_SHOW, parent);
+                            commitsShow.add(parent.index() - COUNT_SHOW, parent);
+                        }
+                    } else {
                         commitsHide.add(i + COUNT_SHOW, parent);
-                        commitsShow.add(parent.index() - COUNT_SHOW, parent);
                     }
-                } else {
-                    commitsHide.add(i + COUNT_SHOW, parent);
                 }
             }
         }

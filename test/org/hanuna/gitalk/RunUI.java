@@ -30,14 +30,24 @@ public class RunUI {
         System.out.println(date.getTime() - time);
         time = date.getTime();
 
-        Commit[] ar = new Commit[list.size()];
         int k = 0;
         int count = 0;
+        int countBadEdges = 0;
         for (Commit c : list) {
             for (Commit par : c.getParents()) {
                 int l = par.index() - c.index();
                 if (l > 10) {
-                    ar[par.index() - 5] = list.get(par.index() - 5);
+                    ReadOnlyList<Commit> childrens = par.getChildren();
+                    if (childrens.size() > 10) {
+                        if (childrens.get(1).index() - childrens.get(0).index() > 20 &&
+                                childrens.get(2).index() - childrens.get(1).index() > 20) {
+                            countBadEdges++;
+                            System.out.println(par.getMessage());
+                            for (Commit ch : childrens) {
+                                System.out.println("   " + ch.getMessage());
+                            }
+                        }
+                    }
                     count++;
                 }
                 if (k < l) {
@@ -48,20 +58,22 @@ public class RunUI {
         System.out.println("max r:" + k);
 
         System.out.println("count:" + count);
+        System.out.println("countBadEdges:" + countBadEdges);
 
         date = new Date();
         System.out.println(date.getTime() - time);
 
+        if (1 == 0) {
+            CommitRowListBuilder builder = new CommitRowListBuilder(list);
+            List<RowOfNode> rows = builder.buildListLineOfNode();
 
-        CommitRowListBuilder builder = new CommitRowListBuilder(list);
-        List<RowOfNode> rows = builder.buildListLineOfNode();
 
+            date = new Date();
+            System.out.println(date.getTime() - time);
+            System.out.println(list.size());
 
-        date = new Date();
-        System.out.println(date.getTime() - time);
-        System.out.println(list.size());
-
-        new GitAlkUI(builder.build(), list);
+            new GitAlkUI(builder.build(), list);
+        }
         /*
         if (1 == 0) {
             for (int i = 0; i < list.size(); i++) {

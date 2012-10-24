@@ -4,7 +4,11 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.SimpleReadOnlyList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -13,6 +17,7 @@ class MutableCommit implements Commit {
     private final Hash hash;
     private boolean wasRead = false;
     private ReadOnlyList<Commit> parents;
+    private List<Commit> childrens = new ArrayList<Commit>(1);
     private String author;
     private String message;
     private long timeStamp;
@@ -20,6 +25,10 @@ class MutableCommit implements Commit {
 
     public MutableCommit(Hash hash) {
         this.hash = hash;
+    }
+
+    public void addChildren(Commit children) {
+        childrens.add(children);
     }
 
     public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, int index) {
@@ -48,6 +57,12 @@ class MutableCommit implements Commit {
     @Override
     public ReadOnlyList<Commit> getParents() {
         return parents;
+    }
+
+    @NotNull
+    @Override
+    public ReadOnlyList<Commit> getChildren() {
+        return new SimpleReadOnlyList<Commit>(childrens);
     }
 
     @NotNull

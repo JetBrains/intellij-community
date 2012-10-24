@@ -24,6 +24,9 @@ public interface Commit {
     public ReadOnlyList<Commit> getParents();
 
     @NotNull
+    public ReadOnlyList<Commit> getChildren();
+
+    @NotNull
     public String getMessage();
 
     @NotNull

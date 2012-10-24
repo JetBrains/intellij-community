@@ -37,6 +37,7 @@ public class CommitListBuilder {
         for (Hash hash : data.getParentsHash()) {
             MutableCommit parent = getCommit(hash);
             parents.add(parent);
+            parent.addChildren(commit);
         }
         removeCommit(data.getHash());
         commit.set(data, new SimpleReadOnlyList<Commit>(parents), commits.size());
