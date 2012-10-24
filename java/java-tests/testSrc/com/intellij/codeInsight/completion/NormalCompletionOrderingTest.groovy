@@ -474,4 +474,16 @@ import java.lang.annotation.Target;
     checkPreferredItems 0, 'myStep', 'myCurrentStep'
   }
 
+  public void testIfConditionStats() {
+    invokeCompletion(getTestName(false) + ".java")
+    myFixture.completeBasic()
+    myFixture.type('cont')
+    assertPreferredItems 1, 'contains', 'containsAll'
+    myFixture.lookup.currentItem = myFixture.lookupElements[0]
+    myFixture.type('\nc)) {\nif (set.')
+    myFixture.completeBasic()
+    myFixture.type('cont')
+    assertPreferredItems 0, 'contains', 'containsAll'
+  }
+
 }
