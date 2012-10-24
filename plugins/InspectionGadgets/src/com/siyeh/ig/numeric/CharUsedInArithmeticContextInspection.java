@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,30 +40,25 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "char.used.in.arithmetic.context.display.name");
+    return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "char.used.in.arithmetic.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.problem.descriptor");
   }
 
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result =
-      new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {
-      final PsiExpression binaryExpression =
-        (PsiExpression)parent;
+      final PsiExpression binaryExpression = (PsiExpression)parent;
       final PsiType type = binaryExpression.getType();
-      if (type instanceof PsiPrimitiveType &&
-          !type.equals(PsiType.CHAR)) {
+      if (type instanceof PsiPrimitiveType && !type.equals(PsiType.CHAR)) {
         final String typeText = type.getCanonicalText();
         result.add(new CharUsedInArithmeticContentCastFix(typeText));
       }
@@ -71,8 +67,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
     while (parent instanceof PsiPolyadicExpression) {
-      if (TypeUtils.expressionHasType((PsiExpression)parent,
-                                      CommonClassNames.JAVA_LANG_STRING)) {
+      if (ExpressionUtils.hasStringType((PsiExpression)parent)) {
         result.add(new CharUsedInArithmeticContentFix());
         break;
       }
@@ -82,36 +77,30 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     return result.toArray(new InspectionGadgetsFix[result.size()]);
   }
 
-  private static class CharUsedInArithmeticContentFix
-    extends InspectionGadgetsFix {
+  private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "char.used.in.arithmetic.context.quickfix");
+      return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiLiteralExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression =
-        (PsiLiteralExpression)element;
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final Object literal = literalExpression.getValue();
       if (!(literal instanceof Character)) {
         return;
       }
-      final String escaped = StringUtil.escapeStringCharacters(
-        literal.toString());
+      final String escaped = StringUtil.escapeStringCharacters(literal.toString());
       replaceExpression(literalExpression, '\"' + escaped + '"');
     }
   }
 
-  private static class CharUsedInArithmeticContentCastFix
-    extends InspectionGadgetsFix {
+  private static class CharUsedInArithmeticContentCastFix extends InspectionGadgetsFix {
 
     private final String typeText;
 
@@ -121,21 +110,18 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "char.used.in.arithmetic.context.cast.quickfix", typeText);
+      return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.cast.quickfix", typeText);
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiExpression)) {
         return;
       }
       final PsiExpression expression = (PsiExpression)element;
       final String expressionText = expression.getText();
-      replaceExpression(expression,
-                        '(' + typeText + ')' + expressionText);
+      replaceExpression(expression, '(' + typeText + ')' + expressionText);
     }
   }
 
@@ -144,8 +130,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     return new CharUsedInArithmeticContextVisitor();
   }
 
-  private static class CharUsedInArithmeticContextVisitor
-    extends BaseInspectionVisitor {
+  private static class CharUsedInArithmeticContextVisitor extends BaseInspectionVisitor {
+
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
@@ -158,11 +144,8 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       for (int i = 1; i < operands.length; i++) {
         final PsiExpression operand = operands[i];
         final PsiType rightType = operand.getType();
-        final PsiType expressionType =
-          TypeConversionUtil.calcTypeForBinaryExpression(
-            leftType, rightType, tokenType, true);
-        if (expressionType == null ||
-            expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        final PsiType expressionType = TypeConversionUtil.calcTypeForBinaryExpression(leftType, rightType, tokenType, true);
+        if (TypeUtils.isJavaLangString(expressionType)) {
           return;
         }
         if (PsiType.CHAR.equals(rightType)) {

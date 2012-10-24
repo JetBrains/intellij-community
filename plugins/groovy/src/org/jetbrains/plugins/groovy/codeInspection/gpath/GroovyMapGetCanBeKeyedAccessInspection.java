@@ -32,9 +32,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
 
@@ -106,9 +105,7 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
       }
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
 
-      if (qualifier == null ||
-          qualifier instanceof GrThisReferenceExpression ||
-          qualifier instanceof GrSuperReferenceExpression) {
+      if (qualifier == null || PsiUtil.isThisOrSuperRef(qualifier)) {
         return;
       }
 

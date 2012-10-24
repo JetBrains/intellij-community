@@ -396,11 +396,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   }
 
   @Override
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-
-  @Override
   @Nullable
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();

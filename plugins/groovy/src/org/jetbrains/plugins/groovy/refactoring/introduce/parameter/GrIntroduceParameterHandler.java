@@ -123,7 +123,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (scopes.size() == 0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
-    else if (scopes.size() == 1) {
+    else if (scopes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       final GrParametersOwner owner = scopes.get(0);
       final PsiElement toSearchFor;
       if (owner instanceof GrMethod) {

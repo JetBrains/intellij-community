@@ -5,8 +5,6 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
 * @author Dmitry Avdeev
 */
@@ -31,8 +29,8 @@ class TestRepository extends BaseRepository {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
-    return ContainerUtil.newArrayList(myTasks);
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+    return myTasks;
   }
 
   @Nullable

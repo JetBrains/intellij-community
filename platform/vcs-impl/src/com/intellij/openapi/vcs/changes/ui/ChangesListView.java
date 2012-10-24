@@ -451,14 +451,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    if (myMenuGroup != null) {
-      updateMenu();
-    }
-  }
-
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   private static class DragImageFactory {
     private static void drawSelection(JTable table, int column, Graphics g, final int width) {

@@ -65,7 +65,7 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!JavaTokenType.PLUS.equals(tokenType) || !hasStringType(expression)) {
+      if (!JavaTokenType.PLUS.equals(tokenType) || !ExpressionUtils.hasStringType(expression)) {
         return;
       }
       final PsiExpression[] operands = expression.getOperands();
@@ -83,7 +83,7 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
     }
 
     private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs) {
-      final boolean lhsIsString = hasStringType(lhs);
+      final boolean lhsIsString = ExpressionUtils.hasStringType(lhs);
       final PsiLiteralExpression lhsLiteral = ExpressionUtils.getLiteral(lhs);
       final PsiLiteralExpression rhsLiteral = ExpressionUtils.getLiteral(rhs);
       if (lhsLiteral != null && lhsIsString) {
@@ -103,7 +103,7 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       else if (ignoreNonStringLiterals || rhsLiteral == null || lhsIsString) {
         return false;
       }
-      final boolean rhsIsString = hasStringType(rhs);
+      final boolean rhsIsString = ExpressionUtils.hasStringType(rhs);
       if (rhsLiteral != null && rhsIsString) {
         final String value = (String)rhsLiteral.getValue();
         if ((value == null) || value.isEmpty()) {
@@ -118,11 +118,6 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
         return false;
       }
       return true;
-    }
-
-    private boolean hasStringType(PsiExpression expression) {
-      final PsiType type = expression.getType();
-      return (type != null) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     }
   }
 }

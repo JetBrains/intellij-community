@@ -65,10 +65,8 @@ public class GenericsUtil {
 
     if (type1 instanceof PsiArrayType && type2 instanceof PsiArrayType) {
       final PsiType componentType = getLeastUpperBound(((PsiArrayType)type1).getComponentType(),
-                                                       ((PsiArrayType)type2).getComponentType(), manager);
-      if (componentType != null) {
-        return componentType.createArrayType();
-      }
+                                                       ((PsiArrayType)type2).getComponentType(), compared, manager);
+      return componentType.createArrayType();
     }
     if (type1 instanceof PsiIntersectionType) {
       Set<PsiType> newConjuncts = new LinkedHashSet<PsiType>();

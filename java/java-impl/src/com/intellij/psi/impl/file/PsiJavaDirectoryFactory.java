@@ -17,6 +17,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -50,7 +51,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       }
       return "";
     }
-    return presentable ? FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl()) : "";
+    return presentable ? StringUtil.notNullize(FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl()), "") : "";
   }
 
   @Nullable

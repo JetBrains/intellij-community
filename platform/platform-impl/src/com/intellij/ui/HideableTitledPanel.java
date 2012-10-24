@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,13 +17,20 @@ import java.awt.event.MouseEvent;
  */
 public class HideableTitledPanel extends JPanel {
 
-  private TitledSeparator myTitledSeparator;
+  private final TitledSeparator myTitledSeparator;
+  private final boolean myAdjustWindow;
+
   private boolean myOn;
   private JComponent myContent;
   private Dimension myPreviousContentSize;
 
   public HideableTitledPanel(String title) {
+    this(title, true);
+  }
+
+  public HideableTitledPanel(String title, boolean adjustWindow) {
     super(new BorderLayout());
+    myAdjustWindow = adjustWindow;
     myTitledSeparator = new TitledSeparator(title, null);
     add(myTitledSeparator, BorderLayout.NORTH);
     myTitledSeparator.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -45,9 +53,15 @@ public class HideableTitledPanel extends JPanel {
     setOn(on);
   }
 
-  protected void setContentComponent(JComponent content) {
+  public void setContentComponent(@Nullable JComponent content) {
+    if (content == null && myContent != null) {
+      remove(myContent);
+    }
     myContent = content;
-    add(myContent, BorderLayout.CENTER);
+    if (myContent != null) {
+      myContent.setVisible(myOn);
+      add(myContent, BorderLayout.CENTER);
+    }
   }
 
   public void setOn(boolean on) {
@@ -77,7 +91,9 @@ public class HideableTitledPanel extends JPanel {
     myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowDown);
     myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowDown, 0.5f));
     myTitledSeparator.getLabel().setIconTextGap(5);
-    myContent.setVisible(true);
+    if (myContent != null) {
+      myContent.setVisible(true);
+    }
     adjustWindow();
     invalidate();
     repaint();
@@ -89,14 +105,17 @@ public class HideableTitledPanel extends JPanel {
     myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowRight, 0.5f));
     myTitledSeparator.getLabel()
       .setIconTextGap(5 + AllIcons.General.ComboArrowDown.getIconWidth() - AllIcons.General.ComboArrowRight.getIconWidth());
-    myContent.setVisible(false);
-    myPreviousContentSize = myContent.getSize();
+    if (myContent != null) {
+      myContent.setVisible(false);
+      myPreviousContentSize = myContent.getSize();
+    }
     adjustWindow();
     invalidate();
     repaint();
   }
 
   private void adjustWindow() {
+    if (!myAdjustWindow) return;
     final Window window = SwingUtilities.getWindowAncestor(this);
     if (window == null) return;
     final Dimension size = window.getSize();

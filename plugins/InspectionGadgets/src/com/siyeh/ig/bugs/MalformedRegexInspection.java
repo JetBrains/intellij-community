@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -33,21 +33,17 @@ public class MalformedRegexInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "malformed.regular.expression.display.name");
+    return InspectionGadgetsBundle.message("malformed.regular.expression.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     if (infos.length == 0) {
-      return InspectionGadgetsBundle.message(
-        "malformed.regular.expression.problem.descriptor1");
+      return InspectionGadgetsBundle.message("malformed.regular.expression.problem.descriptor1");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "malformed.regular.expression.problem.descriptor2",
-        infos[0]);
+      return InspectionGadgetsBundle.message("malformed.regular.expression.problem.descriptor2", infos[0]);
     }
   }
 
@@ -64,8 +60,7 @@ public class MalformedRegexInspection extends BaseInspection {
   private static class MalformedRegexVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
@@ -76,16 +71,14 @@ public class MalformedRegexInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!TypeUtils.expressionHasType(argument,
-                                       CommonClassNames.JAVA_LANG_STRING)) {
+      if (!ExpressionUtils.hasStringType(argument)) {
         return;
       }
       if (!PsiUtil.isConstantExpression(argument)) {
         return;
       }
       final PsiType regexType = argument.getType();
-      final String value = (String)
-        ConstantExpressionUtil.computeCastTo(argument, regexType);
+      final String value = (String)ConstantExpressionUtil.computeCastTo(argument, regexType);
       if (value == null) {
         return;
       }

@@ -42,9 +42,20 @@ public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
+    editor.setPurePaintingMode(true);
+    try {
+      doInit(editor, startLine, endLine, showFolding, showGutter);
+    }
+    finally {
+      editor.setPurePaintingMode(false);
+    }
+  }
+
+  private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    final int textImageWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
+    final int textImageWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil
+      .getScreenRectangle(1, 1).width);
     LOG.assertTrue(textImageWidth > 0, "TextWidth: "+textImageWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
@@ -97,13 +108,7 @@ public class EditorFragmentComponent extends JPanel {
     textGraphics.translate(0, -y1);
     textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
     final boolean wasVisible = editor.setCaretVisible(false);
-    editor.setPurePaintingMode(true);
-    try {
-      editor.getContentComponent().paint(textGraphics);
-    }
-    finally {
-      editor.setPurePaintingMode(false);
-    }
+    editor.getContentComponent().paint(textGraphics);
     if (wasVisible) {
       editor.setCaretVisible(true);
     }

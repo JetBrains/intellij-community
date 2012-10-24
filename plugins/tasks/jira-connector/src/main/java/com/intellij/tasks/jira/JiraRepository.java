@@ -53,11 +53,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     super(type);
   }
 
-  public List<Task> getIssues(@Nullable String request, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
     return getIssues(max, login());
   }
 
-  private List<Task> getIssues(int max, HttpClient httpClient) throws IOException, JDOMException {
+  private Task[] getIssues(int max, HttpClient httpClient) throws IOException, JDOMException {
     StringBuilder url = new StringBuilder(getUrl());
     url.append("/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?");
     url.append("tempMax=").append(max);
@@ -75,7 +75,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   public void setTaskState(Task task, TaskState state) throws Exception {
   }
 
-  private List<Task> processRSS(String url, HttpClient client) throws IOException, JDOMException {
+  private Task[] processRSS(String url, HttpClient client) throws IOException, JDOMException {
     GetMethod method = new GetMethod(url);
     configureHttpMethod(method);
     client.executeMethod(method);
@@ -92,7 +92,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (channel != null) {
       @SuppressWarnings({"unchecked"}) List<Element> children = channel.getChildren("item");
       LOG.info("JIRA: " + children.size() + " issues found");
-      return ContainerUtil.map(children, new Function<Element, Task>() {
+      final List<Task> tasks = ContainerUtil.map(children, new Function<Element, Task>() {
         public Task fun(Element o) {
           return new JiraTask(new JIRAIssueBean(getUrl(), o, false)) {
             @Override
@@ -102,11 +102,12 @@ public class JiraRepository extends BaseRepositoryImpl {
           };
         }
       });
+      return tasks.toArray(new Task[tasks.size()]);
     }
     else {
       LOG.warn("JIRA channel not found");
     }
-    return ContainerUtil.emptyList();
+    return Task.EMPTY_ARRAY;
   }
 
   private HttpClient login() throws Exception {
@@ -202,8 +203,8 @@ public class JiraRepository extends BaseRepositoryImpl {
       url.append("/si/jira.issueviews:issue-xml/");
       url.append(id).append('/').append(id).append(".xml");
 
-      List<Task> tasks = processRSS(url.toString(), login());
-      return tasks.size() == 0 ? null : tasks.get(0);
+      Task[] tasks = processRSS(url.toString(), login());
+      return tasks.length == 0 ? null : tasks[0];
     }
     catch (Exception e) {
       LOG.warn("Cannot get issue " + id + ": " + e.getMessage());

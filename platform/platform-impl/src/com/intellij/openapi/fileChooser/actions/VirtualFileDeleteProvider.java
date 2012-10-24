@@ -23,13 +23,16 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider");
@@ -52,18 +55,24 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        List<String> problems = ContainerUtil.newLinkedList();
         for (final VirtualFile file : files) {
           try {
             file.delete(this);
           }
           catch (IOException e) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                Messages.showMessageDialog(UIBundle.message("file.chooser.could.not.erase.file.or.folder.error.message", file.getName()),
-                                           UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-              }
-            });
+            LOG.info(e);
+            problems.add(file.getName());
           }
+        }
+        if (!problems.isEmpty()) {
+          boolean more = false;
+          if (problems.size() > 10) {
+            problems = problems.subList(0, 10);
+            more = true;
+          }
+          Messages.showMessageDialog("Could not erase files or folders:\n  " + StringUtil.join(problems, ",\n  ") + (more ? "\n  ..." : ""),
+                                     UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
         }
       }
     }

@@ -304,9 +304,18 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
       myParent = parent;
     }
 
-    myArtifactIdField.setText(myBuilder.getName());
-    myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
-    myVersionField.setText(myParent == null ? "1.0" : myParent.getMavenId().getVersion());
+    MavenId projectId = myBuilder.getProjectId();
+
+    if (projectId == null) {
+      myArtifactIdField.setText(myBuilder.getName());
+      myGroupIdField.setText(myParent == null ? myBuilder.getName() : myParent.getMavenId().getGroupId());
+      myVersionField.setText(myParent == null ? "1.0-SNAPSHOT" : myParent.getMavenId().getVersion());
+    }
+    else {
+      myArtifactIdField.setText(projectId.getArtifactId());
+      myGroupIdField.setText(projectId.getGroupId());
+      myVersionField.setText(projectId.getVersion());
+    }
 
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
     myInheritVersionCheckBox.setSelected(myBuilder.isInheritVersion());

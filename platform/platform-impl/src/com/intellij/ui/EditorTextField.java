@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
-  public void setText(@NotNull final String text) {
+  public void setText(@Nullable final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

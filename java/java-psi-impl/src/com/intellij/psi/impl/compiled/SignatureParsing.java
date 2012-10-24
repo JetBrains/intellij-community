@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -121,6 +122,15 @@ public class SignatureParsing {
     while (signature.current() != ';' && signature.current() != CharacterIterator.DONE) {
       switch (signature.current()) {
         case '$':
+          if (signature.getIndex() > 0) {
+            char previous = signature.previous();
+            signature.next();
+            boolean standAlone$ = !StringUtil.isJavaIdentifierPart(previous); // /$
+            if(standAlone$) {
+              canonicalText.append('$');
+              break;
+            }
+          }
         case '/':
         case '.':
           canonicalText.append('.');

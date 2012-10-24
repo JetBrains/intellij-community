@@ -51,7 +51,9 @@ class AbstractGitRootTest extends GitLightTest {
     createProjectStructure(project, projectStructure);
     createProjectStructure(project, contentRoots);
 
-    contentRoots.each { ((MockProjectRootManager)myPlatformFacade.getProjectRootManager(myProject)).myContentRoots << MockVirtualFile.fromPath(it, project)}
+    contentRoots.each {
+      ((MockProjectRootManager)myPlatformFacade.getProjectRootManager(project)).myContentRoots << MockVirtualFile.fromPath(it, project)
+    }
 
     project
   }

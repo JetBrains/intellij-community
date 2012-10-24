@@ -432,10 +432,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
-  @Override
-  public PsiMethodReceiver getMethodReceiver() {
-    return null; //todo parse cls
-  }
+
   @Override
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
@@ -445,5 +442,4 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   protected boolean isVisibilitySupported() {
     return true;
   }
-
 }

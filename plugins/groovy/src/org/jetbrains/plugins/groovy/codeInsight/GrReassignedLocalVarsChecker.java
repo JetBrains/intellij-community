@@ -58,6 +58,7 @@ public class GrReassignedLocalVarsChecker {
       return null;
     }
 
+    assert resolved != null;
     return getLeastUpperBoundByVar((GrVariable)resolved);
   }
 

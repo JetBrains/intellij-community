@@ -31,7 +31,9 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
   
   public void actionPerformed(AnActionEvent e) {
     String url = getIssueUrl(e);
-    BrowserUtil.launchBrowser(url);
+    if (url != null) {
+      BrowserUtil.launchBrowser(url);
+    }
   }
 
   @Override

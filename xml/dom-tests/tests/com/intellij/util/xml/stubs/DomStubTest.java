@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
@@ -68,12 +69,16 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   }
 
   protected ElementStub getRootStub(String filePath) {
-    PsiFile psiFile = myFixture.configureByFile(filePath);
+    return getRootStub(filePath, myFixture);
+  }
+
+  public static ElementStub getRootStub(String filePath, JavaCodeInsightTestFixture fixture) {
+    PsiFile psiFile = fixture.configureByFile(filePath);
 
     StubTreeLoader loader = StubTreeLoader.getInstance();
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
-    ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
+    ObjectStubTree stubTree = loader.readFromVFile(fixture.getProject(), file);
     assertNotNull(stubTree);
     ElementStub root = (ElementStub)stubTree.getRoot();
     assertNotNull(root);

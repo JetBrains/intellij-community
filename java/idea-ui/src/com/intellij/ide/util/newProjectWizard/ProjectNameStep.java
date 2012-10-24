@@ -28,6 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,15 +39,16 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectNameStep extends ModuleWizardStep {
+public class ProjectNameStep extends SettingsStep {
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
+  @Nullable
   protected final WizardMode myMode;
   private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
-  public ProjectNameStep(WizardContext wizardContext, final WizardMode mode) {
+  public ProjectNameStep(WizardContext wizardContext, @Nullable final WizardMode mode) {
     myWizardContext = wizardContext;
     myMode = mode;
     myNamePathComponent = new NamePathComponent(
@@ -62,10 +65,10 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent.setNameValue(initialProjectName);
     myNamePathComponent.getNameComponent().select(0, initialProjectName.length());
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+    myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 20, 0), 0, 0));
 
-    if (myWizardContext.getProject() == null) {
+    if (myWizardContext.getProject() == null && !myWizardContext.isTemplateMode()) {
       myNamePathComponent.add(new JLabel("Project format:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
@@ -83,15 +86,18 @@ public class ProjectNameStep extends ModuleWizardStep {
     myWizardContext.setProjectName(getProjectName());
     final String projectFileDirectory = getProjectFileDirectory();
     myWizardContext.setProjectFileDirectory(projectFileDirectory);
-    final ProjectBuilder moduleBuilder = myMode.getModuleBuilder();
-    myWizardContext.setProjectBuilder(moduleBuilder);
+    final ProjectBuilder moduleBuilder;
+    if (myMode != null) {
+      moduleBuilder = myMode.getModuleBuilder();
+      myWizardContext.setProjectBuilder(moduleBuilder);
+      if (moduleBuilder instanceof ModuleBuilder) { // no SourcePathsBuilder here !
+        ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
+      }
+      else if (moduleBuilder instanceof ProjectFromSourcesBuilderImpl) {
+        ((ProjectFromSourcesBuilderImpl)moduleBuilder).setBaseProjectPath(projectFileDirectory);
+      }
+    }
     myFormatPanel.updateData(myWizardContext);
-    if (moduleBuilder instanceof ModuleBuilder) { // no SourcePathsBuilder here !
-      ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
-    }
-    else if (moduleBuilder instanceof ProjectFromSourcesBuilderImpl) {
-      ((ProjectFromSourcesBuilderImpl)moduleBuilder).setBaseProjectPath(projectFileDirectory);
-    }
   }
 
   public Icon getIcon() {
@@ -163,5 +169,26 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
 
     return shouldContinue;
+  }
+
+  @NotNull
+  @Override
+  public JComponent getSettingsPanel() {
+    return getComponent();
+  }
+
+  @Override
+  public JComponent getExpertSettingsPanel() {
+    return null;
+  }
+
+  @Override
+  public SettingsStep addField(String label, JComponent field) {
+    return this;
+  }
+
+  @Override
+  public SettingsStep addExpertPanel(JComponent panel) {
+    return this;
   }
 }

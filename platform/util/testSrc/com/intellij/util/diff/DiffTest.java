@@ -24,11 +24,11 @@ import java.util.ArrayList;
  * @author dyoma
  */
 public class DiffTest extends TestCase {
-  private static final Object[] DATA_123 = new Object[]{"1", "2", "3"};
-  private static final Object[] DATA_AB = new Object[]{"a", "b"};
-  private static final Object[] DATA_12AB23 = new Object[]{"1", "2", "a", "b", "2", "3"};
-  private static final Object[] DATA_123_ = new Object[]{"x","y","z","1", "2","3","alpha","beta"};
-  private static final Object[] DATA_12AB23_ = new Object[]{"x","y","z","1", "2", "a", "b", "2", "3","alpha","beta"};
+  private static final Object[] DATA_123 = {"1", "2", "3"};
+  private static final Object[] DATA_AB = {"a", "b"};
+  private static final Object[] DATA_12AB23 = {"1", "2", "a", "b", "2", "3"};
+  private static final Object[] DATA_123_ = {"x","y","z","1", "2","3","alpha","beta"};
+  private static final Object[] DATA_12AB23_ = {"x","y","z","1", "2", "a", "b", "2", "3","alpha","beta"};
 
   public void testEqual() throws FilesTooBigForDiffException {
     Diff.Change change = Diff.buildChanges(DATA_123, DATA_123);
@@ -71,9 +71,9 @@ public class DiffTest extends TestCase {
     IntLCSTest.checkLastChange(change, 0, 0, 3, 0);
   }
 
-  public void testPerfomance() throws FilesTooBigForDiffException {
-    ArrayList first = new ArrayList();
-    ArrayList second = new ArrayList();
+  public void testPerformance() throws FilesTooBigForDiffException {
+    ArrayList<String> first = new ArrayList<String>();
+    ArrayList<String> second = new ArrayList<String>();
     int max = 1000;
     for (int i = 0; i < max; i++) {
       first.add(Integer.toString(i));

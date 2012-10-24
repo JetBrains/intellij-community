@@ -16,21 +16,22 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -81,21 +82,34 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                               final ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        //final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
-        //return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
-        return Boolean.TRUE;
-      }
-    }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
+    if (!wizardContext.isTemplateMode()) {
+      steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
+      steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          //final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
+          //return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
+          return Boolean.TRUE;
+        }
+      }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
+    }
     final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
     if (supportForFrameworksStep != null) {
       steps.add(supportForFrameworksStep);
     }
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
+  }
+
+  @Nullable
+  @Override
+  public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder, new Condition<SdkType>() {
+          @Override
+          public boolean value(SdkType sdk) {
+            return sdk instanceof JavaSdkType;
+          }
+        });
   }
 
   private static Icon getJavaModuleIcon() {

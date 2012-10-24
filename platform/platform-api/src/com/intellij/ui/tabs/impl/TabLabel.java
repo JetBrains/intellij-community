@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
@@ -35,6 +32,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,6 +47,21 @@ public class TabLabel extends JPanel {
     @Override
     protected boolean shouldDrawMacShadow() {
       return SystemInfo.isMac && !UIUtil.isUnderDarcula();
+    }
+
+    @Override
+    protected boolean shouldDrawDimmed() {
+      return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+      super.append(fragment, attributes, isMainText);
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+      super.append(fragment, attributes, tag);
     }
   };
   
@@ -75,7 +88,7 @@ public class TabLabel extends JPanel {
     myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
-    if (SystemInfo.isMac) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    if (myTabs.useSmallLabels()) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     setOpaque(false);
     setLayout(new BorderLayout());
 
@@ -255,7 +268,10 @@ public class TabLabel extends JPanel {
 
     final JBTabsPosition pos = myTabs.getTabsPosition();
     switch (pos) {
-      case top: case bottom: size.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1; break;
+      case top:
+      case bottom:
+        if (myTabs.hasUnderline()) size.height += TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT - 1;
+        break;
       case left: case right: size.width += getSelectedOffset(); break;
     }
 
@@ -299,11 +315,11 @@ public class TabLabel extends JPanel {
         myLabel.setIcon(hasIcons() ? myIcon : null);
 
         if (text != null) {
-          text.appendToComponent(myLabel);
+          SimpleColoredText derive = myTabs.useBoldLabels() ? text.derive(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true) : text;
+          derive.appendToComponent(myLabel);
         }
       }
     }, false);
-
 
     invalidateIfNeeded();
   }

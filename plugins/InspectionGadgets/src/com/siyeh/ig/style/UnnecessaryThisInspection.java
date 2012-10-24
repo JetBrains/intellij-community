@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,8 +29,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class UnnecessaryThisInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAssignments = false;
 
   @Override
   @NotNull
@@ -39,8 +47,14 @@ public class UnnecessaryThisInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.this.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.this.ignore.assignments.option"), this,
+                                          "ignoreAssignments");
   }
 
   @Override
@@ -52,8 +66,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.this.remove.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
@@ -75,31 +88,29 @@ public class UnnecessaryThisInspection extends BaseInspection {
     return new UnnecessaryThisVisitor();
   }
 
-  private static class UnnecessaryThisVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiReferenceParameterList parameterList =
-        expression.getParameterList();
+      final PsiReferenceParameterList parameterList = expression.getParameterList();
       if (parameterList == null) {
         return;
       }
       if (parameterList.getTypeArguments().length > 0) {
         return;
       }
-      final PsiExpression qualifierExpression =
-        expression.getQualifierExpression();
+      final PsiExpression qualifierExpression = expression.getQualifierExpression();
       if (!(qualifierExpression instanceof PsiThisExpression)) {
         return;
       }
-      final PsiThisExpression thisExpression =
-        (PsiThisExpression)qualifierExpression;
-      final PsiJavaCodeReferenceElement qualifier =
-        thisExpression.getQualifier();
+      final PsiThisExpression thisExpression = (PsiThisExpression)qualifierExpression;
+      final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       final String referenceName = expression.getReferenceName();
       if (referenceName == null) {
+        return;
+      }
+      if (ignoreAssignments && PsiUtil.isAccessedForWriting(expression)) {
         return;
       }
       final PsiElement parent = expression.getParent();
@@ -114,8 +125,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
           return;
         }
         final PsiVariable variable = (PsiVariable)target;
-        if (!VariableSearchUtils.variableNameResolvesToTarget(
-          referenceName, variable, expression)) {
+        if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
         registerError(thisExpression);
@@ -126,43 +136,31 @@ public class UnnecessaryThisInspection extends BaseInspection {
           return;
         }
         if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression callExpression =
-            (PsiCallExpression)parent;
-          final PsiMethod calledMethod =
-            callExpression.resolveMethod();
+          final PsiCallExpression callExpression = (PsiCallExpression)parent;
+          final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == null) {
             return;
           }
           final String methodName = calledMethod.getName();
-          PsiClass parentClass =
-            ClassUtils.getContainingClass(expression);
+          PsiClass parentClass = ClassUtils.getContainingClass(expression);
           final Project project = expression.getProject();
-          final JavaPsiFacade psiFacade =
-            JavaPsiFacade.getInstance(project);
-          final PsiResolveHelper resolveHelper =
-            psiFacade.getResolveHelper();
+          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+          final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
               registerError(thisExpression);
             }
-            final PsiMethod[] methods =
-              parentClass.findMethodsByName(methodName, true);
+            final PsiMethod[] methods = parentClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
-              final PsiClass containingClass =
-                method.getContainingClass();
-              if (resolveHelper.isAccessible(method,
-                                             expression, containingClass)) {
-                if (method.hasModifierProperty(
-                  PsiModifier.PRIVATE) &&
-                    !PsiTreeUtil.isAncestor(containingClass,
-                                            expression, true)) {
+              final PsiClass containingClass = method.getContainingClass();
+              if (resolveHelper.isAccessible(method, expression, containingClass)) {
+                if (method.hasModifierProperty(PsiModifier.PRIVATE) && !PsiTreeUtil.isAncestor(containingClass, expression, true)) {
                   continue;
                 }
                 return;
               }
             }
-            parentClass =
-              ClassUtils.getContainingClass(parentClass);
+            parentClass = ClassUtils.getContainingClass(parentClass);
           }
         }
         else {
@@ -171,23 +169,19 @@ public class UnnecessaryThisInspection extends BaseInspection {
             return;
           }
           final PsiVariable variable = (PsiVariable)target;
-          if (!VariableSearchUtils.variableNameResolvesToTarget(
-            referenceName, variable, expression)) {
+          if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }
-          PsiClass parentClass =
-            ClassUtils.getContainingClass(expression);
+          PsiClass parentClass = ClassUtils.getContainingClass(expression);
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
               registerError(thisExpression);
             }
-            final PsiField field =
-              parentClass.findFieldByName(referenceName, true);
+            final PsiField field = parentClass.findFieldByName(referenceName, true);
             if (field != null) {
               return;
             }
-            parentClass =
-              ClassUtils.getContainingClass(parentClass);
+            parentClass = ClassUtils.getContainingClass(parentClass);
           }
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,21 @@ import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleDateFormatWithoutLocaleInspection
-  extends BaseInspection {
+public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instantiating.simpledateformat.without.locale.display.name");
+    return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "instantiating.simpledateformat.without.locale.problem.descriptor");
+    return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor");
   }
 
   @Override
@@ -46,23 +43,21 @@ public class SimpleDateFormatWithoutLocaleInspection
     return new SimpleDateFormatWithoutLocaleVisitor();
   }
 
-  private static class SimpleDateFormatWithoutLocaleVisitor
-    extends BaseInspectionVisitor {
+  private static class SimpleDateFormatWithoutLocaleVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!TypeUtils.expressionHasType(expression,
-                                       "java.text.SimpleDateFormat")) {
+      if (!ExpressionUtils.hasType(expression, "java.text.SimpleDateFormat")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;
       }
-      final PsiExpression[] args = argumentList.getExpressions();
-      for (PsiExpression arg : args) {
-        if (TypeUtils.expressionHasType(arg, "java.util.Locale")) {
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      for (PsiExpression argument : arguments) {
+        if (ExpressionUtils.hasType(argument, "java.util.Locale")) {
           return;
         }
       }

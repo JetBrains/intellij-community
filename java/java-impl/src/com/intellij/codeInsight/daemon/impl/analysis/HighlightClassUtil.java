@@ -207,7 +207,7 @@ public class HighlightClassUtil {
         // , or a compile-time error occurs.
         //  However, a local class declaration may be shadowed (?6.3.1)
         //  anywhere inside a class declaration nested within the local class declaration's scope.
-        if (element instanceof PsiMethod || element instanceof PsiClass) {
+        if (element instanceof PsiMethod || element instanceof PsiClass || (element instanceof PsiCodeBlock && element.getParent() instanceof PsiClassInitializer)) {
           checkSiblings = false;
         }
       }
@@ -836,11 +836,15 @@ public class HighlightClassUtil {
     PsiClass targetClass = aClass.getSuperClass();
     if (targetClass == null) return null;
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
-      PsiClass outerClass = targetClass.getContainingClass();
-      if (outerClass != null) {
-        PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
-        return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+    if (qualifier != null) {
+      if (PsiUtil.isInnerClass(targetClass)) {
+        PsiClass outerClass = targetClass.getContainingClass();
+        if (outerClass != null) {
+          PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
+          return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
+        }
+      } else {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, "'" + HighlightUtil.formatClass(targetClass) + "' is not an inner class");
       }
     }
     return null;

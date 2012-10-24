@@ -74,6 +74,11 @@ public class GridCellImpl implements GridCell {
       }
 
       @Override
+      public boolean useSmallLabels() {
+        return true;
+      }
+
+      @Override
       protected Color getFocusedBottomFillColor() {
         return new Color(194, 203, 219);
       }

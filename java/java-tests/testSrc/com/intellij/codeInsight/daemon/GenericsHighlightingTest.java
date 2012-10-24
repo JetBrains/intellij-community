@@ -136,7 +136,9 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA77991() throws Exception { doTest(false); }
   public void testIDEA80386() throws Exception { doTest(false); }
   public void testIDEA66311() throws Exception { doTest17Incompatibility(); }
+  public void testIDEA67672() throws Exception { doTest17Incompatibility(); }
   public void testIDEA88895() throws Exception { doTest17Incompatibility(); }
+  public void testIDEA67667() throws Exception { doTest17Incompatibility(); }
   public void testIDEA66311_16() throws Exception { doTest(false); }
   public void testIDEA76283() throws Exception { doTest(false); }
   public void testIDEA74899() throws Exception { doTest(false); }
@@ -147,11 +149,43 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA57340() throws Exception { doTest(false); }
   public void testIDEA89771() throws Exception { doTest(false); }
   public void testIDEA89801() throws Exception { doTest(false); }
+  public void testIDEA67681() throws Exception { doTest(false); }
+  public void testIDEA67599() throws Exception { doTest(false); }
+  public void testIDEA57668() throws Exception { doTest(false); }
+  public void testIDEA57667() throws Exception { doTest(false); }
+  public void testIDEA57650() throws Exception { doTest(false); }
+  public void testIDEA57378() throws Exception { doTest(false); }
+  public void testIDEA57557() throws Exception { doTest(false); }
+  public void testIDEA57563() throws Exception { doTest(false); }
+  public void testIDEA57275() throws Exception { doTest(false); }
+  public void testIDEA57533() throws Exception { doTest(false); }
+  public void testIDEA57509() throws Exception { doTest(false); }
+  public void testIDEA57410() throws Exception { doTest(false); }
+  public void testIDEA57411() throws Exception { doTest(false); }
+  public void testIDEA57484() throws Exception { doTest(false); }
+  public void testIDEA57485() throws Exception { doTest(false); }
+  public void testIDEA57486() throws Exception { doTest(false); }
+  public void testIDEA57492() throws Exception { doTest(false); }
+  public void testIDEA57493() throws Exception { doTest(false); }
+  public void testIDEA57495() throws Exception { doTest(false); }
+  public void testIDEA57494() throws Exception { doTest(false); }
+  public void testIDEA57496() throws Exception { doTest(false); }
+  public void testIDEA57264() throws Exception { doTest(false); }
+  public void testIDEA57315() throws Exception { doTest(false); }
+  public void testIDEA57346() throws Exception { doTest(false); }
+  public void testIDEA57284() throws Exception { doTest(false); }
+  public void testIDEA57286() throws Exception { doTest(false); }
+  public void testIDEA57307() throws Exception { doTest(true); }
+  public void testIDEA57308() throws Exception { doTest(false); }
+  public void testIDEA57310() throws Exception { doTest(false); }
+  public void testIDEA57311() throws Exception { doTest(false); }
+  public void testIDEA57309() throws Exception { doTest(false); }
   public void testInconvertibleTypes() throws Exception { doTest(false); }
   public void testIncompatibleReturnType() throws Exception { doTest(false); }
   public void testContinueInferenceAfterFirstRawResult() throws Exception { doTest(false); }
   public void testStaticOverride() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
+  public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

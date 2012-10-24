@@ -48,7 +48,7 @@ public class MergeIfAndIntention extends Intention {
 
     final GrExpression childCondition = childStatement.getCondition();
     final String childConditionText;
-    if (ParenthesesUtils.getPrecendence(childCondition)
+    if (ParenthesesUtils.getPrecedence(childCondition)
         > ParenthesesUtils.AND_PRECEDENCE) {
       childConditionText = '(' + childCondition.getText() + ')';
     } else {
@@ -57,7 +57,7 @@ public class MergeIfAndIntention extends Intention {
 
     final GrExpression parentCondition = parentStatement.getCondition();
     final String parentConditionText;
-    if (ParenthesesUtils.getPrecendence(parentCondition)
+    if (ParenthesesUtils.getPrecedence(parentCondition)
         > ParenthesesUtils.AND_PRECEDENCE) {
       parentConditionText = '(' + parentCondition.getText() + ')';
     } else {

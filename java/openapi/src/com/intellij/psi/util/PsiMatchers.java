@@ -71,7 +71,7 @@ public class PsiMatchers {
     };
   }
 
-  public static PsiMatcherExpression hasClass(final Class[] classes) {
+  public static PsiMatcherExpression hasClass(final Class... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

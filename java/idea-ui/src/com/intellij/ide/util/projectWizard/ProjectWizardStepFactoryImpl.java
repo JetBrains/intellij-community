@@ -15,16 +15,16 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
-import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createNameAndLocationStep(final WizardContext wizardContext) {
-    return new ProjectNameStep(wizardContext);
+    return new ProjectNameStep(wizardContext, null);
   }
 
   /**
@@ -136,5 +136,15 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
       return new SupportForFrameworksStep(builder, container);
     }
     return null;
+  }
+
+  @Override
+  public SettingsStep createSettingsStep(WizardContext context) {
+    return new ProjectSettingsStep(context);
+  }
+
+  @Override
+  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+   return new JavaSettingsStep(context, moduleBuilder, sdkFilter);
   }
 }

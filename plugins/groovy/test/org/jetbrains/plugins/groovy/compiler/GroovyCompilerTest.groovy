@@ -218,23 +218,25 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       super.runTest()
     }
     catch (Throwable e) {
-      def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
-      if (ideaLog.exists()) {
-        println "\n\nIdea Log:"
-        def limit = 20000
-        def logText = ideaLog.text
-        println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
-      }
-      def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
-      if (makeLog.exists()) {
-        println "\n\nServer Log:"
-        println makeLog.text
-      }
+      printLogs()
       throw e
     }
-    finally {
-      System.out.flush()
+  }
+
+  private static void printLogs() {
+    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
+    if (ideaLog.exists()) {
+      println "\n\nIdea Log:"
+      def limit = 20000
+      def logText = ideaLog.text
+      println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
     }
+    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    if (makeLog.exists()) {
+      println "\n\nServer Log:"
+      println makeLog.text
+    }
+    System.out.flush()
   }
 
   public void testMakeInTests() throws Throwable {
@@ -724,7 +726,6 @@ public class Main {
 
     def messages = make()
     assert messages 
-    println messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
@@ -756,6 +757,23 @@ string
 """
  } '''
     myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {} '
+
+    assertEmpty make()
+  }
+
+  public void "test inner java class references with incremental recompilation"() {
+    def bar1 = myFixture.addFileToProject('Bar1.groovy', 'class Bar1 extends Bar2 { } ')
+    myFixture.addFileToProject('Bar2.java', 'class Bar2 extends Bar3 { } ')
+    def bar3 = myFixture.addFileToProject('Bar3.groovy', 'class Bar3 { Bar1 property } ')
+
+    myFixture.addClass("package foo; public class Outer { public static class Inner { } }")
+    def using = myFixture.addFileToProject('UsingInner.groovy', 'import foo.Outer; class UsingInner extends Bar1 { Outer.Inner property } ')
+
+    assertEmpty make()
+
+    touch bar1.virtualFile
+    touch bar3.virtualFile
+    touch using.virtualFile
 
     assertEmpty make()
   }

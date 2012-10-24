@@ -79,7 +79,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     final StringBuilder text = new StringBuilder();
     for (PsiExpression operand : operands) {
       if (operandToReplace != null && !replaced) {
-        if (TypeUtils.expressionHasType(operand, CommonClassNames.JAVA_LANG_STRING)) {
+        if (ExpressionUtils.hasStringType(operand)) {
           seenString = true;
         }
         if (text.length() > 0) {
@@ -123,7 +123,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         return "String.valueOf((Object)null)";
       }
     }
-    if (seenString || TypeUtils.expressionHasType(operandToReplace, CommonClassNames.JAVA_LANG_STRING)) {
+    if (seenString || ExpressionUtils.hasStringType(operandToReplace)) {
       return operandToReplace.getText();
     }
     return "String.valueOf(" + operandToReplace.getText() + ')';
@@ -169,7 +169,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
-      if (!TypeUtils.expressionHasType(expression, CommonClassNames.JAVA_LANG_STRING)) {
+      if (!ExpressionUtils.hasStringType(expression)) {
         return;
       }
       final PsiExpression[] operands = expression.getOperands();

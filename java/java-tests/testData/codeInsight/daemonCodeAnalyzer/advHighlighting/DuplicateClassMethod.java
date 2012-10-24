@@ -44,7 +44,7 @@ class cont {
         class B {
         }
         {
-            <error descr="Duplicate class: 'B'">class B</error> {
+            class B {
             }
         }
         <error descr="Duplicate class: 'B'">class B</error> {

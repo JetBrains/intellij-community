@@ -28,11 +28,14 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
@@ -63,7 +66,7 @@ public class GrReferenceAdjuster {
     if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
       result = shortenReferenceInner((GrQualifiedReference<?>)element, addImports, incomplete);
     }
-    else if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() instanceof GrThisSuperReferenceExpression) {
+    else if (element instanceof GrReferenceExpression && PsiUtil.isSuperReference(((GrReferenceExpression)element).getQualifier())) {
       result = shortenReferenceInner((GrReferenceExpression)element, addImports, incomplete);
     }
 
@@ -81,7 +84,7 @@ public class GrReferenceAdjuster {
   private static <Qualifier extends PsiElement> boolean shortenReferenceInner(GrQualifiedReference<Qualifier> ref, boolean addImports, boolean incomplete) {
 
     final Qualifier qualifier = ref.getQualifier();
-    if (qualifier == null || qualifier instanceof GrSuperReferenceExpression || cannotShortenInContext(ref)) {
+    if (qualifier == null || PsiUtil.isSuperReference(qualifier) || cannotShortenInContext(ref)) {
       return false;
     }
 
@@ -173,7 +176,7 @@ public class GrReferenceAdjuster {
     }
 
     if (qualifier instanceof GrExpression) {
-      if (qualifier instanceof GrThisReferenceExpression) return true;
+      if (qualifier instanceof GrReferenceExpression && PsiUtil.isThisReference(qualifier)) return true;
       if (qualifier instanceof GrReferenceExpression && seemsToBeQualifiedClassName((GrExpression)qualifier)) {
         final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiClass || resolved instanceof PsiPackage) return true;

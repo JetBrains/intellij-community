@@ -60,7 +60,7 @@ public class GitCrlfDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[] { getOKAction(), getCancelAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET) };
+    return new Action[] { getHelpAction(), getOKAction(), getCancelAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET) };
   }
 
   @Override
@@ -103,6 +103,12 @@ public class GitCrlfDialog extends DialogWrapper {
 
   public boolean dontWarnAgain() {
     return myDontWarn.isSelected();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.CrlfWarning";
   }
 
 }

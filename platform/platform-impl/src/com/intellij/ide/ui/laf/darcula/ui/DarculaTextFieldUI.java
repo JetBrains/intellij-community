@@ -54,7 +54,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final Container parent = c.getParent();
     if (parent != null) {
       g.setColor(parent.getBackground());
-      g.fillRect(0,0,c.getWidth(), c.getHeight());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
     final Border border = c.getBorder();
     if (border instanceof DarculaTextBorder) {
@@ -67,10 +67,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g.fillRoundRect(insets.left-5, insets.top-2, width - insets.width() + 10, height - insets.height() + 6, 5, 5);
+        g.fillRoundRect(insets.left - 5, insets.top - 2, width - insets.width() + 10, height - insets.height() + 6, 5, 5);
         config.restore();
       } else {
-        g.fillRect(insets.left-5, insets.top-2, width - insets.width() + 12, height - insets.height() + 6);
+        g.fillRect(insets.left - 5, insets.top - 2, width - insets.width() + 12, height - insets.height() + 6);
       }
     } else {
       super.paintBackground(g);

@@ -39,3 +39,12 @@ public class Bug {
 
 class SubClass extends Bug {
 }
+
+class A67678
+{
+      private void foo(){}
+      <T extends A67678 & Cloneable> void bar(T x)
+      {
+          x.<error descr="'foo()' has private access in 'A67678'">foo</error>();
+      }
+}

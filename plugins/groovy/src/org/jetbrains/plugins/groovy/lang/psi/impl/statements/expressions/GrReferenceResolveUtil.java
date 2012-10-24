@@ -19,27 +19,32 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
@@ -84,8 +89,8 @@ public class GrReferenceResolveUtil {
         if (!processQualifier(processor, qualifier, place)) return false;
       }
 
-      if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
-          qualifier instanceof GrThisReferenceExpression) {
+      if (qualifier instanceof GrReferenceExpression &&
+          ("class".equals(((GrReferenceExpression)qualifier).getReferenceName()) || PsiUtil.isThisReference(qualifier))) {
         if (!processIfJavaLangClass(processor, qualifier.getType(), qualifier, place)) return false;
       }
     }
@@ -105,7 +110,7 @@ public class GrReferenceResolveUtil {
   }
 
   private static boolean processIfJavaLangClass(ResolverProcessor processor,
-                                               PsiType type,
+                                               @Nullable PsiType type,
                                                GroovyPsiElement resolveContext,
                                                GrReferenceExpression place) {
     if (!(type instanceof PsiClassType)) return true;
@@ -163,7 +168,7 @@ public class GrReferenceResolveUtil {
       }
       else {
         if (!processQualifierType(processor, qualifierType, state, place)) return false;
-        if (qualifier instanceof GrReferenceExpression) {
+        if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
           PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
           if (resolved instanceof PsiClass) { //omitted .class
             PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, place.getResolveScope());
@@ -266,4 +271,66 @@ public class GrReferenceResolveUtil {
     return TypesUtil.getJavaLangObject(ref);
   }
 
+  public static boolean resolveThisExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {
+    GrExpression qualifier = ref.getQualifier();
+
+    if (qualifier == null) {
+      final PsiElement parent = ref.getParent();
+      if (parent instanceof GrConstructorInvocation) {
+        GroovyResolveResult[] res = ((GrConstructorInvocation)parent).multiResolve(false);
+        ContainerUtil.addAll(results, res);
+        return true;
+      }
+
+      PsiClass aClass = PsiUtil.getContextClass(ref);
+      if (aClass == null) return false;
+
+      results.add(new GroovyResolveResultImpl(aClass, null, null, PsiSubstitutor.EMPTY, true, true));
+      return true;
+    }
+    else {
+      if (!(qualifier instanceof GrReferenceExpression)) return false;
+
+      GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
+      PsiElement resolved = result.getElement();
+      if (!(resolved instanceof PsiClass)) return false;
+      if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, false)) return false;
+
+      results.add(result);
+      return true;
+    }
+  }
+
+  public static boolean resolveSuperExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {
+    GrExpression qualifier = ref.getQualifier();
+
+    PsiClass aClass;
+    if (qualifier == null) {
+      final PsiElement parent = ref.getParent();
+      if (parent instanceof GrConstructorInvocation) {
+        GroovyResolveResult[] res = ((GrConstructorInvocation)parent).multiResolve(false);
+        ContainerUtil.addAll(results, res);
+        return true;
+      }
+
+      aClass = PsiUtil.getContextClass(ref);
+      if (aClass == null) return false;
+    }
+    else {
+      if (!(qualifier instanceof GrReferenceExpression)) return false;
+
+      GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
+      PsiElement resolved = result.getElement();
+      if (!(resolved instanceof PsiClass)) return false;
+      if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, false)) return false;
+
+      aClass = (PsiClass)resolved;
+    }
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return true; //no super class, but the reference is definitely super-reference
+
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+    results.add(new GroovyResolveResultImpl(superClass, null, null, superClassSubstitutor, true, true));
+    return true;
+  }
 }

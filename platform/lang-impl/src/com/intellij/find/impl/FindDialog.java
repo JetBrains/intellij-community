@@ -1091,7 +1091,6 @@ public class FindDialog extends DialogWrapper {
         myRbCustomScope.setSelected(true);
 
         myScopeCombo.setEnabled(true);
-        myScopeCombo.init(myProject, true, true, myModel.getCustomScopeName());
 
         myCbWithSubdirectories.setEnabled(false);
         myDirectoryComboBox.setEnabled(false);

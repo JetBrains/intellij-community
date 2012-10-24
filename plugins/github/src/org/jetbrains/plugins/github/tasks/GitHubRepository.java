@@ -78,7 +78,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     return getIssues(query);
   }
 
@@ -88,7 +88,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private List<Task> getIssues(@Nullable String query) throws Exception {
+  private Task[] getIssues(@Nullable String query) throws Exception {
     String path;
     boolean noQuery = StringUtil.isEmpty(query);
     if (!noQuery) {
@@ -119,7 +119,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private List<Task> parseTasksFromArray(JsonArray issuesArray) {
+  private Task[] parseTasksFromArray(JsonArray issuesArray) {
     List<Task> tasks = new ArrayList<Task>();
     for (JsonElement element : issuesArray) {
       Task issue = createIssue(element.getAsJsonObject());
@@ -130,7 +130,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
         tasks.add(issue);
       }
     }
-    return tasks;
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   @NotNull

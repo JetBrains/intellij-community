@@ -18,6 +18,7 @@ package git4idea.roots
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitGTestUtil
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -36,9 +37,9 @@ class GitRootDetectorTest extends AbstractGitRootTest {
     super.setUp();
   }
 
-  @Override
+  @After
   void tearDown() {
-    super.tearDown()
+    super.tearDown();
   }
 
   @Test
@@ -200,7 +201,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
     assertRoots(expected.roots, actual.roots)
   }
 
-  String roots(Collection roots) {
+  static String roots(Collection roots) {
     "\nRoots:${roots.collect {"\n  * $it"}}\n"
   }
 
@@ -208,7 +209,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
     assertEquals(GitGTestUtil.toAbsolute(expectedRelativePaths, myProject).toSet(), getPaths(actual).toSet())
   }
 
-  Collection<String> getPaths(Collection<VirtualFile> files) {
+  static Collection<String> getPaths(Collection<VirtualFile> files) {
     files.collect { it.path }
   }
 

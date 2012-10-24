@@ -21,6 +21,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public interface DarculaColors {
-  Color BLUE = new Color(46, 93, 188);
+  Color BLUE = new Color(0x589df6);
   Color RED = new Color(255, 100, 100);
 }

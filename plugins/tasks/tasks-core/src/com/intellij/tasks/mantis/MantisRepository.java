@@ -65,22 +65,22 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String request, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
     MantisConnectPortType soap = createSoap();
-    List<Task> result = new ArrayList<Task>(max);
+    List<Task> tasks = new ArrayList<Task>(max);
     int page = 1;
     int issuesOnPage = StringUtils.isEmpty(request) ? max : max * request.length() * 5;
     while (true) {
       final List<Task> issuesFromPage = getIssues(page, issuesOnPage, soap);
       final List<Task> filteredTasks = TaskSearchSupport.filterTasks(request != null ? request : "", issuesFromPage);
-      result.addAll(filteredTasks);
-      if (issuesFromPage.size() < issuesOnPage || result.size() >= max) {
+      tasks.addAll(filteredTasks);
+      if (issuesFromPage.size() < issuesOnPage || tasks.size() >= max) {
         break;
       }
       page++;
     }
-    result = result.subList(0, Math.min(max, result.size()));
-    return result;
+    tasks = tasks.subList(0, Math.min(max, tasks.size()));
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   private List<Task> getIssues(final int page, final int issuesOnPage, final MantisConnectPortType soap) throws Exception {

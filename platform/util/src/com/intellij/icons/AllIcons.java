@@ -83,7 +83,7 @@ public class AllIcons {
     public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.png"); // 16x16
     public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
-    public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 16x16
+    public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 14x14
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.png"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/actions/properties.png"); // 16x16
@@ -825,7 +825,6 @@ public class AllIcons {
   
   public static class ObjectBrowser {
     public static final Icon AbbreviatePackageNames = IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"); // 16x16
-    public static final Icon Browser = IconLoader.getIcon("/objectBrowser/browser.png"); // 16x16
     public static final Icon CompactEmptyPackages = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png"); // 16x16
     public static final Icon FlattenPackages = IconLoader.getIcon("/objectBrowser/flattenPackages.png"); // 16x16
     public static final Icon ShowEditorHighlighting = IconLoader.getIcon("/objectBrowser/showEditorHighlighting.png"); // 16x16

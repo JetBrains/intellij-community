@@ -173,6 +173,8 @@ public class JavaCompletionSorting {
     PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
 
     if (itemType != null) {
+      assert itemType.isValid() : item + "; " + item.getClass();
+      
       for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
         final PsiType defaultType = expectedInfo.getDefaultType();
         final PsiType expectedType = expectedInfo.getType();

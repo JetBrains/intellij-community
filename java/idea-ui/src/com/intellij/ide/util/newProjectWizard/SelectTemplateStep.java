@@ -15,8 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
@@ -26,7 +25,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,9 +35,7 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -74,19 +70,24 @@ public class SelectTemplateStep extends ModuleWizardStep {
   private SearchTextField mySearchField;
   private JTextPane myDescriptionPane;
   private JPanel myDescriptionPanel;
+  private JPanel myExpertPlaceholder;
+  private HideableTitledPanel myExpertPanel = new HideableTitledPanel("E&xpert Settings", false);
 
   private final WizardContext myContext;
   private final StepSequence mySequence;
+  private SettingsStep mySettingsStep;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myBuilder;
   private MinusculeMatcher[] myMatchers;
+  private ModuleBuilder myModuleBuilder;
 
   public SelectTemplateStep(WizardContext context, StepSequence sequence) {
 
     myContext = context;
     mySequence = sequence;
     Messages.installHyperlinkSupport(myDescriptionPane);
+    myExpertPlaceholder.add(myExpertPanel, BorderLayout.CENTER);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
@@ -182,8 +183,13 @@ public class SelectTemplateStep extends ModuleWizardStep {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         ProjectTemplate template = getSelectedTemplate();
+        myModuleBuilder = template == null ? null : template.createModuleBuilder();
+        mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.createSettingsStep(myContext);
+        if (mySettingsStep == null) {
+          mySettingsStep = ProjectWizardStepFactory.getInstance().createSettingsStep(myContext);
+        }
         setupPanels(template);
-        mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
+        mySequence.setType(myModuleBuilder == null ? null : myModuleBuilder.getBuilderId());
         myContext.requestWizardButtonsUpdate();
       }
     });
@@ -199,7 +205,7 @@ public class SelectTemplateStep extends ModuleWizardStep {
     });
     myDescriptionPanel.setVisible(false);
     mySettingsPanel.setVisible(false);
-
+    myExpertPanel.setVisible(false);
 
     new AnAction() {
       @Override
@@ -231,34 +237,37 @@ public class SelectTemplateStep extends ModuleWizardStep {
        }
       }
     });
-
   }
 
   private void setupPanels(@Nullable ProjectTemplate template) {
     if (mySettingsPanel.getComponentCount() > 0) {
       mySettingsPanel.remove(0);
     }
+    myExpertPanel.setContentComponent(null);
+    JComponent expertSettingsPanel = null;
+    String description = null;
     if (template != null) {
-      JComponent settingsPanel = template.getSettingsPanel();
-      if (settingsPanel != null) {
-        mySettingsPanel.add(settingsPanel, BorderLayout.NORTH);
+      if (mySettingsStep != null) {
+        mySettingsPanel.add(mySettingsStep.getSettingsPanel(), BorderLayout.NORTH);
+        expertSettingsPanel = mySettingsStep.getExpertSettingsPanel();
+        if (expertSettingsPanel != null) {
+          expertSettingsPanel.setBorder(IdeBorderFactory.createEmptyBorder(5, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
+          myExpertPanel.setContentComponent(expertSettingsPanel);
+        }
       }
-      mySettingsPanel.setVisible(settingsPanel != null);
-      String description = template.getDescription();
+      description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
         StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
         sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
         sb.append(description).append("</font></body></html>");
         description = sb.toString();
+        myDescriptionPane.setText(description);
       }
+    }
 
-      myDescriptionPane.setText(description);
-      myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
-    }
-    else {
-      mySettingsPanel.setVisible(false);
-      myDescriptionPanel.setVisible(false);
-    }
+    mySettingsPanel.setVisible(mySettingsStep != null);
+    myExpertPanel.setVisible(expertSettingsPanel != null);
+    myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
   }
@@ -266,18 +275,15 @@ public class SelectTemplateStep extends ModuleWizardStep {
   @Override
   public void updateStep() {
     myBuilder.queueUpdate();
-    setModuleType();
-  }
-
-  private void setModuleType() {
-    ProjectTemplate template = getSelectedTemplate();
-    mySequence.setType(template == null ? null : template.createModuleBuilder().getBuilderId());
+    myExpertPanel.setOn(SelectTemplateSettings.getInstance().EXPERT_MODE);
   }
 
   @Override
   public void onStepLeaving() {
     TreeState state = TreeState.createOn(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-    SelectTemplateSettings.getInstance().setTreeState(state);
+    SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
+    settings.setTreeState(state);
+    settings.EXPERT_MODE = myExpertPanel.isExpanded();
   }
 
   @Override
@@ -286,9 +292,8 @@ public class SelectTemplateStep extends ModuleWizardStep {
     if (template == null) {
       throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myContext.getPresentationName()));
     }
-    ValidationInfo info = template.validateSettings();
-    if (info != null) {
-      throw new ConfigurationException(info.message);
+    if (mySettingsStep != null) {
+      return mySettingsStep.validate();
     }
     return true;
   }
@@ -372,7 +377,10 @@ public class SelectTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    setModuleType();
+    myContext.setProjectBuilder(myModuleBuilder);
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
+    }
   }
 
   @Override

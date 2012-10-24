@@ -344,6 +344,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
+            for (File file : files) {
+              LOG.debug("Compiling " + file.getPath());
+            }
             LOG.debug(" classpath for " + chunkName + ":");
             for (File file : classpath) {
               LOG.debug("  " + file.getAbsolutePath());

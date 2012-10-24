@@ -47,10 +47,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.AnySupers;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrExpressionWrapper;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
+import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -96,7 +96,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       for (GrStatement statement : statements) {
         statement.accept(anySupers);
       }
-      if (anySupers.isResult()) {
+      if (anySupers.containsSupers()) {
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {

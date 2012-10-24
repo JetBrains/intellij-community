@@ -77,16 +77,16 @@ public class LighthouseRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String query, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     String url = "/projects/" + myProjectId + "/tickets.xml";
     url += "?q=" + encodeUrl("state:open sort:updated ");
     if (!StringUtil.isEmpty(query)) {
       url += encodeUrl(query);
     }
-    final List<Task> result = new ArrayList<Task>();
+    final List<Task> tasks = new ArrayList<Task>();
     int page = 1;
     final HttpClient client = login();
-    while (result.size() < max) {
+    while (tasks.size() < max) {
       HttpMethod method = doREST(url + "&page=" + page, false, client);
       InputStream stream = method.getResponseBodyAsStream();
       Element element = new SAXBuilder(false).build(stream).getRootElement();
@@ -104,10 +104,10 @@ public class LighthouseRepository extends BaseRepositoryImpl {
           return createIssue((Element)o);
         }
       });
-      result.addAll(taskList);
+      tasks.addAll(taskList);
       page++;
     }
-    return result;
+    return tasks.toArray(new Task[tasks.size()]);
   }
 
   @Nullable
