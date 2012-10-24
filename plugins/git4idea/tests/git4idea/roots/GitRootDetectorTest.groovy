@@ -33,6 +33,12 @@ class GitRootDetectorTest extends AbstractGitRootTest {
 
   @Before
   void setUp() {
+    super.setUp();
+  }
+
+  @Override
+  void tearDown() {
+    super.tearDown()
   }
 
   @Test

@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 package git4idea.crlf
-import com.intellij.dvcs.test.MockProject
 import com.intellij.dvcs.test.MockVirtualFile
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.commands.Git
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryImpl
 import git4idea.test.GitExecutor
-import git4idea.test.GitTestImpl
-import git4idea.test.GitTestPlatformFacade
-import git4idea.test.GitTestRepositoryManager
+import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -38,33 +31,20 @@ import static org.junit.Assert.assertTrue
  * @author Kirill Likhodedov
  */
 @Mixin(GitExecutor)
-class GitCrlfProblemsDetectorTest {
-
-  private MockProject myProject
-  private String myRootDir
-
-  private GitTestPlatformFacade myPlatformFacade
-  private Git myGit
+class GitCrlfProblemsDetectorTest extends GitLightTest {
 
   private String myOldCoreAutoCrlfValue
 
   @Before
   public void setUp() throws Exception {
-    myRootDir = FileUtil.createTempDirectory("", "").getPath()
-    myProject = new MockProject(myRootDir)
-    myPlatformFacade = new GitTestPlatformFacade()
-    myGit = new GitTestImpl()
-
-    cd myRootDir
+    super.setUp();
+    cd myProjectRoot
     if (isGlobalCommandPossible()) {
       myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
       git ("config --global --unset core.autocrlf")
     }
 
-    git ("init")
-
-    GitRepository repository = GitRepositoryImpl.getLightInstance(new MockVirtualFile(myRootDir), myProject, myPlatformFacade, myProject)
-    ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
+    createRepository(myProjectRoot)
   }
 
   @After
@@ -72,8 +52,7 @@ class GitCrlfProblemsDetectorTest {
     if (!StringUtil.isEmptyOrSpaces(myOldCoreAutoCrlfValue)) {
       git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
     }
-    FileUtil.delete(new File(myRootDir))
-    Disposer.dispose(myProject)
+    super.tearDown();
   }
 
   private static boolean isGlobalCommandPossible() {
@@ -161,7 +140,7 @@ win6 crlf=input
     assertTrue "Warning should be done, since one of the files has CRLFs and no related attributes",
            GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit,
                                           ["unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"]
-                                                  .collect { it -> MockVirtualFile.fromPath(it, myRootDir) as VirtualFile})
+                                                  .collect { it -> MockVirtualFile.fromPath(it, myProjectRoot) as VirtualFile})
                    .shouldWarn()
   }
 
@@ -193,7 +172,7 @@ win6 crlf=input
 
   private String createFile(String relPath) {
     List<String> split = StringUtil.split(relPath, "/")
-    File parent = new File(myRootDir)
+    File parent = new File(myProjectRoot)
     for (Iterator<String> it = split.iterator(); it.hasNext(); ) {
       String item = it.next()
       File file = new File(parent, item)

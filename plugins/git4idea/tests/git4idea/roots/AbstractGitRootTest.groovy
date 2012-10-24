@@ -14,32 +14,30 @@
  * limitations under the License.
  */
 package git4idea.roots
-
 import com.intellij.dvcs.test.MockProject
+import com.intellij.dvcs.test.MockProjectRootManager
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.test.GitTestPlatformFacade
+import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
 /**
  * 
  * @author Kirill Likhodedov
- * TODO Inherit GitLightTest
  */
-class AbstractGitRootTest {
+class AbstractGitRootTest extends GitLightTest {
 
-  GitTestPlatformFacade myPlatformFacade
   static File baseDir
 
   @Before
   void setUp() {
-    myPlatformFacade = new GitTestPlatformFacade()
+    super.setUp();
   }
 
   @After
   void tearDown() {
-    FileUtil.delete(baseDir)
+    super.tearDown();
   }
 
   /**
@@ -53,12 +51,12 @@ class AbstractGitRootTest {
     createProjectStructure(project, projectStructure);
     createProjectStructure(project, contentRoots);
 
-    contentRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << MockVirtualFile.fromPath(it, project)}
+    contentRoots.each { ((MockProjectRootManager)myPlatformFacade.getProjectRootManager(myProject)).myContentRoots << MockVirtualFile.fromPath(it, project)}
 
     project
   }
 
-  void createProjectStructure(Project project, Collection<String> paths) {
+  static void createProjectStructure(Project project, Collection<String> paths) {
     paths.each { String path ->
       File file = new File(project.baseDir.path + "/" + path)
       file.mkdir()
