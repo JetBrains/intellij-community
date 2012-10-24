@@ -117,8 +117,9 @@ public class JBEditorTabs extends JBTabsImpl {
       }
     }
 
+    final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
     final Color tabColor = label.getInfo().getTabColor();
-    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column);
+    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column, vertical);
   }
 
   JBEditorTabsPainter getPainter() {

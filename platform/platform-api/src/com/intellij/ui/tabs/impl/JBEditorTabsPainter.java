@@ -21,7 +21,16 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 interface JBEditorTabsPainter {
-  void doPaintInactive(Graphics2D g2d, Rectangle effectiveBounds, int x, int y, int w, int h, Color tabColor, int row, int column);
+  void doPaintInactive(Graphics2D g2d,
+                       Rectangle effectiveBounds,
+                       int x,
+                       int y,
+                       int w,
+                       int h,
+                       Color tabColor,
+                       int row,
+                       int column,
+                       boolean vertical);
 
   void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle);
 

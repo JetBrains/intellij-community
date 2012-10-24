@@ -26,7 +26,16 @@ import java.awt.*;
  */
 public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
   @Override
-  public void doPaintInactive(Graphics2D g2d, Rectangle effectiveBounds, int x, int y, int w, int h, Color tabColor, int row, int column) {
+  public void doPaintInactive(Graphics2D g2d,
+                              Rectangle effectiveBounds,
+                              int x,
+                              int y,
+                              int w,
+                              int h,
+                              Color tabColor,
+                              int row,
+                              int column,
+                              boolean vertical) {
     if (tabColor != null) {
       g2d.setPaint(new GradientPaint(x, y, Gray._200, x, y + effectiveBounds.height, Gray._130));
       g2d.fillRect(x, y, w, h);
@@ -39,7 +48,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
     }
 
 
-    // TODO: Use this color for top tabs row. Otherwise use 255 with alpha 100
+    // Push top row under the navbar or toolbar and have a blink over previous row shadow for 2nd and subsequent rows.
     if (row == 0) {
       g2d.setColor(Gray._200.withAlpha(200));
     }
@@ -49,9 +58,11 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
 
     g2d.drawLine(x, y, x + w, y);
 
-    g2d.setPaint(new GradientPaint(x, y + h - 4, new Color(0, 0, 0, 0),
-                                   x, y + h, new Color(0, 0, 0, 30)));
-    g2d.fillRect(x, y + h - 4, w, h);
+    if (!vertical) {
+      g2d.setPaint(new GradientPaint(x, y + h - 4, new Color(0, 0, 0, 0),
+                                     x, y + h, new Color(0, 0, 0, 30)));
+      g2d.fillRect(x, y + h - 4, w, h);
+    }
   }
 
   @Override
@@ -71,11 +82,11 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
     if (!vertical) {
       g.setColor(Gray._210);
       g.drawLine(x, rectangle.y, x + rectangle.width, rectangle.y);
-    }
 
-    g.setPaint(new GradientPaint(rectangle.x, rectangle.y + rectangle.height - 4, new Color(0, 0, 0, 0),
-                                 rectangle.x, rectangle.y + rectangle.height, new Color(0, 0, 0, 30)));
-    g.fillRect(rectangle.x, rectangle.y + rectangle.height - 4, rectangle.width, rectangle.height + (vertical ? 1 : 0));
+      g.setPaint(new GradientPaint(rectangle.x, rectangle.y + rectangle.height - 4, new Color(0, 0, 0, 0),
+                                   rectangle.x, rectangle.y + rectangle.height, new Color(0, 0, 0, 30)));
+      g.fillRect(rectangle.x, rectangle.y + rectangle.height - 4, rectangle.width, rectangle.height);
+    }
   }
 
   private static Color multiplyColor(Color c) {
