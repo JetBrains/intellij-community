@@ -37,6 +37,5 @@ public abstract class AsyncFutureFactory {
     return result;
   }
 
-
   public abstract <V> AsyncFutureResult<V> createAsyncFutureResult();
 }

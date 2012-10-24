@@ -16,6 +16,7 @@
 
 package com.intellij.util;
 
+import com.intellij.concurrency.AsyncFuture;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,16 +42,13 @@ public class FilteredQuery<T> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    myOriginal.forEach(new Processor<T>() {
-      public boolean process(final T t) {
-        if (!myFilter.value(t)) return true;
-        if (!consumer.process(t)) return false;
-
-        return true;
-      }
-    });
-
+    myOriginal.forEach(new MyProcessor(consumer));
     return true;
+  }
+
+  @Override
+  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
+    return myOriginal.forEachAsync(new MyProcessor(consumer));
   }
 
   @NotNull
@@ -66,5 +64,20 @@ public class FilteredQuery<T> implements Query<T> {
 
   public Iterator<T> iterator() {
     return findAll().iterator();
+  }
+
+  private class MyProcessor implements Processor<T> {
+    private final Processor<T> myConsumer;
+
+    public MyProcessor(Processor<T> consumer) {
+      myConsumer = consumer;
+    }
+
+    public boolean process(final T t) {
+      if (!myFilter.value(t)) return true;
+      if (!myConsumer.process(t)) return false;
+
+      return true;
+    }
   }
 }
