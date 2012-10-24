@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -75,8 +76,10 @@ public class WebServer {
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
-        openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
+        if (!SystemInfo.isLinux) {
+          openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
+        }
         return port;
       }
       catch (ChannelException e) {
