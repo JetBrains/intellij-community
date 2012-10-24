@@ -77,6 +77,23 @@ public class AndroidXmlCodeStyleSettings extends CustomCodeStyleSettings {
         throw new RuntimeException(e);
       }
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final MySettings s = (MySettings)o;
+
+      return INSERT_LINE_BREAK_BEFORE_FIRST_ATTRIBUTE == s.INSERT_LINE_BREAK_BEFORE_FIRST_ATTRIBUTE &&
+             WRAP_ATTRIBUTES == s.WRAP_ATTRIBUTES;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = WRAP_ATTRIBUTES;
+      result = 31 * result + (INSERT_LINE_BREAK_BEFORE_FIRST_ATTRIBUTE ? 1 : 0);
+      return result;
+    }
   }
 
   public static class LayoutSettings extends MySettings {
@@ -100,6 +117,23 @@ public class AndroidXmlCodeStyleSettings extends CustomCodeStyleSettings {
           return INSERT_BLANK_LINE_BEFORE_TAG;
         }
       };
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      final LayoutSettings settings = (LayoutSettings)o;
+
+      return INSERT_BLANK_LINE_BEFORE_TAG == settings.INSERT_BLANK_LINE_BEFORE_TAG;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (INSERT_BLANK_LINE_BEFORE_TAG ? 1 : 0);
+      return result;
     }
   }
 
@@ -143,6 +177,23 @@ public class AndroidXmlCodeStyleSettings extends CustomCodeStyleSettings {
         }
       };
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      final ManifestSettings settings = (ManifestSettings)o;
+
+      return GROUP_TAGS_WITH_SAME_NAME == settings.GROUP_TAGS_WITH_SAME_NAME;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (GROUP_TAGS_WITH_SAME_NAME ? 1 : 0);
+      return result;
+    }
   }
 
   public static class ValueResourceFileSettings extends MySettings {
@@ -182,6 +233,23 @@ public class AndroidXmlCodeStyleSettings extends CustomCodeStyleSettings {
             getDomElement(tag) instanceof Style;
         }
       };
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      final ValueResourceFileSettings settings = (ValueResourceFileSettings)o;
+
+      return INSERT_LINE_BREAKS_AROUND_STYLE == settings.INSERT_LINE_BREAKS_AROUND_STYLE;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (INSERT_LINE_BREAKS_AROUND_STYLE ? 1 : 0);
+      return result;
     }
   }
 
