@@ -106,10 +106,6 @@ if PYVERSION > [1, 4, 0]:
         messages.testError("<noname>")
         messages.testSuiteFinished(name)
 
-  def pytest_configure(config):
-    reporter = PycharmTestReporter(config, sys.stdout)
-    config.pluginmanager.register(reporter, 'terminalreporter')
-
 else:
   def pytest_collectstart(collector):
     if collector.name != "()":

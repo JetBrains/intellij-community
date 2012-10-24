@@ -36,8 +36,8 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     assertEquals(StringUtil.join(result, "\n"), 11, result.length);
     assertEquals("##teamcity[enteredTheMatrix]", result [0]);
     assertEquals("##teamcity[testCount count='2']", result [1]);
-    assertEquals("##teamcity[testSuiteStarted locationHint='python_uttestid://test1.BadTest' name='test1.BadTest']", result [2]);
-    assertEquals("##teamcity[testStarted locationHint='python_uttestid://test1.BadTest.test_fails' name='test_fails']", result[3]);
+    assertTrue(result[2].endsWith("test1.BadTest' name='test1.BadTest']"));
+    assertTrue(result[3].endsWith("test1.BadTest.test_fails' name='test_fails']"));
     assertTrue(result [4], result[4].startsWith("##teamcity[testFailed") && result [4].contains("name='test_fails'"));
   }
 

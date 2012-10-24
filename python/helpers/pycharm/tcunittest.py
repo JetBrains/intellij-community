@@ -98,7 +98,7 @@ class TeamcityTestResult(TestResult):
   def addError(self, test, err):
     TestResult.addError(self, test, err)
 
-    err = self.formatErr(err)
+    err = self._exc_info_to_string(err, test)
 
     self.messages.testError(self.getTestName(test),
                             message='Error', details=err)
@@ -127,7 +127,7 @@ class TeamcityTestResult(TestResult):
       second = self._unescape(self_find_second)
     else:
       first = second = ""
-    err = self.formatErr(err)
+    err = self._exc_info_to_string(err, test)
 
     self.messages.testFailed(self.getTestName(test),
                              message='Failure', details=err, expected=first, actual=second)
@@ -145,9 +145,17 @@ class TeamcityTestResult(TestResult):
       else:
         location = location + ":" + str(test.test.lineno)
     else:
+      import inspect
+
+      try:
+        source_dir_splitted = inspect.getsourcefile(test.__class__).split("/")[:-1]
+        source_dir = "/".join(source_dir_splitted) + "/"
+      except TypeError:
+        source_dir = ""
+
       suite = strclass(test.__class__)
-      suite_location = "python_uttestid://" + suite
-      location = "python_uttestid://" + str(test.id())
+      suite_location = "python_uttestid://" + source_dir + suite
+      location = "python_uttestid://" + source_dir + str(test.id())
 
     return (suite, location, suite_location)
 
