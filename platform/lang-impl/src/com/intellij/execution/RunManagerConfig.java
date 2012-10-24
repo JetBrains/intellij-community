@@ -36,7 +36,7 @@ public class RunManagerConfig {
 
   public int getRecentsLimit() {
     try {
-      return Integer.valueOf(myPropertiesComponent.getOrInit(RECENTS_LIMIT, "5")).intValue();
+      return Math.max(1, Integer.valueOf(myPropertiesComponent.getOrInit(RECENTS_LIMIT, "5")).intValue());
     }
     catch (NumberFormatException e) {
       return 5;
