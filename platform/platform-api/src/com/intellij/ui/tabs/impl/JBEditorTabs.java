@@ -81,7 +81,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useBoldLabels() {
-    return false; // SystemInfo.isMac;
+    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override
