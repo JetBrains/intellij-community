@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,17 @@
  */
 package com.intellij.ide.navigationToolbar.ui;
 
+import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.util.ui.UIUtil;
+
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarUIManager {
-  public static final NavBarUI AQUA = new AquaNavBarUI();
-  public static final NavBarUI COMMON = new CommonNavBarUI();
-  public static final NavBarUI DARCULA = new DarculaNavBarUI();
-  public static final NavBarUI GTK = new GtkNavBarUI();
-  
-
-  public static NavBarUI getUI() {
-    if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
-    if (UIUtil.isUnderGTKLookAndFeel())  return GTK;
-    if (UIUtil.isUnderDarcula())         return DARCULA;
-    return COMMON;
+public class DarculaNavBarUI extends CommonNavBarUI {
+  @Override
+  public Font getElementFont(NavBarItem navBarItem) {
+    return UIUtil.getLabelFont().deriveFont(11.0f);
   }
 }
