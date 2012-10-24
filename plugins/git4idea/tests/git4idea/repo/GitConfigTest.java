@@ -15,6 +15,8 @@
  */
 package git4idea.repo;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitBranch;
@@ -23,6 +25,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
 import git4idea.test.GitTestPlatformFacade;
 import git4idea.test.GitTestUtil;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -58,10 +61,25 @@ public class GitConfigTest {
   
   @Test(dataProvider = "branch")
   public void testBranches(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(new GitTestPlatformFacade(), configFile);
+    Collection<GitBranchTrackInfo> expectedInfos = readBranchResults(resultFile);
+    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitLocalBranch>() {
+      @Override
+      public GitLocalBranch apply(@Nullable GitBranchTrackInfo input) {
+        assert input != null;
+        return input.getLocalBranch();
+      }
+    });
+    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitRemoteBranch>() {
+      @Override
+      public GitRemoteBranch apply(@Nullable GitBranchTrackInfo input) {
+        assert input != null;
+        return input.getRemoteBranch();
+      }
+    });
+
     GitTestUtil.assertEqualCollections(
-      config.parseTrackInfos(Collections.<GitLocalBranch>emptyList(), Collections.<GitRemoteBranch>emptyList()),
-      readBranchResults(resultFile));
+      GitConfig.read(new GitTestPlatformFacade(), configFile).parseTrackInfos(localBranches, remoteBranches),
+      expectedInfos);
   }
 
   private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
