@@ -889,7 +889,7 @@ public class GitUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForCurrentBranch(@NotNull GitRepository repository) {
-    GitBranch currentBranch = repository.getCurrentBranch();
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       return null;
     }

@@ -155,7 +155,7 @@ public class GitFetcher {
 
   @NotNull
   private static FetchParams getFetchParams(@NotNull GitRepository repository) {
-    GitBranch currentBranch = repository.getCurrentBranch();
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       // fetching current branch is called from Update Project and Push, where branch tracking is pre-checked
       String message = "Current branch can't be null here. \nRepository: " + repository;
