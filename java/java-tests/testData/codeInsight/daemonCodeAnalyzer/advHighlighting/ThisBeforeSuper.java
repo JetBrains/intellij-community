@@ -15,3 +15,12 @@ class C extends A
         }
     }
 }
+
+class C1 {
+    class B1 {}
+    class D1 extends C1.B1 {
+        D1() {
+            C1.this.super();
+        }
+    }
+}

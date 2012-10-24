@@ -1,6 +1,6 @@
 class X{
   def foo(){
     X x=new X();
-    <error descr="unknown class 'x'">x</error>.this.foo();
+    <error descr="Qualified this is allowed only in nested/inner classes">x.this</error>.foo();
   }
 }

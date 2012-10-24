@@ -41,8 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -124,7 +122,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
         //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+com\\\\.springsource\\\\.loaded\\\\.).+\")\n");
 
-        javaText.append("if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+com\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+        javaText.append(
+          "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
+          .append(s)
+          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+com\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
         javaText.append("  |thiz0 = thiz;\n");
         javaText.append(" } else {\n");
         javaText.append("  |thiz0 = this;\n");
@@ -144,9 +145,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
                     "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
                     "   final java.lang.Class |c = |loader.parseClass(");
-    javaText.append("\"" + IMPORTS + "class DUMMY" + new Random().nextInt(239) + " { " +
-                    "public groovy.lang.Closure " +
-                       EVAL_NAME + " = {" + TEXT + "}}\"");
+    javaText.append("\"" + IMPORTS + "class DUMMY").append(new Random().nextInt(239)).append(" { ").append("public groovy.lang.Closure ")
+      .append(EVAL_NAME).append(" = {").append(TEXT).append("}}\"");
     javaText.append(", \"DUMMY.groovy\");\n" +
                     "   int |i;\n" +
                     "   java.lang.reflect.Field[] |fields = |c.getFields();\n" +
@@ -197,6 +197,16 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
 
+        if (PsiUtil.isThisReference(referenceExpression)) {
+          replaceWithReference(referenceExpression, closure == null ? "delegate" : "owner");
+          return;
+        }
+
+        if (PsiUtil.isSuperReference(referenceExpression)) {
+          replaceWithReference(referenceExpression, closure == null ? "delegate" : "owner");
+          return;
+        }
+
         if (resolved instanceof PsiMethod && "getDelegate".equals(((PsiMethod) resolved).getName()) && closure != null) {
           replaceWithReference(referenceExpression, "owner");
           return;
@@ -233,18 +243,6 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           parameters.put(name, value);
         }
 
-      }
-
-      @Override
-      public void visitThisExpression(final GrThisReferenceExpression thisExpression) {
-        super.visitThisExpression(thisExpression);
-        replaceWithReference(thisExpression, closure == null ? "delegate" : "owner");
-      }
-
-      @Override
-      public void visitSuperExpression(final GrSuperReferenceExpression superExpression) {
-        super.visitSuperExpression(superExpression);
-        replaceWithReference(superExpression, closure == null ? "delegate" : "owner");
       }
 
       private void replaceWithReference(GrExpression expr, final String exprText) {

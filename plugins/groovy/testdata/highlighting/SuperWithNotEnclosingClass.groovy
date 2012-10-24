@@ -1,5 +1,5 @@
 class X{
   def foo() {
-    <error descr="'java.lang.String' is not an enclosing class">String.super</error>.toString()
+    <error descr="Qualified super is allowed only in nested/inner classes">String.super</error>.toString()
   }
 }

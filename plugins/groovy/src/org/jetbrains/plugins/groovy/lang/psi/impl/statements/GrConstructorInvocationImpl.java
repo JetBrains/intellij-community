@@ -17,16 +17,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
@@ -52,18 +52,25 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   public boolean isSuperCall() {
-    return findChildByType(GroovyElementTypes.SUPER_REFERENCE_EXPRESSION) != null;
+    return getKeywordType() == GroovyTokenTypes.kSUPER;
   }
 
   public boolean isThisCall() {
-    return findChildByType(GroovyElementTypes.THIS_REFERENCE_EXPRESSION) != null;
+    return getKeywordType() == GroovyTokenTypes.kTHIS;
   }
 
-  private static final TokenSet THIS_OR_SUPER_SET =
-    TokenSet.create(GroovyElementTypes.THIS_REFERENCE_EXPRESSION, GroovyElementTypes.SUPER_REFERENCE_EXPRESSION);
+  @Nullable
+  private IElementType getKeywordType() {
+    GrReferenceExpression keyword = getInvokedExpression();
+    PsiElement refElement = keyword.getReferenceNameElement();
+    if (refElement == null) return null;
 
-  public GrThisSuperReferenceExpression getThisOrSuperKeyword() {
-    return (GrThisSuperReferenceExpression)findNotNullChildByType(THIS_OR_SUPER_SET);
+    return refElement.getNode().getElementType();
+  }
+
+
+  public GrReferenceExpression getInvokedExpression() {
+    return findNotNullChildByClass(GrReferenceExpression.class);
   }
 
   @NotNull
@@ -75,7 +82,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       PsiSubstitutor substitutor;
       if (isThisCall()) {
         substitutor = PsiSubstitutor.EMPTY;
-      } else {
+      }
+      else {
         PsiClass enclosing = PsiUtil.getContextClass(this);
         assert enclosing != null;
         substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
@@ -85,7 +93,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
                                                                       incompleteCode, false);
       final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
       clazz.processDeclarations(processor, state, null, this);
-      ResolveUtil.processNonCodeMembers(thisType, processor, getThisOrSuperKeyword(), state);
+      ResolveUtil.processNonCodeMembers(thisType, processor, getInvokedExpression(), state);
 
       return processor.getCandidates();
     }
@@ -116,11 +124,6 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       return isThisCall() ? typeDefinition : typeDefinition.getSuperClass();
     }
     return null;
-  }
-
-  @NotNull
-  public String getCanonicalText() {
-    return getText(); //TODO
   }
 
   @NotNull

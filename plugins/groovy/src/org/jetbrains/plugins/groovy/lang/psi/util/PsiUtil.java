@@ -376,8 +376,17 @@ public class PsiUtil {
               }
             }
           }
-
         }
+        else if (isThisOrSuperRef(qualifier)) {
+          //static members may be invoked from this.<...>
+          final boolean isInStatic = isInStaticContext((GrReferenceExpression)qualifier);
+          if (isThisReference(qualifier) && isInStatic) {
+            return member.hasModifierProperty(PsiModifier.STATIC);
+          }
+
+          return !isStatic || !filterStaticAfterInstanceQualifier || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
+        }
+
         PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
         if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) { //static context
           if (member instanceof PsiClass) {
@@ -411,14 +420,6 @@ public class PsiUtil {
 
           return false;
         }
-      }
-      else if (qualifier instanceof GrThisReferenceExpression && ((GrThisReferenceExpression)qualifier).getQualifier() == null) {
-        //static members may be invoked from this.<...>
-        final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
-        if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
-          return !filterStaticAfterInstanceQualifier || !member.hasModifierProperty(PsiModifier.STATIC) || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
-        }
-        else if (isInStatic) return member.hasModifierProperty(PsiModifier.STATIC);
       }
 
       //instance context
@@ -517,24 +518,31 @@ public class PsiUtil {
   }
 
   public static boolean isInStaticContext(GrQualifiedReference refExpression) {
-    return isInStaticContext(refExpression, null);
+    PsiClass targetClass = null;
+    if (isThisReference(refExpression) && refExpression.getQualifier() != null) {
+      targetClass = (PsiClass)((GrReferenceExpression)refExpression.getQualifier()).resolve();
+    }
+    return isInStaticContext(refExpression, targetClass);
   }
 
   public static boolean isInStaticContext(GrQualifiedReference refExpression, @Nullable PsiClass targetClass) {
-    if (refExpression.getQualifier() != null) {
-      PsiElement qualifier = refExpression.getQualifier();
-      if (qualifier instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
+    PsiElement qualifier = refExpression.getQualifier();
+    if (qualifier != null && !isThisOrSuperRef(refExpression)) {
+      return qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
     }
-    else {
-      PsiElement run = refExpression;
-      while (run != null && run != targetClass) {
-        if (targetClass == null && run instanceof PsiClass) return false;
-        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
-        run = run.getParent();
-      }
+
+
+    if (isSuperReference(refExpression)) return false;
+    //this reference should be checked as all other refs
+
+
+    PsiElement run = refExpression;
+    while (run != null && run != targetClass) {
+      if (targetClass == null && run instanceof PsiClass) return false;
+      if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
+      run = run.getParent();
     }
     return false;
-
   }
 
   public static Iterable<PsiClass> iterateSupers(final @NotNull PsiClass psiClass, final boolean includeSelf) {
@@ -661,7 +669,7 @@ public class PsiUtil {
       return true;
     }
 
-    if ((expr instanceof GrThisReferenceExpression || expr instanceof GrSuperReferenceExpression) &&
+    if ((isThisOrSuperRef(expr)) &&
         GroovyConfigUtils.getInstance().isVersionAtLeast(expr, GroovyConfigUtils.GROOVY1_8)) {
       return true;
     }
@@ -864,7 +872,7 @@ public class PsiUtil {
 
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isSuperClassAccepted) {
     PsiElement place = scope;
-    while (place != null && place != clazz && !(place instanceof PsiFile)) {
+    while (place != null && place != clazz && !(place instanceof PsiFile && place.isPhysical())) {
       if (place instanceof PsiClass) {
         if (isSuperClassAccepted) {
           if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, clazz, true)) return true;
@@ -874,8 +882,9 @@ public class PsiUtil {
         }
       }
       if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) return false;
-      place = place.getParent();
+      place = place.getContext();
     }
+    if (clazz instanceof GroovyScriptClass) return place == clazz.getContainingFile();
     return place == clazz;
   }
 
@@ -951,7 +960,7 @@ public class PsiUtil {
 
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof GrEnumConstant) return true;
-    if (!(element instanceof GrReferenceElement || element instanceof GrThisSuperReferenceExpression)) return false;
+    if (!(element instanceof GrReferenceElement)) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof GrCall) {
       return true;
@@ -1184,7 +1193,7 @@ public class PsiUtil {
 
     return null;
   }
-  
+
   @Nullable
   public static GrCall getCallByNamedParameter(GrNamedArgument namedArgument) {
     PsiElement parent = namedArgument.getParent();
@@ -1282,7 +1291,7 @@ public class PsiUtil {
 
   @NotNull
   public static ResolveResult getAccessObjectClass(GrExpression expression) {
-    if (expression instanceof GrSuperReferenceExpression || expression instanceof GrThisReferenceExpression) return GroovyResolveResult.EMPTY_RESULT;
+    if (isThisOrSuperRef(expression)) return GroovyResolveResult.EMPTY_RESULT;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -1372,5 +1381,61 @@ public class PsiUtil {
 
     if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
     return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
+  }
+
+  public static boolean isThisReference(@Nullable PsiElement expression) {
+    if (!(expression instanceof GrReferenceExpression)) return false;
+    GrReferenceExpression ref = (GrReferenceExpression)expression;
+
+    PsiElement nameElement = ref.getReferenceNameElement();
+    if (nameElement == null) return false;
+
+    IElementType type = nameElement.getNode().getElementType();
+    if (type != GroovyTokenTypes.kTHIS) return false;
+
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier == null) {
+      return true;
+    }
+    else {
+      PsiElement resolved = ref.resolve();
+      return resolved instanceof PsiClass && hasEnclosingInstanceInScope((PsiClass)resolved, ref, false);
+    }
+  }
+
+  public static boolean isSuperReference(@Nullable PsiElement expression) {
+    if (!(expression instanceof GrReferenceExpression)) return false;
+    GrReferenceExpression ref = (GrReferenceExpression)expression;
+
+    PsiElement nameElement = ref.getReferenceNameElement();
+    if (nameElement == null) return false;
+
+    IElementType type = nameElement.getNode().getElementType();
+    if (type != GroovyTokenTypes.kSUPER) return false;
+
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier == null) {
+      return true;
+    }
+    else {
+      PsiElement resolved = ref.resolve();
+      return resolved instanceof PsiClass && hasEnclosingInstanceInScope(((PsiClass)resolved), ref, true);
+    }
+  }
+
+  public static boolean isThisOrSuperRef(@Nullable PsiElement qualifier) {
+    return qualifier instanceof GrReferenceExpression && (isThisReference(qualifier) || isSuperReference(qualifier));
+  }
+
+  public static boolean isInstanceThisRef(GrExpression qualifier) {
+    if (isThisReference(qualifier)) {
+      GrReferenceExpression ref = (GrReferenceExpression)qualifier;
+
+      PsiElement resolved = ref.resolve();
+      if (resolved == null) return false;
+
+      return hasEnclosingInstanceInScope((PsiClass)resolved, qualifier, false);
+    }
+    return false;
   }
 }

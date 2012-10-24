@@ -28,7 +28,7 @@ import java.util.*;
  * Date: 10/19/12
  * Time: 12:42 PM
  */
-public abstract class LearningProxy<T> implements InvocationHandler {
+public abstract class LearningProxy<T, E extends Throwable> {
   private final static Map<String, Object> ourDefaultValues = new HashMap<String, Object>();
   static {
     ourDefaultValues.put("byte", new Byte((byte) 0));
@@ -42,13 +42,25 @@ public abstract class LearningProxy<T> implements InvocationHandler {
     ourDefaultValues.put("void", null);
   }
   private final Set<MethodDescriptor> myTrackedMethods;
+  private final InvocationHandler myLearn;
 
   public LearningProxy() {
     myTrackedMethods = new HashSet<MethodDescriptor>();
+    myLearn = new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        myTrackedMethods.add(new MethodDescriptor(method));
+        final Class<?> returnType = method.getReturnType();
+        if (returnType.isPrimitive()) {
+          return ourDefaultValues.get(returnType.getName());
+        }
+        return null;
+      }
+    };
   }
 
-  protected abstract void onBefore();
-  protected abstract void onAfter();
+  protected abstract void onBefore() throws E;
+  protected abstract void onAfter() throws E;
 
   public <T> T create(Class<T> clazz, final T t) {
     return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, new InvocationHandler() {
@@ -58,6 +70,7 @@ public abstract class LearningProxy<T> implements InvocationHandler {
             if (myTrackedMethods.contains(current)) {
               try {
                 onBefore();
+                method.setAccessible(true);
                 return method.invoke(t, args);
               } finally {
                 onAfter();
@@ -69,17 +82,7 @@ public abstract class LearningProxy<T> implements InvocationHandler {
   }
 
   public <T> T learn(Class<T> clazz) {
-    return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, this);
-  }
-
-  @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    myTrackedMethods.add(new MethodDescriptor(method));
-    final Class<?> returnType = method.getReturnType();
-    if (returnType.isPrimitive()) {
-      return ourDefaultValues.get(returnType.getName());
-    }
-    return null;
+    return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, myLearn);
   }
 
   private static class MethodDescriptor {

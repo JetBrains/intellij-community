@@ -27,14 +27,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 public final class SpreadState {
   public static final Key<SpreadState> SPREAD_STATE = Key.create("Spread state");
 
-  private final PsiType containerType;
+  @Nullable private final PsiType containerType;
   @Nullable private final SpreadState innerState;
 
-  public SpreadState(PsiType type, @Nullable SpreadState state) {
+  public SpreadState(@Nullable PsiType type, @Nullable SpreadState state) {
     containerType = type;
     innerState = state;
   }
 
+  @Nullable
   public PsiType getContainerType() {
     return containerType;
   }
@@ -48,7 +49,8 @@ public final class SpreadState {
     return new SpreadState(type, state);
   }
 
-  public static PsiType apply(PsiType item, @Nullable SpreadState state, Project project) {
+  @Nullable
+  public static PsiType apply(@Nullable PsiType item, @Nullable SpreadState state, Project project) {
     if (state == null) return item;
     return apply(TypesUtil.createSimilarCollection(state.getContainerType(), project, item), state.getInnerState(), project);
   }

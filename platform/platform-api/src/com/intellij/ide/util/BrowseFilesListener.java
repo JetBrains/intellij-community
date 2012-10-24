@@ -42,7 +42,7 @@ public class BrowseFilesListener implements ActionListener {
   private final JTextField myTextField;
   private final String myTitle;
   private final String myDescription;
-  private final FileChooserDescriptor myChooserDescriptor;
+  protected final FileChooserDescriptor myChooserDescriptor;
 
   public BrowseFilesListener(JTextField textField, final String title, final String description, final FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;

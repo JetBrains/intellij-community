@@ -616,4 +616,30 @@ class Bar {
       checkResult("def 'import'() {}")
     }
   }
+
+  void testConstructorAndSuper() {
+    myFixture.with {
+      configureByText(GroovyFileType.GROOVY_FILE_TYPE, '''\
+class B<caret>ase {
+  def Base() {}
+}
+class Inheritor extends Base {
+  def Inheritor() {
+    super()
+  }
+}
+''')
+      renameElementAtCaret('Bassse')
+      checkResult('''\
+class Bassse {
+  def Bassse() {}
+}
+class Inheritor extends Bassse {
+  def Inheritor() {
+    super()
+  }
+}
+''')
+    }
+  }
 }

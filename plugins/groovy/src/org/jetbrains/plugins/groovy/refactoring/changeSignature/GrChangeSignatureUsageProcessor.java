@@ -449,7 +449,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     GrConstructorInvocation invocation =
       GroovyPsiElementFactory.getInstance(constructor.getProject()).createConstructorInvocation("super()");
     invocation = (GrConstructorInvocation)block.addStatementBefore(invocation, getFirstStatement(block));
-    processMethodUsage(invocation.getThisOrSuperKeyword(), changeInfo,
+    processMethodUsage(invocation.getInvokedExpression(), changeInfo,
                        changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged(),
                        changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.<PsiElement>empty_array(), substitutor);
   }

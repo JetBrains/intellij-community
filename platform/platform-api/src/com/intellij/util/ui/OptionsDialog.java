@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,7 @@ public abstract class OptionsDialog extends DialogWrapper  {
     }
 
     public String getDoNotShowMessage() {
-      return CommonBundle.message("dialog.options.do.not.show");
+      return OptionsDialog.this.getDoNotShowMessage();
     }
   }
 

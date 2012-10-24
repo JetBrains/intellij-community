@@ -93,7 +93,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
   @NotNull
   private static String getStringToPutIntoAndExpression(GrExpression expression) {
     String expressionText = expression.getText();
-    if (ParenthesesUtils.AND_PRECEDENCE < ParenthesesUtils.getPrecendence(expression)) {
+    if (ParenthesesUtils.AND_PRECEDENCE < ParenthesesUtils.getPrecedence(expression)) {
       expressionText = "(" + expressionText + ")";
     }
     return expressionText;
@@ -102,7 +102,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
   @NotNull
   private static String getStringToPutIntoOrExpression(GrExpression expression) {
     String expressionText = expression.getText();
-    if (ParenthesesUtils.OR_PRECEDENCE < ParenthesesUtils.getPrecendence(expression)) {
+    if (ParenthesesUtils.OR_PRECEDENCE < ParenthesesUtils.getPrecedence(expression)) {
       expressionText = "(" + expressionText + ")";
     }
     return expressionText;

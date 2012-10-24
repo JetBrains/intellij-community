@@ -22,7 +22,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovySynchronizationOnThisInspection extends BaseInspection {
 
@@ -52,7 +53,7 @@ public class GroovySynchronizationOnThisInspection extends BaseInspection {
     public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
       super.visitSynchronizedStatement(synchronizedStatement);
       final GrExpression lock = synchronizedStatement.getMonitor();
-      if (lock == null || !(lock instanceof GrThisReferenceExpression)) {
+      if (lock == null || !(lock instanceof GrReferenceExpression && PsiUtil.isThisReference(lock))) {
         return;
       }
       registerError(lock);

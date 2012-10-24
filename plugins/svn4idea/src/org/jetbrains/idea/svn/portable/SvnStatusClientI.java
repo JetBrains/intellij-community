@@ -30,7 +30,7 @@ import java.util.Collection;
  * Date: 1/24/12
  * Time: 9:46 AM
  */
-public interface SvnStatusClientI {
+public interface SvnStatusClientI extends SvnMarkerInterface {
   long doStatus(File path, boolean recursive, boolean remote, boolean reportAll,
           boolean includeIgnored, ISVNStatusHandler handler) throws SVNException;
   long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;

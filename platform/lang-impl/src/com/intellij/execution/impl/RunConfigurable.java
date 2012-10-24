@@ -76,6 +76,7 @@ class RunConfigurable extends BaseConfigurable {
   private static final Icon SHARED_ICON = IconLoader.getTransparentIcon(AllIcons.Nodes.Symlink, .6f);
   private static final Icon NON_SHARED_ICON = EmptyIcon.ICON_16;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
+  @NonNls private static final String DEFAULTS = "Defaults";
 
   private volatile boolean isDisposed = false;
 
@@ -210,7 +211,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     // add defaults
-    final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode("Defaults");
+    final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode(DEFAULTS);
     final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
     for (final ConfigurationType type : configurationTypes) {
       if (!(type instanceof UnknownConfigurationType)) {
@@ -549,9 +550,8 @@ class RunConfigurable extends BaseConfigurable {
       applyByType(configurationType);
     }
 
-    String recentsLimit = myRecentsLimit.getText();
     try {
-      int i = Integer.parseInt(recentsLimit);
+      int i = Math.max(1, Integer.parseInt(myRecentsLimit.getText()));
       int oldLimit = manager.getConfig().getRecentsLimit();
       if (oldLimit != i) {
         manager.getConfig().setRecentsLimit(i);
@@ -1269,7 +1269,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
+      TreeNode defaults = TreeUtil.findNodeWithObject(DEFAULTS, myTree.getModel(), myRoot);
       if (defaults != null) {
         final ConfigurationType configurationType = getSelectedConfigurationType();
         if (configurationType != null) {
@@ -1285,7 +1285,19 @@ class RunConfigurable extends BaseConfigurable {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot) != null);
+      boolean isEnabled = TreeUtil.findNodeWithObject(DEFAULTS, myTree.getModel(), myRoot) != null;
+      TreePath path = myTree.getSelectionPath();
+      if (path != null) {
+        Object o = path.getLastPathComponent();
+        if (o instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode)o).getUserObject().equals(DEFAULTS)) {
+          isEnabled = false;
+        }
+        o = path.getParentPath().getLastPathComponent();
+        if (o instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode)o).getUserObject().equals(DEFAULTS)) {
+          isEnabled = false;
+        }
+      }
+      e.getPresentation().setEnabled(isEnabled);
     }
   }
   @Nullable

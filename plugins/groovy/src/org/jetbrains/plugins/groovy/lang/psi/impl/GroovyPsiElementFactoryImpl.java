@@ -671,7 +671,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrThisReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+  public GrReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
     final String text;
     if (psiClass == null) {
       text = "this";
@@ -679,8 +679,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     else {
       text = psiClass.getQualifiedName() + ".this";
     }
-    final GroovyFileImpl dummy = createDummyFile(text);
-    return (GrThisReferenceExpression)dummy.getStatements()[0];
+    return createReferenceExpressionFromText(text);
   }
 
   @Override

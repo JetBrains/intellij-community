@@ -381,7 +381,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
           final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
           if (invocation.isThisCall() == processThisRefs &&
               invocation.getManager().areElementsEquivalent(invocation.resolveMethod(), searchedConstructor) &&
-              !consumer.process(invocation.getThisOrSuperKeyword())) {
+              !consumer.process(invocation.getInvokedExpression())) {
             return false;
           }
         }

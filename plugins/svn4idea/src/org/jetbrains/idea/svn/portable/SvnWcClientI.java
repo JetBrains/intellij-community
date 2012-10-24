@@ -28,7 +28,7 @@ import java.util.Collection;
  * Date: 1/20/12
  * Time: 6:54 PM
  */
-public interface SvnWcClientI {
+public interface SvnWcClientI extends SvnMarkerInterface {
   void setAddParameters(ISVNAddParameters addParameters);
   ISVNCommitHandler getCommitHandler();
   void setCommitHandler(ISVNCommitHandler handler);

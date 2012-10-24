@@ -196,7 +196,7 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  public static boolean isLocalVariable(PsiElement variable) {
+  public static boolean isLocalVariable(@Nullable PsiElement variable) {
     return variable instanceof GrVariable && !(variable instanceof GrField || variable instanceof GrParameter);
   }
 
@@ -460,7 +460,7 @@ public abstract class GroovyRefactoringUtil {
     int result = EXPR_COPY_SAFE;
     if (element == null) return result;
 
-    if (element instanceof GrThisReferenceExpression || element instanceof GrSuperReferenceExpression || element instanceof GrNamedElement) {
+    if (element instanceof GrNamedElement) {
       return EXPR_COPY_SAFE;
     }
 

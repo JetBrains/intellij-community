@@ -15,80 +15,36 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 10/19/12
- * Time: 12:09 PM
+ * Date: 10/23/12
+ * Time: 2:29 PM
  */
-public class SvnWriteOperationLocks {
-  private final ProjectLevelVcsManager myVcsManager;
-  private final Map<String, Lock> myLockMap;
-  private final Object myLock;
+public class SvnWriteOperationLocks extends SvnAbstractWriteOperationLocks {
+  private final RootsToWorkingCopies myRootsToWorkingCopies;
 
-  public SvnWriteOperationLocks(final Project project) {
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myLockMap = new HashMap<String, Lock>();
-    myLock = new Object();
+  public SvnWriteOperationLocks(RootsToWorkingCopies rootsToWorkingCopies) {
+    super(1000);
+    myRootsToWorkingCopies = rootsToWorkingCopies;
   }
 
-  public void lock(final File file) throws SVNException {
-    final Lock lock = getLockObject(file);
-    lock.lock();
-  }
-
-  private Lock getLockObject(File file) throws SVNException {
-    return getLockObject(new FilePathImpl(file, file.isDirectory()), FilePathsHelper.convertPath(file.getPath()));
-  }
-
-  private Lock getLockObject(VirtualFile file) throws SVNException {
-    return getLockObject(new FilePathImpl(file), FilePathsHelper.convertPath(file.getPath()));
-  }
-
-  private Lock getLockObject(FilePathImpl file, final String path) throws SVNException {
-    final boolean directory = file.isDirectory();
-    final VirtualFile root = myVcsManager.getVcsRootFor(file);
-    if (root == null) {
+  protected WorkingCopy getCopy(File file, boolean directory) throws SVNException {
+    final VirtualFile parentOrSelf = ChangesUtil.findValidParentAccurately(new FilePathImpl(file, directory));
+    final WorkingCopy wcRoot = myRootsToWorkingCopies.getWcRoot(parentOrSelf);
+    if (wcRoot == null) {
       throw new SVNException(SVNErrorMessage.create(directory ? SVNErrorCode.WC_NOT_WORKING_COPY : SVNErrorCode.WC_NOT_FILE));
     }
-    Lock lock;
-    synchronized (myLock) {
-      lock = myLockMap.get(path);
-      if (lock == null) {
-        lock = new ReentrantLock();
-        myLockMap.put(path, lock);
-      }
-    }
-    return lock;
-  }
-
-  public void unlock(final File file) throws SVNException {
-    final Lock lock = getLockObject(file);
-    lock.unlock();
-  }
-
-  public void lock(final VirtualFile vf) throws SVNException {
-    final Lock lock = getLockObject(vf);
-    lock.lock();
-  }
-
-  public void unlock(final VirtualFile vf) throws SVNException {
-    final Lock lock = getLockObject(vf);
-    lock.unlock();
+    // todo check about externals!
+    return wcRoot;
   }
 }

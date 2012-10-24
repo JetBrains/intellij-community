@@ -53,7 +53,7 @@ Groovy script
           PsiWhiteSpace('\n    ')
           Assignment expression
             Reference expression
-              'this' reference expression
+              Reference expression
                 PsiElement(this)('this')
               PsiElement(.)('.')
               PsiElement(identifier)('value')
@@ -90,7 +90,7 @@ Groovy script
               PsiElement(()('(')
               Additive expression
                 Reference expression
-                  'this' reference expression
+                  Reference expression
                     PsiElement(this)('this')
                   PsiElement(.)('.')
                   PsiElement(identifier)('value')

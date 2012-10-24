@@ -1236,6 +1236,12 @@ public class HighlightMethodUtil {
       }
       if (classReference != null && aClass.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass)) {
         holder.add(buildAccessProblem(classReference, typeResolveResult, aClass));
+      } else if (aClass.isInterface() && constructorCall instanceof PsiNewExpression) {
+        final PsiReferenceParameterList typeArgumentList = ((PsiNewExpression)constructorCall).getTypeArgumentList();
+        if (typeArgumentList.getTypeArguments().length > 0) {
+          holder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeArgumentList,
+                                                       "Anonymous class implements interface; cannot have type arguments"));
+        }
       }
     }
     else {

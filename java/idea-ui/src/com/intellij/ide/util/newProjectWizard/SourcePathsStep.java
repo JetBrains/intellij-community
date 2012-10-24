@@ -287,8 +287,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   @Nullable
   private String getSourceDirectoryPath() {
     final String contentEntryPath = getContentRootPath();
-    final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
     if (contentEntryPath != null) {
+      final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
       return dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
     }
     return null;

@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
@@ -436,13 +437,16 @@ public class ExpressionGenerator extends Generator {
       else if (resolved == null || resolved instanceof GrLightLocalVariable) {
         //write unresolved reference assignment via setter GroovyObject.setProperty(String name, Object value)
         final GrExpression qualifier = ((GrReferenceExpression)realLValue).getQualifier();
-        final PsiType type = qualifier != null ? qualifier.getType() : factory.createExpressionFromText("this", expression).getType();
+        final PsiType type = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)realLValue);
 
-        final GrExpression[] args = new GrExpression[2];
-        args[0] = factory.createExpressionFromText("\"" + ((GrReferenceExpression)realLValue).getReferenceName() + "\"");
-        args[1] = getRValue(expression);
-        final PsiElement method = PsiImplUtil
-          .extractUniqueElement(ResolveUtil.getMethodCandidates(type, "setProperty", expression, args[0].getType(), args[1].getType()));
+        final GrExpression[] args = {
+          factory.createExpressionFromText("\"" + ((GrReferenceExpression)realLValue).getReferenceName() + "\""),
+          getRValue(expression)
+        };
+        GroovyResolveResult[] candidates = type != null
+                                           ? ResolveUtil.getMethodCandidates(type, "setProperty", expression, args[0].getType(), args[1].getType())
+                                           : GroovyResolveResult.EMPTY_ARRAY;
+        final PsiElement method = PsiImplUtil.extractUniqueElement(candidates);
 
         if (method instanceof PsiMethod) {
           writeAssignmentWithSetter(qualifier, (PsiMethod)method, args, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY,
@@ -870,6 +874,16 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    if (PsiUtil.isThisOrSuperRef(referenceExpression)) {
+      GrExpression qualifier = referenceExpression.getQualifier();
+      if (!context.isInAnonymousContext() && qualifier != null) {
+        qualifier.accept(this);
+      }
+      builder.append(referenceExpression.getReferenceName());
+      return;
+    }
+
+
     final GrExpression qualifier = referenceExpression.getQualifier();
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
@@ -967,7 +981,19 @@ public class ExpressionGenerator extends Generator {
             builder.append(refName);
           }
           else {
-            builder.append("getProperty(\"").append(refName).append("\")");
+            PsiType stringType = PsiType.getJavaLangString(referenceExpression.getManager(), referenceExpression.getResolveScope());
+            PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(referenceExpression);
+            GroovyResolveResult[] candidates = qualifierType != null
+                                               ? ResolveUtil.getMethodCandidates(qualifierType, "getProperty", referenceExpression,
+                                                                                 stringType)
+                                               : GroovyResolveResult.EMPTY_ARRAY;
+            final PsiElement method = PsiImplUtil.extractUniqueElement(candidates);
+            if (method != null) {
+              builder.append("getProperty(\"").append(refName).append("\")");
+            }
+            else {
+              builder.append(refName);
+            }
           }
         }
         else {
@@ -1008,15 +1034,6 @@ public class ExpressionGenerator extends Generator {
     builder.append(';');
     context.myStatements.add(builder.toString());
     return name;
-  }
-
-  @Override
-  public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expr) {
-    GrReferenceExpression qualifier = expr.getQualifier();
-    if (!context.isInAnonymousContext() && qualifier != null) {
-      qualifier.accept(this);
-    }
-    builder.append(expr.getReferenceName());
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,13 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement child = getFirstChild();
+    if (child == null) return null;
+
+    IElementType type = child.getNode().getElementType();
+    if (type == GroovyTokenTypes.mIDENT || type == GroovyTokenTypes.kDEF) return child;
+
+    return null;
   }
 
   public PsiIdentifier getNameIdentifier() {

@@ -70,5 +70,7 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
   @Tag("treeState")
   public Element myElement = new Element(STATE_ELEMENT_NAME);
 
+  public boolean EXPERT_MODE = false;
+
   private TreeState myTreeState = new TreeState();
 }

@@ -90,7 +90,7 @@ public class RootsToWorkingCopies implements VcsListener {
   @Nullable
   @CalledInBackground
   public WorkingCopy getMatchingCopy(final SVNURL url) {
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    assert (! ApplicationManager.getApplication().isDispatchThread()) || ApplicationManager.getApplication().isUnitTestMode();
     if (url == null) return null;
 
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
@@ -111,7 +111,7 @@ public class RootsToWorkingCopies implements VcsListener {
   @CalledInBackground
   @Nullable
   public WorkingCopy getWcRoot(final VirtualFile root) {
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    assert (! ApplicationManager.getApplication().isDispatchThread()) || ApplicationManager.getApplication().isUnitTestMode();
 
     synchronized (myLock) {
       if (myUnversioned.contains(root)) return null;

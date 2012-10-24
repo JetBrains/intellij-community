@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
+package org.jetbrains.plugins.groovy.refactoring.util;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
 * @author Medvedev Max
@@ -25,12 +26,14 @@ public class AnySupers extends GroovyRecursiveElementVisitor {
   boolean myContainsSupers = false;
 
   @Override
-  public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
-    super.visitSuperExpression(superExpression);
-    myContainsSupers = true;
+  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    super.visitReferenceExpression(referenceExpression);
+    if (PsiUtil.isSuperReference(referenceExpression)) {
+      myContainsSupers = true;
+    }
   }
 
-  public boolean isResult() {
+  public boolean containsSupers() {
     return myContainsSupers;
   }
 }

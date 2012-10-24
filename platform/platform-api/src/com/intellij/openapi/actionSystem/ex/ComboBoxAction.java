@@ -369,14 +369,22 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
         g2.fillRect(2, 0, w - 2, h);
         GraphicsUtil.setupAntialiasing(g2);
-        if (!myMouseInside) {
-          g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
-          //g2.setColor(UIUtil.getBorderColor());
+        if (!UIUtil.isUnderDarcula()) {
+          if (!myMouseInside) {
+            g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
+          } else {
+            g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor().darker(), 0, h, UIUtil.getBorderColor().darker().darker()));
+          }
+        } else {
+          if (!myMouseInside) {
+            g2.setPaint(new GradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.2), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.3)));
+          } else {
+            g2.setPaint(new GradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.4), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.5)));
+          }
         }
-        else {
-          g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor().darker(), 0, h, UIUtil.getBorderColor().darker().darker()));
-        }
+
         g2.drawRect(2, 0, w - 3, h - 1);
+
         final Icon icon = getIcon();
         int x = 7;
         if (icon != null) {

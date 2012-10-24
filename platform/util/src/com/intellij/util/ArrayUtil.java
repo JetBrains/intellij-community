@@ -401,31 +401,6 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
-  /**
-   * @param src source array.
-   * @param obj object to be found.
-   * @return index of <code>obj</code> in the <code>src</code> array.
-   *         Returns <code>-1</code> if passed object isn't found. This method uses
-   *         <code>equals</code> of arrays elements to compare <code>obj</code> with
-   *         these elements.
-   */
-  public static <T> int find(@NotNull final T[] src, final T obj) {
-    for (int i = 0; i < src.length; i++) {
-      final T o = src[i];
-      if (o == null) {
-        if (obj == null) {
-          return i;
-        }
-      }
-      else {
-        if (o.equals(obj)) {
-          return i;
-        }
-      }
-    }
-    return -1;
-  }
-
   public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];

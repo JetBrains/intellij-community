@@ -633,9 +633,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
           color.getColorComponents(rgb);
 
           if (rgb[0] < 0.1 && rgb[1] < 0.1 && rgb[1] < 0.1) {
-            g.setColor(Gray._220.withAlpha(70));
+            g.setColor(Gray._220.withAlpha(85));
           } else {
-            g.setColor(Gray._60.withAlpha(50));
+            g.setColor(Gray._60.withAlpha(70));
           }
           g.drawString(fragment, offset, textBaseline);
         }

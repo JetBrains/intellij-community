@@ -32,6 +32,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +51,17 @@ public class TabLabel extends JPanel {
 
     @Override
     protected boolean shouldDrawDimmed() {
-      return myTabs.useBoldLabels();
+      return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+      super.append(fragment, attributes, isMainText);
+    }
+
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+      super.append(fragment, attributes, tag);
     }
   };
   
