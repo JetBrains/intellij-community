@@ -1128,10 +1128,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void error() {
+    error("broken control flow for a scope");
+  }
+
+  private void error(String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
 
-    LogMessageEx.error(LOG, "broken control flow for a scope", myScope.getText(), "\n------------------\n", fileText);
+    LogMessageEx.error(LOG, descr, myScope.getText(), "\n------------------\n", fileText);
   }
 
   private AfterCallInstruction addCallNode(InstructionImpl finallyInstruction, GroovyPsiElement scopeWhenAdded, InstructionImpl src) {
@@ -1161,7 +1165,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void finishNode(InstructionImpl instruction) {
     final InstructionImpl popped = myProcessingStack.pop();
     if (!instruction.equals(popped)) {
-      error();
+      String description = "popped: " + popped.toString() + "   ,  expected: " + instruction.toString();
+      error(description);
     }
   }
 
