@@ -797,7 +797,7 @@ public class ChooseRunConfigurationPopup {
       });
 
       if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
-        result.add(new ActionWrapper("Save configuration", AllIcons.RunConfigurations.SaveTempConfig) {
+        result.add(new ActionWrapper("Save configuration", AllIcons.Actions.Menu_saveall) {
           @Override
           public void perform() {
             final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
