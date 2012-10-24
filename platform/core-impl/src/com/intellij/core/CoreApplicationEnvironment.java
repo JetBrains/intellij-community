@@ -15,8 +15,7 @@
  */
 package com.intellij.core;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.*;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -138,6 +137,21 @@ public class CoreApplicationEnvironment {
             return false;
         }
         return true;
+      }
+
+      @Override
+      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
+                                                                           ProgressIndicator progress,
+                                                                           boolean failFastOnAcquireReadAction,
+                                                                           @NotNull Processor<T> thingProcessor) {
+        final AsyncFutureResult<Boolean> asyncFutureResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+        try {
+          final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
+          asyncFutureResult.set(result);
+        } catch (Throwable t) {
+          asyncFutureResult.setException(t);
+        }
+        return asyncFutureResult;
       }
 
       @Override
