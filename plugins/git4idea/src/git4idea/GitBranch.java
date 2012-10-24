@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,19 +53,8 @@ public abstract class GitBranch extends GitReference {
   @NotNull private final Hash myHash;
 
   protected GitBranch(@NotNull String name, @NotNull Hash hash) {
-    super(cleanFromPrefix(name));
+    super(GitBranchUtil.stripRefsPrefix(name));
     myHash = hash;
-  }
-
-  @NotNull
-  private static String cleanFromPrefix(@NotNull String branchName) {
-    if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-      return branchName.substring(REFS_HEADS_PREFIX.length());
-    }
-    else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-      return branchName.substring(REFS_REMOTES_PREFIX.length());
-    }
-    return branchName;
   }
 
   /**

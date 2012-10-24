@@ -204,18 +204,19 @@ public class GitConfig {
   }
 
   @Nullable
-  private static GitLocalBranch findLocalBranch(@NotNull final String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
+  private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
+    final String name = GitBranchUtil.stripRefsPrefix(branchName);
     try {
       return Iterables.find(localBranches, new Predicate<GitLocalBranch>() {
         @Override
         public boolean apply(@Nullable GitLocalBranch input) {
           assert input != null;
-          return input.getName().equals(branchName);
+          return input.getName().equals(name);
         }
       });
     }
     catch (NoSuchElementException e) {
-      LOG.info("Couldn't find branch with name " + branchName);
+      LOG.info("Couldn't find branch with name " + name);
       return null;
     }
   }

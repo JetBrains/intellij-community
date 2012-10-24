@@ -253,20 +253,32 @@ public class GitBranchUtil {
    * @return remote branch or null if such branch couldn't be found.
    */
   @Nullable
-  public static GitRemoteBranch findRemoteBranchByName(@NotNull final String remoteBranchName, @NotNull final String remoteName,
+  public static GitRemoteBranch findRemoteBranchByName(@NotNull String remoteBranchName, @NotNull final String remoteName,
                                                        @NotNull final Collection<GitRemoteBranch> remoteBranches) {
+    final String branchName = stripRefsPrefix(remoteBranchName);
     Optional<GitRemoteBranch> optional = Iterables.tryFind(remoteBranches, new Predicate<GitRemoteBranch>() {
       @Override
       public boolean apply(@Nullable GitRemoteBranch input) {
         assert input != null;
-        return input.getNameForRemoteOperations().equals(remoteBranchName) && input.getRemote().getName().equals(remoteName);
+        return input.getNameForRemoteOperations().equals(branchName) && input.getRemote().getName().equals(remoteName);
       }
     });
     if (optional.isPresent()) {
       return optional.get();
     }
-    LOG.info(String.format("Couldn't find branch with name %s", remoteBranchName));
+    LOG.info(String.format("Couldn't find branch with name %s", branchName));
     return null;
+  }
+
+  @NotNull
+  public static String stripRefsPrefix(@NotNull String branchName) {
+    if (branchName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      return branchName.substring(GitBranch.REFS_HEADS_PREFIX.length());
+    }
+    else if (branchName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+      return branchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
+    }
+    return branchName;
   }
 
 }
