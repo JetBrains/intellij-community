@@ -115,6 +115,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
         if (psiMethod == null) {
           isConstructor = true;
           if (!(methodCall instanceof PsiNewExpression)) return null;
+          if (((PsiNewExpression)methodCall).getAnonymousClass() != null) return null;
           final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)methodCall).getClassOrAnonymousClassReference();
           if (classReference == null) return null;
           containingClass = (PsiClass)classReference.resolve();
