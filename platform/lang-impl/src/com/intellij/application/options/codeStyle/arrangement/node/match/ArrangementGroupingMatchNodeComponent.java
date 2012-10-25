@@ -15,10 +15,8 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsService;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -40,12 +38,10 @@ public class ArrangementGroupingMatchNodeComponent extends JPanel implements Arr
 
   private static final int TOP_INSET = 3;
 
-  @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
   @NotNull private final ArrangementAtomMatchCondition myCondition;
 
   @Nullable private Rectangle myScreenBounds;
   @NotNull private  Dimension myPreferredSize;
-  private           boolean   mySelected;
 
   public ArrangementGroupingMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
                                                @NotNull ArrangementAtomMatchCondition condition)
@@ -104,7 +100,6 @@ public class ArrangementGroupingMatchNodeComponent extends JPanel implements Arr
 
   @Override
   public void setSelected(boolean selected) {
-    mySelected = selected;
   }
 
   @Nullable
@@ -126,10 +121,6 @@ public class ArrangementGroupingMatchNodeComponent extends JPanel implements Arr
     int y = TOP_INSET;
     g.drawLine(cornerX, y, bounds.width, y);
     g.drawLine(cornerX, y, cornerX, y + bounds.height);
-    if (mySelected) {
-      g.setColor(myColorsService.getBackgroundColor(true));
-      g.fillRect(cornerX + 1, y + 1, bounds.width - 1, bounds.height - 1);
-    }
 
     Point point = ArrangementConfigUtil.getLocationOnScreen(this);
     if (point != null) {

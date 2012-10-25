@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -92,10 +91,11 @@ public class ArrangementRuleTree {
   public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> uiGroupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager,
+                             @NotNull ArrangementColorsProvider colorsProvider,
                              @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, new Runnable() {
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, new Runnable() {
       @Override
       public void run() {
         notifySelectionListeners(); 

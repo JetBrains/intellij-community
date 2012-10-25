@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,9 +28,9 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
   @NotNull private final String myNameAtRemote;
 
   public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @NotNull Hash hash) {
-    super(formStandardName(remote, nameAtRemote), hash);
+    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)), hash);
     myRemote = remote;
-    myNameAtRemote = nameAtRemote;
+    myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
   }
 
   @NotNull

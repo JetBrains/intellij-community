@@ -321,8 +321,9 @@ class FormatProcessor {
    *                              <code>false</code> otherwise
    */
   @SuppressWarnings({"deprecation"})
-  private boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                                         @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
+  private boolean applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
+                                            @NotNull final FormattingModel model,
+                                            @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -366,14 +367,13 @@ class FormatProcessor {
 
   @Nullable
   private static DocumentEx getAffectedDocument(final FormattingModel model) {
-    if (model instanceof DocumentBasedFormattingModel) {
-      final Document document = ((DocumentBasedFormattingModel)model).getDocument();
-      if (document instanceof DocumentEx) return (DocumentEx)document;
-    }/* else if (false) { // till issue with persistent range markers dropped fixed
-      Document document = model.getDocumentModel().getDocument();
-      if (document instanceof DocumentEx) return (DocumentEx)document;
-    }*/
-    return null;
+    final Document document = model.getDocumentModel().getDocument();
+    if (document instanceof DocumentEx) {
+      return (DocumentEx)document;
+    }
+    else {
+      return null;
+    }
   }
 
   private static int replaceWhiteSpace(final FormattingModel model,
@@ -1397,7 +1397,7 @@ class FormatProcessor {
         myResetBulkUpdateState = true;
       }
       if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA
-          && applyChangesAtBulkMode(myBlocksToModify, myModel, myDefaultIndentOption))
+          && applyChangesAtRewriteMode(myBlocksToModify, myModel, myDefaultIndentOption))
       {
         setDone(true);
       }

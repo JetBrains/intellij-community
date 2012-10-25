@@ -185,7 +185,6 @@
 
   <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine"/>
   <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.MemberOrderService"/>
-  <applicationService serviceImplementation="com.intellij.application.options.codeStyle.arrangement.ArrangementColorsService"/>
 
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
