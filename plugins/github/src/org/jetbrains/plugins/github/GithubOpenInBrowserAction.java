@@ -27,7 +27,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
@@ -143,9 +144,9 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Nullable
   public static String getBranchNameOnRemote(@NotNull Project project, @NotNull VirtualFile root) {
-    final GitBranch tracked;
+    final GitRemoteBranch tracked;
     try {
-      final GitBranch current = GitBranchUtil.getCurrentBranch(project, root);
+      final GitLocalBranch current = GitBranchUtil.getCurrentBranch(project, root);
       if (current == null) {
         Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
         return null;
@@ -160,11 +161,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       Messages.showErrorDialog(project, "Error occurred while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
       return null;
     }
-    String branch = tracked.getName();
-    if (branch.startsWith("origin/")) {
-      branch = branch.substring(7);
-    }
-    return branch;
+    return tracked.getNameForRemoteOperations();
   }
 
 }
