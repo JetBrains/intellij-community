@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableBaseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -131,7 +130,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   private boolean isMainMethodFirstUntypedParameter() {
     if (getTypeElementGroovy() != null) return false;
     if (!(getParent() instanceof GrParameterList)) return false;
-    if (getDefaultInitializer() != null) return false;
+    if (getInitializerGroovy() != null) return false;
 
     GrParameterList parameterList = (GrParameterList)getParent();
     if (!(parameterList.getParent() instanceof GrMethod)) return false;
@@ -172,13 +171,8 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return findChildByClass(GrTypeElement.class);
   }
 
-  @Nullable
-  public GrExpression getDefaultInitializer() {
-    return GroovyPsiElementImpl.findExpressionChild(this);
-  }
-
   public boolean isOptional() {
-    return getDefaultInitializer() != null;
+    return getInitializerGroovy() != null;
   }
 
   @NotNull

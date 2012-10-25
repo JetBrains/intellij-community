@@ -192,30 +192,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     myGetters = null;
   }
 
-  @Override
-  public void setInitializerGroovy(GrExpression initializer) {
-    GrExpression oldInitializer = getInitializerGroovy();
-    if (initializer == null) {
-      if (oldInitializer != null) {
-        oldInitializer.delete();
-        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
-        if (assign != null) {
-          assign.delete();
-        }
-      }
-      return;
-    }
-
-
-    if (oldInitializer != null) {
-      oldInitializer.replaceWithExpression(initializer, true);
-    }
-    else {
-      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
-      addAfter(initializer, getLastChild());
-    }
-  }
-
   @NotNull
   public GrAccessorMethod[] getGetters() {
     if (myGetters == null) {

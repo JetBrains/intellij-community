@@ -495,7 +495,7 @@ public class GroovyInlineMethodUtil {
         return (GrExpression)arg;
       }
       else { //arg is skipped. Parameter is optional
-        return parameter.getDefaultInitializer();
+        return parameter.getInitializerGroovy();
       }
     }
   }
@@ -520,7 +520,7 @@ public class GroovyInlineMethodUtil {
     }
     GrParameter[] parameters = method.getParameters();
     for (GrParameter parameter : parameters) {
-      GrExpression initializer = parameter.getDefaultInitializer();
+      GrExpression initializer = parameter.getInitializerGroovy();
       if (nameFilter.contains(parameter.getName()) && initializer != null) {
         replaceAllOccurrencesWithExpression(method, call, initializer, parameter);
       }

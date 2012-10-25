@@ -321,4 +321,32 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
     }
     super.deleteChildInternal(child);
   }
+
+  @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    if (getParent() instanceof GrTupleDeclaration) {
+      throw new UnsupportedOperationException("don't invoke 'setInitializer()' for tuple declaration");
+    }
+
+    GrExpression oldInitializer = getInitializerGroovy();
+    if (initializer == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
+        if (assign != null) {
+          assign.delete();
+        }
+      }
+      return;
+    }
+
+
+    if (oldInitializer != null) {
+      oldInitializer.replaceWithExpression(initializer, true);
+    }
+    else {
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
+      addAfter(initializer, getLastChild());
+    }
+  }
 }
