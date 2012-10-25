@@ -39,11 +39,10 @@ import java.util.List;
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   protected final StringRef myLocalName;
-  @Nullable
   private final StringRef myNamespace;
   private DomInvocationHandler myHandler;
 
-  public DomStub(DomStub parent, @NotNull StringRef localName, @Nullable StringRef namespace) {
+  public DomStub(DomStub parent, @NotNull StringRef localName, StringRef namespace) {
     super(parent);
     myNamespace = namespace;
     if (parent != null) {
@@ -69,11 +68,12 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   }
 
   public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
+    final String s = nsKey == null ? "" : nsKey;
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
         return XmlUtil.getLocalName(stub.getName()).equals(name) &&
-               Comparing.equal(nsKey, stub.getNamespaceKey());
+               Comparing.equal(s, stub.getNamespaceKey());
       }
     });
   }
