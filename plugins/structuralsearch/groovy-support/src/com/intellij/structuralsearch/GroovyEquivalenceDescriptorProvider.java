@@ -42,7 +42,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
       return builder
         .element(p.getNameIdentifierGroovy())
         .optionally(p.getTypeElementGroovy())
-        .optionallyInPattern(p.getDefaultInitializer());
+        .optionallyInPattern(p.getInitializerGroovy());
     }
     else if (e instanceof GrVariable) {
       final GrVariable v = (GrVariable)e;
