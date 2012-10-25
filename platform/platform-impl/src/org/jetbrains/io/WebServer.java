@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -12,6 +13,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -34,7 +36,7 @@ public class WebServer {
     final Application application = ApplicationManager.getApplication();
     final Executor pooledThreadExecutor = new Executor() {
       @Override
-      public void execute(Runnable command) {
+      public void execute(@NotNull Runnable command) {
         application.executeOnPooledThread(command);
       }
     };
@@ -75,8 +77,10 @@ public class WebServer {
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
-        openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
+        if (!SystemInfo.isLinux) {
+          openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
+        }
         return port;
       }
       catch (ChannelException e) {

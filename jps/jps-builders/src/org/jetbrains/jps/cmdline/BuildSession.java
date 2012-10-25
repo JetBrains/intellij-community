@@ -74,7 +74,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
-    List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes = params.getScopeList();
+    List<TargetTypeBuildScope> scopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
     Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -167,7 +167,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         try {
           try {
             fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
-            applyFSEvent(pd, myInitialFSDelta);
+            applyFSEvent(pd, myInitialFSDelta, false);
           }
           finally {
             fsStateStream.close();
@@ -223,7 +223,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       @Override
       public void run() {
         try {
-          applyFSEvent(myProjectDescriptor, event);
+          applyFSEvent(myProjectDescriptor, event, true);
           myLastEventOrdinal += 1;
         }
         catch (IOException e) {
@@ -252,7 +252,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) throws IOException {
+  private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event, final boolean saveEventStamp) throws IOException {
     if (event == null) {
       return;
     }
@@ -283,7 +283,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            pd.fsState.markDirty(null, file, descriptor, timestamps);
+            pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
           }
         }
       }

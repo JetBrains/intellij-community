@@ -18,6 +18,8 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,9 +28,14 @@ import java.io.IOException;
 public class ResourcesBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
   public static final String BUILDER_NAME = "resources";
+  private static final List<StandardResourceBuilderEnabler> ourEnablers = new ArrayList<StandardResourceBuilderEnabler>();
 
   public ResourcesBuilder() {
-    super(BuilderCategory.TRANSLATOR);
+    super(BuilderCategory.RESOURCES_PROCESSOR);
+  }
+
+  public static void registerEnabler(StandardResourceBuilderEnabler enabler) {
+    ourEnablers.add(enabler);
   }
 
   @Override
@@ -53,28 +60,32 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     try {
       final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
 
-      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-        public boolean apply(final ModuleBuildTarget target, final File file, final JavaSourceRootDescriptor sourceRoot) throws IOException {
+      final FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor = new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+        public boolean apply(ModuleBuildTarget target, final File file, final JavaSourceRootDescriptor sourceRoot) throws IOException {
           if (patterns.isResourceFile(file, sourceRoot.root)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               doneSomething.set(true);
-              copyResource(
-                context, target.getModule(), file, sourceRoot,
-                context.getProjectDescriptor().dataManager.getSourceToOutputMap(target), target.isTests()
-              );
+              copyResource(context, sourceRoot, file);
             }
             catch (IOException e) {
               LOG.info(e);
               context.processMessage(
-                new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath()))
+                new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(),
+                                    FileUtil.toSystemIndependentName(file.getPath()))
               );
               return false;
             }
           }
           return true;
         }
-      });
+      };
+
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (isResourceProcessingEnabled(target.getModule())) {
+          FSOperations.processFilesToRecompile(context, target, processor);
+        }
+      }
 
       return doneSomething.get()? ExitCode.OK : ExitCode.NOTHING_DONE;
     }
@@ -83,18 +94,24 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static void copyResource(CompileContext context,
-                                   JpsModule module,
-                                   File file,
-                                   JavaSourceRootDescriptor sourceRoot,
-                                   final SourceToOutputMapping outputToSourceMapping, final boolean tests) throws IOException {
-    final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, tests);
+  private static boolean isResourceProcessingEnabled(JpsModule module) {
+    for (StandardResourceBuilderEnabler enabler : ourEnablers) {
+      if (!enabler.isResourceProcessingEnabled(module)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static void copyResource(CompileContext context, JavaSourceRootDescriptor rd, File file) throws IOException {
+    final ModuleBuildTarget target = rd.getTarget();
+    final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(target.getModule(), target.isTests());
     if (outputRootUrl == null) {
       return;
     }
-    String rootPath = FileUtil.toSystemIndependentName(sourceRoot.root.getAbsolutePath());
+    String rootPath = FileUtil.toSystemIndependentName(rd.root.getAbsolutePath());
     final String relativePath = FileUtil.getRelativePath(rootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
-    final String prefix = sourceRoot.getPackagePrefix();
+    final String prefix = rd.getPackagePrefix();
 
     final StringBuilder targetPath = new StringBuilder();
     targetPath.append(JpsPathUtil.urlToPath(outputRootUrl));
@@ -106,7 +123,8 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     final String outputPath = targetPath.toString();
     FileUtil.copyContent(file, new File(outputPath));
     try {
-      outputToSourceMapping.setOutput(file.getPath(), outputPath);
+      final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+      mapping.setOutput(file.getPath(), outputPath);
     }
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));

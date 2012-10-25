@@ -42,7 +42,9 @@ import static org.testng.Assert.assertTrue;
  * Test for {@link GitLogParser}.
  *
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitLogParserTest extends GitTest {
 
   public static final GitLogOption[] GIT_LOG_OPTIONS =

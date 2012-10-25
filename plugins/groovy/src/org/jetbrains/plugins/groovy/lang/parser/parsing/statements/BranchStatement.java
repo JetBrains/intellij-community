@@ -101,9 +101,10 @@ public class BranchStatement implements GroovyElementTypes {
     if (!ConditionalExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
-    if (mCOLON.equals(builder.getTokenType()) ||
-            mCOMMA.equals(builder.getTokenType())) {
+
+    if (ParserUtils.lookAhead(builder, mCOLON) || mCOMMA.equals(builder.getTokenType())) {
       builder.advanceLexer();
+      ParserUtils.getToken(builder, mNLS);
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }

@@ -1,7 +1,14 @@
 package org.jetbrains.jps.maven.model.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
+import org.jetbrains.jps.incremental.resources.StandardResourceBuilderEnabler;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
 import org.jetbrains.jps.model.JpsElementChildRole;
@@ -11,11 +18,25 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
+
 /**
  * @author nik
  */
 public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.maven.model.impl.JpsMavenExtensionServiceImpl");
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
+
+  public JpsMavenExtensionServiceImpl() {
+    ResourcesBuilder.registerEnabler(new StandardResourceBuilderEnabler() {
+      @Override
+      public boolean isResourceProcessingEnabled(JpsModule module) {
+        // enable standard resource processing only if this is not a maven module
+        // for maven modules use maven-aware resource builder
+        return getExtension(module) == null;
+      }
+    });
+  }
 
   @Nullable
   @Override
@@ -48,5 +69,31 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   public boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency) {
     JpsSimpleElement<Boolean> child = dependency.getContainer().getChild(PRODUCTION_ON_TEST_ROLE);
     return child != null && child.getData();
+  }
+
+  private volatile MavenProjectConfiguration myConfig;
+
+  @NotNull
+  @Override
+  public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
+    MavenProjectConfiguration config = myConfig;
+    if (config == null) {
+      synchronized (this) {
+        config = myConfig;
+        if (config == null) {
+          config = new MavenProjectConfiguration();
+          try {
+            final File configFile = new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+            final Document document = JDOMUtil.loadDocument(configFile);
+            XmlSerializer.deserializeInto(config, document.getRootElement());
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
+          myConfig = config;
+        }
+      }
+    }
+    return config;
   }
 }

@@ -15,9 +15,11 @@
  */
 package git4idea.repo;
 
+import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +38,7 @@ import java.util.List;
  *   There are also some rules about url substitution, like {@code url.<base>.insteadOf}.
  * </p>
  * <p>
- *   GitRemote instance constructed by {@link GitConfig#read(java.io.File)} has all these rules applied.
+ *   GitRemote instance constructed by {@link GitConfig#read(GitPlatformFacade, File)}} has all these rules applied.
  *   Thus, for example, if only one {@code url} and no {@code pushUrls} are defined for the remote, 
  *   both {@link #getUrls()} and {@link #getPushUrls()} will return this url. <br/>
  *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.
@@ -51,10 +53,7 @@ import java.util.List;
  *   If some additional data is needed, add the field, getter, constructor parameter and populate it in {@link GitConfig}.
  * </p>
  * 
- * <p>
- *   This class implements {@link Comparable}, but remotes are compared only by their names 
- *   (which is inconsistent with {@code equals}, but is fair enough, since there can't be different remotes with the same name). 
- * </p>
+ * <p>Remotes are compared (via equals, hashcode and compareTo) only by names.</p>
  * 
  * @author Kirill Likhodedov
  */
@@ -76,12 +75,13 @@ public final class GitRemote implements Comparable<GitRemote> {
   public static final String ORIGIN_NAME = "origin";
 
   @NotNull private final String myName;
-  private final List<String> myUrls;
-  private final Collection<String> myPushUrls;
-  private final List<String> myFetchRefSpecs;
-  private final List<String> myPushRefSpecs;
+  @NotNull private final List<String> myUrls;
+  @NotNull private final Collection<String> myPushUrls;
+  @NotNull  final List<String> myFetchRefSpecs;
+  @NotNull private final List<String> myPushRefSpecs;
 
-  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls, @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
+  GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,
+            @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
     myName = name;
     myUrls = urls;
     myPushUrls = pushUrls;
@@ -99,6 +99,7 @@ public final class GitRemote implements Comparable<GitRemote> {
    * If you need url to fetch, use {@link #getFirstUrl()}, because only the first url is fetched by Git,
    * others are ignored.
    */
+  @NotNull
   public List<String> getUrls() {
     return myUrls;
   }
@@ -111,14 +112,17 @@ public final class GitRemote implements Comparable<GitRemote> {
     return myUrls.isEmpty() ? null : myUrls.get(0);
   }
 
+  @NotNull
   public Collection<String> getPushUrls() {
     return myPushUrls;
   }
 
+  @NotNull
   public List<String> getFetchRefSpecs() {
     return myFetchRefSpecs;
   }
 
+  @NotNull
   public List<String> getPushRefSpecs() {
     return myPushRefSpecs;
   }
@@ -129,24 +133,15 @@ public final class GitRemote implements Comparable<GitRemote> {
     if (o == null || getClass() != o.getClass()) return false;
 
     GitRemote gitRemote = (GitRemote)o;
+    return myName.equals(gitRemote.myName);
 
-    if (!myFetchRefSpecs.equals(gitRemote.myFetchRefSpecs)) return false;
-    if (!myName.equals(gitRemote.myName)) return false;
-    if (!myPushRefSpecs.equals(gitRemote.myPushRefSpecs)) return false;
-    if (!myPushUrls.equals(gitRemote.myPushUrls)) return false;
-    if (!myUrls.equals(gitRemote.myUrls)) return false;
-
-    return true;
+    // other parameters don't count: remotes are equal if their names are equal
+    // TODO: LOG.warn if other parameters differ
   }
 
   @Override
   public int hashCode() {
-    int result = myName.hashCode();
-    result = 31 * result + myUrls.hashCode();
-    result = 31 * result + myPushUrls.hashCode();
-    result = 31 * result + myFetchRefSpecs.hashCode();
-    result = 31 * result + myPushRefSpecs.hashCode();
-    return result;
+    return myName.hashCode();
   }
 
   @Override
@@ -159,4 +154,5 @@ public final class GitRemote implements Comparable<GitRemote> {
   public int compareTo(@NotNull GitRemote o) {
     return getName().compareTo(o.getName());
   }
+
 }

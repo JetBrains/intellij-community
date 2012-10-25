@@ -236,7 +236,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return myStub;
   }
 
-  public void setStub(T stub) {
+  public void setStub(@Nullable T stub) {
     myStub = stub;
   }
 

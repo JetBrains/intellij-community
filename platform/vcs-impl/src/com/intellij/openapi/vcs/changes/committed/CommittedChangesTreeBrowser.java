@@ -225,8 +225,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private void updateModel() {
     final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
+    final TreePath[] paths = myChangesTree.getSelectionPaths();
     myChangesTree.setModel(buildTreeModel(filteredChangeLists));
     TreeUtil.expandAll(myChangesTree);
+    myChangesTree.setSelectionPaths(paths);
   }
 
   public void setGroupingStrategy(ChangeListGroupingStrategy strategy) {

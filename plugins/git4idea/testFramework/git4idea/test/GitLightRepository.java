@@ -19,7 +19,7 @@ import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +158,7 @@ public class GitLightRepository implements GitRepository {
   }
 
   @Override
-  public GitBranch getCurrentBranch() {
+  public GitLocalBranch getCurrentBranch() {
     throw new UnsupportedOperationException();
   }
 
@@ -170,13 +170,13 @@ public class GitLightRepository implements GitRepository {
 
   @NotNull
   @Override
-  public GitConfig getConfig() {
+  public Collection<GitRemote> getRemotes() {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public Collection<GitRemote> getRemotes() {
+  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
     throw new UnsupportedOperationException();
   }
 
@@ -206,7 +206,7 @@ public class GitLightRepository implements GitRepository {
   }
 
   @Override
-  public void update(TrackedTopic... topics) {
+  public void update() {
     throw new UnsupportedOperationException();
   }
 

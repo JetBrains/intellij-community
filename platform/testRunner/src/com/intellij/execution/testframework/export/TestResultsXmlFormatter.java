@@ -90,7 +90,7 @@ public class TestResultsXmlFormatter {
     String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
                                                 new SimpleDateFormat().format(new Date()));
     runAttrs.put(ATTR_FOORTER_TEXT, footerText);
-    Integer duration = myTestRoot.getDuration();
+    Long duration = myTestRoot.getDuration();
     if (duration != null) {
       runAttrs.put(ATTR_DURATION, String.valueOf(duration));
     }
@@ -134,7 +134,7 @@ public class TestResultsXmlFormatter {
     Map<String, String> attrs = new HashMap<String, String>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
-    Integer duration = node.getDuration();
+    Long duration = node.getDuration();
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
     }

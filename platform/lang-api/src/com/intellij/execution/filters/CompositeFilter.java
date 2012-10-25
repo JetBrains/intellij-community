@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   private boolean myIsAnyHeavy;
   private final DumbService myDumbService;
 
-  public CompositeFilter(Project project) {
+  public CompositeFilter(@NotNull Project project) {
     myDumbService = DumbService.getInstance(project);
   }
 

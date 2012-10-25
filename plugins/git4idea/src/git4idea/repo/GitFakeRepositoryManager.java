@@ -60,10 +60,10 @@ public class GitFakeRepositoryManager implements GitRepositoryManager {
   }
 
   @Override
-  public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
+  public void updateRepository(VirtualFile root) {
   }
 
   @Override
-  public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
+  public void updateAllRepositories() {
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Kirill Likhodedov
@@ -50,11 +51,12 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   private final GitUntrackedFilesHolder myUntrackedFilesHolder;
   private final QueueProcessor<Object> myNotifier;
 
-  private volatile State myState;
-  private volatile String myCurrentRevision;
-  private volatile GitBranch myCurrentBranch;
-  private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
-  private volatile GitConfig myConfig;
+  @NotNull private volatile State myState;
+  @Nullable private volatile String myCurrentRevision;
+  @Nullable private volatile GitLocalBranch myCurrentBranch;
+  @NotNull private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
+  @NotNull private volatile Collection<GitRemote> myRemotes = Collections.emptyList();
+  @NotNull private volatile Collection<GitBranchTrackInfo> myBranchTrackInfos;
 
   /**
    * Get the GitRepository instance from the {@link GitRepositoryManager}.
@@ -81,7 +83,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     } else {
       myUntrackedFilesHolder = null;
     }
-    update(TrackedTopic.ALL);
+    update();
   }
 
   /**
@@ -163,7 +165,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @Override
   @Nullable
-  public GitBranch getCurrentBranch() {
+  public GitLocalBranch getCurrentBranch() {
     return myCurrentBranch;
   }
 
@@ -178,14 +180,14 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @Override
   @NotNull
-  public GitConfig getConfig() {
-    return myConfig;
+  public Collection<GitRemote> getRemotes() {
+    return myRemotes;
   }
 
   @Override
   @NotNull
-  public Collection<GitRemote> getRemotes() {
-    return myConfig.getRemotes();
+  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
+    return myBranchTrackInfos;
   }
 
   @Override
@@ -216,59 +218,21 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   }
 
   @Override
-  public void update(TrackedTopic... topics) {
-    for (TrackedTopic topic : topics) {
-      switch (topic) {
-        case STATE:            updateState(); break;
-        case CURRENT_REVISION: updateCurrentRevision(); break;
-        case CURRENT_BRANCH:   updateCurrentBranch(); break;
-        case BRANCHES:         updateBranchList(); break;
-        case CONFIG:           updateConfig(); break;
-        case ALL_CURRENT:
-          updateState();
-          updateCurrentRevision();
-          updateCurrentBranch();
-          break;
-        case ALL:
-          updateState();
-          updateCurrentRevision();
-          updateCurrentBranch();
-          updateBranchList();
-          updateConfig();
-          break;
-      }
-    }
+  public void update() {
+    File configFile = new File(VfsUtilCore.virtualToIoFile(myGitDir), "config");
+    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
+    myRemotes = config.parseRemotes();
+    readRepository(myRemotes);
+    myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
+
     notifyListeners();
   }
 
-  private void updateConfig() {
-    File configFile = new File(VfsUtilCore.virtualToIoFile(myGitDir), "config");
-    myConfig = GitConfig.read(myPlatformFacade, configFile);
-  }
-
-  /**
-   * Reads current state and notifies listeners about the change.
-   */
-  private void updateState() {
+  private void readRepository(@NotNull Collection<GitRemote> remotes) {
     myState = myReader.readState();
-  }
-
-  /**
-   * Reads current revision and notifies listeners about the change.
-   */
-  private void updateCurrentRevision() {
     myCurrentRevision = myReader.readCurrentRevision();
-  }
-
-  /**
-   * Reads current branch and notifies listeners about the change.
-   */
-  private void updateCurrentBranch() {
     myCurrentBranch = myReader.readCurrentBranch();
-  }
-
-  private void updateBranchList() {
-    myBranches = myReader.readBranches();
+    myBranches = myReader.readBranches(remotes);
   }
 
   protected void notifyListeners() {

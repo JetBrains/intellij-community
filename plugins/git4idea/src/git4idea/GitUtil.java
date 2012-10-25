@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.google.common.base.Predicate;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -91,6 +92,13 @@ public class GitUtil {
 
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
   private static final int SHORT_HASH_LENGTH = 8;
+
+  public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
+    @Override
+    public boolean apply(@Nullable GitBranchTrackInfo input) {
+      return input != null;
+    }
+  };
 
   /**
    * A private constructor to suppress instance creation
@@ -666,9 +674,6 @@ public class GitUtil {
       return true;
     }
     GitRepositoryManager manager = getRepositoryManager(project);
-    if (manager == null) {
-      return true;
-    }
     return !manager.moreThanOneRoot();
   }
 
@@ -695,8 +700,13 @@ public class GitUtil {
     return null;
   }
 
+  /**
+   * @deprecated Calls Git for tracked info, use {@link GitRepository#getBranchTrackInfos()} instead.
+   */
   @Nullable
-  public static Pair<GitRemote, GitBranch> findMatchingRemoteBranch(GitRepository repository, GitBranch branch) throws VcsException {
+  @Deprecated
+  public static Pair<GitRemote, GitRemoteBranch> findMatchingRemoteBranch(GitRepository repository, GitLocalBranch branch)
+    throws VcsException {
     /*
     from man git-push:
     git push
@@ -715,7 +725,7 @@ public class GitUtil {
       return null;
     }
 
-    for (GitBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
+    for (GitRemoteBranch remoteBranch : repository.getBranches().getRemoteBranches()) {
       if (remoteBranch.getName().equals(remote.getName() + "/" + branch.getName())) {
         return Pair.create(remote, remoteBranch);
       }
@@ -733,22 +743,8 @@ public class GitUtil {
     return null;
   }
 
-  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitBranch dest) {
+  public static boolean repoContainsRemoteBranch(@NotNull GitRepository repository, @NotNull GitRemoteBranch dest) {
     return repository.getBranches().getRemoteBranches().contains(dest);
-  }
-
-  /**
-   * Convert {@link GitBranch GitBranches} to their names, and remove remote HEAD pointers.
-   */
-  @NotNull
-  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitBranch> branches) {
-    Collection<String> names = new ArrayList<String>(branches.size());
-    for (GitBranch branch : branches) {
-      if (!branch.isRemote() || !branch.getShortName().equals("HEAD")) {
-        names.add(branch.getName());
-      }
-    }
-    return names;
   }
 
   @NotNull
@@ -806,6 +802,16 @@ public class GitUtil {
   @NotNull
   public static GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
+  }
+
+  @Nullable
+  public static GitRepository getRepositoryForRootOrLogError(@NotNull Project project, @NotNull VirtualFile root) {
+    GitRepositoryManager manager = getRepositoryManager(project);
+    GitRepository repository = manager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository is null for root " + root);
+    }
+    return repository;
   }
 
   @NotNull
@@ -883,7 +889,7 @@ public class GitUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForCurrentBranch(@NotNull GitRepository repository) {
-    GitBranch currentBranch = repository.getCurrentBranch();
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       return null;
     }

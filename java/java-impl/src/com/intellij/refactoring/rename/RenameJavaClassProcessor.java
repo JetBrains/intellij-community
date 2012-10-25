@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,11 +64,14 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     PsiClass aClass = (PsiClass) element;
     ArrayList<UsageInfo> postponedCollisions = new ArrayList<UsageInfo>();
+    List<MemberHidesOuterMemberUsageInfo> hidesOut = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     // rename all references
     for (final UsageInfo usage : usages) {
       if (usage instanceof ResolvableCollisionUsageInfo) {
         if (usage instanceof CollidingClassImportUsageInfo) {
           ((CollidingClassImportUsageInfo)usage).getImportStatement().delete();
+        } else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
+          hidesOut.add((MemberHidesOuterMemberUsageInfo)usage);
         }
         else {
           postponedCollisions.add(usage);
@@ -99,6 +103,13 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       ClassHidesImportedClassUsageInfo collision = (ClassHidesImportedClassUsageInfo) postponedCollision;
       collision.resolveCollision();
     }
+
+    for (MemberHidesOuterMemberUsageInfo usage : hidesOut) {
+      PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)usage.getElement();
+     /* PsiReferenceExpression ref = RenameJavaMemberProcessor.createQualifiedMemberReference(aClass, collidingRef);
+      collidingRef.replace(ref);*/
+    }
+
 
     listener.elementRenamed(aClass);
   }
@@ -187,6 +198,33 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         for (PsiClass inner : inners) {
           if (newName.equals(inner.getName())) {
             result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
+          }
+        }
+      }
+    } else if (aClass instanceof PsiTypeParameter) {
+      final PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+      if (owner instanceof PsiClass) {
+        final PsiClass[] supers = ((PsiClass)owner).getSupers();
+        for (PsiClass superClass : supers) {
+          if (newName.equals(superClass.getName())) {
+            final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
+            for (PsiReference reference : ReferencesSearch.search(superClass, new LocalSearchScope(superClass))) {
+              classCollisionsDetector.addClassCollisions(reference.getElement(), newName, result);
+            }
+          }
+          PsiClass[] inners = superClass.getInnerClasses();
+          for (final PsiClass inner : inners) {
+            if (newName.equals(inner.getName())) {
+              ReferencesSearch.search(inner).forEach(new Processor<PsiReference>() {
+                public boolean process(final PsiReference reference) {
+                  PsiElement refElement = reference.getElement();
+                  if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+                  MemberHidesOuterMemberUsageInfo info = new MemberHidesOuterMemberUsageInfo(refElement, aClass);
+                  result.add(info);
+                  return true;
+                }
+              });
+            }
           }
         }
       }

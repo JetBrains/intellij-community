@@ -116,6 +116,11 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {
     public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
+      presentationChanged();
+    }
+
+    @Override
+    public void presentationChanged() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (myComponent != null && !myProject.isDisposed()) {
