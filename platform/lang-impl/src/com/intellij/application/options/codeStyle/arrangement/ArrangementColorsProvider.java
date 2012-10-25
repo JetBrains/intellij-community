@@ -25,18 +25,13 @@ import java.awt.*;
  * @since 10/23/12 11:46 PM
  */
 public interface ArrangementColorsProvider {
+  
   @NotNull
   Color getBorderColor(boolean selected);
 
   @NotNull
-  Color getTextColor(@NotNull ArrangementSettingType type);
+  Color getTextColor(@NotNull ArrangementSettingType type, boolean selected);
 
   @NotNull
-  Color getTextBackgroundColor(@NotNull ArrangementSettingType type);
-
-  @NotNull
-  Color getSelectedTextColor(@NotNull ArrangementSettingType type);
-
-  @NotNull
-  Color getSelectedTextBackgroundColor(@NotNull ArrangementSettingType type);
+  Color getTextBackgroundColor(@NotNull ArrangementSettingType type, boolean selected);
 }

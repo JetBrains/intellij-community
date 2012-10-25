@@ -32,10 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
-import com.intellij.psi.codeStyle.arrangement.settings.DefaultArrangementSettingsRepresentationManager;
+import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -94,6 +91,13 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(
       mySettingsAware, representationManager, groupingRules
     );
+    final ArrangementColorsProvider colorsProvider;
+    if (rearranger instanceof ArrangementColorsAware) {
+      colorsProvider = new ArrangementColorsProviderImpl((ArrangementColorsAware)rearranger);
+    }
+    else {
+      colorsProvider = new ArrangementColorsProviderImpl(null);
+    }
 
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW);
@@ -103,7 +107,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, mySettingsAware);
+    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, colorsProvider, mySettingsAware);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);
@@ -113,7 +117,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     );
 
     final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
-    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(mySettingsAware, displayManager);
+    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(mySettingsAware, colorsProvider, displayManager);
     ruleEditor.applyBackground(treeComponent.getBackground());
     editorPane.getContentPane().setBackground(treeComponent.getBackground());
     editorPane.add(ruleEditor);
