@@ -243,7 +243,7 @@ public class CompletionServiceImpl extends CompletionService{
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
-        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PrefixMatchingClassifier(location)));
+        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher(location)));
       }
       else if ("stats".equals(id)) {
         sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new StatisticsWeigher.LookupStatisticsWeigher(location)));
@@ -276,51 +276,16 @@ public class CompletionServiceImpl extends CompletionService{
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
-  private static class PreferStartMatching extends LookupElementWeigher {
-    private final CompletionLocation myLocation;
-
-    public PreferStartMatching(CompletionLocation location) {
-      super("middleMatching", false, true);
-      myLocation = location;
-    }
-
-    @Override
-    public Comparable weigh(@NotNull LookupElement element) {
-      return !isStartMatch(element, myLocation.getCompletionParameters().getLookup());
-    }
-  }
-
   public static boolean isStartMatch(LookupElement element, Lookup lookup) {
     return getItemMatcher(element, lookup).isStartMatch(element);
   }
 
-  private static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {
+  static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {
     PrefixMatcher itemMatcher = lookup.itemMatcher(element);
     String pattern = lookup.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {
       return itemMatcher.cloneWithPrefix(pattern);
     }
     return itemMatcher;
-  }
-
-  private static class PrefixMatchingClassifier extends LookupElementWeigher {
-    private final CompletionLocation myLocation;
-
-    public PrefixMatchingClassifier(CompletionLocation location) {
-      super("prefix", false, true);
-      myLocation = location;
-    }
-
-    @Override
-    public Comparable weigh(@NotNull LookupElement element) {
-      final PrefixMatcher matcher = getItemMatcher(element, myLocation.getCompletionParameters().getLookup());
-
-      int max = Integer.MIN_VALUE;
-      for (String lookupString : element.getAllLookupStrings()) {
-        max = Math.max(max, matcher.matchingDegree(lookupString));
-      }
-      return -max;
-    }
-
   }
 }
