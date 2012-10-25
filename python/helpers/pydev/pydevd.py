@@ -153,7 +153,8 @@ class PyDBCommandThread(PyDBDaemonThread):
                     PydevdLog(0, 'Finishing debug communication...(2)')
                 time.sleep(0.5)
         except:
-            pass
+            pydev_log.debug(sys.exc_info()[0])
+
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
@@ -173,10 +174,8 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
             pydevd_tracing.SetTrace(None) # no debugging on this thread
             while True:
                 if not self.pyDb.haveAliveThreads():
+                    pydev_log.debug("No alive threads, finishing debug session")
                     self.pyDb.FinishDebuggingSession()
-                    for t in threadingEnumerate():
-                        if hasattr(t, 'doKillPydevThread'):
-                            t.doKillPydevThread()
                     return
 
                 time.sleep(0.3)
@@ -1108,7 +1107,6 @@ class PyDB:
         self.checkOutputRedirect()
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
-        self.writer.join()
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
