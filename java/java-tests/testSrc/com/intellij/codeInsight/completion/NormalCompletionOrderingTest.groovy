@@ -356,6 +356,19 @@ import java.lang.annotation.Target;
     checkPreferredItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
+  public void testPreferApplicableAnnotationsMethod() throws Throwable {
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.TYPE})
+@interface TClassAnno {}
+
+@Target({ElementType.METHOD})
+@interface TMethodAnno {}'''
+    checkPreferredItems 0, 'TMethodAnno', 'TClassAnno'
+  }
+
   public void testJComponentAddNewWithStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
     assertPreferredItems(0, "FooBean3", "JComponent", "Component");
