@@ -144,6 +144,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUserNameText.setEnabled(enabled);
     myPasswordLabel.setEnabled(enabled);
     myPasswordText.setEnabled(enabled);
+    myUseHTTPAuthentication.setEnabled(enabled);
   }
 
   @Nullable
