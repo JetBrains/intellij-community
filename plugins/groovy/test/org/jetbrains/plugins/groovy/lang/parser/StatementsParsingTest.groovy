@@ -19,10 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
  * @author peter
  */
 public class StatementsParsingTest extends GroovyParsingTestCase {
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "statements";
-  }
+  final String basePath = super.basePath + "statements"
 
   public void testBlocks$clos1() throws Throwable { doTest(); }
   public void testBlocks$clos2() throws Throwable { doTest(); }
@@ -34,6 +31,8 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testBlocks$labeledClosure() throws Throwable { doTest(); }
   public void testBranch$assert1() throws Throwable { doTest(); }
   public void testBranch$assert2() throws Throwable { doTest(); }
+  public void testBranch$assert3() throws Throwable { doTest(); }
+  public void testBranch$assert4() throws Throwable { doTest(); }
   public void testBranch$break1() throws Throwable { doTest(); }
   public void testBranch$break2() throws Throwable { doTest(); }
   public void testBranch$ret1() throws Throwable { doTest(); }
