@@ -128,4 +128,17 @@ class Bar extends Base {
 }
 ''')
   }
+
+  void testUnresolvedRef() {
+    doTest('''\
+class Bar {
+  def b() {
+    print unresolved
+  }
+  def <warning descr="Method may be static">abc</warning>() {
+    print 2
+  }
+}
+''')
+  }
 }

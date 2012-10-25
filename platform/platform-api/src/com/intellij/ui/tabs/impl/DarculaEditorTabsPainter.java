@@ -140,6 +140,6 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return Gray._42;
+    return new Color(0x3C3F41);
   }
 }

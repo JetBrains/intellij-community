@@ -715,6 +715,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMousePressedEvent = null;
     myMouseMovedEvent = null;
     Disposer.dispose(myCaretModel);
+    Disposer.dispose(mySoftWrapModel);
     clearCaretThread();
 
     myFocusListeners.clear();

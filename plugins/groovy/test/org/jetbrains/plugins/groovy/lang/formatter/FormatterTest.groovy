@@ -28,10 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 public class FormatterTest extends GroovyFormatterTestCase {
 
-  @Override
-  protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/formatter/";
-  }
+  final String basePath = TestUtils.testDataPath + "groovy/formatter/"
 
   @Override
   protected void setUp() throws Exception {
@@ -84,6 +81,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testPointer1() throws Throwable { doTest(); }
   public void testRange1() throws Throwable { doTest(); }
   public void testRegex1() throws Throwable { doTest(); }
+  public void testRegex2() { doTest() }
   public void testSh1() throws Throwable { doTest(); }
   public void testSh2() throws Throwable { doTest(); }
   public void testSqr1() throws Throwable { doTest(); }
@@ -249,6 +247,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   void testNonIndentAfterClosureQualifier() { doTest() }
   void testNonIndentAfterClosureQualifier2() { doTest() }
 
+  void testAssertDescriptionIndent() { doTest() }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);

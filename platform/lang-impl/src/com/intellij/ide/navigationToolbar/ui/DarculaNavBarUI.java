@@ -28,4 +28,8 @@ public class DarculaNavBarUI extends CommonNavBarUI {
   public Font getElementFont(NavBarItem navBarItem) {
     return UIUtil.getLabelFont().deriveFont(11.0f);
   }
+
+  @Override
+  public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
+  }
 }
