@@ -110,6 +110,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
     assert myExtensions.size() == myLoadedAdapters.size();
 
+    ObjectComponentAdapter adapter = new ObjectComponentAdapter(extension, order);
+    assertClass(extension.getClass());
+
     if (LoadingOrder.ANY == order) {
       int index = myLoadedAdapters.size();
       if (index > 0) {
@@ -118,10 +121,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           index--;
         }
       }
-      internalRegisterExtension(extension, new ObjectComponentAdapter(extension, order), index, true);
+      internalRegisterExtension(extension, adapter, index, true);
     }
     else {
-      myExtensionAdapters.add(new ObjectComponentAdapter(extension, order));
+      myExtensionAdapters.add(adapter);
       processAdapters();
     }
     clearCache();
@@ -177,10 +180,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             T t = result[i];
             if (i > 0 && result[i] == result[i - 1]) {
               LOG.error("Duplicate extension found: " + t + "; " +
-                        " Result:      "+ Arrays.asList(result)+";\n" +
-                        " extensions: "+ myExtensions+";\n" +
-                        " getExtensionClass(): "+ extensionClass +";\n" +
-                        " size:"+myExtensions.size()+";"+result.length);
+                        " Result:      " + Arrays.asList(result) + ";\n" +
+                        " extensions: " + myExtensions + ";\n" +
+                        " getExtensionClass(): " + extensionClass + ";\n" +
+                        " size:" + myExtensions.size() + ";" + result.length);
             }
 
             if (!extensionClass.isAssignableFrom(t.getClass())) {
@@ -216,13 +219,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       allAdapters.addAll(myLoadedAdapters);
 
       myExtensions.clear();
-      ExtensionComponentAdapter[] loadedAdapters = myLoadedAdapters.isEmpty() ? ExtensionComponentAdapter.EMPTY_ARRAY : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
+      ExtensionComponentAdapter[] loadedAdapters = myLoadedAdapters.isEmpty()
+                                                   ? ExtensionComponentAdapter.EMPTY_ARRAY
+                                                   : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
       myLoadedAdapters.clear();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
       for (ExtensionComponentAdapter adapter : adapters) {
         //noinspection unchecked
         T extension = (T)adapter.getExtension();
+        assertClass(extension.getClass());
+
         internalRegisterExtension(extension, adapter, myExtensions.size(), ArrayUtil.find(loadedAdapters, adapter) == -1);
       }
       myExtensionAdapters.clear();
@@ -318,7 +325,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         try {
           //noinspection unchecked
           listener.extensionAdded((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
           myLogger.error(e);
         }
       }
@@ -375,9 +383,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return getName();
   }
 
-  synchronized void registerExtensionAdapter(ExtensionComponentAdapter adapter) {
+  synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     myExtensionAdapters.add(adapter);
     clearCache();
+  }
+
+  private void assertClass(@NotNull Class<?> extensionClass) {
+    Class<T> expectedClass = getExtensionClass();
+    assert expectedClass.isAssignableFrom(extensionClass) : "Expected: "+ expectedClass +"; Actual: "+ extensionClass;
   }
 
   private void clearCache() {
@@ -421,7 +434,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final Object myExtension;
     private final LoadingOrder myLoadingOrder;
 
-    private ObjectComponentAdapter(Object extension, LoadingOrder loadingOrder) {
+    private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
       super(Object.class.getName(), null, null, null, false);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
