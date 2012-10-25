@@ -121,7 +121,6 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -148,8 +147,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final CommandProcessor myCommandProcessor;
   @NotNull private final MyScrollBar myVerticalScrollBar;
 
-  private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
-  @NotNull private final CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners;
+  private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
+  @NotNull private final List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
   private int myCharHeight = -1;
   private int myLineHeight = -1;
@@ -313,7 +312,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myConnection = project.getMessageBus().connect();
       myConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
     }
-    myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     MarkupModelListener markupModelListener = new MarkupModelListener() {
       @Override
@@ -1017,6 +1015,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int yPositionToVisibleLine(int y) {
+    LOG.assertTrue(y >= 0, y);
     return y / getLineHeight();
   }
 
