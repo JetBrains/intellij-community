@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -141,9 +142,9 @@ public class CopyReferenceAction extends AnAction {
 
     if (!doCopy(element, project, editor) && editor != null) {
       Document document = editor.getDocument();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
-        String toCopy = FileUtil.toSystemDependentName(file.getPath()) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
+        String toCopy = getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
         CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
         setStatusBarText(project, toCopy + " has been copied");
       }
