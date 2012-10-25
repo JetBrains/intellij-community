@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.stubs.ObjectStubBase;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,10 +39,11 @@ import java.util.List;
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   protected final StringRef myLocalName;
+  @Nullable
   private final StringRef myNamespace;
   private DomInvocationHandler myHandler;
 
-  public DomStub(DomStub parent, @NotNull StringRef localName, StringRef namespace) {
+  public DomStub(DomStub parent, @NotNull StringRef localName, @Nullable StringRef namespace) {
     super(parent);
     myNamespace = namespace;
     if (parent != null) {
@@ -61,16 +63,17 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return myLocalName.getString();
   }
 
+  @Nullable
   public String getNamespaceKey() {
-    return myNamespace.getString();
+    return myNamespace == null ? null : myNamespace.getString();
   }
 
-  public List<DomStub> getChildrenByName(final CharSequence name, final String nsKey) {
-    final String s = nsKey == null ? "" : nsKey;
+  public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
-        return XmlUtil.getLocalName(stub.getName()).equals(name) && stub.getNamespaceKey().equals(s);
+        return XmlUtil.getLocalName(stub.getName()).equals(name) &&
+               Comparing.equal(nsKey, stub.getNamespaceKey());
       }
     });
   }
