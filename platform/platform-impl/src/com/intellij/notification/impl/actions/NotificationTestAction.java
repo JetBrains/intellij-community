@@ -63,7 +63,8 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification", //"a",
       "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. Long long long long. It should be long. Very long. Too long." +
-      StringUtil.repeat("<br>line", 100) +
+      //StringUtil.repeat("line", 100) +
+      //StringUtil.repeat("<br>line", 100) +
       " And even longer.",
       type, listener);
 

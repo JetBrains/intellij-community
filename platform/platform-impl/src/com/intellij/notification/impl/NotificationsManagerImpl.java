@@ -266,12 +266,14 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     Dimension preferredSize = text.getPreferredSize();
     text.setSize(preferredSize);
-    preferredSize = text.getPreferredSize();
+    
+    Dimension paneSize = new Dimension(text.getPreferredSize());
     int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
-    int maxWidth = Math.min(500, window.getComponent().getWidth() - 20);
-    Dimension maxSize = new Dimension(Math.min(preferredSize.width, maxWidth), Math.min(preferredSize.height, maxHeight));
-    if (!maxSize.equals(preferredSize)) {
-      pane.setPreferredSize(maxSize);
+    int maxWidth = Math.min(600, window.getComponent().getWidth() - 20);
+    if (paneSize.height > maxHeight) {
+      pane.setPreferredSize(new Dimension(Math.min(maxWidth, paneSize.width + UIUtil.getScrollBarWidth()), maxHeight));
+    } else if (paneSize.width > maxWidth) {
+      pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
     }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
