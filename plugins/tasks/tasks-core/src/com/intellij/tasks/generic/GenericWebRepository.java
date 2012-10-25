@@ -88,7 +88,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericWebTask(id, summary));
+      tasks.add(new GenericWebTask(id, summary, this));
     }
 
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
@@ -209,6 +209,12 @@ public class GenericWebRepository extends BaseRepositoryImpl {
       public void cancel() {
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public String getTaskComment(final Task task) {
+    return super.getTaskComment(task);
   }
 
   public String getLoginURL() {
