@@ -496,15 +496,20 @@ public class MavenProjectImporter {
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
-    try {
-      final Document document = new Document(new Element("maven-project-configuration"));
-      XmlSerializer.serializeInto(projectConfig, document.getRootElement());
-      FileUtil.createIfDoesntExist(mavenConfigFile);
-      JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
-    }
-    catch (IOException e) {
-      e.printStackTrace(); // todo
-    }
+    final Document document = new Document(new Element("maven-project-configuration"));
+    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+    BuildManager.getInstance().runCommand(new Runnable() {
+      @Override
+      public void run() {
+        FileUtil.createIfDoesntExist(mavenConfigFile);
+        try {
+          JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
