@@ -252,7 +252,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setCaretPosition(0);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(text,
                                                           ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     pane.setBorder(null);
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
@@ -268,8 +268,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setSize(preferredSize);
     preferredSize = text.getPreferredSize();
     int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
-    if (preferredSize.height > maxHeight) {
-      pane.setPreferredSize(new Dimension(preferredSize.width, maxHeight));
+    int maxWidth = Math.min(500, window.getComponent().getWidth() - 20);
+    Dimension maxSize = new Dimension(Math.min(preferredSize.width, maxWidth), Math.min(preferredSize.height, maxHeight));
+    if (!maxSize.equals(preferredSize)) {
+      pane.setPreferredSize(maxSize);
     }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
