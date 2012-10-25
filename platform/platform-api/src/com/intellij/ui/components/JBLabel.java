@@ -88,6 +88,9 @@ public class JBLabel extends JLabel implements AnchorableComponent {
 
   @Override
   public Color getForeground() {
+    if (!isEnabled()) {
+      return UIUtil.getLabelDisabledForeground();
+    }
     if (myFontColor != null) {
       return UIUtil.getLabelFontColor(myFontColor);
     }
