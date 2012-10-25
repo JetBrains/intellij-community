@@ -61,6 +61,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testAssert2() { doTest() }
   public void testAssert3() { doTest() }
   public void testAssert4() { doTest() }
+  public void testStringInjectionWithParam() { doTest() }
 
   public void doTest() {
     final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");

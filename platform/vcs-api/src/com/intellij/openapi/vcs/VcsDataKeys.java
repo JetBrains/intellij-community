@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -60,6 +61,6 @@ public interface VcsDataKeys {
   DataKey<Object> LABEL_AFTER = DataKey.create("LABEL_AFTER");
   DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
   DataKey<CommitMessageI> COMMIT_MESSAGE_CONTROL = DataKey.create("COMMIT_MESSAGE_CONTROL");
-  DataKey<Runnable> REMOTE_HISTORY_CHANGED_LISTENER = DataKey.create("REMOTE_HISTORY_CHANGED_LISTENER");
+  DataKey<Consumer<String>> REMOTE_HISTORY_CHANGED_LISTENER = DataKey.create("REMOTE_HISTORY_CHANGED_LISTENER");
   DataKey<RepositoryLocation> REMOTE_HISTORY_LOCATION = DataKey.create("REMOTE_HISTORY_LOCATION");
 }

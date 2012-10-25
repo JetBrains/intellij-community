@@ -38,7 +38,7 @@ public final class AndroidDesignerEditorProvider implements FileEditorProvider, 
     PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
-        return PsiManager.getInstance(project).findFile(file);
+        return file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
       }
     });
     return psiFile instanceof XmlFile &&

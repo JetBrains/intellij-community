@@ -40,7 +40,7 @@
       <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
     <action id="EditCommitMessage" class="org.jetbrains.idea.svn.history.SvnEditCommitMessageAction" popup="true" icon="AllIcons.Actions.Edit"
-        text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
+            text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
       <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
     </action>
 

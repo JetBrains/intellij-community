@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -59,12 +60,17 @@ public class SvnEditCommitMessageAction extends AnAction {
     final SvnChangeList svnList = (SvnChangeList) lists[0];
     Project project = PlatformDataKeys.PROJECT.getData(dc);
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+    final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(dc);
 
+    askAndEditRevision(svnList.getNumber(), svnList.getComment(), svnList.getLocation(), project, listener, false);
+  }
+
+  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<String> listener, final boolean fromVersionControl) {
     final String edited = Messages.showMultilineInputDialog(project, "Attention! Previous message will be lost!\n\nNew revision comment:",
-      "Edit Revision # " + svnList.getNumber() + " Comment", svnList.getComment(), Messages.getInformationIcon(), null);
-    if (edited == null || edited.trim().equals(svnList.getComment().trim())) return;
-    final Runnable listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(dc);
-    ProgressManager.getInstance().run(new EditMessageTask(project, edited, svnList, listener));
+                                                            "Edit Revision # " + number + " Comment", oldComment,
+                                                            Messages.getInformationIcon(), null);
+    if (edited == null || edited.trim().equals(oldComment.trim())) return;
+    ProgressManager.getInstance().run(new EditMessageTask(project, edited, location, number, listener, fromVersionControl));
   }
 
   @Override
@@ -99,25 +105,34 @@ public class SvnEditCommitMessageAction extends AnAction {
     return cr instanceof MarkerVcsContentRevision && SvnVcs.getKey().equals(((MarkerVcsContentRevision) cr).getVcsKey());
   }*/
 
-  private static class EditMessageTask extends Task.Backgroundable {
+  static class EditMessageTask extends Task.Backgroundable {
     private final String myNewMessage;
-    private final SvnChangeList myChangeList;
-    private final Runnable myListener;
+    private final SvnRepositoryLocation myLocation;
+    private final long myNumber;
+    private final Consumer<String> myListener;
+    private final boolean myFromVersionControl;
     private VcsException myException;
     private final SvnVcs myVcs;
 
-    private EditMessageTask(@Nullable Project project, final String newMessage, final SvnChangeList changeList, Runnable listener) {
+    EditMessageTask(@Nullable Project project,
+                    final String newMessage,
+                    final SvnRepositoryLocation location,
+                    final long number,
+                    Consumer<String> listener,
+                    boolean fromVersionControl) {
       super(project, "Edit Revision Comment");
       myNewMessage = newMessage;
-      myChangeList = changeList;
+      myLocation = location;
+      myNumber = number;
       myListener = listener;
+      myFromVersionControl = fromVersionControl;
       myVcs = SvnVcs.getInstance(myProject);
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       final SVNWCClient client = myVcs.createWCClient();
-      final String url = myChangeList.getLocation().getURL();
+      final String url = myLocation.getURL();
       final SVNURL root;
       try {
         root = SvnUtil.getRepositoryRoot(myVcs, SVNURL.parseURIEncoded(url));
@@ -125,7 +140,7 @@ public class SvnEditCommitMessageAction extends AnAction {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;
         }
-        client.doSetRevisionProperty(root, SVNRevision.create(myChangeList.getNumber()), "svn:log",
+        client.doSetRevisionProperty(root, SVNRevision.create(myNumber), "svn:log",
                                      SVNPropertyValue.create(myNewMessage), false, null);
       }
       catch (SVNException e) {
@@ -139,14 +154,18 @@ public class SvnEditCommitMessageAction extends AnAction {
         AbstractVcsHelper.getInstance(myProject).showError(myException, myTitle);
       } else {
         if (myListener != null) {
-          myListener.run();
+          myListener.consume(myNewMessage);
         }
         if (! myProject.isDefault()) {
-          CommittedChangesCache.getInstance(myProject).commitMessageChanged(myVcs,
-                                                                            myChangeList.getLocation(), myChangeList.getNumber(), myNewMessage);
+          CommittedChangesCache.getInstance(myProject).commitMessageChanged(myVcs, myLocation, myNumber, myNewMessage);
         }
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Revision #" + myChangeList.getNumber() + " comment " +
-                                                                 "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
+        if (myFromVersionControl) {
+          VcsBalloonProblemNotifier.showOverVersionControlView(myProject, "Revision #" + myNumber + " comment " +
+                                                                          "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
+        } else {
+          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Revision #" + myNumber + " comment " +
+                                                                   "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
+        }
       }
     }
   }
