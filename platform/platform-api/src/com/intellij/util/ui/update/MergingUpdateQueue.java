@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {

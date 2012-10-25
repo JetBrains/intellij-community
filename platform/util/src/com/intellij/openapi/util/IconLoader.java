@@ -118,7 +118,7 @@ public final class IconLoader {
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
    */
-  public static Icon findIcon(@NonNls final String path) {
+  public static Icon findIcon(@NonNls @NotNull String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class

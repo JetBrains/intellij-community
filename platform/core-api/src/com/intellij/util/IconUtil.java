@@ -46,7 +46,7 @@ import java.awt.image.BufferedImage;
 public class IconUtil {
   private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
-  private static boolean wasEverInitialized(Project project) {
+  private static boolean wasEverInitialized(@NotNull Project project) {
     Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
     if (was == null) {
       if (project.isInitialized()) {
@@ -61,7 +61,8 @@ public class IconUtil {
     return was.booleanValue();
   }
 
-  public static Icon cropIcon(Icon icon, int maxWidth, int maxHeight) {
+  @NotNull
+  public static Icon cropIcon(@NotNull Icon icon, int maxWidth, int maxHeight) {
     if (icon.getIconHeight() <= maxHeight && icon.getIconWidth() <= maxWidth) {
       return icon;
     }
@@ -90,6 +91,7 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
+  @NotNull
   public static Icon flip(@NotNull Icon icon, boolean horizontal) {
     int w = icon.getIconWidth();
     int h = icon.getIconHeight();
@@ -109,8 +111,8 @@ public class IconUtil {
     g.dispose();
     return new ImageIcon(second);
   }
-  
-  public static Icon getIcon(final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
+
+  public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
@@ -151,7 +153,7 @@ public class IconUtil {
   }
 
   @Nullable
-  private static Icon getProvidersIcon(VirtualFile file, @Iconable.IconFlags int flags, Project project) {
+  private static Icon getProvidersIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, Project project) {
     for (FileIconProvider provider : getProviders()) {
       final Icon icon = provider.getIcon(file, flags, project);
       if (icon != null) return icon;
@@ -159,6 +161,7 @@ public class IconUtil {
     return null;
   }
 
+  @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
     baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
@@ -168,8 +171,8 @@ public class IconUtil {
     return baseIcon;
   }
 
-  @Nullable
-  private static Icon createEmptyIconLike(final String baseIconPath) {
+  @NotNull
+  private static Icon createEmptyIconLike(@NotNull String baseIconPath) {
     Icon baseIcon = IconLoader.findIcon(baseIconPath);
     if (baseIcon == null) {
       return EmptyIcon.ICON_16;
@@ -265,7 +268,7 @@ public class IconUtil {
     return getToolbarDecoratorIcon("analyze.png");
   }
 
-  public static void paintInCenterOf(Component c, Graphics g, Icon icon) {
+  public static void paintInCenterOf(@NotNull Component c, Graphics g, Icon icon) {
     final int x = (c.getWidth() - icon.getIconWidth()) / 2;
     final int y = (c.getHeight() - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
@@ -282,6 +285,7 @@ public class IconUtil {
   /**
    * Result icons look like original but have equal (maximum) size 
    */
+  @NotNull
   public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {
     Icon[] result = new Icon[icons.length];
     int width = 0;
@@ -301,7 +305,7 @@ public class IconUtil {
     private final int myWidth;
     private final int myHeight;
 
-    private IconSizeWrapper(Icon icon, int width, int height) {
+    private IconSizeWrapper(@NotNull Icon icon, int width, int height) {
       myIcon = icon;
       myWidth = width;
       myHeight = height;
