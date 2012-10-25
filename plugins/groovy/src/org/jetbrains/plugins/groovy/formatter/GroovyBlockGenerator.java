@@ -110,16 +110,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       if (first.getElementType() == GroovyTokenTypes.mLCURLY) children.remove(0);
     }
 
-/*    if (!children.isEmpty()) {
-      ASTNode second = children.get(0);
-      if (second.getElementType() == GroovyElementTypes.PARAMETERS_LIST) children.remove(0);
-    }
-
-    if (!children.isEmpty()) {
-      ASTNode second = children.get(0);
-      if (second.getElementType() == GroovyTokenTypes.mCLOSABLE_BLOCK_OP) children.remove(0);
-    }*/
-
     if (!children.isEmpty()) {
       ASTNode last = children.get(children.size() - 1);
       if (last.getElementType() == GroovyTokenTypes.mRCURLY) children.remove(children.size() - 1);
@@ -132,14 +122,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
     //For binary expressions
     PsiElement blockPsi = myNode.getPsi();
+    IElementType elementType = myNode.getElementType();
 
     if (blockPsi instanceof GrBinaryExpression && !(blockPsi.getParent() instanceof GrBinaryExpression)) {
       return generateForBinaryExpr();
     }
 
     //For multiline strings
-    if ((myNode.getElementType() == mSTRING_LITERAL || myNode.getElementType() == mGSTRING_LITERAL) &&
-        myBlock.getTextRange().equals(myNode.getTextRange())) {
+    if ((elementType == mSTRING_LITERAL || elementType == mGSTRING_LITERAL) && myBlock.getTextRange().equals(myNode.getTextRange())) {
       String text = myNode.getText();
       if (text.length() > 6) {
         if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
@@ -149,19 +139,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
 
-    if (myNode.getElementType() == mGSTRING_BEGIN &&
-        myBlock.getTextRange().equals(myNode.getTextRange())) {
-      String text = myNode.getText();
-      if (text.length() > 3) {
-        if (text.substring(0, 3).equals("\"\"\"")) {
-          return generateForMultiLineGStringBegin();
-        }
-      }
-
-    }
-
     //for gstrings
-    if (myNode.getElementType() == GSTRING) {
+    if (elementType == GSTRING || elementType == REGEX || elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
@@ -174,7 +153,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     // chained properties, calls, indexing, etc
-    if (NESTED.contains(myNode.getElementType()) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
+    if (NESTED.contains(elementType) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
       final List<Block> subBlocks = new ArrayList<Block>();
       AlignmentProvider.Aligner dotsAligner = mySettings.ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner(true) : null;
       addNestedChildren(myNode.getPsi(), subBlocks, dotsAligner, true);
@@ -485,26 +464,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       @NotNull
       public TextRange getTextRange() {
         return new TextRange(end - 3, end);
-      }
-    });
-    return subBlocks;
-  }
-
-  private List<Block> generateForMultiLineGStringBegin() {
-    final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    final int start = myNode.getTextRange().getStartOffset();
-    final int end = myNode.getTextRange().getEndOffset();
-
-    subBlocks.add(new GroovyBlock(myNode, Indent.getNoneIndent(), myWrap, mySettings, myGroovySettings, myAlignmentProvider) {
-      @NotNull
-      public TextRange getTextRange() {
-        return new TextRange(start, start + 3);
-      }
-    });
-    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), myWrap, mySettings, myGroovySettings, myAlignmentProvider) {
-      @NotNull
-      public TextRange getTextRange() {
-        return new TextRange(start + 3, end);
       }
     });
     return subBlocks;
