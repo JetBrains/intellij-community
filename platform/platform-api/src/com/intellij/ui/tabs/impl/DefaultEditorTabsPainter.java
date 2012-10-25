@@ -25,6 +25,9 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
+
+  private static final int ACTIVE_TAB_SHADOW_HEIGHT = 3;
+
   @Override
   public void doPaintInactive(Graphics2D g2d,
                               Rectangle effectiveBounds,
@@ -59,10 +62,15 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
     g2d.drawLine(x, y, x + w, y);
 
     if (!vertical) {
-      g2d.setPaint(new GradientPaint(x, y + h - 4, new Color(0, 0, 0, 0),
-                                     x, y + h, new Color(0, 0, 0, 30)));
-      g2d.fillRect(x, y + h - 4, w, h);
+      drawShadow(g2d, x, w, y + h);
     }
+  }
+
+  private static void drawShadow(Graphics2D g, int x, int w, int shadowBottom) {
+    int shadowTop = shadowBottom - ACTIVE_TAB_SHADOW_HEIGHT;
+    g.setPaint(new GradientPaint(x, shadowTop, new Color(0, 0, 0, 0),
+                                   x, shadowBottom, new Color(0, 0, 0, 30)));
+    g.fillRect(x, shadowTop, w, ACTIVE_TAB_SHADOW_HEIGHT);
   }
 
   @Override
@@ -83,9 +91,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
       g.setColor(Gray._210);
       g.drawLine(x, rectangle.y, x + rectangle.width, rectangle.y);
 
-      g.setPaint(new GradientPaint(rectangle.x, rectangle.y + rectangle.height - 4, new Color(0, 0, 0, 0),
-                                   rectangle.x, rectangle.y + rectangle.height, new Color(0, 0, 0, 30)));
-      g.fillRect(rectangle.x, rectangle.y + rectangle.height - 4, rectangle.width, rectangle.height);
+      drawShadow(g, rectangle.x, rectangle.width, rectangle.y + rectangle.height);
     }
   }
 

@@ -22,17 +22,20 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -138,6 +141,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
+    ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, new Runnable() {
+      @Override
+      public void run() {
+        myTaskQueue.start();
+      }
+    });
     myVcsManager = vcsManager;
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -645,6 +654,28 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
+  public void commitMessageChanged(final AbstractVcs vcs,
+                                   final RepositoryLocation location, final long number, final String newMessage) {
+    myTaskQueue.run(new Runnable() {
+      @Override
+      public void run() {
+        final ChangesCacheFile file = myCachesHolder.haveCache(location);
+        if (file != null) {
+          try {
+            if (file.isEmpty()) return;
+            file.editChangelist(number, newMessage);
+            loadIncomingChanges(false);
+            myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, Collections.<CommittedChangeList>emptyList());
+          }
+          catch (IOException e) {
+            VcsBalloonProblemNotifier.showOverChangesView(myProject, "Didn't update Repository changes with new message due to error: " + e.getMessage(),
+                                                          MessageType.ERROR);
+          }
+        }
+      }
+    });
+  }
+
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer, final boolean inBackground) {
     debug("Loading incoming changes");
     final Runnable task = new Runnable() {
@@ -663,7 +694,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       @Override
       public void run() {
         myCachesHolder.clearAllCaches();
-        myCachedIncomingChangeLists.clear();
+        myCachedIncomingChangeLists = null;
         continuation.run();
         myBus.syncPublisher(COMMITTED_TOPIC).changesCleared();
       }

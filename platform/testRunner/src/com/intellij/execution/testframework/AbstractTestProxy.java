@@ -64,7 +64,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public abstract List<? extends AbstractTestProxy> getAllTests();
 
   @Nullable
-  public Integer getDuration() {
+  public Long getDuration() {
     return null;
   }
 

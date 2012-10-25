@@ -165,7 +165,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     lfs.refreshIoFiles(filesToRefresh);
 
     for (GitRepository repo : GitUtil.getRepositoryManager(myProject).getRepositories()) {
-      repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+      repo.update();
     }
   }
 

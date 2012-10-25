@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.repo;
+package git4idea.repo
 
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.Processor;
-import git4idea.GitBranch;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.test.GitTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.Processor
+import git4idea.GitBranch
+import git4idea.branch.GitBranchesCollection
+import git4idea.test.GitLightTest
+import git4idea.test.GitTestUtil
+import org.jetbrains.annotations.NotNull
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import static junit.framework.Assert.*;
 
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryReaderTest extends LightIdeaTestCase {
+public class GitRepositoryReaderTest extends GitLightTest {
 
   private GitRepositoryReader myRepositoryReader;
-  private File myTempDir;
   private File myGitDir;
   private Collection<GitTestBranch> myLocalBranches;
   private Collection<GitTestBranch> myRemoteBranches;
 
-  protected void setUp() throws Exception {
+  @Before
+  void setUp() {
     super.setUp();
-    myTempDir = FileUtil.createTempDirectory("GitRepositoryReaderTest", null);
+
+    File myTempDir = new File(myTestRoot, "test")
+    myTempDir.mkdir()
 
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     File dataDir = new File(new File(pluginRoot, "testData"), "repo");
@@ -57,21 +59,25 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     myRemoteBranches = readBranches(false);
   }
 
-  protected void tearDown() throws Exception {
-    FileUtil.delete(myTempDir);
+  @After
+  void tearDown() {
     super.tearDown();
   }
   
+  @Test
   public void testHEAD() {
     assertEquals("0e1d130689bc52f140c5c374aa9cc2b8916c0ad7", myRepositoryReader.readCurrentRevision());
   }
   
+  @Test
   public void testCurrentBranch() {
     assertBranch(myRepositoryReader.readCurrentBranch(), new GitTestBranch("master", "0e1d130689bc52f140c5c374aa9cc2b8916c0ad7"));
   }
   
-  public void testBranches(){
-    GitBranchesCollection branchesCollection = myRepositoryReader.readBranches();
+  @Test
+  public void testBranches() {
+    def remotes = GitConfig.read(myPlatformFacade, new File(myGitDir, "config")).parseRemotes();
+    GitBranchesCollection branchesCollection = myRepositoryReader.readBranches(remotes);
     GitBranch currentBranch = myRepositoryReader.readCurrentBranch();
     Collection<GitBranch> localBranches = branchesCollection.getLocalBranches();
     Collection<GitBranch> remoteBranches = branchesCollection.getRemoteBranches();
@@ -81,8 +87,8 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     assertBranches(remoteBranches, myRemoteBranches);
   }
 
-  private static void assertBranches(Collection<GitBranch> actual, Collection<GitTestBranch> expected) {
-    GitTestUtil.assertEqualCollections(actual, expected, new GitTestUtil.EqualityChecker<GitBranch, GitTestBranch>() {
+  private static void assertBranches(Collection<GitBranch> actualBranches, Collection<GitTestBranch> expectedBranches) {
+    GitTestUtil.assertEqualCollections(actualBranches, expectedBranches, new GitTestUtil.EqualityChecker<GitBranch, GitTestBranch>() {
       @Override
       public boolean areEqual(@NotNull GitBranch actual, @NotNull GitTestBranch expected) {
         return branchesAreEqual(actual, expected);
@@ -170,13 +176,8 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
       GitTestBranch branch = (GitTestBranch)o;
-
       if (myName != null ? !myName.equals(branch.myName) : branch.myName != null) return false;
-
       return true;
     }
 

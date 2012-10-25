@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.history;
+package com.intellij.ide.navigationToolbar.ui;
+
+import com.intellij.ide.navigationToolbar.NavBarItem;
+import com.intellij.util.ui.UIUtil;
+
+import java.awt.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/23/12
- * Time: 7:24 PM
+ * @author Konstantin Bulenkov
  */
-public class SvnRevisionComment {
+public class DarculaNavBarUI extends CommonNavBarUI {
+  @Override
+  public Font getElementFont(NavBarItem navBarItem) {
+    return UIUtil.getLabelFont().deriveFont(11.0f);
+  }
 }

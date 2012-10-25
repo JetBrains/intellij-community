@@ -95,7 +95,7 @@ public class BrowserUtil {
    *
    * @param url an URL to open.
    */
-  public static void launchBrowser(@NonNls String url) {
+  public static void launchBrowser(@NotNull @NonNls String url) {
     LOG.debug("Launch browser: [" + url + "]");
 
     if (TRIM_URLS) {

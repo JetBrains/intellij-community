@@ -263,18 +263,19 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public Integer getDuration() {
+  public Long getDuration() {
     TestResultMessage message = getResultMessage();
     if (message != null) {
-      return (int)(message.getEndMillis() - message.getStartMillis());
+      return (message.getEndMillis() - message.getStartMillis());
     }
     else {
       // TODO cache?
       long duration = 0;
       for (TestProxy testProxy : getChildren()) {
-        duration += testProxy.getDuration();
+        final Long d = testProxy.getDuration();
+        duration += (d == null ? 0 : d.longValue());
       }
-      return (int)duration;
+      return duration;
     }
   }
 

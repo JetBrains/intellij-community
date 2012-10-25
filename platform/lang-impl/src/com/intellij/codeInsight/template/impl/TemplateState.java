@@ -812,7 +812,9 @@ public class TemplateState implements Disposable {
   public void gotoEnd(boolean brokenOff) {
     if (myTemplate == null) return;
     calcResults(false);
-    doReformat(null);
+    if (!brokenOff) {
+      doReformat(null);
+    }
     finishTemplateEditing(brokenOff);
   }
 

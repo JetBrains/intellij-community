@@ -34,7 +34,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
   private final String myCommitterName;
   private final Date myCommitDate;
   private final String myName;
-  private final String myComment;
+  private String myComment;
   private final long myNumber;
   protected ArrayList<Change> myChanges;
 
@@ -71,6 +71,11 @@ public class CommittedChangeListImpl implements CommittedChangeList {
   @Override
   public boolean isModifiable() {
     return true;
+  }
+
+  @Override
+  public void setDescription(String newMessage) {
+    myComment = newMessage;
   }
 
   public static Collection<Change> getChangesWithMovedTreesImpl(final CommittedChangeList list) {

@@ -93,16 +93,6 @@ PsiJavaFile:TypeAnno.java
         PsiJavaToken:LPARENTH('(')
         PsiJavaToken:RPARENTH(')')
       PsiWhiteSpace(' ')
-      PsiElement(METHOD_RECEIVER)
-        PsiAnnotation
-          PsiJavaToken:AT('@')
-          PsiJavaCodeReferenceElement:F
-            PsiIdentifier:F('F')
-            PsiReferenceParameterList
-              <empty list>
-          PsiAnnotationParameterList
-            <empty list>
-      PsiWhiteSpace(' ')
       PsiReferenceList
         PsiKeyword:throws('throws')
         PsiWhiteSpace(' ')

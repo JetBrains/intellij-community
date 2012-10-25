@@ -1,0 +1,3 @@
+package pkg;
+
+enum EmptyEnum { }

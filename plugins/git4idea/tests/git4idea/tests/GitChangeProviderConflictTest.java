@@ -21,7 +21,9 @@ import org.testng.annotations.Test;
 
 /**
  * @author Kirill Likhodedov
+ * @deprecated Use {@link GitLightTest}
  */
+@Deprecated
 public class GitChangeProviderConflictTest extends GitChangeProviderTest {
 
   /**

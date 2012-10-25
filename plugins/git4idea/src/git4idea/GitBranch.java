@@ -16,15 +16,17 @@
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static git4idea.repo.GitRepository.*;
-
 /**
  * <p>Represents a Git branch, local or remote.</p>
+ *
+ * <p>Local and remote branches are different in that nature, that remote branch has complex name ("origin/master") containing both
+ *    the name of the remote and the name of the branch. And while the standard name of the remote branch if origin/master,
+ *    in certain cases we must operate with the name which the branch has at the remote: "master".</p>
  *
  * <p>It contains information about the branch name and the hash it points to.
  *    Note that the object (including the hash) is immutable. That means that if branch reference move along, you have to get new instance
@@ -35,7 +37,7 @@ import static git4idea.repo.GitRepository.*;
  *    are considered equal. But in this case an error if logged, becase it means that one of this GitBranch instances is out-of-date, and
  *    it is required to use an {@link GitRepository#update(TrackedTopic...) updated} version.</p>
  */
-public class GitBranch extends GitReference {
+public abstract class GitBranch extends GitReference {
 
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
@@ -49,14 +51,12 @@ public class GitBranch extends GitReference {
   private static final Logger LOG = Logger.getInstance(GitBranch.class);
 
   @NotNull private final Hash myHash;
-  private final boolean myRemote;
 
-  public GitBranch(@NotNull String name, @NotNull Hash hash, boolean remote) {
-    super(name);
-    myRemote = remote;
+  protected GitBranch(@NotNull String name, @NotNull Hash hash) {
+    super(GitBranchUtil.stripRefsPrefix(name));
     myHash = hash;
   }
-  
+
   /**
    * <p>Returns the hash on which this branch is reference to.</p>
    *
@@ -71,40 +71,11 @@ public class GitBranch extends GitReference {
   /**
    * @return true if the branch is remote
    */
-  public boolean isRemote() {
-    return myRemote;
-  }
+  public abstract boolean isRemote();
 
   @NotNull
   public String getFullName() {
-    return (myRemote ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
-  }
-
-  /**
-   * <p>
-   *   Returns the "local" name of a remote branch.
-   *   For example, for "origin/master" returns "master".
-   * </p>
-   * <p>
-   *   Note that slashes are not permitted in remote names, so if we know that a branch is a remote branch,
-   *   we know that local branch name is tha part after the slash.
-   * </p>
-   * @return "local" name of a remote branch, or just {@link #getName()} for local branches.
-   */
-  @NotNull
-  public String getShortName() {
-    return splitNameOfRemoteBranch(getName()).getSecond();
-  }
-
-  /**
-   * Returns the remote and the "local" name of a remote branch.
-   * Expects branch in format "origin/master", i.e. remote/branch
-   */
-  public static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
-    int firstSlash = branchName.indexOf('/');
-    String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
-    String remoteBranchName = branchName.substring(firstSlash + 1);
-    return Pair.create(remoteName, remoteBranchName);
+    return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
 
   @Override
@@ -128,7 +99,7 @@ public class GitBranch extends GitReference {
     if (!myHash.equals(that.myHash)) {
       LOG.error("Branches have equal names, but different hash codes. This: " + toLogString() + ", that: " + that.toLogString());
     }
-    else if (myRemote != that.myRemote) {
+    else if (isRemote() != that.isRemote()) {
       LOG.error("Branches have equal names, but different local/remote type. This: " + toLogString() + ", that: " + that.toLogString());
     }
     */

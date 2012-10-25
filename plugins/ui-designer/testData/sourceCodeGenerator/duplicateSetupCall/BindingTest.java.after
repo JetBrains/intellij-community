@@ -57,5 +57,4 @@ public class BindingTest {
     public JComponent $$$getRootComponent$$$() {
         return myRootComponent;
     }
-
 }

@@ -143,6 +143,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       public void onSuccess() {
         Collection<Developer> developers = myDevelopers[0];
         myDetailsTabForm.setDevelopers(developers);
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourDevelopersList = developers;
       }
     };
@@ -789,11 +790,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return ((PluginException)t).getPluginId();
     }
 
-    StackTraceElement[] elements = t.getStackTrace();
-    for (StackTraceElement element : elements) {
-      String className = element.getClassName();
-      if (PluginManager.isPluginClass(className)) {
-        return PluginManager.getPluginByClassName(className);
+    for (StackTraceElement element : t.getStackTrace()) {
+      if (element != null) {
+        String className = element.getClassName();
+        if (PluginManager.isPluginClass(className)) {
+          return PluginManager.getPluginByClassName(className);
+        }
       }
     }
 

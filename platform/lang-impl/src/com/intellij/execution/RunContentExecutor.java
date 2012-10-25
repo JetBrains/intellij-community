@@ -16,8 +16,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,13 +35,15 @@ public class RunContentExecutor {
   private final Project myProject;
   private final ProcessHandler myProcess;
   private final List<Filter> myFilterList = new ArrayList<Filter>();
-  private Runnable myRerun;
+  private Runnable myRerunAction;
+  private Runnable myStopAction;
   private Runnable myAfterCompletion;
+  private Computable<Boolean> myStopEnabled;
   private String myTitle = "Output";
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
 
-  public RunContentExecutor(Project project, ProcessHandler process) {
+  public RunContentExecutor(@NotNull Project project, @NotNull ProcessHandler process) {
     myProject = project;
     myProcess = process;
   }
@@ -55,7 +59,13 @@ public class RunContentExecutor {
   }
 
   public RunContentExecutor withRerun(Runnable rerun) {
-    myRerun = rerun;
+    myRerunAction = rerun;
+    return this;
+  }
+
+  public RunContentExecutor withStop(@NotNull Runnable stop, @NotNull Computable<Boolean> stopEnabled) {
+    myStopAction = stop;
+    myStopEnabled = stopEnabled;
     return this;
   }
 
@@ -74,7 +84,7 @@ public class RunContentExecutor {
     return this;
   }
 
-  private ConsoleView createConsole(Project project, ProcessHandler processHandler) {
+  private ConsoleView createConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     for (Filter filter : myFilterList) {
       consoleBuilder.addFilter(filter);
@@ -98,6 +108,7 @@ public class RunContentExecutor {
     RunContentDescriptor descriptor = new RunContentDescriptor(view, myProcess, consolePanel, myTitle);
 
     actions.add(new RerunAction(consolePanel));
+    actions.add(new StopAction());
     actions.add(new CloseAction(executor, descriptor, myProject));
 
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, descriptor);
@@ -141,17 +152,34 @@ public class RunContentExecutor {
   private class RerunAction extends AnAction implements DumbAware {
     public RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
-            AllIcons.Actions.RefreshUsages);
+            AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myRerun.run();
+      myRerunAction.run();
     }
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setVisible(myRerun != null);
+      e.getPresentation().setVisible(myRerunAction != null);
+    }
+  }
+
+  private class StopAction extends AnAction implements DumbAware {
+    public StopAction() {
+      super("Stop", "Stop",
+            AllIcons.Actions.Suspend);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      myStopAction.run();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setVisible(myStopAction != null);
+      e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
     }
   }
 }

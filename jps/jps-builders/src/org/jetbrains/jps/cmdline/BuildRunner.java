@@ -184,7 +184,7 @@ public class BuildRunner {
           }
           fileSet.add(file);
           if (buildType == BuildType.FORCED_COMPILATION) {
-            pd.fsState.markDirty(null, file, descriptor, timestamps);
+            pd.fsState.markDirty(null, file, descriptor, timestamps, false);
           }
         }
       }

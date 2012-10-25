@@ -599,6 +599,11 @@ public class SvnChangeList implements CommittedChangeList {
     return true;
   }
 
+  @Override
+  public void setDescription(String newMessage) {
+    myMessage = newMessage;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

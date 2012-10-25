@@ -40,7 +40,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
                                                            "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }", false, false); }
   public void testTypeAnno() {
     doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
-                 "  @F int @F[] method() @F throws @F Exception {\n" +
+                 "  @F int @F[] method() throws @F Exception {\n" +
                  "    a = this instanceof @F C;\n" +
                  "    C<@F @G C> c = new @Q C<@F C>();\n" +
                  "    c = (@F Object)c;\n" +

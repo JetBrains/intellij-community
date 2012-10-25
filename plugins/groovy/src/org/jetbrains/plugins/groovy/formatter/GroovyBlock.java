@@ -199,13 +199,11 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       }
     }
 
-    if (BLOCK_SET.contains(astNode.getElementType()) ||
-        SWITCH_STATEMENT.equals(astNode.getElementType())) {
-//      PsiElement psi = ((GroovyBlock)getSubBlocks().get(newChildIndex)).getNode().getPsi();
-      //     if (GeeseUtil.isClosureRBrace(psi)) {
-      //     return new ChildAttributes(Indent.getNoneIndent(), GeeseUtil.calculateRBraceAlignment(psi, myAlignmentProvider));
-      //  }
-
+    if (BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
+//      List<Block> blocks = getSubBlocks();
+//      if (newChildIndex != 0 && newChildIndex <= blocks.size() && blocks.get(newChildIndex - 1) instanceof ClosureBodyBlock) {
+ //       return new ChildAttributes(Indent.getSpaceIndent(mySettings.getIndentOptions().INDENT_SIZE * 2), null);
+  //    }
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (CASE_SECTION.equals(astNode.getElementType())) {

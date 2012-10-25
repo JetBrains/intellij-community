@@ -29,5 +29,6 @@ public interface CommittedChangesListener {
   void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes);
   void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges);
   void changesCleared();
+  void presentationChanged();
   void refreshErrorStatusChanged(@Nullable VcsException lastError);
 }

@@ -81,10 +81,14 @@ public class AndroidRunDdmsAction extends AndroidRunSdkToolAction {
 
   @NotNull
   private static String getDdmsCmdName() {
-    final String monitorCmdName = SystemInfo.isWindows ? "monitor.exe" : "monitor";
     final String archName = SystemInfo.OS_ARCH.equalsIgnoreCase("x86_64") ||
                             SystemInfo.OS_ARCH.equalsIgnoreCase("amd64")
                             ? "x86_64" : "x86";
-    return "/lib/monitor-" + archName + "/" + monitorCmdName;
+    final String dir = "lib/monitor-" + archName + "/";
+
+    if (SystemInfo.isMac) {
+      return dir + "monitor.app/Contents/MacOS/monitor";
+    }
+    return dir + (SystemInfo.isWindows ? "monitor.exe" : "monitor");
   }
 }

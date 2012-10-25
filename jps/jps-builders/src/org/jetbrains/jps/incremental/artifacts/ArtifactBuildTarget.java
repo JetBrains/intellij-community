@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -22,6 +21,7 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -114,10 +114,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
     return "Artifact '" + myArtifact.getName() + "'";
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public File getOutputDir(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(BuildDataPaths paths) {
     String outputPath = myArtifact.getOutputPath();
-    return !StringUtil.isEmpty(outputPath) ? new File(FileUtil.toSystemDependentName(outputPath)) : null;
+    return outputPath != null && !StringUtil.isEmpty(outputPath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputPath))) : Collections.<File>emptyList();
   }
 }

@@ -148,4 +148,14 @@ public class CachesHolder {
       throw new RuntimeException(e);
     }
   }
+
+  public ChangesCacheFile haveCache(RepositoryLocation location) {
+    String key = location.getKey();
+    if (myCacheFiles.containsKey(key)) return myCacheFiles.get(key);
+    key = key.endsWith("/") ? key : (key + "/");
+    for (String s : myCacheFiles.keySet()) {
+      if (key.startsWith(s) || s.startsWith(key)) return myCacheFiles.get(s);
+    }
+    return null;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
@@ -44,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -97,7 +98,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     else {
       docComment = null;
     }
-    
+
     PsiMember moved;
     if (options.makeEnumConstant() &&
         member instanceof GrVariable &&
@@ -114,7 +115,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
 
       final GrVariableDeclaration parent = (GrVariableDeclaration)member.getParent();
       GrVariableDeclaration movedDeclaration = (GrVariableDeclaration)targetClass.addAfter(parent, anchor);
-      
+
       int number = ArrayUtil.find(parent.getMembers(), member);
       final GrMember[] members = movedDeclaration.getMembers();
       for (int i = 0; i < number; i++) {
@@ -123,16 +124,15 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       for (int i = number + 1; i < members.length; i++) {
         members[i].delete();
       }
-      
+
       if (member.getContainingClass().isInterface() && !targetClass.isInterface()) {
         //might need to make modifiers explicit, see IDEADEV-11416
         final PsiModifierList list = movedDeclaration.getModifierList();
-        assert list != null;
         VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
       }
-      
+
       moved = movedDeclaration.getMembers()[0];
     }
     else if (member instanceof GrMethod) {
@@ -152,21 +152,33 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     }
 
     if (docComment != null) {
-      final ASTNode beforeAnchor;
-      if (anchor == null) {
-        final PsiElement lBrace = ((GrTypeDefinition)targetClass).getBody().getLBrace();
-        beforeAnchor = lBrace == null ? null : lBrace.getNode().getTreeNext();
-      }
-      else {
-        beforeAnchor = anchor.getNode().getTreeNext();
-      }
-      ((GrTypeDefinition)targetClass).getBody().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", beforeAnchor);
-      anchor = beforeAnchor.getTreePrev().getPsi();
-      targetClass.addAfter(docComment, anchor);
+      PsiElement prevSibling = moved.getPrevSibling();
+      targetClass.addBefore(docComment, moved);
+      addLineFeedIfNeeded(prevSibling);
       docComment.delete();
     }
     member.delete();
     return moved;
+  }
+
+  private static void addLineFeedIfNeeded(PsiElement prevSibling) {
+    if (prevSibling == null) return;
+    ASTNode node = prevSibling.getNode();
+    IElementType type = node.getElementType();
+    if (type == GroovyTokenTypes.mLCURLY) return;
+
+    if (type == GroovyTokenTypes.mNLS) {
+      String text = prevSibling.getText();
+      int lfCount = StringUtil.countChars(text, '\n');
+      if (lfCount < 2) {
+        ASTNode parent = node.getTreeParent();
+        parent.addLeaf(GroovyTokenTypes.mNLS, text + "\n", node);
+        parent.removeChild(node);
+      }
+    }
+    else {
+      node.getTreeParent().addLeaf(GroovyTokenTypes.mNLS, "\n\n", node.getTreeNext());
+    }
   }
 
   public void decodeContextInfo(@NotNull PsiElement scope) {

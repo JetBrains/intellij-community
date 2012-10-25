@@ -26,9 +26,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
-import git4idea.GitUtil;
-import git4idea.GitPlatformFacade;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
@@ -186,7 +184,7 @@ public class GitPushDialog extends DialogWrapper {
           LOG.info("Couldn't retrieve tracked branch for current branch " + currentBranch, e);
           remoteName = DEFAULT_REMOTE;
         }
-        String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getShortName();
+        String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getNameForRemoteOperations();
         return Pair.create(remoteName, targetBranch);
       }
     }
@@ -221,21 +219,23 @@ public class GitPushDialog extends DialogWrapper {
   private Map<GitRepository, GitPushSpec> pushSpecsForCurrentOrEnteredBranches() throws VcsException {
     Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
     for (GitRepository repository : myRepositories) {
-      GitBranch currentBranch = repository.getCurrentBranch();
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
       if (currentBranch == null) {
         continue;
       }
       String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), currentBranch.getName());
       String trackedBranchName = GitBranchUtil.getTrackedBranchName(repository.getProject(), repository.getRoot(), currentBranch.getName());
       GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-      GitBranch targetBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, trackedBranchName);
-      if (remote == null || targetBranch == null) {
-        Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
+      GitRemoteBranch targetBranch;
+      if (remote != null && trackedBranchName != null) {
+        targetBranch = GitBranchUtil.findRemoteBranchByName(trackedBranchName, remote.getName(),
+                                                            repository.getBranches().getRemoteBranches());
+      }
+      else {
+        Pair<GitRemote, GitRemoteBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
         if (remoteAndBranch == null) {
-          remote = myRefspecPanel.getSelectedRemote();
           targetBranch = GitPusher.NO_TARGET_BRANCH;
         } else {
-          remote = remoteAndBranch.getFirst();
           targetBranch = remoteAndBranch.getSecond();
         }
       }
@@ -243,17 +243,15 @@ public class GitPushDialog extends DialogWrapper {
       if (myRefspecPanel.turnedOn()) {
         String manualBranchName = myRefspecPanel.getBranchToPush();
         remote = myRefspecPanel.getSelectedRemote();
-        GitBranch manualBranch = GitBranchUtil.findRemoteBranchByName(repository, remote, manualBranchName);
+        GitRemoteBranch manualBranch = GitBranchUtil.findRemoteBranchByName(manualBranchName, remote.getName(),
+                                                                            repository.getBranches().getRemoteBranches());
         if (manualBranch == null) {
-          if (!manualBranchName.startsWith("refs/remotes/")) {
-            manualBranchName = myRefspecPanel.getSelectedRemote().getName() + "/" + manualBranchName;
-          }
-          manualBranch = new GitBranch(manualBranchName, GitBranch.DUMMY_HASH, true);
+          manualBranch = new GitStandardRemoteBranch(remote, manualBranchName, GitBranch.DUMMY_HASH);
         }
         targetBranch = manualBranch;
       }
 
-      GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, targetBranch);
+      GitPushSpec pushSpec = new GitPushSpec(currentBranch, targetBranch == null ? GitPusher.NO_TARGET_BRANCH : targetBranch);
       defaultSpecs.put(repository, pushSpec);
     }
     return defaultSpecs;

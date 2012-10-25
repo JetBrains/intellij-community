@@ -203,7 +203,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.RunConfigurations.SaveTempConfig);
+      presentation.setIcon(AllIcons.Actions.Menu_saveall);
     }
 
     public void actionPerformed(final AnActionEvent e) {

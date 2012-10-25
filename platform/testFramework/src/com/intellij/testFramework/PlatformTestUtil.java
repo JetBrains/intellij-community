@@ -767,4 +767,9 @@ public class PlatformTestUtil {
     assertNotNull(t);
     return t;
   }
+
+  @NotNull
+  public static String loadFileText(@NotNull String fileName) throws IOException {
+    return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
+  }
 }

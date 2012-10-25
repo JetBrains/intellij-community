@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.VcsAnnotation;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,15 @@ public class VcsHistoryCache {
       myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
                                            session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
+    }
+  }
+
+  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<List<VcsFileRevision>> consumer) {
+    synchronized (myLock) {
+      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
+      if (cachedHistory != null) {
+        consumer.consume(cachedHistory.getRevisions());
+      }
     }
   }
 

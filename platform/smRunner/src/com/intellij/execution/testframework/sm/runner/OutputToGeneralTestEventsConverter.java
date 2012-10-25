@@ -343,10 +343,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       final String durationStr = testFinished.getAttributes().get(ATTR_KEY_TEST_DURATION);
 
       // Test duration in milliseconds
-      int duration = 0;
+      long duration = 0;
 
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
-        duration = convertToInt(durationStr, testFinished);
+        duration = convertToLong(durationStr, testFinished);
       }
 
       TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration);
@@ -474,6 +474,18 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
         LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo),
                   ex);
+      }
+      return count;
+    }
+
+    private long convertToLong(final String countStr, @NotNull final ServiceMessage msg) {
+      long count = 0;
+      try {
+        count = Long.parseLong(countStr);
+      }
+      catch (NumberFormatException ex) {
+        final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
+        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse long error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
       }
       return count;
     }

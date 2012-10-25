@@ -181,7 +181,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = testFinishedEvent.getName();
-        final int duration = testFinishedEvent.getDuration();
+        final long duration = testFinishedEvent.getDuration();
         final String fullTestName = getFullTestName(testName);
         final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
 
