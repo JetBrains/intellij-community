@@ -182,7 +182,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
         boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + methodReferenceName;
+        methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
         methodRefText =
