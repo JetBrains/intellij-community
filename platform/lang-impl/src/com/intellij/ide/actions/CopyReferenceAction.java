@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,7 +60,7 @@ import java.util.zip.ZipEntry;
 /**
  * @author Alexey
  */
-public class CopyReferenceAction extends AnAction {
+public class CopyReferenceAction extends DumbAwareAction {
   public static final DataFlavor ourFlavor;
   static {
     try {
