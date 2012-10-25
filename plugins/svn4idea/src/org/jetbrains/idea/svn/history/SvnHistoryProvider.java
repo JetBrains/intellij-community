@@ -474,7 +474,7 @@ public class SvnHistoryProvider
   }
 
   public AnAction[] getAdditionalActions(final Runnable refresher) {
-    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new MergeSourceDetailsAction()};
+    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new MergeSourceDetailsAction(), new SvnEditCommitMessageFromFileHistoryAction()};
   }
 
   public boolean isDateOmittable() {

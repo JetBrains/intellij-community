@@ -1208,8 +1208,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       return getSelectedRevisions();
-    }
-    else if (VcsDataKeys.CHANGES.is(dataId)) {
+    } else if (VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.is(dataId)) {
+      return new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          myDualView.rebuild();
+        }
+      };
+    } else if (VcsDataKeys.CHANGES.is(dataId)) {
       return getChanges();
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {

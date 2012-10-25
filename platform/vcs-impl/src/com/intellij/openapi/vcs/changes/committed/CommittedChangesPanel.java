@@ -69,7 +69,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
-  private Runnable myIfNotCachedReloader;
+  private Consumer<String> myIfNotCachedReloader;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -109,9 +109,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
     myBrowser.addFilter(myFilterComponent);
-    myIfNotCachedReloader = myLocation == null ? null : new Runnable() {
+    myIfNotCachedReloader = myLocation == null ? null : new Consumer<String>() {
       @Override
-      public void run() {
+      public void consume(String s) {
         refreshChanges(false);
       }
     };
