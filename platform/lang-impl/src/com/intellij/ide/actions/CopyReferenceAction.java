@@ -37,10 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
@@ -182,6 +179,13 @@ public class CopyReferenceAction extends DumbAwareAction {
 
     if (element == null) {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
+    if (element == null && editor == null) {
+      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (virtualFile != null && project != null) {
+        element = PsiManager.getInstance(project).findFile(virtualFile);
+      }
     }
     if (element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()) {
       return null;
