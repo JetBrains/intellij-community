@@ -29,4 +29,27 @@ public class PyDocstringLexer extends PythonIndentingLexer {
     }
   }
 
+
+  @Override
+  protected int getNextLineIndent() {
+    int indent = super.getNextLineIndent();
+    while (getBaseTokenType() != null && (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(getBaseTokenType()) ||
+                            getBaseTokenType() == PyTokenTypes.DOT || getBaseTokenType() == PyTokenTypes.GTGT ||
+                            getBaseTokenType() == PyTokenTypes.GT)) {
+      if (getBaseTokenType() == PyTokenTypes.TAB) {
+        indent = ((indent / 8) + 1) * 8;
+      }
+      else if (getBaseTokenType() == PyTokenTypes.SPACE) {
+        indent++;
+      }
+      else if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+        indent = 0;
+      }
+      advanceBase();
+    }
+    if (getBaseTokenType() == null) {
+      return 0;
+    }
+    return indent;
+  }
 }

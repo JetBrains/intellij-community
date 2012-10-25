@@ -56,14 +56,14 @@ public class PyDocstringParsingContext extends ParsingContext {
     @Override
     public void parseStatement(ParsingScope scope) {
       IElementType type = myBuilder.getTokenType();
-      while (!myBuilder.eof() && type != PyDocstringTokenTypes.WELCOME) {
+      if (type == PyTokenTypes.INDENT) {
         myBuilder.advanceLexer();
-        type = myBuilder.getTokenType();
+          type = myBuilder.getTokenType();
       }
       if (type == PyDocstringTokenTypes.WELCOME) { // >>> case
         myBuilder.advanceLexer();
-        super.parseStatement(scope);
       }
+      super.parseStatement(scope);
     }
 
     @Override
