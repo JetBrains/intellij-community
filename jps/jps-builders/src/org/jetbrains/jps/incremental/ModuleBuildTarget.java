@@ -48,12 +48,14 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public File getOutputDir(BuildDataPaths paths) {
-    return getOutputDir();
+  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+    final File outputDir = getOutputDir();
+    return outputDir != null? Collections.singleton(outputDir) : Collections.<File>emptyList();
   }
 
+  @Override
   @NotNull
   public JpsModule getModule() {
     return myModule;

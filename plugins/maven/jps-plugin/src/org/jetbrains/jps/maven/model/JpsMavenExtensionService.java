@@ -2,6 +2,8 @@ package org.jetbrains.jps.maven.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -23,4 +25,7 @@ public abstract class JpsMavenExtensionService {
   public abstract void setProductionOnTestDependency(@NotNull JpsDependencyElement dependency, boolean value);
 
   public abstract boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency);
+
+  @NotNull
+  public abstract MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths);
 }

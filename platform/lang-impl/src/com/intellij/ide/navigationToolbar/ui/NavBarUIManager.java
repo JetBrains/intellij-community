@@ -23,12 +23,14 @@ import com.intellij.util.ui.UIUtil;
 public class NavBarUIManager {
   public static final NavBarUI AQUA = new AquaNavBarUI();
   public static final NavBarUI COMMON = new CommonNavBarUI();
+  public static final NavBarUI DARCULA = new DarculaNavBarUI();
   public static final NavBarUI GTK = new GtkNavBarUI();
   
 
   public static NavBarUI getUI() {
     if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
     if (UIUtil.isUnderGTKLookAndFeel())  return GTK;
+    if (UIUtil.isUnderDarcula())         return DARCULA;
     return COMMON;
   }
 }

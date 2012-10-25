@@ -22,10 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ComparatorUtil;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.skipNulls;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.skipNulls;
 
 /**
  * @author Eugene Zhuravlev
@@ -49,7 +51,7 @@ public class PathUtilEx {
   private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
     @Override
     public String convert(Sdk jdk) {
-      return jdk.getVersionString();
+      return StringUtil.notNullize(jdk.getVersionString());
     }
   };
 

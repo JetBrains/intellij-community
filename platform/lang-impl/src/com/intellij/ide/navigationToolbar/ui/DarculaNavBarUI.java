@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
+package com.intellij.ide.navigationToolbar.ui;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.navigationToolbar.NavBarItem;
+import com.intellij.util.ui.UIUtil;
+
+import java.awt.*;
 
 /**
- * @author peter
-*/
-public class NegativeStatisticsWeigher extends CompletionWeigher {
-
+ * @author Konstantin Bulenkov
+ */
+public class DarculaNavBarUI extends CommonNavBarUI {
   @Override
-  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    return 0;
+  public Font getElementFont(NavBarItem navBarItem) {
+    return UIUtil.getLabelFont().deriveFont(11.0f);
   }
 }
