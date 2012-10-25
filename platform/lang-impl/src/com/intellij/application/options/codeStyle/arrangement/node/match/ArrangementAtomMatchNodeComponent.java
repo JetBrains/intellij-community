@@ -43,8 +43,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   public static final int VERTICAL_PADDING   = 2;
   public static final int HORIZONTAL_PADDING = 8;
 
-  @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
-
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
@@ -77,11 +75,13 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
       return myLabelSize == null ? super.getPreferredSize() : myLabelSize;
     }
   };
-  @NotNull private final RoundedLineBorder myBorder;
 
-  @NotNull private final  ArrangementAtomMatchCondition myCondition;
-  @Nullable private final ActionButton                  myCloseButton;
-  @Nullable private final Runnable                      myCloseCallback;
+  @NotNull private final ArrangementColorsProvider     myColorsProvider;
+  @NotNull private final RoundedLineBorder             myBorder;
+  @NotNull private final ArrangementAtomMatchCondition myCondition;
+
+  @Nullable private final ActionButton myCloseButton;
+  @Nullable private final Runnable     myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
@@ -93,9 +93,11 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   private boolean myCloseButtonHovered;
 
   public ArrangementAtomMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                           @NotNull ArrangementColorsProvider colorsProvider,
                                            @NotNull ArrangementAtomMatchCondition condition,
                                            @Nullable Runnable closeCallback)
   {
+    myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -186,9 +188,9 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   public void setSelected(boolean selected) {
-    myLabel.setForeground(myColorsService.getTextColor(selected));
-    myBorder.setColor(myColorsService.getBorderColor(selected));
-    myBackgroundColor = myColorsService.getBackgroundColor(selected);
+    myLabel.setForeground(myColorsProvider.getTextColor(myCondition.getType(), selected));
+    myBorder.setColor(myColorsProvider.getBorderColor(selected));
+    myBackgroundColor = myColorsProvider.getTextBackgroundColor(myCondition.getType(), selected);
   }
 
   public boolean isEnabled() {

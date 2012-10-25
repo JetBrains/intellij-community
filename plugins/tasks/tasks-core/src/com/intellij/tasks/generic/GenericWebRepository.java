@@ -29,7 +29,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private String myTaskPattern = "";
   private String myLoginURL = "";
   private String myLoginMethodType = GenericWebRepositoryEditor.GET;
-  private String myGetTasksMethodType = GenericWebRepositoryEditor.GET;
+  private String myTasksListMethodType = GenericWebRepositoryEditor.GET;
+  private ResponseType myResponseType = ResponseType.XML;
 
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
@@ -57,21 +58,21 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     myTaskPattern = other.getTaskPattern();
     myLoginURL = other.getLoginURL();
     myLoginMethodType = other.getLoginMethodType();
-    myGetTasksMethodType = other.getGetTasksMethodType();
+    myTasksListMethodType = other.getTasksListMethodType();
+    myResponseType = other.getResponseType();
   }
 
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
     final HttpClient httpClient = getHttpClient();
 
-    if (!isLoginAnonymously()) login(httpClient);
+    if (!isLoginAnonymously() && !isUseHttpAuthentication()) login(httpClient);
 
     final List<String> placeholders = getPlaceholders(myTaskPattern);
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");
     }
 
-    //todo add possibility to select method type
     final HttpMethod method = getTaskListsMethod(query != null ? query : "", max);
     httpClient.executeMethod(method);
     if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
@@ -87,7 +88,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericWebTask(id, summary));
+      tasks.add(new GenericWebTask(id, summary, this));
     }
 
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
@@ -98,7 +99,16 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   private HttpMethod getTaskListsMethod(final String query, final int max) {
     String requestUrl = getFullTasksUrl(query, max);
-    return GenericWebRepositoryEditor.GET.equals(myGetTasksMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+    final HttpMethod method =
+      GenericWebRepositoryEditor.GET.equals(myTasksListMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+    configureHttpMethod(method);
+    return method;
+  }
+
+  @Override
+  protected void configureHttpMethod(final HttpMethod method) {
+    super.configureHttpMethod(method);
+    method.addRequestHeader("accept", myResponseType.getMimeType());
   }
 
   private void login(final HttpClient httpClient) throws Exception {
@@ -170,22 +180,6 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     return new GenericWebRepository(this);
   }
 
-  public String getTasksListURL() {
-    return myTasksListURL;
-  }
-
-  public void setTasksListURL(final String tasksListURL) {
-    myTasksListURL = tasksListURL;
-  }
-
-  public String getTaskPattern() {
-    return myTaskPattern;
-  }
-
-  public void setTaskPattern(final String taskPattern) {
-    myTaskPattern = taskPattern;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -196,7 +190,8 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
     if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;
     if (!Comparing.equal(getLoginMethodType(), that.getLoginMethodType())) return false;
-    if (!Comparing.equal(getGetTasksMethodType(), that.getGetTasksMethodType())) return false;
+    if (!Comparing.equal(getTasksListMethodType(), that.getTasksListMethodType())) return false;
+    if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
     return true;
   }
 
@@ -216,6 +211,12 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     };
   }
 
+  @Nullable
+  @Override
+  public String getTaskComment(final Task task) {
+    return super.getTaskComment(task);
+  }
+
   public String getLoginURL() {
     return myLoginURL;
   }
@@ -228,15 +229,39 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     myLoginMethodType = loginMethodType;
   }
 
-  public void setGetTasksMethodType(final String getTasksMethodType) {
-    myGetTasksMethodType = getTasksMethodType;
+  public void setTasksListMethodType(final String tasksListMethodType) {
+    myTasksListMethodType = tasksListMethodType;
   }
 
   public String getLoginMethodType() {
     return myLoginMethodType;
   }
 
-  public String getGetTasksMethodType() {
-    return myGetTasksMethodType;
+  public String getTasksListMethodType() {
+    return myTasksListMethodType;
+  }
+
+  public ResponseType getResponseType() {
+    return myResponseType;
+  }
+
+  public void setResponseType(final ResponseType responseType) {
+    myResponseType = responseType;
+  }
+
+  public String getTasksListURL() {
+    return myTasksListURL;
+  }
+
+  public void setTasksListURL(final String tasksListURL) {
+    myTasksListURL = tasksListURL;
+  }
+
+  public String getTaskPattern() {
+    return myTaskPattern;
+  }
+
+  public void setTaskPattern(final String taskPattern) {
+    myTaskPattern = taskPattern;
   }
 }
