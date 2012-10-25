@@ -57,6 +57,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("pack1.A", "pack1.C", 0, 1, 2);
   }
 
+  public void testParameterizedRefOn() throws Exception {
+    doTest("pack1.POne", "pack1.C", 1, 2);
+  }
+
   public void testIDEADEV12448() throws Exception {
     doTest("B", "A", false, 0);
   }
