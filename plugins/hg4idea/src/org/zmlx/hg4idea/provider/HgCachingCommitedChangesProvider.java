@@ -62,6 +62,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
 
   public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
     HgRevisionNumber revision = HgRevisionNumber.getInstance(dataInput.readUTF(), dataInput.readUTF());
+    String branch = dataInput.readUTF();
     String committerName = dataInput.readUTF();
     String comment = dataInput.readUTF();
     Date commitDate = new Date(dataInput.readLong());
@@ -72,12 +73,13 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
       changes.add(new Change(beforeRevision, afterRevision));
     }
-    return new HgCommittedChangeList(myVcs, revision, comment, committerName, commitDate, changes);
+    return new HgCommittedChangeList(myVcs, revision, branch, comment, committerName, commitDate, changes);
   }
 
   public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
     HgCommittedChangeList changeList = (HgCommittedChangeList)committedChangeList;
     writeRevisionNumber(dataOutput, changeList.getRevision());
+    dataOutput.writeUTF(changeList.getBranch());
     dataOutput.writeUTF(changeList.getCommitterName());
     dataOutput.writeUTF(changeList.getComment());
     dataOutput.writeLong(changeList.getCommitDate().getTime());
@@ -217,9 +219,8 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
 
-      result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getCommitMessage(), revision.getAuthor(), revision.getRevisionDate(),
-                                          changes));
-
+      result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(),
+                                           revision.getAuthor(), revision.getRevisionDate(), changes));
     }
     Collections.reverse(result);
     return result;
@@ -240,7 +241,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[]{ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
+    return new ChangeListColumn[]{BRANCH_COLUMN, ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
   public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
@@ -324,8 +325,18 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.COPIED));
     }
 
-    return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getCommitMessage(), localRevision.getAuthor(),
-                                     localRevision.getRevisionDate(),
-                                     changes);
+    return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getBranchName(), localRevision.getCommitMessage(),
+                                     localRevision.getAuthor(), localRevision.getRevisionDate(), changes);
   }
+
+  private final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+    public String getTitle() {
+      return HgVcsMessages.message("hg4idea.changelist.column.branch");
+    }
+
+    public Object getValue(final HgCommittedChangeList changeList) {
+      final String branch = changeList.getBranch();
+      return branch.isEmpty() ? "default" : branch;
+    }
+  };
 }
