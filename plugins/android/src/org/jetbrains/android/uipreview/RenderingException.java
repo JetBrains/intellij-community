@@ -2,8 +2,6 @@ package org.jetbrains.android.uipreview;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,29 +46,5 @@ public class RenderingException extends Exception {
   public RenderingException setWarnMessages(List<FixableIssueMessage> warnMessages) {
     myWarnMessages = warnMessages;
     return this;
-  }
-
-  @Override
-  public void printStackTrace(PrintStream s) {
-    if (myCauses.length > 0) {
-      for (Throwable e : myCauses) {
-        e.printStackTrace(s);
-      }
-    }
-    else {
-      super.printStackTrace(s);
-    }
-  }
-
-  @Override
-  public void printStackTrace(PrintWriter s) {
-    if (myCauses.length > 0) {
-      for (Throwable e : myCauses) {
-        e.printStackTrace(s);
-      }
-    }
-    else {
-      super.printStackTrace(s);
-    }
   }
 }
