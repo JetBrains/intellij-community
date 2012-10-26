@@ -121,7 +121,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     bindTo();
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
-    myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 0, 0));
+    myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
