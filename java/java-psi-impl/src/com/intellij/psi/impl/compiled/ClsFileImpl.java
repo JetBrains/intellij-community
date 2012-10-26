@@ -23,21 +23,15 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiImplementationHelper;
-import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -65,22 +59,21 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private static final MirrorLock MIRROR_LOCK = new MirrorLock();
   private static class MirrorLock {}
 
-  private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private volatile SoftReference<StubTree> myStub;
-  private TreeElement myMirrorFileElement;  // guarded by MIRROR_LOCK
+  private TreeElement myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement = null;
   private boolean myIsPhysical = true;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
+    //noinspection ConstantConditions
     super(null);
     myManager = manager;
-    JavaElementType.CLASS.getIndex(); // Initialize java stubs...
-
     myIsForDecompiling = forDecompiling;
     myViewProvider = viewProvider;
+    JavaElementType.CLASS.getIndex(); // Initialize java stubs...
   }
 
   public ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
@@ -143,8 +136,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public PsiClass[] getClasses() {
-    final PsiClassHolderFileStub fileStub = getStub();
-    return fileStub != null ? fileStub.getClasses() : PsiClass.EMPTY_ARRAY;
+    return getStub().getClasses();
   }
 
   @Override
@@ -235,53 +227,30 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    buffer.append("\n  // IntelliJ API Decompiler stub source generated from a class file\n  // Implementation of methods is not available");
-    goNextLine(indentLevel, buffer);
-    goNextLine(indentLevel, buffer);
-    final PsiPackageStatement packageStatement = getPackageStatement();
-    if (packageStatement != null) {
-      ((ClsElementImpl)packageStatement).appendMirrorText(0, buffer);
-      goNextLine(indentLevel, buffer);
-      goNextLine(indentLevel, buffer);
-    }
+  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
+    buffer.append("\n");
+    buffer.append("  // IntelliJ API Decompiler stub source generated from a class file\n");
+    buffer.append("  // Implementation of methods is not available\n");
+    buffer.append("\n");
 
-    final PsiClass[] classes = getClasses();
+    appendText(getPackageStatement(), 0, buffer, "\n\n");
+
+    PsiClass[] classes = getClasses();
     if (classes.length > 0) {
-      PsiClass aClass = classes[0];
-      ((ClsElementImpl)aClass).appendMirrorText(0, buffer);
+      appendText(classes[0], 0, buffer);
     }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
-    PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(element);
-    if (mirrorFile instanceof PsiJavaFile) {
-      PsiPackageStatement packageStatementMirror = ((PsiJavaFile)mirrorFile).getPackageStatement();
-      final PsiPackageStatement packageStatement = getPackageStatement();
-      if (packageStatementMirror != null && packageStatement != null) {
-        ((ClsElementImpl)packageStatement).setMirror((TreeElement)packageStatementMirror.getNode());
-      }
-
-      PsiClass[] classes = getClasses();
-      // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
-      if (classes.length != 1 || JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
-        PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
-        if (classes.length != mirrorClasses.length) {
-          LOG.error("file: " + mirrorFile + " classes: " + Arrays.toString(classes) + " mirrors: " + Arrays.toString(mirrorClasses));
-        }
-        else {
-          for (int i = 0; i < classes.length; i++) {
-            PsiClass mirrorClass = mirrorClasses[i];
-            assert mirrorClass != null : this +"; mirror classes: " + Arrays.asList(mirrorClasses);
-            PsiClass aClass = classes[i];
-            assert aClass != null : this +"; classes: " + Arrays.asList(classes);
-            ((ClsElementImpl)aClass).setMirror((TreeElement)mirrorClass.getNode());
-          }
-        }
-      }
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    PsiElement mirrorElement = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    if (!(mirrorElement instanceof PsiJavaFile)) {
+      throw new InvalidMirrorException("Unexpected mirror file: " + mirrorElement);
     }
-    myMirrorFileElement = element;
+
+    PsiJavaFile mirrorFile = (PsiJavaFile)mirrorElement;
+    setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
+    setMirrors(getClasses(), mirrorFile.getClasses());
   }
 
   @Override
@@ -294,29 +263,29 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public PsiElement getMirror() {
     synchronized (MIRROR_LOCK) {
       if (myMirrorFileElement == null) {
-        VirtualFile virtualFile = getVirtualFile();
-        String mirrorText = decompile(getManager(), virtualFile);
+        VirtualFile file = getVirtualFile();
+        String mirrorText = decompile(getManager(), file);
         String ext = JavaFileType.INSTANCE.getDefaultExtension();
         PsiClass[] classes = getClasses();
-
-        String fileName = (classes.length > 0 ? classes[0].getName(): virtualFile.getNameWithoutExtension()) + "." + ext;
-        PsiManager manager = getManager();
-        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
-        final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+        String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + "." + ext;
+        PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
+        PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false);
+        TreeElement mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
         final NonCancelableSection section = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
         try {
-          setMirror((TreeElement)mirrorTreeElement);
-
-          // TODO this code should be removed after 11.1 release. It is left just in case.
-          // Document is not actually used, maybe it is stored in mirror just to avoid garbage collecting
-          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-          myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
+          setMirror(mirrorTreeElement);
+        }
+        catch (InvalidMirrorException e) {
+          // todo[r.sh] use logging API once available (to attach .class file)
+          LOG.error(file.getPath(), e);
         }
         finally {
           section.done();
         }
+
+        myMirrorFileElement = mirrorTreeElement;
       }
 
       return myMirrorFileElement.getPsi();
@@ -382,11 +351,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   public static String decompile(PsiManager manager, VirtualFile file) {
-    final FileViewProvider provider = ((PsiManagerEx)manager).getFileManager().findViewProvider(file);
     ClsFileImpl psiFile = null;
+
+    final FileViewProvider provider = ((PsiManagerEx)manager).getFileManager().findViewProvider(file);
     if (provider != null) {
       final PsiFile psi = provider.getPsi(provider.getBaseLanguage());
-      if (psi instanceof PsiCompiledFile) {
+      if (psi instanceof ClsFileImpl) {
         psiFile = (ClsFileImpl)psi;
       }
     }
@@ -423,7 +393,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
     StubTree stubHolder = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
     if (stubHolder == null) {
-      // Must be corrupted classfile
+      // Must be corrupted .class file
       LOG.info("Class file is corrupted: " + getVirtualFile().getPresentableUrl());
 
       StubTree emptyTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
@@ -512,6 +482,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return myIsPhysical;
   }
 
+  @SuppressWarnings("UnusedDeclaration")  // used by Kotlin compiler
   public void setPhysical(boolean isPhysical) {
     myIsPhysical = isPhysical;
   }

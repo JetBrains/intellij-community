@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,28 +33,25 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub> implements PsiAnnotation, Navigatable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationImpl");
-  private ClsJavaCodeReferenceElementImpl myReferenceElement; //protected by lock
-  private ClsAnnotationParameterListImpl myParameterList; //protected by lock
-  private final Object lock = new Object();
+  private ClsJavaCodeReferenceElementImpl myReferenceElement;
+  private ClsAnnotationParameterListImpl myParameterList;
 
   public ClsAnnotationImpl(final PsiAnnotationStub stub) {
     super(stub);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append("@").append(getReferenceElement().getCanonicalText());
-    ((ClsAnnotationParameterListImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
+    appendText(getParameterList(), indentLevel, buffer);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiAnnotation mirror = (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(element);
-      ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
-      ((ClsElementImpl)getNameReferenceElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
+    PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirror(getNameReferenceElement(), mirror.getNameReferenceElement());
+    setMirror(getParameterList(), mirror.getParameterList());
   }
 
   @Override
@@ -78,22 +73,18 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   @Override
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    synchronized (lock) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myParameterList == null) {
-        final PsiAnnotationStub stub = getStub();
-        final CompositeElement mirror = stub.getTreeElement();
-
-        final PsiAnnotationParameterList paramList = (PsiAnnotationParameterList)mirror.findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
-
+        PsiAnnotationParameterList paramList = PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiAnnotationParameterList.class);
         myParameterList = new ClsAnnotationParameterListImpl(this, paramList.getAttributes());
       }
-
       return myParameterList;
     }
   }
 
   @Override
-  @Nullable public String getQualifiedName() {
+  @Nullable
+  public String getQualifiedName() {
     if (getReferenceElement() == null) return null;
     return getReferenceElement().getCanonicalText();
   }
@@ -115,7 +106,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   }
 
   @Override
-  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
+  public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -132,11 +123,10 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   }
 
   private ClsJavaCodeReferenceElementImpl getReferenceElement() {
-    synchronized (lock) {
+    synchronized (LAZY_BUILT_LOCK) {
       if (myReferenceElement == null) {
-        final PsiAnnotationStub stub = getStub();
-        final CompositeElement mirror = stub.getTreeElement();
-        myReferenceElement = new ClsJavaCodeReferenceElementImpl(this, mirror.findChildByRole(ChildRole.CLASS_REFERENCE).getText());
+        String text = PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiJavaCodeReferenceElement.class).getText();
+        myReferenceElement = new ClsJavaCodeReferenceElementImpl(this, text);
       }
 
       return myReferenceElement;

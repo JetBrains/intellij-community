@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -23,7 +22,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,28 +30,24 @@ import javax.swing.*;
  * @author ven
  */
 public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsClassObjectAccessExpressionImpl");
-  private final ClsTypeElementImpl myTypeElement;
   private final ClsElementImpl myParent;
-  @NonNls private static final String CLASS_ENDING = ".class";
+  private final ClsTypeElementImpl myTypeElement;
 
-  public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {
+  public ClsClassObjectAccessExpressionImpl(ClsElementImpl parent, String canonicalClassText) {
     myParent = parent;
     myTypeElement = new ClsTypeElementImpl(this, canonicalClassText, ClsTypeElementImpl.VARIANCE_NONE);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     myTypeElement.appendMirrorText(0, buffer);
-    buffer.append(CLASS_ENDING);
+    buffer.append('.').append(PsiKeyword.CLASS);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiClassObjectAccessExpression mirror = (PsiClassObjectAccessExpression)SourceTreeToPsiMap.treeElementToPsi(element);
-      ((ClsElementImpl)getOperand()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));
+    setMirror(getOperand(), SourceTreeToPsiMap.<PsiClassObjectAccessExpression>treeToPsiNotNull(element).getOperand());
   }
 
   @Override

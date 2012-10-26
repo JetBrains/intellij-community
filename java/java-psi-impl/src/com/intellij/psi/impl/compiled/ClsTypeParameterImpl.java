@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
@@ -43,11 +42,9 @@ import java.util.List;
  * @author max
  */
 public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterImpl");
-  static final ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
   private final LightEmptyImplementsList myLightEmptyImplementsList;
 
-  public ClsTypeParameterImpl(final PsiTypeParameterStub stub) {
+  public ClsTypeParameterImpl(@NotNull PsiTypeParameterStub stub) {
     super(stub);
     myLightEmptyImplementsList = new LightEmptyImplementsList(getManager());
   }
@@ -313,25 +310,23 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NonNls final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(getName());
+
     PsiJavaCodeReferenceElement[] bounds = getExtendsList().getReferenceElements();
     if (bounds.length > 0) {
       buffer.append(" extends ");
       for (int i = 0; i < bounds.length; i++) {
-        PsiJavaCodeReferenceElement bound = bounds[i];
         if (i > 0) buffer.append(" & ");
-        buffer.append(bound.getCanonicalText());
+        buffer.append(bounds[i].getCanonicalText());
       }
     }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiTypeParameter mirror = (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(element);
-      ((ClsReferenceListImpl)getExtendsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));
+    setMirror(getExtendsList(), SourceTreeToPsiMap.<PsiTypeParameter>treeToPsiNotNull(element).getExtendsList());
   }
 
   @Override
@@ -345,11 +340,10 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return (PsiTypeParameterListOwner)getParent().getParent();
   }
 
-
   @Override
   public int getIndex() {
-    final PsiTypeParameterStub st = getStub();
-    return st.getParentStub().getChildrenStubs().indexOf(st);
+    final PsiTypeParameterStub stub = getStub();
+    return stub.getParentStub().getChildrenStubs().indexOf(stub);
   }
 
   public PsiMetaData getMetaData() {
@@ -389,6 +383,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
+
   @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,13 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   private final PsiDocCommentOwner myParent;
   private final PsiDocTag[] myTags;
 
-  ClsDocCommentImpl(PsiDocCommentOwner parent) {
+  ClsDocCommentImpl(@NotNull PsiDocCommentOwner parent) {
     myParent = parent;
-    
-    PsiDocTag[] tags = new PsiDocTag[1];
-    tags[0] = new ClsDocTagImpl(this, "@deprecated");
-    myTags = tags;
+    myTags = new PsiDocTag[]{new ClsDocTagImpl(this, "@deprecated")};
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
     buffer.append("/**");
     for (PsiDocTag tag : getTags()) {
       goNextLine(indentLevel + 1, buffer);
@@ -49,7 +46,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaDocElementType.DOC_COMMENT);
   }
 
@@ -83,15 +80,13 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
 
   @Override
   public PsiDocTag findTagByName(@NonNls String name) {
-    if (!name.equals("deprecated")) return null;
-    return getTags()[0];
+    return name.equals("deprecated") ? getTags()[0] : null;
   }
 
   @Override
   @NotNull
   public PsiDocTag[] findTagsByName(@NonNls String name) {
-    if (!name.equals("deprecated")) return PsiDocTag.EMPTY_ARRAY;
-    return getTags();
+    return name.equals("deprecated") ? getTags() : PsiDocTag.EMPTY_ARRAY;
   }
 
   @Override
@@ -108,5 +103,4 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
       visitor.visitElement(this);
     }
   }
-
 }
