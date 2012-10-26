@@ -118,7 +118,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     myNamePathComponent = initNamePathComponent(context);
     mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
-    bindTo();
+    bindModuleSettings();
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
@@ -519,7 +519,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
   }
 
-  public void bindTo() {
+  public void bindModuleSettings() {
 
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {

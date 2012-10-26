@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -51,17 +52,18 @@ public class JavaSettingsStep extends ModuleWizardStep {
   private JPanel myPanel;
   private final JdkComboBox myJdkComboBox;
   private final WizardContext myWizardContext;
+  private final ProjectSdksModel myModel;
 
   public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
     myWizardContext = settingsStep.getContext();
-    ProjectSdksModel model = new ProjectSdksModel();
+    myModel = new ProjectSdksModel();
     Project project = myWizardContext.getProject();
-    model.reset(project, sdkFilter);
-    myJdkComboBox = new JdkComboBox(model, sdkFilter);
+    myModel.reset(project, sdkFilter);
+    myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
     JButton button = new JButton("\u001BNew...");
-    myJdkComboBox.setSetupButton(button, project, model,
+    myJdkComboBox.setSetupButton(button, project, myModel,
                                  project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
                                  null,
                                  false);
@@ -119,5 +121,11 @@ public class JavaSettingsStep extends ModuleWizardStep {
         ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
       }
     }
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    myModel.apply();
+    return true;
   }
 }
