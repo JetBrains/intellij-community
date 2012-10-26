@@ -21,9 +21,11 @@ import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.actions.MergeOperations;
 import com.intellij.openapi.diff.impl.DiffLineMarkerRenderer;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditorSource;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.InlineFragment;
+import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
@@ -69,14 +71,16 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
 
   public void highlightText(@NotNull Fragment fragment, @Nullable GutterIconRenderer gutterIconRenderer) {
     MarkupModel markupModel = getMarkupModel();
-    Editor editor = getEditor();
+    EditorEx editor = getEditor();
     TextDiffTypeEnum diffTypeEnum = fragment.getType();
     if (diffTypeEnum == null || markupModel == null || editor == null) {
       return;
     }
-    TextDiffType type = TextDiffType.create(diffTypeEnum);
+    TextDiffType type = fragment instanceof LineFragment
+                        ? DiffUtil.makeTextDiffType((LineFragment)fragment)
+                        : TextDiffType.create(diffTypeEnum);
     TextRange range = fragment.getRange(getSide());
-    TextAttributes attributes = type.getTextAttributes(getEditor());
+    TextAttributes attributes = type.getTextAttributes(editor);
     if (attributes == null) {
       return;
     }
@@ -95,21 +99,16 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
 
-    boolean adjustHeight = shouldIncreaseHighlightingHeight(fragment);
-    rangeMarker.setLineMarkerRenderer(adjustHeight
-                                      ? DiffLineMarkerRenderer.createHeightAdjustingInstance(type, range)
-                                      : DiffLineMarkerRenderer.createStandardInstance(type));
+    if (!(fragment instanceof InlineFragment)) {
+      rangeMarker.setLineMarkerRenderer(DiffLineMarkerRenderer.createInstance(type));
 
-    Color stripeBarColor = attributes.getErrorStripeColor();
-    if (stripeBarColor != null) {
-      rangeMarker.setErrorStripeMarkColor(stripeBarColor);
-      rangeMarker.setThinErrorStripeMark(true);
+      Color stripeBarColor = attributes.getErrorStripeColor();
+      if (stripeBarColor != null) {
+        rangeMarker.setErrorStripeMarkColor(stripeBarColor);
+        rangeMarker.setThinErrorStripeMark(true);
+      }
     }
     saveHighlighter(rangeMarker);
-  }
-
-  private static boolean shouldIncreaseHighlightingHeight(@NotNull Fragment fragment) {
-    return fragment instanceof InlineFragment;
   }
 
   public void addLineMarker(int line, @Nullable TextAttributesKey type) {

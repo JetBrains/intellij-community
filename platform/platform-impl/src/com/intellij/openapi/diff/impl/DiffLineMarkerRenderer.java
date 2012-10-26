@@ -20,10 +20,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -34,27 +32,14 @@ import java.awt.*;
 public class DiffLineMarkerRenderer implements LineMarkerRenderer {
 
   @NotNull private final TextDiffType myDiffType;
-  @Nullable private final TextRange myTextRange;
 
   @NotNull
-  public static DiffLineMarkerRenderer createStandardInstance(@NotNull TextDiffType diffType) {
-    return new DiffLineMarkerRenderer(diffType, null);
+  public static DiffLineMarkerRenderer createInstance(@NotNull TextDiffType diffType) {
+    return new DiffLineMarkerRenderer(diffType);
   }
 
-  /**
-   * Creates an instance of the renderer that calculates the visual height of the text range and ensures that the drawn rectangle is at
-   * least as high as needed.
-   * @param diffType the type of the difference.
-   * @param range    the highlighted text range.
-   */
-  @NotNull
-  public static DiffLineMarkerRenderer createHeightAdjustingInstance(@NotNull TextDiffType diffType, @NotNull TextRange range) {
-    return new DiffLineMarkerRenderer(diffType, range);
-  }
-
-  private DiffLineMarkerRenderer(@NotNull TextDiffType diffType, @Nullable TextRange range) {
+  private DiffLineMarkerRenderer(@NotNull TextDiffType diffType) {
     myDiffType = diffType;
-    myTextRange = range;
   }
 
   @Override
@@ -70,10 +55,6 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     int y = range.y;
     int width = gutter.getWidth();
     int height = range.height;
-
-    if (myTextRange != null) {
-      height = calcHeightInVisualLines(editor, myTextRange) * editor.getLineHeight();
-    }
 
     if (!myDiffType.isApplied()) {
       if (height > 2) {
@@ -91,17 +72,4 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     }
   }
 
-  private static int calcHeightInVisualLines(@NotNull Editor editor, @NotNull TextRange range) {
-    int startY = editor.offsetToVisualPosition(range.getStartOffset()).getLine();
-    int endY = editor.offsetToVisualPosition(range.getEndOffset()).getLine();
-    if (startY > endY) {
-      return 0;
-    }
-    return endY - startY + 1;
-  }
-
-  @NotNull
-  public TextDiffType getType() {
-    return myDiffType;
-  }
 }

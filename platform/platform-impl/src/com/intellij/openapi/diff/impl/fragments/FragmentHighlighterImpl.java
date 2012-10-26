@@ -49,6 +49,8 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
   }
 
   public void highlightLine(final LineFragment fragment) {
+    highlightFragmentImpl(fragment);
+
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
     if (iterator == null) {
