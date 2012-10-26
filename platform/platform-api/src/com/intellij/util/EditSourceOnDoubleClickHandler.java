@@ -106,16 +106,16 @@ public class EditSourceOnDoubleClickHandler {
 
     @Override
     public boolean onDoubleClick(MouseEvent e) {
-      final TreePath path = myTree.getUI() instanceof WideSelectionTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
-                                                                       : myTree.getPathForLocation(e.getX(), e.getY());
-      if (path == null) return false;
+      final TreePath clickPath = myTree.getUI() instanceof WideSelectionTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
+                                                                               : myTree.getPathForLocation(e.getX(), e.getY());
+      if (clickPath == null) return false;
 
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return false;
 
       final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath == null) return false;
+      if (selectionPath == null || !clickPath.equals(selectionPath)) return false;
       final Object lastPathComponent = selectionPath.getLastPathComponent();
       if (((TreeNode)lastPathComponent).isLeaf() || !expandOnDoubleClick(((TreeNode)lastPathComponent))) {
         //Node expansion for non-leafs has a higher priority

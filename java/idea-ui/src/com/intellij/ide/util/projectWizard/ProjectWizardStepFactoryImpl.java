@@ -139,12 +139,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public SettingsStep createSettingsStep(WizardContext context) {
-    return new ProjectSettingsStep(context);
-  }
-
-  @Override
-  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
-   return new JavaSettingsStep(context, moduleBuilder, sdkFilter);
+  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+   return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }
