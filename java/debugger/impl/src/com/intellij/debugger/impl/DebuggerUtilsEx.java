@@ -59,7 +59,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @param context
    * @return all CodeFragmentFactoryProviders that provide code fragment factories sutable in the context given
    */
-  public static List<CodeFragmentFactory> getCodeFragmentFactories(PsiElement context) {
+  public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactry = DefaultCodeFragmentFactory.getInstance();
     final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
     final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
