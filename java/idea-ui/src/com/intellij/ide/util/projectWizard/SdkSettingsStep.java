@@ -22,7 +22,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,18 +37,19 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   public SdkSettingsStep(SettingsStep settingsStep, Condition<SdkType> sdkFilter) {
 
-    myModel = new ProjectSdksModel();
     myWizardContext = settingsStep.getContext();
-    myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
-
+    myModel = new ProjectSdksModel();
     Project project = myWizardContext.getProject();
     myModel.reset(project, sdkFilter);
+
+    myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
+
     JButton button = new JButton("\u001BNew...");
     myJdkComboBox.setSetupButton(button, project, myModel,
                                  project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
                                  null,
                                  false);
-    JPanel jdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
+    JPanel jdkPanel = new JPanel(new BorderLayout(4, 0));
     jdkPanel.add(myJdkComboBox);
     jdkPanel.add(button, BorderLayout.EAST);
     settingsStep.addSettingsField("Project \u001BSDK:", jdkPanel);
