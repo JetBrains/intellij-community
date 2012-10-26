@@ -21,13 +21,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import static com.intellij.tasks.generic.GenericWebRepository.*;
+import static com.intellij.tasks.generic.GenericRepository.*;
 
 /**
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebRepository> {
+public class GenericRepositoryEditor extends BaseRepositoryEditor<GenericRepository> {
   public static final String POST = "POST";
   public static final String GET = "GET";
   private EditorTextField myTasksListURLText;
@@ -46,9 +46,9 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
   private JRadioButton myJsonRadioButton;
   private JButton myManageTemplateVariablesButton;
 
-  public GenericWebRepositoryEditor(final Project project,
-                                    final GenericWebRepository repository,
-                                    final Consumer<GenericWebRepository> changeListener) {
+  public GenericRepositoryEditor(final Project project,
+                                 final GenericRepository repository,
+                                 final Consumer<GenericRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTest2Button.addActionListener(new ActionListener() {

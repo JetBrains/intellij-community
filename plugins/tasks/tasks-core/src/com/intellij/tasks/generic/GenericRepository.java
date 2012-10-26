@@ -24,12 +24,12 @@ import java.util.regex.Pattern;
  * Date: 10/4/12
  */
 @Tag("Generic")
-public class GenericWebRepository extends BaseRepositoryImpl {
+public class GenericRepository extends BaseRepositoryImpl {
   private String myTasksListURL = "";
   private String myTaskPattern = "";
   private String myLoginURL = "";
-  private String myLoginMethodType = GenericWebRepositoryEditor.GET;
-  private String myTasksListMethodType = GenericWebRepositoryEditor.GET;
+  private String myLoginMethodType = GenericRepositoryEditor.GET;
+  private String myTasksListMethodType = GenericRepositoryEditor.GET;
   private ResponseType myResponseType = ResponseType.XML;
   private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
@@ -46,14 +46,14 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   final static String PAGE_PLACEHOLDER = "{page}";
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GenericWebRepository() {
+  public GenericRepository() {
   }
 
-  public GenericWebRepository(final TaskRepositoryType type) {
+  public GenericRepository(final TaskRepositoryType type) {
     super(type);
   }
 
-  public GenericWebRepository(final GenericWebRepository other) {
+  public GenericRepository(final GenericRepository other) {
     super(other);
     myTasksListURL = other.getTasksListURL();
     myTaskPattern = other.getTaskPattern();
@@ -90,7 +90,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericWebTask(id, summary, this));
+      tasks.add(new GenericTask(id, summary, this));
     }
 
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
@@ -102,7 +102,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private HttpMethod getTaskListsMethod(final String query, final int max) {
     String requestUrl = getFullTasksUrl(query, max);
     final HttpMethod method =
-      GenericWebRepositoryEditor.GET.equals(getTasksListMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+      GenericRepositoryEditor.GET.equals(getTasksListMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
     configureHttpMethod(method);
     return method;
   }
@@ -121,7 +121,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   private HttpMethod getLoginMethod() {
     String requestUrl = getFullLoginUrl();
-    return GenericWebRepositoryEditor.GET.equals(getLoginMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+    return GenericRepositoryEditor.GET.equals(getLoginMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
   }
 
   private static HttpMethod getPostMethodFromURL(final String requestUrl) {
@@ -179,15 +179,15 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   @Override
   public BaseRepository clone() {
-    return new GenericWebRepository(this);
+    return new GenericRepository(this);
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof GenericWebRepository)) return false;
+    if (!(o instanceof GenericRepository)) return false;
     if (!super.equals(o)) return false;
-    GenericWebRepository that = (GenericWebRepository)o;
+    GenericRepository that = (GenericRepository)o;
     if (!Comparing.equal(getTasksListURL(), that.getTasksListURL())) return false;
     if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
     if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;
