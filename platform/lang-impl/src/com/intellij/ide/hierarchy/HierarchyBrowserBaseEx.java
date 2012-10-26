@@ -499,7 +499,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    final Ref<Object> storedInfo = new Ref<Object>();
+    final Ref<Pair<ArrayList<Object>, ArrayList<Object>>> storedInfo = new Ref<Pair<ArrayList<Object>, ArrayList<Object>>>();
     if (myCurrentViewType != null) {
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       storedInfo.set(builder.storeExpandedAndSelectedInfo());
