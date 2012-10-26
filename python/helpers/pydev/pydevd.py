@@ -90,11 +90,15 @@ DONT_TRACE = {
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
               'pydevd_constants.py':1,
+              'pydevd_exec.py':1,
+              'pydevd_exec2.py':1,
               'pydevd_file_utils.py':1,
               'pydevd_frame.py':1,
               'pydevd_io.py':1 ,
               'pydevd_resolver.py':1 ,
               'pydevd_tracing.py':1 ,
+              'pydevd_signature.py':1,
+              'pydevd_utils.py':1,
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
               'pydevd.py':1 ,
@@ -831,6 +835,7 @@ class PyDB:
         self.writer.addCommand(cmd)
 
         info = thread.additionalInfo
+
         while info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
             self.processInternalCommands()
             time.sleep(0.01)
