@@ -261,15 +261,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             final JpsAndroidModuleExtension depExtension = AndroidJpsUtil.getExtension(depModule);
 
             if (depExtension != null && !depExtension.isLibrary()) {
-              String message = "Suspicious module dependency " +
-                               module.getName() +
-                               " -> " +
-                               depModule.getName() +
-                               ": Android application module depends on other application module. Possibly, you should ";
-              if (AndroidJpsUtil.isMavenizedModule(depModule)) {
-                message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
-              }
-              message += "change dependency scope to 'Provided'.";
+              String message = "Suspicious module dependency " + module.getName() + " -> " + depModule.getName() +
+                               ": Android application module depends on other application module. Possibly, you should " +
+                               "change type of module '" + depModule.getName() +
+                               "' to 'Library' or change the dependency scope to 'Provided'.";
               context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message));
             }
           }

@@ -72,9 +72,9 @@ public class AndroidJpsUtil {
   private AndroidJpsUtil() {
   }
 
-  public static boolean isMavenizedModule(JpsModule module) {
-    // todo: implement
-    return false;
+  private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
+    // todo: return false for mavenized modules
+    return true;
   }
 
   @Nullable
@@ -221,7 +221,7 @@ public class AndroidJpsUtil {
     // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
     // and compute all jars referred by library modules. Moreover it would be incorrect,
     // because Maven has dependency resolving algorithm based on versioning
-    final boolean recursive = isMavenizedModule(module);
+    final boolean recursive = shouldProcessDependenciesRecursively(module);
     processClasspath(context, module, processor, new HashSet<String>(), false, recursive);
   }
 
