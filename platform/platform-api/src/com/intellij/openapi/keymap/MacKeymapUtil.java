@@ -29,67 +29,67 @@ import java.awt.event.KeyEvent;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class MacKeymapUtil {
-  public static final String Escape	= "\u238B"; //⎋
-  public static final String Tab	= "\u21E5"; //⇥
-  public static final String Tab_back	= "\u21E4"; //⇤
-  public static final String Capslock	= "\u21EA"; //⇪
-  public static final String Shift	= "\u21E7"; //⇧
-  public static final String Control	= "\u2303"; //⌃
-  public static final String Option     = "\u2325"; //⌥
-  public static final String Apple      = "\uF8FF"; //
-  public static final String Command    = "\u2318"; //⌘
-  public static final String Space	= "\u2423"; //␣
-  public static final String Return	= "\u23CE"; //⏎
-  public static final String Backspace	= "\u232B"; //⌫
-  public static final String Delete	= "\u2326"; //⌦
-  public static final String Home       = "\u2196"; //↖
-  public static final String End	= "\u2198"; //↘
-  public static final String Pageup	= "\u21DE"; //⇞
-  public static final String Pagedown	= "\u21DF"; //⇟
-  public static final String Up	        = "\u2191"; //↑
-  public static final String Down	= "\u2193"; //↓
-  public static final String Left	= "\u2190"; //←
-  public static final String Right	= "\u2192"; //→
-  public static final String Clear	= "\u2327"; //⌧
-  public static final String Numberlock	= "\u21ED"; //⇭
-  public static final String Enter	= "\u2324"; //⌤
-  public static final String Eject	= "\u23CF"; //⏏
-  public static final String Power3	= "\u233D"; //⌽
-  public static final String NUMPAD     = "\u2328"; //⌨
+  public static final String ESCAPE	 = "\u238B"; // ⎋
+  public static final String TAB	 = "\u21E5"; // ⇥
+  public static final String TAB_BACK	 = "\u21E4"; // ⇤
+  public static final String CAPS_LOCK	 = "\u21EA"; // ⇪
+  public static final String SHIFT	 = "\u21E7"; // ⇧
+  public static final String CONTROL	 = "\u2303"; // ⌃
+  public static final String OPTION      = "\u2325"; // ⌥
+  public static final String APPLE       = "\uF8FF"; // 
+  public static final String COMMAND     = "\u2318"; // ⌘
+  public static final String SPACE	 = "\u2423"; // ␣
+  public static final String RETURN	 = "\u23CE"; // ⏎
+  public static final String BACKSPACE	 = "\u232B"; // ⌫
+  public static final String DELETE	 = "\u2326"; // ⌦
+  public static final String HOME        = "\u2196"; // ↖
+  public static final String END	 = "\u2198"; // ↘
+  public static final String PAGE_UP	 = "\u21DE"; // ⇞
+  public static final String PAGE_DOWN	 = "\u21DF"; // ⇟
+  public static final String UP	         = "\u2191"; // ↑
+  public static final String DOWN	 = "\u2193"; // ↓
+  public static final String LEFT	 = "\u2190"; // ←
+  public static final String RIGHT	 = "\u2192"; // →
+  public static final String CLEAR	 = "\u2327"; // ⌧
+  public static final String NUMBER_LOCK = "\u21ED"; // ⇭
+  public static final String ENTER	 = "\u2324"; // ⌤
+  public static final String EJECT	 = "\u23CF"; // ⏏
+  public static final String POWER3	 = "\u233D"; // ⌽
+  public static final String NUM_PAD     = "\u2328"; // ⌨
 
   public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(Control);
-    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(Option);
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(Shift);
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(CONTROL);
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(OPTION);
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(SHIFT);
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(Command);
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(COMMAND);
     return buf.toString();
 
   }
 
   public static String getKeyText(int code) {
     switch (code) {
-      case KeyEvent.VK_BACK_SPACE:     return Backspace;
-      case KeyEvent.VK_ESCAPE:         return Escape;
-      case KeyEvent.VK_CAPS_LOCK:      return Capslock;
-      case KeyEvent.VK_TAB:            return Tab;
-      case KeyEvent.VK_SPACE:          return Space;
-      case KeyEvent.VK_DELETE:         return Delete;
-      case KeyEvent.VK_HOME:           return Home;
-      case KeyEvent.VK_END:            return End;
-      case KeyEvent.VK_PAGE_UP:        return Pageup;
-      case KeyEvent.VK_PAGE_DOWN:      return Pagedown;
-      case KeyEvent.VK_UP:             return Up;
-      case KeyEvent.VK_DOWN:           return Down;
-      case KeyEvent.VK_LEFT:           return Left;
-      case KeyEvent.VK_RIGHT:          return Right;
-      case KeyEvent.VK_NUM_LOCK:       return Numberlock;
-      case KeyEvent.VK_ENTER:          return Return;
+      case KeyEvent.VK_BACK_SPACE:     return BACKSPACE;
+      case KeyEvent.VK_ESCAPE:         return ESCAPE;
+      case KeyEvent.VK_CAPS_LOCK:      return CAPS_LOCK;
+      case KeyEvent.VK_TAB:            return TAB;
+      case KeyEvent.VK_SPACE:          return SPACE;
+      case KeyEvent.VK_DELETE:         return DELETE;
+      case KeyEvent.VK_HOME:           return HOME;
+      case KeyEvent.VK_END:            return END;
+      case KeyEvent.VK_PAGE_UP:        return PAGE_UP;
+      case KeyEvent.VK_PAGE_DOWN:      return PAGE_DOWN;
+      case KeyEvent.VK_UP:             return UP;
+      case KeyEvent.VK_DOWN:           return DOWN;
+      case KeyEvent.VK_LEFT:           return LEFT;
+      case KeyEvent.VK_RIGHT:          return RIGHT;
+      case KeyEvent.VK_NUM_LOCK:       return NUMBER_LOCK;
+      case KeyEvent.VK_ENTER:          return RETURN;
       case KeyEvent.VK_BACK_QUOTE:     return "`";
-      case KeyEvent.VK_NUMBER_SIGN:    return NUMPAD;
-      case KeyEvent.VK_MULTIPLY:       return NUMPAD + " *";
+      case KeyEvent.VK_NUMBER_SIGN:    return NUM_PAD;
+      case KeyEvent.VK_MULTIPLY:       return NUM_PAD + " *";
       case KeyEvent.VK_ADD:            return "+";
       case KeyEvent.VK_SEPARATOR:      return ",";
       case KeyEvent.VK_SUBTRACT:       return "-";
