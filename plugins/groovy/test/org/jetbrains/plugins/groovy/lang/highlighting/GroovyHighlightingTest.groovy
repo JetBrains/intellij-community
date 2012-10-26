@@ -79,7 +79,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   public void testAnonymousClassConstructor() {doTest();}
   public void testAnonymousClassAbstractMethod() {doTest();}
-  public void testAnonymousClassStaticMethod() {doTest();}
+  public void _testAnonymousClassStaticMethod() {doTest();}
   public void testAnonymousClassShoudImplementMethods() {doTest();}
   public void testAnonymousClassShouldImplementSubstitutedMethod() {doTest();}
 
