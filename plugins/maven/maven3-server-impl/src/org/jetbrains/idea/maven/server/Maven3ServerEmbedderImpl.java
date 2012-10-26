@@ -281,7 +281,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
     ProjectBuildingRequest config = request.getProjectBuildingRequest();
 
-    List<Exception> exceptions = new ArrayList<Exception>();
+    org.sonatype.aether.RepositorySystem repoSystem = getComponent(org.sonatype.aether.RepositorySystem.class);
+
+    config.setRepositorySession(CustomMaven3ArtifactResolver.createSession(myLocalRepository, null, repoSystem));
 
     try {
       // copied from DefaultMavenProjectBuilder.buildWithDependencies
@@ -318,7 +320,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       project.setArtifacts(result.getArtifacts());
       // end copied from DefaultMavenProjectBuilder.buildWithDependencies
 
-      return new MavenExecutionResult(project, exceptions);
+      return new MavenExecutionResult(project, new ArrayList<Exception>());
     }
     catch (Exception e) {
       return handleException(e);
