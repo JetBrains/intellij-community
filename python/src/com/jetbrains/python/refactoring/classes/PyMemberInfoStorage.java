@@ -61,7 +61,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
   }
 
   @Override
-  protected boolean memberConflict(PsiElement member1, PsiElement member) {
+  protected boolean memberConflict(PyElement member1, PyElement member) {
     return member1 instanceof PyFunction && member instanceof PyFunction &&
            PyRefactoringUtil.areConflictingMethods((PyFunction)member, (PyFunction)member1);
   }
