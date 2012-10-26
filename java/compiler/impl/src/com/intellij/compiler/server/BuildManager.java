@@ -54,7 +54,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -318,12 +317,11 @@ public class BuildManager implements ApplicationComponent{
 
   @Nullable
   private static String getProjectPath(final Project project) {
-    final String path = project.getPresentableUrl();
-    if (path == null) {
+    final String url = project.getPresentableUrl();
+    if (url == null) {
       return null;
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
-    return vFile != null ? vFile.getPath() : null;
+    return VirtualFileManager.extractPath(url);
   }
 
   private void scheduleAutoMake() {
