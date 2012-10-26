@@ -44,6 +44,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
   private JRadioButton myHtmlRadioButton;
   private JButton myTest2Button;
   private JRadioButton myJsonRadioButton;
+  private JButton myManageTemplateVariablesButton;
 
   public GenericWebRepositoryEditor(final Project project,
                                     final GenericWebRepository repository,
@@ -119,6 +120,17 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
       "<html>Task pattern should be a regexp with two matching groups: ({id}.+?) and ({summary}.+?)" + useCompletionText + "</html>");
 
     myTabbedPane.addTab("Additional", myPanel);
+
+    myManageTemplateVariablesButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        final ManageTemplateVariablesDialog dialog = new ManageTemplateVariablesDialog(myManageTemplateVariablesButton);
+        dialog.setTemplateVariables(myRepository.getTemplateVariables());
+        if (dialog.showAndGet()) {
+          myRepository.setTemplateVariables(dialog.getTemplateVariables());
+        }
+      }
+    });
 
     loginUrlEnablingChanged();
   }
