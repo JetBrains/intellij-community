@@ -57,6 +57,7 @@ public class UnshelveWithDialogAction extends AnAction {
     final ApplyPatchDifferentiatedDialog dialog =
       new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project), Collections.<ApplyPatchExecutor>emptyList(),
                                          ApplyPatchMode.UNSHELVE, virtualFile);
+    dialog.setHelpId("reference.dialogs.vcs.unshelve");
     dialog.show();
   }
 
