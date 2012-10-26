@@ -206,6 +206,61 @@ println 2 //4
 
   }
 
+  public void testStaticContext() {
+    myFixture.addFileToProject 'B.groovy', '''
+class B {
+    public static void main(String[] args) {
+        def cl = { a ->
+          hashCode() //4
+        }
+        cl.delegate = "string"
+        cl(42) //7
+    }
+}'''
+    addBreakpoint 'B.groovy', 4
+    /*
+    addBreakpoint 'B.groovy', 7
+    */
+    runDebugger 'B', {
+      /*
+      waitForBreakpoint()
+      eval 'args.size()', '0'
+      eval 'cl.delegate.size()', '6'
+      resume()
+      */
+      waitForBreakpoint()
+      eval 'a', '42'
+      eval 'size()', '6'
+      eval 'delegate.size()', '6'
+      eval 'owner.name', 'B'
+      eval 'this.name', 'B'
+    }
+
+  }
+
+  public void "test closures in instance context with delegation"() {
+    myFixture.addFileToProject 'B.groovy', '''
+def cl = { a ->
+  hashCode() //2
+}
+cl.delegate = "string"
+cl(42) // 5
+
+def getFoo() { 13 }
+'''
+    addBreakpoint 'B.groovy', 2
+    runDebugger 'B', {
+      waitForBreakpoint()
+      eval 'a', '42'
+      eval 'size()', '6'
+      eval 'delegate.size()', '6'
+      eval 'owner.foo', '13'
+      eval 'this.foo', '13'
+      eval 'foo', '13'
+    }
+
+  }
+
   public void testClassOutOfSourceRoots() {
     def tempDir = new TempDirTestFixtureImpl()
     edt {

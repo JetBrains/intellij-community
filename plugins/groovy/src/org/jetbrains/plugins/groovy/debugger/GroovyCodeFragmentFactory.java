@@ -31,6 +31,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -156,6 +158,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {
+      javaText.append("|closure.setDelegate(|thiz0);\n");
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
       javaText.append("|thiz0.setMetaClass(|emc);\n");
     } else {
@@ -195,29 +198,13 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     toEval.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
+
+        if (PsiUtil.isThisReference(referenceExpression) || PsiUtil.isSuperReference(referenceExpression)) {
+          replaceWithReference(referenceExpression, "delegate");
+          return;
+        }
+
         PsiElement resolved = referenceExpression.resolve();
-
-        if (PsiUtil.isThisReference(referenceExpression)) {
-          replaceWithReference(referenceExpression, closure == null ? "delegate" : "owner");
-          return;
-        }
-
-        if (PsiUtil.isSuperReference(referenceExpression)) {
-          replaceWithReference(referenceExpression, closure == null ? "delegate" : "owner");
-          return;
-        }
-
-        if (resolved instanceof PsiMethod && !referenceExpression.isQualified()) {
-          if (closure != null && "getDelegate".equals(((PsiMethod)resolved).getName())) {
-            replaceWithReference(referenceExpression, "owner");
-            return;
-          }
-          if ("call".equals(((PsiMethod)resolved).getName())) {
-            replaceWithReference(referenceExpression, (closure == null ? "delegate" : "owner") + ".call");
-            return;
-          }
-        }
-
         if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
           String qName = StaticImportMethodFix.getMemberQualifiedName((PsiMember)resolved);
           if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
@@ -226,8 +213,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           }
         }
 
-        if (resolved instanceof GrField && !referenceExpression.isQualified()) {
-          replaceWithReference(referenceExpression, (closure == null ? "delegate" : "owner") + "." + referenceExpression.getReferenceName());
+        if (shouldDelegate(referenceExpression, resolved)) {
+          replaceWithReference(referenceExpression, "delegate." + referenceExpression.getReferenceName());
           return;
         }
 
@@ -249,6 +236,25 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           parameters.put(name, value);
         }
 
+      }
+
+      private boolean shouldDelegate(GrReferenceExpression referenceExpression, @Nullable PsiElement resolved) {
+        if (referenceExpression.isQualified()) {
+          return false;
+        }
+
+        if (resolved instanceof GrField) {
+          return true;
+        }
+
+        if (resolved instanceof PsiMethod && !referenceExpression.isQualified()) {
+          String methodName = ((PsiMethod)resolved).getName();
+          if (closure != null && "getDelegate".equals(methodName) || "call".equals(methodName)) {
+            return true;
+          }
+        }
+
+        return closure != null && resolved instanceof GrLightVariable && "owner".equals(((GrLightVariable)resolved).getName());
       }
 
       private void replaceWithReference(GrExpression expr, final String exprText) {
@@ -300,6 +306,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) return true;
       if (parent instanceof GroovyFile && parent.isPhysical()) return false;
       if (parent instanceof GrTypeDefinition) return false;
+      if (parent instanceof GrClosableBlock) return false;
 
       parent = parent.getContext();
     }
