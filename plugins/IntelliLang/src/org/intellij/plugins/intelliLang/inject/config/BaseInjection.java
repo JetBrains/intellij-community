@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.StringPattern;
 import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.ElementManipulators;
@@ -132,7 +133,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
               ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
       final StringBuilder sb = new StringBuilder();
       textEscaper.decode(textRange, sb);
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(sb), sb.length());
+      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(StringPattern.newBombedCharSequence(sb)), sb.length());
       return !ranges.isEmpty() ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
         public TextRange fun(TextRange s) {
           return new TextRange(textEscaper.getOffsetInHost(s.getStartOffset(), textRange), textEscaper.getOffsetInHost(s.getEndOffset(), textRange));
