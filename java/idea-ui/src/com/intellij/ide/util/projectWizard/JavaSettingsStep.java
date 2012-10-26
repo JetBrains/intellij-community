@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.ide.util.newProjectWizard.ProjectSettingsStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -44,20 +43,21 @@ import java.util.Collections;
  * @author Dmitry Avdeev
  *         Date: 10/23/12
  */
-public class JavaSettingsStep extends ProjectSettingsStep {
+public class JavaSettingsStep extends ModuleWizardStep {
 
   private final ModuleBuilder myModuleBuilder;
   private JBCheckBox myCreateSourceRoot;
   private TextFieldWithBrowseButton mySourcePath;
   private JPanel myPanel;
   private final JdkComboBox myJdkComboBox;
+  private final WizardContext myWizardContext;
 
-  public JavaSettingsStep(WizardContext wizardContext, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
-    super(wizardContext);
+  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
+    myWizardContext = settingsStep.getContext();
     ProjectSdksModel model = new ProjectSdksModel();
-    Project project = wizardContext.getProject();
+    Project project = myWizardContext.getProject();
     model.reset(project, sdkFilter);
     myJdkComboBox = new JdkComboBox(model, sdkFilter);
     JButton button = new JButton("\u001BNew...");
@@ -68,7 +68,7 @@ public class JavaSettingsStep extends ProjectSettingsStep {
     JPanel jdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
     jdkPanel.add(myJdkComboBox);
     jdkPanel.add(button, BorderLayout.EAST);
-    addField("Project \u001BSDK:", jdkPanel);
+    settingsStep.addSettingsField("Project \u001BSDK:", jdkPanel);
 
     if (moduleBuilder instanceof JavaModuleBuilder) {
       ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
@@ -96,16 +96,21 @@ public class JavaSettingsStep extends ProjectSettingsStep {
           mySourcePath.setEnabled(myCreateSourceRoot.isSelected());
         }
       });
-      addExpertPanel(myPanel);
+      settingsStep.addExpertPanel(myPanel);
     }
 
   }
 
   @Override
+  public JComponent getComponent() {
+    return myPanel;
+  }
+
+  @Override
   public void updateDataModel() {
-    super.updateDataModel();
     Sdk jdk = myJdkComboBox.getSelectedJdk();
     myWizardContext.setProjectJdk(jdk);
+
     if (myModuleBuilder instanceof JavaModuleBuilder && myCreateSourceRoot.isSelected()) {
       String contentEntryPath = myModuleBuilder.getContentEntryPath();
       if (contentEntryPath != null) {
