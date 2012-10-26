@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
@@ -218,16 +219,12 @@ class B {
     }
 }'''
     addBreakpoint 'B.groovy', 4
-    /*
     addBreakpoint 'B.groovy', 7
-    */
     runDebugger 'B', {
-      /*
       waitForBreakpoint()
       eval 'args.size()', '0'
       eval 'cl.delegate.size()', '6'
       resume()
-      */
       waitForBreakpoint()
       eval 'a', '42'
       eval 'size()', '6'
@@ -374,7 +371,7 @@ foo()
   }
 
   private def resume() {
-    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invokeAndWait(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
@@ -407,6 +404,11 @@ foo()
       void threadAction() {
         result = cl()
         semaphore.up()
+      }
+
+      @Override
+      protected void commandCancelled() {
+        println DebugUtil.currentStackTrace()
       }
     })
     def finished = semaphore.waitFor(20000)
