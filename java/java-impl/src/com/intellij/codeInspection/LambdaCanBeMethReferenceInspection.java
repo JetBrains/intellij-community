@@ -176,6 +176,12 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
               }
               super.visitReferenceExpression(expression);
             }
+
+            @Override
+            public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+              usedInQualifier.set(true);
+              super.visitMethodCallExpression(expression);
+            }
           });
           if (usedInQualifier.get()) return null;
         }

@@ -1,4 +1,4 @@
-// "Replace with method reference" "true"
+// "Replace with method reference" "false"
 interface Foo<A, B> {
     B f(A a);
 }
