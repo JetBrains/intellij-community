@@ -92,12 +92,16 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
 
                   @Override
                   public void visitThisExpression(PsiThisExpression expression) {
-                    bodyContainsForbiddenRefs[0] = true;
+                    if (expression.getQualifier() == null) {
+                      bodyContainsForbiddenRefs[0] = true;
+                    }
                   }
 
                   @Override
                   public void visitSuperExpression(PsiSuperExpression expression) {
-                    bodyContainsForbiddenRefs[0] = true;
+                    if (expression.getQualifier() == null) {
+                      bodyContainsForbiddenRefs[0] = true;
+                    }
                   }
                 });
                 if (!bodyContainsForbiddenRefs[0]) {
