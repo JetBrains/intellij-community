@@ -1703,21 +1703,30 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String escapeToRegexp(@NotNull String text) {
-    @NonNls StringBuilder result = new StringBuilder();
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      return escapeToRegexp(text, result).toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
+  }
+
+  public static StringBuilder escapeToRegexp(CharSequence text, StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
-        result.append(c);
+        builder.append(c);
       }
       else if (c == '\n') {
-        result.append("\\n");
+        builder.append("\\n");
       }
       else {
-        result.append('\\').append(c);
+        builder.append('\\').append(c);
       }
     }
 
-    return result.toString();
+    return builder;
   }
 
   @NotNull
