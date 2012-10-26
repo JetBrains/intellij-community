@@ -145,7 +145,7 @@
           <text value="Response Type:"/>
         </properties>
       </component>
-      <grid id="d68b9" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d68b9" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -171,9 +171,17 @@
           </component>
           <hspacer id="cebcb">
             <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
+          <component id="71bfc" class="javax.swing.JRadioButton" binding="myJsonRadioButton">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="JS&amp;ON"/>
+            </properties>
+          </component>
         </children>
       </grid>
       <component id="536c8" class="javax.swing.JButton" binding="myTest2Button">
@@ -190,6 +198,7 @@
     <group name="myGroup1">
       <member id="7c3b0"/>
       <member id="90539"/>
+      <member id="71bfc"/>
     </group>
   </buttonGroups>
 </form>

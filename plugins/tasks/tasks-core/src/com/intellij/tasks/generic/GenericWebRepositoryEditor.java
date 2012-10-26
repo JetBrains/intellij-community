@@ -43,6 +43,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
   private JRadioButton myXmlRadioButton;
   private JRadioButton myHtmlRadioButton;
   private JButton myTest2Button;
+  private JRadioButton myJsonRadioButton;
 
   public GenericWebRepositoryEditor(final Project project,
                                     final GenericWebRepository repository,
@@ -73,10 +74,17 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
       case XML:
         myXmlRadioButton.setSelected(true);
         myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(false);
         break;
       case HTML:
         myXmlRadioButton.setSelected(false);
         myHtmlRadioButton.setSelected(true);
+        myJsonRadioButton.setSelected(false);
+        break;
+      case JSON:
+        myXmlRadioButton.setSelected(false);
+        myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(true);
         break;
     }
 
@@ -88,6 +96,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
     };
     myXmlRadioButton.addActionListener(listener);
     myHtmlRadioButton.addActionListener(listener);
+    myJsonRadioButton.addActionListener(listener);
 
     myLoginMethodType.setSelectedItem(myRepository.getLoginMethodType());
     myTasksListMethodType.setSelectedItem(myRepository.getTasksListMethodType());
@@ -103,7 +112,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
                                  .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
                                " for completion.";
     myLoginTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + USERNAME_PLACEHOLDER + ", " +
-                             PASSWORD_PLACEHOLDER + useCompletionText + "</html>");
+                           PASSWORD_PLACEHOLDER + useCompletionText + "</html>");
     myTaskListTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + MAX_COUNT_PLACEHOLDER + ", " +
                               QUERY_PLACEHOLDER + " (use for faster tasks search)" + useCompletionText + "</html>");
     myTaskPatternTooltip.setText(
@@ -134,7 +143,8 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
     myRepository.setLoginURL(myLoginURLText.getText());
     myRepository.setLoginMethodType((String)myLoginMethodType.getModel().getSelectedItem());
     myRepository.setTasksListMethodType((String)myTasksListMethodType.getModel().getSelectedItem());
-    myRepository.setResponseType(myXmlRadioButton.isSelected() ? ResponseType.XML : ResponseType.HTML);
+    myRepository.setResponseType(
+      myXmlRadioButton.isSelected() ? ResponseType.XML : myJsonRadioButton.isSelected() ? ResponseType.JSON : ResponseType.HTML);
     super.apply();
   }
 
