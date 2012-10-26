@@ -79,7 +79,7 @@ public class WebServer {
   // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
     String property = System.getProperty(PROPERTY_ONLY_ANY_HOST);
-    boolean onlyAnyHost = property == null ? SystemInfo.isLinux : (property.isEmpty() || Boolean.valueOf(property));
+    boolean onlyAnyHost = property == null ? SystemInfo.isLinux || SystemInfo.isWindowsXP : (property.isEmpty() || Boolean.valueOf(property));
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
