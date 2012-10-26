@@ -73,7 +73,7 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<MavenResourceRootDescriptor>();
     for (ResourceRootConfiguration resource : getRootConfigurations(dataPaths)) {
-      result.add(new MavenResourceRootDescriptor(this, resource, ignoredFileIndex));
+      result.add(new MavenResourceRootDescriptor(this, resource));
     }
     return result;
   }

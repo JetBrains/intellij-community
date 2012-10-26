@@ -1,6 +1,5 @@
 package org.jetbrains.jps.maven.compiler;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -25,7 +24,6 @@ import java.util.Set;
  *         Date: 10/6/11
  */
 public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.maven.compiler.MavenResourcesBuilder");
   public static final String BUILDER_NAME = "maven-resources";
 
   public MavenResourcesBuilder() {
@@ -48,19 +46,21 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
       @Override
       public boolean apply(MavenResourcesTarget target, File file, MavenResourceRootDescriptor rd) throws IOException {
-        final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration());
-        if (outputDir == null) {
-          return true;
-        }
         final String relPath = FileUtil.getRelativePath(rd.getRootFile(), file);
         if (relPath == null) {
           return true;
         }
-        final File outputFile = new File(outputDir, relPath);
-        final boolean shouldFilter = rd.getConfiguration().isFiltered && !filteringExcludedExtensions.contains(getExtension(file));
-        // todo: support filtering
-        FileUtil.copyContent(file, outputFile);
-        outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(file.getPath()));
+        final String sourcePath = file.getPath();
+        if (rd.isIncluded(relPath)) {
+          final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration());
+          if (outputDir != null) {
+            final File outputFile = new File(outputDir, relPath);
+            final boolean shouldFilter = rd.getConfiguration().isFiltered && !filteringExcludedExtensions.contains(getExtension(file));
+            // todo: support filtering
+            FileUtil.copyContent(file, outputFile);
+            outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
+          }
+        }
         return true;
       }
     });
