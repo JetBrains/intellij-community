@@ -871,7 +871,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (value instanceof Pair) {
           final Pair<AnAction, KeyStroke> pair = (Pair<AnAction, KeyStroke>) value;
           append(KeymapUtil.getShortcutText(new KeyboardShortcut(pair.getSecond(), null)), SimpleTextAttributes.GRAY_ATTRIBUTES);
-          appendAlign(30);
+          appendFixedTextFragmentWidth(30);
           final String text = pair.getFirst().getTemplatePresentation().getText();
           append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }

@@ -37,6 +37,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +49,33 @@ public class HighlightNamesUtil {
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
                                                   @NotNull EditorColorsScheme colorsScheme) {
-    HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
+    boolean isInherited = false;
+
+    if (!isDeclaration) {
+      if (isCalledOnThis(elementToHighlight)) {
+        PsiClass enclosingClass = PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
+        isInherited = enclosingClass.isInheritor(method.getContainingClass(), true);
+      }
+    }
+
+    HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInherited);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
       HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
       if (info != null) return info;
     }
     return null;
+  }
+
+  private static boolean isCalledOnThis(PsiElement elementToHighlight) {
+    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(elementToHighlight, PsiMethodCallExpression.class);
+    if (methodCallExpression != null) {
+      PsiElement qualifier = methodCallExpression.getMethodExpression().getQualifier();
+      if (qualifier == null || qualifier instanceof PsiThisExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
@@ -126,13 +147,17 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static HighlightInfoType getMethodNameHighlightType(PsiMethod method, boolean isDeclaration) {
+  private static HighlightInfoType getMethodNameHighlightType(PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
     if (method.isConstructor()) {
       return isDeclaration ? HighlightInfoType.CONSTRUCTOR_DECLARATION : HighlightInfoType.CONSTRUCTOR_CALL;
     }
+    if (isInheritedMethod) return HighlightInfoType.INHERITED_METHOD;
     if (isDeclaration) return HighlightInfoType.METHOD_DECLARATION;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       return HighlightInfoType.STATIC_METHOD;
+    }
+    if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return HighlightInfoType.ABSTRACT_METHOD;
     }
     return HighlightInfoType.METHOD_CALL;
   }
@@ -144,9 +169,9 @@ public class HighlightNamesUtil {
       return HighlightInfoType.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
-      return var.hasModifierProperty(PsiModifier.STATIC)
-             ? HighlightInfoType.STATIC_FIELD
-             : HighlightInfoType.INSTANCE_FIELD;
+      return var.hasModifierProperty(PsiModifier.STATIC) ? (var.hasModifierProperty(PsiModifier.FINAL)
+                                                            ? HighlightInfoType.STATIC_FINAL_FIELD
+                                                            : HighlightInfoType.STATIC_FIELD) : HighlightInfoType.INSTANCE_FIELD;
     }
     if (var instanceof PsiParameter) {
       return HighlightInfoType.PARAMETER;
@@ -162,6 +187,7 @@ public class HighlightNamesUtil {
     if (aClass != null) {
       if (aClass.isAnnotationType()) return HighlightInfoType.ANNOTATION_NAME;
       if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;
+      if (aClass.isEnum()) return HighlightInfoType.ENUM_NAME;
       if (aClass instanceof PsiTypeParameter) return HighlightInfoType.TYPE_PARAMETER_NAME;
       final PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return HighlightInfoType.ABSTRACT_CLASS_NAME;

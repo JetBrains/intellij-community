@@ -16,11 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.actions.updown;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.actions.GroovyEditorActionTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -28,7 +25,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
+public class GroovyMoveStatementTest extends GroovyEditorActionTestBase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "groovy/actions/moveStatement/";
@@ -119,16 +116,6 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     performAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION);
     if (!lower.endsWith("\n") && myFixture.getEditor().getDocument().getText().endsWith("\n")) lower += "\n";
     myFixture.checkResult(lower);
-  }
-
-  private void performAction(String actionId) {
-    myFixture.performEditorAction(actionId);
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        ((DocumentImpl)myFixture.getEditor().getDocument()).stripTrailingSpaces();
-      }
-    }.execute();
   }
 }
 

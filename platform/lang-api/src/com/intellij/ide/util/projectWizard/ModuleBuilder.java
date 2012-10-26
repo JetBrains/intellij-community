@@ -91,9 +91,13 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   @Nullable
-  public SettingsStep createSettingsStep(WizardContext wizardContext) {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
-    return type == null ? null : type.createSettingsStep(wizardContext, this);
+    return type == null ? null : type.modifySettingsStep(settingsStep, this);
+  }
+
+  public boolean isTemplateBased() {
+    return false;
   }
 
   public void setName(String name) {

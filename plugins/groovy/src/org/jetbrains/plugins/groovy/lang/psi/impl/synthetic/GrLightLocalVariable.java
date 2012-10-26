@@ -75,6 +75,12 @@ public class GrLightLocalVariable extends GrLightVariable implements GrVariable 
     return null;
   }
 
+  @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    //todo?
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   @Override
   public PsiElement getNameIdentifierGroovy() {

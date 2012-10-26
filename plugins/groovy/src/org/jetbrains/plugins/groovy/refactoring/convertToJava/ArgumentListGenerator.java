@@ -108,7 +108,7 @@ class ArgumentListGenerator {
       return true;
     }
     else {
-      /*final GrExpression initializer = param.getDefaultInitializer();
+      /*final GrExpression initializer = param.getInitializerGroovy();
       if (initializer != null) {
         initializer.accept(myExpressionGenerator);
       }

@@ -27,18 +27,21 @@ import org.kohsuke.rngom.digested.*;
 * Date: 19.07.2007
 */
 public class RecursionSaveWalker extends DPatternWalker {
-  private THashSet<DRefPattern> myVisited;
+  private THashSet<DPattern> myVisited;
 
   protected RecursionSaveWalker() {
   }
 
   @Override
   public Void onGrammar(DGrammarPattern p) {
-    try {
-      return super.onGrammar(p);
-    } catch (NullPointerException e) {
-      return null; // missing start pattern
+    if (myVisited.add(p)) {
+      try {
+        return super.onGrammar(p);
+      } catch (NullPointerException e) {
+        return null; // missing start pattern
+      }
     }
+    return null;
   }
 
   public Void onRef(DRefPattern p) {
@@ -53,11 +56,14 @@ public class RecursionSaveWalker extends DPatternWalker {
   }
 
   protected Void onUnary(DUnaryPattern p) {
-    try {
-      return super.onUnary(p);
-    } catch (NullPointerException e) {
-      return null; // empty element
+    if (myVisited.add(p)) {
+      try {
+        return super.onUnary(p);
+      } catch (NullPointerException e) {
+        return null; // empty element
+      }
     }
+    return null;
   }
 
   protected void doAccept(DPattern... p) {
@@ -72,24 +78,24 @@ public class RecursionSaveWalker extends DPatternWalker {
     }
   }
 
-  private static final SpinAllocator<THashSet<DRefPattern>> ourAllocator = new SpinAllocator<THashSet<DRefPattern>>(
-          new SpinAllocator.ICreator<THashSet<DRefPattern>>() {
+  private static final SpinAllocator<THashSet<DPattern>> ourAllocator = new SpinAllocator<THashSet<DPattern>>(
+          new SpinAllocator.ICreator<THashSet<DPattern>>() {
             @SuppressWarnings({ "unchecked" })
-            public THashSet<DRefPattern> createInstance() {
-              return new THashSet<DRefPattern>(64, TObjectHashingStrategy.IDENTITY) {
+            public THashSet<DPattern> createInstance() {
+              return new THashSet<DPattern>(256, TObjectHashingStrategy.IDENTITY) {
                 public void clear() {
                   if (size() == 0) return;
                   super.clear();
                   final int c = capacity();
-                  if (c > 64) {
+                  if (c > 256) {
                     super.compact();
                   }
                 }
               };
             }
           },
-          new SpinAllocator.IDisposer<THashSet<DRefPattern>>() {
-            public void disposeInstance(THashSet<DRefPattern> instance) {
+          new SpinAllocator.IDisposer<THashSet<DPattern>>() {
+            public void disposeInstance(THashSet<DPattern> instance) {
               instance.clear();
             }
           });

@@ -83,7 +83,7 @@ public class AnonymousFromMapGenerator {
 
         if (param < allParameters.length) {
           final GrParameter opt = actual.remove(param);
-          args[param] = opt.getDefaultInitializer();
+          args[param] = opt.getInitializerGroovy();
         }
 
         final GrParameter[] parameters = actual.toArray(new GrParameter[actual.size()]);

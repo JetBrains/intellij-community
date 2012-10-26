@@ -1703,21 +1703,30 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String escapeToRegexp(@NotNull String text) {
-    @NonNls StringBuilder result = new StringBuilder();
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      return escapeToRegexp(text, result).toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
+  }
+
+  public static StringBuilder escapeToRegexp(CharSequence text, StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
-        result.append(c);
+        builder.append(c);
       }
       else if (c == '\n') {
-        result.append("\\n");
+        builder.append("\\n");
       }
       else {
-        result.append('\\').append(c);
+        builder.append('\\').append(c);
       }
     }
 
-    return result.toString();
+    return builder;
   }
 
   @NotNull
@@ -2367,18 +2376,29 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
+  public static CharSequence newBombedCharSequence(CharSequence sequence, long delay) {
+    final long myTime = System.currentTimeMillis() + delay;
+    return new BombedCharSequence(sequence) {
+      @Override
+      protected void checkCanceled() {
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    };
+  }
+
   /**
    * Expirable CharSequence. Very useful to control external libary execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
    */
-  public static class BombedCharSequence implements CharSequence {
+  public abstract static class BombedCharSequence implements CharSequence {
     private CharSequence delegate;
-    private long myTime;
     private int i = 0;
 
-    public BombedCharSequence(CharSequence sequence, long delay) {
+    public BombedCharSequence(CharSequence sequence) {
       delegate = sequence;
-      myTime =  System.currentTimeMillis() + delay;
     }
 
     @Override
@@ -2393,15 +2413,13 @@ public class StringUtil extends StringUtilRt {
       return delegate.charAt(i);
     }
 
-    private void check() {
-      ++i;
-      if ((i & 1023) == 0) {
-        long l = System.currentTimeMillis();
-        if (l >= myTime) {
-          throw new ProcessCanceledException();
-        }
+    protected void check() {
+      if ((++i & 1023) == 0) {
+        checkCanceled();
       }
     }
+
+    protected abstract void checkCanceled();
 
     @Override
     public CharSequence subSequence(int i, int i1) {

@@ -17,6 +17,7 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.StringPattern;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
 
@@ -55,7 +56,7 @@ public abstract class StringMatcher<T> {
     }
 
     public boolean matches(String what) {
-      return myTarget.matcher(what).matches();
+      return myTarget.matcher(StringPattern.newBombedCharSequence(what)).matches();
     }
 
     public String getPattern() {

@@ -72,7 +72,5 @@ public abstract class ProjectWizardStepFactory {
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider);
 
-  public abstract SettingsStep createSettingsStep(WizardContext context);
-
-  public abstract SettingsStep createJavaSettingsStep(WizardContext context, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter);
+  public abstract ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter);
 }

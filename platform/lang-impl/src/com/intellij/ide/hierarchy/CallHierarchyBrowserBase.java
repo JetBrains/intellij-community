@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-
   @SuppressWarnings({"UnresolvedPropertyKey"})
   public static final String CALLEE_TYPE = IdeBundle.message("title.hierarchy.callees.of");
   @SuppressWarnings({"UnresolvedPropertyKey"})
@@ -36,22 +35,23 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
 
-  public CallHierarchyBrowserBase(final Project project, final PsiElement method) {
+  public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
-
-
   }
 
+  @Override
   @Nullable
   protected JPanel createLegendPanel() {
     return null;
   }
 
+  @Override
   @NotNull
   protected String getBrowserDataKey() {
     return CALL_HIERARCHY_BROWSER_DATA_KEY;
   }
 
+  @Override
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
@@ -63,16 +63,19 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     actionGroup.add(new ChangeScopeAction());
   }
 
+  @Override
   @NotNull
   protected String getActionPlace() {
     return ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR;
   }
 
+  @Override
   @NotNull
   protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.prev.occurence.name");
   }
 
+  @Override
   @NotNull
   protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
@@ -86,15 +89,18 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       myTypeName = typeName;
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return myTypeName.equals(myCurrentViewType);
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       if (flag) {
 //        setWaitCursor();
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             changeView(myTypeName);
           }
@@ -102,6 +108,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       }
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());

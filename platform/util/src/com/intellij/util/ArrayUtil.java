@@ -608,7 +608,7 @@ public class ArrayUtil extends ArrayUtilRt {
     array[i1] = t;
   }
 
-  public static int indexOf(@NotNull Object[] objects, Object object) {
+  public static int indexOf(@NotNull Object[] objects, @Nullable Object object) {
     for (int i = 0; i < objects.length; i++) {
       if (Comparing.equal(objects[i], object)) return i;
     }
@@ -658,7 +658,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return -1;
   }
 
-  public static boolean contains(final Object o, final Object... objects) {
+  public static boolean contains(@Nullable final Object o, final Object... objects) {
     return indexOf(objects, o) >= 0;
   }
 

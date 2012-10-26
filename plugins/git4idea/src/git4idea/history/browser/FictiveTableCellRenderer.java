@@ -85,10 +85,10 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
           final String adj = description.getMaxString(i);
           if (adj != null) {
             final int adjWidth = helper.getWidth(new Pair<String, SimpleTextAttributes>(adj, pair.getSecond()));
-            appendAlign(adjWidth);
+            appendFixedTextFragmentWidth(adjWidth);
             fixedWidth += adjWidth;
           } else {
-            appendAlign(width);
+            appendFixedTextFragmentWidth(width);
             fixedWidth += width;
           }
         } else {
@@ -113,15 +113,15 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
           append(truncated, changeable.getSecond());
           append(tag.getFirst(), tag.getSecond(), tag.getThird());
           if (truncatedWidth > 0) {
-            appendAlign(difference - truncatedWidth);
+            appendFixedTextFragmentWidth(difference - truncatedWidth);
           }
         } else {
-          appendAlign(difference);
+          appendFixedTextFragmentWidth(difference);
         }
       }
     } else {
       append(changeable.getFirst(), changeable.getSecond());
-      appendAlign(parentWidth - fixedWidth);
+      appendFixedTextFragmentWidth(parentWidth - fixedWidth);
     }
 
     for (int i = middleIdx + 1; i < pieces.size(); i++) {

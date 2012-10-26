@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +62,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public GrExpression getDefaultInitializer() {
+  public GrExpression getInitializerGroovy() {
     return null;
   }
 
@@ -81,11 +84,6 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   @Override
   public boolean isOptional() {
     return myOptional;
-  }
-
-  @Override
-  public GrExpression getInitializerGroovy() {
-    return null;
   }
 
   @Override
@@ -127,6 +125,12 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   @Override
   public GrModifierList getModifierList() {
     return myModifierList;
+  }
+
+  @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    //todo?
+    throw new UnsupportedOperationException();
   }
 
   @Override

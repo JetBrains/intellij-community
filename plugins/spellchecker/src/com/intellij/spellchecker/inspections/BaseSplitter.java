@@ -100,7 +100,7 @@ public abstract class BaseSplitter implements Splitter {
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(new StringUtil.BombedCharSequence(range.substring(text), 500));
+    Matcher matcher = toExclude.matcher(StringUtil.newBombedCharSequence(range.substring(text), 500));
     try {
       while (matcher.find()) {
         checkCancelled();

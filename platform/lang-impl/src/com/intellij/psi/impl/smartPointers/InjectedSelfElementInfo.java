@@ -67,6 +67,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
 
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
     PsiFile hostFile = hostContext.getContainingFile();
+    if (hostFile == null) return null;
 
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
