@@ -65,6 +65,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -288,7 +289,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   private Set<Object> doFilter(Set<Object> elements) {
-    Set<Object> result = new HashSet<Object>();
+    Set<Object> result = new LinkedHashSet<Object>();
     for (Object o : elements) {
       if (myElementClass.isInstance(o) && getFilter().isAccepted((T)o)) {
         result.add(o);

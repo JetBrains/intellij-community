@@ -369,7 +369,7 @@ public class CodeBlockGenerator extends Generator {
       if (initialization instanceof GrParameter) {
         StringBuilder partBuilder = new StringBuilder();
         writeVariableWithoutSemicolonAndInitializer(partBuilder, (GrParameter)initialization, context);
-        final GrExpression initializer = ((GrParameter)initialization).getDefaultInitializer();
+        final GrExpression initializer = ((GrParameter)initialization).getInitializerGroovy();
         if (initializer != null) {
           final ExpressionContext partContext = forContext.copy();
           partBuilder.append(" = ");

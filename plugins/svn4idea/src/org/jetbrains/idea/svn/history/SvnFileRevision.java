@@ -47,7 +47,7 @@ public class SvnFileRevision implements VcsFileRevision {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnFileRevision");
 
   private final Date myDate;
-  private final String myCommitMessage;
+  private String myCommitMessage;
   private final String myAuthor;
   private final VcsRevisionNumber myRevisionNumber;
   private final SvnVcs myVCS;
@@ -176,6 +176,10 @@ public class SvnFileRevision implements VcsFileRevision {
 
   public String getCopyFromPath() {
     return myCopyFromPath;
+  }
+
+  public void setCommitMessage(String message) {
+    myCommitMessage = message;
   }
 
   private class ContentLoader implements Runnable {

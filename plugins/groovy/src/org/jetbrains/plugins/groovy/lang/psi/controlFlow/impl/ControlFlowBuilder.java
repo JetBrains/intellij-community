@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchStatement switchStatement) {
     final GrCaseSection[] sections = switchStatement.getCaseSections();
-    final int i = ArrayUtil.find(sections, caseSection);
+    final int i = ArrayUtilRt.find(sections, caseSection);
     if (i == sections.length - 1) {
       return true;
     }
@@ -321,6 +322,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitClosure(GrClosableBlock closure) {
     //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
+      for (GrParameter parameter : closure.getAllParameters()) {
+        addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+      }
+      addNode(new ReadWriteVariableInstruction("owner", closure.getLBrace(), WRITE));
+
       super.visitClosure(closure);
       return;
     }
@@ -807,13 +813,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     finishNode(start);
   }
 
-  private void processForLoopInitializer(GrForClause clause) {
+  private void processForLoopInitializer(@Nullable GrForClause clause) {
     GroovyPsiElement initializer = clause instanceof GrTraditionalForClause ? ((GrTraditionalForClause)clause).getInitialization() :
                                    clause instanceof GrForInClause ? ((GrForInClause)clause).getIteratedExpression() : null;
     acceptNullable(initializer);
   }
 
-  private void addForLoopBreakingEdge(GrForStatement forStatement, GrForClause clause) {
+  private void addForLoopBreakingEdge(GrForStatement forStatement, @Nullable GrForClause clause) {
     if (clause instanceof GrTraditionalForClause) {
       final GrExpression condition = ((GrTraditionalForClause)clause).getCondition();
       if (condition != null) {
@@ -828,7 +834,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private void flushForeachLoopVariable(GrForClause clause) {
+  private void flushForeachLoopVariable(@Nullable GrForClause clause) {
     if (clause instanceof GrForInClause) {
       GrVariable variable = clause.getDeclaredVariable();
       if (variable != null) {
@@ -1128,10 +1134,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void error() {
+    error("broken control flow for a scope");
+  }
+
+  private void error(String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
 
-    LogMessageEx.error(LOG, "broken control flow for a scope", myScope.getText(), "\n------------------\n", fileText);
+    LogMessageEx.error(LOG, descr, myScope.getText(), "\n------------------\n", fileText);
   }
 
   private AfterCallInstruction addCallNode(InstructionImpl finallyInstruction, GroovyPsiElement scopeWhenAdded, InstructionImpl src) {
@@ -1161,7 +1171,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void finishNode(InstructionImpl instruction) {
     final InstructionImpl popped = myProcessingStack.pop();
     if (!instruction.equals(popped)) {
-      error();
+      String description = "popped: " + popped.toString() + "   ,  expected: " + instruction.toString();
+      error(description);
     }
   }
 

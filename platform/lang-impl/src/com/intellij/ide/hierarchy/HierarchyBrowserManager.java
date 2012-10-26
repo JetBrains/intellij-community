@@ -57,10 +57,12 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
     return myContentManager;
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(final State state) {
     myState = state;
   }

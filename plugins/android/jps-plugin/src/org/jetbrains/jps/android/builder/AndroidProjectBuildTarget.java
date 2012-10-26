@@ -107,10 +107,10 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
     return "Android " + myKind.name();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public File getOutputDir(BuildDataPaths paths) {
-    return null;
+  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+    return Collections.emptyList();
   }
 
   public static class TargetType extends BuildTargetType<AndroidProjectBuildTarget> {

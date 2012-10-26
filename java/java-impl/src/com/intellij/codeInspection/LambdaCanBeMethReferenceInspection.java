@@ -18,11 +18,13 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +117,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
         if (psiMethod == null) {
           isConstructor = true;
           if (!(methodCall instanceof PsiNewExpression)) return null;
+          if (((PsiNewExpression)methodCall).getAnonymousClass() != null) return null;
           final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)methodCall).getClassOrAnonymousClassReference();
           if (classReference == null) return null;
           containingClass = (PsiClass)classReference.resolve();
@@ -145,21 +148,36 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
           if (parameters[i + offset] != resolve) return null;
         }
 
+        final PsiExpression qualifierExpression;
+        if (methodCall instanceof PsiMethodCallExpression) {
+          qualifierExpression = ((PsiMethodCallExpression)methodCall).getMethodExpression().getQualifierExpression();
+        }
+        else if (methodCall instanceof PsiNewExpression) {
+          qualifierExpression = ((PsiNewExpression)methodCall).getQualifier();
+        }
+        else {
+          qualifierExpression = null;
+        }
         if (offset > 0) {
-          final PsiExpression qualifierExpression;
-          if (methodCall instanceof PsiMethodCallExpression) {
-            qualifierExpression = ((PsiMethodCallExpression)methodCall).getMethodExpression().getQualifierExpression();
-          }
-          else if (methodCall instanceof PsiNewExpression) {
-            qualifierExpression = ((PsiNewExpression)methodCall).getQualifier();
-          }
-          else {
-            qualifierExpression = null;
-          }
           if (!(qualifierExpression instanceof PsiReferenceExpression) ||
               ((PsiReferenceExpression)qualifierExpression).resolve() != parameters[0]) {
             return null;
           }
+        }
+        else if (qualifierExpression != null) {
+          final Ref<Boolean> usedInQualifier = new Ref<Boolean>(false);
+          qualifierExpression.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              final PsiElement resolve = expression.resolve();
+              if (resolve instanceof PsiParameter && ArrayUtilRt.find(parameters, resolve) > -1) {
+                usedInQualifier.set(true);
+                return;
+              }
+              super.visitReferenceExpression(expression);
+            }
+          });
+          if (usedInQualifier.get()) return null;
         }
         return methodCall;
       }
@@ -181,7 +199,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
         boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + methodReferenceName;
+        methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
         methodRefText =

@@ -103,8 +103,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder, new Condition<SdkType>() {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkType>() {
           @Override
           public boolean value(SdkType sdk) {
             return sdk instanceof JavaSdkType;

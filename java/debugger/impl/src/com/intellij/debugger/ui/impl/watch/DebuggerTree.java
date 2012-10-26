@@ -71,7 +71,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
 
-  private final Project myProject;
   protected final NodeManagerImpl myNodeManager;
 
   private DebuggerContextImpl myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
@@ -117,7 +116,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     setModel(model);
 
-    myProject = project;
     final TreeSpeedSearch search = new TreeSpeedSearch(this);
     search.setComparator(new SpeedSearchComparator(false));
   }
@@ -308,10 +306,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       getMutableModel().nodeStructureChanged(node);
       restoreState();
     }
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   protected abstract void build(DebuggerContextImpl context);

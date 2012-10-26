@@ -20,6 +20,7 @@ import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.OpenFileAction;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -96,8 +97,10 @@ public class MacOSApplicationProvider implements ApplicationComponent {
             project = ProjectManager.getInstance().getDefaultProject();
           }
 
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, new ProjectConfigurablesGroup(project),
+          if (!((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).isAlreadyShown()) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, new ProjectConfigurablesGroup(project),
                                                             new IdeConfigurablesGroup());
+          }
           applicationEvent.setHandled(true);
         }
 

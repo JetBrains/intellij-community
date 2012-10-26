@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
+package org.jetbrains.plugins.groovy.lang.actions
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.openapi.editor.impl.DocumentImpl
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 /**
- * @author peter
-*/
-public class NegativeStatisticsWeigher extends CompletionWeigher {
-
-  @Override
-  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    return 0;
+ * @author Max Medvedev
+ */
+abstract class GroovyEditorActionTestBase extends LightGroovyTestCase {
+  void performAction(String actionId) {
+    myFixture.performEditorAction(actionId)
+    ((DocumentImpl)myFixture.editor.document).stripTrailingSpaces()
   }
 }

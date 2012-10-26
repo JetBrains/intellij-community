@@ -37,6 +37,7 @@ import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,7 +54,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   private DebuggerTreeNodeImpl myCurrentTooltipNode;
 
   private JComponent myCurrentTooltip;
-  private Point myCurrentPosition;
 
   protected final TipManager myTipManager;
 
@@ -62,14 +62,17 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     myProject = project;
 
     myTipManager = new TipManager(this, new TipManager.TipFactory() {
+      @Override
       public JComponent createToolTip(MouseEvent e) {
         return DebuggerTreeBase.this.createToolTip(e);
       }
 
+      @Override
       public MouseEvent createTooltipEvent(MouseEvent candidateEvent) {
         return DebuggerTreeBase.this.createTooltipEvent(candidateEvent);
       }
 
+      @Override
       public boolean isFocusOwner() {
         return DebuggerTreeBase.this.isFocusOwner();
       }
@@ -85,23 +88,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     TreeUtil.installActions(this);
   }
 
-  private static int getMaximumChars(final String s, final FontMetrics metrics, final int maxWidth) {
-    int minChar = 0;
-    int maxChar = s.length();
-    int chars;
-    while (minChar < maxChar) {
-      chars = (minChar + maxChar + 1) / 2;
-      final int width = metrics.stringWidth(s.substring(0, chars));
-      if (width <= maxWidth) {
-        minChar = chars;
-      }
-      else {
-        maxChar = chars - 1;
-      }
-    }
-    return minChar;
-  }
-
   private JComponent createTipContent(String tipText, DebuggerTreeNodeImpl node) {
     final JToolTip tooltip = new JToolTip();
 
@@ -114,35 +100,30 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       rootSize.width -= (borderInsets.left + borderInsets.right) * 2;
       rootSize.height -= (borderInsets.top + borderInsets.bottom) * 2;
 
-      //noinspection HardCodedStringLiteral
-      final StringBuilder tipBuilder = new StringBuilder();
-      try {
-        final String markupText = node.getMarkupTooltipText();
-        if (markupText != null) {
-          tipBuilder.append(markupText);
-        }
+      @NonNls StringBuilder tipBuilder = new StringBuilder();
+      final String markupText = node.getMarkupTooltipText();
+      if (markupText != null) {
+        tipBuilder.append(markupText);
+      }
 
-        if (tipText.length() > 0) {
-          final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n ", true);
+      if (!tipText.isEmpty()) {
+        final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n ", true);
 
-          while (tokenizer.hasMoreElements()) {
-            final String each = tokenizer.nextElement();
-            if ("\n".equals(each)) {
-              tipBuilder.append("<br>");
-            }
-            else if (" ".equals(each)) {
-              tipBuilder.append("&nbsp ");
-            }
-            else {
-              tipBuilder.append(JDOMUtil.legalizeText(each));
-            }
+        while (tokenizer.hasMoreElements()) {
+          final String each = tokenizer.nextElement();
+          if ("\n".equals(each)) {
+            tipBuilder.append("<br>");
+          }
+          else if (" ".equals(each)) {
+            tipBuilder.append("&nbsp ");
+          }
+          else {
+            tipBuilder.append(JDOMUtil.legalizeText(each));
           }
         }
+      }
 
-        tooltip.setTipText(UIUtil.toHtml(tipBuilder.toString(), 0));
-      }
-      finally {
-      }
+      tooltip.setTipText(UIUtil.toHtml(tipBuilder.toString(), 0));
     }
 
     tooltip.setBorder(null);
@@ -174,7 +155,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     final Rectangle bounds = getRowBounds(row);
 
     return new MouseEvent(this, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, bounds.x,
-                          bounds.y + bounds.height - (bounds.height / 4), 0, false);
+                          bounds.y + bounds.height - bounds.height / 4, 0, false);
   }
 
   @Nullable
@@ -198,8 +179,8 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     final JComponent tipContent = createTipContent(toolTipText, node);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tipContent);
     scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     final Point point = e.getPoint();
     SwingUtilities.convertPointToScreen(point, e.getComponent());
@@ -209,17 +190,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
 
     final JToolTip toolTip = new JToolTip();
 
-    tipContent.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        if (UIUtil.isActionClick(e)) {
-          final Window wnd = SwingUtilities.getWindowAncestor(toolTip);
-          if (wnd instanceof JWindow) {
-            wnd.setVisible(false);
-          }
-        }
-      }
-    });
+    tipContent.addMouseListener(new HideTooltip(toolTip));
 
     final Border tooltipBorder = toolTip.getBorder();
     if (tooltipBorder != null) {
@@ -228,16 +199,12 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         .setSize(tipRectangle.width + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top + borderInsets.bottom);
     }
 
-    boolean addScrollers = true;
-
     toolTip.setLayout(new BorderLayout());
     toolTip.add(scrollPane, BorderLayout.CENTER);
 
 
-    if (addScrollers) {
-      tipRectangle.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
-      tipRectangle.width += scrollPane.getVerticalScrollBar().getPreferredSize().width;
-    }
+    tipRectangle.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
+    tipRectangle.width += scrollPane.getVerticalScrollBar().getPreferredSize().width;
 
 
     final int maxWidth = (int)(screen.width - screen.width * .25);
@@ -264,7 +231,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     toolTip.setPreferredSize(tipRectangle.getSize());
 
     myCurrentTooltip = toolTip;
-    myCurrentPosition = tipRectangle.getLocation();
 
     return myCurrentTooltip;
   }
@@ -287,7 +253,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         }
 
         final String tipText = prepareToolTipText(text);
-        if (tipText.length() > 0 &&
+        if (!tipText.isEmpty() &&
             (tipText.indexOf('\n') >= 0 || !getVisibleRect().contains(getRowBounds(getRowForPath(new TreePath(node.getPath())))))) {
           return tipText;
         }
@@ -307,42 +273,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     }
 
     return null;
-  }
-
-  private Rectangle getTipBounds(final Point point, Dimension tipContentSize) {
-    Rectangle nodeBounds = new Rectangle(point);
-    TreePath pathForLocation = getPathForLocation(point.x, point.y);
-    if (pathForLocation != null) {
-      nodeBounds = getPathBounds(pathForLocation);
-    }
-
-    Rectangle contentRect = getVisibleRect();
-    System.out.println("contentRect = " + contentRect);
-
-    int vgap = nodeBounds.height;
-    int width = Math.min(tipContentSize.width, contentRect.width);
-    int height;
-    int y;
-    if (point.y > contentRect.y + contentRect.height / 2) {
-      y = Math.max(contentRect.y, nodeBounds.y - tipContentSize.height - vgap);
-      height = Math.min(tipContentSize.height, nodeBounds.y - contentRect.y - vgap);
-    }
-    else {
-      y = nodeBounds.y + nodeBounds.height + vgap;
-      height = Math.min(tipContentSize.height, contentRect.height - y);
-    }
-
-    final Dimension tipSize = new Dimension(width, height);
-
-    int x = point.x - width / 2;
-    if (x < contentRect.x) {
-      x = contentRect.x;
-    }
-    if (x + width > contentRect.x + contentRect.width) {
-      x = contentRect.x + contentRect.width - width;
-    }
-
-    return new Rectangle(new Point(x, y), tipSize);
   }
 
   private String prepareToolTipText(String text) {
@@ -383,6 +313,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     return buf.toString();
   }
 
+  @Override
   public void dispose() {
     final JComponent tooltip = myCurrentTooltip;
     if (tooltip != null) {
@@ -390,5 +321,27 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     }
     myCurrentTooltip = null;
     myCurrentTooltipNode = null;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  private static class HideTooltip extends MouseAdapter {
+    private final JToolTip myToolTip;
+
+    public HideTooltip(JToolTip toolTip) {
+      myToolTip = toolTip;
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      if (UIUtil.isActionClick(e)) {
+        final Window wnd = SwingUtilities.getWindowAncestor(myToolTip);
+        if (wnd instanceof JWindow) {
+          wnd.setVisible(false);
+        }
+      }
+    }
   }
 }

@@ -32,7 +32,6 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,16 +51,6 @@ public class TabLabel extends JPanel {
     @Override
     protected boolean shouldDrawDimmed() {
       return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
-    }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-      super.append(fragment, attributes, isMainText);
-    }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      super.append(fragment, attributes, tag);
     }
   };
   
@@ -88,7 +77,7 @@ public class TabLabel extends JPanel {
     myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
-    if (myTabs.useSmallLabels()) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    if (myTabs.useSmallLabels() || UIUtil.isUnderDarcula()) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     setOpaque(false);
     setLayout(new BorderLayout());
 
@@ -166,16 +155,6 @@ public class TabLabel extends JPanel {
     if (myTabs.getSelectedInfo() != myInfo) {
       doPaint(g);
     }
-  }
-
-  @Override
-  public void setBounds(Rectangle r) {
-    super.setBounds(r);
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    super.setBounds(x, y, width, height);
   }
 
   public void paintImage(Graphics g) {

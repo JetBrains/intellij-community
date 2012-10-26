@@ -2,6 +2,7 @@ package com.intellij.tasks.generic;
 
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +14,12 @@ import java.util.Date;
 public class GenericWebTask extends Task {
   private final String myId;
   private final String myDescription;
+  private TaskRepository myRepository;
 
-  public GenericWebTask(final String id, final String description) {
+  public GenericWebTask(final String id, final String description, final TaskRepository repository) {
     myId = id;
     myDescription = description;
+    myRepository = repository;
   }
 
   @NotNull
@@ -81,5 +84,11 @@ public class GenericWebTask extends Task {
   @Override
   public String getIssueUrl() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

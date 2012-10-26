@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   private final ProgressManager myProgressManager;
   private final Task.Backgroundable myTask;
+  private volatile boolean myIsStarted;
 
   public ProgressManagerQueue(final Project project, final String title) {
     myProgressManager = ProgressManager.getInstance();
@@ -34,7 +35,13 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
     };
   }
 
+  public void start() {
+    myIsStarted = true;
+    runMe();
+  }
+
   protected void runMe() {
+    if (! myIsStarted) return;
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       if (myTask.myProject != null && myTask.myProject.isDisposed()) return;

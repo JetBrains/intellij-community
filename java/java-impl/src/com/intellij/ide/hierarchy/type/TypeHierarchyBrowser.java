@@ -129,7 +129,7 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   public static class BaseOnThisTypeAction extends TypeHierarchyBrowserBase.BaseOnThisTypeAction {
-    protected boolean isEnabled(final HierarchyBrowserBaseEx browser, final PsiElement psiElement) {
+    protected boolean isEnabled(@NotNull final HierarchyBrowserBaseEx browser, @NotNull final PsiElement psiElement) {
       return super.isEnabled(browser, psiElement) && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)psiElement).getQualifiedName());
     }
   }

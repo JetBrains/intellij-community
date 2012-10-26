@@ -730,19 +730,19 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(mySimpleTest.getDuration());
 
     mySimpleTest.setDuration(0);
-    Integer duration = mySimpleTest.getDuration();
+    Long duration = mySimpleTest.getDuration();
     assertNotNull(duration);
-    assertEquals(0, duration.intValue());
+    assertEquals(0, duration.longValue());
 
     mySimpleTest.setDuration(10);
     duration = mySimpleTest.getDuration();
     assertNotNull(duration);
-    assertEquals(10, duration.intValue());
+    assertEquals(10, duration.longValue());
 
     mySimpleTest.setDuration(5);
     duration = mySimpleTest.getDuration();
     assertNotNull(duration);
-    assertEquals(5, duration.intValue());
+    assertEquals(5, duration.longValue());
 
     mySimpleTest.setDuration(-2);
     assertNull(mySimpleTest.getDuration());
@@ -760,9 +760,9 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test = createTestProxy("test", mySuite);
     test.setDuration(2);
     mySuite.setDuration(5);
-    final Integer duration = mySuite.getDuration();
+    final Long duration = mySuite.getDuration();
     assertNotNull(duration);
-    assertEquals(2, duration.intValue());
+    assertEquals(2L, duration.longValue());
   }
 
   public void testDuration_ForSuiteWithTests() {
@@ -773,14 +773,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test1.setDuration(5);
-    Integer duration = suite.getDuration();
+    Long duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(5, duration.intValue());
+    assertEquals(5L, duration.longValue());
 
     test2.setDuration(6);
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(11, duration.intValue());
+    assertEquals(11L, duration.longValue());
   }
 
   public void testDuration_OnFinished() {
@@ -790,24 +790,24 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test.setDuration(5);
-    Integer duration = suite.getDuration();
+    Long duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(5, duration.intValue());
+    assertEquals(5L, duration.longValue());
 
     test.setDuration(7);
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(7, duration.intValue());
+    assertEquals(7L, duration.longValue());
 
     suite.setFinished();
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(7, duration.intValue());
+    assertEquals(7L, duration.longValue());
 
     test.setDuration(8);
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(8, duration.intValue());
+    assertEquals(8L, duration.longValue());
   }
 
   public void testDuration_OnTerminated() {
@@ -817,24 +817,24 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test.setDuration(5);
-    Integer duration = suite.getDuration();
+    Long duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(5, duration.intValue());
+    assertEquals(5L, duration.longValue());
 
     test.setDuration(7);
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(7, duration.intValue());
+    assertEquals(7L, duration.longValue());
 
     suite.setTerminated();
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(7, duration.intValue());
+    assertEquals(7L, duration.longValue());
 
     test.setDuration(8);
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(8, duration.intValue());
+    assertEquals(8L, duration.longValue());
   }
 
   public void testDuration_ForSuiteWithSuites() {
@@ -847,19 +847,19 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test21 = createTestProxy("test21", suite2);
 
     test11.setDuration(5);
-    Integer duration = root.getDuration();
+    Long duration = root.getDuration();
     assertNotNull(duration);
-    assertEquals(5, duration.intValue());
+    assertEquals(5L, duration.longValue());
 
     test12.setDuration(6);
     duration = root.getDuration();
     assertNotNull(duration);
-    assertEquals(11, duration.intValue());
+    assertEquals(11, duration.longValue());
 
     test21.setDuration(9);
     duration = root.getDuration();
     assertNotNull(duration);
-    assertEquals(20, duration.intValue());
+    assertEquals(20, duration.longValue());
   }
 
   public void testMagnitudeWeight() {

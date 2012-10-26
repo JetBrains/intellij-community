@@ -116,9 +116,6 @@ public abstract class XsltContextProviderBase extends ContextProvider {
       final Map<String, String> namespaceDeclarations = rootTag.getLocalNamespaceDeclarations();
       final Collection<String> prefixes = namespaceDeclarations.keySet();
 
-      //noinspection unchecked
-      final Set<XmlElementDescriptor> history = new THashSet<XmlElementDescriptor>();
-
       final XmlElementFactory ef = XmlElementFactory.getInstance(file.getProject());
       int noSchemaNamespaces = 0;
       for (String prefix : prefixes) {
@@ -141,9 +138,12 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         //noinspection unchecked
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
+        //noinspection unchecked
+        final Set<XmlElementDescriptor> history = new THashSet<XmlElementDescriptor>();
+
         final XmlElementDescriptor[] e = rootDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor descriptor : e) {
-          processElementDescriptors(descriptor, tag, names, history);
+          processElementDescriptors(descriptor, tag, names, history, 0);
         }
       }
 
@@ -161,8 +161,8 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     return IGNORED_URIS.contains(namespace) || prefix.length() == 0 || "xmlns".equals(prefix);
   }
 
-  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history) {
-    if (!history.add(descriptor)) {
+  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history, int depth) {
+    if (!history.add(descriptor) || ++depth == 200) {
       return;
     }
     final String namespace = descriptor instanceof XmlElementDescriptorImpl
@@ -178,7 +178,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
 
     final XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
     for (XmlElementDescriptor elem : descriptors) {
-      processElementDescriptors(elem, tag, names, history);
+      processElementDescriptors(elem, tag, names, history, depth);
     }
   }
 

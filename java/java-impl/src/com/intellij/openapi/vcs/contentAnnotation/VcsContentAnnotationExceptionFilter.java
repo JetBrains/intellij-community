@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -57,7 +58,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   private final VcsContentAnnotationSettings mySettings;
   private Map<VirtualFile,VcsRevisionNumber> myRevNumbersCache;
 
-  public VcsContentAnnotationExceptionFilter(GlobalSearchScope scope) {
+  public VcsContentAnnotationExceptionFilter(@NotNull GlobalSearchScope scope) {
     myScope = scope;
     myProject = scope.getProject();
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);

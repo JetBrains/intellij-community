@@ -15,24 +15,19 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 10/23/12
  */
-public abstract class SettingsStep extends ModuleWizardStep {
+public interface SettingsStep {
 
-  @NotNull
-  public abstract JComponent getSettingsPanel();
+  WizardContext getContext();
 
-  @Nullable
-  public abstract JComponent getExpertSettingsPanel();
+  void addSettingsField(String label, JComponent field);
 
-  public abstract SettingsStep addField(String label, JComponent field);
+  void addSettingsComponent(JComponent component);
 
-  public abstract SettingsStep addExpertPanel(JComponent panel);
+  void addExpertPanel(JComponent panel);
 }

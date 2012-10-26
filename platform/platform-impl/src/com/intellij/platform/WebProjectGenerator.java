@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nls;
@@ -80,6 +81,9 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   public interface GeneratorPeer<T> {
     @NotNull
     JComponent getComponent();
+
+    @Nullable
+    Pair<String, JComponent> getSettingsField();
 
     @NotNull
     T getSettings();

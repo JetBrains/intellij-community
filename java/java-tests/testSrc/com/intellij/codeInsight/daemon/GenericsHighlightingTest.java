@@ -183,6 +183,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInconvertibleTypes() throws Exception { doTest(false); }
   public void testIncompatibleReturnType() throws Exception { doTest(false); }
   public void testContinueInferenceAfterFirstRawResult() throws Exception { doTest(false); }
+  public void testDoNotAcceptLowerBoundIfRaw() throws Exception { doTest(false); }
   public void testStaticOverride() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }

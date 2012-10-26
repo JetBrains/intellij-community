@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,7 +27,7 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
   private final boolean myAccessedForReading;
   private final boolean myAccessedForWriting;
 
-  public ReadWriteAccessUsageInfo2UsageAdapter(final UsageInfo usageInfo, final boolean accessedForReading, final boolean accessedForWriting) {
+  public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, final boolean accessedForReading, final boolean accessedForWriting) {
     super(usageInfo);
     myAccessedForReading = accessedForReading;
     myAccessedForWriting = accessedForWriting;

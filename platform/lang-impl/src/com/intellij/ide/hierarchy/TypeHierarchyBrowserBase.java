@@ -57,7 +57,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected void setHierarchyBase(PsiElement element) {
+  protected void setHierarchyBase(@NotNull PsiElement element) {
     super.setHierarchyBase(element);
     myIsInterface = isInterface(element);
   }

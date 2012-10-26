@@ -102,7 +102,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
         currentPaths.add(file);
       }
       if (forceMarkDirty || myProjectDescriptor.timestamps.getStorage().getStamp(file, myTarget) != FileSystemUtil.lastModified(file)) {
-        myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage());
+        myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage(), false);
       }
     }
   }

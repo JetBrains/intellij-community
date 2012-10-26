@@ -25,7 +25,7 @@ import com.intellij.psi.*;
  */
 public class CanItBeNullAction  extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
-  private static final String TEXT = "Can it be null?";
+  private static final String TEXT = "Group by leaf expression nullness";
 
   public CanItBeNullAction(SliceTreeBuilder treeBuilder) {
     super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);

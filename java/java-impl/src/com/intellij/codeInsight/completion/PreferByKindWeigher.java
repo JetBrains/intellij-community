@@ -93,7 +93,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       assert annotation != null;
       PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiTypeParameter) {
-        PsiElement member = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
+        PsiElement member = (PsiElement)owner;
+        if (member instanceof PsiModifierList) {
+          member = member.getParent();
+        }
+        if (member instanceof PsiTypeElement && member.getParent() instanceof PsiMethod) {
+          member = member.getParent();
+        }
         final String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(member);
         return new Condition<PsiClass>() {
           @Override

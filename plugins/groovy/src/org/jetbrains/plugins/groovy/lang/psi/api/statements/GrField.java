@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
@@ -44,7 +43,5 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
   Map<String, NamedArgumentDescriptor> getNamedParameters();
 
   void clearCaches();
-
-  void setInitializerGroovy(GrExpression initializer);
 }
 

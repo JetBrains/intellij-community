@@ -58,12 +58,12 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
     final int x = rectangle.x;
     final int y = rectangle.y;
     final int h = rectangle.height;
-    g.setPaint(new GradientPaint(x, y, Gray._128.withAlpha(160), x, y + h, Gray._128.withAlpha(120)));
+    g.setPaint(new GradientPaint(x, y, Gray._78.withAlpha(160), x, y + h, Gray._78.withAlpha(120)));
     final int w = rectangle.width;
     g.fillRect(x, rectangle.y, w, h + (vertical ? 1 : 0));
 
     if (!vertical) {
-      g.setColor(Gray._100);
+      g.setColor(Gray._78);
       g.drawLine(x, rectangle.y, x + w, rectangle.y);
     }
   }
@@ -140,6 +140,6 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return Gray._42;
+    return new Color(0x3C3F41);
   }
 }

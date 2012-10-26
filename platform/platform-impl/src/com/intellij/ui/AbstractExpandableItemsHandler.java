@@ -31,7 +31,7 @@ import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Collections;
 
-abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
+public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   protected final ComponentType myComponent;
@@ -53,21 +53,26 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myTipComponent = new TipComponent();
     myComponent.addMouseListener(
       new MouseListener() {
+        @Override
         public void mouseEntered(MouseEvent e) {
           handleMouseEvent(e);
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
           hideHint();
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
           handleMouseEvent(e);
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
           handleMouseEvent(e);
         }
@@ -76,10 +81,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myComponent.addMouseMotionListener(
       new MouseMotionListener() {
+        @Override
         public void mouseDragged(MouseEvent e) {
           handleMouseEvent(e);
         }
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           handleMouseEvent(e, false);
         }
@@ -88,10 +95,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myComponent.addFocusListener(
       new FocusAdapter() {
+        @Override
         public void focusLost(FocusEvent e) {
           onFocusLost();
         }
 
+        @Override
         public void focusGained(FocusEvent e) {
           updateCurrentSelection();
         }
@@ -100,10 +109,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myComponent.addComponentListener(
       new ComponentAdapter() {
+        @Override
         public void componentHidden(ComponentEvent e) {
           hideHint();
         }
 
+        @Override
         public void componentMoved(ComponentEvent e) {
           updateCurrentSelection();
         }
@@ -129,6 +140,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myComponent.addHierarchyListener(
       new HierarchyListener() {
+        @Override
         public void hierarchyChanged(HierarchyEvent e) {
           hideHint();
         }
@@ -179,6 +191,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         doHandleSelectionChange(selected, processIfUnfocused);
       }
@@ -362,18 +375,22 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract KeyType getCellKeyForPoint(Point point);
 
   private class TipComponent extends JComponent {
+    @Override
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return new Dimension(myImage.getWidth(), myImage.getHeight());
     }
 
+    @Override
     public void paint(Graphics g) {
       g.drawImage(myImage, 0, 0, null);
     }

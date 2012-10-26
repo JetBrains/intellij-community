@@ -29,10 +29,9 @@ import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -56,62 +55,66 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
   /**
    * Calculates indent, based on code style, between parent block and child node
    *
-   * @param parent        parent block
+   * @param parentBlock   parent block
    * @param child         child node
    * @return indent
    */
   @NotNull
-  public static Indent getChildIndent(@NotNull final GroovyBlock parent, @NotNull final ASTNode child) {
-    ASTNode astNode = parent.getNode();
-    final PsiElement psiParent = astNode.getPsi();
+  public static Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
+    ASTNode node = parentBlock.getNode();
+
+    final PsiElement psiParent = node.getPsi();
+    PsiElement psiChild = child.getPsi();
+
+
+    IElementType childType = child.getElementType();
+    IElementType parentType = node.getElementType();
+
 
     // For Groovy file
     if (psiParent instanceof GroovyFileBase) {
       return Indent.getNoneIndent();
     }
 
-    if (psiParent instanceof GrMethod && child.getPsi() instanceof GrParameterList) {
+    if (psiParent instanceof GrMethod && childType == PARAMETERS_LIST) {
       return Indent.getContinuationIndent();
     }
 
-    if (GSTRING_TOKENS_INNER.contains(child.getElementType()) && mGSTRING_BEGIN != child.getElementType()) {
+    if (GSTRING_TOKENS_INNER.contains(childType) && mGSTRING_BEGIN != childType) {
       return Indent.getAbsoluteNoneIndent();
     }
 
-    if (psiParent instanceof GrListOrMap) {
-      if (mLBRACK.equals(child.getElementType()) || mRBRACK.equals(child.getElementType())) {
-        return Indent.getNoneIndent();
-      } else {
-        return Indent.getContinuationWithoutFirstIndent();
-      }
+    if (parentType == ASSERT_STATEMENT && childType != GroovyTokenTypes.kASSERT) {
+      return Indent.getContinuationIndent();
     }
 
-    if (child.getElementType() == GroovyElementTypes.PARAMETERS_LIST && parent instanceof ClosureBodyBlock) {
+    if (parentType == LIST_OR_MAP) {
+      boolean isBracket = childType == mLBRACK || childType == mRBRACK;
+      return isBracket ? Indent.getNoneIndent() : Indent.getContinuationWithoutFirstIndent();
+    }
+
+    if (parentBlock instanceof ClosureBodyBlock && childType == GroovyElementTypes.PARAMETERS_LIST) {
       return Indent.getNoneIndent();
     }
 
     // For common code block
-    if (BLOCK_SET.contains(astNode.getElementType()) &&
-        !BLOCK_STATEMENT.equals(astNode.getElementType()) || parent instanceof ClosureBodyBlock) {
-      return indentForBlock(psiParent, child);
+    if (BLOCK_SET.contains(parentType) && !BLOCK_STATEMENT.equals(parentType) || parentBlock instanceof ClosureBodyBlock) {
+      boolean isBrace = child.getElementType() == mLCURLY || child.getElementType() == mRCURLY;
+      return isBrace ? Indent.getNoneIndent() : Indent.getNormalIndent();
     }
 
-    if (CASE_SECTION.equals(astNode.getElementType())) {
-      return indentForCaseSection(child);
+    if (CASE_SECTION.equals(parentType)) {
+      return child.getElementType() == CASE_LABEL ? Indent.getNoneIndent() : Indent.getNormalIndent();
     }
 
-    if (SWITCH_STATEMENT.equals(astNode.getElementType())) {
-      return indentForSwitchStatement(psiParent, child);
+    if (SWITCH_STATEMENT.equals(parentType)) {
+      return child.getElementType() == CASE_SECTION ? getSwitchCaseIndent(psiParent) : Indent.getNoneIndent();
     }
 
-    if (psiParent instanceof GrLabeledStatement) {
-      if (child.getPsi() instanceof GrLabel) {
-        CommonCodeStyleSettings.IndentOptions indentOptions = parent.getSettings().getIndentOptions();
-        if (indentOptions.LABEL_INDENT_ABSOLUTE) {
-          return Indent.getAbsoluteLabelIndent();
-        }
-        return Indent.getLabelIndent();
-      }
+    if (parentType == LABELED_STATEMENT && childType == LABEL) {
+      CommonCodeStyleSettings.IndentOptions indentOptions = parentBlock.getSettings().getIndentOptions();
+      boolean isLabelIndentAbsolute = indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE;
+      return isLabelIndentAbsolute ? Indent.getAbsoluteLabelIndent() : Indent.getLabelIndent();
     }
 
     // for control structures
@@ -122,31 +125,24 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     if (psiParent instanceof GrExpression) {
       return getExpressionIndent(psiParent, child);
     }
-    if (psiParent instanceof GrVariable && child.getPsi() == ((GrVariable)psiParent).getInitializerGroovy()) {
+
+    if (psiParent instanceof GrVariable && psiChild == ((GrVariable)psiParent).getInitializerGroovy()) {
       return Indent.getNormalIndent();
     }
 
     //For parameter lists
-    if (psiParent instanceof GrParameterList ||
-        psiParent instanceof GrExtendsClause ||
-        psiParent instanceof GrThrowsClause) {
-      if (parent.getIndent() != null) {
-        return Indent.getContinuationWithoutFirstIndent();
-      }
-      return Indent.getNoneIndent();
+    if (psiParent instanceof GrParameterList || psiParent instanceof GrExtendsClause || psiParent instanceof GrThrowsClause) {
+      Indent parentIndent = parentBlock.getIndent();
+      return parentIndent != null ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
     }
 
     // For arguments
-    if (psiParent instanceof GrArgumentList) {
-      if (child.getElementType() != mLPAREN && child.getElementType() != mRPAREN /*&& child.getElementType() != mCOMMA*/) {
-        return Indent.getContinuationWithoutFirstIndent();
-      }
+    if (psiParent instanceof GrArgumentList && childType != mLPAREN && childType != mRPAREN) {
+      return Indent.getContinuationWithoutFirstIndent();
     }
 
-    if ((psiParent instanceof GrDocComment &&
-        child.getElementType() != mGDOC_COMMENT_START) ||
-        psiParent instanceof GrDocTag &&
-            child.getElementType() != mGDOC_TAG_NAME) {
+    if (psiParent instanceof GrDocComment && childType != mGDOC_COMMENT_START ||
+        psiParent instanceof GrDocTag     && childType != mGDOC_TAG_NAME) {
       return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
 
@@ -154,7 +150,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getContinuationIndent();
     }
 
-    if (child.getPsi() instanceof GrVariable && psiParent instanceof GrVariableDeclaration) {
+    if (psiChild instanceof GrVariable && psiParent instanceof GrVariableDeclaration) {
       return Indent.getContinuationWithoutFirstIndent();
     }
 
@@ -235,43 +231,8 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     return CodeStyleSettingsManager.getSettings(parent.getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
   }
 
-  /**
-   * Indent for common block
-   *
-   * @param psiBlock
-   * @param child
-   * @return
-   */
-  private static Indent indentForBlock(PsiElement psiBlock, ASTNode child) {
-    // Common case
-    if (mLCURLY.equals(child.getElementType()) ||
-        mRCURLY.equals(child.getElementType())) {
-      return Indent.getNoneIndent();
-    }
-    return Indent.getNormalIndent();
-
-
-  }
-
-  private static Indent indentForCaseSection(ASTNode child) {
-    if (CASE_LABEL.equals(child.getElementType())) {
-      return Indent.getNoneIndent();
-    }
-    return Indent.getNormalIndent();
-  }
-
-  private static Indent indentForSwitchStatement(PsiElement psiParent, ASTNode child) {
-    if (CASE_SECTION.equals(child.getElementType())) {
-      return getSwitchCaseIndent(psiParent);
-    }
-    return Indent.getNoneIndent();
-  }
-
   public static Indent getSwitchCaseIndent(PsiElement psiParent) {
-    if (getGroovySettings(psiParent).INDENT_CASE_FROM_SWITCH) {
-        return Indent.getNormalIndent();
-      }
-    return Indent.getNoneIndent();
+    return getGroovySettings(psiParent).INDENT_CASE_FROM_SWITCH ? Indent.getNormalIndent() : Indent.getNoneIndent();
   }
 }
 

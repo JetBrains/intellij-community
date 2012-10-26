@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +40,8 @@ public class HtmlLanguageLevelForm {
   private JRadioButton myOtherRadioButton;
   private JPanel myContentPanel;
   private JPanel myOtherDoctypeWrapper;
-  private TextFieldWithAutoCompletion myDoctypeTextField;
-  private List<MyListener> myListeners = new ArrayList<MyListener>();
+  private final TextFieldWithAutoCompletion myDoctypeTextField;
+  private final List<MyListener> myListeners = new ArrayList<MyListener>();
 
   public HtmlLanguageLevelForm(Project project) {
     final String[] urls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
@@ -73,14 +74,14 @@ public class HtmlLanguageLevelForm {
     if (myHtml4RadioButton.isSelected()) {
       return XmlUtil.XHTML_URI;
     }
-    else if (myHtml5RadioButton.isSelected()) {
+    if (myHtml5RadioButton.isSelected()) {
       return Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
     }
     return myDoctypeTextField.getText();
   }
 
-  public void resetFromDoctype(String doctype) {
-    if (doctype == null || doctype.length() == 0 || doctype.equals(XmlUtil.XHTML4_SCHEMA_LOCATION)) {
+  public void resetFromDoctype(final String doctype) {
+    if (doctype == null || doctype.isEmpty() || doctype.equals(XmlUtil.XHTML4_SCHEMA_LOCATION)) {
       myHtml4RadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(false);
     }
@@ -91,7 +92,17 @@ public class HtmlLanguageLevelForm {
     else {
       myOtherRadioButton.setSelected(true);
       myDoctypeTextField.setEnabled(true);
-      myDoctypeTextField.setText(doctype);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myDoctypeTextField.setText(doctype);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
     }
   }
 

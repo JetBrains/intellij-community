@@ -46,7 +46,7 @@ public class GrParameterInfo implements JavaParameterInfo {
     else {
       myTypeWrapper = null;
     }
-    final GrExpression defaultInitializer = parameter.getDefaultInitializer();
+    final GrExpression defaultInitializer = parameter.getInitializerGroovy();
     if (defaultInitializer != null) {
       myDefaultInitializer = defaultInitializer.getText();
     }

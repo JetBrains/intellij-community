@@ -432,6 +432,10 @@ public class UIUtil {
     return defColor;
   }
 
+  public static int getScrollBarWidth() {
+    return UIManager.getInt("ScrollBar.width");
+  }
+
   public static Font getLabelFont() {
     return UIManager.getFont("Label.font");
   }
@@ -1746,7 +1750,7 @@ public class UIUtil {
   }
 
   public static Color getBorderColor() {
-    return BORDER_COLOR;
+    return isUnderDarcula() ? Gray._0.withAlpha(80) : BORDER_COLOR;
   }
 
   public static Font getTitledBorderFont() {

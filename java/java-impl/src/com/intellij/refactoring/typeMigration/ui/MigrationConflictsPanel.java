@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.UsagesPanel;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfoToUsageConverter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
@@ -38,7 +39,7 @@ public class MigrationConflictsPanel extends UsagesPanel{
   }
 
   @Override
-  public void showUsages(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final UsageInfo[] usageInfos) {
+  public void showUsages(@NotNull final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, @NotNull final UsageInfo[] usageInfos) {
     super.showUsages(descriptor, usageInfos);
   }
 }

@@ -196,11 +196,16 @@ public class SvnUtil {
     if (!failedLocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
       List<VcsException> exceptions = new ArrayList<VcsException>();
-
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
+      final StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
+      for (VcsException vcsException : exceptions) {
+        if (sb.length() > 0) sb.append('\n');
+        sb.append(vcsException.getMessage());
+      }
       AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
+      throw new VcsException(sb.toString());
     }
 
     StatusBarUtil.setStatusBarInfo(project, SvnBundle.message("message.text.files.locked", count[0]));
@@ -366,14 +371,10 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) {
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SVNException {
     final SVNWCClient client = vcs.createWCClient();
-    try {
-      SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      return (info == null) ? null : info.getRepositoryRootURL();
-    } catch (SVNException e) {
-      return null;
-    }
+    SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    return (info == null) ? null : info.getRepositoryRootURL();
   }
 
   public static boolean isWorkingCopyRoot(final File file) {

@@ -1647,8 +1647,9 @@ public class JBTabsImpl extends JComponent
       else {
         alpha = 255;
         final Color tabColor = getActiveTabColor(null);
-        shapeInfo.from = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
-        shapeInfo.to = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        final Color defaultBg = UIUtil.isUnderDarcula()? UIUtil.getControlColor() : Color.white;
+        shapeInfo.from = tabColor == null ? defaultBg : tabColor;
+        shapeInfo.to = tabColor == null ? defaultBg : tabColor;
       }
     }
 
@@ -1858,15 +1859,15 @@ public class JBTabsImpl extends JComponent
   }
 
   private static Color getBoundsColor() {
-    return Color.gray;
+    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(80) : Color.gray;
   }
 
   private static Color getRightBlockColor() {
-    return Color.lightGray;
+    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(0) : Color.lightGray;
   }
 
   private static Color getTopBlockColor() {
-    return Color.white;
+    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(0) : Color.white;
   }
 
   private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists, final boolean rightGhostExists) {
@@ -2045,11 +2046,16 @@ public class JBTabsImpl extends JComponent
     final Line2D.Float gradientLine =
       shape.transformLine(0, topY, 0, topY + shape.deltaY((int) (shape.getHeight() / 1.5 )));
 
-    final GradientPaint gp =
-      new GradientPaint(gradientLine.x1, gradientLine.y1,
+    final GradientPaint gp = UIUtil.isUnderDarcula()
+      ? new GradientPaint(gradientLine.x1, gradientLine.y1,
+                        shape.transformY1(backgroundColor, backgroundColor),
+                        gradientLine.x2, gradientLine.y2,
+                        shape.transformY1(backgroundColor, backgroundColor))
+      : new GradientPaint(gradientLine.x1, gradientLine.y1,
                         shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
                         gradientLine.x2, gradientLine.y2,
                         shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
+
     final Paint old = g2d.getPaint();
     g2d.setPaint(gp);
     g2d.fill(shape.getShape());

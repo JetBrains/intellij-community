@@ -287,6 +287,7 @@ public class ChangeContextUtil {
     try{
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression)) return false;
+      if (refExpr.getTypeParameters().length > 0) return false;
       PsiElement qualifierRefElement = ((PsiReferenceExpression)qualifier).resolve();
       if (!(qualifierRefElement instanceof PsiClass)) return false;
       PsiElement refElement = refExpr.resolve();

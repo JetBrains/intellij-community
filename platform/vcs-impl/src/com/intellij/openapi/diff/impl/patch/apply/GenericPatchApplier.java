@@ -109,6 +109,25 @@ public class GenericPatchApplier {
     }
   }
 
+  public int weightContextMatch(final int maxWalk, final int maxPartsToCheck) {
+    final List<SplitHunk> hunks = new ArrayList<SplitHunk>(myHunks.size());
+    for (PatchHunk hunk : myHunks) {
+      hunks.addAll(SplitHunk.read(hunk));
+    }
+    int cntPlus = 0;
+    int cnt = maxPartsToCheck;
+    for (SplitHunk hunk : hunks) {
+      final SplitHunk copy = createWithAllContextCopy(hunk);
+      if (copy.isInsertion()) continue;
+      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), maxWalk)) {
+        ++ cntPlus;
+      }
+      -- cnt;
+      if (cnt == 0) break;
+    }
+    return cntPlus;
+  }
+
   public boolean execute() {
     debug("GenericPatchApplier execute started");
     if (! myHunks.isEmpty()) {

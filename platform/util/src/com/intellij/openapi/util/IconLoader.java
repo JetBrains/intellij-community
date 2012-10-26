@@ -118,7 +118,7 @@ public final class IconLoader {
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
    */
-  public static Icon findIcon(@NonNls final String path) {
+  public static Icon findIcon(@NonNls @NotNull String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
@@ -259,11 +259,11 @@ public final class IconLoader {
     return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
-  public static Icon getTransparentIcon(final Icon icon) {
+  public static Icon getTransparentIcon(@NotNull final Icon icon) {
     return getTransparentIcon(icon, 0.5f);
   }
 
-  public static Icon getTransparentIcon(final Icon icon, final float alpha) {
+  public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new Icon() {
       public int getIconHeight() {
         return icon.getIconHeight();
