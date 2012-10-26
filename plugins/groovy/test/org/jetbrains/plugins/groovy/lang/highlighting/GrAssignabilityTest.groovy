@@ -163,7 +163,7 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
     testHighlighting(''' Map<Integer, String> a; a[2] = [:] ''', false, false, false)
   }
 
-  void testThisInStaticMethodOfAnonymousClass() {
+  void _testThisInStaticMethodOfAnonymousClass() {
     testHighlighting('''\
 class A {
     static abc
