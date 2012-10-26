@@ -116,7 +116,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   }
 
 
-  //todo: see GrModifierListImpl.hasModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(property);
@@ -345,7 +344,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
       oldInitializer.replaceWithExpression(initializer, true);
     }
     else {
-      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
+      getNode().addLeaf(TokenType.WHITE_SPACE, " ", null);
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", null);
       addAfter(initializer, getLastChild());
     }
   }

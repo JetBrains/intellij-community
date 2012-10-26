@@ -60,5 +60,5 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
   @Nullable
   GrModifierList getModifierList();
 
-  void setInitializerGroovy(GrExpression initializer);
+  void setInitializerGroovy(@Nullable GrExpression initializer);
 }
