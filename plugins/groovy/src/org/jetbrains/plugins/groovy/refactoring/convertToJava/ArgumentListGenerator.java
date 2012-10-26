@@ -101,7 +101,7 @@ class ArgumentListGenerator {
       final PsiType declaredType = GenerationUtil.getDeclaredType((GrExpression)actual, myExpressionGenerator.getContext());
       if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType,(GrExpression)actual)) {
         myBuilder.append('(');
-        GenerationUtil.writeType(myBuilder, type, actual);
+        TypeWriter.writeType(myBuilder, type, actual);
         myBuilder.append(')');
       }
       ((GrExpression)actual).accept(myExpressionGenerator);
@@ -129,8 +129,8 @@ class ArgumentListGenerator {
 
     if (type instanceof PsiArrayType) {
       myBuilder.append("new ");
-      GenerationUtil.writeType(myBuilder, ((PsiArrayType)type).getComponentType(),context);
-      myBuilder.append("[]{");
+      TypeWriter.writeTypeForNew(myBuilder, type, context);
+      myBuilder.append("{");
 
       for (PsiElement element : arg.args) {
         LOG.assertTrue(element instanceof GrExpression);

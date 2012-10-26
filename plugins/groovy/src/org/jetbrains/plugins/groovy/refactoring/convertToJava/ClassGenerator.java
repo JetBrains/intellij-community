@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev

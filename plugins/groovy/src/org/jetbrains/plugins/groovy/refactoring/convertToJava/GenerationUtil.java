@@ -79,6 +79,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_ASS
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev
@@ -87,36 +88,6 @@ public class GenerationUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
 
   private GenerationUtil() {
-  }
-
-  public static void writeType(StringBuilder builder, PsiType type, PsiElement context) {
-    writeType(builder, type, context, new GeneratorClassNameProvider());
-  }
-
-  public static void writeType(final StringBuilder builder,
-                               @Nullable final PsiType type,
-                               final PsiElement context,
-                               final ClassNameProvider classNameProvider) {
-    if (type instanceof PsiPrimitiveType) {
-      builder.append(type.getCanonicalText());
-      return;
-    }
-
-    if (type == null) {
-      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
-      return;
-    }
-
-    final boolean acceptEllipsis = isLastParameter(context);
-
-    type.accept(new TypeWriter(builder, classNameProvider, acceptEllipsis, context));
-  }
-
-  private static boolean isLastParameter(PsiElement context) {
-    final PsiElement parent = context.getParent();
-    return context instanceof PsiParameter &&
-           parent instanceof PsiParameterList &&
-           ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
   }
 
   public static void writeTypeParameters(StringBuilder builder,
@@ -482,11 +453,14 @@ public class GenerationUtil {
         builder.append('(');
       }
       final PsiType iType = getDeclaredType(initializer, expressionContext);
+
+      //generate cast
       if (original != null && iType != null && !TypesUtil.isAssignable(original, iType, initializer)) {
         builder.append('(');
         writeType(builder, original, initializer);
         builder.append(')');
       }
+
       initializer.accept(new ExpressionGenerator(builder, expressionContext));
       if (wrapped) {
         builder.append(')');

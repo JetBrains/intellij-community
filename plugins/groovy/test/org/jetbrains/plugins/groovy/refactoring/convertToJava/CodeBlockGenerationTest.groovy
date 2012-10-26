@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.convertToJava;
+package org.jetbrains.plugins.groovy.refactoring.convertToJava
 
-
-import com.intellij.lang.StdLanguages
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Maxim.Medvedev
  */
 public class CodeBlockGenerationTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}refactoring/convertGroovyToJava/codeBlock";
-  }
+  final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/codeBlock'
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile("${testName}.groovy");
+    final PsiFile file = myFixture.configureByFile(testName + '.groovy');
     assertInstanceOf file, GroovyFile
 
     GrTopStatement[] statements = file.topStatements
@@ -46,10 +41,10 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
       builder.append('\n')
     }
 
-    final PsiFile result = createLightFile("${testName}.java", StdLanguages.JAVA, builder.toString())
+    final PsiFile result = createLightFile(testName + '.java', JavaLanguage.INSTANCE, builder.toString())
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     final String text = result.text
-    final String expected = psiManager.findFile(myFixture.copyFileToProject("${testName}.java")).text
+    final String expected = psiManager.findFile(myFixture.copyFileToProject(testName + '.java')).text
     assertEquals expected, text
   }
 
@@ -164,4 +159,6 @@ public final class Matcher {
 
   void testEmptyMap() {doTest()}
   void testEmptyList() {doTest()}
+
+  void testErasedArrayInitializer() { doTest() }
 }

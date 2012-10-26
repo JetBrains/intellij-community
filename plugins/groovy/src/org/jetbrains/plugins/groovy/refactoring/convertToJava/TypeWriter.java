@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -28,7 +30,43 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
   private ClassNameProvider classNameProvider;
   private PsiElement context;
 
-  public TypeWriter(StringBuilder builder, ClassNameProvider classNameProvider, boolean acceptEllipsis, PsiElement context) {
+  public static void writeTypeForNew(StringBuilder builder, @Nullable PsiType type, PsiElement context) {
+
+    //new Array[] cannot contain generics
+    if (type instanceof PsiArrayType) {
+      PsiType erased = TypeConversionUtil.erasure(type);
+      if (erased != null) {
+        type = erased;
+      }
+    }
+
+    writeType(builder, type, context, new GeneratorClassNameProvider());
+  }
+
+  public static void writeType(StringBuilder builder, @Nullable PsiType type, PsiElement context) {
+    writeType(builder, type, context, new GeneratorClassNameProvider());
+  }
+
+  public static void writeType(final StringBuilder builder,
+                               @Nullable PsiType type,
+                               final PsiElement context,
+                               final ClassNameProvider classNameProvider) {
+    if (type instanceof PsiPrimitiveType) {
+      builder.append(type.getCanonicalText());
+      return;
+    }
+
+    if (type == null) {
+      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
+      return;
+    }
+
+    final boolean acceptEllipsis = isLastParameter(context);
+
+    type.accept(new TypeWriter(builder, classNameProvider, acceptEllipsis, context));
+  }
+
+  private TypeWriter(StringBuilder builder, ClassNameProvider classNameProvider, boolean acceptEllipsis, PsiElement context) {
     this.acceptEllipsis = acceptEllipsis;
     this.builder = builder;
     this.classNameProvider = classNameProvider;
@@ -112,4 +150,12 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
   public Object visitType(PsiType type) {
     throw new UnsupportedOperationException();
   }
+
+  private static boolean isLastParameter(PsiElement context) {
+    final PsiElement parent = context.getParent();
+    return context instanceof PsiParameter &&
+           parent instanceof PsiParameterList &&
+           ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
+  }
+
 }
