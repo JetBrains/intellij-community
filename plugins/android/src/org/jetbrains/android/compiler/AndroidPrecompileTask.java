@@ -71,6 +71,8 @@ public class AndroidPrecompileTask implements CompileTask {
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
+
+    // todo: add gen roots to excludes in android-jps and then remove this line
     createGenModulesAndSourceRoots(project);
 
     if (!CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {

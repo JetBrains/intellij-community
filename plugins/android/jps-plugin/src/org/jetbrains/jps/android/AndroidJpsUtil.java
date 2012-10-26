@@ -650,4 +650,21 @@ public class AndroidJpsUtil {
     }
     return null;
   }
+
+
+  @Nullable
+  public static Set<String> getGenDirs(@NotNull JpsAndroidModuleExtension extension) throws IOException {
+    final Set<String> result = new HashSet<String>();
+    File dir = extension.getAaptGenDir();
+
+    if (dir != null) {
+      result.add(dir.getPath());
+    }
+    dir = extension.getAidlGenDir();
+
+    if (dir != null) {
+      result.add(dir.getPath());
+    }
+    return result;
+  }
 }
