@@ -207,9 +207,15 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return;
         }
 
-        if (resolved instanceof PsiMethod && "getDelegate".equals(((PsiMethod) resolved).getName()) && closure != null) {
-          replaceWithReference(referenceExpression, "owner");
-          return;
+        if (resolved instanceof PsiMethod && !referenceExpression.isQualified()) {
+          if (closure != null && "getDelegate".equals(((PsiMethod)resolved).getName())) {
+            replaceWithReference(referenceExpression, "owner");
+            return;
+          }
+          if ("call".equals(((PsiMethod)resolved).getName())) {
+            replaceWithReference(referenceExpression, (closure == null ? "delegate" : "owner") + ".call");
+            return;
+          }
         }
 
         if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {

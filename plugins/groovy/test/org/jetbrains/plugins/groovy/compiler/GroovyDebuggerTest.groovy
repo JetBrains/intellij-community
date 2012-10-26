@@ -50,8 +50,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import junit.framework.Test
-import junit.framework.TestSuite
 /**
  * @author peter
  */
@@ -180,6 +178,32 @@ println 2 //4
       eval 'lst', '[3]'
       eval 'lst.size()', '1'
     }
+  }
+
+  public void testCall() {
+    myFixture.addFileToProject 'B.groovy', '''class B {
+    def getFoo() {2}
+
+    def call(Object... args){
+        -1  // 4
+    }
+
+    public static void main(String[] args) {
+        new B().call()
+    }
+}'''
+    addBreakpoint 'B.groovy', 4
+    runDebugger 'B', {
+      waitForBreakpoint()
+      eval 'foo', '2'
+      eval 'getFoo()', '2'
+      eval 'this.getFoo()', '2'
+      eval 'this.foo', '2'
+      eval 'this.call(2)', '-1'
+      eval 'call(2)', '-1'
+      eval 'call(foo)', '-1'
+    }
+
   }
 
   public void testClassOutOfSourceRoots() {
