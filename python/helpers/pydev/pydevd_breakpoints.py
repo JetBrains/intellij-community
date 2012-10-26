@@ -1,4 +1,5 @@
 from pydevd_constants import *
+import pydevd_tracing
 import sys
 import pydev_log
 
