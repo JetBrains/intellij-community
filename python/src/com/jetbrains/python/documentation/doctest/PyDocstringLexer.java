@@ -42,21 +42,18 @@ public class PyDocstringLexer extends PythonIndentingLexer {
     indent = 0;
     while (getBaseTokenType() != null && ourIgnoreSet.contains(getBaseTokenType()))
       advanceBase();
-    while (getBaseTokenType() != null && PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(getBaseTokenType())) {
+    while (getBaseTokenType() != null && PyTokenTypes.WHITESPACE.contains(getBaseTokenType())) {
       if (getBaseTokenType() == PyTokenTypes.TAB) {
         indent = ((indent / 8) + 1) * 8;
       }
       else if (getBaseTokenType() == PyTokenTypes.SPACE) {
         indent++;
       }
-      else if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
-        indent = 0;
-      }
       advanceBase();
     }
     if (getBaseTokenType() == null) {
       return 0;
     }
-    return indent - 1;
+    return indent > 0? indent - 1 : indent;
   }
 }
