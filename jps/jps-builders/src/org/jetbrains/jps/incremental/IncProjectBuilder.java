@@ -579,8 +579,7 @@ public class IncProjectBuilder {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
       ensureFSStateInitialized(context, chunk);
       if (context.isMake()) {
-        processDeletedPaths(context, chunk.getTargets());
-        doneSomething |= Utils.hasRemovedSources(context);
+        doneSomething |= processDeletedPaths(context, chunk.getTargets());
       }
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
@@ -607,10 +606,10 @@ public class IncProjectBuilder {
 
         try {
           // restore deleted paths that were not procesesd by 'integrate'
-          final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+          final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
           if (map != null) {
-            for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
-              final BuildTarget<?> target = entry.getKey();
+            for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : map.entrySet()) {
+              final ModuleBuildTarget target = entry.getKey();
               final Collection<String> paths = entry.getValue();
               if (paths != null) {
                 for (String path : paths) {
@@ -675,32 +674,38 @@ public class IncProjectBuilder {
   }
 
 
-  private void processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
+  private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
+    boolean doneSomething = false;
     try {
       // cleanup outputs
-      final Map<BuildTarget<?>, Collection<String>> removedSources = new HashMap<BuildTarget<?>, Collection<String>>();
+      final Map<ModuleBuildTarget, Collection<String>> moduleTargetRemovedSources = new HashMap<ModuleBuildTarget, Collection<String>>();
 
       for (BuildTarget<?> target : targets) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
         }
-        removedSources.put(target, deletedPaths);
+        if (target instanceof ModuleBuildTarget) {
+          moduleTargetRemovedSources.put((ModuleBuildTarget)target, deletedPaths);
+        }
 
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
 
           if (outputs != null && !outputs.isEmpty()) {
-            final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
             if (logger.isEnabled()) {
               logger.logDeletedFiles(outputs);
             }
 
             for (String output : outputs) {
-              new File(output).delete();
+              final boolean deleted = new File(output).delete();
+              if (deleted) {
+                doneSomething = true;
+              }
             }
             context.processMessage(new FileDeletedEvent(outputs));
           }
@@ -719,27 +724,34 @@ public class IncProjectBuilder {
               sourceToFormMap.remove(deletedSource);
             }
           }
+          else {
+            if (outputs != null) {
+              // for all other targets can clean the mapping right now
+              sourceToOutputStorage.remove(deletedSource);
+            }
+          }
         }
       }
-      if (!removedSources.isEmpty()) {
-        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+      if (!moduleTargetRemovedSources.isEmpty()) {
+        final Map<ModuleBuildTarget, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
-          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
-            final Collection<String> paths = removedSources.get(entry.getKey());
+          for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : existing.entrySet()) {
+            final Collection<String> paths = moduleTargetRemovedSources.get(entry.getKey());
             if (paths != null) {
               paths.addAll(entry.getValue());
             }
             else {
-              removedSources.put(entry.getKey(), entry.getValue());
+              moduleTargetRemovedSources.put(entry.getKey(), entry.getValue());
             }
           }
         }
-        Utils.REMOVED_SOURCES_KEY.set(context, removedSources);
+        Utils.REMOVED_SOURCES_KEY.set(context, moduleTargetRemovedSources);
       }
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
     }
+    return doneSomething;
   }
 
   // return true if changed something, false otherwise
@@ -954,29 +966,26 @@ public class IncProjectBuilder {
         ensureFSStateInitialized(context, pd, timestamps, configuration, (ModuleBuildTarget)target);
       }
       else {
-        ensureFSStateInitialized(context, target);
+        if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(target)) {
+          clearOutputFiles(context, target);
+          FSOperations.markDirtyFiles(context, target, timestamps, true, null);
+          configuration.save();
+        }
+        else if (pd.fsState.markInitialScanPerformed(target)) {
+          if (target.getModule() != null) {
+            initTargetFSState(context, target, false);
+          }
+          else {
+            // todo: check why other non-associated with module targets have to initialize deleted outputs by themselves
+            // instead of getting this functionality out-of the box
+            FSOperations.markDirtyFiles(context, target, timestamps, false, null);
+          }
+        }
       }
     }
   }
 
-  private static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final Timestamps timestamps = pd.timestamps.getStorage();
-    final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-    if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(target)) {
-      clearOutputFiles(context, target);
-      FSOperations.markDirtyFiles(context, target, timestamps, true, null, Collections.<File>emptySet());
-      configuration.save();
-    }
-    else if (pd.fsState.markInitialScanPerformed(target)) {
-      FSOperations.markDirtyFiles(context, target, timestamps, false, null, Collections.<File>emptySet());
-    }
-  }
-
-  private static void ensureFSStateInitialized(CompileContext context,
-                                               ProjectDescriptor pd,
-                                               Timestamps timestamps,
-                                               BuildTargetConfiguration configuration, ModuleBuildTarget target) throws IOException {
+  private static void ensureFSStateInitialized(CompileContext context, final ProjectDescriptor pd, final Timestamps timestamps, final BuildTargetConfiguration configuration, ModuleBuildTarget target) throws IOException {
     if (context.isProjectRebuild() || configuration.isTargetDirty()) {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null);
       updateOutputRootsLayout(context, target);
@@ -985,19 +994,7 @@ public class IncProjectBuilder {
     else {
       if (context.isMake()) {
         if (pd.fsState.markInitialScanPerformed(target)) {
-          boolean forceMarkDirty = false;
-          final File currentOutput = target.getOutputDir();
-          if (currentOutput != null) {
-            final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
-            if (outputsPair != null) {
-              final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
-              forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
-            }
-            else {
-              forceMarkDirty = true;
-            }
-          }
-          initTargetFSState(context, target, forceMarkDirty);
+          initTargetFSState(context, target, hasOutputDirectoryChanged(pd, target));
           updateOutputRootsLayout(context, target);
         }
       }
@@ -1009,6 +1006,22 @@ public class IncProjectBuilder {
         }
       }
     }
+  }
+
+  private static boolean hasOutputDirectoryChanged(ProjectDescriptor pd, ModuleBuildTarget target) throws IOException {
+    final File currentOutput = target.getOutputDir();
+    if (currentOutput == null) {
+      return false;
+    }
+    final Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
+    if (outputsPair == null) {
+      return true;
+    }
+    final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
+    if (StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath))) {
+      return true;
+    }
+    return false;
   }
 
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
