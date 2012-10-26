@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -422,17 +423,9 @@ public class GroovyCompletionData {
 
         PsiElement superParent = parent.getParent();
 
-        if (superParent instanceof GrClosableBlock) return true;
-
-        if (superParent instanceof GrExpression) {
-          superParent = superParent.getParent();
-        }
-
         if (superParent instanceof GrStatementOwner ||
             superParent instanceof GrLabeledStatement ||
-            superParent instanceof GrIfStatement ||
-            superParent instanceof GrForStatement ||
-            superParent instanceof GrWhileStatement) {
+            superParent instanceof GrControlStatement) {
           return true;
         }
       }
