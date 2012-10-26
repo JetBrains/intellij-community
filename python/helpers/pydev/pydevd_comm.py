@@ -71,6 +71,7 @@ if USE_LIB_COPY:
     import _pydev_Queue as PydevQueue
     from _pydev_socket import socket
     from _pydev_socket import AF_INET, SOCK_STREAM
+    from _pydev_socket import SHUT_RD, SHUT_WR
 else:
     import time
     import threading
@@ -85,6 +86,7 @@ else:
         import queue as PydevQueue
     from socket import socket
     from socket import AF_INET, SOCK_STREAM
+    from socket import SHUT_RD
 
 try:
     from urllib import quote
@@ -102,6 +104,13 @@ from pydevd_utils import quote_smart as quote
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevconsole
+
+try:
+    _Thread_stop = threading.Thread._Thread__stop
+except AttributeError:
+    _Thread_stop = threading.Thread._stop  # _stop in Python 3
+
+
 
 CMD_RUN = 101
 CMD_LIST_THREADS = 102
@@ -247,6 +256,8 @@ class PyDBDaemonThread(threading.Thread):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
 
+    def stop(self):
+        _Thread_stop(self)
 
 #=======================================================================================================================
 # ReaderThread
@@ -264,7 +275,7 @@ class ReaderThread(PyDBDaemonThread):
         #We must close the socket so that it doesn't stay halted there.
         self.killReceived = True
         try:
-            self.sock.close()
+            self.sock.shutdown(SHUT_RD) #shotdown the socket for read
         except:
             #just ignore that
             pass
@@ -278,7 +289,8 @@ class ReaderThread(PyDBDaemonThread):
                 try:
                     r = self.sock.recv(1024)
                 except:
-                    self.handleExcept()
+                    if not self.killReceived:
+                        self.handleExcept()
                     return #Finished communication.
                 if IS_PY3K:
                     r = r.decode('utf-8')
@@ -348,6 +360,10 @@ class WriterThread(PyDBDaemonThread):
                         cmd = self.cmdQueue.get(1, 0.3)
                     except PydevQueue.Empty:
                         if self.killReceived:
+                            self.sock.shutdown(SHUT_WR)
+                            self.sock.close()
+                            self.stop() #mark thread as stopped to unblock joined threads for sure (they can hang otherwise)
+
                             return #break if queue is empty and killReceived
                         else:
                             continue

@@ -33,4 +33,4 @@ if run_cov:
     a_file.close()
 main()
 if run_cov:
-    main(["xml", "-o", coverage_file + ".xml"])
+    main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])

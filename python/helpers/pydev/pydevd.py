@@ -90,11 +90,15 @@ DONT_TRACE = {
               'pydevd_additional_thread_info.py':1,
               'pydevd_comm.py':1,
               'pydevd_constants.py':1,
+              'pydevd_exec.py':1,
+              'pydevd_exec2.py':1,
               'pydevd_file_utils.py':1,
               'pydevd_frame.py':1,
               'pydevd_io.py':1 ,
               'pydevd_resolver.py':1 ,
               'pydevd_tracing.py':1 ,
+              'pydevd_signature.py':1,
+              'pydevd_utils.py':1,
               'pydevd_vars.py':1,
               'pydevd_vm_type.py':1,
               'pydevd.py':1 ,
@@ -153,7 +157,8 @@ class PyDBCommandThread(PyDBDaemonThread):
                     PydevdLog(0, 'Finishing debug communication...(2)')
                 time.sleep(0.5)
         except:
-            pass
+            pydev_log.debug(sys.exc_info()[0])
+
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
@@ -173,10 +178,8 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
             pydevd_tracing.SetTrace(None) # no debugging on this thread
             while True:
                 if not self.pyDb.haveAliveThreads():
+                    pydev_log.debug("No alive threads, finishing debug session")
                     self.pyDb.FinishDebuggingSession()
-                    for t in threadingEnumerate():
-                        if hasattr(t, 'doKillPydevThread'):
-                            t.doKillPydevThread()
                     return
 
                 time.sleep(0.3)
@@ -832,6 +835,7 @@ class PyDB:
         self.writer.addCommand(cmd)
 
         info = thread.additionalInfo
+
         while info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
             self.processInternalCommands()
             time.sleep(0.01)
@@ -900,6 +904,23 @@ class PyDB:
         self.writer.addCommand(cmd)
 
 
+    def handle_post_mortem_stop(self, additionalInfo, t):
+        pydev_log.debug("We are stopping in post-mortem\n")
+        self.force_post_mortem_stop -= 1
+        frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
+        thread_id = GetThreadId(t)
+        pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
+        try:
+            add_exception_to_frame(frame, additionalInfo.exception)
+            self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
+            pydev_log.debug("setSuspend.\n")
+            self.doWaitSuspend(t, frame, 'exception', None)
+            pydev_log.debug("Wait suspend\n")
+        except:
+            pydev_log.error("We got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
+        finally:
+            additionalInfo.pydev_force_stop_at_exception = None
+            pydevd_vars.removeAdditionalFrameById(thread_id)
 
     def trace_dispatch(self, frame, event, arg):
         ''' This is the callback used when we enter some context in the debugger.
@@ -924,9 +945,8 @@ class PyDB:
 
             is_file_to_ignore = DictContains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
 
-            if not self.force_post_mortem_stop: #If we're in post mortem mode, we might not have another chance to show that info!
-                if is_file_to_ignore:
-                    return None
+            if is_file_to_ignore:
+                return None
 
             #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name)
             try:
@@ -942,20 +962,6 @@ class PyDB:
                 additionalInfo = t.additionalInfo
             except:
                 additionalInfo = t.additionalInfo = PyDBAdditionalThreadInfo()
-
-            if self.force_post_mortem_stop: #If we're in post mortem mode, we might not have another chance to show that info!
-                if additionalInfo.pydev_force_stop_at_exception:
-                    self.force_post_mortem_stop -= 1
-                    frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
-                    thread_id = GetThreadId(t)
-                    used_id = pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
-                    try:
-                        add_exception_to_frame(frame, additionalInfo.exception)
-                        self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
-                        self.doWaitSuspend(t, frame, 'exception', None)
-                    finally:
-                        additionalInfo.pydev_force_stop_at_exception = None
-                        pydevd_vars.removeAdditionalFrameById(thread_id)
 
             # if thread is not alive, cancel trace_dispatch processing
             if not t.isAlive():
@@ -1108,7 +1114,6 @@ class PyDB:
         self.checkOutputRedirect()
         cmd = self.cmdFactory.makeExitMessage()
         self.writer.addCommand(cmd)
-        self.writer.join()
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True

@@ -1,4 +1,5 @@
 from pydevd_constants import *
+import pydevd_tracing
 import sys
 import pydev_log
 
@@ -125,6 +126,8 @@ def excepthook(exctype, value, tb):
     debugger = GetGlobalDebugger()
     debugger.force_post_mortem_stop += 1
 
+    pydevd_tracing.SetTrace(None) #no tracing from here
+    debugger.handle_post_mortem_stop(thread.additionalInfo, thread)
 
 #=======================================================================================================================
 # set_pm_excepthook

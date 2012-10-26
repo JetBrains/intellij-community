@@ -109,7 +109,11 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   }
 
   // should be all keywords?
-  private static final TokenSet SINGLE_SPACE_KEYWORDS = TokenSet.create(IN_KEYWORD, AND_KEYWORD, OR_KEYWORD, IS_KEYWORD);
+  private static final TokenSet SINGLE_SPACE_KEYWORDS = TokenSet.create(IN_KEYWORD, AND_KEYWORD, OR_KEYWORD, IS_KEYWORD,
+                                                                        IF_KEYWORD, ELIF_KEYWORD, FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
+                                                                        ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
+                                                                        EXEC_KEYWORD, GLOBAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
+                                                                        NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD);
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
