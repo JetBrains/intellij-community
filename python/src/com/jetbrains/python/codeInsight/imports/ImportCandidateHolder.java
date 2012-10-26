@@ -9,10 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +109,13 @@ class ImportCandidateHolder implements Comparable {
       }
     }
     if (parent instanceof PyFromImportStatement) {
-      sb.append(" from ").append(((PyFromImportStatement)parent).getImportSource().getReferencedName()); // no NPE, we won't add a sourceless import stmt
+      sb.append(" from ");
+      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
+      sb.append(StringUtil.repeat(".", fromImportStatement.getRelativeLevel()));
+      final PyReferenceExpression source = fromImportStatement.getImportSource();
+      if (source != null) {
+        sb.append(source.getReferencedName());
+      }
     }
     return sb.toString();
   }
