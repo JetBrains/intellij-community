@@ -191,8 +191,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       } else {
         processDrag(e, draggedTo, (Point)myPressPointScreen.clone());
       }
-
-      e.consume();
     }
   }
 
@@ -236,7 +234,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   }
 
   protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
-
+    event.consume();
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {

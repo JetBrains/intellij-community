@@ -674,7 +674,12 @@ public class AndroidUtils {
                                                     boolean androidLibrariesOnly,
                                                     List<AndroidFacet> result,
                                                     Set<AndroidFacet> visited) {
-    for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+    final OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
+    // loop in the inverse order to resolve dependencies on the libraries, so that if a library
+    // is required by two higher level libraries it can be inserted in the correct place
+
+    for (int i = entries.length - 1; i >= 0; i--) {
+      final OrderEntry orderEntry = entries[i];
       if (orderEntry instanceof ModuleOrderEntry) {
         final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
 

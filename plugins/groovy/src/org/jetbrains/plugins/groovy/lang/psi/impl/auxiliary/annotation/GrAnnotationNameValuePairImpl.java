@@ -17,18 +17,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -57,7 +58,13 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement child = getFirstChild();
+    if (child == null) return null;
+
+    IElementType type = child.getNode().getElementType();
+    if (type == GroovyTokenTypes.mIDENT || type == GroovyTokenTypes.kDEF) return child;
+
+    return null;
   }
 
   public PsiIdentifier getNameIdentifier() {

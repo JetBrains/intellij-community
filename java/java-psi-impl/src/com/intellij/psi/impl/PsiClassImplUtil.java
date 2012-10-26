@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -963,9 +964,12 @@ public class PsiClassImplUtil {
 
   private static PsiElement originalElement(PsiClass aClass) {
     final PsiElement originalElement = aClass.getOriginalElement();
-    final PsiCompiledElement compiled = originalElement.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    if (compiled != null) {
-      return compiled;
+    ASTNode node = originalElement.getNode();
+    if (node != null) {
+      final PsiCompiledElement compiled = node.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+      if (compiled != null) {
+        return compiled;
+      }
     }
     return originalElement;
   }

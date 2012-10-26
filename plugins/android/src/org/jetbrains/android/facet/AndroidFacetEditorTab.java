@@ -100,6 +100,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JBLabel myProguardConfigFileLabel;
   private TextFieldWithBrowseButton myProguardConfigFileTextField;
   private JCheckBox myIncludeSystemProguardFileCheckBox;
+  private JBCheckBox myIncludeAssetsFromLibraries;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -343,6 +344,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (myConfiguration.PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
       return true;
     }
+    if (myConfiguration.isIncludeAssetsFromLibraries() != myIncludeAssetsFromLibraries.isSelected()) {
+      return true;
+    }
 
     if (checkRelativePath(myConfiguration.PROGUARD_CFG_PATH, myProguardConfigFileTextField.getText())) {
       return true;
@@ -464,6 +468,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
     
     myConfiguration.PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
+
+    myConfiguration.setIncludeAssetsFromLibraries(myIncludeAssetsFromLibraries.isSelected());
 
     String absProguardPath = myProguardConfigFileTextField.getText().trim();
     if (absProguardPath.length() == 0) {
@@ -619,11 +625,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
     myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.PACK_TEST_CODE);
+    myIncludeAssetsFromLibraries.setSelected(myConfiguration.isIncludeAssetsFromLibraries());
 
     updateAptPanel();
 
     final boolean lib = myConfiguration.LIBRARY_PROJECT;
-    myAssetsFolderField.setEnabled(!lib);
+    myIncludeAssetsFromLibraries.setEnabled(!lib);
   }
 
   @Nullable
