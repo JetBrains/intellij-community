@@ -95,7 +95,12 @@ public class PyExceptionBreakpointType
       final Pair<WeakReference<PyClass>, Boolean> pair = processedElements.get(key);
       boolean isException;
       if (pair == null || pair.first.get() != pyClass) {
-        isException = PyUtil.isExceptionClass(pyClass);
+        isException = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return PyUtil.isExceptionClass(pyClass);
+          }
+        });
         processedElements.put(key, Pair.create(new WeakReference<PyClass>(pyClass), isException));
       }
       else {
