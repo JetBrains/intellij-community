@@ -105,6 +105,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("B", "A", 0);
   }
 
+  public void testStaticImportAndOverridenMethods() throws Exception {
+    doTest("bar.B", "bar.A", 0);
+  }
+
   public void testWritableField() throws Exception {
     try {
       doTest("B", "A", 0);
