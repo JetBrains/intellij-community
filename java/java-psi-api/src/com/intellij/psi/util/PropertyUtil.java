@@ -506,6 +506,9 @@ public class PropertyUtil {
     modifierList.addAfter(factory.createAnnotationFromText("@" + annotationQName, listOwner), null);
   }
 
+  public static String suggestPropertyName(PsiField field) {
+    return suggestPropertyName(field.getProject(), field);
+  }
   public static String suggestPropertyName(Project project, PsiField field) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     VariableKind kind = codeStyleManager.getVariableKind(field);

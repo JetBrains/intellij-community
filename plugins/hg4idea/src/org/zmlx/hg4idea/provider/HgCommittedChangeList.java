@@ -32,4 +32,9 @@ public class HgCommittedChangeList extends CommittedChangeListImpl {
     return myVcs;
   }
 
+  @Override
+  public String toString() {
+    return getComment();
+  }
+
 }

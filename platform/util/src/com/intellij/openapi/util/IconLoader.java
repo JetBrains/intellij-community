@@ -259,11 +259,11 @@ public final class IconLoader {
     return Toolkit.getDefaultToolkit().createImage(prod);
   }
 
-  public static Icon getTransparentIcon(final Icon icon) {
+  public static Icon getTransparentIcon(@NotNull final Icon icon) {
     return getTransparentIcon(icon, 0.5f);
   }
 
-  public static Icon getTransparentIcon(final Icon icon, final float alpha) {
+  public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new Icon() {
       public int getIconHeight() {
         return icon.getIconHeight();

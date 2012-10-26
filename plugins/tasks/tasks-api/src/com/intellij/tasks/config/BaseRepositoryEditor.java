@@ -25,10 +25,9 @@ import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +64,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JBLabel myComment;
   private JPanel myEditorPanel;
   protected JBCheckBox myLoginAnonymouslyJBCheckBox;
+  protected JBTabbedPane myTabbedPane;
 
   private boolean myApplying;
   protected Project myProject;
@@ -113,7 +113,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
     myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
-    myEditorPanel.add(ScrollPaneFactory.createScrollPane(myEditor.getComponent(), SideBorder.NONE), BorderLayout.CENTER);
+    myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
     myComment.setText("Available placeholders: " + repository.getComment());
 
     installListener(myAddCommitMessage);
@@ -139,11 +139,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
   }
 
-  protected void loginAnonymouslyChanged(boolean enabled) {
+  private void loginAnonymouslyChanged(boolean enabled) {
     myUsernameLabel.setEnabled(enabled);
     myUserNameText.setEnabled(enabled);
     myPasswordLabel.setEnabled(enabled);
     myPasswordText.setEnabled(enabled);
+    myUseHTTPAuthentication.setEnabled(enabled);
   }
 
   @Nullable

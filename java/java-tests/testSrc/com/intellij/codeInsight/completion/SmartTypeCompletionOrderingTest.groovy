@@ -21,7 +21,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "b", "foo", "fooBean239", "this", "getName");
+    checkPreferredItems(0, "name", "getName", "b", "foo", "fooBean239", "this");
   }
   
   public void testJComponentAddNew() throws Throwable {
@@ -161,7 +161,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferParametersToGetters() throws Throwable {
-    checkPreferredItems(0, "a", "getLastI");
+    checkPreferredItems(0, "a", "I._1", "valueOf", "getLastI");
   }
 
   public void testExpectedInterfaceShouldGoFirst() throws Throwable {
@@ -178,7 +178,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferNonRecursiveMethodParams() throws Throwable {
-    checkPreferredItems(0, "b", "s", "a", "hashCode");
+    checkPreferredItems(0, "b", "hashCode", "s", "a");
   }
 
   public void testPreferDelegatingMethodParams() throws Throwable {
@@ -222,7 +222,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testFactoryMethodForDefaultType() throws Throwable {
-    checkPreferredItems(0, "create", "this", "map", "getClass");
+    checkPreferredItems(0, "create", "this", "getClass");
   }
 
   public void testLocalVarsBeforeClassLiterals() throws Throwable {

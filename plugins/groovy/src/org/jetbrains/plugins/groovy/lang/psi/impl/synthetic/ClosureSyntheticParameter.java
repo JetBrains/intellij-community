@@ -80,7 +80,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  public GrExpression getDefaultInitializer() {
+  public GrExpression getInitializerGroovy() {
     return GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("null");
   }
 }

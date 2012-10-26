@@ -116,7 +116,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   }
 
 
-  //todo: see GrModifierListImpl.hasModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(property);
@@ -320,5 +319,34 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
       deleteChildInternal(findNotNullChildByType(GroovyTokenTypes.mASSIGN).getNode());
     }
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    if (getParent() instanceof GrTupleDeclaration) {
+      throw new UnsupportedOperationException("don't invoke 'setInitializer()' for tuple declaration");
+    }
+
+    GrExpression oldInitializer = getInitializerGroovy();
+    if (initializer == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
+        if (assign != null) {
+          assign.delete();
+        }
+      }
+      return;
+    }
+
+
+    if (oldInitializer != null) {
+      oldInitializer.replaceWithExpression(initializer, true);
+    }
+    else {
+      getNode().addLeaf(TokenType.WHITE_SPACE, " ", null);
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", null);
+      addAfter(initializer, getLastChild());
+    }
   }
 }

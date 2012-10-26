@@ -449,7 +449,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       GrParameter grParam = (GrParameter)param;
       GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, true, buffer);
 
-      final GrExpression initializer = grParam.getDefaultInitializer();
+      final GrExpression initializer = grParam.getInitializerGroovy();
       if (initializer != null) {
         buffer.append(" = ").append(initializer.getText());
       }

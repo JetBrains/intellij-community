@@ -45,7 +45,7 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   @Nullable
   public static GrExpression getDefaultInitializer(PsiParameter parameter) {
-    return parameter instanceof GrParameter ? ((GrParameter)parameter).getDefaultInitializer() : null;
+    return parameter instanceof GrParameter ? ((GrParameter)parameter).getInitializerGroovy() : null;
   }
 
   public static boolean isParameterOptional(PsiParameter parameter) {

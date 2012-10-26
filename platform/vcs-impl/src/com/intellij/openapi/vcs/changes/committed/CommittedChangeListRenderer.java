@@ -57,13 +57,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   }
 
   public static Pair<String, Boolean> getDescriptionOfChangeList(final String text) {
-    String description = text;
-    int pos = description.indexOf("\n");
-    if (pos >= 0) {
-      description = description.substring(0, pos).trim();
-      return new Pair<String, Boolean>(description, Boolean.TRUE);
-    }
-    return new Pair<String, Boolean>(description, Boolean.FALSE);
+    return new Pair<String, Boolean>(text.replaceAll("\n", " // "), text.contains("\n"));
   }
 
   public static String truncateDescription(final String initDescription, final FontMetrics fontMetrics, int maxWidth) {

@@ -64,9 +64,6 @@ public class JavaCompletionSorting {
     else {
       afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
-    if (!JavaCompletionData.START_FOR.accepts(position)) {
-      afterPriority.add(new PreferByKindWeigher(type, position));
-    }
     ContainerUtil.addIfNotNull(afterPriority, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {
       afterPriority.add(new PreferExpected(false, expectedTypes));
@@ -117,7 +114,8 @@ public class JavaCompletionSorting {
       });
     }
     sorter = sorter.weighAfter("priority", afterPriority.toArray(new LookupElementWeigher[afterPriority.size()]));
-    sorter = sorter.weighAfter("prefix", new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(), new PreferEnumConstants(parameters));
+    sorter = sorter.weighAfter("prefix", new PreferByKindWeigher(type, position));
+    sorter = sorter.weighAfter("stats", new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(), new PreferEnumConstants(parameters));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
     return result.withRelevanceSorter(sorter);
   }
