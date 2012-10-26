@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
-    @NonNls public String STRIP_TRAILING_SPACES = "Changed";
+    @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = 500;
@@ -109,6 +110,8 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
+  @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
+  @interface StripTrailingSpaces {}
 
   @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
 
@@ -356,12 +359,13 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setEnsureNewLineAtEOF(boolean ensure) {
     myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
   }
-  
+
+  @StripTrailingSpaces
   public String getStripTrailingSpaces() {
     return myOptions.STRIP_TRAILING_SPACES;
   } // TODO: move to CodeEditorManager or something else
 
-  public void setStripTrailingSpaces(String stripTrailingSpaces) {
+  public void setStripTrailingSpaces(@StripTrailingSpaces String stripTrailingSpaces) {
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
   }
 
