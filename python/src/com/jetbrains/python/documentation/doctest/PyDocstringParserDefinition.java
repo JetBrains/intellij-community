@@ -27,7 +27,7 @@ public class PyDocstringParserDefinition extends PythonParserDefinition {
   @NotNull
   @Override
   public PsiParser createParser(Project project) {
-    return new PyDocstingParser();
+    return new PyDocstringParser();
   }
 
 
