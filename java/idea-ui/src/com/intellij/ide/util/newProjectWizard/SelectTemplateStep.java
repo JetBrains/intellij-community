@@ -476,6 +476,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
+  public void addSettingsComponent(JComponent component) {
+    myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+  }
+
+  @Override
   public void addExpertPanel(JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
