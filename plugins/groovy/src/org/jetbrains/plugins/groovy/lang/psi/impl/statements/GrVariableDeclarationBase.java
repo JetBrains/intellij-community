@@ -140,6 +140,10 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
     return findChildByClass(GrTypeElement.class);
   }
 
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitVariableDeclaration(this);
+  }
+
   public static class GrVariables extends GrVariableDeclarationBase implements StubBasedPsiElement<EmptyStub> {
 
     public GrVariables(@NotNull ASTNode node) {
@@ -148,10 +152,6 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
 
     public GrVariables(EmptyStub stub) {
       super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
-    }
-
-    public void accept(GroovyElementVisitor visitor) {
-      visitor.visitVariableDeclaration(this);
     }
 
     public String toString() {
