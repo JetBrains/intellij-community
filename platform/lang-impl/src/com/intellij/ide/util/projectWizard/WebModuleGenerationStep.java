@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -279,6 +280,12 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
         @Override
         public JComponent getComponent() {
           return new JLabel("No extra files will be created.");
+        }
+
+        @Nullable
+        @Override
+        public Pair<String, JComponent> getSettingsField() {
+          return null;
         }
 
         @NotNull

@@ -17,7 +17,11 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.codeStyle.DefaultCodeStyleFacade;
-import com.intellij.mock.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.mock.MockCommandProcessor;
+import com.intellij.mock.MockEditorFactory;
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -91,6 +95,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     final ProjectManager projectManager = EasyMock.createMock(ProjectManager.class);
     myDocumentManager = new MyMockFileDocumentManager(virtualFileManager, projectManager);
     getApplication().registerService(FileDocumentManager.class, myDocumentManager);
+    getApplication().registerService(DataManager.class, new DataManagerImpl());
   }
 
   public void testGetCachedDocument_Cached() throws Exception {

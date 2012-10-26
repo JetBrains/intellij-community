@@ -63,21 +63,24 @@ public class CommandLineApplication {
   }
 
   public static class MyDataManagerImpl extends DataManagerImpl {
-    
+    @Override
     @NotNull
     public DataContext getDataContext() {
       return new CommandLineDataContext();
     }
 
+    @Override
     public DataContext getDataContext(Component component) {
       return getDataContext();
     }
 
+    @Override
     public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();
     }
 
     private static class CommandLineDataContext extends UserDataHolderBase implements DataContext {
+      @Override
       public Object getData(String dataId) {
         return ourInstance.getData(dataId);
       }

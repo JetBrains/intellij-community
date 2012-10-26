@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -118,7 +119,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     myNamePathComponent = initNamePathComponent(context);
     mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
-    bindTo();
+    bindModuleSettings();
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
@@ -309,7 +310,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
     mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myModuleBuilder != null);
+    myExpertPlaceholder.setVisible(myModuleBuilder != null && !myModuleBuilder.isTemplateBased());
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
@@ -340,7 +341,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   public boolean validate() throws ConfigurationException {
     ProjectTemplate template = getSelectedTemplate();
     if (template == null) {
-      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myWizardContext.getPresentationName()));
+      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myWizardContext.getPresentationName()), "Error");
+    }
+    ValidationInfo info = template.validateSettings();
+    if (info != null) {
+      throw new ConfigurationException(info.message, "Error");
     }
     if (mySettingsCallback != null) {
       return mySettingsCallback.validate();
@@ -476,6 +481,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
+  public void addSettingsComponent(JComponent component) {
+    myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+  }
+
+  @Override
   public void addExpertPanel(JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -519,7 +530,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
   }
 
-  public void bindTo() {
+  public void bindModuleSettings() {
 
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
