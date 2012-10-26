@@ -162,7 +162,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(file, true);
-      if (svnStatus == null) {
+      if (svnStatus == null || itemExists(svnStatus) && SVNRevision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
         // IDEADEV-21785 (no idea why this can happen)
         final SVNInfo info = myVcs.createWCClient().doInfo(file, SVNRevision.HEAD);
         if (info == null || info.getURL() == null) {
@@ -171,8 +171,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
         }
         return createResult(info.getCommittedRevision(), true, false);
       }
-      final boolean exists = ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
-        ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
+      final boolean exists = itemExists(svnStatus);
       if (! exists) {
         // get really latest revision
         final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
@@ -190,5 +189,10 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
       LOG.debug(e);    // most likely the file is unversioned
       return defaultResult();
     }
+  }
+
+  private boolean itemExists(SVNStatus svnStatus) {
+    return ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
+      ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
   }
 }
