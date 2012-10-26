@@ -139,7 +139,7 @@ public class XsltCommandLineState extends CommandLineState {
         vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
         final PluginId pluginId = PluginManager.getPluginByClassName(getClass().getName());
-        assert pluginId != null || System.getProperty("xslt.plugin.path") != null;
+        assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
 
         final File pluginPath;
         if (pluginId != null) {
