@@ -28,7 +28,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
 
   @Override
   protected boolean isInheritor(PyClass baseClass, PyClass aClass) {
-    return getSubclasses(aClass).contains(baseClass);
+    return getSubclasses(baseClass).contains(aClass);
   }
 
   @Override
