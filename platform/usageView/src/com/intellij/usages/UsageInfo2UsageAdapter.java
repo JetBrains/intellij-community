@@ -37,16 +37,16 @@ import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,9 +64,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       return new UsageInfo2UsageAdapter(usageInfo);
     }
   };
+  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = new Comparator<UsageInfo>() {
+    @Override
+    public int compare(UsageInfo o1, UsageInfo o2) {
+      return o1.getNavigationOffset() - o2.getNavigationOffset();
+    }
+  };
 
   private final UsageInfo myUsageInfo;
-  private final List<UsageInfo> myMergedUsageInfos = new SmartList<UsageInfo>(); // contains all merged infos, including myUsageInfo
+  @NotNull
+  private Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
   protected Icon myIcon;
@@ -74,7 +81,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   public UsageInfo2UsageAdapter(@NotNull final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
-    myMergedUsageInfos.add(usageInfo);
+    myMergedUsageInfos = usageInfo;
 
     Pair<Integer,Integer> data =
     ApplicationManager.getApplication().runReadAction(new Computable<Pair<Integer,Integer>>() {
@@ -140,7 +147,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (element == null || !element.isValid()) {
       return false;
     }
-    for (UsageInfo usageInfo : myMergedUsageInfos) {
+    for (UsageInfo usageInfo : getMergedInfos()) {
       if (usageInfo.getSegment() == null) return false;
     }
     return true;
@@ -186,7 +193,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   // must iterate in start offset order
   public boolean processRangeMarkers(@NotNull Processor<Segment> processor) {
-    for (UsageInfo usageInfo : myMergedUsageInfos) {
+    for (UsageInfo usageInfo : getMergedInfos()) {
       Segment segment = usageInfo.getSegment();
       if (segment != null && !processor.process(segment)) {
         return false;
@@ -312,13 +319,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
     assert u2 != this;
     if (myLineNumber != u2.myLineNumber || !Comparing.equal(getFile(), u2.getFile())) return false;
-    myMergedUsageInfos.addAll(u2.myMergedUsageInfos);
-    Collections.sort(myMergedUsageInfos, new Comparator<UsageInfo>() {
-      @Override
-      public int compare(UsageInfo o1, UsageInfo o2) {
-        return o1.getNavigationOffset() - o2.getNavigationOffset();
-      }
-    });
+    UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
+    myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
+    Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
     initChunks();
     return true;
   }
@@ -326,11 +329,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!myMergedUsageInfos.isEmpty()) {
-      myMergedUsageInfos.clear();
-      myMergedUsageInfos.add(myUsageInfo);
-      initChunks();
-    }
+    myMergedUsageInfos = myUsageInfo;
+    initChunks();
   }
 
   @Override
@@ -404,14 +404,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
     }
     if (key == UsageView.USAGE_INFO_LIST_KEY) {
-      List<UsageInfo> list = getSelectedInfoList();
+      List<UsageInfo> list = Arrays.asList(getMergedInfos());
       sink.put(UsageView.USAGE_INFO_LIST_KEY, list);
     }
   }
 
   @NotNull
-  private List<UsageInfo> getSelectedInfoList() {
-    return myMergedUsageInfos;
+  private UsageInfo[] getMergedInfos() {
+    Object infos = myMergedUsageInfos;
+    return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
 
   private long myModificationStamp;
