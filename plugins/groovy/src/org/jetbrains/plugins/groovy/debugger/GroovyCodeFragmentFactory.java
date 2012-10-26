@@ -145,7 +145,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
                     "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
                     "   final java.lang.Class |c = |loader.parseClass(");
-    javaText.append("\"" + IMPORTS + "class DUMMY").append(new Random().nextInt(239)).append(" { ").append("public groovy.lang.Closure ")
+    javaText.append("\"" + IMPORTS + "class DUMMY").append(" { ").append("public groovy.lang.Closure ")
       .append(EVAL_NAME).append(" = {").append(TEXT).append("}}\"");
     javaText.append(", \"DUMMY.groovy\");\n" +
                     "   int |i;\n" +
@@ -175,7 +175,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 
-    String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
+    String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$_" + new Random().nextInt(42));
     hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
     final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
     JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
