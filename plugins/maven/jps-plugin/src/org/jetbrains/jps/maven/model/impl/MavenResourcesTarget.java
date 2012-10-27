@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -39,6 +40,19 @@ import java.util.*;
  *         Date: 10/21/12
  */
 public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
+
+  private static final Comparator<String> STRING_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return o1.compareTo(o2);
+    }
+  };
+  private static final Comparator<ResourceRootConfiguration> ROOT_CONFIG_COMPARATOR = new Comparator<ResourceRootConfiguration>() {
+    @Override
+    public int compare(ResourceRootConfiguration o1, ResourceRootConfiguration o2) {
+      return STRING_COMPARATOR.compare(o1.directory, o2.directory);
+    }
+  };
 
   MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
@@ -67,7 +81,10 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   }
 
   private List<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
-    final MavenModuleResourceConfiguration moduleConfig = getModuleResourcesConfiguration(dataPaths);
+    return getRootConfigurations(getModuleResourcesConfiguration(dataPaths));
+  }
+
+  private List<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
     if (moduleConfig != null) {
       return isTests() ? moduleConfig.myTestResources : moduleConfig.myResources;
     }
@@ -130,5 +147,39 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
     }
     final File targetPathFile = new File(targetPath);
     return targetPathFile.isAbsolute()? targetPathFile : new File(moduleOutput, targetPath);
+  }
+
+  @Override
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+    final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
+    if (configuration != null) {
+      out.write(configuration.escapeString);
+
+      out.write(String.valueOf(configuration.myProperties.hashCode()));
+
+      writeStringCollection(out, configuration.getFiltetingExcludedExtensions());
+
+      final List<ResourceRootConfiguration> sorted = new ArrayList<ResourceRootConfiguration>(getRootConfigurations(configuration));
+      Collections.sort(sorted, ROOT_CONFIG_COMPARATOR);
+      for (ResourceRootConfiguration root : sorted) {
+        writeResourceRoot(out, root);
+      }
+    }
+  }
+
+  private static void writeResourceRoot(PrintWriter out, ResourceRootConfiguration rootConfig) {
+    out.write(rootConfig.directory);
+    out.write(rootConfig.targetPath == null? "" : FileUtil.toSystemIndependentName(rootConfig.targetPath));
+    out.write(rootConfig.isFiltered? "f" : "n");
+    writeStringCollection(out, rootConfig.includes);
+    writeStringCollection(out, rootConfig.excludes);
+  }
+
+  private static void writeStringCollection(PrintWriter out, Collection<String> collection) {
+    List<String> sorted = new ArrayList<String>(collection);
+    Collections.sort(sorted, STRING_COMPARATOR);
+    for (String extension : sorted) {
+      out.write(extension);
+    }
   }
 }

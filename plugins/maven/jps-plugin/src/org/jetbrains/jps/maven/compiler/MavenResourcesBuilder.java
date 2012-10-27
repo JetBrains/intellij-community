@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -16,6 +17,7 @@ import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -42,6 +44,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     if (config == null) {
       return;
     }
+    final SourceToOutputMapping srcOutMapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     final Set<String> filteringExcludedExtensions = config.getFiltetingExcludedExtensions();
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
       @Override
@@ -59,6 +62,18 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
             // todo: support filtering
             FileUtil.copyContent(file, outputFile);
             outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
+          }
+        }
+        else {
+          if (!context.isProjectRebuild()) {
+            // check if the file has been copied before
+            final Collection<String> outputs = srcOutMapping.getOutputs(sourcePath);
+            if (outputs != null) {
+              for (String output : outputs) {
+                new File(output).delete();
+              }
+              srcOutMapping.remove(sourcePath);
+            }
           }
         }
         return true;
