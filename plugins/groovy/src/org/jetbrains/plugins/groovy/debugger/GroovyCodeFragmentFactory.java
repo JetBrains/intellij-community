@@ -160,19 +160,15 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("|closure.setDelegate(|thiz0);\n");
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-      javaText.append("|thiz0.setMetaClass(|emc);\n");
     } else {
       javaText.append("|emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |emc);\n");
     }
     javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
       javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \"").append(EVAL_NAME).append("\", |resVals);\n");
-      javaText.append("|thiz0.setMetaClass(|mc);"); //try/finally is not supported
     } else {
       javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
-      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |mc);\n");
     }
     javaText.append("if (|res instanceof java.lang.Boolean) ((java.lang.Boolean) |res).booleanValue() else |res");
 
