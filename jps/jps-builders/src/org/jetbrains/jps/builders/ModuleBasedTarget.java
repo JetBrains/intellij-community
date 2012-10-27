@@ -21,4 +21,23 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
   }
 
   public abstract boolean isTests();
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || !(o instanceof ModuleBasedTarget)) {
+      return false;
+    }
+
+    ModuleBasedTarget target = (ModuleBasedTarget)o;
+    return getTargetType() == target.getTargetType() && getId().equals(target.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * getId().hashCode() + getTargetType().hashCode();
+  }
+
 }

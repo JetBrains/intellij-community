@@ -119,22 +119,4 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
   public String getPresentableName() {
     return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || !(o instanceof ModuleBuildTarget)) {
-      return false;
-    }
-
-    ModuleBuildTarget target = (ModuleBuildTarget)o;
-    return myTargetType == target.myTargetType && myModuleName.equals(target.myModuleName);
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * myModuleName.hashCode() + myTargetType.hashCode();
-  }
 }
