@@ -20,9 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
@@ -40,19 +38,10 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 10/21/12
  */
-public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescriptor>{
-  @NotNull
-  private final JpsModule myModule;
+public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
 
   MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
-    super(type);
-    myModule = module;
-  }
-
-  @NotNull
-  @Override
-  public JpsModule getModule() {
-    return myModule;
+    super(type, module);
   }
 
   @Override
@@ -61,9 +50,8 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
-    final MavenResourcesTargetType type = (MavenResourcesTargetType)getTargetType();
-    final JavaModuleBuildTargetType targetType = type.isTests() ? JavaModuleBuildTargetType.TEST : JavaModuleBuildTargetType.PRODUCTION;
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
+    final JavaModuleBuildTargetType targetType = isTests() ? JavaModuleBuildTargetType.TEST : JavaModuleBuildTargetType.PRODUCTION;
     return Collections.<BuildTarget<?>>singletonList(new ModuleBuildTarget(myModule, targetType));
   }
 
@@ -91,7 +79,7 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
     return projectConfig.moduleConfigurations.get(myModule.getName());
   }
 
-  private boolean isTests() {
+  public boolean isTests() {
     return ((MavenResourcesTargetType)getTargetType()).isTests();
   }
 

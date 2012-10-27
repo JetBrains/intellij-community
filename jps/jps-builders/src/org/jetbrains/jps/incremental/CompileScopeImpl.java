@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -51,7 +52,7 @@ public class CompileScopeImpl extends CompileScope {
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
-    final JpsModule module = target.getModule();
+    final JpsModule module = target instanceof ModuleBasedTarget ? ((ModuleBasedTarget)target).getModule() : null;
     if (module != null) {
       // this target is associated with module
       for (JavaModuleBuildTargetType moduleType : JavaModuleBuildTargetType.ALL_TYPES) {

@@ -972,7 +972,7 @@ public class IncProjectBuilder {
           configuration.save();
         }
         else if (pd.fsState.markInitialScanPerformed(target)) {
-          if (target.getModule() != null) {
+          if (target instanceof ModuleBasedTarget) {
             initTargetFSState(context, target, false);
           }
           else {

@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -31,16 +33,14 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
-  private final JpsModule myModule;
+public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
-    super(targetType);
+    super(targetType, module);
     myTargetType = targetType;
     myModuleName = module.getName();
-    myModule = module;
   }
 
   @Nullable
@@ -55,16 +55,11 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
     return outputDir != null? Collections.singleton(outputDir) : Collections.<File>emptyList();
   }
 
-  @Override
-  @NotNull
-  public JpsModule getModule() {
-    return myModule;
-  }
-
   public String getModuleName() {
     return myModuleName;
   }
 
+  @Override
   public boolean isTests() {
     return myTargetType.isTests();
   }
@@ -75,7 +70,7 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();

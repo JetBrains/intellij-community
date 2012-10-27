@@ -3,10 +3,9 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
@@ -46,7 +45,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
     JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), new Processor<JpsPackagingElement>() {
       @Override
@@ -64,6 +63,16 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
         return true;
       }
     });
+    if (!dependencies.isEmpty()) {
+      final List<BuildTarget<?>> additional = new SmartList<BuildTarget<?>>();
+      for (BuildTarget<?> dependency : dependencies) {
+        if (dependency instanceof ModuleBasedTarget<?>) {
+          final ModuleBasedTarget target = (ModuleBasedTarget)dependency;
+          additional.addAll(targetRegistry.getModuleBasedTargets(target.getModule(), target.isTests()? BuildTargetRegistry.ModuleTargetSelector.TEST : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
+        }
+      }
+      dependencies.addAll(additional);
+    }
     return dependencies;
   }
 
