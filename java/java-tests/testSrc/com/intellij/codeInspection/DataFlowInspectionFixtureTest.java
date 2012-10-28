@@ -83,4 +83,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
 
+  public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
+
 }

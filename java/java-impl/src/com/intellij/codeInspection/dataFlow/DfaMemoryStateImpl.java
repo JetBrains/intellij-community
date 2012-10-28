@@ -277,6 +277,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(compareToNull(var, true));
     }
     else if (value instanceof DfaTypeValue) {
+      getVariableState(var).setNullable(((DfaTypeValue)value).isNullable());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       applyInstanceofOrNull(dfaInstanceof);
     }
