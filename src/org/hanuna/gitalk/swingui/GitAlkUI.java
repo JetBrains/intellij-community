@@ -20,7 +20,9 @@ public class GitAlkUI extends JFrame {
         table.setRowHeight(GraphCell.HEIGHT_CELL);
         table.setShowHorizontalLines(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-
+        table.getColumnModel().getColumn(0).setPreferredWidth(800);
+        table.getColumnModel().getColumn(1).setMinWidth(80);
+        table.getColumnModel().getColumn(2).setMinWidth(80);
 
         getContentPane().add(new JScrollPane(table));
         pack();
