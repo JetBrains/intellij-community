@@ -8,7 +8,6 @@ import org.hanuna.gitalk.commitgraph.order.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.util.Iterator;
 
@@ -46,7 +45,7 @@ public class CommitRowListAdapter implements ReadOnlyList<CommitRow> {
 
             @Override
             public ReadOnlyList<SpecialNode> getSpecialNodes() {
-                return SimpleReadOnlyList.getEmpty();
+                return nodesAndEdges.getSpecialNodes(rowIndex);
             }
 
             @Override

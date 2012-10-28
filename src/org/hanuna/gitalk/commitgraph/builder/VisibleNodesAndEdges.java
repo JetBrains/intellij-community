@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.Edge;
+import org.hanuna.gitalk.commitgraph.SpecialNode;
 import org.hanuna.gitalk.commitgraph.hides.HideCommits;
 import org.hanuna.gitalk.commitgraph.order.MutableRowOfNode;
 import org.hanuna.gitalk.commitgraph.Node;
@@ -12,6 +13,10 @@ import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Current;
+import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Hide;
+import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Show;
 
 /**
  * @author erokhins
@@ -87,6 +92,33 @@ class VisibleNodesAndEdges {
         } else {
             return new InverseEdges(getDownEdges(rowIndex - 1));
         }
+    }
+
+    private SpecialNode createNode(RowOfNode row, SpecialNode.Type type, Commit commit) {
+        int index = row.getIndexOfCommit(commit);
+        assert index != -1 : "bad getVisibleNodes";
+        Node node = row.get(index);
+        return new SpecialNode(type, commit, node.getColorIndex(), index);
+    }
+
+    public ReadOnlyList<SpecialNode> getSpecialNodes(int rowIndex) {
+        checkRowIndex(rowIndex);
+        List<SpecialNode> list = new ArrayList<SpecialNode>();
+        RowOfNode currentRow = getVisibleNodes(rowIndex);
+        Commit currentCommit = commitsModel.get(rowIndex);
+        list.add(createNode(currentRow, Current, currentCommit));
+
+        ReadOnlyList<Commit> hideCommits = commitsModel.hidesCommits(rowIndex);
+        for (Commit hide : hideCommits) {
+            list.add(createNode(currentRow, Hide, hide));
+        }
+
+        ReadOnlyList<Commit> showCommits = commitsModel.showsCommits(rowIndex);
+        for (Commit show : showCommits) {
+            list.add(createNode(currentRow, Show, show));
+        }
+
+        return new SimpleReadOnlyList<SpecialNode>(list);
     }
 
 
