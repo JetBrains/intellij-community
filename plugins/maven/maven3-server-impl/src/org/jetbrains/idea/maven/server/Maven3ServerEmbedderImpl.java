@@ -80,6 +80,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   @NotNull private final DefaultPlexusContainer myContainer;
@@ -272,18 +273,11 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return createExecutionResult(file, result, listener.getRootNode());
   }
 
-  @NotNull
-  public MavenExecutionResult doResolveProject(@NotNull final File file,
-                                               @NotNull final List<String> activeProfiles,
-                                               List<ResolutionListener> listeners) throws RemoteException {
-    MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
-
-    ProjectBuildingRequest config = request.getProjectBuildingRequest();
-
+  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
 
-    config.setRepositorySession(repositorySession);
+    request.getProjectBuildingRequest().setRepositorySession(repositorySession);
 
     MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
     LegacySupport legacySupport = getComponent(LegacySupport.class);
@@ -292,51 +286,70 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
     legacySupport.setSession(mavenSession);
     try {
-      // copied from DefaultMavenProjectBuilder.buildWithDependencies
-      ProjectBuilder builder = getComponent(ProjectBuilder.class);
-      ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), config);
-      //builder.calculateConcreteState(project, config, false);
-
-      MavenProject project = buildingResult.getProject();
-
-      // copied from DefaultLifecycleExecutor.execute
-      //findExtensions(project);
-      // end copied from DefaultLifecycleExecutor.execute
-
-      //Artifact projectArtifact = project.getArtifact();
-      //Map managedVersions = project.getManagedVersionMap();
-      //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
-      project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-      //
-      ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-
-      ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-      resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-      resolutionRequest.setArtifact(project.getArtifact());
-      resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-      resolutionRequest.setLocalRepository(myLocalRepository);
-      resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-      resolutionRequest.setListeners(listeners);
-
-      resolutionRequest.setResolveRoot(false);
-      resolutionRequest.setResolveTransitively(true);
-
-      ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-      project.setArtifacts(result.getArtifacts());
-      // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-
-      return new MavenExecutionResult(project, new ArrayList<Exception>());
-    }
-    catch (Exception e) {
-      return handleException(e);
+      runnable.run();
     }
     finally {
       legacySupport.setSession(oldSession);
     }
   }
 
-  private MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
+  @NotNull
+  public MavenExecutionResult doResolveProject(@NotNull final File file,
+                                               @NotNull final List<String> activeProfiles,
+                                               final List<ResolutionListener> listeners) throws RemoteException {
+    final MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.<String>emptyList(), Collections.<String>emptyList());
+
+    final AtomicReference<MavenExecutionResult> ref = new AtomicReference<MavenExecutionResult>();
+
+    executeWithMavenSession(request, new Runnable() {
+      @Override
+      public void run() {
+        try {
+          // copied from DefaultMavenProjectBuilder.buildWithDependencies
+          ProjectBuilder builder = getComponent(ProjectBuilder.class);
+          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+          //builder.calculateConcreteState(project, config, false);
+
+          MavenProject project = buildingResult.getProject();
+
+          // copied from DefaultLifecycleExecutor.execute
+          //findExtensions(project);
+          // end copied from DefaultLifecycleExecutor.execute
+
+          //Artifact projectArtifact = project.getArtifact();
+          //Map managedVersions = project.getManagedVersionMap();
+          //ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
+          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+          //
+          ArtifactResolver resolver = getComponent(ArtifactResolver.class);
+
+          ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
+          resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
+          resolutionRequest.setArtifact(project.getArtifact());
+          resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
+          resolutionRequest.setLocalRepository(myLocalRepository);
+          resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+          resolutionRequest.setListeners(listeners);
+
+          resolutionRequest.setResolveRoot(false);
+          resolutionRequest.setResolveTransitively(true);
+
+          ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
+
+          project.setArtifacts(result.getArtifacts());
+          // end copied from DefaultMavenProjectBuilder.buildWithDependencies
+          ref.set(new MavenExecutionResult(project, new ArrayList<Exception>()));
+        }
+        catch (Exception e) {
+          ref.set(handleException(e));
+        }
+      }
+    });
+
+    return ref.get();
+  }
+
+  public MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
     throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
@@ -745,6 +758,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       new OperatingSystemProfileActivator()};
   }
 
-
+  public interface Computable<T> {
+    T compute();
+  }
 }
 

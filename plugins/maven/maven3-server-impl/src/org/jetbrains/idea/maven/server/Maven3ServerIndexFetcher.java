@@ -25,15 +25,14 @@ import org.apache.maven.wagon.authentication.AuthenticationException;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferListener;
 import org.apache.maven.wagon.repository.Repository;
-import org.sonatype.nexus.index.updater.ResourceFetcher;
+import org.sonatype.nexus.index.updater.AbstractResourceFetcher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.rmi.RemoteException;
 
-public class Maven3ServerIndexFetcher implements ResourceFetcher {
+public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
   private final String myOriginalRepositoryId;
   private final String myOriginalRepositoryUrl;
   private final WagonManager myWagonManager;
@@ -110,10 +109,5 @@ public class Maven3ServerIndexFetcher implements ResourceFetcher {
       newEx.initCause(e);
       throw newEx;
     }
-  }
-
-  @Override
-  public InputStream retrieve(String name) throws IOException, FileNotFoundException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

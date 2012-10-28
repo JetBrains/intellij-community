@@ -29,6 +29,9 @@ import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.source.ArchetypeDataSource;
 import org.apache.maven.archetype.source.ArchetypeDataSourceException;
+import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.wagon.events.TransferEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -48,7 +51,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
@@ -127,9 +129,9 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
   }
 
   @Override
-  public void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator)
+  public void updateIndex(int id, MavenServerSettings settings, final MavenServerProgressIndicator indicator)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
-    IndexingContext index = getIndex(id);
+    final IndexingContext index = getIndex(id);
 
     try {
       File repository = index.getRepository();
@@ -145,39 +147,51 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
         }
       }
       else {
-        Maven3ServerEmbedderImpl embedder = new Maven3ServerEmbedderImpl(settings);
+        final Maven3ServerEmbedderImpl embedder = new Maven3ServerEmbedderImpl(settings);
 
-        IndexUpdateRequest request = new IndexUpdateRequest(index);
+        MavenExecutionRequest r =
+          embedder.createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+
+        final IndexUpdateRequest request = new IndexUpdateRequest(index);
+
         try {
-          //request.setResourceFetcher(new MavenServerIndexFetcher(index.getRepositoryId(),
-          //                                                        index.getRepositoryUrl(),
-          //                                                        embedder.getComponent(WagonManager.class),
-          //                                                        new TransferListenerAdapter(indicator) {
-          //                                                          @Override
-          //                                                          protected void downloadProgress(long downloaded, long total) {
-          //                                                            super.downloadProgress(downloaded, total);
-          //                                                            try {
-          //                                                              myIndicator.setFraction(((double)downloaded) / total);
-          //                                                            }
-          //                                                            catch (RemoteException e) {
-          //                                                              throw new RuntimeRemoteException(e);
-          //                                                            }
-          //                                                          }
-          //
-          //                                                          @Override
-          //                                                          public void transferCompleted(TransferEvent event) {
-          //                                                            super.transferCompleted(event);
-          //                                                            try {
-          //                                                              myIndicator.setText2("Processing indices...");
-          //                                                            }
-          //                                                            catch (RemoteException e) {
-          //                                                              throw new RuntimeRemoteException(e);
-          //                                                            }
-          //                                                          }
-          //                                                        }));
-          //myUpdater.fetchAndUpdateIndex(request);
+          embedder.executeWithMavenSession(r, new Runnable() {
+            @Override
+            public void run() {
+              request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
+                                                                      index.getRepositoryUrl(),
+                                                                      embedder.getComponent(WagonManager.class),
+                                                                      new TransferListenerAdapter(indicator) {
+                                                                        @Override
+                                                                        protected void downloadProgress(long downloaded, long total) {
+                                                                          super.downloadProgress(downloaded, total);
+                                                                          try {
+                                                                            myIndicator.setFraction(((double)downloaded) / total);
+                                                                          }
+                                                                          catch (RemoteException e) {
+                                                                            throw new RuntimeRemoteException(e);
+                                                                          }
+                                                                        }
 
-          throw new UnsupportedOperationException();
+                                                                        @Override
+                                                                        public void transferCompleted(TransferEvent event) {
+                                                                          super.transferCompleted(event);
+                                                                          try {
+                                                                            myIndicator.setText2("Processing indices...");
+                                                                          }
+                                                                          catch (RemoteException e) {
+                                                                            throw new RuntimeRemoteException(e);
+                                                                          }
+                                                                        }
+                                                                      }));
+              try {
+                myUpdater.fetchAndUpdateIndex(request);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
         }
         finally {
           embedder.release();
