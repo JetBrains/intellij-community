@@ -81,23 +81,26 @@ class VisibleNodesAndEdges {
         RowOfNode thisRow = getVisibleNodes(rowIndex);
         RowOfNode nextRow = getVisibleNodes(rowIndex + 1);
         Commit mainCommit = commitsModel.get(rowIndex);
+        int mainIndex = thisRow.getIndexOfCommit(mainCommit);
+        Node mainNode = thisRow.get(mainIndex);
+            ReadOnlyList<Commit> parents = mainCommit.getParents();
+            for (int j = 0; j < parents.size(); j++) {
+                Commit parent = parents.get(j);
+                int index = nextRow.getIndexOfCommit(parent);
+                assert index != -1 : "bad hide commits model";
+                int colorIndex;
+                if (j == 0) {
+                    colorIndex = mainNode.getColorIndex();
+                } else {
+                    colorIndex = thisRow.getLastColorIndex() + j;
+                }
+                edges.add(new Edge(mainIndex, index, colorIndex));
+            }
+
+
         for (int i = 0; i < thisRow.size(); i++) {
             Node node = thisRow.get(i);
-            if (node.getCommit() == mainCommit) {
-                ReadOnlyList<Commit> parents = mainCommit.getParents();
-                for (int j = 0; j < parents.size(); j++) {
-                    Commit parent = parents.get(j);
-                    int index = nextRow.getIndexOfCommit(parent);
-                    assert index != -1 : "bad hide commits model";
-                    int colorIndex;
-                    if (j == 0) {
-                        colorIndex = node.getColorIndex();
-                    } else {
-                        colorIndex = thisRow.getLastColorIndex() + j;
-                    }
-                    edges.add(new Edge(i, index, colorIndex));
-                }
-            } else {
+            if (node.getCommit() != mainCommit) {
                 int index = nextRow.getIndexOfCommit(node.getCommit());
                 if (index != -1) {
                     edges.add(new Edge(i, index, node.getColorIndex()));
