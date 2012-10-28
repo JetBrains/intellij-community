@@ -14,7 +14,7 @@ import java.util.List;
 public class FullPreCalculateModel<T extends Indexed> implements CalculateModel<T> {
     private final List<T> calcList;
     private int size = -1;
-    private Calculator<T> calculator;
+    private Calculator<T> calculator = null;
 
     public FullPreCalculateModel() {
         this.calcList = new ArrayList<T>();
@@ -30,8 +30,8 @@ public class FullPreCalculateModel<T extends Indexed> implements CalculateModel<
 
     @Override
     public void prepare(Calculator<T> calculator, int size) {
-        T first = calculator.getFirst();
         assert size >= 0 : "bad size";
+        T first = calculator.getFirst();
         this.size = size;
         calcList.add(first);
         T t = first;

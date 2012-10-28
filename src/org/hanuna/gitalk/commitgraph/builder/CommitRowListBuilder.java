@@ -9,15 +9,15 @@ import org.hanuna.gitalk.commitgraph.order.RowOfNodeCalculator;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.CalculateModel;
-import org.hanuna.gitalk.common.calculatemodel.FullPreCalculateModel;
+import org.hanuna.gitalk.common.calculatemodel.PartSaveCalculateModel;
 
 /**
  * @author erokhins
  */
 public class CommitRowListBuilder {
     private final CommitsModel commitsModel;
-    public CalculateModel<RowOfNode> rowsModel = new FullPreCalculateModel<RowOfNode>();
-    public CalculateModel<HideCommits> hideModel = new FullPreCalculateModel<HideCommits>();
+    public CalculateModel<RowOfNode> rowsModel = new PartSaveCalculateModel<RowOfNode>();
+    public CalculateModel<HideCommits> hideModel = new PartSaveCalculateModel<HideCommits>();
     private int size;
 
     public CommitRowListBuilder(@NotNull CommitsModel commitsModel) {

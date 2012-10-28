@@ -18,6 +18,9 @@ public abstract class AbstractCalculator<M extends T, T extends Indexed> impleme
     @Override
     public T next(T prev, int steps) {
         assert prev.getRowIndex() + steps < this.size() && steps >= 0 : "bad count steps";
+        if (steps == 0) {
+            return prev;
+        }
         M row = this.createMutable(prev);
         for (int i = 0; i < steps; i++) {
             row = oneStep(row);
