@@ -34,12 +34,12 @@ public class MutableHideCommits implements HideCommits {
         this.rowIndex = rowIndex;
     }
 
-    public void add(int index, Commit commit) {
-        hideCommits.add(index, commit);
+    public void add(Commit commit) {
+        hideCommits.add(commit);
     }
 
-    public void remove(int index) {
-        hideCommits.remove(index);
+    public void remove(Commit commit) {
+        hideCommits.remove(commit);
     }
 
     public void setRowIndex(int newRowIndex) {

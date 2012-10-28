@@ -11,7 +11,7 @@ import java.util.Iterator;
  * @author erokhins
  */
 public class CommitsModel implements ReadOnlyList<Commit> {
-    private static final int HIDE_LIMIT = 15;
+    private static final int HIDE_LIMIT = 25;
     private static final int COUNT_SHOW = 3;
 
     public static CommitsModel buildModel(ReadOnlyList<Commit> commits) {
