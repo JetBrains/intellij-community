@@ -20,8 +20,10 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ import java.util.Set;
 public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
-  private final Set<BinopInstruction> myNotToReportReachability = new THashSet<BinopInstruction>();
+  private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
   private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNotNull = new FactoryMap<MethodCallInstruction, boolean[]>() {
     @Override
@@ -328,7 +330,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (isViaMethods(dfaLeft) || isViaMethods(dfaRight)) {
-      myNotToReportReachability.add(instruction);
+      ContainerUtil.addIfNotNull(myNotToReportReachability, instruction.getPsiAnchor());
     }
     myCanBeNullInInstanceof.add(instruction);
 
@@ -435,7 +437,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return myCanBeNullInInstanceof.contains(instruction);
   }
 
-  public boolean silenceConstantCondition(BranchingInstruction instruction) {
-    return instruction instanceof BinopInstruction && myNotToReportReachability.contains(instruction);
+  public boolean silenceConstantCondition(@Nullable PsiElement element) {
+    for (PsiElement skipped : myNotToReportReachability) {
+      if (PsiTreeUtil.isAncestor(element, skipped, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
