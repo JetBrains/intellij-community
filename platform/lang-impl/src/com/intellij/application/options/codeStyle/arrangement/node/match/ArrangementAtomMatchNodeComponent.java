@@ -103,7 +103,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
-    //myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myText = manager.getDisplayValue(condition);
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
