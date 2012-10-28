@@ -267,7 +267,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     flushVariable(var);
-    if (value instanceof DfaUnknownValue) return;
+    if (value instanceof DfaUnknownValue) {
+      getVariableState(var).setNullable(false);
+      return;
+    }
 
     getVariableState(var).setValue(value);
     if (value instanceof DfaNotNullValue) {
