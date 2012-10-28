@@ -58,8 +58,13 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleEncoding(target.getModule());
     final Date timestamp = new Date();
 
-    if (!context.isProjectRebuild()) {
-      cleanOutputsCorrespondingToChangedFiles(holder, context, target);
+    @Nullable
+    final Set<File> cleanedSources;
+    if (context.isProjectRebuild()) {
+      cleanedSources = null;
+    }
+    else {
+      cleanedSources = cleanOutputsCorrespondingToChangedFiles(holder, context, target);
     }
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
@@ -103,6 +108,9 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           FileUtil.copyContent(file, outputFile);
         }
         outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
+        if (cleanedSources != null) {
+          cleanedSources.remove(file);
+        }
         return true;
       }
 
@@ -130,14 +138,23 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       }
 
     });
+
+    if (cleanedSources != null) {
+      // cleanup mapping for the files that were copied before but not copied now
+      final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+      for (File file : cleanedSources) {
+        mapping.remove(file.getPath());
+      }
+    }
   }
 
-  private static void cleanOutputsCorrespondingToChangedFiles(
+  private static Set<File> cleanOutputsCorrespondingToChangedFiles(
     DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder,
     final CompileContext context,
     MavenResourcesTarget target) throws IOException {
 
     final THashSet<File> targetDirtyFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final THashSet<File> cleanedSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
       @Override
       public boolean apply(MavenResourcesTarget target, File file, MavenResourceRootDescriptor root) throws IOException {
@@ -155,10 +172,11 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           for (String output : outputs) {
             new File(output).delete();
           }
-          mapping.remove(path);
+          cleanedSources.add(dirtyFile);
         }
       }
     }
+    return cleanedSources;
   }
 
 

@@ -1121,6 +1121,7 @@ public class IncProjectBuilder {
     private final CompileContext myContext;
     private FileGeneratedEvent myFileGeneratedEvent;
     private Collection<File> myOutputs;
+    private THashSet<String> myRegisteredSources = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
     public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
       myTarget = target;
@@ -1141,7 +1142,12 @@ public class IncProjectBuilder {
       }
       final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
       for (String sourceFile : sourceFiles) {
-        mapping.appendOutput(sourceFile, outputFilePath);
+        if (myRegisteredSources.add(FileUtil.toSystemIndependentName(sourceFile))) {
+          mapping.setOutput(sourceFile, outputFilePath);
+        }
+        else {
+          mapping.appendOutput(sourceFile, outputFilePath);
+        }
       }
     }
 
