@@ -101,5 +101,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
 
 }

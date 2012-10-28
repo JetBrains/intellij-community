@@ -701,12 +701,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class ApplyNotNullInstruction extends Instruction {
+    private PsiMethodCallExpression myCall;
+
+    private ApplyNotNullInstruction(PsiMethodCallExpression call) {
+      myCall = call;
+    }
+
     @Override
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
       DfaValueFactory factory = runner.getFactory();
-      state.applyCondition(factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-      return nextInstruction(runner, state);
+      if (state.applyCondition(
+        factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true))) {
+        return nextInstruction(runner, state);
+      }
+      if (visitor instanceof StandardInstructionVisitor) {
+        ((StandardInstructionVisitor)visitor).skipConstantConditionReporting(myCall);
+      }
+      return DfaInstructionState.EMPTY_ARRAY;
     }
   }
 
@@ -1225,7 +1237,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
 
         paramExprs[0].accept(this);
-        addInstruction(new ApplyNotNullInstruction());
+        addInstruction(new ApplyNotNullInstruction(expression));
       }
     }
     finally {
