@@ -163,4 +163,5 @@ public final class Matcher {
   void testErasedArrayInitializer() { doTest() }
 
   void testTupleVariableDeclaration() {doTest()}
+  void testEmptyVarargs() { doTest() }
 }

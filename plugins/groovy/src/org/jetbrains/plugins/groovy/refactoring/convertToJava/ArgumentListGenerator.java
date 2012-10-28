@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullUtils;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -73,19 +70,20 @@ class ArgumentListGenerator {
 
     final Project project = context.getProject();
     myBuilder.append('(');
-    boolean hasArgs = false;
+    boolean hasCommaAtEnd = false;
     for (int i = 0; i < argInfos.length; i++) {
       GrClosureSignatureUtil.ArgInfo<PsiElement> arg = argInfos[i];
       if (arg == null) continue;
       final GrClosureParameter param = params[i];
-      if (arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project, context) : generateSingeArg(arg, param)) {
-        hasArgs = true;
+      boolean generated = arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project, context) : generateSingeArg(arg, param);
+      if (generated) {
+        hasCommaAtEnd = true;
         myBuilder.append(", ");
       }
     }
 
-    if (hasArgs) {
-      myBuilder.delete(myBuilder.length()-2, myBuilder.length());
+    if (hasCommaAtEnd) {
+      myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
       //myBuilder.removeFromTheEnd(2);
     }
 
@@ -127,7 +125,21 @@ class ArgumentListGenerator {
     final PsiType type = param.getType();
     //todo find out if param is array in case of it has declared type
 
-    if (type instanceof PsiArrayType) {
+    if (type instanceof PsiEllipsisType) {
+      for (PsiElement element : arg.args) {
+        LOG.assertTrue(element instanceof GrExpression);
+        ((GrExpression)element).accept(myExpressionGenerator);
+        myBuilder.append(", ");
+      }
+      if (arg.args.size() > 0) {
+        myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else if (type instanceof PsiArrayType) {
       myBuilder.append("new ");
       TypeWriter.writeTypeForNew(myBuilder, type, context);
       myBuilder.append("{");
@@ -137,7 +149,7 @@ class ArgumentListGenerator {
         ((GrExpression)element).accept(myExpressionGenerator);
         myBuilder.append(", ");
       }
-      if (arg.args.size() > 0) myBuilder.delete(myBuilder.length()- 2, myBuilder.length());
+      if (arg.args.size() > 0) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
       //if (arg.args.size() > 0) myBuilder.removeFromTheEnd(2);
       myBuilder.append('}');
     }
