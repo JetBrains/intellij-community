@@ -1,6 +1,8 @@
 package org.hanuna.gitalk.common.calculatemodel;
 
 import org.hanuna.gitalk.common.ReadOnlyIterator;
+import org.hanuna.gitalk.common.calculatemodel.calculator.Calculator;
+import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,7 +11,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class FullPreCalculateModel<T> implements CalculateModel<T> {
+public class FullPreCalculateModel<T extends Indexed> implements CalculateModel<T> {
     private final List<T> calcList;
     private int size = -1;
     private Calculator<T> calculator;
@@ -27,7 +29,8 @@ public class FullPreCalculateModel<T> implements CalculateModel<T> {
     }
 
     @Override
-    public void prepare(T first, Calculator<T> calculator, int size) {
+    public void prepare(Calculator<T> calculator, int size) {
+        T first = calculator.getFirst();
         assert size >= 0 : "bad size";
         this.size = size;
         calcList.add(first);
