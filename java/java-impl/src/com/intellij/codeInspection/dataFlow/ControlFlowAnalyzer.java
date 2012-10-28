@@ -213,7 +213,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiElement[] elements = statement.getDeclaredElements();
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) {
-        element.accept(this);
+        addInstruction(new EmptyInstruction(element));
       }
       else if (element instanceof PsiVariable) {
         PsiVariable variable = (PsiVariable)element;
@@ -306,7 +306,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiStatement body = ((PsiForeachStatement)continuedStatement).getBody();
         offset = myPass1Flow.getEndOffset(body);
       }
-      Instruction instruction = offset == -1 ? new EmptyInstruction() : new GotoInstruction(offset);
+      Instruction instruction = offset == -1 ? new EmptyInstruction(null) : new GotoInstruction(offset);
       addInstruction(instruction);
     }
     finishElement(statement);

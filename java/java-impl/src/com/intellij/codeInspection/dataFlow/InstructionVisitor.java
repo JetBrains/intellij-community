@@ -161,4 +161,7 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
+  public DfaInstructionState[] visitEmptyInstruction(EmptyInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
+    return nextInstruction(instruction, runner, before);
+  }
 }
