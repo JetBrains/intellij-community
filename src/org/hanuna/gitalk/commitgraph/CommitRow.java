@@ -1,15 +1,15 @@
 package org.hanuna.gitalk.commitgraph;
 
-import java.util.List;
+import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 /**
  * @author erokhins
  */
 public interface CommitRow {
     public int count();
-    public int getIndexCommit(int position);
-    public int getMainPosition();
-    public int getMainColorIndex();
-    public List<Edge> getUpEdges(int position);
-    public List<Edge> getDownEdges(int position);
+    public Commit getCommit(int position);
+    public ReadOnlyList<SpecialNode> getSpecialNodes();
+    public ReadOnlyList<Edge> getUpEdges();
+    public ReadOnlyList<Edge> getDownEdges();
 }
