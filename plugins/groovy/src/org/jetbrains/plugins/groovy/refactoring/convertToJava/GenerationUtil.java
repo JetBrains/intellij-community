@@ -157,6 +157,16 @@ public class GenerationUtil {
                                         GrClosableBlock[] closureArgs,
                                         ExpressionGenerator expressionGenerator,
                                         GroovyPsiElement psiContext) {
+    GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
+    invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
+  }
+
+  public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
+                                                   String methodName,
+                                                   GrExpression[] exprs,
+                                                   GrNamedArgument[] namedArgs,
+                                                   GrClosableBlock[] closureArgs,
+                                                   GroovyPsiElement psiContext) {
     GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
 
     final PsiType type;
@@ -171,8 +181,7 @@ public class GenerationUtil {
       final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
       call = PsiImplUtil.extractUniqueResult(candidates);
     }
-
-    invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
+    return call;
   }
 
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
@@ -605,6 +614,26 @@ public class GenerationUtil {
     }
     else {
       return substitutor.substitute(method.getReturnType());
+    }
+  }
+
+  public static void wrapInCastIfNeeded(StringBuilder builder,
+                                        @NotNull PsiType expected,
+                                        @Nullable PsiType actual,
+                                        PsiElement context,
+                                        ExpressionContext expressionContext,
+                                        StatementWriter writer) {
+    if (actual != null && expected.isAssignableFrom(actual) || expected.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))  {
+      writer.writeStatement(builder, expressionContext);
+    }
+    else {
+      builder.append("((");
+
+      //todo check operator priority IDEA-93790
+      writeType(builder, expected, context);
+      builder.append(")(") ;
+      writer.writeStatement(builder, expressionContext);
+      builder.append("))");
     }
   }
 }
