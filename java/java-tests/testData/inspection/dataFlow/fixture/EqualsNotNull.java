@@ -62,7 +62,10 @@ public class Main {
     if (val != null) {
       return val;
     }
-    if (defVal == val) {
+    if (<warning descr="Condition 'defVal == val' is always 'false'">defVal == val</warning>) {
+      return val;
+    }
+    if (<warning descr="Condition 'val == defVal' is always 'false'">val == defVal</warning>) {
       return val;
     }
     if (defVal.equals(val)) {
