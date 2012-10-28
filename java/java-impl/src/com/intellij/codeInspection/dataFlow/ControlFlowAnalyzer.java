@@ -52,18 +52,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private Stack<CatchDescriptor> myCatchStack;
   private PsiType myRuntimeException;
   private final DfaValueFactory myFactory;
-  private boolean myHonorRuntimeExceptions = true;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory) {
     myFactory = valueFactory;
   }
 
-  private static class CantAnalyzeException extends RuntimeException {
-  }
-
-  public void setHonorRuntimeExceptions(final boolean honorRuntimeExceptions) {
-    myHonorRuntimeExceptions = honorRuntimeExceptions;
-  }
+  private static class CantAnalyzeException extends RuntimeException { }
 
   public ControlFlow buildControlFlow(PsiElement codeFragment) {
     if (codeFragment == null) return null;
@@ -774,8 +768,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       if (parameter != null && catchBlock != null) {
         for (PsiType type : section.getPreciseCatchTypes()) {
-          if (type instanceof PsiClassType &&
-              (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)type))) {
+          if (type instanceof PsiClassType) {
             myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
             catchesPushCount++;
           }

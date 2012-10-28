@@ -30,12 +30,6 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     return new MyDfaMemoryState(getFactory());
   }
 
-  protected ControlFlowAnalyzer createControlFlowAnalyzer() {
-    final ControlFlowAnalyzer analyzer = super.createControlFlowAnalyzer();
-    analyzer.setHonorRuntimeExceptions(false);
-    return analyzer;
-  }
-
   static class MyDfaMemoryState extends DfaMemoryStateImpl {
     private MyDfaMemoryState(final DfaValueFactory factory) {
       super(factory);
