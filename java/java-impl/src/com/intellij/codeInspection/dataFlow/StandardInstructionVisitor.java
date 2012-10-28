@@ -187,7 +187,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
       final int revIdx = args.length - i - 1;
-      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length) {
+      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length && !(i == args.length - 1 && instruction.isVarargCall())) {
         if (parametersNotNull[revIdx]) {
           if (!memState.applyNotNull(arg)) {
             onPassingNullParameter(runner, args[revIdx]);
