@@ -43,6 +43,10 @@ public class MavenModuleResourceConfiguration {
   @Tag("directory")
   public String directory;
 
+  @NotNull
+  @Tag("delimiters-pattern")
+  public String delimitersPattern;
+
   @Tag("model-map")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
   public Map<String, String> modelMap = new HashMap<String, String>();
@@ -81,6 +85,7 @@ public class MavenModuleResourceConfiguration {
     int result = id.hashCode();
     result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
     result = 31 * result + directory.hashCode();
+    result = 31 * result + delimitersPattern.hashCode();
     result = 31 * result + modelMap.hashCode();
     result = 31 * result + properties.hashCode();
     result = 31 * result + filteringExclusions.hashCode();

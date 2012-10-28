@@ -44,6 +44,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -1023,6 +1024,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
         }
         resourceConfig.directory = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
+        resourceConfig.delimitersPattern = MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern();
         for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
           final String key = entry.getKey();
           final String value = entry.getValue();
@@ -1103,7 +1105,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private static Properties getFilteringProperties(MavenProject mavenProject) {
-    final Properties properties = new Properties(mavenProject.getProperties());
+    final Properties properties = new Properties();
+    properties.putAll(mavenProject.getProperties());
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);

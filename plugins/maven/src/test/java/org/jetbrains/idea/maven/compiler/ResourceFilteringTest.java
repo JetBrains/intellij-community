@@ -19,16 +19,32 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class ResourceFilteringTest extends MavenImportingTestCase {
+public abstract class ResourceFilteringTest extends MavenImportingTestCase {
+
+  public static class IdeaModeTest extends ResourceFilteringTest {
+    @Override
+    protected boolean useJps() {
+      return false;
+    }
+  }
+
+  public static class JpsModeTest extends ResourceFilteringTest {
+    @Override
+    protected boolean useJps() {
+      return true;
+    }
+  }
 
   @Override
   protected boolean runInWriteAction() {
@@ -303,7 +319,14 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertResult("target/classes/file1.properties", "value=project");
-    assertResult("target/classes/file2.properties", "value=${project.artifactId}");
+    if (useJps()) {
+       // in jps only maven resource builder works for mavenized modules, so the file should not be copied at all
+      File file = new File(myProjectPom.getParent().getPath(), "target/classes/file2.properties");
+      assertFalse("The file should not be copied " + file.getPath(), file.exists());
+    }
+    else {
+      assertResult("target/classes/file2.properties", "value=${project.artifactId}");
+    }
   }
 
 
@@ -931,9 +954,16 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult(myProjectPom, relativePath, content);
   }
 
-  private static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
-    VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
-    assertNotNull("file not found: " + relativePath, file);
-    assertEquals(content, VfsUtil.loadText(file));
+  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+    if (useJps()) {
+      File file = new File(pomFile.getParent().getPath(), relativePath);
+      assertTrue("file not found: " + relativePath, file.exists());
+      assertEquals(content, new String(FileUtil.loadFileText(file)));
+    }
+    else {
+      VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
+      assertNotNull("file not found: " + relativePath, file);
+      assertEquals(content, VfsUtil.loadText(file));
+    }
   }
 }
