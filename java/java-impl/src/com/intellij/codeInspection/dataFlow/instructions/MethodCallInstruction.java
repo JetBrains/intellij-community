@@ -42,7 +42,6 @@ public class MethodCallInstruction extends Instruction {
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
   @Nullable private DfaValue myPrecalculatedReturnValue;
-  private boolean myVarargCall;
   public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
@@ -50,7 +49,6 @@ public class MethodCallInstruction extends Instruction {
   public MethodCallInstruction(@NotNull PsiCallExpression callExpression, @Nullable DfaValue precalculatedReturnValue) {
     this(callExpression, MethodType.REGULAR_METHOD_CALL);
     myPrecalculatedReturnValue = precalculatedReturnValue;
-    myVarargCall = calcIsVarargCall(callExpression);
   }
 
   public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
@@ -77,34 +75,6 @@ public class MethodCallInstruction extends Instruction {
   @Nullable
   public PsiType getResultType() {
     return myType;
-  }
-
-  public boolean isVarargCall() {
-    return myVarargCall;
-  }
-
-  private static boolean calcIsVarargCall(PsiCallExpression callExpression) {
-    PsiExpressionList argumentList = callExpression.getArgumentList();
-    if (argumentList != null) {
-      JavaResolveResult result = callExpression.resolveMethodGenerics();
-      PsiMethod method = (PsiMethod)result.getElement();
-      if (method != null && method.isVarArgs()) {
-        PsiType[] argTypes = argumentList.getExpressionTypes();
-        int argCount = argTypes.length;
-
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        int paramCount = parameters.length;
-
-        if (argCount > paramCount) {
-          return true;
-        }
-        PsiType lastParam = parameters[paramCount - 1].getType();
-        if (argCount == paramCount && !result.getSubstitutor().substitute(lastParam).isAssignableFrom(argTypes[argCount - 1])) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull

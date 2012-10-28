@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -102,5 +103,20 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
   public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+
+  public void testAnnotatedTypeParameters() throws Throwable {
+    myFixture.addClass("package foo; public @interface Nullable {}");
+    myFixture.addClass("package foo; public @interface NotNull {}");
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setNotNulls("foo.NotNull");
+    nnnManager.setNullables("foo.Nullable");
+    try {
+      doTest();
+    }
+    finally {
+      nnnManager.setNotNulls();
+      nnnManager.setNullables();
+    }
+  }
 
 }

@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
@@ -30,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,44 +41,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
-  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNotNull = new FactoryMap<MethodCallInstruction, boolean[]>() {
+  private final FactoryMap<MethodCallInstruction, Map<PsiExpression, Boolean>> myParametersNullability = new FactoryMap<MethodCallInstruction, Map<PsiExpression, Boolean>>() {
+    @Nullable
     @Override
-    protected boolean[] create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
-      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
-      if (callee != null) {
-        final PsiParameter[] params = callee.getParameterList().getParameters();
-        boolean[] result = new boolean[params.length];
-        for (int i = 0; i < params.length; i++) {
-          result[i] = NullableNotNullManager.getInstance(params[i].getProject()).isNotNull(params[i], false);
-        }
-        return result;
-      }
-      else {
-        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
-      }
+    protected Map<PsiExpression, Boolean> create(MethodCallInstruction key) {
+      return calcParameterNullability(key.getCallExpression());
     }
   };
-  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNonAnnotated = new FactoryMap<MethodCallInstruction, boolean[]>() {
-    @Override
-    protected boolean[] create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
-      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
-      if (callee != null) {
-        final PsiParameter[] params = callee.getParameterList().getParameters();
-        boolean[] result = new boolean[params.length];
-        final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(callee.getProject());
-        for (int i = 0; i < params.length; i++) {
-          result[i] = !notNullManager.isNotNull(params[i], false) && !notNullManager.isNullable(params[i], false);
-        }
-        return result;
-      }
-      else {
-        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
-      }
-    }
-  };
-  private final FactoryMap<MethodCallInstruction, Boolean> myCalleeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
+  private final FactoryMap<MethodCallInstruction, Boolean> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
     @Override
     protected Boolean create(MethodCallInstruction key) {
       final PsiCallExpression callExpression = key.getCallExpression();
@@ -85,20 +56,84 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return Boolean.FALSE;
       }
 
-      if (callExpression != null) {
-        final PsiMethod callee = callExpression.resolveMethod();
-        if (callee != null) {
-          if (NullableNotNullManager.isNullable(callee)) {
-            return Boolean.TRUE;
-          }
-          if (NullableNotNullManager.isNotNull(callee)) {
-            return Boolean.FALSE;
-          }
-        }
-      }
-      return null;
+      return callExpression != null ? getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
   };
+
+  private static Map<PsiExpression, Boolean> calcParameterNullability(@Nullable PsiCallExpression callExpression) {
+    PsiExpressionList argumentList = callExpression == null ? null : callExpression.getArgumentList();
+    if (argumentList != null) {
+      JavaResolveResult result = callExpression.resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)result.getElement();
+      if (method != null) {
+        PsiSubstitutor substitutor = result.getSubstitutor();
+        PsiExpression[] args = argumentList.getExpressions();
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        boolean varArg = isVarArgCall(method, substitutor, args, parameters);
+        int checkedCount = Math.min(args.length, parameters.length) - (varArg ? 1 : 0);
+
+        Map<PsiExpression, Boolean> map = ContainerUtil.newHashMap();
+        for (int i = 0; i < checkedCount; i++) {
+          map.put(args[i], getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
+        }
+        return map;
+      }
+    }
+    return Collections.emptyMap();
+  }
+
+  private static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
+    if (!method.isVarArgs()) {
+      return false;
+    }
+
+    int argCount = args.length;
+    int paramCount = parameters.length;
+    if (argCount > paramCount) {
+      return true;
+    }
+    else if (paramCount > 0) {
+      if (argCount == paramCount) {
+        PsiType lastArgType = args[argCount - 1].getType();
+        if (lastArgType != null &&
+            !substitutor.substitute(parameters[paramCount - 1].getType()).isAssignableFrom(lastArgType)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  @Nullable
+  private static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+    if (owner == null) {
+      return null;
+    }
+
+    if (NullableNotNullManager.isNullable(owner)) {
+      return Boolean.TRUE;
+    }
+    if (NullableNotNullManager.isNotNull(owner)) {
+      return Boolean.FALSE;
+    }
+
+    if (resultType != null) {
+      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
+      for (PsiAnnotation annotation : resultType.getAnnotations()) {
+        String qualifiedName = annotation.getQualifiedName();
+        if (nnn.getNullables().contains(qualifiedName)) {
+          return Boolean.TRUE;
+        }
+        if (nnn.getNotNulls().contains(qualifiedName)) {
+          return Boolean.FALSE;
+        }
+      }
+    }
+
+    return null;
+  }
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -181,24 +216,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final PsiExpression[] args = instruction.getArgs();
-    final boolean[] parametersNotNull = myParametersNotNull.get(instruction);
-    final boolean[] nonAnnotated = myParametersNonAnnotated.get(instruction);
+    Map<PsiExpression, Boolean> map = myParametersNullability.get(instruction);
     final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
-      final int revIdx = args.length - i - 1;
-      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length && !(i == args.length - 1 && instruction.isVarargCall())) {
-        if (parametersNotNull[revIdx]) {
-          if (!memState.applyNotNull(arg)) {
-            onPassingNullParameter(runner, args[revIdx]);
-            if (arg instanceof DfaVariableValue) {
-              memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
-            }
+      PsiExpression expr = args[(args.length - i - 1)];
+      if (map.get(expr) == Boolean.FALSE) {
+        if (!memState.applyNotNull(arg)) {
+          onPassingNullParameter(runner, expr);
+          if (arg instanceof DfaVariableValue) {
+            memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
           }
         }
-        else if (nonAnnotated[revIdx] && !memState.checkNotNullable(arg)) {
-          onPassingNullParameterToNonAnnotated(runner, args[revIdx]);
-        }
+      }
+      else if (map.containsKey(expr) && map.get(expr) == null && !memState.checkNotNullable(arg)) {
+        onPassingNullParameterToNonAnnotated(runner, expr);
       }
     }
 
@@ -236,7 +268,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
     if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
-      @Nullable final Boolean nullability = myCalleeNullability.get(instruction);
+      @Nullable final Boolean nullability = myReturnTypeNullability.get(instruction);
       return nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
     }
 
