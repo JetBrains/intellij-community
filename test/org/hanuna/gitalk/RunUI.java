@@ -1,8 +1,11 @@
 package org.hanuna.gitalk;
 
+import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
-import org.hanuna.gitalk.commitgraph.builder.RowOfNode;
+import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.order.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.swingui.GitAlkUI;
@@ -11,7 +14,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
-import java.util.List;
+
+import static org.hanuna.gitalk.TestUtils.toStr;
 
 /**
  * @author erokhins
@@ -25,7 +29,7 @@ public class RunUI {
         Process p = Runtime.getRuntime().exec("git log --all --date-order --format=%h|-%p|-%an|-%ct|-%s");
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-        ReadOnlyList<Commit> list = GitLogParser.parseCommitLog(r);
+        CommitsModel list = GitLogParser.parseCommitLog(r);
         date = new Date();
         System.out.println(date.getTime() - time);
         time = date.getTime();
@@ -63,16 +67,26 @@ public class RunUI {
         date = new Date();
         System.out.println(date.getTime() - time);
 
-        if (1 == 0) {
+        if (1 == 1) {
             CommitRowListBuilder builder = new CommitRowListBuilder(list);
-            List<RowOfNode> rows = builder.buildListLineOfNode();
 
+            ReadOnlyList<CommitRow> commitRows = builder.build();
 
             date = new Date();
             System.out.println(date.getTime() - time);
             System.out.println(list.size());
 
-            new GitAlkUI(builder.build(), list);
+        if (1 == 1) {
+            ReadOnlyList<RowOfNode> rows = builder.rowsModel;
+            for (RowOfNode row : rows) {
+                for (Node node : row) {
+                    System.out.print(toStr(node.getCommit().hash()) + ":" + node.getColorIndex() + " ");
+                }
+                System.out.println(row.getLastColorIndex());
+            }
+        }
+
+            new GitAlkUI(commitRows, list);
         }
         /*
         if (1 == 0) {
@@ -85,7 +99,7 @@ public class RunUI {
                 for (Node node : line) {
                     System.out.print(node.getCommitIndex() + ":" + node.getColorIndex() + " ");
                 }
-                System.out.println(line.getStartIndexColor() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
+                System.out.println(line.getLastColorIndex() + " " + line.getMainPosition() + " " + line.getCountAdditionEdges());
             }
         }*/
     }

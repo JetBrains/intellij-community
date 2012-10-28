@@ -1,10 +1,9 @@
 package org.hanuna.gitalk.parser;
 
-import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
 import java.io.BufferedReader;
@@ -49,7 +48,7 @@ public class GitLogParser {
         }
     }
 
-    public static ReadOnlyList<Commit> parseCommitLog(Reader inputReader) throws IOException {
+    public static CommitsModel parseCommitLog(Reader inputReader) throws IOException {
         BufferedReader input;
         if (inputReader instanceof BufferedReader) {
             input = (BufferedReader) inputReader;
