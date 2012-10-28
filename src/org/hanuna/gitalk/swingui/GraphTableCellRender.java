@@ -2,6 +2,7 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitgraph.Edge;
+import org.hanuna.gitalk.commitgraph.SpecialNode;
 import org.hanuna.gitalk.common.ReadOnlyList;
 
 import javax.swing.*;
@@ -59,6 +60,25 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         g2.fill(circle);
     }
 
+    private void paintHide(Graphics2D g2, int position, Color color) {
+        int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
+        int y0 = HEIGHT_CELL / 2;
+        int r = CIRCLE_RADIUS;
+        g2.setColor(color);
+        g2.drawLine(x0, y0, x0 + r, y0 - r);
+        g2.drawLine(x0, y0, x0 - r, y0 - r);
+    }
+
+    private void paintShow(Graphics2D g2, int position, Color color) {
+        int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
+        int y0 = HEIGHT_CELL / 2;
+        int r = CIRCLE_RADIUS;
+        g2.setColor(color);
+        g2.drawLine(x0, y0, x0 + r, y0 + r);
+        g2.drawLine(x0, y0, x0 - r, y0 + r);
+    }
+
+
     public void paint(Graphics g) {
         super.paint(g);
         Graphics2D g2 = (Graphics2D) g;
@@ -74,6 +94,25 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         edges = commitRow.getUpEdges();
         for (Edge edge : edges) {
             paintUpLine(g2, edge.from(), edge.to(), ColorGenerator.getColor(edge.getColorIndex()));
+        }
+
+        ReadOnlyList<SpecialNode> nodes = commitRow.getSpecialNodes();
+        for (SpecialNode node : nodes) {
+            int pos = node.getPosition();
+            Color color = ColorGenerator.getColor(node.getColorIndex());
+            switch (node.getType()) {
+                case Current:
+                    paintCircle(g2, pos, color);
+                    break;
+                case Hide:
+                    paintHide(g2, pos, color);
+                    break;
+                case Show:
+                    paintShow(g2, pos, color);
+                    break;
+                default:
+                    throw new IllegalStateException();
+            }
         }
     }
 
