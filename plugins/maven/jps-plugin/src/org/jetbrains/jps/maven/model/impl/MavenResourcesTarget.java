@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
@@ -80,13 +81,13 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
     return result;
   }
 
-  private List<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
+  private Collection<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
     return getRootConfigurations(getModuleResourcesConfiguration(dataPaths));
   }
 
-  private List<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
+  private Collection<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
     if (moduleConfig != null) {
-      return isTests() ? moduleConfig.myTestResources : moduleConfig.myResources;
+      return isTests() ? moduleConfig.testResources : moduleConfig.resources;
     }
     return Collections.emptyList();
   }
@@ -119,10 +120,10 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext context) {
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
-    for (ResourceRootConfiguration resConfig : getRootConfigurations(paths)) {
+    for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {
       final File output = getOutputDir(moduleOutput, resConfig);
       if (output != null) {
         result.add(output);
@@ -153,33 +154,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
     final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {
-      out.write(configuration.escapeString);
-
-      out.write(String.valueOf(configuration.myProperties.hashCode()));
-
-      writeStringCollection(out, configuration.getFiltetingExcludedExtensions());
-
-      final List<ResourceRootConfiguration> sorted = new ArrayList<ResourceRootConfiguration>(getRootConfigurations(configuration));
-      Collections.sort(sorted, ROOT_CONFIG_COMPARATOR);
-      for (ResourceRootConfiguration root : sorted) {
-        writeResourceRoot(out, root);
-      }
-    }
-  }
-
-  private static void writeResourceRoot(PrintWriter out, ResourceRootConfiguration rootConfig) {
-    out.write(rootConfig.directory);
-    out.write(rootConfig.targetPath == null? "" : FileUtil.toSystemIndependentName(rootConfig.targetPath));
-    out.write(rootConfig.isFiltered? "f" : "n");
-    writeStringCollection(out, rootConfig.includes);
-    writeStringCollection(out, rootConfig.excludes);
-  }
-
-  private static void writeStringCollection(PrintWriter out, Collection<String> collection) {
-    List<String> sorted = new ArrayList<String>(collection);
-    Collections.sort(sorted, STRING_COMPARATOR);
-    for (String extension : sorted) {
-      out.write(extension);
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));
     }
   }
 }

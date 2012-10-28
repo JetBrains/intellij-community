@@ -51,6 +51,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.jps.maven.model.impl.MavenIdBean;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
@@ -1013,12 +1014,28 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           continue;
         }
         final MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
-        addResources(resourceConfig.myResources, mavenProject.getResources());
-        addResources(resourceConfig.myTestResources, mavenProject.getTestResources());
-        resourceConfig.myFilteringExcludedExtensions.addAll(getFilterExclusions(mavenProject));
+
+        final MavenId projectId = mavenProject.getMavenId();
+        resourceConfig.id = new MavenIdBean(projectId.getGroupId(), projectId.getArtifactId(), projectId.getVersion());
+
+        final MavenId parentId = mavenProject.getParentId();
+        if (parentId != null) {
+          resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
+        }
+        resourceConfig.directory = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
+        for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
+          final String key = entry.getKey();
+          final String value = entry.getValue();
+          if (value != null && !"null".equals(value)) {  // todo: probable Maven Integration bug: storing null values as 'null' strings
+            resourceConfig.modelMap.put(key, value);
+          }
+        }
+        addResources(resourceConfig.resources, mavenProject.getResources());
+        addResources(resourceConfig.testResources, mavenProject.getTestResources());
+        resourceConfig.filteringExclusions.addAll(getFilterExclusions(mavenProject));
         final Properties properties = getFilteringProperties(mavenProject);
         for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
-          resourceConfig.myProperties.put((String)propEntry.getKey(), (String)propEntry.getValue());
+          resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
         }
         resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(
           mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"

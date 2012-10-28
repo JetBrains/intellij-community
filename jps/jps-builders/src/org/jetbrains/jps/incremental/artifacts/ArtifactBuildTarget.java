@@ -7,6 +7,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -125,7 +126,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext ccontext) {
     String outputPath = myArtifact.getOutputPath();
     return outputPath != null && !StringUtil.isEmpty(outputPath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputPath))) : Collections.<File>emptyList();
   }

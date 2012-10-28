@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -50,9 +52,20 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext context) {
+    Collection<File> result = new SmartList<File>();
     final File outputDir = getOutputDir();
-    return outputDir != null? Collections.singleton(outputDir) : Collections.<File>emptyList();
+    if (outputDir != null) {
+      result.add(outputDir);
+    }
+    final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(getModule());
+    if (profile.isEnabled()) {
+      final File annotationOut = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(getModule(), isTests(), profile);
+      if (annotationOut != null) {
+        result.add(annotationOut);
+      }
+    }
+    return result;
   }
 
   public String getModuleName() {

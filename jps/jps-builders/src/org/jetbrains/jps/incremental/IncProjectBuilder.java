@@ -15,7 +15,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
@@ -36,7 +35,6 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -311,11 +309,9 @@ public class IncProjectBuilder {
     final MultiMap<File, BuildTarget<?>> rootsToDelete = new MultiMapBasedOnSet<File,BuildTarget<?>>();
     final Set<File> allSourceRoots = new HashSet<File>();
 
-    final ProjectPaths paths = context.getProjectPaths();
-
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-      final Collection<File> outputs = target.getOutputDirs(projectDescriptor.dataManager.getDataPaths());
+      final Collection<File> outputs = target.getOutputDirs(context);
       for (File file : outputs) {
         rootsToDelete.putValue(file, target);
       }
@@ -324,7 +320,10 @@ public class IncProjectBuilder {
     for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
         for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
-          allSourceRoots.add(descriptor.getRootFile());
+          if (!descriptor.isGenerated()) {
+            // excluding from checks source roots with generated sources; because it is safe to delete generated stuff
+            allSourceRoots.add(descriptor.getRootFile());
+          }
         }
       }
     }
@@ -355,31 +354,11 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. The output cannot be cleaned."));
+        context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned."));
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {
           clearOutputFiles(context, target);
         }
-      }
-    }
-
-    final Set<File> annotationOutputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY); // separate collection because no root intersection checks needed for annotation generated sources
-    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-      for (ModuleBuildTarget target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
-        final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(target.getModule());
-        if (profile.isEnabled()) {
-          final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile);
-          if (annotationOut != null) {
-            annotationOutputs.add(annotationOut);
-          }
-        }
-      }
-    }
-    for (File annotationOutput : annotationOutputs) {
-      // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
-      final File[] children = annotationOutput.listFiles();
-      if (children != null) {
-        filesToDelete.addAll(Arrays.asList(children));
       }
     }
 
@@ -1147,7 +1126,7 @@ public class IncProjectBuilder {
       myTarget = target;
       myContext = context;
       myFileGeneratedEvent = new FileGeneratedEvent();
-      myOutputs = myTarget.getOutputDirs(myContext.getProjectDescriptor().dataManager.getDataPaths());
+      myOutputs = myTarget.getOutputDirs(context);
     }
 
     @Override

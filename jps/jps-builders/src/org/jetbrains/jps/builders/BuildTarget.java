@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -46,7 +47,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   public abstract String getPresentableName();
 
   @NotNull
-  public abstract Collection<File> getOutputDirs(BuildDataPaths paths);
+  public abstract Collection<File> getOutputDirs(CompileContext context);
 
   @Override
   public String toString() {
