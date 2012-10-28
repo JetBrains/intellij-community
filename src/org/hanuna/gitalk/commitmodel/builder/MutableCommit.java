@@ -97,7 +97,7 @@ class MutableCommit implements Commit {
 
     @Override
     public int index() {
-        assert !wasRead : "index undefined";
+        assert wasRead : "index undefined";
         return index;
     }
 
