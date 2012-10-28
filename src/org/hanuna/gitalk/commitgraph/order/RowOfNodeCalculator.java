@@ -38,6 +38,21 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
         return commitsModel.size();
     }
 
+    // true, if node was add
+    private boolean addNode(MutableRowOfNode row, Node node, int indexAdd) {
+        int index = row.getIndexOfCommit(node.getCommit());
+        if (index != -1) {
+            Node oldNode = row.get(index);
+            if (oldNode.getColorIndex() > node.getColorIndex()) {
+                row.set(index, node);
+            }
+            return false;
+        } else {
+            row.addNode(indexAdd, node);
+            return true;
+        }
+    }
+
     @NotNull
     protected MutableRowOfNode oneStep(MutableRowOfNode row) {
         Commit prevCommit = commitsModel.get(row.getRowIndex());
@@ -55,9 +70,7 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
                 colorIndex = row.getLastColorIndex() + i;
             }
             Commit parent = parents.get(i);
-            if (row.getIndexOfCommit(parent) == -1) {
-                Node newNode = new Node(parent, colorIndex);
-                row.addNode(prevCommitIndex + countNewNode, newNode);
+            if (addNode(row, new Node(parent, colorIndex), prevCommitIndex + countNewNode)) {
                 countNewNode++;
             }
         }

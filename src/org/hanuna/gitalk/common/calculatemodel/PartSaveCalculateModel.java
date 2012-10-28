@@ -11,7 +11,7 @@ import java.util.List;
  * @author erokhins
  */
 public class PartSaveCalculateModel<T extends Indexed> implements CalculateModel<T> {
-    private static final int STANDART_N = 10;
+    private static final int STANDART_N = 30;
 
     private final int N;
     private final List<T> results;

@@ -45,6 +45,10 @@ public class MutableRowOfNode implements RowOfNode {
         return nodes.remove(index);
     }
 
+    public void set(int index, Node newNode) {
+        nodes.set(index, newNode);
+    }
+
     @Nullable
     public Node removeNode(@NotNull Commit commit) {
         int index = getIndexOfCommit(commit);
