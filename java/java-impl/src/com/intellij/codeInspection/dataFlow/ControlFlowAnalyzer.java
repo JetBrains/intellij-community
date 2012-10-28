@@ -500,12 +500,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new CheckReturnValueInstruction(statement));
     }
 
+    returnCheckingFinally();
+    finishElement(statement);
+  }
+
+  private void returnCheckingFinally() {
     int finallyOffset = getFinallyOffset();
     if (finallyOffset != NOT_FOUND) {
       addInstruction(new GosubInstruction(finallyOffset));
     }
     addInstruction(new ReturnInstruction());
-    finishElement(statement);
   }
 
   @Override public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
@@ -1254,7 +1258,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
             pushParameters(params, false, !testng);
-            addInstruction(new ReturnInstruction());
+            returnCheckingFinally();
             return true;
           }
           else if ("assertTrue".equals(methodName)) {
@@ -1297,7 +1301,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
                 param.accept(this);
                 addInstruction(new PopInstruction());
               }
-              addInstruction(new ReturnInstruction());
+              returnCheckingFinally();
               return true;
             }
             else if ("assertTrue".equals(methodName)) {

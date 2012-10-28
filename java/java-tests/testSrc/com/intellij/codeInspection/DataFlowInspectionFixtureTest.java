@@ -91,6 +91,12 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
+
+  public void testAssertFailInCatch() throws Throwable {
+    myFixture.addClass("package org.junit; public class Assert { public static void fail() {}}");
+    doTest();
+  }
+
   public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
 
 }
