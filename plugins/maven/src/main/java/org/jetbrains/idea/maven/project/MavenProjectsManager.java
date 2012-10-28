@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
@@ -997,6 +998,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void generateBuildConfiguration() {
+    if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) {
+      return;
+    }
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
     if (projectSystemDir == null) {
