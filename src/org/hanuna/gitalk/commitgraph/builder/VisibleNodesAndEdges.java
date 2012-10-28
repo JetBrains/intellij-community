@@ -8,6 +8,8 @@ import org.hanuna.gitalk.commitgraph.Node;
 import org.hanuna.gitalk.commitgraph.order.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
+import org.hanuna.gitalk.common.CacheGet;
+import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.SimpleReadOnlyList;
 
@@ -26,6 +28,22 @@ class VisibleNodesAndEdges {
     private final CommitsModel commitsModel;
     private final ReadOnlyList<RowOfNode> rows;
     private final ReadOnlyList<HideCommits> hideCommitsList;
+    private final VisibleNodesAndEdges curC = this;
+
+    private final CacheGet<Integer, RowOfNode> visibleNodes = new CacheGet<Integer, RowOfNode>(new Get<Integer, RowOfNode>() {
+        @Override
+        public RowOfNode get(Integer key) {
+            return curC.getVisibleNodesNotCache(key);
+        }
+    }, 100);
+
+
+    private final CacheGet<Integer, ReadOnlyList<Edge>> downEdges = new CacheGet<Integer, ReadOnlyList<Edge>>(new Get<Integer, ReadOnlyList<Edge>>() {
+        @Override
+        public ReadOnlyList<Edge> get(Integer key) {
+            return curC.getDownEdgesNotCache(key);
+        }
+    }, 100);
 
     public VisibleNodesAndEdges(ReadOnlyList<RowOfNode> rows, ReadOnlyList<HideCommits> hideCommits, int size, CommitsModel commitsModel) {
         this.size = size;
@@ -40,7 +58,7 @@ class VisibleNodesAndEdges {
         }
     }
 
-    public RowOfNode getVisibleNodes(int rowIndex) {
+    private RowOfNode getVisibleNodesNotCache(int rowIndex) {
         checkRowIndex(rowIndex);
         MutableRowOfNode row = MutableRowOfNode.create(rows.get(rowIndex));
         HideCommits hideCommits = hideCommitsList.get(rowIndex);
@@ -50,7 +68,11 @@ class VisibleNodesAndEdges {
         return row;
     }
 
-    public ReadOnlyList<Edge> getDownEdges(int rowIndex) {
+    public RowOfNode getVisibleNodes(int rowIndex) {
+        return visibleNodes.get(rowIndex);
+    }
+
+    private ReadOnlyList<Edge> getDownEdgesNotCache(int rowIndex) {
         checkRowIndex(rowIndex);
         if (rowIndex == size - 1) {
             return SimpleReadOnlyList.getEmpty();
@@ -83,6 +105,10 @@ class VisibleNodesAndEdges {
             }
         }
         return new SimpleReadOnlyList<Edge>(edges);
+    }
+
+    public ReadOnlyList<Edge> getDownEdges(int rowIndex) {
+        return downEdges.get(rowIndex);
     }
 
     public ReadOnlyList<Edge> getUpEdges(int rowIndex) {
