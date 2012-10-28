@@ -90,5 +90,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
+  public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
 
 }

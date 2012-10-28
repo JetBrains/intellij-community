@@ -28,13 +28,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -1596,33 +1594,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       pushTypeOrUnknown(castExpression);
     }
 
-    addInstruction(createCastInstruction(castExpression));
+    final PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && operand != null) {
+      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+    }
     finishElement(castExpression);
   }
 
   @Override public void visitClass(PsiClass aClass) {
   }
-
-  @NotNull
-  private static Instruction createCastInstruction(PsiTypeCastExpression castExpression) {
-    PsiExpression expr = castExpression.getOperand();
-    final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && !RedundantCastUtil.isTypeCastSemantical(castExpression)) {
-      PsiType castType = typeElement.getType();
-      if (expr != null) {
-        return new TypeCastInstruction(castExpression, expr, castType);
-      }
-    }
-    return new Instruction() {
-
-      @Override
-      public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-        stateBefore.pop();
-        stateBefore.push(DfaUnknownValue.getInstance());
-        return nextInstruction(runner, stateBefore);
-      }
-    };
-  }
-
 
 }
