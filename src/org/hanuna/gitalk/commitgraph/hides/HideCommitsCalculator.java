@@ -3,6 +3,7 @@ package org.hanuna.gitalk.commitgraph.hides;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.SimpleReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.calculator.AbstractCalculator;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +36,22 @@ public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits
 
     @NotNull
     protected MutableHideCommits oneStep(MutableHideCommits hideCommits) {
-        ReadOnlyList<Commit> hides = commitsModel.hidesCommits(hideCommits.getRowIndex());
-        ReadOnlyList<Commit> shows = commitsModel.showsCommits(hideCommits.getRowIndex());
+
+        int rowIndex = hideCommits.getRowIndex();
+        ReadOnlyList<Commit> hides = commitsModel.hidesCommits(rowIndex);
+        ReadOnlyList<Commit> shows;
+        if (rowIndex < size() - 1) {
+            shows = commitsModel.showsCommits(rowIndex + 1);
+        } else {
+            shows = SimpleReadOnlyList.getEmpty();
+        }
         for (Commit hide : hides) {
             hideCommits.add(hide);
         }
         for (Commit show : shows) {
             hideCommits.remove(show);
         }
-        hideCommits.setRowIndex(hideCommits.getRowIndex() + 1);
+        hideCommits.setRowIndex(rowIndex + 1);
         return hideCommits;
     }
 }
