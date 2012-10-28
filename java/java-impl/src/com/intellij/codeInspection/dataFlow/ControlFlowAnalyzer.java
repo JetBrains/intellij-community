@@ -606,7 +606,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lock = statement.getLockExpression();
     if (lock != null) {
       lock.accept(this);
-      addInstruction(new PopInstruction());
+      addInstruction(new FieldReferenceInstruction(lock, "Synchronized value"));
     }
 
     addInstruction(new FlushVariableInstruction(null));
