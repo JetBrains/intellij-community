@@ -53,8 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -328,9 +328,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       PsiElement parent = variable.getParent();
       //check tuple assignment:  def (int x, int y) = foo()
-      if (parent instanceof GrTupleDeclaration) {
-        GrTupleDeclaration tuple = (GrTupleDeclaration)parent;
-        GrExpression initializer = tuple.getInitializerGroovy();
+      if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()) {
+        GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
+        GrExpression initializer = tuple.getTupleInitializer();
         if (initializer == null) return;
         if (!(initializer instanceof GrListOrMap)) {
           PsiType type = initializer.getType();

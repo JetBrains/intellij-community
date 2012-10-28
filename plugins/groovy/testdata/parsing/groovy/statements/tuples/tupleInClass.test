@@ -13,21 +13,20 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Multiple variable definitions
+      Variable definitions
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        Tuple
-          PsiElement(()('(')
-          Variable
-            PsiElement(identifier)('a')
-          PsiElement(,)(',')
-          Variable
-            PsiElement(identifier)('b')
-          PsiElement(,)(',')
-          Variable
-            PsiElement(identifier)('h')
-          PsiElement())(')')
+        PsiElement(()('(')
+        Variable
+          PsiElement(identifier)('a')
+        PsiElement(,)(',')
+        Variable
+          PsiElement(identifier)('b')
+        PsiElement(,)(',')
+        Variable
+          PsiElement(identifier)('h')
+        PsiElement())(')')
         PsiElement(=)('=')
         Generalized list
           PsiElement([)('[')

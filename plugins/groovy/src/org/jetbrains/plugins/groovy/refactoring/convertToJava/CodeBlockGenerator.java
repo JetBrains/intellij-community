@@ -522,7 +522,7 @@ public class CodeBlockGenerator extends Generator {
                                      StringBuilder builder,
                                      ExpressionContext expressionContext) {
     GrVariable[] variables = variableDeclaration.getVariables();
-    final GrExpression tupleInitializer = variableDeclaration.getTupleDeclaration().getInitializerGroovy();
+    final GrExpression tupleInitializer = variableDeclaration.getTupleInitializer();
     if (tupleInitializer instanceof GrListOrMap) {
       for (GrVariable variable : variables) {
         writeVariableSeparately(variable, builder, expressionContext);

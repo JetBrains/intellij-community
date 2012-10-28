@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -35,7 +36,7 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrTypeElement getTypeElementGroovyForVariable(GrVariable var);
 
   @Nullable
-  GrTupleDeclaration getTupleDeclaration();
+  GrExpression getTupleInitializer();
 
   @Override
   boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name);
