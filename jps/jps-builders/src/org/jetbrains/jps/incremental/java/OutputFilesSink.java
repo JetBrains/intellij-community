@@ -12,6 +12,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
+import javax.tools.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,12 +35,14 @@ class OutputFilesSink implements OutputFileConsumer {
   }
 
   public void save(final @NotNull OutputFileObject fileObject) {
-    final String className = fileObject.getClassName();
-    if (className != null) {
-      final OutputFileObject.Content content = fileObject.getContent();
-      if (content != null) {
-        synchronized (myCompiledClasses) {
-          myCompiledClasses.put(className, fileObject);
+    if (fileObject.getKind() == JavaFileObject.Kind.CLASS) {
+      final String className = fileObject.getClassName();
+      if (className != null) {
+        final OutputFileObject.Content content = fileObject.getContent();
+        if (content != null) {
+          synchronized (myCompiledClasses) {
+            myCompiledClasses.put(className, fileObject);
+          }
         }
       }
     }
