@@ -28,15 +28,13 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.cli.MavenCli;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequestPopulationException;
-import org.apache.maven.execution.MavenExecutionRequestPopulator;
+import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
+import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.version.DefaultPluginVersionRequest;
@@ -72,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.*;
+import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
 
 import java.io.File;
@@ -281,10 +280,17 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
     ProjectBuildingRequest config = request.getProjectBuildingRequest();
 
-    org.sonatype.aether.RepositorySystem repoSystem = getComponent(org.sonatype.aether.RepositorySystem.class);
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    RepositorySystemSession repositorySession = maven.newRepositorySession(request);
 
-    config.setRepositorySession(CustomMaven3ArtifactResolver.createSession(myLocalRepository, null, repoSystem));
+    config.setRepositorySession(repositorySession);
 
+    MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
+    LegacySupport legacySupport = getComponent(LegacySupport.class);
+
+    MavenSession oldSession = legacySupport.getSession();
+
+    legacySupport.setSession(mavenSession);
     try {
       // copied from DefaultMavenProjectBuilder.buildWithDependencies
       ProjectBuilder builder = getComponent(ProjectBuilder.class);
@@ -324,6 +330,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     }
     catch (Exception e) {
       return handleException(e);
+    }
+    finally {
+      legacySupport.setSession(oldSession);
     }
   }
 
