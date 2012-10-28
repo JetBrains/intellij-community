@@ -123,7 +123,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
 
     JPanel labelPanel = new JPanel(new GridBagLayout());
     labelPanel.add(myTextControl, constraints);
-    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, HORIZONTAL_PADDING));
+    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, 0));
     labelPanel.setOpaque(false);
 
     final int arcSize = myTextControl.getFont().getSize();
