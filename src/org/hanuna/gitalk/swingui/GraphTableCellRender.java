@@ -2,13 +2,13 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitgraph.Edge;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
-import java.util.List;
 
 import static org.hanuna.gitalk.swingui.GraphCell.*;
 
@@ -65,22 +65,16 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         g2.setStroke(new BasicStroke(THICK_LINE));
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         CommitRow commitRow = data.getCommitRow();
-        for (int i = 0; i < commitRow.count(); i++) {
-            List<Edge> edges = commitRow.getDownEdges(i);
-            for (int j = edges.size() - 1; j >= 0; j--) {
-                Edge edge = edges.get(j);
-                paintDownLine(g2, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
-            }
 
-            edges = commitRow.getUpEdges(i);
-            for (int j = edges.size() - 1; j >= 0; j--) {
-                Edge edge = edges.get(j);
-                paintUpLine(g2, i, edge.to(), ColorGenerator.getColor(edge.getIndexColor()));
-            }
+        ReadOnlyList<Edge> edges = commitRow.getDownEdges();
+        for (Edge edge : edges) {
+            paintDownLine(g2, edge.from(), edge.to(), ColorGenerator.getColor(edge.getColorIndex()));
         }
-        int mainPos = commitRow.getMainPosition();
-        int colorIndex = commitRow.getMainColorIndex();
-        paintCircle(g2, mainPos, ColorGenerator.getColor(colorIndex));
+
+        edges = commitRow.getUpEdges();
+        for (Edge edge : edges) {
+            paintUpLine(g2, edge.from(), edge.to(), ColorGenerator.getColor(edge.getColorIndex()));
+        }
     }
 
 }
