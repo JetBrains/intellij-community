@@ -1132,12 +1132,14 @@ public class IncProjectBuilder {
 
     @Override
     public void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException {
-      if (myOutputs.size() == 1) {
-        // todo: multiple outputs case?
-        final File outputDir = myOutputs.iterator().next();
-        final String relativePath = FileUtil.getRelativePath(outputDir, new File(outputFilePath));
-        if (relativePath != null) {
-          myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputDir.getPath()), FileUtil.toSystemIndependentName(relativePath));
+      final File outputFile = new File(outputFilePath);
+      for (File outputDir : myOutputs) {
+        if (FileUtil.isAncestor(outputDir, outputFile, true)) {
+          final String relativePath = FileUtil.getRelativePath(outputDir, outputFile);
+          if (relativePath != null) {
+            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputDir.getPath()), FileUtil.toSystemIndependentName(relativePath));
+          }
+          break;
         }
       }
       final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
