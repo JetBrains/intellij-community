@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,9 +41,7 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
   @NotNull private final Icon                          myEditIcon;
   @NotNull private final ActionButton                  myEditButton;
 
-  public ArrangementEditIconMatchNodeComponent(@NotNull ArrangementMatchNodeComponent delegate,
-                                               @NotNull ArrangementColorsProvider colorsProvider)
-  {
+  public ArrangementEditIconMatchNodeComponent(@NotNull ArrangementMatchNodeComponent delegate) {
     myDelegate = delegate;
     
     setLayout(null);
@@ -64,8 +61,6 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
       y = (size.height - myEditIcon.getIconHeight()) / 2;
     }
     myEditButton.setBounds(size.width, y, myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
-
-    setBackground(colorsProvider.getRowUnderMouseBackground());
   }
 
   @Override

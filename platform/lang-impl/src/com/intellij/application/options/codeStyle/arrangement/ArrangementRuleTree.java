@@ -82,7 +82,6 @@ public class ArrangementRuleTree {
   @NotNull private final Tree                                 myTree;
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final List<Set<ArrangementMatchCondition>> myUiGroupingRules;
-  @NotNull private final ArrangementColorsProvider            myColorsProvider;
 
   @Nullable private final MutableTreeNode myGroupingsRoot;
 
@@ -99,7 +98,6 @@ public class ArrangementRuleTree {
                              @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myColorsProvider = colorsProvider;
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, new Runnable() {
       @Override
       public void run() {
@@ -254,7 +252,7 @@ public class ArrangementRuleTree {
             color = UIUtil.getTreeSelectionBackground(tr.hasFocus());
           }
           else if (row == myRowUnderMouse) {
-            color = myColorsProvider.getRowUnderMouseBackground();
+            color = UIUtil.getDecoratedRowColor();
           }
 
           if (color == null) {

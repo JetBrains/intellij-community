@@ -443,16 +443,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @Nullable
   @Override
-  public Color getRowUnderMouseBackground(@NotNull EditorColorsScheme scheme) {
-    Color baseColor = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    if (baseColor == null) {
-      return baseColor;
-    }
-    return baseColor.brighter().brighter();
-  }
-
-  @Nullable
-  @Override
   public Color getBorderColor(@NotNull EditorColorsScheme scheme, boolean selected) {
     return null;
   }

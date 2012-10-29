@@ -85,7 +85,7 @@ public class ArrangementMatchNodeComponentFactory {
       }
     });
     if (showEditIcon) {
-      return new ArrangementEditIconMatchNodeComponent(ref.get(), myColorsProvider);
+      return new ArrangementEditIconMatchNodeComponent(ref.get());
     }
     else {
       return ref.get();
