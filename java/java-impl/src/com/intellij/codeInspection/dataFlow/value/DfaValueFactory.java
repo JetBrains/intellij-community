@@ -130,7 +130,7 @@ public class DfaValueFactory {
     }
 
     if (isEffectivelyUnqualified(referenceExpression)) {
-      return getVarFactory().createVariableValue(variable, false);
+      return getVarFactory().createVariableValue(variable, referenceExpression.getType(), false, null, false);
     }
 
     return null;

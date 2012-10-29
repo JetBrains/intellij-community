@@ -27,10 +27,12 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -44,11 +46,19 @@ public class DfaVariableState implements Cloneable {
   private boolean myNullable = false;
   private final boolean myVariableIsDeclaredNotNull;
 
-  public DfaVariableState(@Nullable PsiVariable var) {
+  public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
+    PsiVariable var = dfaVar.getPsiVariable();
     myNullable = var != null && (NullableNotNullManager.isNullable(var) || isNullableInitialized(var, true));
     myVariableIsDeclaredNotNull = var != null && (NullableNotNullManager.isNotNull(var) || isNullableInitialized(var, false));
+  }
+
+  protected DfaVariableState(final DfaVariableState toClone) {
+    myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
+    myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
+    myNullable = toClone.myNullable;
+    myVariableIsDeclaredNotNull = toClone.myVariableIsDeclaredNotNull;
   }
 
   private static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
@@ -77,13 +87,6 @@ public class DfaVariableState implements Cloneable {
       }
     }
     return !nullable;
-  }
-
-  protected DfaVariableState(final DfaVariableState toClone) {
-    myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
-    myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
-    myNullable = toClone.myNullable;
-    myVariableIsDeclaredNotNull = toClone.myVariableIsDeclaredNotNull;
   }
 
   public boolean isNullable() {

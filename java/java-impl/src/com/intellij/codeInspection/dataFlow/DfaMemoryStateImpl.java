@@ -758,11 +758,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {
-      final PsiVariable psiVariable = dfaVar.getPsiVariable();
-      state = createVariableState(psiVariable);
+      state = createVariableState(dfaVar);
       myVariableStates.put(dfaVar, state);
-      if (psiVariable != null) {
-        state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
+      PsiType type = dfaVar.getVariableType();
+      if (type != null) {
+        state.setInstanceofValue(myFactory.getTypeFactory().create(type));
       }
     }
 
@@ -773,8 +773,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myVariableStates;
   }
 
-  protected DfaVariableState createVariableState(final PsiVariable psiVariable) {
-    return new DfaVariableState(psiVariable);
+  protected DfaVariableState createVariableState(final DfaVariableValue var) {
+    return new DfaVariableState(var);
   }
 
   public void flushFields(DataFlowRunner runner) {
