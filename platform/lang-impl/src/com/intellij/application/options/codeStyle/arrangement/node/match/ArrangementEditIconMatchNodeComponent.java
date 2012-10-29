@@ -59,7 +59,11 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
     Dimension buttonSize = new Dimension(myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
     myEditButton = new ActionButton(action, presentation, ArrangementConstants.RULE_TREE_PLACE, buttonSize);
     add(myEditButton);
-    myEditButton.setBounds(size.width, 0, myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
+    int y = 0;
+    if (size.height > myEditIcon.getIconHeight()) {
+      y = (size.height - myEditIcon.getIconHeight()) / 2;
+    }
+    myEditButton.setBounds(size.width, y, myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
 
     setBackground(colorsProvider.getRowUnderMouseBackground());
   }
@@ -125,7 +129,7 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
   public boolean onCanvasWidthChange(int width) {
     myDelegate.onCanvasWidthChange(width);
     myEditButton.setBounds(width - myEditIcon.getIconWidth() - ArrangementAtomMatchNodeComponent.HORIZONTAL_PADDING,
-                           0,
+                           myEditButton.getBounds().y,
                            myEditIcon.getIconWidth(),
                            myEditIcon.getIconHeight());
     return true;
