@@ -14,32 +14,35 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions;
+package org.jetbrains.plugins.groovy.intentions
 
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils
 
+import static org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention.INTENTION_NAME
 /**
  * @author Maxim.Medvedev
  */
 public class ConvertGStringToStringTest extends GrIntentionTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "intentions/convertGStringToString/";
+
+  final String basePath = TestUtils.testDataPath + "intentions/convertGStringToString/"
+
+  public void testSimpleCase() {
+    doTest(INTENTION_NAME, true);
   }
 
-  public void testSimpleCase() throws Exception {
-    doTest("Convert to String", true);
+  public void testComplicatedCase() {
+    doTest(INTENTION_NAME, true);
   }
 
-  public void testComplicatedCase() throws Exception {
-    doTest("Convert to String", true);
+  public void testEscaping() {
+    doTest(INTENTION_NAME, true);
   }
 
-  public void testEscaping() throws Exception {
-    doTest("Convert to String", true);
+  public void testSlashBeforeNewLine() {
+    doTest(INTENTION_NAME, true);
   }
 
-  public void testSlashBeforeNewLine() throws Exception {
-    doTest("Convert to String", true);
+  public void testGStringWithComplicatedInjection() {
+    doTest(INTENTION_NAME, false)
   }
 }
