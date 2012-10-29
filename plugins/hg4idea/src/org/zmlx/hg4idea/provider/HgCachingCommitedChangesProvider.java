@@ -50,6 +50,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
 
   private final Project project;
   private final HgVcs myVcs;
+  public final static int VERSION_WITH_REPOSITORY_BRANCHES = 2;
 
   public HgCachingCommitedChangesProvider(Project project, HgVcs vcs) {
     this.project = project;
@@ -57,7 +58,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   }
 
   public int getFormatVersion() {
-    return 0;
+    return VERSION_WITH_REPOSITORY_BRANCHES;
   }
 
   public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
