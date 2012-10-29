@@ -25,6 +25,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -54,6 +55,8 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -106,7 +109,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private ModuleWizardStep mySettingsCallback;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
-  private final FilteringTreeBuilder myBuilder;
+  private final FilteringTreeBuilder myTreeBuilder;
   private MinusculeMatcher[] myMatchers;
   @Nullable
   private ModuleBuilder myModuleBuilder;
@@ -162,7 +165,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         return matches(template);
       }
     };
-    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
+    myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         if (o1 instanceof FilteringTreeStructure.FilteringNode) {
@@ -262,11 +265,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       @Override
       public void run() {
         TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-       if (state != null) {
+       if (state != null && !ApplicationManager.getApplication().isUnitTestMode()) {
          state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
        }
        else {
-         myBuilder.expandAll(null);
+         myTreeBuilder.expandAll(new Runnable() {
+           @Override
+           public void run() {
+             myTemplatesTree.setSelectionRow(1);
+           }
+         });
        }
       }
     });
@@ -325,7 +333,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void updateStep() {
-    myBuilder.queueUpdate();
+    myTreeBuilder.queueUpdate();
     myExpertDecorator.setOn(SelectTemplateSettings.getInstance().EXPERT_MODE);
   }
 
@@ -358,7 +366,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     SimpleNode selectedNode = myTemplatesTree.getSelectedNode();
     final Ref<SimpleNode> node = new Ref<SimpleNode>();
     if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
-      myTemplatesTree.accept(myBuilder, new SimpleNodeVisitor() {
+      myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
         @Override
         public boolean accept(SimpleNode simpleNode) {
           FilteringTreeStructure.FilteringNode wrapper = (FilteringTreeStructure.FilteringNode)simpleNode;
@@ -414,6 +422,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private SimpleNode getSimpleNode(Object component) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
     Object userObject = node.getUserObject();
+    return getDelegate(userObject);
+  }
+
+  private SimpleNode getDelegate(Object userObject) {
     if (!(userObject instanceof FilteringTreeStructure.FilteringNode)) //noinspection ConstantConditions
       return null;
     FilteringTreeStructure.FilteringNode object = (FilteringTreeStructure.FilteringNode)userObject;
@@ -452,7 +464,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void disposeUIResources() {
-    Disposer.dispose(myBuilder);
+    Disposer.dispose(myTreeBuilder);
   }
 
   @Override
@@ -505,7 +517,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     public SimpleNode[] getChildren() {
       List<SimpleNode> children = new ArrayList<SimpleNode>();
       for (ProjectTemplate template : myTemplates) {
-        children.add(new TemplateNode(template));
+        children.add(new TemplateNode(this, template));
       }
       return children.toArray(new SimpleNode[children.size()]);
     }
@@ -518,15 +530,23 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   private static class TemplateNode extends NullNode {
 
+    private final GroupNode myGroupNode;
     private final ProjectTemplate myTemplate;
 
-    public TemplateNode(ProjectTemplate template) {
+    public TemplateNode(GroupNode groupNode, ProjectTemplate template) {
+      myGroupNode = groupNode;
       myTemplate = template;
     }
 
     @Override
     public String getName() {
       return myTemplate.getName();
+    }
+
+    @NotNull
+    @Override
+    public Object[] getEqualityObjects() {
+      return new Object[] { myGroupNode.getName(), getName() };
     }
   }
 
@@ -675,5 +695,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   protected String getModuleName() {
     return myModuleName.getText().trim();
+  }
+
+  public void setSelectedTemplate(String group, String name) {
+    final ComparableObject.Impl test = new ComparableObject.Impl(group, name);
+    myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
+      @Override
+      public boolean accept(SimpleNode simpleNode) {
+        SimpleNode node = getDelegate(simpleNode);
+        return test.equals(node);
+      }
+    }, true);
   }
 }

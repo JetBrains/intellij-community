@@ -83,12 +83,17 @@ public class JavaSettingsStep extends SdkSettingsStep {
   @Override
   public void updateDataModel() {
     super.updateDataModel();
-    if (myModuleBuilder instanceof JavaModuleBuilder && myCreateSourceRoot.isSelected()) {
-      String contentEntryPath = myModuleBuilder.getContentEntryPath();
-      if (contentEntryPath != null) {
-        final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
-        String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+    if (myModuleBuilder instanceof JavaModuleBuilder) {
+      if (myCreateSourceRoot.isSelected()) {
+        String contentEntryPath = myModuleBuilder.getContentEntryPath();
+        if (contentEntryPath != null) {
+          final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
+          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+        }
+      }
+      else {
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
       }
     }
   }
