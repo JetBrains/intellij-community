@@ -500,6 +500,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    * @param filePath the path to open the project.
    * @return the project, or null if the user has cancelled opening the project.
    */
+  @Override
   @Nullable
   public Project convertAndLoadProject(String filePath) throws IOException {
     final String fp = toCanonicalName(filePath);

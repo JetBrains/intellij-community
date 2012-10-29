@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,6 +128,11 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
+    return computation.compute();
+  }
+
+  @Override
+  public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     return computation.compute();
   }
 
