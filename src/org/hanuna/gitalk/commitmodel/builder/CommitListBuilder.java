@@ -44,10 +44,19 @@ public class CommitListBuilder {
         commits.add(commit);
     }
 
+    private void checkEmptyCache() {
+        if (cache.size() > 0) {
+            throw new IllegalStateException();
+        }
+    }
+
     @NotNull
-    public CommitsModel build() {
+    public CommitsModel build(boolean fullLog) {
+        if (fullLog) {
+            checkEmptyCache();
+        }
         ReadOnlyList<Commit> commits1 = new SimpleReadOnlyList<Commit>(commits);
-        return CommitsModel.buildModel(commits1);
+        return CommitsModel.buildModel(commits1, fullLog);
     }
 
 }

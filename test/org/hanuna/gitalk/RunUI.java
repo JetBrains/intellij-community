@@ -1,14 +1,10 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
-import org.hanuna.gitalk.commitgraph.node.Node;
 import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
-import org.hanuna.gitalk.commitgraph.hidecommits.HideCommits;
-import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
-import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.Timer;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.swingui.GitAlkUI;
 
@@ -16,33 +12,51 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static org.hanuna.gitalk.TestUtils.toStr;
-
 /**
  * @author erokhins
  */
 public class RunUI {
 
     public static void main(String args[]) throws IOException {
-        Timer t = new Timer("log parse");
 
         Process p = Runtime.getRuntime().exec("git log --all --date-order --format=%h|-%p|-%an|-%ct|-%s");
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        GitLogParser parser = new GitLogParser(r);
 
-        CommitsModel list = GitLogParser.parseCommitLog(r);
-
+        Timer t = new Timer("log parse");
+        CommitsModel commitsModel = parser.getFirstPart();
         t.print();
 
-        Timer t1 = new Timer("precalculate");
+        Timer precalc = new Timer("precalculate");
+        CommitRowListBuilder builder = new CommitRowListBuilder(commitsModel);
+        ReadOnlyList<CommitRow> commitRows = builder.build();
+        precalc.print();
 
+        GitAlkUI ui = new GitAlkUI(commitRows, commitsModel);
+        ui.showUi();
+
+        if (!commitsModel.isFullModel()) {
+            Timer fullLogParse = new Timer("full log parse");
+            CommitsModel fullCommitsModel = parser.getFullModel();
+            fullLogParse.print();
+
+            Timer fullprecalc = new Timer("full precalculate");
+            CommitRowListBuilder fullBuilder = new CommitRowListBuilder(fullCommitsModel);
+            ReadOnlyList<CommitRow> fullCommitRow = fullBuilder.build();
+            fullprecalc.print();
+
+            ui.update(fullCommitRow, fullCommitsModel);
+        }
+
+        /*
         if (1 == 1) {
-            CommitRowListBuilder builder = new CommitRowListBuilder(list);
+            CommitRowListBuilder builder = new CommitRowListBuilder(commitsModel);
             ReadOnlyList<CommitRow> commitRows = builder.build();
 
-            t1.print();
+            precalc.print();
 
 
-        if (1 == 0) {
+       /* if (1 == 0) {
             ReadOnlyList<RowOfNode> rows = builder.rowsModel;
             for (RowOfNode row : rows) {
                 for (Node node : row) {
@@ -61,16 +75,15 @@ public class RunUI {
                 System.out.println();
             }
         }
+         */
 
 
-            new GitAlkUI(commitRows, list);
-        }
 
 
         /*
         if (1 == 0) {
-            for (int i = 0; i < list.size(); i++) {
-                Commit node = list.get(i);
+            for (int i = 0; i < commitsModel.size(); i++) {
+                Commit node = commitsModel.get(i);
                 System.out.println(toStr(node));
             }
             System.out.println();

@@ -33,7 +33,8 @@ public class GitLogParserTest {
     private void runLogParserTest(String in, String out) throws IOException {
         String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         String output = out.replace(" ", "|-") + "\n";
-        ReadOnlyList<Commit> commits = GitLogParser.parseCommitLog(new StringReader(input));
+        GitLogParser parser = new GitLogParser(new StringReader(input));
+        ReadOnlyList<Commit> commits = parser.getFullModel();
         assertEquals(output, toShortStr(commits));
     }
 

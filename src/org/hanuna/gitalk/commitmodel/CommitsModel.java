@@ -2,34 +2,43 @@ package org.hanuna.gitalk.commitmodel;
 
 import org.hanuna.gitalk.common.HashMultiMap;
 import org.hanuna.gitalk.common.MultiMap;
+import org.hanuna.gitalk.common.readonly.AbstractReadOnlyList;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
 
 /**
  * @author erokhins
  */
-public class CommitsModel implements ReadOnlyList<Commit> {
+public class CommitsModel extends AbstractReadOnlyList<Commit> {
     private static final int HIDE_LIMIT = 25;
     private static final int COUNT_SHOW = 3;
 
-    public static CommitsModel buildModel(ReadOnlyList<Commit> commits) {
-        CommitsModel model = new CommitsModel(commits);
+    @NotNull
+    public static CommitsModel buildModel(@NotNull ReadOnlyList<Commit> commits, boolean fullList) {
+        CommitsModel model = new CommitsModel(commits, fullList);
         model.buildHideShowMap();
         return model;
     }
 
     private final ReadOnlyList<Commit> commits;
+    private final int size;
+    private final boolean fullModel;
     private final MultiMap<Integer, Commit> commitsHide = new HashMultiMap<Integer, Commit>();
     private final MultiMap<Integer, Commit> commitsShow = new HashMultiMap<Integer, Commit>();
 
-    private CommitsModel(ReadOnlyList<Commit> commits) {
+    private CommitsModel(@NotNull ReadOnlyList<Commit> commits, boolean fullModel) {
         this.commits = commits;
+        this.fullModel = fullModel;
+        if (fullModel) {
+            this.size = commits.size();
+        } else {
+            assert commits.size() > 2 * HIDE_LIMIT : "small size";
+            this.size = commits.size() - 2 * HIDE_LIMIT;
+        }
     }
 
     private void buildHideShowMap() {
-        for (int i = 0; i < commits.size(); i++) {
+        for (int i = 0; i < size; i++) {
             Commit commit = commits.get(i);
             ReadOnlyList<Commit> currentChildrens = commit.getChildren();
             if (currentChildrens.size() > 0) {
@@ -74,6 +83,9 @@ public class CommitsModel implements ReadOnlyList<Commit> {
         }
     }
 
+    public boolean isFullModel() {
+        return fullModel;
+    }
 
     @NotNull
     public ReadOnlyList<Commit> hidesCommits(int index) {
@@ -88,7 +100,7 @@ public class CommitsModel implements ReadOnlyList<Commit> {
 
     @Override
     public int size() {
-        return commits.size();
+        return size;
     }
 
     @Override
@@ -96,8 +108,4 @@ public class CommitsModel implements ReadOnlyList<Commit> {
         return commits.get(index);
     }
 
-    @Override
-    public Iterator<Commit> iterator() {
-        return commits.iterator();
-    }
 }

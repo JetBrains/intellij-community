@@ -22,6 +22,7 @@ public class GitLogParser {
     private static final String regExp =
             String.format("([a-f0-9]+)%1$s((?:[a-f0-9]+)?(?:\\s[a-f0-9]+)*)%1$s(.*?)%1$s([0-9]*)%1$s(.*)", SEPARATOR);
     private static final Pattern pattern = Pattern.compile(regExp);
+    private static final int DEFAULT_FIRST_PART_SIZE = 5000;
 
     public static CommitData parseCommitData(String inputStr) {
         Matcher matcher = pattern.matcher(inputStr);
@@ -48,19 +49,46 @@ public class GitLogParser {
         }
     }
 
-    public static CommitsModel parseCommitLog(Reader inputReader) throws IOException {
-        BufferedReader input;
-        if (inputReader instanceof BufferedReader) {
-            input = (BufferedReader) inputReader;
+    private final BufferedReader input;
+    private final CommitListBuilder builder = new CommitListBuilder();
+    private final int firstPartSize;
+    private int countLines = 0;
+
+
+    public GitLogParser(Reader input) {
+        this(input, DEFAULT_FIRST_PART_SIZE);
+    }
+    public GitLogParser(Reader input, int firstPartSize) {
+        this.firstPartSize = firstPartSize;
+        if (input instanceof BufferedReader) {
+            this.input = (BufferedReader) input;
         } else  {
-            input = new BufferedReader(inputReader);
+            this.input = new BufferedReader(input);
         }
-        CommitListBuilder builder = new CommitListBuilder();
-        String line;
+    }
+
+    public CommitsModel getFirstPart() throws IOException {
+        String line = null;
+        while (countLines < firstPartSize && (line = input.readLine()) != null) {
+            CommitData data = parseCommitData(line);
+            builder.append(data);
+            countLines++;
+        }
+        if (line == null) {
+            return builder.build(true);
+        } else {
+            return builder.build(false);
+        }
+    }
+
+    public CommitsModel getFullModel() throws IOException  {
+        String line = null;
         while ((line = input.readLine()) != null) {
             CommitData data = parseCommitData(line);
             builder.append(data);
+            countLines++;
         }
-        return builder.build();
+        return builder.build(true);
     }
+
 }
