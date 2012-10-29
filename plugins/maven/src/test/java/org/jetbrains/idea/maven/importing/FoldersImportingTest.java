@@ -1024,6 +1024,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                          "target/generated-sources/test-annotations",
                          "target/generated-test-sources/foo");
 
+    createProjectSubFile("anno/aaa.java");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1053,7 +1055,6 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertTestSources("project",
                       "src/test/java",
                       "src/test/resources",
-                      "test-anno",
                       "target/generated-test-sources/foo");
   }
 
