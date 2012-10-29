@@ -33,7 +33,7 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> 
     steps.add(new PythonSdkSelectStep(moduleBuilder, "reference.project.structure.sdk.python", project));
     final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(getInstance(), DefaultFacetsProvider.INSTANCE);
     if (!providers.isEmpty()) {
-      steps.add(new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(project)));
+      steps.add(new SupportForFrameworksStep(wizardContext, moduleBuilder, LibrariesContainerFactory.createContainer(project)));
     }
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }
