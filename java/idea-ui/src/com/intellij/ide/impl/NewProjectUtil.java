@@ -43,7 +43,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -103,12 +102,10 @@ public class NewProjectUtil {
 
       final Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
-        newProject = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Project, RuntimeException>() {
-          @Override
-          public Project compute() throws RuntimeException {
-            return projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false);
-          }
-        }, "Creating Project", true, null);
+        String name = dialog.getProjectName();
+        newProject = projectBuilder == null
+                   ? projectManager.newProject(name, projectFilePath, true, false)
+                   : projectBuilder.createProject(name, projectFilePath);
       }
       else {
         newProject = projectToClose;

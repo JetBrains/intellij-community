@@ -31,8 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -241,8 +240,8 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return module != null ? Collections.singletonList(module) : null;
   }
 
+  @Nullable
   public Module commitModule(@NotNull final Project project, final ModifiableModuleModel model) {
-    final Ref<Module> result = new Ref<Module>();
     if (canCreateModule()) {
       if (myName == null) {
         myName = project.getName();
@@ -250,24 +249,20 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       if (myModuleFilePath == null) {
         myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
-      Exception ex = ApplicationManager.getApplication().runWriteAction(new NullableComputable<Exception>() {
-        @Override
-        public Exception compute() {
-          try {
-            result.set(createAndCommitIfNeeded(project, model, true));
-            return null;
+      try {
+        return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
+          @Override
+          public Module compute() throws Exception {
+            return createAndCommitIfNeeded(project, model, true);
           }
-          catch (Exception e) {
-            return e;
-          }
-        }
-      });
-      if (ex != null) {
+        });
+      }
+      catch (Exception ex) {
         LOG.warn(ex);
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
-    return result.get();
+    return null;
   }
 
   public static void deleteModuleFile(String moduleFilePath) {

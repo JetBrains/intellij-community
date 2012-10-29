@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,17 @@ public interface Application extends ComponentManager {
    * @return the result returned by the computation.
    */
   <T> T runWriteAction(@NotNull Computable<T> computation);
+
+  /**
+   * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
+   * The action is executed immediately if no read actions or write actions are currently running,
+   * or blocked until all read actions and write actions complete.
+   *
+   * @param computation the computation to run
+   * @return the result returned by the computation.
+   * @exception E re-frown from ThrowableComputable
+   */
+  <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * Returns true if there is currently executing write action of the specified class.
