@@ -2,6 +2,8 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,17 +15,17 @@ import java.awt.event.HierarchyListener;
  * @author evgeny.zakrevsky
  */
 public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
-  public static final String LABEL_FROM_TABBED_PANE = "JBTabbedPane.labelFromTabbedPane";
+  @NonNls public static final String LABEL_FROM_TABBED_PANE = "JBTabbedPane.labelFromTabbedPane";
   private int previousSelectedIndex = -1;
   
   public JBTabbedPane() {
   }
 
-  public JBTabbedPane(int tabPlacement) {
+  public JBTabbedPane(@JdkConstants.TabPlacement int tabPlacement) {
     super(tabPlacement);
   }
 
-  public JBTabbedPane(int tabPlacement, int tabLayoutPolicy) {
+  public JBTabbedPane(@JdkConstants.TabPlacement int tabPlacement, @JdkConstants.TabLayoutPolicy int tabLayoutPolicy) {
     super(tabPlacement, tabLayoutPolicy);
   }
 
@@ -87,5 +89,13 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   public void hierarchyChanged(HierarchyEvent e) {
     UIUtil.setNotOpaqueRecursively(e.getComponent());
     repaint();
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    for (int i=0; i<getTabCount(); i++) {
+      getComponentAt(i).removeHierarchyListener(this);
+    }
   }
 }
