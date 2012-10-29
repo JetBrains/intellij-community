@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commitgraph.node.Node;
 import org.hanuna.gitalk.commitgraph.node.PositionNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;
+import org.hanuna.gitalk.common.calculatemodel.calculator.Row;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  *  7:0         3
  *
  */
-public interface RowOfNode extends ReadOnlyList<Node>, Indexed {
+public interface RowOfNode extends ReadOnlyList<Node>, Row {
     public int getLastColorIndex();
     public int getIndexOfCommit(@NotNull Commit commit);
 

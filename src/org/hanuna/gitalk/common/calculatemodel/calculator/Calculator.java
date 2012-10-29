@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public interface Calculator<T extends Indexed> {
+public interface Calculator<T extends Row> {
     @NotNull
     public T getFirst();
 

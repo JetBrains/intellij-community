@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public abstract class AbstractCalculator<M extends T, T extends Indexed> implements Calculator<T> {
+public abstract class AbstractCalculator<M extends T, T extends Row> implements Calculator<T> {
 
     @NotNull
     @Override

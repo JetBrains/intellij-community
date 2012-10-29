@@ -2,10 +2,10 @@ package org.hanuna.gitalk.commitgraph.hidecommits;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;
+import org.hanuna.gitalk.common.calculatemodel.calculator.Row;
 
 /**
  * @author erokhins
  */
-public interface HideCommits extends ReadOnlyList<Commit>, Indexed {
+public interface HideCommits extends ReadOnlyList<Commit>, Row {
 }

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.common.calculatemodel;
 
 import org.hanuna.gitalk.common.calculatemodel.calculator.Calculator;
-import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;
+import org.hanuna.gitalk.common.calculatemodel.calculator.Row;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class PartSaveCalculateModel<T extends Indexed> implements CalculateModel<T> {
+public class PartSaveCalculateModel<T extends Row> implements CalculateModel<T> {
     private static final int STANDART_N = 30;
 
     private final int N;
@@ -46,17 +46,8 @@ public class PartSaveCalculateModel<T extends Indexed> implements CalculateModel
     }
 
     @Override
-    public void updateSize(int newSize) {
-
-    }
-
-    @Override
-    public void updateSize(int startUpdateIndex, int newSize) {
-
-    }
-
-    @Override
     public int size() {
+        checkPrepare();
         return size;
     }
 
@@ -72,6 +63,7 @@ public class PartSaveCalculateModel<T extends Indexed> implements CalculateModel
 
     @Override
     public Iterator<T> iterator() {
+        checkPrepare();
         return new Iterator<T>() {
             int step = 0;
             T t = null;

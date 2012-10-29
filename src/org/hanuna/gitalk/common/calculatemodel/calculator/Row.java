@@ -3,6 +3,6 @@ package org.hanuna.gitalk.common.calculatemodel.calculator;
 /**
  * @author erokhins
  */
-public interface Indexed {
+public interface Row {
     public int getRowIndex();
 }
