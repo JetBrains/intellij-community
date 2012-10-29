@@ -296,7 +296,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument = (DocumentImpl)document;
     myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
-    myIsViewer = viewer;
+    myIsViewer = viewer || !document.isWritable();
     mySettings = new SettingsImpl(this);
 
     mySelectionModel = new SelectionModelImpl(this);
