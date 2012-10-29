@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -83,13 +84,28 @@ public class JavaSettingsStep extends SdkSettingsStep {
   @Override
   public void updateDataModel() {
     super.updateDataModel();
-    if (myModuleBuilder instanceof JavaModuleBuilder && myCreateSourceRoot.isSelected()) {
-      String contentEntryPath = myModuleBuilder.getContentEntryPath();
-      if (contentEntryPath != null) {
-        final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
-        String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+    if (myModuleBuilder instanceof JavaModuleBuilder) {
+      if (myCreateSourceRoot.isSelected()) {
+        String contentEntryPath = myModuleBuilder.getContentEntryPath();
+        if (contentEntryPath != null) {
+          final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
+          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+        }
+      }
+      else {
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
       }
     }
+  }
+
+  @TestOnly
+  public void setCreateSourceRoot(boolean create) {
+    myCreateSourceRoot.setSelected(create);
+  }
+
+  @TestOnly
+  public void setSourcePath(String path) {
+    mySourcePath.setText(path);
   }
 }

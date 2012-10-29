@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
@@ -44,6 +45,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -51,6 +53,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.jps.maven.model.impl.MavenIdBean;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
@@ -995,6 +998,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void generateBuildConfiguration() {
+    if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) {
+      return;
+    }
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
     if (projectSystemDir == null) {
@@ -1013,12 +1019,29 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           continue;
         }
         final MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
-        addResources(resourceConfig.myResources, mavenProject.getResources());
-        addResources(resourceConfig.myTestResources, mavenProject.getTestResources());
-        resourceConfig.myFilteringExcludedExtensions.addAll(getFilterExclusions(mavenProject));
+
+        final MavenId projectId = mavenProject.getMavenId();
+        resourceConfig.id = new MavenIdBean(projectId.getGroupId(), projectId.getArtifactId(), projectId.getVersion());
+
+        final MavenId parentId = mavenProject.getParentId();
+        if (parentId != null) {
+          resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
+        }
+        resourceConfig.directory = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
+        resourceConfig.delimitersPattern = MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern();
+        for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
+          final String key = entry.getKey();
+          final String value = entry.getValue();
+          if (value != null && !"null".equals(value)) {  // todo: probable Maven Integration bug: storing null values as 'null' strings
+            resourceConfig.modelMap.put(key, value);
+          }
+        }
+        addResources(resourceConfig.resources, mavenProject.getResources());
+        addResources(resourceConfig.testResources, mavenProject.getTestResources());
+        resourceConfig.filteringExclusions.addAll(getFilterExclusions(mavenProject));
         final Properties properties = getFilteringProperties(mavenProject);
         for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
-          resourceConfig.myProperties.put((String)propEntry.getKey(), (String)propEntry.getValue());
+          resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
         }
         resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(
           mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"
@@ -1086,7 +1109,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private static Properties getFilteringProperties(MavenProject mavenProject) {
-    final Properties properties = new Properties(mavenProject.getProperties());
+    final Properties properties = new Properties();
+    properties.putAll(mavenProject.getProperties());
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);

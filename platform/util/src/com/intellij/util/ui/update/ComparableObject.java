@@ -31,11 +31,7 @@ public interface ComparableObject {
       this(NONE);
     }
 
-    public Impl(@NotNull Object object) {
-      this(new Object[] {object});
-    }
-
-    public Impl(@NotNull Object[] objects) {
+    public Impl(@NotNull Object... objects) {
       myObjects = objects;
     }
 

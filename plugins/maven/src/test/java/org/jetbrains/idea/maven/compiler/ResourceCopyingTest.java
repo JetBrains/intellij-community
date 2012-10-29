@@ -36,12 +36,12 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
     }
   }
 
-  //public static class JpsModeTest extends ResourceCopyingTest {
-  //  @Override
-  //  protected boolean useJps() {
-  //    return true;
-  //  }
-  //}
+  public static class JpsModeTest extends ResourceCopyingTest {
+    @Override
+    protected boolean useJps() {
+      return true;
+    }
+  }
 
 
   @Override
@@ -258,8 +258,10 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotCopyExcludedStandardResources() throws Exception {
-    if (ignore()) return;
-    
+    if (!useJps()) {
+      if (ignore()) return;
+    }
+
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     configuration.addResourceFilePattern("*.zzz");
 
@@ -342,6 +344,10 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testCopyManuallyDeletedFiles() throws Exception {
+    if (useJps()) {
+      ignore();
+      return;
+    }
     createProjectSubFile("res/file.properties");
 
     importProject("<groupId>test</groupId>" +

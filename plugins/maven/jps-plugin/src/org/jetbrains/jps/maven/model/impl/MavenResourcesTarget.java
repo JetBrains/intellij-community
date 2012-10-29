@@ -20,11 +20,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
@@ -34,25 +33,30 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 10/21/12
  */
-public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescriptor>{
-  @NotNull
-  private final JpsModule myModule;
+public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
+
+  private static final Comparator<String> STRING_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return o1.compareTo(o2);
+    }
+  };
+  private static final Comparator<ResourceRootConfiguration> ROOT_CONFIG_COMPARATOR = new Comparator<ResourceRootConfiguration>() {
+    @Override
+    public int compare(ResourceRootConfiguration o1, ResourceRootConfiguration o2) {
+      return STRING_COMPARATOR.compare(o1.directory, o2.directory);
+    }
+  };
 
   MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
-    super(type);
-    myModule = module;
-  }
-
-  @NotNull
-  @Override
-  public JpsModule getModule() {
-    return myModule;
+    super(type, module);
   }
 
   @Override
@@ -61,9 +65,8 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
-    final MavenResourcesTargetType type = (MavenResourcesTargetType)getTargetType();
-    final JavaModuleBuildTargetType targetType = type.isTests() ? JavaModuleBuildTargetType.TEST : JavaModuleBuildTargetType.PRODUCTION;
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
+    final JavaModuleBuildTargetType targetType = isTests() ? JavaModuleBuildTargetType.TEST : JavaModuleBuildTargetType.PRODUCTION;
     return Collections.<BuildTarget<?>>singletonList(new ModuleBuildTarget(myModule, targetType));
   }
 
@@ -78,10 +81,13 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
     return result;
   }
 
-  private List<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
-    final MavenModuleResourceConfiguration moduleConfig = getModuleResourcesConfiguration(dataPaths);
+  private Collection<ResourceRootConfiguration> getRootConfigurations(BuildDataPaths dataPaths) {
+    return getRootConfigurations(getModuleResourcesConfiguration(dataPaths));
+  }
+
+  private Collection<ResourceRootConfiguration> getRootConfigurations(@Nullable MavenModuleResourceConfiguration moduleConfig) {
     if (moduleConfig != null) {
-      return isTests() ? moduleConfig.myTestResources : moduleConfig.myResources;
+      return isTests() ? moduleConfig.testResources : moduleConfig.resources;
     }
     return Collections.emptyList();
   }
@@ -91,7 +97,7 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
     return projectConfig.moduleConfigurations.get(myModule.getName());
   }
 
-  private boolean isTests() {
+  public boolean isTests() {
     return ((MavenResourcesTargetType)getTargetType()).isTests();
   }
 
@@ -114,10 +120,10 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext context) {
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
-    for (ResourceRootConfiguration resConfig : getRootConfigurations(paths)) {
+    for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {
       final File output = getOutputDir(moduleOutput, resConfig);
       if (output != null) {
         result.add(output);
@@ -142,5 +148,13 @@ public class MavenResourcesTarget extends BuildTarget<MavenResourceRootDescripto
     }
     final File targetPathFile = new File(targetPath);
     return targetPathFile.isAbsolute()? targetPathFile : new File(moduleOutput, targetPath);
+  }
+
+  @Override
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+    final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
+    if (configuration != null) {
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));
+    }
   }
 }

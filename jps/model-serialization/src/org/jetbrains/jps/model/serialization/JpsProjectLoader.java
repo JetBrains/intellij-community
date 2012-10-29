@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -37,6 +38,7 @@ import java.util.concurrent.Future;
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
+  private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
   private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
@@ -170,7 +172,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
+  private void loadModules(Element root, final @Nullable JpsSdkType<?> projectSdkType) {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
@@ -186,7 +188,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
     try {
       for (Future<JpsModule> future : futures) {
-        myProject.addModule(future.get());
+        JpsModule module = future.get();
+        if (module != null) {
+          myProject.addModule(module);
+        }
       }
     }
     catch (Exception e) {
@@ -194,9 +199,15 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  private JpsModule loadModule(String path, JpsSdkType<?> projectSdkType) {
+  @Nullable
+  private JpsModule loadModule(@NotNull String path, @Nullable JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
+    if (!file.exists()) {
+      LOG.info("Module '" + name + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+      return null;
+    }
+
     final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
     final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");

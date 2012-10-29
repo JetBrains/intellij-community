@@ -1002,6 +1002,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
+  public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    final AccessToken token = acquireWriteActionLock(computation.getClass());
+    try {
+      return computation.compute();
+    }
+    finally {
+      token.finish();
+    }
+  }
+
+  @Override
   public boolean hasWriteAction(@Nullable Class<?> actionClass) {
     assertCanRunWriteAction();
 

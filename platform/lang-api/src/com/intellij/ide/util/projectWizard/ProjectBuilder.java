@@ -23,6 +23,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.Nullable;
@@ -57,5 +58,10 @@ public abstract class ProjectBuilder {
    */
   public boolean isSuitableSdk(Sdk sdk) {
     return true;
+  }
+
+  @Nullable
+  public Project createProject(String name, String path) {
+    return ProjectManager.getInstance().createProject(name, path);
   }
 }

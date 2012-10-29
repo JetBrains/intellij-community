@@ -58,4 +58,13 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   // returns true on success
   public abstract boolean closeAndDispose(@NotNull Project project);
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    return newProject(name, path, true, false);
+  }
+
+  @Nullable
+  public abstract Project convertAndLoadProject(String filePath) throws IOException;
 }

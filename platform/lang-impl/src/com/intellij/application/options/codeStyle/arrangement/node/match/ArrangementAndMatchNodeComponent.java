@@ -58,6 +58,7 @@ public class ArrangementAndMatchNodeComponent extends JPanel implements Arrangem
                                           @Nullable ArrangementRuleEditingModel model)
   {
     mySetting = setting;
+    setOpaque(false);
     setLayout(null);
     int x = 0;
     final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
@@ -80,7 +81,7 @@ public class ArrangementAndMatchNodeComponent extends JPanel implements Arrangem
     for (Object key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
-      ArrangementMatchNodeComponent component = factory.getComponent(operand, model);
+      ArrangementMatchNodeComponent component = factory.getComponent(operand, model, false);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
       Dimension size = uiComponent.getPreferredSize();

@@ -3,10 +3,10 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -29,9 +29,9 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
     return myTargetType;
   }
 
-  public abstract Collection<BuildTarget<?>> computeDependencies();
+  public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry);
 
-  public void writeConfiguration(PrintWriter out, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
   }
 
   @NotNull
@@ -47,15 +47,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   public abstract String getPresentableName();
 
   @NotNull
-  public abstract Collection<File> getOutputDirs(BuildDataPaths paths);
-
-  /**
-   * @return associated module if applicable
-   */
-  @Nullable
-  public JpsModule getModule() {
-    return null;
-  }
+  public abstract Collection<File> getOutputDirs(CompileContext context);
 
   @Override
   public String toString() {

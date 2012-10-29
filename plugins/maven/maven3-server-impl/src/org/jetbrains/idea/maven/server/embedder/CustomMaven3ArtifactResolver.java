@@ -110,20 +110,8 @@ public class CustomMaven3ArtifactResolver
     }
   }
 
-  public static RepositorySystemSession createSession(ArtifactRepository localRepository, RepositorySystemSession session, RepositorySystem repoSystem) {
-    RepositorySystemSession res =
-      LegacyLocalRepositoryManager.overlay(localRepository, session, repoSystem);
-
-    return new FilterRepositorySystemSession(res) {
-      @Override
-      public LocalRepository getLocalRepository() {
-        return getLocalRepositoryManager().getRepository(); // avoid NPE in DefaultMetadataResolver.resolve(RepositorySystemSession,Collection<? extends MetadataRequest>) : 318
-      }
-    };
-  }
-
   private RepositorySystemSession getSession(ArtifactRepository localRepository) {
-    return createSession(localRepository, legacySupport.getRepositorySession(), repoSystem);
+    return LegacyLocalRepositoryManager.overlay( localRepository, legacySupport.getRepositorySession(), repoSystem );
   }
 
   private void injectSession1( RepositoryRequest request, MavenSession session )

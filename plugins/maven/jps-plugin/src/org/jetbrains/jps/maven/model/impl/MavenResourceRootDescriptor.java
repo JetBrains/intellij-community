@@ -24,6 +24,7 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -38,8 +39,8 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
   private final String myId;
-  private List<Pattern> myCompiledIncludes;
-  private List<Pattern> myCompiledExcludes;
+  private Collection<Pattern> myCompiledIncludes;
+  private Collection<Pattern> myCompiledExcludes;
 
   public MavenResourceRootDescriptor(@NotNull MavenResourcesTarget target, ResourceRootConfiguration config) {
     myTarget = target;
@@ -88,7 +89,7 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     return isIncluded(FileUtil.toSystemIndependentName(relativePath), myCompiledIncludes, myCompiledExcludes);
   }
 
-  private static boolean isIncluded(String relativeName, List<Pattern> includes, List<Pattern> excludes) {
+  private static boolean isIncluded(String relativeName, Collection<Pattern> includes, Collection<Pattern> excludes) {
     boolean isIncluded = false;
     for (Pattern each : includes) {
       if (each.matcher(relativeName).matches()) {
@@ -108,7 +109,7 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @NotNull
-  private static List<Pattern> compilePatterns(@NotNull List<String> patterns, @Nullable String defaultValue) {
+  private static Collection<Pattern> compilePatterns(@NotNull Collection<String> patterns, @Nullable String defaultValue) {
     final List<Pattern> result = new ArrayList<Pattern>();
     if (patterns.isEmpty()) {
       if (defaultValue == null) {

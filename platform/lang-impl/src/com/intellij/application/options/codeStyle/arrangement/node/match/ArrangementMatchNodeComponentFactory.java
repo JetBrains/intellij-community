@@ -55,7 +55,8 @@ public class ArrangementMatchNodeComponentFactory {
 
   @NotNull
   public ArrangementMatchNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
-                                                    @Nullable final ArrangementRuleEditingModel model)
+                                                    @Nullable final ArrangementRuleEditingModel model,
+                                                    boolean showEditIcon)
   {
     final Ref<ArrangementMatchNodeComponent> ref = new Ref<ArrangementMatchNodeComponent>();
     node.invite(new ArrangementMatchConditionVisitor() {
@@ -83,7 +84,12 @@ public class ArrangementMatchNodeComponentFactory {
         }
       }
     });
-    return ref.get();
+    if (showEditIcon) {
+      return new ArrangementEditIconMatchNodeComponent(ref.get());
+    }
+    else {
+      return ref.get();
+    }
   }
 
   @Nullable

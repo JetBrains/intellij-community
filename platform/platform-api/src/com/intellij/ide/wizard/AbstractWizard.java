@@ -292,7 +292,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myCurrentStep;
   }
 
-  protected T getCurrentStepObject() {
+  public T getCurrentStepObject() {
     return mySteps.get(myCurrentStep);
   }
 
