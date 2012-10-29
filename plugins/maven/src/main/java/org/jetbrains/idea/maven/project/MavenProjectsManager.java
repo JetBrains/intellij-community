@@ -156,12 +156,19 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void initComponent() {
     if (!isNormalProject()) return;
 
-    StartupManagerEx.getInstanceEx(myProject).registerStartupActivity(new Runnable() {
+    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
+
+    startupManager.registerStartupActivity(new Runnable() {
       public void run() {
         boolean wasMavenized = !myState.originalFiles.isEmpty();
         if (!wasMavenized) return;
         initMavenized();
+      }
+    });
 
+    startupManager.registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
         CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
           @Override
           public boolean execute(CompileContext context) {
