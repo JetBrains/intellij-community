@@ -42,10 +42,6 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
     private boolean addNode(MutableRowOfNode row, Node node, int indexAdd) {
         int index = row.getIndexOfCommit(node.getCommit());
         if (index != -1) {
-            Node oldNode = row.get(index);
-            if (oldNode.getColorIndex() > node.getColorIndex()) {
-                row.set(index, node);
-            }
             return false;
         } else {
             row.addNode(indexAdd, node);
