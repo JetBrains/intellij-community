@@ -35,7 +35,7 @@ public interface PsiCatchSection extends PsiElement {
   ArrayFactory<PsiCatchSection> ARRAY_FACTORY = new ArrayFactory<PsiCatchSection>() {
     @Override
     public PsiCatchSection[] create(final int count) {
-      return count == 0 ? PsiCatchSection.EMPTY_ARRAY : new PsiCatchSection[count];
+      return count == 0 ? EMPTY_ARRAY : new PsiCatchSection[count];
     }
   };
 
