@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DfaValueFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
@@ -62,69 +63,82 @@ public class DfaValueFactory {
     return myValues.get(id);
   }
 
-  public DfaValue create(PsiExpression psiExpression) {
-    DfaValue result = null;
-
+  @Nullable
+  public DfaValue createValue(PsiExpression psiExpression) {
     if (psiExpression instanceof PsiReferenceExpression) {
-      PsiElement psiSource = ((PsiReferenceExpression)psiExpression).resolve();
-
-      if (psiSource != null) {
-        if (psiSource instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)psiSource;
-          DfaValue constValue = getConstFactory().create(variable);
-          if (constValue != null) return constValue;
-
-          PsiExpression initializer = variable.getInitializer();
-          if (initializer != null && variable.hasModifierProperty(PsiModifier.FINAL)) {
-            PsiType type = initializer.getType();
-            if (initializer instanceof PsiNewExpression) {
-              return getNotNullFactory().create(type);
-            }
-            if (initializer instanceof PsiPolyadicExpression) {
-              if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                return getNotNullFactory().create(type);
-              }
-            }
-          }
-        }
-
-        PsiVariable psiVariable = resolveVariable((PsiReferenceExpression)psiExpression);
-        if (psiVariable != null) {
-          result = getVarFactory().createVariableValue(psiVariable, false);
-        }
-      }
-    }
-    else if (psiExpression instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression literal = (PsiLiteralExpression)psiExpression;
-      if (literal.getValue() instanceof String) {
-        result = getNotNullFactory().create(psiExpression.getType()); // Non-null string literal.
-      }
-      else {
-        result = getConstFactory().create(literal);
-      }
-    }
-    else if (psiExpression instanceof PsiNewExpression) {
-      result = getNotNullFactory().create(psiExpression.getType());
-    }
-    else {
-      final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
-      PsiType type = psiExpression.getType();
-      if (value != null && type != null) {
-        if (value instanceof String) {
-          result  = getNotNullFactory().create(type); // Non-null string literal.
-        }
-        else {
-          result = getConstFactory().createFromValue(value, type);
-        }
-      }
+      return createReferenceValue((PsiReferenceExpression)psiExpression);
     }
 
-    return result;
+    if (psiExpression instanceof PsiLiteralExpression) {
+      return createLiteralValue((PsiLiteralExpression)psiExpression);
+    }
+
+    if (psiExpression instanceof PsiNewExpression) {
+      return getNotNullFactory().create(psiExpression.getType());
+    }
+
+    final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
+    PsiType type = psiExpression.getType();
+    if (value != null && type != null) {
+      if (value instanceof String) {
+        return getNotNullFactory().create(type); // Non-null string literal.
+      }
+      return getConstFactory().createFromValue(value, type);
+    }
+
+    return null;
   }
 
-  public static PsiVariable resolveVariable(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
-    if (qualifier == null || qualifier instanceof PsiThisExpression) {
+  @Nullable
+  public DfaValue createLiteralValue(PsiLiteralExpression literal) {
+    if (literal.getValue() instanceof String) {
+      return getNotNullFactory().create(literal.getType()); // Non-null string literal.
+    }
+    return getConstFactory().create(literal);
+  }
+
+  private static boolean isNotNullExpression(PsiExpression initializer, PsiType type) {
+    if (initializer instanceof PsiNewExpression) {
+      return true;
+    }
+    if (initializer instanceof PsiPolyadicExpression) {
+      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @Nullable
+  public DfaValue createReferenceValue(PsiReferenceExpression referenceExpression) {
+    PsiElement psiSource = referenceExpression.resolve();
+    if (!(psiSource instanceof PsiVariable)) {
+      return null;
+    }
+
+    final PsiVariable variable = (PsiVariable)psiSource;
+    if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+      DfaValue constValue = getConstFactory().create(variable);
+      if (constValue != null) return constValue;
+
+      PsiExpression initializer = variable.getInitializer();
+      PsiType type = initializer == null ? null : initializer.getType();
+      if (initializer != null && type != null && isNotNullExpression(initializer, type)) {
+        return getNotNullFactory().create(type);
+      }
+    }
+
+    if (isEffectivelyUnqualified(referenceExpression)) {
+      return getVarFactory().createVariableValue(variable, false);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PsiVariable resolveUnqualifiedVariable(PsiReferenceExpression refExpression) {
+    if (isEffectivelyUnqualified(refExpression)) {
       PsiElement resolved = refExpression.resolve();
       if (resolved instanceof PsiVariable) {
         return (PsiVariable)resolved;
@@ -132,6 +146,11 @@ public class DfaValueFactory {
     }
 
     return null;
+  }
+
+  private static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
+    PsiExpression qualifier = refExpression.getQualifierExpression();
+    return qualifier == null || qualifier instanceof PsiThisExpression;
   }
 
   private final DfaVariableValue.Factory myVarFactory;
