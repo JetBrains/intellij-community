@@ -1,5 +1,7 @@
 package org.hanuna.gitalk.common;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Date;
 
 /**
@@ -11,7 +13,7 @@ public class Timer {
 
     public Timer() {}
 
-    public Timer(String message) {
+    public Timer(@NotNull String message) {
         this.message = message;
     }
 

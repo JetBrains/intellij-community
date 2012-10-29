@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hanuna.gitalk.common.MyAssert.myAssert;
-
 /**
  * @author erokhins
  */
@@ -58,7 +56,7 @@ public final class Hash {
     }
 
     public String toStrHash() {
-        myAssert(data.length > 0, "bad length Hash.data");
+        assert data.length > 0 : "bad length Hash.data";
         byte even = data[0];
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i < data.length; i++) {

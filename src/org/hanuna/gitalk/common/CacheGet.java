@@ -1,5 +1,7 @@
 package org.hanuna.gitalk.common;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ public class CacheGet<K, V> implements Get<K, V>{
     private Map<K, V> map;
     private Map<K, V> moreMap;
 
-    public CacheGet(Get<K, V> getFunction, int size) {
+    public CacheGet(@NotNull Get<K, V> getFunction, int size) {
         this.getFunction = getFunction;
         this.size = size;
         this.map = new HashMap<K, V>(2 * size);
