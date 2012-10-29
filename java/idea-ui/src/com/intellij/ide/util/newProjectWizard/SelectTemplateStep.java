@@ -58,6 +58,7 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -106,7 +107,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final WizardContext myWizardContext;
   private final StepSequence mySequence;
   @Nullable
-  private ModuleWizardStep mySettingsCallback;
+  private ModuleWizardStep mySettingsStep;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myTreeBuilder;
@@ -303,7 +304,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     restorePanel(myNamePathComponent, 4);
     restorePanel(myExpertPanel, 6);
 
-    mySettingsCallback = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
+    mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
     String description = null;
     if (template != null) {
@@ -355,8 +356,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     if (info != null) {
       throw new ConfigurationException(info.message, "Error");
     }
-    if (mySettingsCallback != null) {
-      return mySettingsCallback.validate();
+    if (mySettingsStep != null) {
+      return mySettingsStep.validate();
     }
     return true;
   }
@@ -457,8 +458,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       myModuleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
     }
 
-    if (mySettingsCallback != null) {
-      mySettingsCallback.updateDataModel();
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
     }
   }
 
@@ -706,5 +707,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         return test.equals(node);
       }
     }, true);
+  }
+
+  @TestOnly
+  @Nullable
+  public ModuleWizardStep getSettingsStep() {
+    return mySettingsStep;
   }
 }

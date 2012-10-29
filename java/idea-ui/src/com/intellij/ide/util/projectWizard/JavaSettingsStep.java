@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -96,5 +97,15 @@ public class JavaSettingsStep extends SdkSettingsStep {
         ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
       }
     }
+  }
+
+  @TestOnly
+  public void setCreateSourceRoot(boolean create) {
+    myCreateSourceRoot.setSelected(create);
+  }
+
+  @TestOnly
+  public void setSourcePath(String path) {
+    mySourcePath.setText(path);
   }
 }
