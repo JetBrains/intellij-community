@@ -1024,6 +1024,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void generateBuildConfigurationIfNeed() {
+    if (!isMavenizedProject()) {
+      return;
+    }
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
     if (projectSystemDir == null) {
