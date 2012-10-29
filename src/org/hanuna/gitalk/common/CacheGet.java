@@ -15,8 +15,8 @@ public class CacheGet<K, V> implements Get<K, V>{
     public CacheGet(Get<K, V> getFunction, int size) {
         this.getFunction = getFunction;
         this.size = size;
-        this.map = new HashMap<K, V>(size);
-        this.moreMap = new HashMap<K, V>(size);
+        this.map = new HashMap<K, V>(2 * size);
+        this.moreMap = new HashMap<K, V>(2 * size);
     }
 
     @Override
@@ -28,14 +28,17 @@ public class CacheGet<K, V> implements Get<K, V>{
             value = getFunction.get(key);
             moreMap.put(key, value);
             map.put(key, value);
+            checkSize();
             return value;
         }
     }
 
     private void checkSize() {
         if (map.size() >= size) {
+            Map<K, V> tempMap = moreMap;
             moreMap = map;
-            map = new HashMap<K, V>(size);
+            map = tempMap;
+            map.clear();
         }
     }
 }
