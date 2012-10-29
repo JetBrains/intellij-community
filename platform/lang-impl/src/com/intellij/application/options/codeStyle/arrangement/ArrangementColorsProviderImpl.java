@@ -44,7 +44,6 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
 
   @NotNull private Color myBorderColor;
   @NotNull private Color mySelectedBorderColor;
-  @NotNull private Color myRowUnderMouseBackgroundColor;
 
   public ArrangementColorsProviderImpl(@Nullable ArrangementColorsAware colorsAware) {
     myColorsAware = colorsAware;
@@ -64,12 +63,6 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
   @Override
   public TextAttributes getTextAttributes(@NotNull ArrangementSettingType type, boolean selected) {
     return selected ? mySelectedTextAttributes.get(type) : myTextAttributes.get(type);
-  }
-
-  @NotNull
-  @Override
-  public Color getRowUnderMouseBackground() {
-    return myRowUnderMouseBackgroundColor;
   }
 
   /**
@@ -110,8 +103,6 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
       selectionBorderColor = GroupedElementsRenderer.SELECTED_FRAME_FOREGROUND;
     }
     mySelectedBorderColor = selectionBorderColor;
-
-    myRowUnderMouseBackgroundColor = UIUtil.getPanelBackground();
   }
 
   private void applyCustomColors(@NotNull ArrangementColorsAware colorsAware) {
@@ -136,11 +127,6 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     Color selectedBorderColor = colorsAware.getBorderColor(scheme, true);
     if (selectedBorderColor != null) {
       mySelectedBorderColor = selectedBorderColor;
-    }
-
-    Color activeRowBackground = colorsAware.getRowUnderMouseBackground(scheme);
-    if (activeRowBackground != null) {
-      myRowUnderMouseBackgroundColor = activeRowBackground;
     }
   }
 }

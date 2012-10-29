@@ -37,8 +37,5 @@ public interface ArrangementColorsAware {
   TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme, @NotNull ArrangementSettingType type, boolean selected);
   
   @Nullable
-  Color getRowUnderMouseBackground(@NotNull EditorColorsScheme scheme);
-
-  @Nullable
   Color getBorderColor(@NotNull EditorColorsScheme scheme, boolean selected);
 }
