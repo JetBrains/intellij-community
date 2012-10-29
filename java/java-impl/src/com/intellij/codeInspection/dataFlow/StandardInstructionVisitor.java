@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
@@ -105,7 +104,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return false;
   }
 
-
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dfaSource = memState.pop();
@@ -114,8 +112,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
-      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(psiVariable.getProject());
-      if (nullableManager.isNotNull(psiVariable, false)) {
+      if (DfaUtil.getElementNullability(var.getVariableType(), psiVariable) == Boolean.FALSE) {
         if (!memState.applyNotNull(dfaSource)) {
           onAssigningToNotNullableVariable(instruction, runner);
         }
@@ -123,6 +120,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
+    } else if (dfaDest instanceof DfaNotNullValue && !memState.applyNotNull(dfaSource)) {
+      onAssigningToNotNullableVariable(instruction, runner);
     }
 
     memState.push(dfaDest);
@@ -240,7 +239,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
     if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
       @Nullable final Boolean nullability = myReturnTypeNullability.get(instruction);
-      return nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
+      return factory.createTypeValueWithNullability(type, nullability);
     }
 
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {

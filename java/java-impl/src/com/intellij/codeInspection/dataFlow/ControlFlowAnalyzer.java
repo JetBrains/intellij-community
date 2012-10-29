@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -1523,7 +1522,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       dfaValue = createChainedVariableValue(expression);
     }
     if (dfaValue == null) {
-      return myFactory.getTypeFactory().create(field.getType(), NullableNotNullManager.isNullable(field));
+      PsiType type = expression.getType();
+      return myFactory.createTypeValueWithNullability(type, DfaUtil.getElementNullability(type, field));
     }
     return dfaValue;
   }

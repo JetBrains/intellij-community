@@ -49,7 +49,11 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
   }
 
-  int createID() {
+  public DfaValue createTypeValueWithNullability(@Nullable PsiType type, @Nullable Boolean nullability) {
+    return nullability == Boolean.FALSE ? getNotNullFactory().create(type) : getTypeFactory().create(type, nullability == Boolean.TRUE);
+  }
+
+   int createID() {
     myLastID++;
     LOG.assertTrue(myLastID >= 0, "Overflow");
     return myLastID;

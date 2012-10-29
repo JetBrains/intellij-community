@@ -18,10 +18,10 @@ class Test {
   }
 
   private static void test3(Ref<@NotNull Object> ref) {
-    if (ref.value == null) {
+    if (<warning descr="Condition 'ref.value == null' is always 'false'">ref.value == null</warning>) {
       return;
     }
-    ref.value = null;
+    ref.value = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>;
   }
 
 
