@@ -17,16 +17,15 @@ import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -131,5 +130,47 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
   @Override
   public String getPresentableName() {
     return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
+  }
+
+  @Override
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+    final JpsModule module = getModule();
+
+    int fingerprint = getDependenciesFingerprint();
+
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level != null) {
+      fingerprint += level.name().hashCode();
+    }
+
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
+    final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
+    if (bytecodeTarget != null) {
+      fingerprint += bytecodeTarget.hashCode();
+    }
+
+    // todo: can we tolerate project rebuild because of resource pattern changes?
+    //final List<String> patterns = config.getResourcePatterns();
+    //for (String pattern : patterns) {
+    //  fingerprint += pattern.hashCode();
+    //}
+
+    out.write(Integer.toHexString(fingerprint));
+  }
+
+  private int getDependenciesFingerprint() {
+    final JpsModule module = getModule();
+
+    int fingerprint = 0;
+
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly();
+    if (!isTests()) {
+      enumerator = enumerator.productionOnly();
+    }
+
+    for (String url : enumerator.classes().getUrls()) {
+      fingerprint += 31 * fingerprint + url.hashCode();
+    }
+    return fingerprint;
   }
 }

@@ -14,6 +14,7 @@ public class BuildTargetConfiguration {
   private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
   private String myConfiguration;
+  private volatile String myCurrentState;
 
   public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
     myTarget = target;
@@ -35,24 +36,17 @@ public class BuildTargetConfiguration {
   }
 
   public boolean isTargetDirty() {
-    String newConfiguration = saveToString();
-    if (!newConfiguration.equals(myConfiguration)) {
+    final String currentState = getCurrentState();
+    if (!currentState.equals(myConfiguration)) {
       LOG.debug(myTarget + " configuration was changed:");
       LOG.debug("Old:");
       LOG.debug(myConfiguration);
       LOG.debug("New:");
-      LOG.debug(newConfiguration);
+      LOG.debug(currentState);
       LOG.debug(myTarget + " will be recompiled");
       return true;
     }
     return false;
-  }
-
-  private String saveToString() {
-    StringWriter out = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getDataPaths(), myTargetsState.getBuildRootIndex());
-    return out.toString();
   }
 
   public void save() {
@@ -61,9 +55,9 @@ public class BuildTargetConfiguration {
       FileUtil.createParentDirs(configFile);
       Writer out = new BufferedWriter(new FileWriter(configFile));
       try {
-        String s = saveToString();
-        out.write(s);
-        myConfiguration = s;
+        String current = getCurrentState();
+        out.write(current);
+        myConfiguration = current;
       }
       finally {
         out.close();
@@ -77,4 +71,20 @@ public class BuildTargetConfiguration {
   private File getConfigFile() {
     return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "config.dat");
   }
+
+  private String getCurrentState() {
+    String state = myCurrentState;
+    if (state == null) {
+      myCurrentState = state = saveToString();
+    }
+    return state;
+  }
+
+  private String saveToString() {
+    StringWriter out = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getDataPaths(), myTargetsState.getBuildRootIndex());
+    return out.toString();
+  }
+
 }

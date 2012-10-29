@@ -68,7 +68,7 @@ public interface ArrangementMatchNodeComponent {
   void setSelected(boolean selected);
 
   /**
-   * Instructs current component about mose move event.
+   * Notifies current component about mose move event.
    * <p/>
    * Primary intention is to allow to react on event like 'on mouse hover' etc. We can't do that by subscribing to the
    * mouse events at the {@link #getUiComponent() corresponding UI control} because it's used only as a renderer and is not put

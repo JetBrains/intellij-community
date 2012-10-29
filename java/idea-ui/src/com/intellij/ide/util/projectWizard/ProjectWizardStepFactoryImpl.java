@@ -133,7 +133,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
     if (!FrameworkSupportUtil.getProviders(builder).isEmpty()) {
       final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
-      return new SupportForFrameworksStep(builder, container);
+      return new SupportForFrameworksStep(context, builder, container);
     }
     return null;
   }

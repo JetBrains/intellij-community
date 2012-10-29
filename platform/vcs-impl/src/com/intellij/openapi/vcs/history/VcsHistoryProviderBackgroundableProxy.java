@@ -90,7 +90,7 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
-                                       @Nullable VcsBackgroundableActions actionKey, boolean canUseCache) {
+                                       @Nullable VcsBackgroundableActions actionKey, boolean canUseCache, boolean canUseLastRevisionCheck) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session =
         myVcsHistoryCache.getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
@@ -127,19 +127,19 @@ public class VcsHistoryProviderBackgroundableProxy {
     } else {
       cachedPartner = partner;
     }
-    reportHistory(filePath, vcsKey, resultingActionKey, handler, cachedPartner);
+    reportHistory(filePath, vcsKey, resultingActionKey, handler, cachedPartner, canUseLastRevisionCheck);
   }
 
   private void reportHistory(final FilePath filePath, final VcsKey vcsKey,
                              final VcsBackgroundableActions resultingActionKey,
                              final BackgroundableActionEnabledHandler handler,
-                             final VcsAppendableHistorySessionPartner cachedPartner) {
+                             final VcsAppendableHistorySessionPartner cachedPartner, final boolean canUseLastRevisionCheck) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final VcsHistorySession cachedSession = myCachesHistory ? getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey) : null;
-          if (cachedSession != null) {
+          VcsHistorySession cachedSession = null;
+          if (canUseLastRevisionCheck && myCachesHistory && ((cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey))) != null) {
             cachedPartner.reportCreatedEmptySession((VcsAbstractHistorySession)cachedSession);
           } else {
             myDelegate.reportAppendableHistory(filePath, cachedPartner);

@@ -44,9 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
@@ -55,7 +53,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private String myName;
   @NonNls private String myModuleFilePath;
   private String myContentEntryPath;
-  private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
+  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   public static List<ModuleBuilder> getAllBuilders() {
@@ -176,14 +174,18 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     deleteModuleFile(myModuleFilePath);
     final ModuleType moduleType = getModuleType();
     final Module module = moduleModel.newModule(myModuleFilePath, moduleType.getId());
+    setupModule(module);
+
+    return module;
+  }
+
+  protected void setupModule(Module module) throws ConfigurationException {
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
     for (ModuleConfigurationUpdater updater : myUpdaters) {
       updater.update(module, modifiableModel);
     }
     modifiableModel.commit();
-
-    return module;
   }
 
   private void onModuleInitialized(final Module module) {
@@ -286,6 +288,12 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public String getPresentableName() {
     return getModuleType().getName();
+  }
+
+  public void updateFrom(ModuleBuilder from) {
+    myName = from.getName();
+    myContentEntryPath = from.getContentEntryPath();
+    myModuleFilePath = from.getModuleFilePath();
   }
 
   public static abstract class ModuleConfigurationUpdater {
