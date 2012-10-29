@@ -254,7 +254,10 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         }
       }
     };
-    return new VcsCommittedViewAuxiliary(Collections.singletonList(copyHashAction), null, Collections.singletonList(copyHashAction));
+    return new VcsCommittedViewAuxiliary(Collections.singletonList(copyHashAction), new Runnable() {
+      public void run() {
+      }
+    }, Collections.singletonList(copyHashAction));
   }
 
   public int getUnlimitedCountValue() {
