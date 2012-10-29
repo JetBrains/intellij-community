@@ -1,10 +1,10 @@
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
-import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -51,6 +51,7 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   public GenericRepository(final TaskRepositoryType type) {
     super(type);
+    resetToDefaults();
   }
 
   public GenericRepository(final GenericRepository other) {
@@ -62,6 +63,11 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTasksListMethodType = other.getTasksListMethodType();
     myResponseType = other.getResponseType();
     myTemplateVariables = other.getTemplateVariables();
+  }
+
+  @Override
+  public boolean isConfigured() {
+    return StringUtil.isNotEmpty(myTasksListURL) && StringUtil.isNotEmpty(myTaskPattern);
   }
 
   @Override
@@ -178,7 +184,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public BaseRepository clone() {
+  public GenericRepository clone() {
     return new GenericRepository(this);
   }
 
@@ -282,5 +288,43 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   public void setTemplateVariables(final List<TemplateVariable> templateVariables) {
     myTemplateVariables = templateVariables;
+  }
+
+  public void resetToDefaults() {
+    myTasksListURL = getTasksListURLDefault();
+    myTaskPattern = getTaskPatternDefault();
+    myLoginURL = getLoginURLDefault();
+    myLoginMethodType = getLoginMethodTypeDefault();
+    myTasksListMethodType = getTasksListMethodTypeDefault();
+    myResponseType = getResponseTypeDefault();
+    myTemplateVariables = getTemplateVariablesDefault();
+  }
+
+  protected List<TemplateVariable> getTemplateVariablesDefault() {
+    return new ArrayList<TemplateVariable>();
+  }
+
+  protected ResponseType getResponseTypeDefault() {
+    return ResponseType.XML;
+  }
+
+  protected String getTasksListMethodTypeDefault() {
+    return GenericRepositoryEditor.GET;
+  }
+
+  protected String getLoginMethodTypeDefault() {
+    return GenericRepositoryEditor.GET;
+  }
+
+  protected String getLoginURLDefault() {
+    return "";
+  }
+
+  protected String getTaskPatternDefault() {
+    return "";
+  }
+
+  protected String getTasksListURLDefault() {
+    return "";
   }
 }

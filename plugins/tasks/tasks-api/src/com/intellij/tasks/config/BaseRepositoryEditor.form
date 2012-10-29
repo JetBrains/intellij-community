@@ -71,7 +71,7 @@
                   <text value="Pr&amp;oxy settings..."/>
                 </properties>
               </component>
-              <component id="d86a3" class="javax.swing.JCheckBox" binding="myUseHTTPAuthentication">
+              <component id="d86a3" class="javax.swing.JCheckBox" binding="myUseHttpAuthenticationCheckBox">
                 <constraints>
                   <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -92,7 +92,7 @@
                   <text value="Te&amp;st"/>
                 </properties>
               </component>
-              <component id="8abc1" class="javax.swing.JCheckBox" binding="myShareURL">
+              <component id="8abc1" class="javax.swing.JCheckBox" binding="myShareUrlCheckBox">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
