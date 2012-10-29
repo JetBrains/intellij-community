@@ -1,6 +1,7 @@
 package com.intellij.appengine.enhancement;
 
 import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.appengine.facet.PersistenceApi;
 import com.intellij.appengine.rt.EnhancerRunner;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.compiler.SymbolTable;
@@ -169,7 +170,12 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
           programParameters.add(argsFile.getAbsolutePath());
           programParameters.add("com.google.appengine.tools.enhancer.Enhance");
           programParameters.add("-api");
-          programParameters.add(facet.getConfiguration().getPersistenceApi().getName());
+          PersistenceApi api = facet.getConfiguration().getPersistenceApi();
+          programParameters.add(api.getEnhancerApiName());
+          if (api.getEnhancerVersion() == 2) {
+            programParameters.add("-enhancerVersion");
+            programParameters.add("v2");
+          }
           programParameters.add("-v");
 
         }

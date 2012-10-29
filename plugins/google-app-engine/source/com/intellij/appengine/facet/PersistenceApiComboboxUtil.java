@@ -20,7 +20,7 @@ public class PersistenceApiComboboxUtil {
       model.addElement(NONE_ITEM);
     }
     for (PersistenceApi api : PersistenceApi.values()) {
-      model.addElement(api.getName());
+      model.addElement(api.getDisplayName());
     }
     comboBox.setModel(model);
   }
@@ -30,7 +30,7 @@ public class PersistenceApiComboboxUtil {
     final String apiName = (String)comboBox.getSelectedItem();
     PersistenceApi api = null;
     for (PersistenceApi value : PersistenceApi.values()) {
-      if (value.getName().equals(apiName)) {
+      if (value.getDisplayName().equals(apiName)) {
         api = value;
       }
     }

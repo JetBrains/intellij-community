@@ -143,7 +143,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
           sourceRoot = findOrCreateChildDirectory(rootModel.getContentRoots()[0], "src");
         }
         VirtualFile metaInf = findOrCreateChildDirectory(sourceRoot, "META-INF");
-        if (persistenceApi == PersistenceApi.JDO) {
+        if (persistenceApi == PersistenceApi.JDO || persistenceApi == PersistenceApi.JDO3) {
           createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_JDO_CONFIG_TEMPLATE, metaInf, AppEngineUtil.JDO_CONFIG_XML_NAME);
         }
         else {
@@ -226,7 +226,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "Google App Engine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
       if (model.isFrameworkSelected(JPA_PROVIDER_ID)) {
-        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
       }
       model.addFrameworkListener(this);
 
@@ -267,7 +267,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
     public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {
       if (provider.getId().equals(JPA_PROVIDER_ID)) {
-        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
       }
     }
 

@@ -123,7 +123,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myFilesListModel.removeAllElements();
     fillFilesList(myFacetConfiguration.getFilesToEnhance());
     myRunEnhancerOnMakeCheckBox.setSelected(myFacetConfiguration.isRunEnhancerOnMake());
-    myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getName());
+    myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getDisplayName());
   }
 
   private void fillFilesList(final List<String> paths) {
