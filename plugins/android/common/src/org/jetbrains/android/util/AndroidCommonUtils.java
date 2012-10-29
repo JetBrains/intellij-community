@@ -458,7 +458,7 @@ public class AndroidCommonUtils {
           revisionNumber = Integer.parseInt(revision);
         }
         catch (NumberFormatException e) {
-          LOG.info(e);
+          LOG.debug(e);
         }
       }
     }
