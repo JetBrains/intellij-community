@@ -210,7 +210,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
             break;
           case OVERRIDDEN_METHODS:
             setupOverriddenMethods(parseInfo);
-          default: assert false;
+          default: // Do nothing
         }
       }
     }
