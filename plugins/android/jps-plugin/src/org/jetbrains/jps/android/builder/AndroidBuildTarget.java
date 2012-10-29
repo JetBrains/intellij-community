@@ -37,11 +37,11 @@ import java.util.*;
 /**
  * @author nik
  */
-public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> {
+public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
   private final JpsModule myModule;
   private final TargetType myTargetType;
 
-  public AndroidProjectBuildTarget(@NotNull TargetType targetType, @NotNull JpsModule module) {
+  public AndroidBuildTarget(@NotNull TargetType targetType, @NotNull JpsModule module) {
     super(targetType);
     myTargetType = targetType;
     myModule = module;
@@ -56,7 +56,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   public Collection<BuildTarget<?>> computeDependencies() {
     final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
     if (myTargetType == TargetType.PACKAGING) {
-      result.add(new AndroidProjectBuildTarget(TargetType.DEX, myModule));
+      result.add(new AndroidBuildTarget(TargetType.DEX, myModule));
     }
     addModuleTargets(myModule, result);
     final JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
@@ -84,7 +84,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    AndroidProjectBuildTarget target = (AndroidProjectBuildTarget)o;
+    AndroidBuildTarget target = (AndroidBuildTarget)o;
 
     if (!myModule.equals(target.myModule)) return false;
     return myTargetType.equals(target.myTargetType);
@@ -124,7 +124,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
     return Collections.emptyList();
   }
 
-  public static class TargetType extends BuildTargetType<AndroidProjectBuildTarget> {
+  public static class TargetType extends BuildTargetType<AndroidBuildTarget> {
     public static final TargetType DEX = new TargetType(AndroidCommonUtils.DEX_BUILD_TARGET_TYPE_ID, "DEX");
     public static final TargetType PACKAGING = new TargetType(AndroidCommonUtils.PACKAGING_BUILD_TARGET_TYPE_ID, "Packaging");
 
@@ -142,17 +142,17 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
 
     @NotNull
     @Override
-    public List<AndroidProjectBuildTarget> computeAllTargets(@NotNull JpsModel model) {
+    public List<AndroidBuildTarget> computeAllTargets(@NotNull JpsModel model) {
       if (!AndroidJpsUtil.containsAndroidFacet(model.getProject())) {
         return Collections.emptyList();
       }
-      final List<AndroidProjectBuildTarget> targets = new ArrayList<AndroidProjectBuildTarget>();
+      final List<AndroidBuildTarget> targets = new ArrayList<AndroidBuildTarget>();
 
       for (JpsModule module : model.getProject().getModules()) {
         final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
         if (extension != null && !extension.isLibrary()) {
-          targets.add(new AndroidProjectBuildTarget(this, module));
+          targets.add(new AndroidBuildTarget(this, module));
         }
       }
       return targets;
@@ -160,16 +160,16 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
 
     @NotNull
     @Override
-    public BuildTargetLoader<AndroidProjectBuildTarget> createLoader(@NotNull final JpsModel model) {
-      final HashMap<String, AndroidProjectBuildTarget> targetMap = new HashMap<String, AndroidProjectBuildTarget>();
+    public BuildTargetLoader<AndroidBuildTarget> createLoader(@NotNull final JpsModel model) {
+      final HashMap<String, AndroidBuildTarget> targetMap = new HashMap<String, AndroidBuildTarget>();
 
-      for (AndroidProjectBuildTarget target : computeAllTargets(model)) {
+      for (AndroidBuildTarget target : computeAllTargets(model)) {
         targetMap.put(target.getId(), target);
       }
-      return new BuildTargetLoader<AndroidProjectBuildTarget>() {
+      return new BuildTargetLoader<AndroidBuildTarget>() {
         @Nullable
         @Override
-        public AndroidProjectBuildTarget createTarget(@NotNull String targetId) {
+        public AndroidBuildTarget createTarget(@NotNull String targetId) {
           return targetMap.get(targetId);
         }
       };

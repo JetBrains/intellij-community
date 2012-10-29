@@ -30,7 +30,7 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -56,7 +56,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidProjectBuildTarget> {
+public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
@@ -65,12 +65,12 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
 
   public AndroidDexBuilder() {
-    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.DEX));
+    super(Collections.singletonList(AndroidBuildTarget.TargetType.DEX));
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target,
-                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+  public void build(@NotNull AndroidBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
     if (AndroidJpsUtil.isLightBuild(context)) {
