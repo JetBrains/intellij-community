@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph.hides;
+package org.hanuna.gitalk.commitgraph.hidecommits;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyIterator;
@@ -12,15 +12,17 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableHideCommits implements HideCommits {
-
-    public static MutableHideCommits create(HideCommits hideCommits) {
+    @NotNull
+    public static MutableHideCommits create(@NotNull HideCommits hideCommits) {
         List<Commit> commits = new LinkedList<Commit>();
         for (Commit commit : hideCommits) {
+            assert commit != null : "null commit in HideCommits";
             commits.add(commit);
         }
         return new MutableHideCommits(commits, hideCommits.getRowIndex());
     }
 
+    @NotNull
     public static MutableHideCommits getEmpty(int rowIndex) {
         List<Commit> commits = new LinkedList<Commit>();
         return new MutableHideCommits(commits, rowIndex);
@@ -29,16 +31,16 @@ public class MutableHideCommits implements HideCommits {
     private final List<Commit> hideCommits;
     private int rowIndex;
 
-    private MutableHideCommits(List hideCommits, int rowIndex) {
+    private MutableHideCommits(@NotNull List<Commit> hideCommits, int rowIndex) {
         this.hideCommits = hideCommits;
         this.rowIndex = rowIndex;
     }
 
-    public void add(Commit commit) {
+    public void add(@NotNull Commit commit) {
         hideCommits.add(commit);
     }
 
-    public void remove(Commit commit) {
+    public void remove(@NotNull Commit commit) {
         hideCommits.remove(commit);
     }
 
@@ -62,6 +64,7 @@ public class MutableHideCommits implements HideCommits {
         return hideCommits.get(index);
     }
 
+    @NotNull
     @Override
     public Iterator<Commit> iterator() {
         return new ReadOnlyIterator<Commit>(hideCommits.iterator());

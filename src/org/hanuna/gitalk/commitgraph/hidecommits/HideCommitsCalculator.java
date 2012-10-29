@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph.hides;
+package org.hanuna.gitalk.commitgraph.hidecommits;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits, HideCommits> {
     private final CommitsModel commitsModel;
 
-    public HideCommitsCalculator(CommitsModel commitsModel) {
+    public HideCommitsCalculator(@NotNull CommitsModel commitsModel) {
         this.commitsModel = commitsModel;
     }
 
@@ -25,7 +25,7 @@ public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits
 
     @NotNull
     @Override
-    protected MutableHideCommits createMutable(HideCommits prev) {
+    protected MutableHideCommits createMutable(@NotNull HideCommits prev) {
         return MutableHideCommits.create(prev);
     }
 
@@ -34,9 +34,9 @@ public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits
         return commitsModel.size();
     }
 
-    @NotNull
-    protected MutableHideCommits oneStep(MutableHideCommits hideCommits) {
 
+    @NotNull
+    protected MutableHideCommits oneStep(@NotNull MutableHideCommits hideCommits) {
         int rowIndex = hideCommits.getRowIndex();
         ReadOnlyList<Commit> hides = commitsModel.hidesCommits(rowIndex);
         ReadOnlyList<Commit> shows;

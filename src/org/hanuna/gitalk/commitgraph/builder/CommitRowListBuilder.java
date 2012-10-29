@@ -2,8 +2,8 @@ package org.hanuna.gitalk.commitgraph.builder;
 
 import com.sun.istack.internal.NotNull;
 import org.hanuna.gitalk.commitgraph.CommitRow;
-import org.hanuna.gitalk.commitgraph.hides.HideCommits;
-import org.hanuna.gitalk.commitgraph.hides.HideCommitsCalculator;
+import org.hanuna.gitalk.commitgraph.hidecommits.HideCommits;
+import org.hanuna.gitalk.commitgraph.hidecommits.HideCommitsCalculator;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNodeCalculator;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
