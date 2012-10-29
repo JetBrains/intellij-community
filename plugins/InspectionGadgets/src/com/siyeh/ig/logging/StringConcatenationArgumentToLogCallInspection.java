@@ -19,14 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -67,30 +65,21 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final int count = StringConcatenationArgumentToLogCallFix.isAvailable((PsiExpression)infos[0]);
-    if (count == 0) {
+    if (!StringConcatenationArgumentToLogCallFix.isAvailable((PsiExpression)infos[0])) {
       return null;
     }
-    return new StringConcatenationArgumentToLogCallFix(count > 1);
+    return new StringConcatenationArgumentToLogCallFix();
   }
 
   private static class StringConcatenationArgumentToLogCallFix extends InspectionGadgetsFix {
 
-    private final boolean myPlural;
 
-    public StringConcatenationArgumentToLogCallFix(boolean plural) {
-      myPlural = plural;
-    }
+    public StringConcatenationArgumentToLogCallFix() {}
 
     @NotNull
     @Override
     public String getName() {
-      if (myPlural) {
-        return InspectionGadgetsBundle.message("string.concatenation.in.format.call.plural.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix");
-      }
+      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix");
     }
 
     @Override
@@ -114,7 +103,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
         if (!TypeUtils.expressionHasTypeOrSubtype(argument, "org.slf4j.Marker") || arguments.length < 2) {
           return;
         }
-        newMethodCall.append(argument.getText()).append(",\"");
+        newMethodCall.append(argument.getText()).append(',');
         argument = arguments[1];
         usedArguments = 2;
         if (!(argument instanceof PsiPolyadicExpression)) {
@@ -122,7 +111,6 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
         }
       }
       else {
-        newMethodCall.append('\"');
         usedArguments = 1;
       }
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)argument;
@@ -145,25 +133,56 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       }
       final List<PsiExpression> newArguments = new ArrayList();
       final PsiExpression[] operands = polyadicExpression.getOperands();
+      boolean addPlus = false;
+      boolean inStringLiteral = false;
       for (PsiExpression operand : operands) {
-        if (operand instanceof PsiLiteralExpression) {
-          final String text = operand.getText();
-          final int count = StringUtil.getOccurrenceCount(text, "{}");
-          for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
-            newArguments.add((PsiExpression)arguments[i + usedArguments].copy());
+        if (ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
+          if (ExpressionUtils.hasStringType(operand)) {
+            final String text = operand.getText();
+            final int count = StringUtil.getOccurrenceCount(text, "{}");
+            for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
+              newArguments.add((PsiExpression)arguments[i + usedArguments].copy());
+            }
+            usedArguments += count;
+            if (!inStringLiteral) {
+              if (addPlus) {
+                newMethodCall.append('+');
+              }
+              newMethodCall.append('"');
+              inStringLiteral = true;
+            }
+            newMethodCall.append(text.substring(1, text.length() - 1));
           }
-          usedArguments += count;
-          newMethodCall.append(text.substring(1, text.length() - 1));
+          else {
+            if (inStringLiteral) {
+              newMethodCall.append('"');
+              inStringLiteral = false;
+            }
+            if (addPlus) {
+              newMethodCall.append('+');
+            }
+            newMethodCall.append(operand.getText());
+          }
         }
         else {
           newArguments.add((PsiExpression)operand.copy());
+          if (!inStringLiteral) {
+            if (addPlus) {
+              newMethodCall.append('+');
+            }
+            newMethodCall.append('"');
+            inStringLiteral = true;
+          }
           newMethodCall.append("{}");
         }
+        addPlus = true;
       }
       while (usedArguments < arguments.length) {
         newArguments.add(arguments[usedArguments++]);
       }
-      newMethodCall.append('"');
+      if (inStringLiteral) {
+        newMethodCall.append('"');
+      }
       if (!varArgs && newArguments.size() > 2) {
         newMethodCall.append(", new Object[]{");
         boolean comma = false;
@@ -187,26 +206,18 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       replaceExpression(methodCallExpression, newMethodCall.toString());
     }
 
-    public static int isAvailable(PsiExpression expression) {
-      int count = 0;
+    public static boolean isAvailable(PsiExpression expression) {
       if (!(expression instanceof PsiPolyadicExpression)) {
-        return count;
+        return false;
       }
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (PsiExpression operand : operands) {
-        if (operand instanceof PsiLiteralExpression) {
-          if (!ExpressionUtils.hasStringType(operand)) {
-            return count;
-          }
-          continue;
+        if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
+          return true;
         }
-        if (!(operand instanceof PsiReferenceExpression)) {
-          return count;
-        }
-        count++;
       }
-      return count;
+      return false;
     }
   }
 
@@ -248,30 +259,28 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
           return;
         }
       }
-      argument = ParenthesesUtils.stripParentheses(argument);
-      if (argument == null || !containsConcatenation(argument)) {
+      if (!containsNonConstantConcatenation(argument)) {
         return;
       }
       registerMethodCallError(expression, argument);
     }
 
-    private static boolean containsConcatenation(@Nullable PsiExpression expression) {
+    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-        containsConcatenation(parenthesizedExpression.getExpression());
+        return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
       }
       else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         if (!ExpressionUtils.hasStringType(polyadicExpression)) {
           return false;
         }
-        final IElementType tokenType = polyadicExpression.getOperationTokenType();
-        if (!JavaTokenType.PLUS.equals(tokenType)) {
+        if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
           return false;
         }
         final PsiExpression[] operands = polyadicExpression.getOperands();
         for (PsiExpression operand : operands) {
-          if (operand instanceof PsiReferenceExpression) {
+          if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
             return true;
           }
         }
