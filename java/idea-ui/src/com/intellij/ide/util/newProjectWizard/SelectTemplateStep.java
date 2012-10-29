@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -139,12 +140,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
     // put single leafs under "Other"
     for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
-      if (entry.getValue().size() > 1 || ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
-        sorted.put(entry.getKey(), entry.getValue());
+      Collection<ProjectTemplate> templates = entry.getValue();
+      if (templates.size() == 1 &&
+          !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+
+        if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
+          sorted.putValues("Other", templates);
+          continue;
+        }
       }
-      else  {
-        sorted.putValues("Other", entry.getValue());
-      }
+      sorted.put(entry.getKey(), templates);
     }
 
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
@@ -698,9 +703,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     return myModuleName.getText().trim();
   }
 
-  public void setSelectedTemplate(String group, String name) {
+  public boolean setSelectedTemplate(String group, String name) {
     final ComparableObject.Impl test = new ComparableObject.Impl(group, name);
-    myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
+    return myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
       @Override
       public boolean accept(SimpleNode simpleNode) {
         SimpleNode node = getDelegate(simpleNode);
