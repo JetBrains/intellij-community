@@ -862,7 +862,11 @@ public class ArrangementRuleTree {
     }
 
     public boolean isRowSelected(int row) {
-      for (int i : getSelectionRows()) {
+      int[] rows = getSelectionRows();
+      if (rows == null) {
+        return false;
+      }
+      for (int i : rows) {
         if (i == row) {
           return true;
         }
