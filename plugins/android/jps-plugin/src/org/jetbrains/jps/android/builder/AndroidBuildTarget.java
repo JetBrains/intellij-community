@@ -15,20 +15,19 @@
  */
 package org.jetbrains.jps.android.builder;
 
-import com.intellij.util.Consumer;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -37,14 +36,12 @@ import java.util.*;
 /**
  * @author nik
  */
-public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
-  private final JpsModule myModule;
+public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
   private final TargetType myTargetType;
 
   public AndroidBuildTarget(@NotNull TargetType targetType, @NotNull JpsModule module) {
-    super(targetType);
+    super(targetType, module);
     myTargetType = targetType;
-    myModule = module;
   }
 
   @Override
@@ -53,45 +50,18 @@ public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(final BuildTargetRegistry targetRegistry) {
+  public Collection<BuildTarget<?>> computeDependencies(final BuildTargetRegistry registry) {
     final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+
     if (myTargetType == TargetType.PACKAGING) {
       result.add(new AndroidBuildTarget(TargetType.DEX, myModule));
     }
-    addModuleTargets(myModule, result, targetRegistry);
-    final JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
+    result.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
 
-    enumerator.processModules(new Consumer<JpsModule>() {
-      @Override
-      public void consume(JpsModule depModule) {
-        addModuleTargets(depModule, result, targetRegistry);
-      }
-    });
-    return result;
-  }
-
-  private static void addModuleTargets(JpsModule module, List<BuildTarget<?>> result, BuildTargetRegistry targetRegistry) {
-    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-    result.addAll(targetRegistry.getModuleBasedTargets(module, extension != null && extension.isPackTestCode()
-                                                               ? BuildTargetRegistry.ModuleTargetSelector.ALL
-                                                               : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    AndroidBuildTarget target = (AndroidBuildTarget)o;
-
-    if (!myModule.equals(target.myModule)) return false;
-    return myTargetType.equals(target.myTargetType);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myModule.hashCode();
-    result = 31 * result + myTargetType.hashCode();
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(myModule);
+    if (extension != null && extension.isPackTestCode()) {
+      result.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.TEST));
+    }
     return result;
   }
 
@@ -120,6 +90,11 @@ public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
   @Override
   public Collection<File> getOutputDirs(CompileContext context) {
     return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isTests() {
+    return false;
   }
 
   public static class TargetType extends BuildTargetType<AndroidBuildTarget> {
