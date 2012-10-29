@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph.order;
+package org.hanuna.gitalk.commitgraph.ordernodes;
 
 import org.hanuna.gitalk.commitgraph.Node;
 import org.hanuna.gitalk.commitmodel.Commit;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, RowOfNode> {
     private final CommitsModel commitsModel;
 
-    public RowOfNodeCalculator(CommitsModel commitsModel) {
+    public RowOfNodeCalculator(@NotNull CommitsModel commitsModel) {
         this.commitsModel = commitsModel;
     }
 
@@ -29,7 +29,7 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
 
     @NotNull
     @Override
-    protected MutableRowOfNode createMutable(RowOfNode prev) {
+    protected MutableRowOfNode createMutable(@NotNull RowOfNode prev) {
         return MutableRowOfNode.create(prev);
     }
 
@@ -41,27 +41,27 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
     // true, if node was add
     private boolean addNode(MutableRowOfNode row, Node node, int indexAdd) {
         int index = row.getIndexOfCommit(node.getCommit());
-        if (index != -1) {
-            return false;
-        } else {
+        if (index == -1) {
             row.addNode(indexAdd, node);
             return true;
         }
+        return false;
     }
 
     @NotNull
     protected MutableRowOfNode oneStep(MutableRowOfNode row) {
         Commit prevCommit = commitsModel.get(row.getRowIndex());
         int prevCommitIndex = row.getIndexOfCommit(prevCommit);
-        assert prevCommitIndex != -1 : "bad prev row";
-        Node prevNode = row.removeNode(prevCommitIndex);
+        assert prevCommitIndex != -1 : "not found main commit in row";
+        Node prevCommitNode = row.removeNode(prevCommitIndex);
         ReadOnlyList<Commit> parents = prevCommit.getParents();
 
+        // add parents node if they not existed
         int countNewNode = 0;
         for (int i = 0; i < parents.size(); i++) {
             int colorIndex;
             if (i == 0) {
-                colorIndex = prevNode.getColorIndex();
+                colorIndex = prevCommitNode.getColorIndex();
             } else {
                 colorIndex = row.getLastColorIndex() + i;
             }
@@ -73,6 +73,7 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
         if (parents.size() > 0) {
             row.setLastColorIndex(row.getLastColorIndex() + parents.size() - 1);
         }
+        // if mainCommit hasn't children - add him
         Commit thisCommit = commitsModel.get(row.getRowIndex() + 1);
         if (thisCommit.getChildren().size() == 0) {
             row.addNode(new Node(thisCommit, row.getLastColorIndex() + 1));

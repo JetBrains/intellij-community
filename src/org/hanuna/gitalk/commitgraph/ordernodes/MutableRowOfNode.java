@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph.order;
+package org.hanuna.gitalk.commitgraph.ordernodes;
 
 import org.hanuna.gitalk.commitgraph.Node;
 import org.hanuna.gitalk.commitgraph.PositionNode;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class MutableRowOfNode implements RowOfNode {
     @NotNull
-    public static MutableRowOfNode create(RowOfNode row) {
+    public static MutableRowOfNode create(@NotNull RowOfNode row) {
         List<Node> nodes = new LinkedList<Node>();
         for (Node node : row) {
             assert node != null : "null Node in RowOfNode";
@@ -35,7 +35,7 @@ public class MutableRowOfNode implements RowOfNode {
     private int rowIndex;
     private int lastColorIndex;
 
-    private MutableRowOfNode(List<Node> nodes, int rowIndex, int lastColorIndex) {
+    private MutableRowOfNode(@NotNull List<Node> nodes, int rowIndex, int lastColorIndex) {
         this.nodes = nodes;
         this.rowIndex = rowIndex;
         this.lastColorIndex = lastColorIndex;
@@ -120,6 +120,7 @@ public class MutableRowOfNode implements RowOfNode {
         return nodes.get(index);
     }
 
+    @NotNull
     @Override
     public Iterator<Node> iterator() {
         return new ReadOnlyIterator<Node>(nodes.iterator());

@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph.order;
+package org.hanuna.gitalk.commitgraph.ordernodes;
 
 import org.hanuna.gitalk.commitgraph.Node;
 import org.hanuna.gitalk.commitgraph.PositionNode;
@@ -23,14 +23,14 @@ import org.jetbrains.annotations.Nullable;
  * 7|-|-
  *
  * Lines was:
- *  0:0         1
- *  3:0 1:1     2
- *  3:0 2:1 4:2 3
- *  3:0 5:3 4:2 -1
- *  6:0 5:3 4:2 -1
- *  6:0 5:3 7:2 -1
- *  6:0 7:3     -1
- *  7:0         -1
+ *  0:0         0
+ *  3:0 1:1     1
+ *  3:0 2:1 4:2 2
+ *  3:0 5:3 4:2 3
+ *  6:0 5:3 4:2 3
+ *  6:0 5:3 7:2 3
+ *  6:0 7:3     3
+ *  7:0         3
  *
  */
 public interface RowOfNode extends ReadOnlyList<Node>, Indexed {

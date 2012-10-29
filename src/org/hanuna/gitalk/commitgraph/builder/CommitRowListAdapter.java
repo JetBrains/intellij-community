@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitgraph.Edge;
 import org.hanuna.gitalk.commitgraph.SpecialNode;
 import org.hanuna.gitalk.commitgraph.hides.HideCommits;
-import org.hanuna.gitalk.commitgraph.order.RowOfNode;
+import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
