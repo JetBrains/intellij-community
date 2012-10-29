@@ -56,7 +56,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return Boolean.FALSE;
       }
 
-      return callExpression != null ? getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
+      return callExpression != null ? DfaUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
   };
 
@@ -75,7 +75,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
         Map<PsiExpression, Boolean> map = ContainerUtil.newHashMap();
         for (int i = 0; i < checkedCount; i++) {
-          map.put(args[i], getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
+          map.put(args[i], DfaUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
         }
         return map;
       }
@@ -105,35 +105,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return false;
   }
 
-
-  @Nullable
-  private static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (owner == null) {
-      return null;
-    }
-
-    if (NullableNotNullManager.isNullable(owner)) {
-      return Boolean.TRUE;
-    }
-    if (NullableNotNullManager.isNotNull(owner)) {
-      return Boolean.FALSE;
-    }
-
-    if (resultType != null) {
-      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
-      for (PsiAnnotation annotation : resultType.getAnnotations()) {
-        String qualifiedName = annotation.getQualifiedName();
-        if (nnn.getNullables().contains(qualifiedName)) {
-          return Boolean.TRUE;
-        }
-        if (nnn.getNotNulls().contains(qualifiedName)) {
-          return Boolean.FALSE;
-        }
-      }
-    }
-
-    return null;
-  }
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

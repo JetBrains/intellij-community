@@ -50,8 +50,9 @@ public class DfaVariableState implements Cloneable {
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
     PsiVariable var = dfaVar.getPsiVariable();
-    myNullable = var != null && (NullableNotNullManager.isNullable(var) || isNullableInitialized(var, true));
-    myVariableIsDeclaredNotNull = var != null && (NullableNotNullManager.isNotNull(var) || isNullableInitialized(var, false));
+    Boolean nullability = DfaUtil.getElementNullability(dfaVar.getVariableType(), var);
+    myNullable = nullability == Boolean.TRUE || var != null && isNullableInitialized(var, true);
+    myVariableIsDeclaredNotNull = nullability == Boolean.FALSE || var != null && isNullableInitialized(var, false);
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
