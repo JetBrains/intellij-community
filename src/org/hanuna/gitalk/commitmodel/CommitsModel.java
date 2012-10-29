@@ -31,12 +31,40 @@ public class CommitsModel implements ReadOnlyList<Commit> {
     private void buildHideShowMap() {
         for (int i = 0; i < commits.size(); i++) {
             Commit commit = commits.get(i);
+            ReadOnlyList<Commit> currentChildrens = commit.getChildren();
+            if (currentChildrens.size() > 0) {
+                Commit lastChildren = currentChildrens.get(currentChildrens.size() - 1);
+                assert lastChildren.wasRead() : "last children not read";
+                if (i - lastChildren.index() > HIDE_LIMIT) {
+                    commitsShow.add(i - COUNT_SHOW, commit);
+                }
+            }
             for (Commit parent : commit.getParents()) {
-                if (parent.getChildren().size() == 1) {
+                int childrenIndex = -1;
+                ReadOnlyList<Commit> childrens = parent.getChildren();
+                for (int  j = 0; j < childrens.size(); j++) {
+                    if (commit == childrens.get(j)) {
+                        childrenIndex = j;
+                    }
+                }
+                assert childrenIndex != -1 : "bad commits model";
+                if (childrenIndex > 0) {
+                    Commit prevChildren = childrens.get(childrenIndex - 1);
+                    assert prevChildren.wasRead() : "prev children not read";
+                    if (i - prevChildren.index() > HIDE_LIMIT) {
+                        commitsShow.add(i - COUNT_SHOW, parent);
+                    }
+                }
+                if (childrenIndex < childrens.size() - 1) {
+                    Commit nextChildren = childrens.get(childrenIndex + 1);
+                    assert nextChildren.wasRead() : "next children not read";
+                    if (nextChildren.index() - i > HIDE_LIMIT) {
+                        commitsHide.add(i + COUNT_SHOW, parent);
+                    }
+                } else {
                     if (parent.wasRead()) {
                         if (parent.index() - i > HIDE_LIMIT) {
                             commitsHide.add(i + COUNT_SHOW, parent);
-                            commitsShow.add(parent.index() - COUNT_SHOW, parent);
                         }
                     } else {
                         commitsHide.add(i + COUNT_SHOW, parent);
