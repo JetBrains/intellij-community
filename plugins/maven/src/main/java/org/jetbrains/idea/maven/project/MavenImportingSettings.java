@@ -59,7 +59,7 @@ public class MavenImportingSettings implements Cloneable {
 
     public final String title;
 
-    private GeneratedSourcesFolder(String title) {
+    GeneratedSourcesFolder(String title) {
       this.title = title;
     }
   }

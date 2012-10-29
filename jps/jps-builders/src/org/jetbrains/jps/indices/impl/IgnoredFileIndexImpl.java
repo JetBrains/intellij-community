@@ -1,6 +1,7 @@
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -29,7 +30,7 @@ public class IgnoredFileIndexImpl implements IgnoredFileIndex {
       String pattern = tokenizer.nextToken();
       if (!StringUtil.isEmptyOrSpaces(pattern)) {
         try {
-          myPatterns.add(Pattern.compile(convertToJavaPattern(pattern)));
+          myPatterns.add(Pattern.compile(convertToJavaPattern(pattern), SystemInfoRt.isFileSystemCaseSensitive? 0 : Pattern.CASE_INSENSITIVE));
         }
         catch (PatternSyntaxException e) {
           LOG.info("Cannot load ignored file pattern " + pattern, e);

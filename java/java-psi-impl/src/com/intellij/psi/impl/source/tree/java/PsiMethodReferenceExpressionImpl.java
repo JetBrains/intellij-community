@@ -95,6 +95,23 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
+  public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
+    if (newQualifier == null) {
+      super.setQualifierExpression(newQualifier);
+      return;
+    }
+    final PsiExpression expression = getQualifierExpression();
+    if (expression != null) {
+      expression.replace(newQualifier);
+    } else {
+      final PsiElement qualifier = getQualifier();
+      if (qualifier != null) {
+        qualifier.replace(newQualifier);
+      }
+    }
+  }
+
+  @Override
   public int getChildRole(ASTNode child) {
     final IElementType elType = child.getElementType();
     if (elType == JavaTokenType.DOUBLE_COLON) {

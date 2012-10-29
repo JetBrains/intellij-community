@@ -1,5 +1,6 @@
 package org.jetbrains.jps.builders.impl;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -7,11 +8,14 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
@@ -33,7 +37,36 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       targetsByType.add(targets);
     }
     myDependencies = new HashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
-    myAllTargets = ContainerUtil.concat(targetsByType);
+    myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
+  }
+
+  @Override
+  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@Nullable JpsModule module, @NotNull ModuleTargetSelector selector) {
+    final List<ModuleBasedTarget<?>> result = new SmartList<ModuleBasedTarget<?>>();
+    for (BuildTarget<?> target : getAllTargets()) {
+      if (!(target instanceof ModuleBasedTarget)) {
+        continue;
+      }
+      final ModuleBasedTarget _target = (ModuleBasedTarget)target;
+      if (module != null && !module.equals(_target.getModule())) {
+        continue;
+      }
+      switch (selector) {
+        case ALL:
+          result.add(_target);
+          break;
+        case PRODUCTION:
+          if (!_target.isTests()) {
+            result.add(_target);
+          }
+          break;
+        case TEST:
+          if (_target.isTests()) {
+            result.add(_target);
+          }
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -55,8 +88,9 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       return;
     }
 
-    for (BuildTarget<?> target : getAllTargets()) {
-      myDependencies.put(target, target.computeDependencies());
+    final List<? extends BuildTarget<?>> allTargets = getAllTargets();
+    for (BuildTarget<?> target : allTargets) {
+      myDependencies.put(target, target.computeDependencies(this));
     }
 
     GraphGenerator<BuildTarget<?>>

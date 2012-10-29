@@ -16,7 +16,10 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -32,7 +35,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -116,31 +118,35 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
           return true;
         }
 
-        if (!myChooseFactory.isEnabled()) {
+        if (myContext == null) {
           return true;
         }
 
-        DefaultActionGroup actions = new DefaultActionGroup();
-        for (final CodeFragmentFactory fragmentFactory : getAllFactories()) {
-          actions.add(new AnAction(fragmentFactory.getFileType().getLanguage().getDisplayName(), null, fragmentFactory.getFileType().getIcon()) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              setFactory(fragmentFactory);
-              setText(getText());
-              IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this, true);
-            }
-          });
-        }
-
-        DataContext dataContext = DataManager.getInstance().getDataContext(DebuggerEditorImpl.this);
-        ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
-                                                                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                                              false);
+        ListPopup popup = createLanguagePopup();
         popup.showUnderneathOf(myChooseFactory);
         myPopup = new WeakReference<ListPopup>(popup);
         return true;
       }
     }.installOn(myChooseFactory);
+  }
+
+  private ListPopup createLanguagePopup() {
+    DefaultActionGroup actions = new DefaultActionGroup();
+    for (final CodeFragmentFactory fragmentFactory : DebuggerUtilsEx.getCodeFragmentFactories(myContext)) {
+      actions.add(new AnAction(fragmentFactory.getFileType().getLanguage().getDisplayName(), null, fragmentFactory.getFileType().getIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          setFactory(fragmentFactory);
+          setText(getText());
+          IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this, true);
+        }
+      });
+    }
+
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    return JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
+                                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                                          false);
   }
 
   @Override
@@ -169,22 +175,19 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public abstract JComponent getPreferredFocusedComponent();
 
-  public void setContext(PsiElement context) {
-    TextWithImports text = getText();
-    PsiElement oldContext = myContext;
+  public void setContext(@Nullable PsiElement context) {
     myContext = context;
 
-    CodeFragmentFactory oldFactory = myFactory;
-    List<CodeFragmentFactory> factories = getAllFactories();
-    if (myInitialFactory || !factories.contains(myFactory)) {
+    List<CodeFragmentFactory> factories = DebuggerUtilsEx.getCodeFragmentFactories(context);
+    boolean many = factories.size() > 1;
+    if (myInitialFactory) {
+      myInitialFactory = false;
       setFactory(factories.get(0));
+      myChooseFactory.setVisible(many);
     }
-    myChooseFactory.setVisible(factories.size() > 1);
-    myInitialFactory = false;
+    myChooseFactory.setVisible(myChooseFactory.isVisible() || many);
+    myChooseFactory.setEnabled(many && factories.contains(myFactory));
 
-    if (!oldFactory.equals(myFactory) || !Comparing.equal(oldContext, context)) {
-      setText(new TextWithImportsImpl(text.getKind(), text.getText(), text.getImports(), myFactory.getFileType()));
-    }
     updateEditorUi();
   }
 
@@ -197,10 +200,6 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   protected abstract void doSetText(TextWithImports text);
 
   protected abstract void updateEditorUi();
-
-  private List<CodeFragmentFactory> getAllFactories() {
-    return DebuggerUtilsEx.getCodeFragmentFactories(myContext);
-  }
 
   public PsiElement getContext() {
     return myContext;

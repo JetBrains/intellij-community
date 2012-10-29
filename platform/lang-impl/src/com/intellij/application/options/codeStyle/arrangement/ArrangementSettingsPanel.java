@@ -88,9 +88,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       groupingRules = ((ArrangementConditionsGrouper)mySettingsAware).getGroupingConditions();
     }
 
-    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(
-      mySettingsAware, representationManager, groupingRules
-    );
     final ArrangementColorsProvider colorsProvider;
     if (rearranger instanceof ArrangementColorsAware) {
       colorsProvider = new ArrangementColorsProviderImpl((ArrangementColorsAware)rearranger);
@@ -98,6 +95,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     else {
       colorsProvider = new ArrangementColorsProviderImpl(null);
     }
+    
+    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(
+      mySettingsAware, colorsProvider, representationManager
+    );
 
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW);

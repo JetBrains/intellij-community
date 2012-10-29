@@ -243,7 +243,7 @@ public class ArrangementRuleTree {
     if (component == null) {
       return;
     }
-    if (!component.onCanvasWidthChange(myCanvasWidth)) {
+    if (!component.onCanvasWidthChange(myCanvasWidth - myTree.getRowBounds(row).x)) {
       return;
     }
 
@@ -501,7 +501,7 @@ public class ArrangementRuleTree {
   {
     ArrangementMatchNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
-      myRenderers.put(row, result = myFactory.getComponent(condition, model));
+      myRenderers.put(row, result = myFactory.getComponent(condition, model, true));
       doUpdateCanvasWidth(row);
     }
     return result;
@@ -699,7 +699,7 @@ public class ArrangementRuleTree {
       }
 
       if (row < 0) {
-        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null);
+        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null, true);
         doUpdateCanvasWidth(row);
         return component.getUiComponent();
       }

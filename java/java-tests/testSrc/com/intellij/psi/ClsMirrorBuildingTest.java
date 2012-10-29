@@ -19,12 +19,19 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.IOException;
 
 public class ClsMirrorBuildingTest extends LightIdeaTestCase {
+  public void testSimpleEnum() { doTest(); }
+  public void testEnumWithFields() { doTest(); }
+  public void testNormalClass() { doTest(); }
+  public void testDeprecated() { doTest(); }
+  public void testAnnotations() { doTest(); }
+  public void testParameterNames() { doTest(); }
   public void testEmptyEnum() { doTest(); }
   public void test$BuckClass() { doTest(); }
   public void testExtMethods() { doTest(); }
@@ -53,14 +60,6 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       fail(e.getMessage());
       return;
     }
-    assertEquals(expected, clsFile.getText());
-
-    /*String srcPath = testDir + "src/pkg/" + name + ".java";
-    vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
-    assertNotNull(srcPath, vFile);
-    PsiFile srcFile = getPsiManager().findFile(vFile);
-    assertNotNull(vFile.getPath(), srcFile);
-
-    ((ClsFileImpl)clsFile).setMirror((TreeElement)srcFile.getNode());*/
+    assertEquals(expected, ((ClsFileImpl)clsFile).getMirror().getText());
   }
 }

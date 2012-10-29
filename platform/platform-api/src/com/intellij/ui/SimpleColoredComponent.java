@@ -22,8 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntIntHashMap;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -52,44 +52,46 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
-  public static final int FRAGMENT_ICON = -2;
+  public static final int   FRAGMENT_ICON                 = -2;
 
-  private final ArrayList<String> myFragments;
+  private final ArrayList<String>               myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private ArrayList<Object> myFragmentTags = null;
-  
+
   /**
    * Component's icon. It can be <code>null</code>.
    */
-  private Icon myIcon;
+  private   Icon    myIcon;
   /**
    * Internal padding
    */
-  private Insets myIpad;
+  private   Insets  myIpad;
   /**
    * Gap between icon and text. It is used only if icon is defined.
    */
-  protected int myIconTextGap;
+  protected int     myIconTextGap;
   /**
    * Defines whether the focus border around the text is painted or not.
    * For example, text can have a border if the component represents a selected item
    * in focused JList.
    */
-  private boolean myPaintFocusBorder;
+  private   boolean myPaintFocusBorder;
   /**
    * Defines whether the focus border around the text extends to icon or not
    */
-  private boolean myFocusBorderAroundIcon;
+  private   boolean myFocusBorderAroundIcon;
   /**
    * This is the border around the text. For example, text can have a border
    * if the component represents a selected item in a focused JList.
    * Border can be <code>null</code>.
    */
-  private Border myBorder;
+  private   Border  myBorder;
 
   private int myMainTextLastIndex = -1;
 
-  private final Map<Integer, Integer> myAligns;
+  private final TIntIntHashMap myFixedWidths;
+
+  @JdkConstants.HorizontalAlignment private int myTextAlign = SwingConstants.LEFT;
 
   private boolean myIconOpaque = true;
 
@@ -106,7 +108,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     myIpad = new Insets(1, 2, 1, 2);
     myIconTextGap = 2;
     myBorder = new MyBorder();
-    myAligns = new HashMap<Integer, Integer>(10);
+    myFixedWidths = new TIntIntHashMap(10);
     setOpaque(true);
   }
 
@@ -176,9 +178,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     myFragmentTags.add(tag);
   }
 
-  public synchronized void appendAlign(int alignWidth) {
+  public synchronized void appendFixedTextFragmentWidth(int width) {
     final int alignIndex = myFragments.size()-1;
-    myAligns.put(alignIndex, alignWidth);
+    myFixedWidths.put(alignIndex, width);
+  }
+  
+  public void setTextAlign(@JdkConstants.HorizontalAlignment int align) {
+    myTextAlign = align;
   }
 
   /**
@@ -197,7 +203,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     myAttributes.clear();
     myFragmentTags = null;
     myMainTextLastIndex = -1;
-    myAligns.clear();
+    myFixedWidths.clear();
   }
 
   /**
@@ -334,25 +340,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     LOG.assertTrue(font != null);
 
-    int baseSize = font.getSize();
-    boolean wasSmaller = false;
-    for (int i = 0; i < myAttributes.size(); i++) {
-      SimpleTextAttributes attributes = myAttributes.get(i);
-      boolean isSmaller = attributes.isSmaller();
-      if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
-      }
-      wasSmaller = isSmaller;
-      final FontMetrics metrics = getFontMetrics(font);
-      width += metrics.stringWidth(myFragments.get(i));
-
-      final Integer fixedWidth = myAligns.get(i);
-      if (fixedWidth != null && width < fixedWidth.intValue()) {
-        width = fixedWidth.intValue();
-      }
-
-      if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
-    }
+    width += computeTextWidth(font, mainTextOnly);
     width += myIpad.right + borderInsets.right;
 
     // Calculate height
@@ -377,6 +365,29 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
 
     return new Dimension(width, height);
+  }
+
+  private int computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
+    int result = 0;
+    int baseSize = font.getSize();
+    boolean wasSmaller = false;
+    for (int i = 0; i < myAttributes.size(); i++) {
+      SimpleTextAttributes attributes = myAttributes.get(i);
+      boolean isSmaller = attributes.isSmaller();
+      if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
+        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+      }
+      wasSmaller = isSmaller;
+      final FontMetrics metrics = getFontMetrics(font);
+      result += metrics.stringWidth(myFragments.get(i));
+
+      final int fixedWidth = myFixedWidths.get(i);
+      if (fixedWidth > 0 && result < fixedWidth) {
+        result = fixedWidth;
+      }
+      if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
+    }
+    return result;
   }
 
   /**
@@ -414,9 +425,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         return i;
       }
       curX += curWidth;
-      final Integer fixedWidth = myAligns.get(i);
-      if (fixedWidth != null && curX < fixedWidth.intValue()) {
-        curX = fixedWidth.intValue();
+      final int fixedWidth = myFixedWidths.get(i);
+      if (fixedWidth > 0 && curX < fixedWidth) {
+        curX = fixedWidth;
       }
     }
 
@@ -582,8 +593,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     
     UIUtil.applyRenderingHints(g);
     applyAdditionalHints(g);
-
     final Font ownFont = getFont();
+    offset += computeTextAlignShift(ownFont);
     int baseSize = ownFont != null ? ownFont.getSize() : g.getFont().getSize();
     boolean wasSmaller = false;
     for (int i = 0; i < myFragments.size(); i++) {
@@ -665,10 +676,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         searchMatches.add(new Object[] {offset, offset + fragmentWidth, textBaseline, fragment, g.getFont()});
       }
 
-      final Integer fixedWidth = myAligns.get(i);
-      if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
-        //if (fixedWidth != null) {
-        offset = fixedWidth.intValue();
+      final int fixedWidth = myFixedWidths.get(i);
+      if (fixedWidth > 0 && fragmentWidth < fixedWidth) {
+        offset = fixedWidth;
       } else {
         offset += fragmentWidth;
       }
@@ -697,6 +707,27 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
     return offset;
+  }
+
+  private int computeTextAlignShift(@NotNull Font font) {
+    if (myTextAlign == SwingConstants.LEFT || myTextAlign == SwingConstants.LEADING) {
+      return 0;
+    }
+
+    int componentWidth = getSize().width;
+    int excessiveWidth = componentWidth - computePreferredSize(false).width;
+    if (excessiveWidth <= 0) {
+      return 0;
+    }
+
+    int textWidth = computeTextWidth(font, false);
+    if (myTextAlign == SwingConstants.CENTER) {
+      return excessiveWidth / 2;
+    }
+    else if (myTextAlign == SwingConstants.RIGHT || myTextAlign == SwingConstants.TRAILING) {
+      return excessiveWidth;
+    }
+    return 0;
   }
 
   protected boolean shouldDrawMacShadow() {

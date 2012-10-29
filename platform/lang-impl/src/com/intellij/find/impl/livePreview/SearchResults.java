@@ -307,8 +307,7 @@ public class SearchResults implements DocumentListener {
       FindManager findManager = FindManager.getInstance(getProject());
       FindResult result;
       try {
-        StringUtil.BombedCharSequence
-          bombedCharSequence = new StringUtil.BombedCharSequence(editor.getDocument().getCharsSequence(), 3000);
+        CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(editor.getDocument().getCharsSequence(), 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
       } catch(PatternSyntaxException e) {
         result = null;

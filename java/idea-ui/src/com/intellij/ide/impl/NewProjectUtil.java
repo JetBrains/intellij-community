@@ -78,6 +78,10 @@ public class NewProjectUtil {
       return;
     }
 
+    doCreate(dialog, projectToClose);
+  }
+
+  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
@@ -93,7 +97,7 @@ public class NewProjectUtil {
             }
           });
 
-          return;
+          return projectToClose;
         }
       }
 
@@ -110,7 +114,7 @@ public class NewProjectUtil {
         newProject = projectToClose;
       }
 
-      if (newProject == null) return;
+      if (newProject == null) return projectToClose;
 
       final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
@@ -148,10 +152,10 @@ public class NewProjectUtil {
 
 
       if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
-        return;
+        return projectToClose;
       }
 
-      if (newProject != projectToClose) {
+      if (newProject != projectToClose && !ApplicationManager.getApplication().isUnitTestMode()) {
         closePreviousProject(projectToClose);
       }
 
@@ -196,10 +200,11 @@ public class NewProjectUtil {
             }
           }
         }
-        
+
         projectManager.openProject(newProject);
       }
       newProject.save();
+      return newProject;
     }
     finally {
       if (projectBuilder != null) {

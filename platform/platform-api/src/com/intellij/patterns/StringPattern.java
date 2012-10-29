@@ -15,6 +15,7 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
 import dk.brics.automaton.Automaton;
@@ -105,7 +106,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new ValuePatternCondition<String>("matches") {
       @Override
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
-        return pattern.matcher(str).matches();
+        return pattern.matcher(newBombedCharSequence(str)).matches();
       }
 
       @Override
@@ -211,4 +212,13 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     return super.oneOf(set);
   }
 
+  @NotNull
+  public static CharSequence newBombedCharSequence(@NotNull CharSequence sequence) {
+    return new StringUtil.BombedCharSequence(sequence) {
+      @Override
+      protected void checkCanceled() {
+        ProgressManager.checkCanceled();
+      }
+    };
+  }
 }

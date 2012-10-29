@@ -1,7 +1,7 @@
 <component>
   <actions>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"
-      icon="AllIcons.Actions.ShowAsTree"/>
+      icon="AllIcons.Vcs.History"/>
 
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>

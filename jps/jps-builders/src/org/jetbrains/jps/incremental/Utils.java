@@ -5,7 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -19,7 +18,7 @@ import java.util.*;
  *         Date: 10/20/11
  */
 public class Utils {
-  public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
+  public static final Key<Map<ModuleBuildTarget, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
@@ -52,7 +51,7 @@ public class Utils {
     final int locationHash;
 
     final File rootFile = new File(projectPath);
-    if (rootFile.isFile() && projectPath.endsWith(".ipr")) {
+    if (!rootFile.isDirectory() && projectPath.endsWith(".ipr")) {
       name = StringUtil.trimEnd(rootFile.getName(), ".ipr");
       locationHash = projectPath.hashCode();
     }
@@ -129,11 +128,6 @@ public class Utils {
       return new HashSet<JpsModule>(set1).removeAll(set2);
     }
     return new HashSet<JpsModule>(set2).removeAll(set1);
-  }
-
-  public static boolean hasRemovedSources(CompileContext context) {
-    final Map<BuildTarget<?>, Collection<String>> removed = REMOVED_SOURCES_KEY.get(context);
-    return removed != null && !removed.isEmpty();
   }
 
   public static boolean errorsDetected(CompileContext context) {

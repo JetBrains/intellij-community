@@ -18,22 +18,18 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -43,34 +39,19 @@ import java.util.Collections;
  * @author Dmitry Avdeev
  *         Date: 10/23/12
  */
-public class JavaSettingsStep extends ModuleWizardStep {
+public class JavaSettingsStep extends SdkSettingsStep {
 
   private final ModuleBuilder myModuleBuilder;
   private JBCheckBox myCreateSourceRoot;
   private TextFieldWithBrowseButton mySourcePath;
   private JPanel myPanel;
-  private final JdkComboBox myJdkComboBox;
-  private final WizardContext myWizardContext;
 
   public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+    super(settingsStep, sdkFilter);
     myModuleBuilder = moduleBuilder;
 
-    myWizardContext = settingsStep.getContext();
-    ProjectSdksModel model = new ProjectSdksModel();
-    Project project = myWizardContext.getProject();
-    model.reset(project, sdkFilter);
-    myJdkComboBox = new JdkComboBox(model, sdkFilter);
-    JButton button = new JButton("\u001BNew...");
-    myJdkComboBox.setSetupButton(button, project, model,
-                                 project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
-                                 null,
-                                 false);
-    JPanel jdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
-    jdkPanel.add(myJdkComboBox);
-    jdkPanel.add(button, BorderLayout.EAST);
-    settingsStep.addSettingsField("Project \u001BSDK:", jdkPanel);
-
     if (moduleBuilder instanceof JavaModuleBuilder) {
+      Project project = settingsStep.getContext().getProject();
       ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
         new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
           IdeBundle.message("prompt.select.source.directory"), null, mySourcePath, project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
@@ -98,26 +79,33 @@ public class JavaSettingsStep extends ModuleWizardStep {
       });
       settingsStep.addExpertPanel(myPanel);
     }
-
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return myPanel;
   }
 
   @Override
   public void updateDataModel() {
-    Sdk jdk = myJdkComboBox.getSelectedJdk();
-    myWizardContext.setProjectJdk(jdk);
-
-    if (myModuleBuilder instanceof JavaModuleBuilder && myCreateSourceRoot.isSelected()) {
-      String contentEntryPath = myModuleBuilder.getContentEntryPath();
-      if (contentEntryPath != null) {
-        final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
-        String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+    super.updateDataModel();
+    if (myModuleBuilder instanceof JavaModuleBuilder) {
+      if (myCreateSourceRoot.isSelected()) {
+        String contentEntryPath = myModuleBuilder.getContentEntryPath();
+        if (contentEntryPath != null) {
+          final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
+          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+        }
+      }
+      else {
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
       }
     }
+  }
+
+  @TestOnly
+  public void setCreateSourceRoot(boolean create) {
+    myCreateSourceRoot.setSelected(create);
+  }
+
+  @TestOnly
+  public void setSourcePath(String path) {
+    mySourcePath.setText(path);
   }
 }

@@ -21,8 +21,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -43,9 +43,19 @@ public class ResourceRootConfiguration {
 
   @Tag("includes")
   @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public List<String> includes = new ArrayList<String>();
+  public Set<String> includes = new HashSet<String>();
 
   @Tag("excludes")
   @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
-  public List<String> excludes = new ArrayList<String>();
+  public Set<String> excludes = new HashSet<String>();
+
+
+  public int computeConfigurationHash() {
+    int result = directory.hashCode();
+    result = 31 * result + (targetPath != null ? targetPath.hashCode() : 0);
+    result = 31 * result + (isFiltered ? 1 : 0);
+    result = 31 * result + includes.hashCode();
+    result = 31 * result + excludes.hashCode();
+    return result;
+  }
 }

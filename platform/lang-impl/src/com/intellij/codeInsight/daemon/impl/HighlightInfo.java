@@ -286,14 +286,18 @@ public class HighlightInfo implements Segment {
     if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
     if (type == HighlightInfoType.INSTANCE_FIELD) return false;
     if (type == HighlightInfoType.STATIC_FIELD) return false;
+    if (type == HighlightInfoType.STATIC_FINAL_FIELD) return false;
     if (type == HighlightInfoType.PARAMETER) return false;
     if (type == HighlightInfoType.METHOD_CALL) return false;
     if (type == HighlightInfoType.METHOD_DECLARATION) return false;
     if (type == HighlightInfoType.STATIC_METHOD) return false;
+    if (type == HighlightInfoType.ABSTRACT_METHOD) return false;
+    if (type == HighlightInfoType.INHERITED_METHOD) return false;
     if (type == HighlightInfoType.CONSTRUCTOR_CALL) return false;
     if (type == HighlightInfoType.CONSTRUCTOR_DECLARATION) return false;
     if (type == HighlightInfoType.INTERFACE_NAME) return false;
     if (type == HighlightInfoType.ABSTRACT_CLASS_NAME) return false;
+    if (type == HighlightInfoType.ENUM_NAME) return false;
     if (type == HighlightInfoType.CLASS_NAME) return false;
     if (type == HighlightInfoType.ANONYMOUS_CLASS_NAME) return false;
     return true;

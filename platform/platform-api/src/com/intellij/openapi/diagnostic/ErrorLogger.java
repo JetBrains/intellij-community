@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ package com.intellij.openapi.diagnostic;
  * @author kir
  */
 public interface ErrorLogger {
-
   boolean canHandle(IdeaLoggingEvent event);
 
-  /** Error event handling occures in a separate thread. */
+  /** Error event handling occurs in a separate thread. */
   void handle(IdeaLoggingEvent event);
 }

@@ -238,8 +238,7 @@ public def layoutCommunityPlugins(String home) {
       }
 
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "maven-dependency-tree-*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "nexus-indexer-*.jar")}
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "*.jar")}
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/boot")
       }

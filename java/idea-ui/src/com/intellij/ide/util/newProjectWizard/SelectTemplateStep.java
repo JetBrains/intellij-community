@@ -25,11 +25,13 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -53,7 +55,10 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -102,10 +107,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final WizardContext myWizardContext;
   private final StepSequence mySequence;
   @Nullable
-  private ModuleWizardStep mySettingsCallback;
+  private ModuleWizardStep mySettingsStep;
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
-  private final FilteringTreeBuilder myBuilder;
+  private final FilteringTreeBuilder myTreeBuilder;
   private MinusculeMatcher[] myMatchers;
   @Nullable
   private ModuleBuilder myModuleBuilder;
@@ -118,7 +123,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     myNamePathComponent = initNamePathComponent(context);
     mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
-    bindTo();
+    bindModuleSettings();
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
@@ -161,7 +166,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         return matches(template);
       }
     };
-    myBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
+    myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         if (o1 instanceof FilteringTreeStructure.FilteringNode) {
@@ -261,11 +266,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       @Override
       public void run() {
         TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-       if (state != null) {
+       if (state != null && !ApplicationManager.getApplication().isUnitTestMode()) {
          state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
        }
        else {
-         myBuilder.expandAll(null);
+         myTreeBuilder.expandAll(new Runnable() {
+           @Override
+           public void run() {
+             myTemplatesTree.setSelectionRow(1);
+           }
+         });
        }
       }
     });
@@ -294,7 +304,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     restorePanel(myNamePathComponent, 4);
     restorePanel(myExpertPanel, 6);
 
-    mySettingsCallback = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
+    mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
     String description = null;
     if (template != null) {
@@ -309,7 +319,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
     mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myModuleBuilder != null);
+    myExpertPlaceholder.setVisible(myModuleBuilder != null && !myModuleBuilder.isTemplateBased());
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
@@ -324,7 +334,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void updateStep() {
-    myBuilder.queueUpdate();
+    myTreeBuilder.queueUpdate();
     myExpertDecorator.setOn(SelectTemplateSettings.getInstance().EXPERT_MODE);
   }
 
@@ -340,10 +350,14 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   public boolean validate() throws ConfigurationException {
     ProjectTemplate template = getSelectedTemplate();
     if (template == null) {
-      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myWizardContext.getPresentationName()));
+      throw new ConfigurationException(ProjectBundle.message("project.new.wizard.from.template.error", myWizardContext.getPresentationName()), "Error");
     }
-    if (mySettingsCallback != null) {
-      return mySettingsCallback.validate();
+    ValidationInfo info = template.validateSettings();
+    if (info != null) {
+      throw new ConfigurationException(info.message, "Error");
+    }
+    if (mySettingsStep != null) {
+      return mySettingsStep.validate();
     }
     return true;
   }
@@ -353,7 +367,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     SimpleNode selectedNode = myTemplatesTree.getSelectedNode();
     final Ref<SimpleNode> node = new Ref<SimpleNode>();
     if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
-      myTemplatesTree.accept(myBuilder, new SimpleNodeVisitor() {
+      myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
         @Override
         public boolean accept(SimpleNode simpleNode) {
           FilteringTreeStructure.FilteringNode wrapper = (FilteringTreeStructure.FilteringNode)simpleNode;
@@ -409,6 +423,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private SimpleNode getSimpleNode(Object component) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
     Object userObject = node.getUserObject();
+    return getDelegate(userObject);
+  }
+
+  private SimpleNode getDelegate(Object userObject) {
     if (!(userObject instanceof FilteringTreeStructure.FilteringNode)) //noinspection ConstantConditions
       return null;
     FilteringTreeStructure.FilteringNode object = (FilteringTreeStructure.FilteringNode)userObject;
@@ -440,14 +458,14 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       myModuleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
     }
 
-    if (mySettingsCallback != null) {
-      mySettingsCallback.updateDataModel();
+    if (mySettingsStep != null) {
+      mySettingsStep.updateDataModel();
     }
   }
 
   @Override
   public void disposeUIResources() {
-    Disposer.dispose(myBuilder);
+    Disposer.dispose(myTreeBuilder);
   }
 
   @Override
@@ -476,6 +494,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
+  public void addSettingsComponent(JComponent component) {
+    myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+  }
+
+  @Override
   public void addExpertPanel(JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -494,7 +518,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     public SimpleNode[] getChildren() {
       List<SimpleNode> children = new ArrayList<SimpleNode>();
       for (ProjectTemplate template : myTemplates) {
-        children.add(new TemplateNode(template));
+        children.add(new TemplateNode(this, template));
       }
       return children.toArray(new SimpleNode[children.size()]);
     }
@@ -507,9 +531,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   private static class TemplateNode extends NullNode {
 
+    private final GroupNode myGroupNode;
     private final ProjectTemplate myTemplate;
 
-    public TemplateNode(ProjectTemplate template) {
+    public TemplateNode(GroupNode groupNode, ProjectTemplate template) {
+      myGroupNode = groupNode;
       myTemplate = template;
     }
 
@@ -517,9 +543,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     public String getName() {
       return myTemplate.getName();
     }
+
+    @NotNull
+    @Override
+    public Object[] getEqualityObjects() {
+      return new Object[] { myGroupNode.getName(), getName() };
+    }
   }
 
-  public void bindTo() {
+  public void bindModuleSettings() {
 
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
@@ -664,5 +696,22 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   protected String getModuleName() {
     return myModuleName.getText().trim();
+  }
+
+  public void setSelectedTemplate(String group, String name) {
+    final ComparableObject.Impl test = new ComparableObject.Impl(group, name);
+    myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
+      @Override
+      public boolean accept(SimpleNode simpleNode) {
+        SimpleNode node = getDelegate(simpleNode);
+        return test.equals(node);
+      }
+    }, true);
+  }
+
+  @TestOnly
+  @Nullable
+  public ModuleWizardStep getSettingsStep() {
+    return mySettingsStep;
   }
 }

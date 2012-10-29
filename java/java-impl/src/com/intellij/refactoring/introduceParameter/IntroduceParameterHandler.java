@@ -151,7 +151,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
 
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
-    if (!invokedOnDeclaration && typeByExpression == null) {
+    if (!invokedOnDeclaration && (typeByExpression == null || LambdaUtil.notInferredType(typeByExpression))) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
       showErrorMessage(project, message, editor);
       return false;

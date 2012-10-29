@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -24,10 +23,11 @@ import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceListImpl");
-  private ClsJavaCodeReferenceElementImpl[] myRefs; //guarded by PsiLock
+  private static final ClsJavaCodeReferenceElementImpl[] EMPTY_REFS_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
 
-  public ClsReferenceListImpl(final PsiClassReferenceListStub stub) {
+  private ClsJavaCodeReferenceElementImpl[] myRefs;
+
+  public ClsReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
     super(stub);
   }
 
@@ -37,13 +37,15 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     synchronized (LAZY_BUILT_LOCK) {
       if (myRefs == null) {
         final String[] strings = getStub().getReferencedNames();
-        ClsJavaCodeReferenceElementImpl[] res = strings.length == 0 ?
-                                                ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY :
-                                                new ClsJavaCodeReferenceElementImpl[strings.length];
-        for (int i = 0; i < res.length; i++) {
-          res[i] = new ClsJavaCodeReferenceElementImpl(this, strings[i]);
+        if (strings.length > 0) {
+          myRefs = new ClsJavaCodeReferenceElementImpl[strings.length];
+          for (int i = 0; i < strings.length; i++) {
+            myRefs[i] = new ClsJavaCodeReferenceElementImpl(this, strings[i]);
+          }
         }
-        myRefs = res;
+        else {
+          myRefs = EMPTY_REFS_ARRAY;
+        }
       }
       return myRefs;
     }
@@ -67,7 +69,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     final String[] names = getStub().getReferencedNames();
     if (names.length != 0) {
       final Role role = getStub().getRole();
@@ -91,17 +93,9 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiJavaCodeReferenceElement[] refs = getReferenceElements();
-    PsiJavaCodeReferenceElement[] refMirrors = ((PsiReferenceList)SourceTreeToPsiMap.treeElementToPsi(element)).getReferenceElements();
-    LOG.assertTrue(refs.length == refMirrors.length);
-    if (refs.length == refMirrors.length) {
-      for (int i = 0; i < refs.length; i++) {
-          ((ClsElementImpl)refs[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(refMirrors[i]));
-      }
-    }
+    setMirrors(getReferenceElements(), SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements());
   }
 
   @Override
@@ -114,9 +108,8 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     }
   }
 
+  @Override
   public String toString() {
     return "PsiReferenceList";
   }
-
-
 }

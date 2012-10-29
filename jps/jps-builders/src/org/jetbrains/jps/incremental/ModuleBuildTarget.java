@@ -1,11 +1,14 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -18,6 +21,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -31,16 +35,14 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
-  private final JpsModule myModule;
+public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
-    super(targetType);
+    super(targetType, module);
     myTargetType = targetType;
     myModuleName = module.getName();
-    myModule = module;
   }
 
   @Nullable
@@ -50,21 +52,27 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext context) {
+    Collection<File> result = new SmartList<File>();
     final File outputDir = getOutputDir();
-    return outputDir != null? Collections.singleton(outputDir) : Collections.<File>emptyList();
-  }
-
-  @Override
-  @NotNull
-  public JpsModule getModule() {
-    return myModule;
+    if (outputDir != null) {
+      result.add(outputDir);
+    }
+    final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(getModule());
+    if (profile.isEnabled()) {
+      final File annotationOut = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(getModule(), isTests(), profile);
+      if (annotationOut != null) {
+        result.add(annotationOut);
+      }
+    }
+    return result;
   }
 
   public String getModuleName() {
     return myModuleName;
   }
 
+  @Override
   public boolean isTests() {
     return myTargetType.isTests();
   }
@@ -75,7 +83,7 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
@@ -123,23 +131,5 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   @Override
   public String getPresentableName() {
     return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || !(o instanceof ModuleBuildTarget)) {
-      return false;
-    }
-
-    ModuleBuildTarget target = (ModuleBuildTarget)o;
-    return myTargetType == target.myTargetType && myModuleName.equals(target.myModuleName);
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * myModuleName.hashCode() + myTargetType.hashCode();
   }
 }

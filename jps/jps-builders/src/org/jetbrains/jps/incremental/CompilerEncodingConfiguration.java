@@ -94,13 +94,17 @@ public class CompilerEncodingConfiguration {
   @Nullable
   public String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
     for (JpsModule module : moduleChunk.getModules()) {
-      final Set<String> encodings = getModuleCharsetMap().get(module);
-      final String encoding = ContainerUtil.getFirstItem(encodings, null);
+      final String encoding = getPreferredModuleEncoding(module);
       if (encoding != null) {
         return encoding;
       }
     }
     return myProjectCharset;
+  }
+
+  public String getPreferredModuleEncoding(JpsModule module) {
+    final Set<String> encodings = getModuleCharsetMap().get(module);
+    return ContainerUtil.getFirstItem(encodings, null);
   }
 
   @NotNull

@@ -928,6 +928,7 @@ public class AllIcons {
     public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16
     public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.png"); // 16x16
+    public static final Icon SaveTempConfig = IconLoader.getIcon("/runConfigurations/saveTempConfig.png"); // 16x16
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.png"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
@@ -1037,6 +1038,7 @@ public class AllIcons {
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 12x12
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 12x12
+    public static final Icon History = IconLoader.getIcon("/vcs/history.png"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
     public static final Icon MergeSourcesTree = IconLoader.getIcon("/vcs/mergeSourcesTree.png"); // 16x16
