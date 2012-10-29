@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -53,30 +53,28 @@ public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(final BuildTargetRegistry targetRegistry) {
     final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
     if (myTargetType == TargetType.PACKAGING) {
       result.add(new AndroidBuildTarget(TargetType.DEX, myModule));
     }
-    addModuleTargets(myModule, result);
+    addModuleTargets(myModule, result, targetRegistry);
     final JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
 
     enumerator.processModules(new Consumer<JpsModule>() {
       @Override
       public void consume(JpsModule depModule) {
-        addModuleTargets(depModule, result);
+        addModuleTargets(depModule, result, targetRegistry);
       }
     });
     return result;
   }
 
-  private static void addModuleTargets(JpsModule module, List<BuildTarget<?>> result) {
-    result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+  private static void addModuleTargets(JpsModule module, List<BuildTarget<?>> result, BuildTargetRegistry targetRegistry) {
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-
-    if (extension != null && extension.isPackTestCode()) {
-      result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
-    }
+    result.addAll(targetRegistry.getModuleBasedTargets(module, extension != null && extension.isPackTestCode()
+                                                               ? BuildTargetRegistry.ModuleTargetSelector.ALL
+                                                               : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
   }
 
   @Override
@@ -120,7 +118,7 @@ public class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext ccontext) {
+  public Collection<File> getOutputDirs(CompileContext context) {
     return Collections.emptyList();
   }
 
