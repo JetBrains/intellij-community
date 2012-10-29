@@ -19,10 +19,7 @@ import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -65,7 +62,26 @@ class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public Module commitModule(@NotNull Project project, ModifiableModuleModel model) {
-    return myProjectMode ? null : super.commitModule(project, model);
+    if (myProjectMode) {
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length > 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              setupModule(modules[0]);
+            }
+            catch (ConfigurationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+      return null;
+    }
+    else {
+      return super.commitModule(project, model);
+    }
   }
 
   @Override
