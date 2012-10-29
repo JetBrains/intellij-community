@@ -1,10 +1,12 @@
 package org.hanuna.gitalk.commitgraph.order;
 
 import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.PositionNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author erokhins
@@ -34,4 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public interface RowOfNode extends ReadOnlyList<Node>, Indexed {
     public int getLastColorIndex();
     public int getIndexOfCommit(@NotNull Commit commit);
+
+    @Nullable
+    public PositionNode getPositionNode(@NotNull Commit commit);
 }

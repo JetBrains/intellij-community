@@ -5,7 +5,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 /**
  * @author erokhins
  */
-public class SpecialNode extends Node {
+public class SpecialNode extends PositionNode {
     public static enum Type {
         Current,
         Hide,
@@ -13,20 +13,15 @@ public class SpecialNode extends Node {
     }
 
     private final Type type;
-    private final int position;
 
     public SpecialNode(Type type, Commit commit, int colorIndex, int position) {
-        super(commit, colorIndex);
+        super(commit, colorIndex, position);
         this.type = type;
-        this.position = position;
     }
 
     public Type getType() {
         return type;
     }
 
-    public int getPosition() {
-        return position;
-    }
 
 }

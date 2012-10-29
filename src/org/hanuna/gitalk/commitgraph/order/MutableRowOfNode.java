@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.commitgraph.order;
 
 import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.PositionNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyIterator;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +46,6 @@ public class MutableRowOfNode implements RowOfNode {
         return nodes.remove(index);
     }
 
-    public void set(int index, Node newNode) {
-        nodes.set(index, newNode);
-    }
 
     @Nullable
     public Node removeNode(@NotNull Commit commit) {
@@ -88,13 +86,26 @@ public class MutableRowOfNode implements RowOfNode {
 
     @Override
     public int getIndexOfCommit(@NotNull Commit commit) {
-        for (int i = 0; i < nodes.size(); i++) {
-            Node node = nodes.get(i);
-            if (node.getCommit().equals(commit)) {
+        int i = 0;
+        for (Node node : nodes) {
+            if (node.getCommit() == commit) {
                 return i;
             }
+            i++;
         }
         return -1;
+    }
+
+    @Override
+    public PositionNode getPositionNode(@NotNull Commit commit) {
+        int i = 0;
+        for (Node node : nodes) {
+            if (node.getCommit() == commit) {
+                return new PositionNode(node.getCommit(), node.getColorIndex(), i);
+            }
+            i++;
+        }
+        return null;
     }
 
 

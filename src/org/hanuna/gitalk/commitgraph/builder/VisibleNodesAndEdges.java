@@ -1,10 +1,11 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.Edge;
+import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.PositionNode;
 import org.hanuna.gitalk.commitgraph.SpecialNode;
 import org.hanuna.gitalk.commitgraph.hides.HideCommits;
 import org.hanuna.gitalk.commitgraph.order.MutableRowOfNode;
-import org.hanuna.gitalk.commitgraph.Node;
 import org.hanuna.gitalk.commitgraph.order.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
@@ -16,9 +17,7 @@ import org.hanuna.gitalk.common.SimpleReadOnlyList;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Current;
-import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Hide;
-import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.Show;
+import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.*;
 
 /**
  * @author erokhins
@@ -81,8 +80,8 @@ class VisibleNodesAndEdges {
         RowOfNode thisRow = getVisibleNodes(rowIndex);
         RowOfNode nextRow = getVisibleNodes(rowIndex + 1);
         Commit mainCommit = commitsModel.get(rowIndex);
-        int mainIndex = thisRow.getIndexOfCommit(mainCommit);
-        Node mainNode = thisRow.get(mainIndex);
+        PositionNode mainNode = thisRow.getPositionNode(mainCommit);
+        assert mainNode != null : "bad hide commits model";
             ReadOnlyList<Commit> parents = mainCommit.getParents();
             for (int j = 0; j < parents.size(); j++) {
                 Commit parent = parents.get(j);
@@ -94,7 +93,7 @@ class VisibleNodesAndEdges {
                 } else {
                     colorIndex = thisRow.getLastColorIndex() + j;
                 }
-                edges.add(new Edge(mainIndex, index, colorIndex));
+                edges.add(new Edge(mainNode.getPosition(), index, colorIndex));
             }
 
 
@@ -124,10 +123,9 @@ class VisibleNodesAndEdges {
     }
 
     private SpecialNode createNode(RowOfNode row, SpecialNode.Type type, Commit commit) {
-        int index = row.getIndexOfCommit(commit);
-        assert index != -1 : "bad getVisibleNodes";
-        Node node = row.get(index);
-        return new SpecialNode(type, commit, node.getColorIndex(), index);
+        PositionNode node = row.getPositionNode(commit);
+        assert node != null : "bad getVisibleNodes";
+        return new SpecialNode(type, commit, node.getColorIndex(), node.getPosition());
     }
 
     public ReadOnlyList<SpecialNode> getSpecialNodes(int rowIndex) {
