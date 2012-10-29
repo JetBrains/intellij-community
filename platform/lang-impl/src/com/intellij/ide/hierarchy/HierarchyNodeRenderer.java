@@ -38,6 +38,7 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
     setOpaque(false);
   }
 
+  @Override
   public void customizeCellRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf,
                                     final int row, final boolean hasFocus) {
     if (value instanceof DefaultMutableTreeNode) {
