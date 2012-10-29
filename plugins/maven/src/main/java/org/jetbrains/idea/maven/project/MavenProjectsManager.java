@@ -1068,7 +1068,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        if (value != null && !"null".equals(value)) {  // todo: probable Maven Integration bug: storing null values as 'null' strings
+        if (value != null) {
           resourceConfig.modelMap.put(key, value);
         }
       }

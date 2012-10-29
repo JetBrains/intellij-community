@@ -345,6 +345,11 @@ public class MavenModelConverter {
     }
   }
 
+  private static boolean isNativeToString(String toStringResult, Object o) {
+    String className = o.getClass().getName();
+    return (toStringResult.startsWith(className) && toStringResult.startsWith("@", className.length()));
+  }
+
   private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
     for (Field each : ReflectionUtil.collectFields(object.getClass())) {
       Class<?> type = each.getType();
@@ -353,9 +358,14 @@ public class MavenModelConverter {
       each.setAccessible(true);
       Object value = each.get(object);
 
-      String name = prefix + each.getName();
-      result.put(name, String.valueOf(value));
       if (value != null) {
+        String name = prefix + each.getName();
+
+        String sValue = String.valueOf(value);
+        if (!isNativeToString(sValue, value)) {
+          result.put(name, sValue);
+        }
+
         Package pack = type.getPackage();
         if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
           doConvert(value, name + ".", result);
