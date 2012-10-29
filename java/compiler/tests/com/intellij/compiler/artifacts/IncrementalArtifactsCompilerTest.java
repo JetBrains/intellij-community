@@ -50,6 +50,15 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       assertOutput(a, fs().file("A.class"));
     }
 
+    public void testRebuildArtifactAfterClean() {
+      Artifact a = addArtifact(root().file(createFile("file.txt", "123")));
+      make(a);
+      assertOutput(a, fs().file("file.txt"));
+
+      delete(getOutputDir(a));
+      make(a);
+      assertOutput(a, fs().file("file.txt", "123"));
+    }
   }
 
   @Override

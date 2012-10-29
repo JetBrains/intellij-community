@@ -101,11 +101,16 @@ public abstract class ArtifactCompilerTestCase extends BaseCompilerTestCase {
   }
 
   public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) {
+    final VirtualFile outputFile = getOutputDir(artifact);
+    outputFile.refresh(false, true);
+    item.build().assertDirectoryEqual(VfsUtil.virtualToIoFile(outputFile));
+  }
+
+  protected static VirtualFile getOutputDir(Artifact artifact) {
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
     final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);
     assertNotNull("output file not found " + output, outputFile);
-    outputFile.refresh(false, true);
-    item.build().assertDirectoryEqual(VfsUtil.virtualToIoFile(outputFile));
+    return outputFile;
   }
 }
