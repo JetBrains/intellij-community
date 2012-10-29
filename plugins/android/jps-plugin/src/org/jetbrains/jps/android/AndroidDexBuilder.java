@@ -65,7 +65,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
 
   public AndroidDexBuilder() {
-    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.DEX));
   }
 
   @Override
@@ -73,7 +73,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
-    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.DEX && AndroidJpsUtil.isLightBuild(context)) {
+    if (AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
 

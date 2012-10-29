@@ -16,7 +16,7 @@ import java.util.List;
 public class AndroidBuilderService extends BuilderService {
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    return Arrays.asList(AndroidProjectBuildTarget.TargetType.INSTANCE);
+    return Arrays.asList(AndroidProjectBuildTarget.TargetType.DEX, AndroidProjectBuildTarget.TargetType.PACKAGING);
   }
 
   @NotNull

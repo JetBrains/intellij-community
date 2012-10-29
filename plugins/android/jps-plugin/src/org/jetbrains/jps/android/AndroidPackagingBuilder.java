@@ -47,7 +47,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
 
   public AndroidPackagingBuilder() {
-    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.PACKAGING));
   }
 
   @Override
@@ -65,7 +65,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
-    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
+    if (AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
     final Collection<JpsModule> modules = context.getProjectDescriptor().getProject().getModules();

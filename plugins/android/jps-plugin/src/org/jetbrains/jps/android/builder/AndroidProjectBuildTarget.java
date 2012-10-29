@@ -15,14 +15,17 @@
  */
 package org.jetbrains.jps.android.builder;
 
+import com.intellij.util.Consumer;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -35,38 +38,45 @@ import java.util.*;
  * @author nik
  */
 public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> {
-  public enum AndroidBuilderKind {DEX, PACKAGING}
-  private final AndroidBuilderKind myKind;
-  private final JpsModel myModel;
+  private final JpsModule myModule;
+  private final TargetType myTargetType;
 
-  public AndroidProjectBuildTarget(@NotNull AndroidBuilderKind kind, JpsModel model) {
-    super(TargetType.INSTANCE);
-    myKind = kind;
-    myModel = model;
+  public AndroidProjectBuildTarget(@NotNull TargetType targetType, @NotNull JpsModule module) {
+    super(targetType);
+    myTargetType = targetType;
+    myModule = module;
   }
 
   @Override
   public String getId() {
-    return myKind.name();
-  }
-
-  public AndroidBuilderKind getKind() {
-    return myKind;
+    return myModule.getName();
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
-    List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
-    if (myKind == AndroidBuilderKind.PACKAGING) {
-      result.add(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, myModel));
+  public Collection<BuildTarget<?>> computeDependencies() {
+    final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    if (myTargetType == TargetType.PACKAGING) {
+      result.add(new AndroidProjectBuildTarget(TargetType.DEX, myModule));
     }
-    for (JpsModule module : myModel.getProject().getModules()) {
-      JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-      if (extension != null) {
-        result.addAll(targetRegistry.getModuleBasedTargets(module, extension.isPackTestCode()? BuildTargetRegistry.ModuleTargetSelector.ALL : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
+    addModuleTargets(myModule, result);
+    final JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
+
+    enumerator.processModules(new Consumer<JpsModule>() {
+      @Override
+      public void consume(JpsModule depModule) {
+        addModuleTargets(depModule, result);
       }
-    }
+    });
     return result;
+  }
+
+  private static void addModuleTargets(JpsModule module, List<BuildTarget<?>> result) {
+    result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+
+    if (extension != null && extension.isPackTestCode()) {
+      result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+    }
   }
 
   @Override
@@ -74,12 +84,17 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    return myKind == ((AndroidProjectBuildTarget)o).myKind;
+    AndroidProjectBuildTarget target = (AndroidProjectBuildTarget)o;
+
+    if (!myModule.equals(target.myModule)) return false;
+    return myTargetType.equals(target.myTargetType);
   }
 
   @Override
   public int hashCode() {
-    return myKind.hashCode();
+    int result = myModule.hashCode();
+    result = 31 * result + myTargetType.hashCode();
+    return result;
   }
 
   @NotNull
@@ -100,7 +115,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Android " + myKind.name();
+    return "Android " + myTargetType.getPresentableName();
   }
 
   @NotNull
@@ -110,10 +125,19 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   }
 
   public static class TargetType extends BuildTargetType<AndroidProjectBuildTarget> {
-    public static final TargetType INSTANCE = new TargetType();
+    public static final TargetType DEX = new TargetType(AndroidCommonUtils.DEX_BUILD_TARGET_TYPE_ID, "DEX");
+    public static final TargetType PACKAGING = new TargetType(AndroidCommonUtils.PACKAGING_BUILD_TARGET_TYPE_ID, "Packaging");
 
-    public TargetType() {
-      super(AndroidCommonUtils.PROJECT_BUILD_TARGET_TYPE_ID);
+    private final String myPresentableName;
+
+    private TargetType(@NotNull String typeId, @NotNull String presentableName) {
+      super(typeId);
+      myPresentableName = presentableName;
+    }
+
+    @NotNull
+    public String getPresentableName() {
+      return myPresentableName;
     }
 
     @NotNull
@@ -122,18 +146,31 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
       if (!AndroidJpsUtil.containsAndroidFacet(model.getProject())) {
         return Collections.emptyList();
       }
-      return Arrays.asList(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, model),
-                           new AndroidProjectBuildTarget(AndroidBuilderKind.PACKAGING, model));
+      final List<AndroidProjectBuildTarget> targets = new ArrayList<AndroidProjectBuildTarget>();
+
+      for (JpsModule module : model.getProject().getModules()) {
+        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+
+        if (extension != null && !extension.isLibrary()) {
+          targets.add(new AndroidProjectBuildTarget(this, module));
+        }
+      }
+      return targets;
     }
 
     @NotNull
     @Override
     public BuildTargetLoader<AndroidProjectBuildTarget> createLoader(@NotNull final JpsModel model) {
+      final HashMap<String, AndroidProjectBuildTarget> targetMap = new HashMap<String, AndroidProjectBuildTarget>();
+
+      for (AndroidProjectBuildTarget target : computeAllTargets(model)) {
+        targetMap.put(target.getId(), target);
+      }
       return new BuildTargetLoader<AndroidProjectBuildTarget>() {
         @Nullable
         @Override
         public AndroidProjectBuildTarget createTarget(@NotNull String targetId) {
-          return new AndroidProjectBuildTarget(AndroidBuilderKind.valueOf(targetId), model);
+          return targetMap.get(targetId);
         }
       };
     }
