@@ -643,7 +643,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
-    myPool = new SvnIdeaRepositoryPoolManager(keep, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    myPool = new SvnIdeaRepositoryPoolManager(false, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   @NotNull
