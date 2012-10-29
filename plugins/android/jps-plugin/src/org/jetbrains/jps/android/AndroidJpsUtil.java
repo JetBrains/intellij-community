@@ -652,7 +652,7 @@ public class AndroidJpsUtil {
   }
 
 
-  @Nullable
+  @NotNull
   public static Set<String> getGenDirs(@NotNull JpsAndroidModuleExtension extension) throws IOException {
     final Set<String> result = new HashSet<String>();
     File dir = extension.getAaptGenDir();

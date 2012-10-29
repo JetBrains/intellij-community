@@ -72,7 +72,8 @@ public class AndroidPrecompileTask implements CompileTask {
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
 
-    // todo: add gen roots to excludes in android-jps and then remove this line
+    // in out-of-process mode gen roots will be excluded by AndroidExcludedJavaSourceRootProvider
+    // we do it here for internal mode and also to make there roots 'visibly excluded' in IDE settings
     createGenModulesAndSourceRoots(project);
 
     if (!CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
