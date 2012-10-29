@@ -963,6 +963,15 @@ class PyDB:
             except:
                 additionalInfo = t.additionalInfo = PyDBAdditionalThreadInfo()
 
+            if additionalInfo.is_tracing:
+                f = frame
+                while f is not None:
+                    fname, bs = GetFilenameAndBase(f)
+                    if bs == 'pydevd_frame.py':
+                        if 'trace_dispatch' == f.f_code.co_name:
+                            return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
+                    f = f.f_back
+
             # if thread is not alive, cancel trace_dispatch processing
             if not t.isAlive():
                 self.processThreadNotAlive(GetThreadId(t))

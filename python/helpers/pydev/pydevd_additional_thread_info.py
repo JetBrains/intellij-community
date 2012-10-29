@@ -19,6 +19,7 @@ class AbstractPyDBAdditionalThreadInfo:
         self.pydev_force_stop_at_exception = None
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = None
+        self.is_tracing = False
 
         
     def IterFrames(self):
