@@ -591,6 +591,7 @@ def layout_core_upsource(String home, String target) {
     jar("intellij-core-upsource.jar") {
       module("util-rt")
       module("util")
+      module("icons")
       module("core-api")
       module("core-impl")
       module("boot")
