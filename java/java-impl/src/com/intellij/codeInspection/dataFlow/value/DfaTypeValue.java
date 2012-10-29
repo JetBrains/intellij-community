@@ -46,7 +46,7 @@ public class DfaTypeValue extends DfaValue {
     }
 
     @NotNull
-    public DfaTypeValue create(PsiType type, boolean nullable) {
+    public DfaTypeValue create(@NotNull PsiType type, boolean nullable) {
       mySharedInstance.myType = type;
       mySharedInstance.myCanonicalText = type.getCanonicalText();
       mySharedInstance.myIsNullable = nullable;
@@ -70,7 +70,7 @@ public class DfaTypeValue extends DfaValue {
       return result;
     }
 
-    public DfaTypeValue create(PsiType type) {
+    public DfaTypeValue create(@NotNull PsiType type) {
       return create(type, false);
     }
   }

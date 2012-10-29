@@ -134,11 +134,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
     if (elem == CASE_LABEL) return new GrCaseLabelImpl(node);
     if (elem == CASE_SECTION) return new GrCaseSectionImpl(node);
-    if (elem == VARIABLE_DEFINITION || elem == VARIABLE_DEFINITION_ERROR)
-      return new GrVariableDeclarationBase.GrVariables(node);
-    if (elem == MULTIPLE_VARIABLE_DEFINITION)
-      return new GrVariableDeclarationBase.GrMultipleVariables(node);
-    if (elem == TUPLE_DECLARATION || elem == TUPLE_ERROR) return new GrTupleDeclarationImpl(node);
+    if (elem == VARIABLE_DEFINITION || elem == VARIABLE_DEFINITION_ERROR) return new GrVariableDeclarationImpl(node);
     if (elem == TUPLE_EXPRESSION) return new GrTupleExpressionImpl(node);
     if (elem == VARIABLE) return new GrVariableImpl(node);
 

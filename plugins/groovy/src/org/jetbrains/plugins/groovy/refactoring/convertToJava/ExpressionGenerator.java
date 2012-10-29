@@ -72,6 +72,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock.EMPTY_ARRAY;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
 
 /**
  * @author Maxim.Medvedev
@@ -221,7 +223,7 @@ public class ExpressionGenerator extends Generator {
       final PsiType builtIn = typeElement.getType();
       LOG.assertTrue(builtIn instanceof PsiPrimitiveType);
       final PsiType boxed = TypesUtil.boxPrimitiveType(builtIn, newExpression.getManager(), newExpression.getResolveScope());
-      writeType(builder, boxed, newExpression);
+      writeTypeForNew(builder, boxed, newExpression);
     }
     else if (referenceElement != null) {
       writeCodeReferenceElement(builder, referenceElement);
@@ -1070,7 +1072,7 @@ public class ExpressionGenerator extends Generator {
 
     if (operand instanceof GrListOrMap && !((GrListOrMap)operand).isMap() && typeElement instanceof GrArrayTypeElement) {
       builder.append("new ");
-      writeType(builder, typeElement.getType(), typeCastExpression);
+      writeTypeForNew(builder, typeElement.getType(), typeCastExpression);
       builder.append('{');
       final GrExpression[] initializers = ((GrListOrMap)operand).getInitializers();
       for (GrExpression initializer : initializers) {
@@ -1269,7 +1271,7 @@ public class ExpressionGenerator extends Generator {
     if (listOrMap.isMap()) {
       if (listOrMap.getNamedArguments().length == 0) {
         builder.append("new ");
-        writeType(builder, type, listOrMap);
+        writeTypeForNew(builder, type, listOrMap);
         builder.append("()");
       }
       else {
@@ -1279,32 +1281,30 @@ public class ExpressionGenerator extends Generator {
       }
     }
     else {
-      boolean isArray = type instanceof PsiArrayType;
       builder.append("new ");
-      writeType(builder, type, listOrMap);
-      if (listOrMap.getInitializers().length == 0) {
-        if (isArray) {
+      writeTypeForNew(builder, type, listOrMap);
+
+      if (type instanceof PsiArrayType) {
+        if (listOrMap.getInitializers().length == 0) {
           builder.replace(builder.length() - 2, builder.length(), "[0]");
         }
         else {
-          builder.append("()");
+          builder.append('{');
+          genInitializers(listOrMap);
+          builder.append('}');
         }
       }
       else {
-        if (isArray) {
-          builder.append('{');
+        if (listOrMap.getInitializers().length == 0) {
+          builder.append("()");
         }
         else {
           builder.append("(java.util.Arrays.asList(");
-        }
-        genInitializers(listOrMap);
-        if (isArray) {
-          builder.append('}');
-        }
-        else {
+          genInitializers(listOrMap);
           builder.append("))");
         }
       }
+
     }
   }
 
@@ -1346,7 +1346,7 @@ public class ExpressionGenerator extends Generator {
     writeType(declaration, type, listOrMap);
     final String varName = suggestVarName(type, listOrMap, this.context);
     declaration.append(' ').append(varName).append(" = new ");
-    writeType(declaration, type, listOrMap);
+    writeTypeForNew(declaration, type, listOrMap);
 
     declaration.append('(');
     //insert count of elements in list or map

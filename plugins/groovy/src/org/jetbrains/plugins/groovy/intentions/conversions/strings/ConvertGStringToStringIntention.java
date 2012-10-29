@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 
 public class ConvertGStringToStringIntention extends Intention {
+  public static final String INTENTION_NAME = "Convert to String";
 
   @NotNull
   public PsiElementPredicate getElementPredicate() {

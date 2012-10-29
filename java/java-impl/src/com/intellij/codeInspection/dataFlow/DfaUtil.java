@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
@@ -81,6 +82,35 @@ public class DfaUtil {
     if (value == TOO_COMPLEX) return null;
     final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
+  }
+
+  @Nullable
+  static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+    if (owner == null) {
+      return null;
+    }
+
+    if (NullableNotNullManager.isNullable(owner)) {
+      return Boolean.TRUE;
+    }
+    if (NullableNotNullManager.isNotNull(owner)) {
+      return Boolean.FALSE;
+    }
+
+    if (resultType != null) {
+      NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
+      for (PsiAnnotation annotation : resultType.getAnnotations()) {
+        String qualifiedName = annotation.getQualifiedName();
+        if (nnn.getNullables().contains(qualifiedName)) {
+          return Boolean.TRUE;
+        }
+        if (nnn.getNotNulls().contains(qualifiedName)) {
+          return Boolean.FALSE;
+        }
+      }
+    }
+
+    return null;
   }
 
   public static enum Nullness {

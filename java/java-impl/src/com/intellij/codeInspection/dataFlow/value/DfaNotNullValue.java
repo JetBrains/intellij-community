@@ -27,6 +27,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -43,7 +44,7 @@ public class DfaNotNullValue extends DfaValue {
     }
 
     @NotNull
-    public DfaValue create(PsiType type) {
+    public DfaValue create(@Nullable PsiType type) {
       if (type == null) return DfaUnknownValue.getInstance();
       mySharedInstance.myType = type;
 
