@@ -110,11 +110,15 @@ public class JdkChooserPanel extends JPanel {
     editor.show();
     if (editor.isOK()) {
       Sdk selectedJdk = editor.getSelectedJdk();
-      updateList(selectedJdk, null, null);
+      updateList(selectedJdk, null);
     }
   }
 
-  public void updateList(final Sdk selectedJdk, final SdkType type, final @Nullable Sdk[] globalSdks) {
+  public void updateList(final Sdk selectedJdk, final @Nullable SdkType type) {
+    updateList(selectedJdk, type, null);
+  }
+
+  public void updateList(final Sdk selectedJdk, final @Nullable SdkType type, final @Nullable Sdk[] globalSdks) {
     final int[] selectedIndices = myList.getSelectedIndices();
     fillList(type, globalSdks);
     // restore selection
@@ -150,7 +154,7 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  public void fillList(final SdkType type, final @Nullable Sdk[] globalSdks) {
+  public void fillList(final @Nullable SdkType type, final @Nullable Sdk[] globalSdks) {
     myListModel.clear();
     final Sdk[] jdks;
     if (myProject == null || myProject.isDefault()) {
@@ -175,7 +179,7 @@ public class JdkChooserPanel extends JPanel {
     }
   }
 
-  private Sdk[] getCompatibleJdks(final SdkType type, final Collection<Sdk> collection) {
+  private Sdk[] getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
     final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
     for (Sdk projectJdk : collection) {
       if (isCompatibleJdk(projectJdk, type)) {
@@ -185,7 +189,7 @@ public class JdkChooserPanel extends JPanel {
     return compatibleJdks.toArray(new Sdk[compatibleJdks.size()]);
   }
 
-  private boolean isCompatibleJdk(final Sdk projectJdk, final SdkType type) {
+  private boolean isCompatibleJdk(final Sdk projectJdk, final @Nullable SdkType type) {
     if (type != null) {
       return projectJdk.getSdkType() == type;
     }
