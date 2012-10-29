@@ -2,7 +2,7 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 
 import javax.swing.*;
 import java.awt.*;

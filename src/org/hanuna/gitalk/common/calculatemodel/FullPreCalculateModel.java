@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.common.calculatemodel;
 
-import org.hanuna.gitalk.common.ReadOnlyIterator;
+import org.hanuna.gitalk.common.readonly.ReadOnlyIterator;
 import org.hanuna.gitalk.common.calculatemodel.calculator.Calculator;
 import org.hanuna.gitalk.common.calculatemodel.calculator.Row;
 

@@ -3,7 +3,7 @@ package org.hanuna.gitalk.commitgraph.ordernodes;
 import org.hanuna.gitalk.commitgraph.node.Node;
 import org.hanuna.gitalk.commitgraph.node.PositionNode;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.calculator.Row;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

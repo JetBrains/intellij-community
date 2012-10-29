@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitmodel;
 
 import com.sun.istack.internal.NotNull;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 
 /**
  * @author erokhins

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitgraph.hidecommits;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyIterator;
+import org.hanuna.gitalk.common.readonly.ReadOnlyIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;

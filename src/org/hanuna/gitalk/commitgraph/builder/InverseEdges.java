@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.Edge;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;

@@ -2,7 +2,7 @@ package org.hanuna.gitalk.commitgraph;
 
 import org.hanuna.gitalk.commitgraph.node.SpecialNode;
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -2,7 +2,7 @@ package org.hanuna.gitalk.parser;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.junit.Test;
 
 import java.io.IOException;

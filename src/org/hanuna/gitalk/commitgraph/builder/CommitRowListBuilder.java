@@ -7,7 +7,7 @@ import org.hanuna.gitalk.commitgraph.hidecommits.HideCommitsCalculator;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNodeCalculator;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.CalculateModel;
 import org.hanuna.gitalk.common.calculatemodel.PartSaveCalculateModel;
 

@@ -7,8 +7,8 @@ import org.hanuna.gitalk.commitgraph.node.SpecialNode;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
-import org.hanuna.gitalk.common.AbstractReadOnlyList;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.AbstractReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 /**

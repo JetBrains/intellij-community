@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.commitmodel;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 /**

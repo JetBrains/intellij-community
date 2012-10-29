@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.common;
 
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 /**

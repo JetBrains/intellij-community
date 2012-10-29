@@ -11,8 +11,8 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.common.SimpleReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.common;
+package org.hanuna.gitalk.common.readonly;
 
 import java.util.Iterator;
 

@@ -7,7 +7,7 @@ import org.hanuna.gitalk.commitgraph.hidecommits.HideCommits;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
-import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.swingui.GitAlkUI;
