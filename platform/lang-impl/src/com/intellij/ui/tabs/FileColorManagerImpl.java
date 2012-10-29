@@ -212,7 +212,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return null;
 
-    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) ? LightColors.SLIGHTLY_GREEN : null;
+    //todo[kb] slightly_green for darcula
+    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
   }
 
   @Nullable
