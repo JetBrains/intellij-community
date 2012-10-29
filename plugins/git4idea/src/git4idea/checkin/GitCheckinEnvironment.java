@@ -331,9 +331,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.endOptions();
       handler.run();
       GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-      if (manager != null) {
-        manager.updateRepository(root);
-      }
+      manager.updateRepository(root);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -350,7 +348,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private static boolean isMergeCommit(final VcsException ex) {
     //noinspection HardCodedStringLiteral
-    return -1 != ex.getMessage().indexOf("fatal: cannot do a partial commit during a merge.");
+    return ex.getMessage().contains("fatal: cannot do a partial commit during a merge.");
   }
 
   /**
