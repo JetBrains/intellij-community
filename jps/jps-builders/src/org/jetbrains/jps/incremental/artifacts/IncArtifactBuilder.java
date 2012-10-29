@@ -45,7 +45,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
-    if (StringUtil.isEmpty(artifact.getOutputPath())) {
+    String outputFilePath = artifact.getOutputFilePath();
+    if (StringUtil.isEmpty(outputFilePath)) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
       return;
     }
