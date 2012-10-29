@@ -21,8 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.HashMap;
 
-import java.awt.*;
-import java.lang.ref.WeakReference;
 import java.util.Map;
 
 public class SimpleDataContext implements DataContext {
@@ -40,6 +38,7 @@ public class SimpleDataContext implements DataContext {
     myParent = parent;
   }
 
+  @Override
   public Object getData(String dataId) {
     Object result =  myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) : 
            myParent == null ? null : myParent.getData(dataId);
