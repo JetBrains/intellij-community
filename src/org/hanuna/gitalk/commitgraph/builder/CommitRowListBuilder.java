@@ -16,20 +16,21 @@ import org.hanuna.gitalk.common.calculatemodel.PartSaveCalculateModel;
  */
 public class CommitRowListBuilder {
     private final CommitsModel commitsModel;
-    public CalculateModel<RowOfNode> rowsModel = new PartSaveCalculateModel<RowOfNode>();
-    public CalculateModel<HideCommits> hideModel = new PartSaveCalculateModel<HideCommits>();
-    private int size;
 
     public CommitRowListBuilder(@NotNull CommitsModel commitsModel) {
         this.commitsModel = commitsModel;
-        size = commitsModel.size();
     }
 
+    //when run this method commitsModel must be constant
     @NotNull
     public ReadOnlyList<CommitRow> build() {
+        int size = commitsModel.size();
+        CalculateModel<RowOfNode> rowsModel = new PartSaveCalculateModel<RowOfNode>();
         rowsModel.prepare(new RowOfNodeCalculator(commitsModel), size);
+
+        CalculateModel<HideCommits> hideModel = new PartSaveCalculateModel<HideCommits>();
         hideModel.prepare(new HideCommitsCalculator(commitsModel), size);
-        return new CommitRowListAdapter(rowsModel, hideModel, size, commitsModel);
+        return new CommitRowListAdapter(rowsModel, hideModel, commitsModel);
     }
 
 

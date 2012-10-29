@@ -2,6 +2,7 @@ package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.Edge;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -9,12 +10,13 @@ import java.util.Iterator;
 * @author erokhins
 */
 class InverseEdges implements ReadOnlyList<Edge> {
-    private static Edge inverse(Edge edge) {
+    @NotNull
+    private static Edge inverse(@NotNull Edge edge) {
         return new Edge(edge.to(), edge.from(), edge.getColorIndex());
     }
 
     private final ReadOnlyList<Edge> edges;
-    InverseEdges(ReadOnlyList<Edge> edges) {
+    InverseEdges(@NotNull ReadOnlyList<Edge> edges) {
         this.edges = edges;
     }
 
@@ -23,11 +25,13 @@ class InverseEdges implements ReadOnlyList<Edge> {
         return edges.size();
     }
 
+    @NotNull
     @Override
     public Edge get(int index) {
         return inverse(edges.get(index));
     }
 
+    @NotNull
     @Override
     public Iterator<Edge> iterator() {
         return new IteratorInverse(edges.iterator());
@@ -36,7 +40,7 @@ class InverseEdges implements ReadOnlyList<Edge> {
     private static class IteratorInverse implements Iterator<Edge> {
         private final Iterator<Edge> iterator;
 
-        private IteratorInverse(Iterator<Edge> iterator) {
+        private IteratorInverse(@NotNull Iterator<Edge> iterator) {
             this.iterator = iterator;
         }
 
@@ -45,11 +49,13 @@ class InverseEdges implements ReadOnlyList<Edge> {
             return iterator.hasNext();
         }
 
+        @NotNull
         @Override
         public Edge next() {
             return inverse(iterator.next());
         }
 
+        @NotNull
         @Override
         public void remove() {
             iterator.remove();

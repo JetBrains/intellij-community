@@ -12,9 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits, HideCommits> {
     private final CommitsModel commitsModel;
+    private final int size;
 
     public HideCommitsCalculator(@NotNull CommitsModel commitsModel) {
         this.commitsModel = commitsModel;
+        this.size = commitsModel.size();
     }
 
     @NotNull
@@ -31,7 +33,7 @@ public class HideCommitsCalculator extends AbstractCalculator<MutableHideCommits
 
     @Override
     protected int size() {
-        return commitsModel.size();
+        return size;
     }
 
 

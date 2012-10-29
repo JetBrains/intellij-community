@@ -12,15 +12,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, RowOfNode> {
     private final CommitsModel commitsModel;
+    private final int size;
 
     public RowOfNodeCalculator(@NotNull CommitsModel commitsModel) {
         this.commitsModel = commitsModel;
+        this.size = commitsModel.size();
     }
 
     @NotNull
     @Override
     public RowOfNode getFirst() {
-        assert commitsModel.size() > 0 : "empty CommitsModel";
+        assert size > 0 : "empty CommitsModel";
         Node firstNode = new Node(commitsModel.get(0), 0);
         MutableRowOfNode firstRow = MutableRowOfNode.getEmpty(0, 0);
         firstRow.addNode(0, firstNode);
@@ -35,7 +37,7 @@ public class RowOfNodeCalculator extends AbstractCalculator<MutableRowOfNode, Ro
 
     @Override
     protected int size() {
-        return commitsModel.size();
+        return size;
     }
 
     // true, if node was add
