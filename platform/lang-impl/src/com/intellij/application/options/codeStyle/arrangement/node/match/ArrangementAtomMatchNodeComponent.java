@@ -120,10 +120,10 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
 
-    JPanel labelPanel = new JPanel(new GridBagLayout());
-    labelPanel.add(myTextControl, constraints);
-    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, 0));
-    labelPanel.setOpaque(false);
+    JPanel insetsPanel = new JPanel(new GridBagLayout());
+    insetsPanel.add(myTextControl, constraints);
+    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, 0));
+    insetsPanel.setOpaque(false);
 
     final int arcSize = myTextControl.getFont().getSize();
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
@@ -141,7 +141,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
         super.paint(g);
       }
     };
-    roundBorderPanel.add(labelPanel, new GridBag().fillCellHorizontally());
+    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally());
     roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
