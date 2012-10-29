@@ -54,7 +54,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     if (config == null) {
       return;
     }
-    final Set<String> filteringExcludedExtensions = config.getFiltetingExcludedExtensions();
+    final Set<String> filteringExcludedExtensions = config.getFilteringExcludedExtensions();
     final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleEncoding(target.getModule());
     final Date timestamp = new Date();
 

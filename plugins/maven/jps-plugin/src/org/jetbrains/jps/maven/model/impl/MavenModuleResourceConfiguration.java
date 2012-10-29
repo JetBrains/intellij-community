@@ -71,7 +71,7 @@ public class MavenModuleResourceConfiguration {
   public List<ResourceRootConfiguration> testResources = new ArrayList<ResourceRootConfiguration>();
 
 
-  public Set<String> getFiltetingExcludedExtensions() {
+  public Set<String> getFilteringExcludedExtensions() {
     if (filteringExclusions.isEmpty()) {
       return MavenProjectConfiguration.DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
     }
