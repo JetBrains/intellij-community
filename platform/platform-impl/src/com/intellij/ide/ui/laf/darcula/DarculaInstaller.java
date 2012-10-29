@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -39,7 +38,7 @@ public class DarculaInstaller {
   }
 
   private static void restart() {
-    if (Messages.showOkCancelDialog("Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
+    if (Messages.showOkCancelDialog("You must restart the IDE to changes take effect. Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
       ApplicationManagerEx.getApplicationEx().restart();
     }
   }
