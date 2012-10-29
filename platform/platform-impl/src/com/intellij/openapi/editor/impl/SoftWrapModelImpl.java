@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +53,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener, PropertyChangeListener, Dumpable {
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, DocumentBulkUpdateListener, FoldingListener,
+                                          PropertyChangeListener, Dumpable, Disposable
+{
 
   /**
    * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
@@ -109,6 +112,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done. 
    */
   private boolean myUpdateInProgress;
+  
+  private boolean myBulkUpdateInProgress;
 
   /**
    * There is a possible case that target document is changed while its editor is inactive (e.g. user opens two editors for classes
@@ -169,6 +174,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myUseSoftWraps = settings.isUseSoftWraps();
     
     editor.addPropertyChangeListener(this);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, this);
   }
 
   /**
@@ -370,7 +377,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
-    if (myUpdateInProgress || !prepareToMapping()) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
       return myEditor.visualToLogicalPosition(visual, false);
     }
     myActive++;
@@ -386,7 +393,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    if (myUpdateInProgress || !prepareToMapping()) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
       return myEditor.offsetToLogicalPosition(offset, false);
     }
     myActive++;
@@ -401,7 +408,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @NotNull
   public LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset) {
-    if (myUpdateInProgress || !prepareToMapping()) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
       return defaultLogical;
     }
 
@@ -418,7 +425,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @Override
   @NotNull
   public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
-    if (myUpdateInProgress || !prepareToMapping()) {
+    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
       return defaultVisual;
     }
 
@@ -566,6 +573,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    if (myBulkUpdateInProgress) {
+      return;
+    }
     myUpdateInProgress = true;
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
@@ -578,6 +588,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    if (myBulkUpdateInProgress) {
+      return;
+    }
     myUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;
@@ -585,6 +598,20 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     for (DocumentListener listener : myDocumentListeners) {
       listener.documentChanged(event);
     }
+  }
+
+  @Override
+  public void updateStarted(@NotNull Document doc) {
+    myBulkUpdateInProgress = true;
+  }
+
+  @Override
+  public void updateFinished(@NotNull Document doc) {
+    myBulkUpdateInProgress = false;
+    if (!isSoftWrappingEnabled()) {
+      return;
+    }
+    recalculate();
   }
 
   @Override
@@ -620,6 +647,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   @Override
+  public void dispose() {
+    release();
+  }
+
+  @Override
   public void release() {
     myDataMapper.release();
     myApplianceManager.release();
@@ -632,6 +664,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager.reset();
     myDeferredFoldRegions.clear();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    myApplianceManager.recalculateIfNecessary();
   }
 
   public SoftWrapApplianceManager getApplianceManager() {

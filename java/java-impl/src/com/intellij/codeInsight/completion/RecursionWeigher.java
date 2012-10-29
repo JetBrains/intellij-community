@@ -23,8 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -53,7 +51,7 @@ class RecursionWeigher extends LookupElementWeigher {
 
   public RecursionWeigher(PsiElement position,
                           @NotNull PsiReferenceExpression reference,
-                          PsiMethodCallExpression expression,
+                          @Nullable PsiMethodCallExpression expression,
                           ExpectedTypeInfo[] expectedInfos) {
     super("recursion");
     myFilter = recursionFilter(position);
@@ -70,7 +68,7 @@ class RecursionWeigher extends LookupElementWeigher {
   }
 
   @Nullable
-  private static PsiExpression normalizeQualifier(PsiElement qualifier) {
+  private static PsiExpression normalizeQualifier(@Nullable PsiElement qualifier) {
     return qualifier instanceof PsiThisExpression || !(qualifier instanceof PsiExpression) ? null : (PsiExpression)qualifier;
   }
 
@@ -127,21 +125,23 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.passingObjectToItself;
     }
 
-    if (myExpression != null) {
-      if (myExpectedInfos != null) {
-        final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
-        for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
-          PsiMethod calledMethod = expectedInfo.getCalledMethod();
-          if (calledMethod != null && itemType != null) {
-            if (calledMethod.equals(myPositionMethod) && expectedInfo.getType().isAssignableFrom(itemType)) {
-              return myDelegate ? Result.delegation : Result.recursive;
-            }
-            if (isGetterSetterAssignment(object, calledMethod)) {
-              return myDelegate ? Result.delegation : Result.recursive;
-            }
-          }
+    if (myExpectedInfos != null) {
+      final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
+      for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+        PsiMethod calledMethod = expectedInfo.getCalledMethod();
+        if (itemType != null &&
+            calledMethod != null &&
+            calledMethod.equals(myPositionMethod) &&
+            expectedInfo.getType().isAssignableFrom(itemType)) {
+          return myDelegate ? Result.delegation : Result.recursive;
+        }
+        String propertyName = getSetterPropertyName(calledMethod);
+        if (propertyName != null && isGetterSetterAssignment(object, propertyName)) {
+          return myDelegate ? Result.delegation : Result.recursive;
         }
       }
+    }
+    if (myExpression != null) {
       return Result.normal;
     }
 
@@ -159,16 +159,25 @@ class RecursionWeigher extends LookupElementWeigher {
     return Result.normal;
   }
 
-  private static boolean isGetterSetterAssignment(Object lookupObject, PsiMethod calledMethod) {
-    if (!PropertyUtil.isSimplePropertySetter(calledMethod)) {
-      return false;
+  @Nullable 
+  private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
+    if (PropertyUtil.isSimplePropertySetter(calledMethod)) {
+      assert calledMethod != null;
+      return PropertyUtil.getPropertyName(calledMethod);
     }
+    PsiReferenceExpression reference = ExcludeSillyAssignment.getAssignedReference(myPosition);
+    if (reference != null) {
+      PsiElement target = reference.resolve();
+      if (target instanceof PsiField) {
+        return PropertyUtil.suggestPropertyName((PsiField)target);
+      }
+    }
+    return null;
+  }
 
-    String prop = PropertyUtil.getPropertyName(calledMethod);
-    assert prop != null;
+  private static boolean isGetterSetterAssignment(Object lookupObject, String prop) {
     if (lookupObject instanceof PsiField &&
-        prop.equals(JavaCodeStyleManager.getInstance(calledMethod.getProject())
-                      .variableNameToPropertyName(((PsiField)lookupObject).getName(), VariableKind.FIELD))) {
+        prop.equals(PropertyUtil.suggestPropertyName((PsiField)lookupObject))) {
       return true;
     }
     if (lookupObject instanceof PsiMethod &&
@@ -181,7 +190,7 @@ class RecursionWeigher extends LookupElementWeigher {
 
   private boolean isPassingObjectToItself(Object object) {
     if (object instanceof PsiThisExpression) {
-      return !myDelegate || myCallQualifier instanceof PsiSuperExpression;
+      return myCallQualifier != null && !myDelegate || myCallQualifier instanceof PsiSuperExpression;
     }
     return myCallQualifier instanceof PsiReferenceExpression &&
            object.equals(((PsiReferenceExpression)myCallQualifier).advancedResolve(true).getElement());

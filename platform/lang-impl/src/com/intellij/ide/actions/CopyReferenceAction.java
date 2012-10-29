@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,9 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
@@ -58,7 +57,7 @@ import java.util.zip.ZipEntry;
 /**
  * @author Alexey
  */
-public class CopyReferenceAction extends AnAction {
+public class CopyReferenceAction extends DumbAwareAction {
   public static final DataFlavor ourFlavor;
   static {
     try {
@@ -141,9 +140,9 @@ public class CopyReferenceAction extends AnAction {
 
     if (!doCopy(element, project, editor) && editor != null) {
       Document document = editor.getDocument();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
-        String toCopy = FileUtil.toSystemDependentName(file.getPath()) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
+        String toCopy = getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
         CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
         setStatusBarText(project, toCopy + " has been copied");
       }
@@ -180,6 +179,13 @@ public class CopyReferenceAction extends AnAction {
 
     if (element == null) {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
+    if (element == null && editor == null) {
+      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (virtualFile != null && project != null) {
+        element = PsiManager.getInstance(project).findFile(virtualFile);
+      }
     }
     if (element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()) {
       return null;

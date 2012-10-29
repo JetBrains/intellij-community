@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,16 +120,16 @@ public class FSOperations {
     context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
-  static void markDirtyFiles(CompileContext context,
-                             BuildTarget<?> target,
-                             Timestamps timestamps, boolean forceMarkDirty,
-                             @Nullable THashSet<File> currentFiles) throws IOException {
-    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
-    Set<File> excludes = target instanceof ModuleBuildTarget ? new HashSet<File>(rootsIndex.getModuleExcludes(((ModuleBuildTarget)target).getModule())) : Collections.<File>emptySet();
-    markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles, excludes);
-  }
-
-  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles, final Set<File> excludes) throws IOException {
+  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles) throws IOException {
+    final Set<File> excludes;
+    if (target instanceof ModuleBuildTarget) {
+      excludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final ModuleExcludeIndex index = context.getProjectDescriptor().getModuleExcludeIndex();
+      excludes.addAll(index.getModuleExcludes(((ModuleBuildTarget)target).getModule()));
+    }
+    else {
+      excludes = Collections.emptySet();
+    }
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
@@ -140,7 +141,16 @@ public class FSOperations {
     }
   }
 
-  private static void traverseRecursively(CompileContext context, final BuildRootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
+  private static void traverseRecursively(CompileContext context,
+                                          final BuildRootDescriptor rd,
+                                          final File file,
+                                          Set<File> excludes,
+                                          @NotNull final Timestamps tsStorage,
+                                          final boolean forceDirty,
+                                          @Nullable Set<File> currentFiles) throws IOException {
+    if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
+      return;
+    }
     final File[] children = file.listFiles();
     if (children != null) { // is directory
       if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {

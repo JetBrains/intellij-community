@@ -13,6 +13,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
@@ -31,6 +32,9 @@ public class WebServer {
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
   private static final Logger LOG = Logger.getInstance(WebServer.class);
+
+  @NonNls
+  private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
 
   public WebServer() {
     final Application application = ApplicationManager.getApplication();
@@ -74,11 +78,13 @@ public class WebServer {
   // but if we bind only to any local port (0.0.0.0), instance of idea <121 can bind to our ports and any request to us will be intercepted
   // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
+    String property = System.getProperty(PROPERTY_ONLY_ANY_HOST);
+    boolean onlyAnyHost = property == null ? SystemInfo.isLinux || SystemInfo.isWindowsXP : (property.isEmpty() || Boolean.valueOf(property));
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
-        if (!SystemInfo.isLinux) {
+        if (!onlyAnyHost) {
           openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
         }
         return port;

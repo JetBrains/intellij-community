@@ -43,7 +43,7 @@ public interface GrParameter extends PsiParameter, GrVariable, GrCondition {
   GrTypeElement getTypeElementGroovy();
 
   @Nullable
-  GrExpression getDefaultInitializer();
+  GrExpression getInitializerGroovy();
 
   @NotNull
   GrModifierList getModifierList();

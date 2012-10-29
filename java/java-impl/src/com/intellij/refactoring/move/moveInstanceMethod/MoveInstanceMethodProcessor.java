@@ -107,18 +107,22 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       PsiParameter parameter = (PsiParameter)myTargetVariable;
       for (final UsageInfo usageInfo : usages) {
         if (usageInfo instanceof MethodCallUsageInfo) {
-          final PsiMethodCallExpression methodCall = ((MethodCallUsageInfo)usageInfo).getMethodCallExpression();
-          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-          final int index = myMethod.getParameterList().getParameterIndex(parameter);
-          if (index < expressions.length) {
-            PsiExpression instanceValue = expressions[index];
-            instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
-            if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-              String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
-                                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
-                                                         CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
-              conflicts.putValue(instanceValue, message);
+          final PsiElement methodCall = ((MethodCallUsageInfo)usageInfo).getMethodCallExpression();
+          if (methodCall instanceof PsiMethodCallExpression) {
+            final PsiExpression[] expressions = ((PsiMethodCallExpression)methodCall).getArgumentList().getExpressions();
+            final int index = myMethod.getParameterList().getParameterIndex(parameter);
+            if (index < expressions.length) {
+              PsiExpression instanceValue = expressions[index];
+              instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
+              if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
+                String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
+                                                           CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
+                conflicts.putValue(instanceValue, message);
+              }
             }
+          } else if (methodCall instanceof PsiMethodReferenceExpression) {
+            conflicts.putValue(methodCall, "Method reference would be broken after move");
           }
         }
       }
@@ -220,7 +224,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         addMethodToClass(inheritor, patternMethod, true);
       }
       else if (usage instanceof MethodCallUsageInfo && !((MethodCallUsageInfo)usage).isInternal()) {
-        correctMethodCall(((MethodCallUsageInfo)usage).getMethodCallExpression(), false);
+        final PsiElement expression = ((MethodCallUsageInfo)usage).getMethodCallExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          correctMethodCall((PsiMethodCallExpression)expression, false);
+        } else if (expression instanceof PsiMethodReferenceExpression) {
+          PsiExpression newQualifier = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(myTargetVariable.getType().getCanonicalText(), null);
+          ((PsiMethodReferenceExpression)expression).setQualifierExpression(newQualifier);
+        }
       }
       else if (usage instanceof JavadocUsageInfo) {
         docRefs.add(usage.getElement().getReference());

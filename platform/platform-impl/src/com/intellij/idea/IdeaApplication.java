@@ -240,10 +240,12 @@ public class IdeaApplication {
   protected class IdeStarter implements ApplicationStarter {
     private Splash mySplash;
 
+    @Override
     public String getCommandName() {
       return null;
     }
 
+    @Override
     public void premain(String[] args) {
       initLAF();
     }
@@ -278,6 +280,7 @@ public class IdeaApplication {
       return SplashScreen.getSplashScreen();
     }
 
+    @Override
     public void main(String[] args) {
 
       // Event queue should not be changed during initialization of application components.
@@ -296,6 +299,7 @@ public class IdeaApplication {
       }
 
       app.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (mySplash != null) {
             mySplash.dispose();
@@ -306,6 +310,7 @@ public class IdeaApplication {
 
 
       app.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myPerformProjectLoad) {
             loadProject();
@@ -323,6 +328,7 @@ public class IdeaApplication {
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               PluginManager.reportPluginError();
             }

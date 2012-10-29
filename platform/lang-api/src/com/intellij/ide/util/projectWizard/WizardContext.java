@@ -171,7 +171,7 @@ public class WizardContext {
     return myProjectBuilder;
   }
 
-  public void setProjectBuilder(final ProjectBuilder projectBuilder) {
+  public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
   }
 

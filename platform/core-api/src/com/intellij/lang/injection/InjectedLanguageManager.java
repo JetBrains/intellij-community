@@ -55,10 +55,17 @@ public abstract class InjectedLanguageManager {
   public abstract TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange);
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
 
-  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+  /**
+   * Test-only method.
+   * @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME
+   */
   @Deprecated
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
-  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
+
+  /**
+   * Test-only method.
+   * @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME
+   */
   @Deprecated
   public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 

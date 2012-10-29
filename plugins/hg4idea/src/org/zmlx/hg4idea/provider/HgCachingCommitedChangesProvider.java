@@ -12,11 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
@@ -26,6 +30,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
+import com.intellij.util.PlatformIcons;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +39,7 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
@@ -238,7 +244,20 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   }
 
   public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
-    return null;
+    AnAction copyHashAction = new AnAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+        if (changeLists != null && changeLists[0] instanceof HgCommittedChangeList) {
+          HgRevisionNumber revisionNumber = ((HgCommittedChangeList)changeLists[0]).getRevision();
+          CopyPasteManager.getInstance().setContents(new StringSelection(revisionNumber.getChangeset()));
+        }
+      }
+    };
+    return new VcsCommittedViewAuxiliary(Collections.singletonList(copyHashAction), new Runnable() {
+      public void run() {
+      }
+    }, Collections.singletonList(copyHashAction));
   }
 
   public int getUnlimitedCountValue() {

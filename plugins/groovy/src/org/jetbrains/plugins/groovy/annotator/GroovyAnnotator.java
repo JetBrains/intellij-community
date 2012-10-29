@@ -1548,9 +1548,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           checkModifierIsNotAllowed(modifiersList, PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PROTECTED), holder);
         }
         else if (containingTypeDef.isAnonymous()) {
-          //anonymous class
-          checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("static.declaration.in.inner.class"), holder);
-
           if (isMethodAbstract) {
             final Annotation annotation = holder.createErrorAnnotation(getModifierOrList(modifiersList, ABSTRACT), GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
             registerMakeAbstractMethodNotAbstractFix(annotation, method, false);

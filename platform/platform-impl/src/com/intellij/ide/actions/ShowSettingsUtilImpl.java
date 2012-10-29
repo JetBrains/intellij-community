@@ -36,19 +36,25 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private AtomicBoolean myShown = new AtomicBoolean(false);
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
     try {
+      myShown.set(true);
       _showSettingsDialog(project, group, null);
     }
     catch (Exception e) {
       LOG.error(e);
+    }
+    finally {
+      myShown.set(false);
     }
   }
 
@@ -224,5 +230,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
     return editConfigurable(parent, null, configurable, dimensionServiceKey, null);
+  }
+
+  public boolean isAlreadyShown() {
+    return myShown.get();
   }
 }

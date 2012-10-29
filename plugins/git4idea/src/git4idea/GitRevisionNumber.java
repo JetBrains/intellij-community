@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -25,7 +26,6 @@ import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.StringTokenizer;
 
@@ -36,13 +36,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   /**
    * the hash from 40 zeros representing not yet created commit
    */
-  public static final String NOT_COMMITTED_HASH;
-
-  static {
-    char[] data = new char[40];
-    Arrays.fill(data, '0');
-    NOT_COMMITTED_HASH = new String(data);
-  }
+  public static final String NOT_COMMITTED_HASH = StringUtil.repeat("0", 40);
 
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.

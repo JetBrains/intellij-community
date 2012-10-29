@@ -201,7 +201,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
       else {
         LOG.assertTrue(parameter.isOptional());
-        final GrExpression initializer = parameter.getDefaultInitializer();
+        final GrExpression initializer = parameter.getInitializerGroovy();
         LOG.assertTrue(initializer != null);
         builder.append(initializer.getText());
       }

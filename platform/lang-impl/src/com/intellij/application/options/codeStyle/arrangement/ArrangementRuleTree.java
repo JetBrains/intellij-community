@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -92,10 +91,11 @@ public class ArrangementRuleTree {
   public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> uiGroupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager,
+                             @NotNull ArrangementColorsProvider colorsProvider,
                              @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, new Runnable() {
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, new Runnable() {
       @Override
       public void run() {
         notifySelectionListeners(); 
@@ -243,7 +243,7 @@ public class ArrangementRuleTree {
     if (component == null) {
       return;
     }
-    if (!component.onCanvasWidthChange(myCanvasWidth)) {
+    if (!component.onCanvasWidthChange(myCanvasWidth - myTree.getRowBounds(row).x)) {
       return;
     }
 
@@ -501,7 +501,7 @@ public class ArrangementRuleTree {
   {
     ArrangementMatchNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
-      myRenderers.put(row, result = myFactory.getComponent(condition, model));
+      myRenderers.put(row, result = myFactory.getComponent(condition, model, true));
       doUpdateCanvasWidth(row);
     }
     return result;
@@ -699,7 +699,7 @@ public class ArrangementRuleTree {
       }
 
       if (row < 0) {
-        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null);
+        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null, true);
         doUpdateCanvasWidth(row);
         return component.getUiComponent();
       }

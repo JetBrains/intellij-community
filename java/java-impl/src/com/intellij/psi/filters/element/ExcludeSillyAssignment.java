@@ -17,6 +17,7 @@ package com.intellij.psi.filters.element;
 
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,14 +27,13 @@ import com.intellij.psi.filters.ElementFilter;
  * To change this template use Options | File Templates.
  */
 public class ExcludeSillyAssignment implements ElementFilter {
-  @Override
-  public boolean isAcceptable(Object element, PsiElement context) {
-    if(!(element instanceof PsiElement)) return true;
 
-    PsiElement each = context;
+  @Nullable 
+  public static PsiReferenceExpression getAssignedReference(PsiElement position) {
+    PsiElement each = position;
     while (each != null && !(each instanceof PsiFile)) {
       if (each instanceof PsiExpressionList || each instanceof PsiPrefixExpression || each instanceof PsiPolyadicExpression) {
-        return true;
+        return null;
       }
 
       if (each instanceof PsiAssignmentExpression) {
@@ -43,18 +43,29 @@ public class ExcludeSillyAssignment implements ElementFilter {
           final PsiElement qualifier = referenceExpression.getQualifier();
           if (qualifier != null) {
             if (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null) {
-              return true;
+              return null;
             }
           }
 
-          return !referenceExpression.isReferenceTo((PsiElement)element);
+          return referenceExpression;
         }
-        return true;
+        return null;
       }
 
       each = each.getContext();
     }
+    
+    return null;
+  }
+  
+  @Override
+  public boolean isAcceptable(Object element, PsiElement context) {
+    if(!(element instanceof PsiElement)) return true;
 
+    PsiReferenceExpression referenceExpression = getAssignedReference(context);
+    if (referenceExpression != null && referenceExpression.isReferenceTo((PsiElement)element)) {
+      return false;
+    }
     return true;
   }
 

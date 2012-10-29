@@ -51,7 +51,7 @@ public class BuildTargetConfiguration {
   private String saveToString() {
     StringWriter out = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getBuildRootIndex());
+    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getDataPaths(), myTargetsState.getBuildRootIndex());
     return out.toString();
   }
 

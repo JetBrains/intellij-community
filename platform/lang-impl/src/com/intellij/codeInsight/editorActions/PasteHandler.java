@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.HashMap;
@@ -365,15 +367,23 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  private static void reformatBlock(Project project, Editor editor, int startOffset, int endOffset) {
+  private static void reformatBlock(final Project project, final Editor editor, final int startOffset, final int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        try {
+          CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    };
 
-    try {
-      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    if (endOffset - startOffset > 1000) {
+      DocumentUtil.executeInBulk(editor.getDocument(), true, task);
     }
   }
 

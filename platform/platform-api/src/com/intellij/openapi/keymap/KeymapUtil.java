@@ -32,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -138,13 +137,17 @@ public class KeymapUtil {
 
   public static String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
+    if (SystemInfo.isMac) {
+      return MacKeymapUtil.getKeyStrokeText(accelerator);
+    }
     String acceleratorText = "";
     int modifiers = accelerator.getModifiers();
     if (modifiers > 0) {
       acceleratorText = getModifiersText(modifiers);
     }
 
-    String keyText = KeyEvent.getKeyText(accelerator.getKeyCode());
+    final int code = accelerator.getKeyCode();
+    String keyText = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
     // [vova] this is dirty fix for bug #35092 
     if(CANCEL_KEY_TEXT.equals(keyText)){
       keyText = BREAK_KEY_TEXT;
@@ -156,18 +159,19 @@ public class KeymapUtil {
 
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     if (SystemInfo.isMac) {
-      try {
-        Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
-        Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);
-        return (String)getModifiers.invoke(appleLaf, modifiers, Boolean.FALSE);
-      }
-      catch (Exception e) {
-        if (SystemInfo.isMacOSLeopard) {
-          return getKeyModifiersTextForMacOSLeopard(modifiers);
-        }
-        
-        // OK do nothing here.
-      }
+      //try {
+      //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
+      //  Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);
+      //  return (String)getModifiers.invoke(appleLaf, modifiers, Boolean.FALSE);
+      //}
+      //catch (Exception e) {
+      //  if (SystemInfo.isMacOSLeopard) {
+      //    return getKeyModifiersTextForMacOSLeopard(modifiers);
+      //  }
+      //
+      //  // OK do nothing here.
+      //}
+      return MacKeymapUtil.getModifiersText(modifiers);
     }
 
     final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
@@ -253,13 +257,13 @@ public class KeymapUtil {
   public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
       if ((modifiers & InputEvent.META_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.meta", "Meta"));
+          buf.append("\u2318");
       }
       if ((modifiers & InputEvent.CTRL_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
       }
       if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.alt", "Alt"));
+          buf.append("\2325");
       }
       if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.shift", "Shift"));

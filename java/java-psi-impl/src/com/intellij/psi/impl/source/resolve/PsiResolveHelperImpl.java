@@ -273,8 +273,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
 
-    if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.EQUALS);
     if (rawInference != null) return rawInference;
+    if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.EQUALS);
 
     if (parent != null) {
       final Pair<PsiType, ConstraintType> constraint =

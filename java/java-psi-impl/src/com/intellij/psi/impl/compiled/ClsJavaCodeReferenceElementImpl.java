@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
+  private static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
+  @NonNls private static final String EXTENDS_PREFIX = "?extends";
+  @NonNls private static final String SUPER_PREFIX = "?super";
+
   private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
   private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
   private volatile PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
-  @NonNls private static final String EXTENDS_PREFIX = "?extends";
-  @NonNls private static final String SUPER_PREFIX = "?super";
-  public static final ClsJavaCodeReferenceElementImpl[] EMPTY_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
 
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;
@@ -51,7 +52,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myCanonicalText = canonicalText;
     final String[] classParametersText = PsiNameHelper.getClassParametersText(canonicalText);
     int length = classParametersText.length;
-    myTypeParameters = length == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[length];
+    myTypeParameters = length == 0 ? EMPTY_ARRAY : new ClsTypeElementImpl[length];
     for (int i = 0; i < length; i++) {
       String s = classParametersText[length - i - 1];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
@@ -137,7 +138,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       return new CandidateInfo(resolve, PsiSubstitutor.EMPTY);
     }
   }
-
 
   @Override
   @NotNull
@@ -240,8 +240,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     PsiClass aClass = (PsiClass)element;
-    return myCanonicalText.equals(aClass.getQualifiedName())
-           || getManager().areElementsEquivalent(resolve(), element);
+    return myCanonicalText.equals(aClass.getQualifiedName()) || getManager().areElementsEquivalent(resolve(), element);
   }
 
   @Override
@@ -256,12 +255,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
     buffer.append(getCanonicalText());
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.JAVA_CODE_REFERENCE);
   }
 

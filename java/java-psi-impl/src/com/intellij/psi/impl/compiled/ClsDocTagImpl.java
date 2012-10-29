@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -31,24 +29,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocTagImpl");
-
   private final ClsDocCommentImpl myDocComment;
   private final PsiElement myNameElement;
 
   public ClsDocTagImpl(ClsDocCommentImpl docComment, @NonNls String name) {
     myDocComment = docComment;
-    myNameElement = new NameElement(name);
+    myNameElement = new NameElement(this, name);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(myNameElement.getText());
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, ElementType.DOC_TAG);
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaDocElementType.DOC_TAG);
   }
 
   @Override
@@ -58,11 +54,12 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
 
   @Override
   @NotNull
-  public char[] textToCharArray(){
+  public char[] textToCharArray() {
     return myNameElement.textToCharArray();
   }
 
   @Override
+  @NotNull
   public String getName() {
     return getNameElement().getText().substring(1);
   }
@@ -78,7 +75,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   }
 
   @Override
-  public int getTextLength(){
+  public int getTextLength() {
     return myNameElement.getTextLength();
   }
 
@@ -123,10 +120,18 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     }
   }
 
-  private class NameElement extends ClsElementImpl {
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    PsiImplUtil.setName(getNameElement(), name);
+    return this;
+  }
+
+  private static class NameElement extends ClsElementImpl {
+    private final ClsDocTagImpl myParent;
     private final String myText;
 
-    public NameElement(String text) {
+    public NameElement(ClsDocTagImpl parent, String text) {
+      myParent = parent;
       myText = text;
     }
 
@@ -137,38 +142,33 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
 
     @Override
     @NotNull
-    public char[] textToCharArray(){
+    public char[] textToCharArray() {
       return myText.toCharArray();
     }
 
     @Override
     @NotNull
-    public PsiElement[] getChildren(){
+    public PsiElement[] getChildren() {
       return PsiElement.EMPTY_ARRAY;
     }
 
     @Override
-    public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+    public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     }
 
     @Override
-    public void setMirror(@NotNull TreeElement element) {
+    public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
       setMirrorCheckingType(element, null);
     }
 
     @Override
     public PsiElement getParent() {
-      return ClsDocTagImpl.this;
+      return myParent;
     }
 
     @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
       visitor.visitElement(this);
     }
-  }
-  @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
-    PsiImplUtil.setName(getNameElement(), name);
-    return this;
   }
 }

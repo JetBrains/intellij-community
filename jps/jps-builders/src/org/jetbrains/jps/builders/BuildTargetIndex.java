@@ -10,17 +10,12 @@ import java.util.Set;
 /**
  * @author nik
  */
-public interface BuildTargetIndex {
-  @NotNull
-  <T extends BuildTarget<?>>
-  List<T> getAllTargets(@NotNull BuildTargetType<T> type);
+public interface BuildTargetIndex extends BuildTargetRegistry {
 
   @NotNull
   Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target);
 
   List<BuildTargetChunk> getSortedTargetChunks();
-
-  List<? extends BuildTarget<?>> getAllTargets();
 
   Set<BuildTarget<?>> getDependenciesRecursively(BuildTarget<?> target);
 }

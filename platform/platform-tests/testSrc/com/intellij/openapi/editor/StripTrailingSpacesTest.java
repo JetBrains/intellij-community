@@ -125,6 +125,24 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     checkResultByText("xxx\n<caret>yyy\n"); // now we can strip
   }
 
+  public void testDisableStrip_Modify_Save_EnableOnModifiedLines_Modify_Save_ShouldStripModifiedOnly() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+
+    configureFromFileText("x.txt", "");
+    type("xxx   \nyyy   \nzzz   \n");
+    myEditor.getCaretModel().moveToOffset(0);
+    end();end();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx   <caret>\nyyy   \nzzz   \n");
+
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
+    type(' ');
+    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getText().length());
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx\nyyy   \nzzz   \n<caret>");
+  }
+
   public void testDoNotStripModifiedLines_And_EnsureBlankLineAtTheEnd_LeavesWhitespacesAtTheEndOfFileAlone() throws IOException {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);

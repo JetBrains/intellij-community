@@ -24,7 +24,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -58,7 +57,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     final PsiAnnotationStub stub = getStub();
     if (stub != null) {
-      return (PsiJavaCodeReferenceElement)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+      return PsiTreeUtil.getRequiredChildOfType(stub.getPsiElement(), PsiJavaCodeReferenceElement.class);
     }
 
     final Object result = PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);

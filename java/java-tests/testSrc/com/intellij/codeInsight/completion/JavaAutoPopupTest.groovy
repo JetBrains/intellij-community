@@ -864,7 +864,11 @@ class Foo {
   }
 
   public void testNonFinishedParameterComma() {
-    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
+    myFixture.configureByText("a.java", """
+class Foo {
+  void foo(int aaa, int aaaaa) { }
+  void bar(int aaa, int aaaaa) { foo(<caret>) }
+} """)
     type 'a,'
     assert myFixture.editor.document.text.contains('foo(aaa, )')
   }

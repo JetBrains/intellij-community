@@ -209,7 +209,7 @@ class GitRepositoryReader {
                   return;
                 }
                 if (branchName.endsWith(ref)) {
-                  hashRef.set(hash);
+                  hashRef.set(shortBuffer(hash));
                 }
               }
             });
@@ -340,6 +340,7 @@ class GitRepositoryReader {
           if (hash == null || branchName == null) {
             return;
           }
+          hash = shortBuffer(hash);
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
             localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
           }
@@ -472,6 +473,11 @@ class GitRepositoryReader {
     finally {
       resultHandler.handleResult(null, null);
     }
+  }
+
+  @NotNull
+  private static String shortBuffer(String raw) {
+    return new String(raw);
   }
 
   private interface PackedRefsLineResultHandler {

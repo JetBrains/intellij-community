@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.stubs.StubElement;
 
+/**
+ * @author max
+ */
 public interface PsiAnnotationStub extends StubElement<PsiAnnotation> {
   String getText();
-  CompositeElement getTreeElement();
+
+  PsiAnnotation getPsiElement();
 }

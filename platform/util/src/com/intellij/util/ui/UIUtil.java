@@ -432,6 +432,10 @@ public class UIUtil {
     return defColor;
   }
 
+  public static int getScrollBarWidth() {
+    return UIManager.getInt("ScrollBar.width");
+  }
+
   public static Font getLabelFont() {
     return UIManager.getFont("Label.font");
   }

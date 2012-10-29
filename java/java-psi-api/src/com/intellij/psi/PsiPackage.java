@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java package.
  */
 public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer, PsiQualifiedNamedElement {
-  @NonNls String PACKAGE_INFO_FILE = "package-info.java";
+  @NonNls String PACKAGE_INFO_CLASS = "package-info";
+  @NonNls String PACKAGE_INFO_FILE = PACKAGE_INFO_CLASS + ".java";
 
   PsiPackage[] EMPTY_ARRAY = new PsiPackage[0];
 

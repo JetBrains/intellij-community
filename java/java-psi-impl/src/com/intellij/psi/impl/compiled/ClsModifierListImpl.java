@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -28,9 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
-
   public ClsModifierListImpl(final PsiModifierListStub stub) {
     super(stub);
   }
@@ -90,28 +88,15 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  private boolean isAnnotationFormattingAllowed() {
-    final PsiElement element = getParent();
-    return element instanceof PsiClass
-        || element instanceof PsiMethod
-        || element instanceof PsiField;
-  }
-
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    final PsiAnnotation[] annotations = getAnnotations();
-    final boolean formattingAllowed = isAnnotationFormattingAllowed();
-    for (PsiAnnotation annotation : annotations) {
-      ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
-      if (formattingAllowed) {
-        goNextLine(indentLevel, buffer);
-      }
-      else {
-        buffer.append(' ');
-      }
-    }
-
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     final PsiElement parent = getParent();
+    final PsiAnnotation[] annotations = getAnnotations();
+    final boolean separateAnnotations = parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiField;
+
+    for (int i = 0; i < annotations.length; i++) {
+      appendText(annotations[i], indentLevel, buffer, separateAnnotations ? NEXT_LINE : " ");
+    }
 
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
     final boolean isClass = parent instanceof PsiClass;
@@ -169,15 +154,9 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
-
-    PsiElement[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();
-    PsiAnnotation[] annotations = getAnnotations();
-    LOG.assertTrue(annotations.length == mirrorAnnotations.length);
-    for (int i = 0; i < annotations.length; i++) {
-      ((ClsElementImpl)annotations[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorAnnotations[i]));
-    }
+    setMirrors(getAnnotations(), SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations());
   }
 
   @Override
@@ -190,6 +169,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     }
   }
 
+  @Override
   public String toString() {
     return "PsiModifierList";
   }

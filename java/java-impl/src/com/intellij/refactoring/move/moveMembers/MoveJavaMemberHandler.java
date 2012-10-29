@@ -17,8 +17,10 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
@@ -171,7 +173,17 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
-          refExpr.setQualifierExpression(null);
+          final PsiReferenceParameterList parameterList = refExpr.getParameterList();
+          if (parameterList != null && parameterList.getTypeArguments().length == 0){
+            refExpr.setQualifierExpression(null);
+          } else {
+            final Project project = element.getProject();
+            final PsiClass targetClass =
+              JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
+            if (targetClass != null) {
+              changeQualifier(refExpr, targetClass, usage.member);
+            }
+          }
         }
       }
       else { // no qualifier

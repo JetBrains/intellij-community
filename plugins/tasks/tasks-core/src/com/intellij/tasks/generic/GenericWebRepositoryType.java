@@ -47,6 +47,6 @@ public class GenericWebRepositoryType extends BaseRepositoryType<GenericWebRepos
 
   @Override
   protected int getFeatures() {
-    return LOGIN_ANONYMOUSLY;
+    return LOGIN_ANONYMOUSLY | BASIC_HTTP_AUTHORIZATION;
   }
 }

@@ -847,6 +847,10 @@ public class LambdaUtil {
     return psiSubstitutor;
   }
 
+  public static boolean notInferredType(PsiType typeByExpression) {
+    return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
+  }
+
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;

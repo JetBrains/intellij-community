@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,11 +37,15 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -47,8 +53,13 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.jps.maven.model.impl.MavenIdBean;
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
+import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -984,6 +995,136 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue.restartTimer();
 
     return importer.get().getCreatedModules();
+  }
+
+  public void generateBuildConfiguration() {
+    if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) {
+      return;
+    }
+    final BuildManager buildManager = BuildManager.getInstance();
+    final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
+    if (projectSystemDir == null) {
+      return;
+    }
+    final MavenDefaultModifiableModelsProvider provider = new MavenDefaultModifiableModelsProvider(myProject);
+    final File mavenConfigFile;
+    final MavenProjectConfiguration projectConfig;
+    try {
+      final Map<VirtualFile, Module> fileToModuleMap = getFileToModuleMapping(provider);
+      mavenConfigFile = new File(projectSystemDir, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+      projectConfig = new MavenProjectConfiguration();
+      for (MavenProject mavenProject : getProjects()) {
+        final Module module = fileToModuleMap.get(mavenProject.getFile());
+        if (module == null) {
+          continue;
+        }
+        final MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
+
+        final MavenId projectId = mavenProject.getMavenId();
+        resourceConfig.id = new MavenIdBean(projectId.getGroupId(), projectId.getArtifactId(), projectId.getVersion());
+
+        final MavenId parentId = mavenProject.getParentId();
+        if (parentId != null) {
+          resourceConfig.parentId = new MavenIdBean(parentId.getGroupId(), parentId.getArtifactId(), parentId.getVersion());
+        }
+        resourceConfig.directory = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
+        resourceConfig.delimitersPattern = MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern();
+        for (Map.Entry<String, String> entry : mavenProject.getModelMap().entrySet()) {
+          final String key = entry.getKey();
+          final String value = entry.getValue();
+          if (value != null && !"null".equals(value)) {  // todo: probable Maven Integration bug: storing null values as 'null' strings
+            resourceConfig.modelMap.put(key, value);
+          }
+        }
+        addResources(resourceConfig.resources, mavenProject.getResources());
+        addResources(resourceConfig.testResources, mavenProject.getTestResources());
+        resourceConfig.filteringExclusions.addAll(getFilterExclusions(mavenProject));
+        final Properties properties = getFilteringProperties(mavenProject);
+        for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
+          resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
+        }
+        resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(
+          mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"
+        );
+        projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
+      }
+    }
+    finally {
+      provider.dispose();
+    }
+    final Document document = new Document(new Element("maven-project-configuration"));
+    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+    buildManager.runCommand(new Runnable() {
+      @Override
+      public void run() {
+        buildManager.clearState(myProject);
+        FileUtil.createIfDoesntExist(mavenConfigFile);
+        try {
+          JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  private static void addResources(final List<ResourceRootConfiguration> container, Collection<MavenResource> resources) {
+    for (MavenResource resource : resources) {
+      final String dir = resource.getDirectory();
+      if (dir == null) {
+        continue;
+      }
+
+      final ResourceRootConfiguration props = new ResourceRootConfiguration();
+      props.directory = FileUtil.toSystemIndependentName(dir);
+
+      final String target = resource.getTargetPath();
+      props.targetPath = target != null? FileUtil.toSystemIndependentName(target) : null;
+
+      props.isFiltered = resource.isFiltered();
+      props.includes.clear();
+      for (String include : resource.getIncludes()) {
+        props.includes.add(FileUtil.convertAntToRegexp(include.trim()));
+      }
+      props.excludes.clear();
+      for (String exclude : resource.getExcludes()) {
+        props.excludes.add(FileUtil.convertAntToRegexp(exclude.trim()));
+      }
+      container.add(props);
+    }
+  }
+
+  @NotNull
+  private static Collection<String> getFilterExclusions(MavenProject mavenProject) {
+    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    if (config == null) {
+      return Collections.emptySet();
+    }
+    final List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    if (customNonFilteredExtensions.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return Collections.unmodifiableCollection(customNonFilteredExtensions);
+  }
+
+  private static Properties getFilteringProperties(MavenProject mavenProject) {
+    final Properties properties = new Properties();
+    properties.putAll(mavenProject.getProperties());
+    for (String each : mavenProject.getFilters()) {
+      try {
+        FileInputStream in = new FileInputStream(each);
+        try {
+          properties.load(in);
+        }
+        finally {
+          in.close();
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return properties;
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {

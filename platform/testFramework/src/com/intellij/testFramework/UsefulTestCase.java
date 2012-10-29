@@ -339,7 +339,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public static <T> void assertOrderedEquals(final String errorMsg, Iterable<T> actual, T... expected) {
+  public static <T> void assertOrderedEquals(final String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
     Assert.assertNotNull(actual);
     Assert.assertNotNull(expected);
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
@@ -554,7 +554,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertEmpty(final String errorMsg, final Collection<?> collection) {
-    assertOrderedEquals(errorMsg, collection);
+    Iterable<Object> i = (Iterable<Object>)collection;
+    assertOrderedEquals(errorMsg, i);
   }
 
   public static void assertSize(int expectedSize, final Object[] array) {

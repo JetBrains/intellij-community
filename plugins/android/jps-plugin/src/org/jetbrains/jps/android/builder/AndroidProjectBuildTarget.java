@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -56,7 +55,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
     if (myKind == AndroidBuilderKind.PACKAGING) {
       result.add(new AndroidProjectBuildTarget(AndroidBuilderKind.DEX, myModel));
@@ -64,10 +63,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
     for (JpsModule module : myModel.getProject().getModules()) {
       JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
       if (extension != null) {
-        result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
-        if (extension.isPackTestCode()) {
-          result.add(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
-        }
+        result.addAll(targetRegistry.getModuleBasedTargets(module, extension.isPackTestCode()? BuildTargetRegistry.ModuleTargetSelector.ALL : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
       }
     }
     return result;
@@ -109,7 +105,7 @@ public class AndroidProjectBuildTarget extends BuildTarget<BuildRootDescriptor> 
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext ccontext) {
     return Collections.emptyList();
   }
 

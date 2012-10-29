@@ -153,7 +153,7 @@ public interface ASTNode extends UserDataHolder {
    * @param anchorBefore the node before which the child node is inserted.
    * @since 7.0
    */
-  void addLeaf(@NotNull IElementType leafType, CharSequence leafText, ASTNode anchorBefore);
+  void addLeaf(@NotNull IElementType leafType, CharSequence leafText, @Nullable ASTNode anchorBefore);
 
   /**
    * Removes the specified node from the list of children of this node.

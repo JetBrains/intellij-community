@@ -746,8 +746,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   @Nullable
   @Override
-  public SettingsStep createSettingsStep(WizardContext wizardContext) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(wizardContext, this, Conditions.<SdkType>is(AndroidSdkType.getInstance()));
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, Conditions.<SdkType>is(AndroidSdkType.getInstance()));
   }
 
   private static boolean hasAppropriateJdk() {

@@ -40,6 +40,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     clear();
 
+    setFont(list.getFont());
     mySelected = selected;
     myForeground = list.getForeground();
     mySelectionForeground = list.getSelectionForeground();

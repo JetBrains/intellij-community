@@ -94,7 +94,7 @@ public class GitBranchUtil {
    */
   @Deprecated
   @Nullable
-  public static GitBranch getCurrentBranch(@NotNull Project project, @NotNull VirtualFile root) {
+  public static GitLocalBranch getCurrentBranch(@NotNull Project project, @NotNull VirtualFile root) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository != null) {
       return repository.getCurrentBranch();
@@ -137,7 +137,7 @@ public class GitBranchUtil {
    */
   @Deprecated
   @Nullable
-  public static GitBranch tracked(@NotNull Project project, @NotNull VirtualFile root, @NotNull String branchName) throws VcsException {
+  public static GitRemoteBranch tracked(@NotNull Project project, @NotNull VirtualFile root, @NotNull String branchName) throws VcsException {
     final HashMap<String, String> result = new HashMap<String, String>();
     GitConfigUtil.getValues(project, root, null, result);
     String remoteName = result.get(trackedRemoteKey(branchName));

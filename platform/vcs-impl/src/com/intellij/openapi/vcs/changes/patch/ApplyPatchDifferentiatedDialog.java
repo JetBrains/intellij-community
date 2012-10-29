@@ -218,7 +218,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void init(List<TextFilePatch> patches, final LocalChangeList localChangeList) {
-    final List<FilePatchInProgress> matchedPathes = new AutoMatchIterator(myProject).execute(patches);
+    final List<FilePatchInProgress> matchedPathes = new MatchPatchPaths(myProject).execute(patches);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -311,7 +311,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (patchReader == null) return;
 
       final List<FilePatchInProgress> matchedPathes = patchReader == null ? Collections.<FilePatchInProgress>emptyList() :
-                                                      new AutoMatchIterator(myProject).execute(patchReader.getPatches());
+                                                      new MatchPatchPaths(myProject).execute(patchReader.getPatches());
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

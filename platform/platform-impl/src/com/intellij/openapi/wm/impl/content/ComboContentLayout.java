@@ -17,10 +17,12 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -76,7 +78,13 @@ class ComboContentLayout extends ContentLayout {
     if (!isToDrawCombo()) return;
 
     Rectangle r = myComboLabel.getBounds();
-    
+    if (UIUtil.isUnderDarcula()) {
+      g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
+      g.drawLine(r.width, 0, r.width, r.height);
+      g.setColor(ColorUtil.toAlpha(UIUtil.getBorderColor(), 50));
+      g.drawLine(r.width-1, 0, r.width-1, r.height);
+      return;
+    }
     if (myImage == null || myImage.getHeight() != r.height || myImage.getWidth() != r.width) {
       myImage = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2d = myImage.createGraphics();
@@ -89,7 +97,7 @@ class ComboContentLayout extends ContentLayout {
       g2d.setColor(new Color(0, 0, 0, 60));
       g2d.drawLine(0, 0, 0, r.height);
       g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
-      
+
       g2d.setColor(new Color(255, 255, 255, 80));
       g2d.drawRect(1, 0, r.width - 3, r.height - 1);
       

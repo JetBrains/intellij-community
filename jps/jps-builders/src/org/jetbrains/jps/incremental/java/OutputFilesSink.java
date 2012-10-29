@@ -12,7 +12,11 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import java.io.*;
+import javax.tools.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -20,23 +24,25 @@ import java.util.*;
 *         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
-  private final CompileContext myContextI;
+  private final CompileContext myContext;
   private final Set<File> mySuccessfullyCompiled = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final Set<File> myProblematic = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
   private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
 
   public OutputFilesSink(CompileContext context) {
-    myContextI = context;
+    myContext = context;
   }
 
   public void save(final @NotNull OutputFileObject fileObject) {
-    final String className = fileObject.getClassName();
-    if (className != null) {
-      final OutputFileObject.Content content = fileObject.getContent();
-      if (content != null) {
-        synchronized (myCompiledClasses) {
-          myCompiledClasses.put(className, fileObject);
+    if (fileObject.getKind() == JavaFileObject.Kind.CLASS) {
+      final String className = fileObject.getClassName();
+      if (className != null) {
+        final OutputFileObject.Content content = fileObject.getContent();
+        if (content != null) {
+          synchronized (myCompiledClasses) {
+            myCompiledClasses.put(className, fileObject);
+          }
         }
       }
     }
@@ -72,12 +78,12 @@ class OutputFilesSink implements OutputFileConsumer {
               }
             }
             catch (IOException e) {
-              myContextI.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+              myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
             }
           }
         }
         finally {
-          myContextI.processMessage(event);
+          myContext.processMessage(event);
         }
       }
     }
@@ -119,13 +125,13 @@ class OutputFilesSink implements OutputFileConsumer {
       mySuccessfullyCompiled.add(source);
       final String className = fileObject.getClassName();
       if (className != null) {
-        myContextI.processMessage(new ProgressMessage("Compiled " + className));
+        myContext.processMessage(new ProgressMessage("Compiled " + className));
       }
     }
   }
 
   private static void _writeToFile(final File file, OutputFileObject.Content content) throws IOException {
-    final OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+    final OutputStream stream = new FileOutputStream(file);
     try {
       stream.write(content.getBuffer(), content.getOffset(), content.getLength());
     }

@@ -37,6 +37,7 @@ import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Set;
 
 public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
@@ -110,9 +111,9 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     if (!(document instanceof DocumentImpl)) {
       return;
     }
-    if (!myDocumentsToStripLater.contains(document)) return;
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
+    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
+    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
     boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
     Editor activeEditor = isDisposeInProgress ? null : PlatformDataKeys.EDITOR.getData(dataContext);
 

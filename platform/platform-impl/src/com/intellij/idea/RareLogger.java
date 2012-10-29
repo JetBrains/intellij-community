@@ -72,10 +72,12 @@ public class RareLogger extends Logger {
     
     // just passes to parent logger
     myProxy = new LogFilter() {
+      @Override
       @NotNull
       public Integer getAllowedLoggingInterval(Level level, String message, Throwable t, String[] details) {
         return -1;
       }
+      @Override
       public Object getKey(@NotNull Level level,
                            @NonNls String message,
                            @Nullable Throwable t,

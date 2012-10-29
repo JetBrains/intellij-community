@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -27,7 +26,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -39,51 +37,19 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
+public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
+  private PsiTypeElement myType = null;
+  private PsiExpression myInitializer = null;
+  private boolean myInitializerInitialized = false;
 
-  private final PsiIdentifier myNameIdentifier;
-  private final PsiDocComment myDocComment;
-  private PsiTypeElement myType = null;          //guarded by PsiLock.LOCK
-  private PsiExpression myInitializer = null;    //guarded by PsiLock.LOCK
-  private boolean myInitializerInitialized = false;  //guarded by PsiLock.LOCK
-
-  public ClsFieldImpl(final PsiFieldStub stub) {
+  public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
-    myDocComment = isDeprecated() ? new ClsDocCommentImpl(this) : null;
-    myNameIdentifier = new ClsIdentifierImpl(this, getName());
   }
 
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    PsiDocComment docComment = getDocComment();
-    PsiModifierList modifierList = getModifierList();
-    PsiTypeElement type = getTypeElement();
-    PsiIdentifier name = getNameIdentifier();
-
-    int count =
-      (docComment != null ? 1 : 0)
-      + (modifierList != null ? 1 : 0)
-      + (type != null ? 1 : 0)
-      + (name != null ? 1 : 0);
-    PsiElement[] children = new PsiElement[count];
-
-    int offset = 0;
-    if (docComment != null) {
-      children[offset++] = docComment;
-    }
-    if (modifierList != null) {
-      children[offset++] = modifierList;
-    }
-    if (type != null) {
-      children[offset++] = type;
-    }
-    if (name != null) {
-      children[offset++] = name;
-    }
-
-    return children;
+    return getChildren(getDocComment(), getModifierList(), getTypeElement(), getNameIdentifier());
   }
 
   @Override
@@ -93,34 +59,18 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
 
   @Override
   @NotNull
-  public PsiIdentifier getNameIdentifier() {
-    return myNameIdentifier;
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getName() {
-    return getStub().getName();
-  }
-
-  @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiImplUtil.setName(getNameIdentifier(), name);
-    return this;
-  }
-
-  @Override
-  @NotNull
   public PsiType getType() {
     return getTypeElement().getType();
   }
 
   @Override
+  @NotNull
   public PsiTypeElement getTypeElement() {
     synchronized (LAZY_BUILT_LOCK) {
       if (myType == null) {
-        String typeText = TypeInfo.createTypeText(getStub().getType(false));
+        PsiFieldStub stub = getStub();
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
         myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
       }
       return myType;
@@ -192,43 +142,34 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   @Override
-  public PsiDocComment getDocComment() {
-    return myDocComment;
-  }
-
-  @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
-    if (docComment != null) {
-      docComment.appendMirrorText(indentLevel, buffer);
-      goNextLine(indentLevel, buffer);
-    }
-    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
-    ((ClsElementImpl)getTypeElement()).appendMirrorText(indentLevel, buffer);
-    buffer.append(' ');
-    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
-    if (getInitializer() != null) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
+    appendText(getModifierList(), indentLevel, buffer, "");
+    appendText(getTypeElement(), indentLevel, buffer, " ");
+    appendText(getNameIdentifier(), indentLevel, buffer);
+
+    PsiExpression initializer = getInitializer();
+    if (initializer != null) {
       buffer.append(" = ");
-      buffer.append(getInitializer().getText());
+      buffer.append(initializer.getText());
     }
+
     buffer.append(';');
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
-    PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);
-    if (getDocComment() != null) {
-        ((ClsElementImpl)getDocComment()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
-    }
-      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-      ((ClsElementImpl)getTypeElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeElement()));
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+    PsiField mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirrorIfPresent(getDocComment(), mirror.getDocComment());
+    setMirror(getModifierList(), mirror.getModifierList());
+    setMirror(getTypeElement(), mirror.getTypeElement());
+    setMirror(getNameIdentifier(), mirror.getNameIdentifier());
   }
 
   @Override
@@ -239,10 +180,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public String toString() {
-    return "PsiField:" + getName();
   }
 
   @Override
@@ -297,4 +234,8 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     return true;
   }
 
+  @Override
+  public String toString() {
+    return "PsiField:" + getName();
+  }
 }

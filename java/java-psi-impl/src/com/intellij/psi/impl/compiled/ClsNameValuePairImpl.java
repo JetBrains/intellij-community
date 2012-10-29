@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,51 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsNameValuePairImpl");
   private final ClsElementImpl myParent;
   private final ClsIdentifierImpl myNameIdentifier;
   private final PsiAnnotationMemberValue myMemberValue;
 
-  public ClsNameValuePairImpl(ClsElementImpl parent, String name, PsiAnnotationMemberValue value) {
+  public ClsNameValuePairImpl(@NotNull ClsElementImpl parent, @Nullable String name, @NotNull PsiAnnotationMemberValue value) {
     myParent = parent;
-    myNameIdentifier = new ClsIdentifierImpl(this, name);
+    myNameIdentifier = name != null ? new ClsIdentifierImpl(this, name) : null;
     myMemberValue = ClsParsingUtil.getMemberValue(value, this);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    if (myNameIdentifier.getText() != null) {
-      myNameIdentifier.appendMirrorText(0, buffer);
-      buffer.append(" = ");
-    }
-    ((ClsElementImpl)myMemberValue).appendMirrorText(0, buffer);
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    appendText(myNameIdentifier, 0, buffer, " = ");
+    appendText(myMemberValue, 0, buffer);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
-    PsiNameValuePair mirror = (PsiNameValuePair)SourceTreeToPsiMap.treeElementToPsi(element);
-    final PsiIdentifier mirrorIdentifier = mirror.getNameIdentifier();
-    if (mirrorIdentifier != null) {
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorIdentifier));
-    }
-    ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
+    PsiNameValuePair mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirrorIfPresent(getNameIdentifier(), mirror.getNameIdentifier());
+    setMirrorIfPresent(getValue(), mirror.getValue());
   }
 
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    return new PsiElement[]{myNameIdentifier, myMemberValue};
+    if (myNameIdentifier != null) {
+      return new PsiElement[]{myNameIdentifier, myMemberValue};
+    }
+    else {
+      return new PsiElement[]{myMemberValue};
+    }
   }
 
   @Override
@@ -86,7 +84,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
 
   @Override
   public String getName() {
-    return myNameIdentifier.getText();
+    return myNameIdentifier != null ? myNameIdentifier.getText() : null;
   }
 
   @Override
