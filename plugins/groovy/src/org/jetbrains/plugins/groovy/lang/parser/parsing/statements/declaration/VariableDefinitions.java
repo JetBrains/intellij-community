@@ -146,7 +146,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     if (declarator != WRONGWAY) {
       final boolean wasAssingment = parseAssignment(builder, parser);
 
-      if (declarator == TUPLE_DECLARATION || declarator == TUPLE_ERROR) {
+      if (declarator == TUPLE_DECLARATION) {
         varAssMarker.drop();
         if (!wasAssingment && !hasModifiers) {
           builder.error(GroovyBundle.message("assignment.expected"));
@@ -171,8 +171,9 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (isInClass && declarator == TUPLE_DECLARATION) {
         builder.error(GroovyBundle.message("tuple.cant.be.placed.in.class"));
       }
-      return declarator == TUPLE_DECLARATION ? MULTIPLE_VARIABLE_DEFINITION : VARIABLE_DEFINITION;
-    } else {
+      return VARIABLE_DEFINITION;
+    }
+    else {
       varAssMarker.drop();
       builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
@@ -188,11 +189,13 @@ public class VariableDefinitions implements GroovyElementTypes {
       if (isInClass) {
         varAssMarker.done(FIELD);
         return FIELD;
-      } else {
+      }
+      else {
         varAssMarker.done(VARIABLE);
         return VARIABLE;
       }
-    } else {
+    }
+    else {
       varAssMarker.drop();
       builder.error("Identifier expected");
       return WRONGWAY;
@@ -205,8 +208,9 @@ public class VariableDefinitions implements GroovyElementTypes {
         ParserUtils.getToken(builder, mIDENT);
         return mIDENT;
       }
-    } else if (builder.getTokenType() == mLPAREN && isTuple) {
-      if (TupleParse.parseTuple(builder, TUPLE_DECLARATION, VARIABLE)) {
+    }
+    else if (builder.getTokenType() == mLPAREN && isTuple) {
+      if (TupleParse.parseTuple(builder, null, VARIABLE)) {
         return TUPLE_DECLARATION;
       }
     }
@@ -223,7 +227,8 @@ public class VariableDefinitions implements GroovyElementTypes {
         marker.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
         return false;
-      } else {
+      }
+      else {
         marker.drop();
         return true;
       }

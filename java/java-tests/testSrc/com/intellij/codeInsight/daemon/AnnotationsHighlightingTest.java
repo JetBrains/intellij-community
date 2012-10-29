@@ -35,6 +35,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncompatibleType2() { doTest(false); }
   public void testIncompatibleType3() { doTest(false); }
   public void testIncompatibleType4() { doTest(false); }
+  public void testIncompatibleType5() { doTest(false); }
   public void testMissingAttribute() { doTest(false); }
   public void testDuplicateAnnotation() { doTest(false); }
   public void testNonConstantInitializer() { doTest(false); }

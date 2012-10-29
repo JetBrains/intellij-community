@@ -29,6 +29,9 @@ public interface ArrangementColorsProvider {
   
   @NotNull
   Color getBorderColor(boolean selected);
+
+  @NotNull
+  Color getRowUnderMouseBackground();
   
   @NotNull
   TextAttributes getTextAttributes(@NotNull ArrangementSettingType type, boolean selected);

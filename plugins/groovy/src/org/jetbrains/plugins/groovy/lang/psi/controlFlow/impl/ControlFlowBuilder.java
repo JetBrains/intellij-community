@@ -1243,7 +1243,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
     if (variable.getInitializerGroovy() != null ||
-        variable.getParent() instanceof GrTupleDeclaration && ((GrTupleDeclaration)variable.getParent()).getInitializerGroovy() != null) {
+        variable.getParent() instanceof GrVariableDeclaration && ((GrVariableDeclaration)variable.getParent()).getTupleInitializer() != null) {
       ReadWriteVariableInstruction writeInst = new ReadWriteVariableInstruction(variable.getName(), variable, WRITE);
       addNodeAndCheckPending(writeInst);
     }

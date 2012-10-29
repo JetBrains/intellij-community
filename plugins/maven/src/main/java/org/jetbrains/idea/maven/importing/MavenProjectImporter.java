@@ -135,12 +135,6 @@ public class MavenProjectImporter {
       myModelsProvider.dispose();
     }
 
-    postTasks.add(new MavenProjectsProcessorTask() {
-      @Override
-      public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        MavenProjectsManager.getInstance(project).generateBuildConfiguration();
-      }
-    });
     return postTasks;
   }
 

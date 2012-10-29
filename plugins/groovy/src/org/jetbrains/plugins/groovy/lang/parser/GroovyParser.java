@@ -22,6 +22,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
@@ -187,7 +188,7 @@ public class GroovyParser implements PsiParser {
   }
 
   //gsp directives, scriptlets and such
-  protected boolean isExtendedSeparator(final IElementType tokenType) {
+  protected boolean isExtendedSeparator(@Nullable final IElementType tokenType) {
     return false;
   }
 
@@ -406,14 +407,15 @@ public class GroovyParser implements PsiParser {
     if (declType != WRONGWAY) {
       if (declType != null) {
         declMarker.done(declType);
-      } else {
+      }
+      else {
         declMarker.drop();
       }
       return true;
     }
 
     if (modifiersParsed) {
-      declMarker.done(VARIABLE_DEFINITION_ERROR);
+      declMarker.done(VARIABLE_DEFINITION);
       return true;
     }
     declMarker.rollbackTo();

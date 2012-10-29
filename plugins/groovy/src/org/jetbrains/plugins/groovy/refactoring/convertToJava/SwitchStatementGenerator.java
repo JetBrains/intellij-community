@@ -135,7 +135,7 @@ public class SwitchStatementGenerator {
     final PsiType type = condition.getType();
     final String varName = GenerationUtil.validateName("switchArg", condition, context);
     conditionBuilder.append("final ");
-    GenerationUtil.writeType(conditionBuilder, type, condition);
+    TypeWriter.writeType(conditionBuilder, type, condition);
     conditionBuilder.append(' ').append(varName).append(" = ");
     condition.accept(new ExpressionGenerator(conditionBuilder, context));
     conditionBuilder.append(";\n");

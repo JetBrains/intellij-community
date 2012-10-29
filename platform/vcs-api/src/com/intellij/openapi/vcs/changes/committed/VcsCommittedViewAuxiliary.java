@@ -16,30 +16,34 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class VcsCommittedViewAuxiliary {
-  //private final JPanel myPanel;
-  private final List<AnAction> myToolbarActions;
-  private final List<AnAction> myPopupActions;
-  private final Runnable myCalledOnViewDispose;
 
-  public VcsCommittedViewAuxiliary(final List<AnAction> popupActions, final Runnable calledOnViewDispose,
-                                   final List<AnAction> toolbarActions) {
+  @NotNull private final List<AnAction> myToolbarActions;
+  @NotNull private final List<AnAction> myPopupActions;
+  @NotNull private final Runnable myCalledOnViewDispose;
+
+  public VcsCommittedViewAuxiliary(@NotNull List<AnAction> popupActions, @NotNull Runnable calledOnViewDispose,
+                                   @NotNull List<AnAction> toolbarActions) {
     myToolbarActions = toolbarActions;
     myPopupActions = popupActions;
     myCalledOnViewDispose = calledOnViewDispose;
   }
 
+  @NotNull
   public List<AnAction> getPopupActions() {
     return myPopupActions;
   }
 
+  @NotNull
   public Runnable getCalledOnViewDispose() {
     return myCalledOnViewDispose;
   }
 
+  @NotNull
   public List<AnAction> getToolbarActions() {
     return myToolbarActions;
   }

@@ -51,7 +51,6 @@ public class DfaRelationValue extends DfaValue {
       myStringToObject = new HashMap<String, ArrayList<DfaRelationValue>>();
     }
 
-    @Nullable
     public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && INSTANCEOF_KEYWORD != relation) return null;
       if (PLUS == relation) return null;

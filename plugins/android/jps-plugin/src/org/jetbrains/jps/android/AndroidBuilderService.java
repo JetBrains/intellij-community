@@ -1,7 +1,7 @@
 package org.jetbrains.jps.android;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidBuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
@@ -16,7 +16,7 @@ import java.util.List;
 public class AndroidBuilderService extends BuilderService {
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    return Arrays.asList(AndroidProjectBuildTarget.TargetType.INSTANCE);
+    return Arrays.asList(AndroidBuildTarget.TargetType.DEX, AndroidBuildTarget.TargetType.PACKAGING);
   }
 
   @NotNull

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 
 
 class ConvertibleGStringLiteralPredicate implements PsiElementPredicate {
@@ -36,8 +37,9 @@ class ConvertibleGStringLiteralPredicate implements PsiElementPredicate {
 
     if (text.charAt(0) != '"') return false;
     for (PsiElement child : element.getChildren()) {
-      if (child instanceof GrClosableBlock) {
-        if (!checkClosure((GrClosableBlock)child)) return false;
+      if (child instanceof GrStringInjection) {
+        GrClosableBlock block = ((GrStringInjection)child).getClosableBlock();
+        if (block != null && !checkClosure(block)) return false;
       }
     }
     return true;

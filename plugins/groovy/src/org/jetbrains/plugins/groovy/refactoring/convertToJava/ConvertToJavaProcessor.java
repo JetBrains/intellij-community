@@ -111,23 +111,26 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
         return;
       }
 
+      doPostProcessing(newFile);
+    }
+  }
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      // don't move classes to new files with corresponding class names and reformat
+  private void doPostProcessing(PsiElement newFile) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    // don't move classes to new files with corresponding class names and reformat
 
-      if (!(newFile instanceof PsiJavaFile)) {
-        LOG.info(".java is not assigned to java file type");
-        return;
-      }
+    if (!(newFile instanceof PsiJavaFile)) {
+      LOG.info(".java is not assigned to java file type");
+      return;
+    }
 
-      newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
-      newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
-      PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
-      for (PsiClass psiClass : inner) {
-        MoveClassToSeparateFileFix fix = new MoveClassToSeparateFileFix(psiClass);
-        if (fix.isAvailable(myProject, null, (PsiFile)newFile)) {
-          fix.invoke(myProject, null, (PsiFile)newFile);
-        }
+    newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
+    newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
+    PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
+    for (PsiClass psiClass : inner) {
+      MoveClassToSeparateFileFix fix = new MoveClassToSeparateFileFix(psiClass);
+      if (fix.isAvailable(myProject, null, (PsiFile)newFile)) {
+        fix.invoke(myProject, null, (PsiFile)newFile);
       }
     }
   }

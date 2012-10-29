@@ -521,9 +521,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
           setupJdkForModule(each);
           modules.add(getModule(each));
         }
-        if (useJps()) {
-          MavenProjectsManager.getInstance(myProject).generateBuildConfiguration();
-        }
       }
     });
 

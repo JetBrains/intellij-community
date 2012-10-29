@@ -455,14 +455,15 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     if (resolvedInfo != null) {
-      final Sdk sdk = findOrCreateAndroidPlatform(resolvedInfo.getSdkPath(), resolvedInfo.getApiLevel());
+      final String apiLevel = resolvedInfo.getApiLevel();
+      final Sdk sdk = findOrCreateAndroidPlatform(apiLevel, resolvedInfo.getSdkPath());
 
       if (sdk != null) {
         apklibModuleModel.setSdk(sdk);
         moveJdkOrderEntryDown(apklibModuleModel);
       }
       else {
-        reportError("Cannot find appropriate Android platform", apklibModuleName);
+        reportCannotFindAndroidPlatformError(apklibModuleName, apiLevel);
       }
 
       for (AndroidExternalApklibDependenciesManager.MavenDependencyInfo depArtifactInfo : resolvedInfo.getApklibDependencies()) {
@@ -533,6 +534,11 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     else {
       reportError("Cannot find sdk info for artifact " + artifact.getMavenId().getKey(), apklibModuleName);
     }
+  }
+
+  private static void reportCannotFindAndroidPlatformError(String moduleName, @Nullable String apiLevel) {
+    reportError("Cannot find appropriate Android platform" + (apiLevel != null ? " for API level " + apiLevel : ""),
+                moduleName);
   }
 
   private static void reportError(String message, String modName) {
@@ -674,13 +680,15 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final Sdk currentSdk = model.getSdk();
 
     if (currentSdk == null || !isAppropriateSdk(currentSdk, project)) {
-      final Sdk platformLib = findOrCreateAndroidPlatform(project);
+      final String apiLevel = getPlatformFromConfig(project);
+      final String predefinedSdkPath = getSdkPathFromConfig(project);
+      final Sdk platformLib = findOrCreateAndroidPlatform(apiLevel, predefinedSdkPath);
 
       if (platformLib != null) {
         model.setSdk(platformLib);
       }
       else {
-        reportError("Cannot find appropriate Android platform", model.getModule().getName());
+        reportCannotFindAndroidPlatformError(model.getModule().getName(), apiLevel);
       }
     }
     moveJdkOrderEntryDown(model);
@@ -728,13 +736,6 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     return AndroidSdkUtils.targetHasId(androidPlatform.getTarget(), platformId);
-  }
-
-  @Nullable
-  private Sdk findOrCreateAndroidPlatform(MavenProject project) {
-    final String apiLevel = getPlatformFromConfig(project);
-    final String predefinedSdkPath = getSdkPathFromConfig(project);
-    return findOrCreateAndroidPlatform(apiLevel, predefinedSdkPath);
   }
 
   @Nullable

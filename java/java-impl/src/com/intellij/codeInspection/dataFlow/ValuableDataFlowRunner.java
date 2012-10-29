@@ -18,8 +18,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiVariable;
 
 /**
  * @author Gregory.Shrago
@@ -28,12 +28,6 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
 
   protected DfaMemoryState createMemoryState() {
     return new MyDfaMemoryState(getFactory());
-  }
-
-  protected ControlFlowAnalyzer createControlFlowAnalyzer() {
-    final ControlFlowAnalyzer analyzer = super.createControlFlowAnalyzer();
-    analyzer.setHonorRuntimeExceptions(false);
-    return analyzer;
   }
 
   static class MyDfaMemoryState extends DfaMemoryStateImpl {
@@ -45,8 +39,9 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
       return new MyDfaMemoryState(getFactory());
     }
 
-    protected DfaVariableState createVariableState(final PsiVariable psiVariable) {
-      return new ValuableDfaVariableState(psiVariable);
+    @Override
+    protected DfaVariableState createVariableState(DfaVariableValue var) {
+      return new ValuableDfaVariableState(var);
     }
 
   }
@@ -55,7 +50,7 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     DfaValue myValue;
     PsiExpression myExpression;
 
-    private ValuableDfaVariableState(final PsiVariable psiVariable) {
+    private ValuableDfaVariableState(final DfaVariableValue psiVariable) {
       super(psiVariable);
     }
 

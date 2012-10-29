@@ -94,12 +94,11 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testReturn()              { doTest() }
   void testAssertInClosure()     { doTest() }
   void testAfterLabel()          { doTest() }
+  void testKeywordsInParentheses() { doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 
   @Override
-  protected boolean addReferenceVariants() {
-    false
-  }
+  protected boolean addReferenceVariants() { false }
 
 }

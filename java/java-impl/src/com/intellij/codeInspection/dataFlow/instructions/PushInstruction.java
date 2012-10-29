@@ -34,12 +34,13 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
   private final PsiExpression myPlace;
 
-  public PushInstruction(DfaValue value, PsiExpression place) {
+  public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
     myPlace = place;
   }

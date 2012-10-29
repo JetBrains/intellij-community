@@ -110,7 +110,17 @@ public class MavenRootModelAdapter {
   }
 
   public void addSourceFolder(String path, boolean testSource) {
-    if (!exists(path)) return;
+    addSourceFolder(path, testSource, false);
+  }
+
+  public void addSourceFolder(String path, boolean testSource, boolean ifNotEmpty) {
+    if (ifNotEmpty) {
+      String[] childs = new File(toPath(path).getPath()).list();
+      if (childs == null || childs.length == 0) return;
+    }
+    else {
+      if (!exists(path)) return;
+    }
 
     Url url = toUrl(path);
     ContentEntry e = getContentRootFor(url);

@@ -17,7 +17,9 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -31,9 +33,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -44,6 +48,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 public class MavenProjectsTree {
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".6";
@@ -832,6 +837,103 @@ public class MavenProjectsTree {
       readUnlock();
     }
   }
+
+  private static void updateCrc(CRC32 crc, int x) {
+    crc.update(x & 0xFF);
+    x >>>= 8;
+    crc.update(x & 0xFF);
+    x >>>= 8;
+    crc.update(x & 0xFF);
+    x >>>= 8;
+    crc.update(x);
+  }
+
+  private static void updateCrc(CRC32 crc, long l) {
+    updateCrc(crc, (int)l);
+    updateCrc(crc, (int)(l >>> 32));
+  }
+
+  private static void updateCrc(CRC32 crc, @Nullable String s) {
+    if (s == null) {
+      crc.update(111);
+    }
+    else {
+      updateCrc(crc, s.hashCode());
+      crc.update(s.length() & 0xFF);
+    }
+  }
+
+  @NotNull
+  public static Collection<String> getFilterExclusions(MavenProject mavenProject) {
+    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    if (config == null) {
+      return Collections.emptySet();
+    }
+    final List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    if (customNonFilteredExtensions.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return Collections.unmodifiableCollection(customNonFilteredExtensions);
+  }
+
+  public int getFilterConfigCrc(ProjectFileIndex fileIndex) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    readLock();
+    try {
+      CRC32 crc = new CRC32();
+      crc.update(myRootProjects.size() & 0xFF);
+      for (MavenProject mavenProject : myRootProjects) {
+        VirtualFile pomFile = mavenProject.getFile();
+        Module module = fileIndex.getModuleForFile(pomFile);
+        if (module == null) continue;
+
+        if (fileIndex.getContentRootForFile(pomFile) != pomFile.getParent()) continue;
+
+        updateCrc(crc, module.getName());
+
+        MavenId mavenId = mavenProject.getMavenId();
+        updateCrc(crc, mavenId.getGroupId());
+        updateCrc(crc, mavenId.getArtifactId());
+        updateCrc(crc, mavenId.getVersion());
+
+        MavenId parentId = mavenProject.getParentId();
+        if (parentId != null) {
+          updateCrc(crc, parentId.getGroupId());
+          updateCrc(crc, parentId.getArtifactId());
+          updateCrc(crc, parentId.getVersion());
+        }
+
+
+        updateCrc(crc, mavenProject.getDirectory());
+        updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
+        updateCrc(crc, mavenProject.getModelMap().hashCode());
+        updateCrc(crc, mavenProject.getResources().hashCode());
+        updateCrc(crc, mavenProject.getTestResources().hashCode());
+        updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
+        updateCrc(crc, mavenProject.getProperties().hashCode());
+
+        for (String each : mavenProject.getFilters()) {
+          File file = new File(each);
+          updateCrc(crc, file.lastModified());
+        }
+
+        updateCrc(crc, getEscapeString(mavenProject));
+      }
+
+      return (int)crc.getValue();
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
+  public static String getEscapeString(MavenProject mavenProject) {
+    return MavenJDOMUtil.findChildValueByPath(
+      mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"
+    );
+  }
+
 
   public List<VirtualFile> getRootProjectsFiles() {
     return MavenUtil.collectFiles(getRootProjects());

@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -57,6 +56,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev
@@ -522,29 +522,83 @@ public class CodeBlockGenerator extends Generator {
                                      StringBuilder builder,
                                      ExpressionContext expressionContext) {
     GrVariable[] variables = variableDeclaration.getVariables();
-    final GrExpression tupleInitializer = variableDeclaration.getTupleDeclaration().getInitializerGroovy();
+    final GrExpression tupleInitializer = variableDeclaration.getTupleInitializer();
     if (tupleInitializer instanceof GrListOrMap) {
       for (GrVariable variable : variables) {
         writeVariableSeparately(variable, builder, expressionContext);
         builder.append(";\n");
       }
     }
-    else {
-      final PsiType iteratorType =
-        JavaPsiFacade.getElementFactory(context.project).createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, variableDeclaration);
-      final String iteratorName = suggestVarName(iteratorType, variableDeclaration, expressionContext);
-      builder.append("final ").append(CommonClassNames.JAVA_UTIL_ITERATOR).append(' ').append(iteratorName).append(" = ");
+    else if (tupleInitializer != null) {
 
-      invokeMethodByName(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
-                         GrClosableBlock.EMPTY_ARRAY, new ExpressionGenerator(builder, expressionContext),
-                         variableDeclaration);
+      GroovyResolveResult iteratorMethodResult =
+        resolveMethod(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+                      variableDeclaration);
+
+      final PsiType iteratorType = inferIteratorType(iteratorMethodResult, tupleInitializer);
+
+      final String iteratorName = genIteratorVar(variableDeclaration, builder, expressionContext, tupleInitializer, iteratorType,
+                                                 iteratorMethodResult);
+
       final GrModifierList modifierList = variableDeclaration.getModifierList();
+
+      PsiType iterableTypeParameter = PsiUtil.extractIterableTypeParameter(iteratorType, false);
+
       for (final GrVariable v : variables) {
         ModifierListGenerator.writeModifiers(builder, modifierList);
         final PsiType type = context.typeProvider.getVarType(v);
         writeType(builder, type, variableDeclaration);
         builder.append(' ').append(v.getName());
-        builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
+
+        builder.append(" = ");
+        wrapInCastIfNeeded(builder, type, iterableTypeParameter, tupleInitializer, expressionContext, new StatementWriter() {
+          @Override
+          public void writeStatement(StringBuilder builder, ExpressionContext context) {
+            builder.append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null");
+          }
+        });
+        builder.append(";\n");
+      }
+    }
+    else {
+      writeSimpleVarDeclaration(variableDeclaration, builder, expressionContext);
+    }
+  }
+
+  private static String genIteratorVar(GrVariableDeclaration variableDeclaration,
+                                       StringBuilder builder,
+                                       ExpressionContext expressionContext,
+                                       @NotNull GrExpression tupleInitializer,
+                                       PsiType iteratorType,
+                                       GroovyResolveResult iteratorMethodResult) {
+
+    final String iteratorName = suggestVarName(iteratorType, variableDeclaration, expressionContext);
+    builder.append("final ");
+    writeType(builder, iteratorType, variableDeclaration);
+    builder.append(' ').append(iteratorName).append(" = ");
+
+    invokeMethodByResolveResult(tupleInitializer, iteratorMethodResult, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
+                                GrClosableBlock.EMPTY_ARRAY, new ExpressionGenerator(builder, expressionContext), variableDeclaration);
+    builder.append(";\n");
+    return iteratorName;
+  }
+
+  private PsiType inferIteratorType(GroovyResolveResult iteratorMethodResult, GrExpression tupleInitializer) {
+    PsiElement method = iteratorMethodResult.getElement();
+    if (method instanceof PsiMethod) {
+      return iteratorMethodResult.getSubstitutor().substitute(((PsiMethod)method).getReturnType());
+    }
+    else {
+      PsiType initializerType = tupleInitializer.getType();
+      PsiType iterableParam = PsiUtil.extractIterableTypeParameter(initializerType, false);
+
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(context.project);
+      PsiClass iterableClass = facade.findClass(CommonClassNames.JAVA_UTIL_ITERATOR, tupleInitializer.getResolveScope());
+      if (iterableClass != null && iterableParam != null) {
+        return facade.getElementFactory().createType(iterableClass, iterableParam);
+      }
+      else {
+        return facade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, tupleInitializer);
       }
     }
   }

@@ -47,7 +47,7 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev

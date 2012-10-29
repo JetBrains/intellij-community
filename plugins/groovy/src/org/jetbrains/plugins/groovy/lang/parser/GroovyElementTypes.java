@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
@@ -414,15 +414,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
       public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
-        return new GrVariableDeclarationBase.GrVariables(stub);
+        return new GrVariableDeclarationImpl(stub);
       }
     };
   IElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
-
-
-  GroovyElementType TUPLE_ERROR = new GroovyElementType("tuple with error");
 
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
