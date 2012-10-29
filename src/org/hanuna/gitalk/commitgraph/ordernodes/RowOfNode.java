@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitgraph.ordernodes;
 
-import org.hanuna.gitalk.commitgraph.Node;
-import org.hanuna.gitalk.commitgraph.PositionNode;
+import org.hanuna.gitalk.commitgraph.node.Node;
+import org.hanuna.gitalk.commitgraph.node.PositionNode;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.calculatemodel.calculator.Indexed;

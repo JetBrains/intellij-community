@@ -1,7 +1,7 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
-import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.node.Node;
 import org.hanuna.gitalk.commitgraph.builder.CommitRowListBuilder;
 import org.hanuna.gitalk.commitgraph.hidecommits.HideCommits;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;

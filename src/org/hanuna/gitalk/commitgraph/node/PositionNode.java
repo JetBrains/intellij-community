@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitgraph;
+package org.hanuna.gitalk.commitgraph.node;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 

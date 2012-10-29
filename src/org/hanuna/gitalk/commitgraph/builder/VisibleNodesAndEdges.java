@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.commitgraph.builder;
 
 import org.hanuna.gitalk.commitgraph.Edge;
-import org.hanuna.gitalk.commitgraph.Node;
-import org.hanuna.gitalk.commitgraph.PositionNode;
-import org.hanuna.gitalk.commitgraph.SpecialNode;
+import org.hanuna.gitalk.commitgraph.node.Node;
+import org.hanuna.gitalk.commitgraph.node.PositionNode;
+import org.hanuna.gitalk.commitgraph.node.SpecialNode;
 import org.hanuna.gitalk.commitgraph.hidecommits.HideCommits;
 import org.hanuna.gitalk.commitgraph.ordernodes.MutableRowOfNode;
 import org.hanuna.gitalk.commitgraph.ordernodes.RowOfNode;
@@ -17,7 +17,7 @@ import org.hanuna.gitalk.common.SimpleReadOnlyList;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hanuna.gitalk.commitgraph.SpecialNode.Type.*;
+import static org.hanuna.gitalk.commitgraph.node.SpecialNode.Type.*;
 
 /**
  * @author erokhins

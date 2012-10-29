@@ -2,7 +2,7 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitgraph.Edge;
-import org.hanuna.gitalk.commitgraph.SpecialNode;
+import org.hanuna.gitalk.commitgraph.node.SpecialNode;
 import org.hanuna.gitalk.common.ReadOnlyList;
 
 import javax.swing.*;

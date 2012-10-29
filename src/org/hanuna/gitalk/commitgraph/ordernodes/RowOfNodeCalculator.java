@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.commitgraph.ordernodes;
 
-import org.hanuna.gitalk.commitgraph.Node;
+import org.hanuna.gitalk.commitgraph.node.Node;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.common.ReadOnlyList;
