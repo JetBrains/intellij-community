@@ -35,9 +35,10 @@ import java.util.*;
 
 public class PackageUtil {
 
-  public static PsiPackage[] getSubpackages(PsiPackage aPackage,
+  @NotNull
+  public static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
                                             Module module,
-                                            final Project project,
+                                            @NotNull Project project,
                                             final boolean searchInLibraries) {
     final GlobalSearchScope scopeToShow = getScopeToShow(project, module, searchInLibraries);
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
@@ -50,7 +51,7 @@ public class PackageUtil {
           final String name = psiPackage.getName();
           // skip "default" subpackages as they should be attributed to other modules
           // this is the case when contents of one module is nested into contents of another
-          if (name != null && !"".equals(name)) {
+          if (name != null && !name.isEmpty()) {
             subpackages.add(psiPackage);
           }
         }
@@ -98,24 +99,20 @@ public class PackageUtil {
       if (forLibraries) {
         return new ModuleLibrariesSearchScope(module);
       }
-      else {
-        return GlobalSearchScope.moduleScope(module);
-      }
+      return GlobalSearchScope.moduleScope(module);
     }
     else {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
       }
-      else {
-        return GlobalSearchScope.projectScope(project);
-      }
+      return GlobalSearchScope.projectScope(project);
     }
   }
 
 
   public static boolean isPackageDefault(PsiPackage directoryPackage) {
     final String qName = directoryPackage.getQualifiedName();
-    return qName.length() == 0;
+    return qName.isEmpty();
   }
 
   public static Collection<AbstractTreeNode> createPackageViewChildrenOnFiles(final List<VirtualFile> sourceRoots,
@@ -158,19 +155,24 @@ public class PackageUtil {
     return children;
   }
 
-  public static String getNodeName(final ViewSettings settings, final PsiPackage aPackage, final PsiPackage parentPackageInTree, String defaultShortName,
-                            boolean isFQNameShown) {
+  public static String getNodeName(final ViewSettings settings,
+                                   PsiPackage aPackage,
+                                   final PsiPackage parentPackageInTree,
+                                   String defaultShortName,
+                                   boolean isFQNameShown) {
     final String name;
     if (isFQNameShown) {
-      name = settings.isAbbreviatePackageNames() ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage) : aPackage == null ? defaultShortName : aPackage.getQualifiedName();
+      name = settings.isAbbreviatePackageNames() ?
+             aPackage == null ? defaultShortName : TreeViewUtil.calcAbbreviatedPackageFQName(aPackage) :
+             aPackage == null ? defaultShortName : aPackage.getQualifiedName();
     }
-    else if (parentPackageInTree != null || (aPackage != null && aPackage.getParentPackage() != null)) {
+    else if (parentPackageInTree != null || aPackage != null && aPackage.getParentPackage() != null) {
       PsiPackage parentPackage = aPackage.getParentPackage();
       final StringBuilder buf = new StringBuilder();
       buf.append(aPackage.getName());
       while (parentPackage != null && (parentPackageInTree == null || !parentPackage.equals(parentPackageInTree))) {
         final String parentPackageName = parentPackage.getName();
-        if (parentPackageName == null || "".equals(parentPackageName)) {
+        if (parentPackageName == null || parentPackageName.isEmpty()) {
           break; // reached default package
         }
         buf.insert(0, ".");
@@ -193,20 +195,24 @@ public class PackageUtil {
       myModule = module;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       final OrderEntry orderEntry = ModuleRootManager.getInstance(myModule).getFileIndex().getOrderEntryForFile(file);
       return orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry;
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
       return Comparing.compare(fileIndex.getOrderEntryForFile(file2), fileIndex.getOrderEntryForFile(file1));
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return true;
     }
@@ -222,6 +228,7 @@ public class PackageUtil {
       return ModuleManager.getInstance(project).getModules();
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       final Module[] modules = getModules(getProject());
       for (Module module : modules) {
@@ -231,6 +238,7 @@ public class PackageUtil {
       return false;
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       final Module[] modules = getModules(getProject());
       for (Module module : modules) {
@@ -241,18 +249,18 @@ public class PackageUtil {
           if (orderEntry2 != null) {
             return orderEntry2.compareTo(orderEntry1);
           }
-          else {
-            return 0;
-          }
+          return 0;
         }
       }
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return true;
     }
