@@ -61,7 +61,7 @@ public abstract class ProjectBuilder {
    */
   @Deprecated
   public boolean isSuitableSdk(Sdk sdk) {
-    return true;
+    return isSuitableSdkType(sdk.getSdkType());
   }
 
   public boolean isSuitableSdkType(SdkTypeId sdkType) {

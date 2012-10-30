@@ -17,9 +17,11 @@ package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -102,13 +104,22 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder) {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, final ModuleBuilder moduleBuilder) {
+    Project project = settingsStep.getContext().getProject();
+    if (project != null) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
+        // use default project SDK
+//        context.setProjectJdk(sdk);
+        return null;
+      }
+    }
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
-          @Override
-          public boolean value(SdkTypeId sdk) {
-            return sdk instanceof JavaSdkType;
-          }
-        });
+      @Override
+      public boolean value(SdkTypeId sdkType) {
+        return moduleBuilder.isSuitableSdkType(sdkType);
+      }
+    });
   }
 
   private static Icon getJavaModuleIcon() {
