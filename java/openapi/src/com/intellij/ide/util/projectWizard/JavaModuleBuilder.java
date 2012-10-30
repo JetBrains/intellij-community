@@ -21,14 +21,14 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -83,7 +83,12 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, Conditions.<SdkType>alwaysTrue());
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
+      @Override
+      public boolean value(SdkTypeId sdkType) {
+        return isSuitableSdkType(sdkType);
+      }
+    });
   }
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
@@ -164,7 +169,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   }
 
   @Override
-  public boolean isSuitableSdk(final Sdk sdk) {
-    return sdk.getSdkType() == JavaSdk.getInstance();
+  public boolean isSuitableSdkType(SdkTypeId sdkType) {
+    return sdkType == JavaSdk.getInstance();
   }
 }

@@ -3,6 +3,8 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
@@ -77,7 +79,20 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
+  public static String getDirectoryBaseProjectName(File dir) {
+    File nameFile = new File(dir, ".name");
+    if (nameFile.isFile()) {
+      try {
+        return FileUtilRt.loadFile(nameFile).trim();
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return StringUtil.replace(dir.getParentFile().getName(), ":", "");
+  }
+
   private void loadFromDirectory(File dir) {
+    myProject.setName(getDirectoryBaseProjectName(dir));
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
@@ -127,7 +142,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromIpr(File iprFile) {
     final Element iprRoot = loadRootElement(iprFile);
 
-    File iwsFile = new File(iprFile.getParent(), FileUtil.getNameWithoutExtension(iprFile) + ".iws");
+    String projectName = FileUtil.getNameWithoutExtension(iprFile);
+    myProject.setName(projectName);
+    File iwsFile = new File(iprFile.getParent(), projectName + ".iws");
     Element iwsRoot = iwsFile.exists() ? loadRootElement(iwsFile) : null;
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);

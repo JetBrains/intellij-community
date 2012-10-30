@@ -288,7 +288,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
       return ProjectJdkTable.getInstance().findMostRecentSdk(new Condition<Sdk>() {
         public boolean value(Sdk sdk) {
-          return projectBuilder == null || projectBuilder.isSuitableSdk(sdk);
+          return projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType());
         }
       });
     }

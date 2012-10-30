@@ -18,7 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
@@ -35,7 +35,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final WizardContext myWizardContext;
   protected final ProjectSdksModel myModel;
 
-  public SdkSettingsStep(SettingsStep settingsStep, Condition<SdkType> sdkFilter) {
+  public SdkSettingsStep(SettingsStep settingsStep, Condition<SdkTypeId> sdkFilter) {
 
     myWizardContext = settingsStep.getContext();
     myModel = new ProjectSdksModel();

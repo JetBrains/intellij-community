@@ -16,14 +16,14 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.startup.StartupManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -52,8 +52,9 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     }
   }
 
-  public boolean isSuitableSdk(Sdk sdk) {
-    return sdk.getSdkType() == IdeaJdk.getInstance();
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == IdeaJdk.getInstance();
   }
 
   @Override
