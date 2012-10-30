@@ -696,7 +696,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myContentRootDocListenerEnabled = true;
   }
 
-  private void setModuleName(String moduleName) {
+  public void setModuleName(String moduleName) {
     myModuleNameDocListenerEnabled = false;
     myModuleName.setText(moduleName);
     myModuleNameDocListenerEnabled = true;
