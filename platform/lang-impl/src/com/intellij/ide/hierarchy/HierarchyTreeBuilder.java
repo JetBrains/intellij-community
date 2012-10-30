@@ -38,12 +38,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 public class HierarchyTreeBuilder extends AbstractTreeBuilder {
-  public HierarchyTreeBuilder(final Project project,
+  public HierarchyTreeBuilder(@NotNull Project project,
                               final JTree tree,
                               final DefaultTreeModel treeModel,
                               final HierarchyTreeStructure treeStructure,
-                              final Comparator<NodeDescriptor> comparator
-                              ) {
+                              final Comparator<NodeDescriptor> comparator) {
     super(tree, treeModel, treeStructure, comparator);
 
     initRootNode();
@@ -72,9 +71,8 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    if (getTreeStructure().getRootElement().equals(nodeDescriptor.getElement())) return true;
-
-    return !(nodeDescriptor instanceof HierarchyNodeDescriptor);
+    return getTreeStructure().getRootElement().equals(nodeDescriptor.getElement())
+           || !(nodeDescriptor instanceof HierarchyNodeDescriptor);
   }
 
   @Override
@@ -87,10 +85,29 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
     return false; // prevents problems with building descriptors for invalidated elements
   }
 
+
+  private MyStatusBarProgress myProgress;
   @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
-    return new StatusBarProgress();
+    return myProgress = new MyStatusBarProgress();
+  }
+
+  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
+    myProgress.setSecondaryIndicator(indicator);
+  }
+
+  private static class MyStatusBarProgress extends StatusBarProgress {
+    private ProgressIndicator mySecondaryIndicator;
+
+    public void setSecondaryIndicator(ProgressIndicator indicator) {
+      mySecondaryIndicator = indicator;
+    }
+
+    @Override
+    public boolean isCanceled() {
+      return super.isCanceled() || mySecondaryIndicator != null && mySecondaryIndicator.isCanceled();
+    }
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

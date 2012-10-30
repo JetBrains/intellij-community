@@ -4,6 +4,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -79,10 +80,15 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     }
   }
 
-  private static void setInsets(Component component) {
+  private void setInsets(Component component) {
     if (component instanceof JComponent) {
-      UIUtil.addInsets((JComponent)component, UIUtil.PANEL_SMALL_INSETS);
+      UIUtil.addInsets((JComponent)component, getInsetsForTabComponent());
     }
+  }
+
+  @NotNull
+  protected Insets getInsetsForTabComponent() {
+    return UIUtil.PANEL_SMALL_INSETS;
   }
 
   @Override
