@@ -41,14 +41,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class UsageContextDataflowPanel extends UsageContextPanelBase {
+public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   private JComponent myPanel;
 
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowPanel(((UsageViewImpl)usageView).getProject());
+      return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject());
     }
 
     @Override
@@ -66,11 +66,11 @@ public class UsageContextDataflowPanel extends UsageContextPanelBase {
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Dataflow";
+      return "Dataflow to Here";
     }
   }
 
-  public UsageContextDataflowPanel(@NotNull Project project) {
+  public UsageContextDataflowToPanel(@NotNull Project project) {
     super(project);
   }
 
@@ -95,25 +95,36 @@ public class UsageContextDataflowPanel extends UsageContextPanelBase {
         Disposer.dispose((Disposable)myPanel);
       }
 
-      JComponent panel = createPanel(element);
+      JComponent panel = createPanel(element, isDataflowToThis());
       myPanel = panel;
-      Disposer.register(UsageContextDataflowPanel.this, (Disposable)panel);
+      Disposer.register(this, (Disposable)panel);
       removeAll();
       add(panel, BorderLayout.CENTER);
       revalidate();
     }
   }
 
+  protected boolean isDataflowToThis() {
+    return true;
+  }
+
   @NotNull
-  private JComponent createPanel(@NotNull PsiElement element) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+  private static SliceAnalysisParams createParams(PsiElement element, boolean dataFlowToThis) {
     SliceAnalysisParams params = new SliceAnalysisParams();
-    params.dataFlowToThis = true;
-    params.scope = new AnalysisScope(myProject);
+    params.scope = new AnalysisScope(element.getProject());
+    params.dataFlowToThis = dataFlowToThis;
+    params.showInstanceDereferences = true;
+    return params;
+  }
+
+  @NotNull
+  protected JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+    SliceAnalysisParams params = createParams(element, dataFlowToThis);
 
     SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), SliceManager.createRootUsage(element, params));
 
-    return new SlicePanel(myProject, true, rootNode, false, toolWindow) {
+    return new SlicePanel(myProject, dataFlowToThis, rootNode, false, toolWindow) {
       @Override
       public boolean isToShowAutoScrollButton() {
         return false;
