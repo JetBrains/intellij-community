@@ -488,7 +488,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myNamePathComponent.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myNamePathComponent.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                      GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+                                                      GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override

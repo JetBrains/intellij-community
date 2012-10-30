@@ -56,7 +56,6 @@ public class ProjectSdksModel implements SdkModel {
 
   private Sdk myProjectSdk;
   private boolean myInitialized = false;
-  private Condition<SdkTypeId> myFilter;
 
   @Override
   public Listener getMulticaster() {
@@ -87,16 +86,12 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset(@Nullable Project project, @Nullable Condition<SdkTypeId> filter) {
+  public void reset(@Nullable Project project) {
     myProjectSdks.clear();
-    myFilter = filter;
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
-        SdkTypeId type = sdk.getSdkType();
-        if (acceptSdkType(type)) {
-          myProjectSdks.put(sdk, (Sdk)sdk.clone());
-        }
+        myProjectSdks.put(sdk, (Sdk)sdk.clone());
       }
       catch (CloneNotSupportedException e) {
         LOG.error(e);
@@ -107,14 +102,6 @@ public class ProjectSdksModel implements SdkModel {
     }
     myModified = false;
     myInitialized = true;
-  }
-
-  private boolean acceptSdkType(SdkTypeId type) {
-    return myFilter == null || myFilter.value(type);
-  }
-
-  public void reset(@Nullable Project project) {
-    reset(project, null);
   }
 
   public void disposeUIResources() {
@@ -150,7 +137,7 @@ public class ProjectSdksModel implements SdkModel {
           if (myProjectSdks.containsKey(tableItem)) {
             itemsInTable.add(tableItem);
           }
-          else if (acceptSdkType(tableItem.getSdkType())){
+          else {
             jdkTable.removeJdk(tableItem);
           }
         }
