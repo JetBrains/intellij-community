@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
@@ -64,7 +65,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
 
   public void copyFromRoot(final String filePath,
                            final int rootIndex, final String outputPath,
-                           CompileContext context, final SourceToOutputMapping srcOutMapping,
+                           CompileContext context, final BuildOutputConsumer outputConsumer,
                            final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
     processEntries(new EntryProcessor() {
@@ -89,7 +90,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
               from.close();
               to.close();
             }
-            srcOutMapping.appendOutput(filePath, fullOutputPath);
+            outputConsumer.registerOutputFile(fullOutputPath, Collections.singletonList(filePath));
           }
           outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(fullSourcePath, rootIndex)));
         }

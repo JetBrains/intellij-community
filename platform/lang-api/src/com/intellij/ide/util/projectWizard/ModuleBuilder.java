@@ -290,6 +290,10 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return getModuleType().getName();
   }
 
+  public String getGroupName() {
+    return getPresentableName().split(" ")[0];
+  }
+
   public void updateFrom(ModuleBuilder from) {
     myName = from.getName();
     myContentEntryPath = from.getContentEntryPath();

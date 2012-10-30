@@ -14,7 +14,7 @@ import javax.swing.*;
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-public class GenericWebRepositoryType extends BaseRepositoryType<GenericWebRepository> {
+public class GenericRepositoryType extends BaseRepositoryType<GenericRepository> {
   @NotNull
   @Override
   public String getName() {
@@ -29,20 +29,20 @@ public class GenericWebRepositoryType extends BaseRepositoryType<GenericWebRepos
   @NotNull
   @Override
   public TaskRepository createRepository() {
-    return new GenericWebRepository(this);
+    return new GenericRepository(this);
   }
 
   @Override
-  public Class<GenericWebRepository> getRepositoryClass() {
-    return GenericWebRepository.class;
+  public Class<GenericRepository> getRepositoryClass() {
+    return GenericRepository.class;
   }
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(final GenericWebRepository repository,
+  public TaskRepositoryEditor createEditor(final GenericRepository repository,
                                            final Project project,
-                                           final Consumer<GenericWebRepository> changeListener) {
-    return new GenericWebRepositoryEditor(project, repository, changeListener);
+                                           final Consumer<GenericRepository> changeListener) {
+    return new GenericRepositoryEditor<GenericRepository>(project, repository, changeListener);
   }
 
   @Override

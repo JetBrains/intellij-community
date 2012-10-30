@@ -1,12 +1,14 @@
 package org.jetbrains.jps.model.artifact.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
@@ -50,6 +52,14 @@ public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElem
       myOutputPath = outputPath;
       fireElementChanged();
     }
+  }
+
+  @Nullable
+  @Override
+  public String getOutputFilePath() {
+    if (StringUtil.isEmpty(myOutputPath)) return null;
+    JpsCompositePackagingElement root = getRootElement();
+    return root instanceof JpsArchivePackagingElement ? myOutputPath + "/" + ((JpsArchivePackagingElement)root).getArchiveName() : myOutputPath;
   }
 
   @NotNull

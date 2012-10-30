@@ -3,6 +3,7 @@ package com.intellij.tasks.generic;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 
 /**
  * User: evgeny.zakrevsky
@@ -10,8 +11,8 @@ import com.intellij.openapi.fileTypes.FileType;
  */
 public enum ResponseType {
   XML("application/xml", XmlFileType.INSTANCE),
-  HTML("text/html", HtmlFileType.INSTANCE);
-  //todo JSON("application/json")
+  HTML("text/html", HtmlFileType.INSTANCE),
+  JSON("application/json", PlainTextFileType.INSTANCE);
 
   private String myMimeType;
   private FileType myFileType;

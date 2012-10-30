@@ -49,7 +49,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected JTextField myURLText;
   protected JTextField myUserNameText;
   protected JBLabel myUsernameLabel;
-  protected JCheckBox myShareURL;
+  protected JCheckBox myShareUrlCheckBox;
   protected JPasswordField myPasswordText;
   protected JBLabel myPasswordLabel;
 
@@ -57,7 +57,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JPanel myPanel;
   private JBCheckBox myUseProxy;
   private JButton myProxySettingsButton;
-  protected JCheckBox myUseHTTPAuthentication;
+  protected JCheckBox myUseHttpAuthenticationCheckBox;
 
   private JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
@@ -95,11 +95,11 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myURLText.setText(repository.getUrl());
     myUserNameText.setText(repository.getUsername());
     myPasswordText.setText(repository.getPassword());
-    myShareURL.setSelected(repository.isShared());
+    myShareUrlCheckBox.setSelected(repository.isShared());
     myUseProxy.setSelected(repository.isUseProxy());
 
-    myUseHTTPAuthentication.setSelected(repository.isUseHttpAuthentication());
-    myUseHTTPAuthentication.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
+    myUseHttpAuthenticationCheckBox.setSelected(repository.isUseHttpAuthentication());
+    myUseHttpAuthenticationCheckBox.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
 
     myLoginAnonymouslyJBCheckBox.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.LOGIN_ANONYMOUSLY));
     myLoginAnonymouslyJBCheckBox.setSelected(repository.isLoginAnonymously());
@@ -123,9 +123,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myUserNameText);
     installListener(myPasswordText);
 
-    installListener(myShareURL);
+    installListener(myShareUrlCheckBox);
     installListener(myUseProxy);
-    installListener(myUseHTTPAuthentication);
+    installListener(myUseHttpAuthenticationCheckBox);
     installListener(myLoginAnonymouslyJBCheckBox);
 
     enableButtons();
@@ -144,7 +144,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUserNameText.setEnabled(enabled);
     myPasswordLabel.setEnabled(enabled);
     myPasswordText.setEnabled(enabled);
-    myUseHTTPAuthentication.setEnabled(enabled);
+    myUseHttpAuthenticationCheckBox.setEnabled(enabled);
   }
 
   @Nullable
@@ -233,9 +233,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUsername(myUserNameText.getText().trim());
     //noinspection deprecation
     myRepository.setPassword(myPasswordText.getText());
-    myRepository.setShared(myShareURL.isSelected());
+    myRepository.setShared(myShareUrlCheckBox.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
-    myRepository.setUseHttpAuthentication(myUseHTTPAuthentication.isSelected());
+    myRepository.setUseHttpAuthentication(myUseHttpAuthenticationCheckBox.isSelected());
     myRepository.setLoginAnonymously(myLoginAnonymouslyJBCheckBox.isSelected());
 
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());

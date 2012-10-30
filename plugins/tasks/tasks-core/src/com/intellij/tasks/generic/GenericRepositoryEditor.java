@@ -21,21 +21,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import static com.intellij.tasks.generic.GenericWebRepository.*;
+import static com.intellij.tasks.generic.GenericRepository.*;
 
 /**
  * User: Evgeny.Zakrevsky
  * Date: 10/4/12
  */
-public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebRepository> {
+public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRepositoryEditor<T> {
   public static final String POST = "POST";
   public static final String GET = "GET";
   private EditorTextField myTasksListURLText;
   private EditorTextField myTaskPatternText;
-  private JBLabel myLoginURLLabel;
-  private EditorTextField myLoginURLText;
-  private ComboBox myLoginMethodType;
-  private ComboBox myTasksListMethodType;
+  protected JBLabel myLoginURLLabel;
+  protected EditorTextField myLoginURLText;
+  protected ComboBox myLoginMethodTypeComboBox;
+  private ComboBox myTasksListMethodTypeComboBox;
   private JBLabel myLoginTooltip;
   private JBLabel myTaskListTooltip;
   private JBLabel myTaskPatternTooltip;
@@ -43,10 +43,13 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
   private JRadioButton myXmlRadioButton;
   private JRadioButton myHtmlRadioButton;
   private JButton myTest2Button;
+  private JRadioButton myJsonRadioButton;
+  private JButton myManageTemplateVariablesButton;
+  private JButton myResetToDefaultsButton;
 
-  public GenericWebRepositoryEditor(final Project project,
-                                    final GenericWebRepository repository,
-                                    final Consumer<GenericWebRepository> changeListener) {
+  public GenericRepositoryEditor(final Project project,
+                                 final T repository,
+                                 final Consumer<T> changeListener) {
     super(project, repository, changeListener);
 
     myTest2Button.addActionListener(new ActionListener() {
@@ -62,7 +65,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
       }
     });
 
-    myUseHTTPAuthentication.addActionListener(new ActionListener() {
+    myUseHttpAuthenticationCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         loginUrlEnablingChanged();
@@ -73,10 +76,17 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
       case XML:
         myXmlRadioButton.setSelected(true);
         myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(false);
         break;
       case HTML:
         myXmlRadioButton.setSelected(false);
         myHtmlRadioButton.setSelected(true);
+        myJsonRadioButton.setSelected(false);
+        break;
+      case JSON:
+        myXmlRadioButton.setSelected(false);
+        myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(true);
         break;
     }
 
@@ -88,12 +98,13 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
     };
     myXmlRadioButton.addActionListener(listener);
     myHtmlRadioButton.addActionListener(listener);
+    myJsonRadioButton.addActionListener(listener);
 
-    myLoginMethodType.setSelectedItem(myRepository.getLoginMethodType());
-    myTasksListMethodType.setSelectedItem(myRepository.getTasksListMethodType());
+    myLoginMethodTypeComboBox.setSelectedItem(myRepository.getLoginMethodType());
+    myTasksListMethodTypeComboBox.setSelectedItem(myRepository.getTasksListMethodType());
 
-    installListener(myLoginMethodType);
-    installListener(myTasksListMethodType);
+    installListener(myLoginMethodTypeComboBox);
+    installListener(myTasksListMethodTypeComboBox);
     installListener(myTasksListURLText.getDocument());
     installListener(myLoginURLText.getDocument());
     installListener(myTaskPatternText.getDocument());
@@ -103,7 +114,7 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
                                  .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
                                " for completion.";
     myLoginTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + USERNAME_PLACEHOLDER + ", " +
-                             PASSWORD_PLACEHOLDER + useCompletionText + "</html>");
+                           PASSWORD_PLACEHOLDER + useCompletionText + "</html>");
     myTaskListTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + MAX_COUNT_PLACEHOLDER + ", " +
                               QUERY_PLACEHOLDER + " (use for faster tasks search)" + useCompletionText + "</html>");
     myTaskPatternTooltip.setText(
@@ -111,6 +122,52 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
 
     myTabbedPane.addTab("Additional", myPanel);
 
+    myManageTemplateVariablesButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        final ManageTemplateVariablesDialog dialog = new ManageTemplateVariablesDialog(myManageTemplateVariablesButton);
+        dialog.setTemplateVariables(myRepository.getTemplateVariables());
+        if (dialog.showAndGet()) {
+          myRepository.setTemplateVariables(dialog.getTemplateVariables());
+        }
+      }
+    });
+
+    myResetToDefaultsButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        myRepository.resetToDefaults();
+        reset(myRepository.clone());
+      }
+    });
+
+    loginUrlEnablingChanged();
+  }
+
+  protected void reset(final GenericRepository clone) {
+    myLoginURLText.setText(clone.getLoginURL());
+    myTasksListURLText.setText(clone.getTasksListURL());
+    myTaskPatternText.setText(clone.getTaskPattern());
+    myLoginMethodTypeComboBox.setSelectedItem(clone.getLoginMethodType());
+    myTasksListMethodTypeComboBox.setSelectedItem(clone.getTasksListMethodType());
+    switch (clone.getResponseType()) {
+      case XML:
+        myXmlRadioButton.setSelected(true);
+        myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(false);
+        break;
+      case HTML:
+        myXmlRadioButton.setSelected(false);
+        myHtmlRadioButton.setSelected(true);
+        myJsonRadioButton.setSelected(false);
+        break;
+      case JSON:
+        myXmlRadioButton.setSelected(false);
+        myHtmlRadioButton.setSelected(false);
+        myJsonRadioButton.setSelected(true);
+        break;
+    }
+    responseTypeChanged();
     loginUrlEnablingChanged();
   }
 
@@ -119,11 +176,11 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
     myTaskPatternText.setFileType(myRepository.getResponseType().getFileType());
   }
 
-  private void loginUrlEnablingChanged() {
-    final boolean enabled = !myLoginAnonymouslyJBCheckBox.isSelected() && !myUseHTTPAuthentication.isSelected();
+  protected void loginUrlEnablingChanged() {
+    final boolean enabled = !myLoginAnonymouslyJBCheckBox.isSelected() && !myUseHttpAuthenticationCheckBox.isSelected();
     myLoginURLLabel.setEnabled(enabled);
     myLoginURLText.setEnabled(enabled);
-    myLoginMethodType.setEnabled(enabled);
+    myLoginMethodTypeComboBox.setEnabled(enabled);
     myLoginTooltip.setEnabled(enabled);
   }
 
@@ -132,9 +189,10 @@ public class GenericWebRepositoryEditor extends BaseRepositoryEditor<GenericWebR
     myRepository.setTasksListURL(myTasksListURLText.getText());
     myRepository.setTaskPattern(myTaskPatternText.getDocument().getText());
     myRepository.setLoginURL(myLoginURLText.getText());
-    myRepository.setLoginMethodType((String)myLoginMethodType.getModel().getSelectedItem());
-    myRepository.setTasksListMethodType((String)myTasksListMethodType.getModel().getSelectedItem());
-    myRepository.setResponseType(myXmlRadioButton.isSelected() ? ResponseType.XML : ResponseType.HTML);
+    myRepository.setLoginMethodType((String)myLoginMethodTypeComboBox.getModel().getSelectedItem());
+    myRepository.setTasksListMethodType((String)myTasksListMethodTypeComboBox.getModel().getSelectedItem());
+    myRepository.setResponseType(
+      myXmlRadioButton.isSelected() ? ResponseType.XML : myJsonRadioButton.isSelected() ? ResponseType.JSON : ResponseType.HTML);
     super.apply();
   }
 

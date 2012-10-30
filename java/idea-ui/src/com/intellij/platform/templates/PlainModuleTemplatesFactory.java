@@ -15,11 +15,13 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,43 +33,50 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-public class EmptyModuleTemplatesFactory implements ProjectTemplatesFactory {
-
-  public static final String GROUP_NAME = "Standard";
+public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
 
   @NotNull
   @Override
   public String[] getGroups() {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-    return ContainerUtil.map2Array(builders, String.class, new Function<ModuleBuilder, String>() {
+    List<String> groups = ContainerUtil.map(builders, new Function<ModuleBuilder, String>() {
       @Override
       public String fun(ModuleBuilder builder) {
-        return getGroupName(builder);
+        return builder.getGroupName();
       }
     });
+    groups.add(OTHER_GROUP);
+    return ArrayUtil.toStringArray(groups);
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-    for (ModuleBuilder builder : context.getAllBuilders()) {
-      if (getGroupName(builder).equals(group)) return new ProjectTemplate[] {new EmptyModuleTemplate(builder, context)};
+    ModuleBuilder[] builders = context.getAllBuilders();
+    for (ModuleBuilder builder : builders) {
+      if (builder.getGroupName().equals(group)) return new ProjectTemplate[] {new PlainModuleTemplate(builder)};
+    }
+    if (OTHER_GROUP.equals(group)) {
+      return new ProjectTemplate[] { new PlainModuleTemplate(new EmptyModuleBuilder() {
+        @Override
+        public String getPresentableName() {
+          return "Empty Project";
+        }
+
+        @Override
+        public String getDescription() {
+          return "Empty project without modules. Use it to create free-style module structure.";
+        }
+      })};
     }
     return new ProjectTemplate[0];
   }
 
-  private static String getGroupName(ModuleBuilder builder) {
-    String name = builder.getPresentableName();
-    return name.split(" ")[0];
-  }
-
-  private static class EmptyModuleTemplate implements ProjectTemplate {
+  private static class PlainModuleTemplate implements ProjectTemplate {
     private final ModuleBuilder myBuilder;
-    private final WizardContext myContext;
 
-    public EmptyModuleTemplate(ModuleBuilder builder, WizardContext context) {
+    public PlainModuleTemplate(ModuleBuilder builder) {
       myBuilder = builder;
-      myContext = context;
     }
 
     @NotNull

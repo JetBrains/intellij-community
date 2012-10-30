@@ -20,6 +20,9 @@ public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<Jp
 
   void setOutputPath(@Nullable String outputPath);
 
+  @Nullable
+  String getOutputFilePath();
+
   @NotNull
   JpsCompositePackagingElement getRootElement();
 

@@ -43,7 +43,6 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
-import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
@@ -126,15 +125,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
     bindModuleSettings();
 
-    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
+    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
-      for (String string : factory.getGroups()) {
-        groups.putValues(string, Arrays.asList(factory.createTemplates(string, context)));
+      for (String group : factory.getGroups()) {
+        groups.putValues(group, Arrays.asList(factory.createTemplates(group, context)));
       }
     }
     final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
@@ -145,7 +144,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
           !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
 
         if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
-          sorted.putValues("Other", templates);
+          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
           continue;
         }
       }
@@ -177,12 +176,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         if (o1 instanceof FilteringTreeStructure.FilteringNode) {
           if (((FilteringTreeStructure.FilteringNode)o1).getDelegate() instanceof GroupNode) {
             String name = ((GroupNode)((FilteringTreeStructure.FilteringNode)o1).getDelegate()).getName();
-            if (name.equals(EmptyModuleTemplatesFactory.GROUP_NAME)) {
-//              return 1;
-            }
-            else if (name.equals(ArchivedTemplatesFactory.CUSTOM_GROUP)) {
-//              return -1;
-            }
           }
         }
         return AlphaComparator.INSTANCE.compare(o1, o2);
