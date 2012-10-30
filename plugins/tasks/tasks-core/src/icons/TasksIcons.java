@@ -13,6 +13,7 @@ public class TasksIcons {
     return IconLoader.getIcon(path, TasksIcons.class);
   }
 
+  public static final Icon Assembla = load("/icons/assembla.png"); // 16x16
   public static final Icon Bug = load("/icons/bug.png"); // 16x16
   public static final Icon Exception = load("/icons/exception.png"); // 16x16
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
@@ -20,7 +21,6 @@ public class TasksIcons {
   public static final Icon Github = load("/icons/github.png"); // 16x16
   public static final Icon Lighthouse = load("/icons/lighthouse.gif"); // 16x16
   public static final Icon Mantis = load("/icons/mantis.png"); // 16x16
-  public static final Icon Assembla = load("/icons/assembla.png"); // 16x16
   public static final Icon Other = load("/icons/other.png"); // 16x16
   
   public static class Pivotal {

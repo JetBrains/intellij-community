@@ -583,7 +583,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
       super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
-            AllIcons.Nodes.TestSourceFolder);
+            AllIcons.Actions.GroupByTestProduction);
     }
 
     public boolean isSelected(AnActionEvent event) {
