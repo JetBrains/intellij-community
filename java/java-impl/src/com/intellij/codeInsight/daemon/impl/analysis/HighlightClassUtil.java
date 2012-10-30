@@ -921,7 +921,9 @@ public class HighlightClassUtil {
       if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
       if (classReference == null) return;
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, (PsiClass)classReference.resolve());
+      final PsiClass psiClass = (PsiClass)classReference.resolve();
+      if (psiClass == null) return;
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, psiClass);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
