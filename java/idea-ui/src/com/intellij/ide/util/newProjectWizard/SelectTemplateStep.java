@@ -324,7 +324,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
     mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(template != null && myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
