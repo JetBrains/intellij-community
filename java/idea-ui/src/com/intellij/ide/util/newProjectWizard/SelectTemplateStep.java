@@ -125,7 +125,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
     bindModuleSettings();
 
-    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
+    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
@@ -144,7 +144,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
           !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
 
         if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
-          sorted.putValues("Other", templates);
+          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
           continue;
         }
       }

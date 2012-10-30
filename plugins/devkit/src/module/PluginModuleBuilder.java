@@ -55,4 +55,9 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
   public boolean isSuitableSdk(Sdk sdk) {
     return sdk.getSdkType() == IdeaJdk.getInstance();
   }
+
+  @Override
+  public String getGroupName() {
+    return "Java";
+  }
 }
