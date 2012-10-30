@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -29,6 +30,7 @@ import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -963,5 +965,23 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isIgnoredName(@Nullable final String name) {
     return "ignore".equals(name) || "ignored".equals(name);
+  }
+
+  @Nullable
+  public static PsiMethod getResourceCloserMethod(@NotNull final PsiResourceVariable resource) {
+    final PsiType resourceType = resource.getType();
+    if (!(resourceType instanceof PsiClassType)) return null;
+    final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
+    if (resourceClass == null) return null;
+
+    final Project project = resource.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
+    if (autoCloseable == null) return null;
+
+    if (!InheritanceUtil.isInheritorOrSelf(resourceClass, autoCloseable, true)) return null;
+
+    final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
+    return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
   }
 }
