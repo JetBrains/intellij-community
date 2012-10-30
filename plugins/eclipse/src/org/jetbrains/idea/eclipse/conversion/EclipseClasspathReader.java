@@ -144,7 +144,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
   @Override
-  protected void addJUnitDefaultLib(ModifiableRootModel rootModel, String junitName) {
+  protected void addJUnitDefaultLib(ModifiableRootModel rootModel, String junitName, ExpandMacroToPathMap macroMap) {
     final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(junitName);
     final Library.ModifiableModel modifiableModel = library.getModifiableModel();
     modifiableModel.addRoot(getJunitClsUrl(junitName.contains("4")), OrderRootType.CLASSES);

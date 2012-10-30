@@ -59,7 +59,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   protected abstract void addSourceFolder(T rootModel, String srcUrl, boolean testFolder);
   protected abstract void addSourceFolderToCurrentContentRoot(T rootModel, String srcUrl, boolean testFolder);
 
-  protected abstract void addJUnitDefaultLib(T rootModel, String junitName);
+  protected abstract void addJUnitDefaultLib(T rootModel, String junitName, ExpandMacroToPathMap macroMap);
   protected abstract void addModuleLibrary(T rootModel,
                                            Element element,
                                            boolean exported,
@@ -195,7 +195,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       }
       else if (path.startsWith(EclipseXml.JUNIT_CONTAINER)) {
         final String junitName = IdeaXml.JUNIT + getPresentableName(path);
-        addJUnitDefaultLib(rootModel, junitName);
+        addJUnitDefaultLib(rootModel, junitName, macroMap);
       }
       else if (path.equals(EclipseXml.GROOVY_DSL_CONTAINER)) {
         eclipseModuleManager.setGroovyDslSupport();
