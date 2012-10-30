@@ -54,7 +54,7 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
   @Override
   public ProjectTemplate[] createTemplates(final String group, WizardContext context) {
     if (OTHER_GROUP.equals(group)) {
-      return new ProjectTemplate[] { new PlainModuleTemplate(new EmptyModuleBuilder() {
+      return context.isCreatingNewProject() ? new ProjectTemplate[] { new PlainModuleTemplate(new EmptyModuleBuilder() {
         @Override
         public String getPresentableName() {
           return "Empty Project";
@@ -64,7 +64,7 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
         public String getDescription() {
           return "Empty project without modules. Use it to create free-style module structure.";
         }
-      })};
+      })} : ProjectTemplate.EMPTY_ARRAY;
     }
     ModuleBuilder[] builders = context.getAllBuilders();
     return ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {
