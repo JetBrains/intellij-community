@@ -688,7 +688,6 @@ public class MavenProjectTest extends MavenImportingTestCase {
     Map<String,String> map = p.getModelMap();
 
     assertEquals("test", map.get("groupId"));
-    assertTrue(map.get("build"), map.get("build").startsWith("org.apache.maven.model.Build@"));
     assertEquals("foo", map.get("build.finalName"));
     assertEquals(new File(p.getDirectory(), "target").toString(), map.get("build.directory"));
     assertEquals(null, map.get("build.plugins"));

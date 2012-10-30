@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: Jan 25, 2005
@@ -52,7 +54,7 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
   @NotNull
-  public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
+  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);
 
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
@@ -61,5 +63,16 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
 
   public abstract void refreshUsagesList(RunProfile profile);
+
+  @NotNull
+  public abstract List<String> getFolders(@NotNull ConfigurationType type);
+
+  public abstract boolean createFolder(@NotNull ConfigurationType type, @NotNull String name);
+
+  public abstract boolean renameFolder(@NotNull ConfigurationType type,
+                                       @NotNull String oldName,
+                                       @NotNull String newName);
+
+  public abstract boolean removeFolder(@NotNull ConfigurationType type, @NotNull String name);
 
 }

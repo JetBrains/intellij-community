@@ -57,7 +57,7 @@ public class MockRunManager extends RunManagerEx {
 
   @NotNull
   @Override
-  public RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type) {
+  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type) {
     throw new UnsupportedOperationException();
   }
 
@@ -168,5 +168,26 @@ public class MockRunManager extends RunManagerEx {
 
   @Override
   public void refreshUsagesList(RunProfile profile) {
+  }
+
+  @NotNull
+  @Override
+  public List<String> getFolders(@NotNull ConfigurationType type) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean createFolder(@NotNull ConfigurationType type, @NotNull String name) {
+    return false;
+  }
+
+  @Override
+  public boolean renameFolder(@NotNull ConfigurationType type, @NotNull String oldName, @NotNull String newName) {
+    return false;
+  }
+
+  @Override
+  public boolean removeFolder(@NotNull ConfigurationType type, @NotNull String name) {
+    return false;
   }
 }

@@ -17,6 +17,7 @@ package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,8 +52,11 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
 
   @Override
   protected String prepareValidUrlInsideJar(String url) {
-    if (url.contains("!")) {
-      return url.substring(0, url.indexOf("!"));//todo
+    //strip path inside jar
+    final String jarSeparator = "!/";
+    final int localPathEndIdx = url.indexOf(jarSeparator);
+    if (localPathEndIdx > -1) {
+      return url.substring(0, localPathEndIdx + jarSeparator.length());
     }
     return url;
   }
@@ -103,8 +108,35 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
   }
 
   @Override
-  protected void addJUnitDefaultLib(JpsModule rootModel, String junitName) {
-    //To change body of implemented methods use File | Settings | File Templates.
+  protected void addJUnitDefaultLib(JpsModule rootModel, String junitName, ExpandMacroToPathMap macroMap) {
+    final String ideaHome = macroMap.substitute("$APPLICATION_HOME_DIR$", SystemInfo.isFileSystemCaseSensitive);
+    final FilenameFilter junitFilter = new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.startsWith("junit");
+      }
+    };
+    File[] junitJars = new File(ideaHome, "lib").listFiles(junitFilter);
+    if (junitJars == null || junitJars.length == 0) {
+      junitJars = new File(new File(ideaHome, "community"), "lib").listFiles(junitFilter);
+    }
+    if (junitJars != null && junitJars.length > 0) {
+      final boolean isJUnit4 = junitName.contains("4");
+      File junitJar = null;
+      for (File jar : junitJars) {
+        final boolean isCurrentJarV4 = jar.getName().contains("4");
+        if (isCurrentJarV4 && isJUnit4 || !isCurrentJarV4 && !isJUnit4) {
+          junitJar = jar;
+          break;
+        }
+      }
+      if (junitJar != null) {
+        final JpsLibrary jpsLibrary = rootModel.addModuleLibrary(junitName, JpsJavaLibraryType.INSTANCE);
+        jpsLibrary.addRoot(pathToUrl(junitJar.getPath()), JpsOrderRootType.COMPILED);
+        final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
+        dependenciesList.addLibraryDependency(jpsLibrary);
+      }
+    }
   }
 
   @Override
@@ -118,6 +150,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     final JpsLibrary jpsLibrary = rootModel.addModuleLibrary(libName, JpsJavaLibraryType.INSTANCE);
     final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
     final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(jpsLibrary);
+    url = StringUtil.trimStart(url, "file://");
     final String linked = expandLinkedResourcesPath(url, macroMap);
     if (linked != null) {
       url = pathToUrl(linked);
