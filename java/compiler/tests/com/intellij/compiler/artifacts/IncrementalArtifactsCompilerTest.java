@@ -21,6 +21,17 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       return true;
     }
 
+    public void testAddFile() {
+      VirtualFile file = createFile("dir/file.txt");
+      Artifact a = addArtifact(root().dirCopy(file.getParent()));
+      make(a);
+      assertOutput(a, fs().file("file.txt"));
+
+      createFile("dir/file2.txt");
+      make(a);
+      assertOutput(a, fs().file("file.txt").file("file2.txt"));
+    }
+
     public void testChangeFile() {
       VirtualFile file = createFile("file.txt", "a");
       Artifact a = addArtifact(root().dir("dir").file(file));
@@ -58,6 +69,42 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       delete(getOutputDir(a));
       make(a);
       assertOutput(a, fs().file("file.txt", "123"));
+    }
+
+    public void testChangeFileInIncludedArtifact() {
+      VirtualFile file = createFile("file.txt", "a");
+      Artifact included = addArtifact("i", root().file(file));
+      Artifact a = addArtifact(root().artifact(included));
+      make(a);
+      assertOutput(a, fs().file("file.txt", "a"));
+
+      changeFile(file, "b");
+      make(a);
+      assertOutput(a, fs().file("file.txt", "b"));
+    }
+
+    public void testChangeFileInArtifactIncludedInArchive() {
+      VirtualFile file = createFile("file.txt", "a");
+      Artifact included = addArtifact("i", root().file(file));
+      Artifact a = addArtifact(archive("a.jar").artifact(included));
+      make(a);
+      assertOutput(a, fs().archive("a.jar").file("file.txt", "a"));
+
+      changeFile(file, "b");
+      make(a);
+      assertOutput(a, fs().archive("a.jar").file("file.txt", "b"));
+    }
+
+    public void testChangeFileInIncludedArchive() {
+      VirtualFile file = createFile("file.txt", "a");
+      Artifact included = addArtifact("i", archive("f.jar").file(file));
+      Artifact a = addArtifact(root().artifact(included));
+      make(a);
+      assertOutput(a, fs().archive("f.jar").file("file.txt", "a"));
+
+      changeFile(file, "b");
+      make(a);
+      assertOutput(a, fs().archive("f.jar").file("file.txt", "b"));
     }
   }
 
