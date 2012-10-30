@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
 </module>
 
