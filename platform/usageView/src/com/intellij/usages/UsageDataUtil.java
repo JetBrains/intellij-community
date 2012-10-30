@@ -15,7 +15,7 @@
  */
 package com.intellij.usages;
 
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
@@ -68,6 +68,6 @@ public class UsageDataUtil {
       }
     }
 
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 }
