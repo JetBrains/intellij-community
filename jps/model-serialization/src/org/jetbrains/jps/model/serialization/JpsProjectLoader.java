@@ -197,12 +197,16 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
     List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
+    final List<String> paths = new ArrayList<String>(); 
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
+      paths.add(path);
+    }
+    for (final String path : paths) {
       futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
         @Override
         public JpsModule call() throws Exception {
-          return loadModule(path, projectSdkType);
+          return loadModule(path, paths, projectSdkType);
         }
       }));
     }
@@ -220,7 +224,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @Nullable
-  private JpsModule loadModule(@NotNull String path, @Nullable JpsSdkType<?> projectSdkType) {
+  private JpsModule loadModule(@NotNull String path, List<String> paths, @Nullable JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
     if (!file.exists()) {
@@ -251,7 +255,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths);
         }
       }
     }

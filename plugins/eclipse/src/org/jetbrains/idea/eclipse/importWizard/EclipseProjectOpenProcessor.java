@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.util.List;

@@ -29,6 +29,7 @@ import com.intellij.projectImport.SelectImportedProjectsStep;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import javax.swing.*;

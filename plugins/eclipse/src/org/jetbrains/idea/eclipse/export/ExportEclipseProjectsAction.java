@@ -37,6 +37,7 @@ import com.intellij.util.Function;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
+import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;

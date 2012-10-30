@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.util.LinkedHashMap;
@@ -40,7 +41,7 @@ import java.util.Set;
     )
   }
 )
-public class EclipseModuleManager implements PersistentStateComponent<Element>{
+public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element> {
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String VARELEMENT = "varelement";
   @NonNls private static final String VAR_ATTRIBUTE = "var";
@@ -65,28 +66,32 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   private String myInvalidJdk;
   private boolean myGroovyDslSupport = false;
 
-  public EclipseModuleManager(Module module) {
+  public EclipseModuleManagerImpl(Module module) {
     myModule = module;
   }
 
+  @Override
   public void setInvalidJdk(String invalidJdk) {
     myInvalidJdk = invalidJdk;
   }
 
+  @Override
   public String getInvalidJdk() {
     return myInvalidJdk;
   }
 
+  @Override
   public void setGroovyDslSupport() {
     myGroovyDslSupport = true;
   }
 
+  @Override
   public boolean isGroovyDslSupport() {
     return myGroovyDslSupport;
   }
 
-  public static EclipseModuleManager getInstance(Module module) {
-    return ModuleServiceManager.getService(module, EclipseModuleManager.class);
+  public static EclipseModuleManagerImpl getInstance(Module module) {
+    return ModuleServiceManager.getService(module, EclipseModuleManagerImpl.class);
   }
 
   public CachedXmlDocumentSet getDocumentSet() {
@@ -97,63 +102,78 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
     myDocumentSet = documentSet;
   }
 
+  @Override
   public void registerEclipseVariablePath(String path, String var) {
     myEclipseVariablePaths.put(path, var);
   }
 
+  @Override
   public void registerEclipseSrcVariablePath(String path, String var) {
     myEclipseVariablePaths.put(SRC_PREFIX + path, var);
   }
 
+  @Override
   public void registerEclipseLinkedSrcVarPath(String path, String var) {
     myEclipseVariablePaths.put(SRC_LINK_PREFIX + path, var);
   }
 
+  @Override
   public String getEclipseLinkedSrcVariablePath(String path) {
     return myEclipseVariablePaths.get(SRC_LINK_PREFIX + path);
   }
 
+  @Override
   public void registerEclipseLinkedVarPath(String path, String var) {
     myEclipseVariablePaths.put(LINK_PREFIX + path, var);
   }
 
+   @Override
    public String getEclipseLinkedVarPath(String path) {
     return myEclipseVariablePaths.get(LINK_PREFIX + path);
   }
 
+  @Override
   public String getEclipseVariablePath(String path) {
     return myEclipseVariablePaths.get(path);
   }
 
+  @Override
   public String getEclipseSrcVariablePath(String path) {
     return myEclipseVariablePaths.get(SRC_PREFIX + path);
   }
 
+  @Override
   public void registerUnknownCons(String con) {
     myUnknownCons.add(con);
   }
 
+  @Override
   public Set<String> getUnknownCons() {
     return myUnknownCons;
   }
 
+  @Override
   public boolean isForceConfigureJDK() {
     return myForceConfigureJDK;
   }
 
+  @Override
   public void setForceConfigureJDK() {
     myForceConfigureJDK = true;
     myExpectedModuleSourcePlace++;
   }
 
+  @Override
   public void registerEclipseLibUrl(String url) {
     myEclipseUrls.add(url);
   }
 
+  @Override
   public boolean isEclipseLibUrl(String url) {
     return myEclipseUrls.contains(url);
   }
 
+  @Override
   public Element getState() {
     if (!ClasspathStorage.getStorageType(myModule).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       if (!myEclipseUrls.isEmpty() || !myEclipseVariablePaths.isEmpty() || myForceConfigureJDK || !myUnknownCons.isEmpty()) {
@@ -207,6 +227,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
     return null;
   }
 
+  @Override
   public void loadState(Element state) {
     clear();
 
@@ -242,18 +263,22 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
     mySrcPlace.clear();
   }
 
+  @Override
   public void setExpectedModuleSourcePlace(int expectedModuleSourcePlace) {
     myExpectedModuleSourcePlace = expectedModuleSourcePlace;
   }
 
+  @Override
   public boolean isExpectedModuleSourcePlace(int expectedPlace) {
     return myExpectedModuleSourcePlace == expectedPlace;
   }
 
+  @Override
   public void registerSrcPlace(String srcUrl, int placeIdx) {
     mySrcPlace.put(srcUrl, placeIdx);
   }
 
+  @Override
   public Integer getSrcPlace(String srcUtl) {
     return mySrcPlace.get(srcUtl);
   }
