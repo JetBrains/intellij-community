@@ -19,6 +19,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
+import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
+import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -51,6 +53,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
+    myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
   }
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
@@ -230,6 +233,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
+    module.getContainer().setChild(JpsModuleSerializationDataExtensionImpl.ROLE,
+                                    new JpsModuleSerializationDataExtensionImpl(file.getParentFile()));
 
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       extension.loadModuleOptions(module, moduleRoot);

@@ -28,6 +28,8 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
+    String baseDirPath = getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH);
+    assertTrue(FileUtil.filesEqual(new File(baseDirPath), JpsModelSerializationDataService.getBaseDirectory(myProject)));
     assertEquals("sampleProjectName", myProject.getName());
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
@@ -37,6 +39,8 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("util", util.getName());
     JpsModule xxx = modules.get(2);
     assertEquals("xxx", xxx.getName());
+
+    assertTrue(FileUtil.filesEqual(new File(baseDirPath, "util"), JpsModelSerializationDataService.getBaseDirectory(util)));
 
     List<JpsLibrary> libraries = myProject.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
@@ -61,9 +65,12 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
   }
 
-  public void testFileBasedProjectName() {
-    loadProject("/jps/model-serialization/testData/run-configurations/run-configurations.ipr");
+  public void testFileBasedProjectNameAndBaseDir() {
+    String relativePath = "/jps/model-serialization/testData/run-configurations/run-configurations.ipr";
+    String absolutePath = getTestDataFileAbsolutePath(relativePath);
+    loadProject(relativePath);
     assertEquals("run-configurations", myProject.getName());
+    assertTrue(FileUtil.filesEqual(new File(absolutePath).getParentFile(), JpsModelSerializationDataService.getBaseDirectory(myProject)));
   }
 
   public void testDirectoryBasedProjectName() {
