@@ -746,9 +746,8 @@ public final class TreeUtil {
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
     final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
     final int idx = parent.getIndex(treeNode);
-    parent.remove(treeNode);
-    parent.insert(treeNode, idx + direction);
-    ((DefaultTreeModel)tree.getModel()).reload(parent);
+    ((DefaultTreeModel)tree.getModel()).removeNodeFromParent(treeNode);
+    ((DefaultTreeModel)tree.getModel()).insertNodeInto(treeNode, parent, idx + direction);
     selectNode(tree, treeNode);
   }
 

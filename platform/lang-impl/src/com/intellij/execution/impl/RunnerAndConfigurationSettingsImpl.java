@@ -48,6 +48,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @NonNls
   private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
   @NonNls
+  private static final String FOLDER_NAME = "folderName";
+  @NonNls
   private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
   @NonNls
   public static final String NAME_ATTR = "name";
@@ -78,6 +80,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private boolean myTemporary;
   private boolean myEditBeforeRun;
   private boolean mySingleton;
+  private String myFolderName;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -147,6 +150,17 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return mySingleton;
   }
 
+  @Override
+  public void setFolderName(@Nullable String folderName) {
+    myFolderName = folderName;
+  }
+
+  @Nullable
+  @Override
+  public String getFolderName() {
+    return myFolderName;
+  }
+
   @Nullable
   private ConfigurationFactory getFactory(final Element element) {
     final String typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE);
@@ -159,6 +173,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
     mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
+    myFolderName = element.getAttributeValue(FOLDER_NAME);
 
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
@@ -218,6 +233,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       }
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
+      if (myFolderName != null) {
+        element.setAttribute(FOLDER_NAME, myFolderName);
+      }
 
       if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
       if (isSingleton()) element.setAttribute(SINGLETON, String.valueOf(true));
