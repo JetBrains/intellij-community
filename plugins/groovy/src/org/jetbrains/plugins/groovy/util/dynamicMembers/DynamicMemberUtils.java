@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -123,6 +124,8 @@ public class DynamicMemberUtils {
 
       myClass = (GrTypeDefinition)elementFactory.createGroovyFile(classSource, false, null).getClasses()[0];
 
+      Map<String, String> classCommentMap = parseComment(myClass.getDocComment());
+
       // Collect fields.
       myFieldMap = new HashMap<String, PsiField[]>();
       myStaticFieldMap = new HashMap<String, PsiField[]>();
@@ -134,7 +137,15 @@ public class DynamicMemberUtils {
 
       int i = 0;
       for (PsiField field : fields) {
-        PsiField dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
+        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
+
+        Map<String, String> commentMap = parseComment(((GrField)field).getDocComment());
+        String originalInfo = commentMap.get("originalInfo");
+        if (originalInfo == null) {
+          originalInfo = classCommentMap.get("originalInfo");
+        }
+        dynamicField.setOriginalInfo(originalInfo);
+
         PsiField[] dynamicFieldArray = new PsiField[]{dynamicField};
 
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -160,21 +171,18 @@ public class DynamicMemberUtils {
       MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<String, PsiMethod>();
 
       for (GrMethod method : myClass.getGroovyMethods()) {
-        PsiMethod dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
+        GrDynamicMethodWithCache dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
 
-        GrDocComment comment = method.getDocComment();
-        if (comment != null) {
-          Map<String, String> commentMap = new HashMap<String, String>();
-          for (GrDocTag tag : comment.getTags()) {
-            String tagText = tag.getText().trim();
-            String valueText = tag.getValueElement().getText().trim();
-            assert tagText.endsWith(valueText);
-            
-            commentMap.put(tagText.substring(0, tagText.length() - valueText.length()).trim(), valueText);
-          }
-          
+        Map<String, String> commentMap = parseComment(method.getDocComment());
+        if (!commentMap.isEmpty()) {
           dynamicMethod.putUserData(COMMENT_KEY, commentMap);
         }
+
+        String originalInfo = commentMap.get("originalInfo");
+        if (originalInfo == null) {
+          originalInfo = classCommentMap.get("originalInfo");
+        }
+        dynamicMethod.setOriginalInfo(originalInfo);
 
         multiMap.putValue(null, dynamicMethod);
         multiMap.putValue(method.getName(), dynamicMethod);
@@ -192,6 +200,27 @@ public class DynamicMemberUtils {
       myMethodMap = convertMap(multiMap);
       myStaticMethodMap = convertMap(staticMultiMap);
       myNonStaticMethodMap = convertMap(nonStaticMultiMap);
+    }
+
+    private static Map<String, String> parseComment(@Nullable GrDocComment comment) {
+      if (comment == null) return Collections.emptyMap();
+
+      GrDocTag[] docTags = comment.getTags();
+
+      if (docTags.length == 0) return Collections.emptyMap();
+
+      Map<String, String> res = new HashMap<String, String>();
+
+      for (GrDocTag tag : docTags) {
+        String tagText = tag.getText().trim();
+
+        int idx = tagText.indexOf(' ');
+        if (idx != -1) {
+          res.put(tag.getName(), tagText.substring(idx + 1).trim());
+        }
+      }
+
+      return res;
     }
 
     public GrTypeDefinition getParsedClass() {
@@ -288,12 +317,12 @@ public class DynamicMemberUtils {
     PsiClass getSourceClass();
   }
 
-  private static class GrDynamicMethodWithCache extends GrDynamicMethodImpl implements DynamicElement {
+  private static class GrDynamicMethodWithCache extends GrDynamicMethodImpl implements DynamicElement, OriginInfoAwareElement {
 
     private PsiTypeParameter[] myTypeParameters;
     private GrParameterList myParameterList;
     private Map<String, NamedArgumentDescriptor> namedParameters;
-
+    private String myOriginalInfo;
     public final String mySource;
 
     public GrDynamicMethodWithCache(GrMethod method, String source) {
@@ -341,12 +370,24 @@ public class DynamicMemberUtils {
     public PsiClass getSourceClass() {
       return myMethod.getContainingClass();
     }
+
+    @Nullable
+    @Override
+    public String getOriginInfo() {
+      return myOriginalInfo;
+    }
+
+    public void setOriginalInfo(String originalInfo) {
+      myOriginalInfo = originalInfo;
+    }
   }
 
-  private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement {
+  private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
     private final String mySource;
     private final PsiClass myClass;
-    
+
+    private String myOriginalInfo;
+
     private MyGrDynamicPropertyImpl(PsiClass containingClass, GrField field, PsiElement navigationalElement, String source) {
       super(null, field, navigationalElement);
       myClass = containingClass;
@@ -361,6 +402,16 @@ public class DynamicMemberUtils {
     @Override
     public PsiClass getSourceClass() {
       return myClass;
+    }
+
+    @Nullable
+    @Override
+    public String getOriginInfo() {
+      return myOriginalInfo;
+    }
+
+    public void setOriginalInfo(String originalInfo) {
+      myOriginalInfo = originalInfo;
     }
   }
 }
