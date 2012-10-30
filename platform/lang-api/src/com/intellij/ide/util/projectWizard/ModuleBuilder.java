@@ -93,10 +93,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return type == null ? null : type.modifySettingsStep(settingsStep, this);
   }
 
-  public boolean isTemplateBased() {
-    return false;
-  }
-
   public void setName(String name) {
     myName = acceptParameter(name);
   }

@@ -307,6 +307,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private void setupPanels(@Nullable ProjectTemplate template) {
 
     restorePanel(myNamePathComponent, 4);
+    restorePanel(myModulePanel, 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
 
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
@@ -495,10 +496,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
-    myNamePathComponent.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                       GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myNamePathComponent.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                      GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
+                                                 GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
   }
 
   @Override

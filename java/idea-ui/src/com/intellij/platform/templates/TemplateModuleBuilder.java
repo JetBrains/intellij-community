@@ -97,11 +97,6 @@ class TemplateModuleBuilder extends ModuleBuilder {
     return myType;
   }
 
-  @Override
-  public boolean isTemplateBased() {
-    return true;
-  }
-
   @NotNull
   @Override
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
