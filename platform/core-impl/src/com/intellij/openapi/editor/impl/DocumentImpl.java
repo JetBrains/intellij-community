@@ -532,7 +532,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void clearLineModificationFlagsExcept(int caretLine) {
-    boolean wasModified = caretLine != -1 && myLineSet.isModified(caretLine);
+    boolean wasModified = caretLine >= 0 && caretLine < myLineSet.getLineCount() && myLineSet.isModified(caretLine);
     clearLineModificationFlags();
     if (wasModified) {
       myLineSet.setModified(caretLine);
