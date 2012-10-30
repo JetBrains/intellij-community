@@ -166,6 +166,7 @@ public class
                                 selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
                                                                                                        selectedShape.labelPath.deltaY(4)));
     }
+    if (UIUtil.isUnderDarcula()) return;
     g2d.setColor(panelBg);
     g2d.fillRect(2, selectedShape.labelPath.getMaxY() - 2, selectedShape.path.getMaxX() - 2, 3);
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);

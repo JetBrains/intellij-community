@@ -80,6 +80,14 @@ public class GridCellImpl implements GridCell {
       }
 
       @Override
+      protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
+        if (UIUtil.isUnderDarcula()) {
+          return;
+        }
+        super.paintBorder(g2d, shape, borderColor);
+      }
+
+      @Override
       protected Color getFocusedBottomFillColor() {
         return UIUtil.isUnderDarcula() ? new Color(0x1E2533)  : new Color(0xc2cbdb);
       }
