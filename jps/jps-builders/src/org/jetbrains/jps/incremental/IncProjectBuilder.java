@@ -322,7 +322,7 @@ public class IncProjectBuilder {
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-      final Collection<File> outputs = target.getOutputDirs(context);
+      final Collection<File> outputs = target.getOutputRoots(context);
       for (File file : outputs) {
         rootsToDelete.putValue(file, target);
       }
@@ -362,6 +362,9 @@ public class IncProjectBuilder {
         final File[] children = outputRoot.listFiles();
         if (children != null) {
           filesToDelete.addAll(Arrays.asList(children));
+        }
+        else if (outputRoot.isFile()) {
+          filesToDelete.add(outputRoot);
         }
       }
       else {
