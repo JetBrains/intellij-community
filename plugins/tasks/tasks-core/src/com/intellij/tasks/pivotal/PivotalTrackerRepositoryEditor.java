@@ -29,7 +29,7 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
 
     myProjectId.setText(repository.getProjectId());
     myAPIKey.setText(repository.getAPIKey());
-    myUseHTTPAuthentication.setVisible(false);
+    myUseHttpAuthenticationCheckBox.setVisible(false);
   }
 
   @Override

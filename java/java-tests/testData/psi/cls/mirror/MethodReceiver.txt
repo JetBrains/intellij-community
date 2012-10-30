@@ -4,12 +4,11 @@
 
 package pkg;
 
-class MethodReceiver  {
-    
+class MethodReceiver {
     MethodReceiver() { /* compiled code */ }
-    
+
     void m(int i) { /* compiled code */ }
-    
+
     static @interface A {
     }
 }

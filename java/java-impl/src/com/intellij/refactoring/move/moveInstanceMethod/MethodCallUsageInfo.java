@@ -15,7 +15,8 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.usageView.UsageInfo;
 
@@ -23,16 +24,16 @@ import com.intellij.usageView.UsageInfo;
  * @author ven
  */
 public class MethodCallUsageInfo extends UsageInfo {
-  private final PsiMethodCallExpression myMethodCallExpression;
+  private final PsiElement myMethodCallExpression;
   private final boolean myIsInternal;
 
   public MethodCallUsageInfo(final PsiReferenceExpression referenceExpression, final boolean internal) {
     super(referenceExpression);
     myIsInternal = internal;
-    myMethodCallExpression = (PsiMethodCallExpression)referenceExpression.getParent();
+    myMethodCallExpression = referenceExpression instanceof PsiMethodReferenceExpression ? referenceExpression : referenceExpression.getParent();
   }
 
-  public PsiMethodCallExpression getMethodCallExpression() {
+  public PsiElement getMethodCallExpression() {
     return myMethodCallExpression;
   }
 

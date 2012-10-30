@@ -161,7 +161,7 @@ public class TestDataReferenceCollector {
       if (callText.equals("getTestName")) {
         final PsiExpression[] psiExpressions = methodCall.getArgumentList().getExpressions();
         if (psiExpressions.length == 1) {
-          if (psiExpressions[0].getText().equals("true")) {
+          if ("true".equals(psiExpressions[0].getText()) && !StringUtil.isEmpty(myTestName)) {
             return UsefulTestCase.lowercaseFirstLetter(myTestName, true);
           }
           return myTestName;

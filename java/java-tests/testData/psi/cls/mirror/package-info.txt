@@ -5,5 +5,5 @@
 package pkg;
 
 @pkg.PkgAnno
-interface $$package-info /* Real name is 'package-info' */  {
+interface $$package-info /* Real name is 'package-info' */ {
 }

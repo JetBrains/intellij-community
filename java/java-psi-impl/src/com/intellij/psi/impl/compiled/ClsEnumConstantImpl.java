@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -27,35 +26,25 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsEnumConstantImpl");
-
-  public ClsEnumConstantImpl(final PsiFieldStub stub) {
+  public ClsEnumConstantImpl(@NotNull PsiFieldStub stub) {
     super(stub);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
-    if (docComment != null) {
-      docComment.appendMirrorText(indentLevel, buffer);
-      goNextLine(indentLevel, buffer);
-    }
-
-    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
-    buffer.append(' ');
-    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
+    appendText(getModifierList(), indentLevel, buffer, "");
+    appendText(getNameIdentifier(), indentLevel, buffer);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
-    PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);
-    if (getDocComment() != null) {
-        ((ClsElementImpl)getDocComment()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
-    }
-      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+    PsiField mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirrorIfPresent(getDocComment(), mirror.getDocComment());
+    setMirror(getModifierList(), mirror.getModifierList());
+    setMirror(getNameIdentifier(), mirror.getNameIdentifier());
   }
 
   @Override
@@ -89,7 +78,6 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   public PsiMethod resolveConstructor() {
     return null;
   }
-
 
   @Override
   @NotNull

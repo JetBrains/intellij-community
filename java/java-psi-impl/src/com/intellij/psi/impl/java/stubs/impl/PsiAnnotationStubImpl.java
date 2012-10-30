@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiJavaParserFacade;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +38,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
   private final String myText;
-  private PatchedSoftReference<CompositeElement> myParsedFromRepository;
+  private PatchedSoftReference<PsiAnnotation> myParsedFromRepository;
 
   public PsiAnnotationStubImpl(final StubElement parent, final String text) {
     this(parent, text, null);
@@ -61,18 +61,21 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   }
 
   @Override
-  public CompositeElement getTreeElement() {
+  public PsiAnnotation getPsiElement() {
     if (myParsedFromRepository != null) {
-      CompositeElement parsed = myParsedFromRepository.get();
-      if (parsed != null) return parsed;
+      PsiAnnotation annotation = myParsedFromRepository.get();
+      if (annotation != null) {
+        return annotation;
+      }
     }
 
     final String text = getText();
     try {
-      CompositeElement parsed = (CompositeElement)JavaPsiFacade.getInstance(getProject()).getParserFacade().createAnnotationFromText(text, getPsi()).getNode();
-      myParsedFromRepository = new PatchedSoftReference<CompositeElement>(parsed);
-      assert parsed != null;
-      return parsed;
+      PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+      PsiAnnotation annotation = facade.createAnnotationFromText(text, getPsi());
+      myParsedFromRepository = new PatchedSoftReference<PsiAnnotation>(annotation);
+      assert annotation != null : text;
+      return annotation;
     }
     catch (IncorrectOperationException e) {
       LOG.error("Bad annotation in repository!", e);
@@ -80,6 +83,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     }
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiAnnotationStub[" + myText + "]";

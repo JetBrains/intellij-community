@@ -17,6 +17,7 @@ package org.jetbrains.android.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,15 +70,28 @@ public class AndroidPrecompileTask implements CompileTask {
 
   @Override
   public boolean execute(CompileContext context) {
+    final Project project = context.getProject();
+
+    // in out-of-process mode gen roots will be excluded by AndroidExcludedJavaSourceRootProvider
+    // we do it here for internal mode and also to make there roots 'visibly excluded' in IDE settings
+    createGenModulesAndSourceRoots(project);
+
+    if (!CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
+      return prepareForCompilation(context);
+    }
+    return true;
+  }
+
+  private static boolean prepareForCompilation(CompileContext context) {
+    final Project project = context.getProject();
+
     if (!checkArtifacts(context)) {
       return false;
     }
     checkAndroidDependencies(context);
 
-    final Project project = context.getProject();
-
     ExcludedEntriesConfiguration configuration =
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+      CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration();
 
     Set<ExcludeEntryDescription> addedEntries = new HashSet<ExcludeEntryDescription>();
 
@@ -87,14 +101,6 @@ public class AndroidPrecompileTask implements CompileTask {
       if (facet == null) {
         continue;
       }
-
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
-        }
-      }, indicator != null ? indicator.getModalityState() : ModalityState.NON_MODAL);
 
       if (context.isRebuild()) {
         clearResCache(facet, context);
@@ -122,6 +128,23 @@ public class AndroidPrecompileTask implements CompileTask {
       CompilerManager.getInstance(project).addCompilationStatusListener(new MyCompilationStatusListener(project, addedEntries), project);
     }
     return true;
+  }
+
+  private static void createGenModulesAndSourceRoots(Project project) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+      if (facet != null) {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
+          }
+        }, indicator != null ? indicator.getModalityState() : ModalityState.NON_MODAL);
+      }
+    }
   }
 
   private static boolean checkArtifacts(@NotNull CompileContext context) {

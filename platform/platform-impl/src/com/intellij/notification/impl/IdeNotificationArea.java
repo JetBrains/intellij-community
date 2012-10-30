@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,7 +213,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       g.setFont(calcFont());
       y += getIconHeight() - g.getFontMetrics().getDescent();
 
-      g.setColor(Color.BLACK);
+      g.setColor(UIUtil.getLabelForeground());
       g.drawString(myStr, x, y);
 
       g.setFont(originalFont);

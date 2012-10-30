@@ -4,9 +4,8 @@
 
 package pkg;
 
-interface ExtMethods  {
-    
+interface ExtMethods {
     void m1();
-    
+
     void m2() { /* compiled code */ }
 }

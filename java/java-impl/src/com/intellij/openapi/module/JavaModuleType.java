@@ -18,10 +18,7 @@ package com.intellij.openapi.module;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
@@ -103,10 +100,10 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(context, moduleBuilder, new Condition<SdkType>() {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder) {
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
           @Override
-          public boolean value(SdkType sdk) {
+          public boolean value(SdkTypeId sdk) {
             return sdk instanceof JavaSdkType;
           }
         });

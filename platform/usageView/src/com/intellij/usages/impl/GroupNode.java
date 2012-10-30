@@ -24,6 +24,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final UsageGroup myGroup;
   private final int myRuleIndex;
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
-  private final List<UsageNode> myUsageNodes = new ArrayList<UsageNode>();
+  private final List<UsageNode> myUsageNodes = new SmartList<UsageNode>();
   private volatile int myRecursiveUsageCount = 0;
 
   public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {

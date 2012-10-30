@@ -32,6 +32,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.SingletonSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -62,11 +63,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final StringInterner myIdentifierTable = new StringInterner() {
+    @Override
     @NotNull
-    public String intern(@NotNull final String name) {
-      synchronized (this) {
-        return super.intern(name);
-      }
+    public synchronized String intern(@NotNull final String name) {
+      return super.intern(name);
     }
   };
 
@@ -163,8 +163,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
           }
         }
       }
-
-
     }
     catch (Exception e) {
       LOG.error(e);
@@ -191,16 +189,25 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       myId2Name.put(myIdentifierTable.intern(id), myIdentifierTable.intern(groupName));
     }
 
+    OptionDescription description =
+      new OptionDescription(null, myIdentifierTable.intern(id).trim(), hit != null ? myIdentifierTable.intern(hit).trim() : null,
+                            path != null ? myIdentifierTable.intern(path).trim() : null);
     Set<OptionDescription> configs = myStorage.get(option);
     if (configs == null) {
-      configs = new THashSet<OptionDescription>(3, 0.9f);
+      configs = new SingletonSet<OptionDescription>(description);
       myStorage.put(new String(option), configs);
     }
-
-    configs.add(new OptionDescription(null, myIdentifierTable.intern(id).trim(), hit != null ? myIdentifierTable.intern(hit).trim() : null,
-                                      path != null ? myIdentifierTable.intern(path).trim() : null));
+    else if (configs instanceof SingletonSet){
+      configs = new THashSet<OptionDescription>(configs);
+      configs.add(description);
+      myStorage.put(new String(option), configs);
+    }
+    else {
+      configs.add(description);
+    }
   }
 
+  @Override
   @NotNull
   public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
                                             final DocumentEvent.EventType type,
@@ -313,6 +320,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
+  @Override
   @Nullable
   public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
     loadHugeFilesIfNecessary();
@@ -354,15 +362,18 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
   }
 
+  @Override
   public boolean isStopWord(String word) {
     return myStopWords.contains(word);
   }
 
+  @Override
   public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
     loadHugeFilesIfNecessary();
     return myHighlightOption2Synonym.get(Pair.create(option, configurable.getId()));
   }
 
+  @Override
   public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
     loadHugeFilesIfNecessary();
     final boolean perProject = CodeStyleFacade.getInstance(project).projectUsesOwnSettings();
@@ -399,10 +410,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
+  @Override
   public void addOption(String option, String path, final String hit, final String configurableId, final String configurableDisplayName) {
     putOptionWithHelpId(option, configurableId, configurableDisplayName, hit, path);
   }
 
+  @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
@@ -416,6 +429,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
+  @Override
   public Set<String> getProcessedWords(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
@@ -429,6 +443,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
+  @Override
   public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable) {
     final Set<String> result = new HashSet<String>(options);
     for (String option : options) {

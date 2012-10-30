@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ProjectTemplate {
 
+  ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
+
   @NotNull
   String getName();
 

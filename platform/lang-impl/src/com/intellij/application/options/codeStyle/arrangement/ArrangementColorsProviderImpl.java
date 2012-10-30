@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementColorsAware;
@@ -38,14 +37,10 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
 
   @Nullable private final ArrangementColorsAware myColorsAware;
 
-  @NotNull private final Map<ArrangementSettingType, Color> myTextColors
-    = new EnumMap<ArrangementSettingType, Color>(ArrangementSettingType.class);
-  @NotNull private final Map<ArrangementSettingType, Color> myBackgroundColors
-    = new EnumMap<ArrangementSettingType, Color>(ArrangementSettingType.class);
-  @NotNull private final Map<ArrangementSettingType, Color> mySelectedTextColors
-    = new EnumMap<ArrangementSettingType, Color>(ArrangementSettingType.class);
-  @NotNull private final Map<ArrangementSettingType, Color> mySelectedBackgroundColors
-    = new EnumMap<ArrangementSettingType, Color>(ArrangementSettingType.class);
+  @NotNull private final Map<ArrangementSettingType, TextAttributes> myTextAttributes
+    = new EnumMap<ArrangementSettingType, TextAttributes>(ArrangementSettingType.class);
+  @NotNull private final Map<ArrangementSettingType, TextAttributes> mySelectedTextAttributes
+    = new EnumMap<ArrangementSettingType, TextAttributes>(ArrangementSettingType.class);
 
   @NotNull private Color myBorderColor;
   @NotNull private Color mySelectedBorderColor;
@@ -66,14 +61,8 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
 
   @NotNull
   @Override
-  public Color getTextColor(@NotNull ArrangementSettingType type, boolean selected) {
-    return selected ? mySelectedTextColors.get(type) : myTextColors.get(type);
-  }
-
-  @NotNull
-  @Override
-  public Color getTextBackgroundColor(@NotNull ArrangementSettingType type, boolean selected) {
-    return selected ? mySelectedBackgroundColors.get(type) : myBackgroundColors.get(type);
+  public TextAttributes getTextAttributes(@NotNull ArrangementSettingType type, boolean selected) {
+    return selected ? mySelectedTextAttributes.get(type) : myTextAttributes.get(type);
   }
 
   /**
@@ -87,25 +76,25 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
       return;
     }
 
-    myTextColors.clear();
-    myBackgroundColors.clear();
-    mySelectedTextColors.clear();
-    mySelectedBackgroundColors.clear();
+    myTextAttributes.clear();
+    mySelectedTextAttributes.clear();
     
     applyDefaultColors();
     applyCustomColors(myColorsAware);
   }
   
   private void applyDefaultColors() {
-    Color textColor = UIUtil.getTreeTextForeground();
-    Color selectedTextColor = UIUtil.getTreeSelectionForeground();
-    Color backgroundColor = UIUtil.getPanelBackground();
-    Color selectedBackgroundColor = UIUtil.getTreeSelectionBackground();
+    TextAttributes normalTextAttributes = new TextAttributes();
+    normalTextAttributes.setForegroundColor(UIUtil.getTreeTextForeground());
+    normalTextAttributes.setBackgroundColor(UIUtil.getPanelBackground());
+    
+    TextAttributes selectedTextAttributes = new TextAttributes();
+    selectedTextAttributes.setForegroundColor(UIUtil.getTreeSelectionForeground());
+    selectedTextAttributes.setBackgroundColor(UIUtil.getTreeSelectionBackground());
+    
     for (ArrangementSettingType type : ArrangementSettingType.values()) {
-      myTextColors.put(type, textColor);
-      mySelectedTextColors.put(type, selectedTextColor);
-      myBackgroundColors.put(type, backgroundColor);
-      mySelectedBackgroundColors.put(type, selectedBackgroundColor);
+      myTextAttributes.put(type, normalTextAttributes);
+      mySelectedTextAttributes.put(type, selectedTextAttributes);
     }
     
     myBorderColor = UIUtil.getBorderColor();
@@ -119,37 +108,25 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
   private void applyCustomColors(@NotNull ArrangementColorsAware colorsAware) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     for (ArrangementSettingType type : ArrangementSettingType.values()) {
-      applyColorIfPossible(scheme, colorsAware.getTextKey(type, false), type, myTextColors);
-      applyColorIfPossible(scheme, colorsAware.getTextKey(type, true), type, mySelectedTextColors);
-      applyColorIfPossible(scheme, colorsAware.getTextBackgroundKey(type, false), type, myBackgroundColors);
-      applyColorIfPossible(scheme, colorsAware.getTextBackgroundKey(type, true), type, mySelectedBackgroundColors);
+      TextAttributes textAttributes = colorsAware.getTextAttributes(scheme, type, false);
+      if (textAttributes != null) {
+        myTextAttributes.put(type, textAttributes);
+      }
+
+      TextAttributes selectedTextAttributes = colorsAware.getTextAttributes(scheme, type, true);
+      if (selectedTextAttributes != null) {
+        mySelectedTextAttributes.put(type, selectedTextAttributes);
+      }
     }
 
-    Color borderColor = colorsAware.getBorderColor(false);
+    Color borderColor = colorsAware.getBorderColor(scheme, false);
     if (borderColor != null) {
       myBorderColor = borderColor;
     }
-    Color selectedBorderColor = colorsAware.getBorderColor(true);
+    
+    Color selectedBorderColor = colorsAware.getBorderColor(scheme, true);
     if (selectedBorderColor != null) {
       mySelectedBorderColor = selectedBorderColor;
-    }
-  }
-
-  private static void applyColorIfPossible(@NotNull EditorColorsScheme scheme,
-                                           @Nullable TextAttributesKey key,
-                                           @NotNull ArrangementSettingType type,
-                                           @NotNull Map<ArrangementSettingType, Color> holder)
-  {
-    if (key == null) {
-      return;
-    }
-    TextAttributes attributes = scheme.getAttributes(key);
-    if (attributes == null) {
-      return;
-    }
-    Color color = attributes.getForegroundColor();
-    if (color != null) {
-      holder.put(type, color);
     }
   }
 }

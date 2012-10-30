@@ -895,4 +895,11 @@ enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> 
 }
 ''')
   }
+
+  void testVarInTupleDuplicate() {
+    testHighlighting('''\
+def (a, b)
+def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>)
+''')
+  }
 }

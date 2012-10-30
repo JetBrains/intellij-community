@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
   public void deleteElement(@NotNull DataContext dataContext) {
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null || files.length == 0) return;
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     String message = createConfirmationMessage(files);
     int returnValue = Messages.showOkCancelDialog(message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"),
@@ -54,7 +56,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     Arrays.sort(files, FileComparator.getInstance());
 
     final List<String> problems = ContainerUtil.newLinkedList();
-    new WriteCommandAction.Simple(PlatformDataKeys.PROJECT.getData(dataContext)) {
+    new WriteCommandAction.Simple(project) {
 
       @Override
       protected void run() throws Throwable {

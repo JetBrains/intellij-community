@@ -19,8 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -766,14 +764,14 @@ public class ClsRepositoryUseTest extends PsiTestCase {
   public void testModifiers() throws Exception {
     final PsiClass psiClass = myJavaFacade.findClass("pack.Modifiers", RESOLVE_SCOPE);
     assertNotNull(psiClass);
-    assertEquals("public class Modifiers  {\n" +
+    assertEquals("public class Modifiers {\n" +
                  "    private transient int f1;\n" +
                  "    private volatile int f2;\n" +
-                 "    \n" +
+                 "\n" +
                  "    public Modifiers() { /* compiled code */ }\n" +
-                 "    \n" +
+                 "\n" +
                  "    private void m1(int... i) { /* compiled code */ }\n" +
-                 "    \n" +
+                 "\n" +
                  "    private synchronized void m2() { /* compiled code */ }\n" +
                  "}",
                  psiClass.getText().trim());

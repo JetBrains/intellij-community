@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,7 +38,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectNameStep extends SettingsStep {
+public class ProjectNameStep extends ModuleWizardStep {
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
@@ -64,6 +63,7 @@ public class ProjectNameStep extends SettingsStep {
     myNamePathComponent.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
     myNamePathComponent.setNameValue(initialProjectName);
     myNamePathComponent.getNameComponent().select(0, initialProjectName.length());
+
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 20, 0), 0, 0));
@@ -169,26 +169,5 @@ public class ProjectNameStep extends SettingsStep {
     }
 
     return shouldContinue;
-  }
-
-  @NotNull
-  @Override
-  public JComponent getSettingsPanel() {
-    return getComponent();
-  }
-
-  @Override
-  public JComponent getExpertSettingsPanel() {
-    return null;
-  }
-
-  @Override
-  public SettingsStep addField(String label, JComponent field) {
-    return this;
-  }
-
-  @Override
-  public SettingsStep addExpertPanel(JComponent panel) {
-    return this;
   }
 }

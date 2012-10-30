@@ -178,11 +178,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   };
 
-  public void scheduleRefresh() {
+  public void scheduleRefresh(final boolean canUseLastRevision) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        refreshImpl();
+        refreshImpl(canUseLastRevision);
       }
     });
   }
@@ -375,7 +375,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myProject);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 
@@ -429,7 +429,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         myUpdateAlarm.addRequest(this, 20000);
 
         if (refresh) {
-          refreshImpl();
+          refreshImpl(true);
         }
       }
     }, 20000);
@@ -769,7 +769,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     result.add(new MyAnnotateAction());
     AnAction[] additionalActions = myProvider.getAdditionalActions(new Runnable() {
       public void run() {
-        refreshImpl();
+        refreshImpl(true);
       }
     });
     if (additionalActions != null) {
@@ -800,7 +800,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return result;
   }
 
-  private void refreshImpl() {
+  private void refreshImpl(final boolean useLastRevision) {
     new AbstractCalledLater(myVcs.getProject(), ModalityState.NON_MODAL) {
       public void run() {
         if (myInRefresh) return;
@@ -810,7 +810,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         mySplitter.revalidate();
         mySplitter.repaint();
 
-        myRefresherI.run(true);
+        myRefresherI.run(true, useLastRevision);
         myDualView.getFlatView().updateColumnSizes();
       }
     }.callMe();
@@ -1671,7 +1671,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     public void actionPerformed(AnActionEvent e) {
       if (myInRefresh) return;
-      refreshImpl();
+      refreshImpl(false);
     }
 
     @Override

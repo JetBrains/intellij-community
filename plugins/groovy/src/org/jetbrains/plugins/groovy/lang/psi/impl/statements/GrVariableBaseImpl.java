@@ -28,6 +28,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -130,7 +130,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTupleDeclaration) parent = parent.getParent();
     if (parent instanceof GrVariableDeclaration) {
       return ((GrVariableDeclaration)parent).getTypeElementGroovyForVariable(this);
     }
@@ -148,11 +147,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   @Nullable
   public PsiType getTypeGroovy() {
     final GrExpression initializer = getInitializerGroovy();
-    final PsiElement parent = getParent();
-
-    if (parent instanceof GrTupleDeclaration && initializer != null){
-      return initializer.getType();
-    }
 
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
@@ -240,15 +234,15 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   @Nullable
   public GrExpression getInitializerGroovy() {
     final PsiElement parent = getParent();
-    if (parent instanceof GrTupleDeclaration){
-      final GrTupleDeclaration tuple = (GrTupleDeclaration)parent;
-      final GrExpression initializer = tuple.getInitializerGroovy();
+    if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()){
+      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
+      final GrExpression initializer = tuple.getTupleInitializer();
 
       if (initializer instanceof GrListOrMap){
         final GrListOrMap listOrMap = (GrListOrMap)initializer;
         final GrExpression[] initializers = listOrMap.getInitializers();
 
-        final int varNumber = tuple.getVariableNumber(this);
+        final int varNumber = ArrayUtil.indexOf(tuple.getVariables(), this);
         if (initializers.length < varNumber + 1) return null;
 
         return initializers[varNumber];
@@ -303,9 +297,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   @Nullable
   private GrVariableDeclaration getDeclaration() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTupleDeclaration) {
-      parent = parent.getParent();
-    }
     if (parent instanceof GrVariableDeclaration) {
       return (GrVariableDeclaration)parent;
     }
@@ -323,7 +314,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
 
   @Override
   public void setInitializerGroovy(GrExpression initializer) {
-    if (getParent() instanceof GrTupleDeclaration) {
+    if (getParent() instanceof GrVariableDeclaration && ((GrVariableDeclaration)getParent()).isTuple()) {
       throw new UnsupportedOperationException("don't invoke 'setInitializer()' for tuple declaration");
     }
 

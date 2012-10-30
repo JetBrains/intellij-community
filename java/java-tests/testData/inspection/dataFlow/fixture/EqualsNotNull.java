@@ -52,8 +52,26 @@ public class Main {
       return val;
     }
     if (defVal.equals(val)) {
-      return <warning descr="Expression 'val' might evaluate to null but is returned by the method declared as @NotNull">val</warning>;
+      return val;
     }
     return defVal;
   }
+
+  @NotNull
+  private static Object test(@NotNull Object defVal, @Nullable final Object val) {
+    if (val != null) {
+      return val;
+    }
+    if (<warning descr="Condition 'defVal == val' is always 'false'">defVal == val</warning>) {
+      return val;
+    }
+    if (<warning descr="Condition 'val == defVal' is always 'false'">val == defVal</warning>) {
+      return val;
+    }
+    if (defVal.equals(val)) {
+      return val;
+    }
+    return defVal;
+  }
+
 }

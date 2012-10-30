@@ -59,7 +59,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
       g2d.setColor(Gray._255.withAlpha(100));
     }
 
-    g2d.drawLine(x, y, x + w, y);
+    g2d.drawLine(x, y, x + w - 1, y);
 
     if (!vertical) {
       drawShadow(g2d, x, w, y + h);

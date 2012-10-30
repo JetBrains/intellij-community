@@ -23,7 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
@@ -104,8 +104,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
-  public boolean isSuitableSdk(Sdk sdk) {
-    return sdk.getSdkType() == JavaSdk.getInstance();
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == JavaSdk.getInstance();
   }
 
   @Override

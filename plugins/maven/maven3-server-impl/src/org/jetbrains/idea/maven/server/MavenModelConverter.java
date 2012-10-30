@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ReflectionUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.model.*;
@@ -27,6 +27,7 @@ import org.jdom.Element;
 import org.jdom.IllegalNameException;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3Artifact;
+import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -344,6 +345,11 @@ public class MavenModelConverter {
     }
   }
 
+  private static boolean isNativeToString(String toStringResult, Object o) {
+    String className = o.getClass().getName();
+    return (toStringResult.startsWith(className) && toStringResult.startsWith("@", className.length()));
+  }
+
   private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
     for (Field each : ReflectionUtil.collectFields(object.getClass())) {
       Class<?> type = each.getType();
@@ -352,9 +358,14 @@ public class MavenModelConverter {
       each.setAccessible(true);
       Object value = each.get(object);
 
-      String name = prefix + each.getName();
-      result.put(name, String.valueOf(value));
       if (value != null) {
+        String name = prefix + each.getName();
+
+        String sValue = String.valueOf(value);
+        if (!isNativeToString(sValue, value)) {
+          result.put(name, sValue);
+        }
+
         Package pack = type.getPackage();
         if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
           doConvert(value, name + ".", result);
@@ -508,6 +519,18 @@ public class MavenModelConverter {
     result.setUpdatePolicy(policy.getUpdatePolicy());
     result.setChecksumPolicy(policy.getChecksumPolicy());
     return result;
+  }
+
+  public static MavenArtifactInfo convertArtifactInfo(ArtifactInfo a) {
+    return new MavenArtifactInfo(a.groupId, a.artifactId, a.version, a.packaging, a.classifier, a.classNames, a.repository);
+  }
+
+  public static MavenArchetype convertArchetype(Archetype archetype) {
+    return new MavenArchetype(archetype.getGroupId(),
+                              archetype.getArtifactId(),
+                              archetype.getVersion(),
+                              archetype.getRepository(),
+                              archetype.getDescription());
   }
 }
 

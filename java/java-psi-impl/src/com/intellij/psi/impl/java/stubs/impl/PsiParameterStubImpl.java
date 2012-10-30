@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
@@ -31,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiParameterStub {
   private StringRef myName;
   private final TypeInfo myType;
@@ -74,16 +73,6 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     return StringRef.toString(myName);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.
-        append("PsiParameterStub[").
-        append(myName).append(':').append(TypeInfo.createTypeText(getType(false))).
-        append(']');
-    return builder.toString();
-  }
-
   public void setName(String name) {
     myName = StringRef.fromString(name);
   }
@@ -98,5 +87,15 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
       }
     }
     return ("p" + paramIndex).equals(getName());
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.
+      append("PsiParameterStub[").
+      append(myName).append(':').append(TypeInfo.createTypeText(getType(false))).
+      append(']');
+    return builder.toString();
   }
 }

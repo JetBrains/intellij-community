@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
@@ -68,19 +69,24 @@ public class
                                  Rectangle effectiveBounds,
                                  boolean rightGhostExists, int row, int column) {
     Insets insets = getTabsBorder().getEffectiveBorder();
-
+    final boolean dark = UIUtil.isUnderDarcula();
     int _x = effectiveBounds.x + insets.left;
     int _y = effectiveBounds.y + insets.top + 3;
     int _width = effectiveBounds.width - insets.left - insets.right;
     int _height = effectiveBounds.height - insets.top - insets.bottom - 3;
     _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+    if (dark) {
+      g2d.setPaint(new GradientPaint(_x, _y, ColorUtil.shift(UIUtil.getListBackground(), 1.3), _x, _y + effectiveBounds.height, UIUtil.getPanelBackground()));
+      g2d.fillRect(_x, _y, _width, _height);
 
-    g2d
-      .setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
-    g2d.fillRect(_x, _y, _width, _height);
+      g2d.setColor(Gray._0.withAlpha(50));
+    } else {
+      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
+      g2d.fillRect(_x, _y, _width, _height);
 
-    g2d.setColor(new Color(255, 255, 255, 100));
-    g2d.drawRect(_x, _y, _width - 1, _height - 1);
+      g2d.setColor(new Color(255, 255, 255, 100));
+      g2d.drawRect(_x, _y, _width - 1, _height - 1);
+    }
   }
 
   @Override
@@ -128,6 +134,9 @@ public class
 
   protected void paintSelectionAndBorder(Graphics2D g2d) {
     if (getSelectedInfo() == null) return;
+    final boolean dark = UIUtil.isUnderDarcula();
+    final Color col = dark ? ColorUtil.shift(UIUtil.getListBackground(), 1.6) : Gray._255;
+    final Color panelBg = dark ? ColorUtil.shift(UIUtil.getPanelBackground(), 1.3) : UIUtil.getPanelBackground();
 
     TabLabel label = getSelectedLabel();
     Rectangle r = label.getBounds();
@@ -143,11 +152,11 @@ public class
     int _height = r.height;
 
     if (!isHideTabs()) {
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._255, _x, _y + _height - 3, UIUtil.getPanelBackground()));
+      g2d.setPaint(new GradientPaint(_x, _y, col, _x, _y + _height - 3, panelBg));
 
       g2d.fill(selectedShape.fillPath.getShape());
 
-      g2d.setColor(Gray._255.withAlpha(180));
+      g2d.setColor(ColorUtil.toAlpha(col, 180));
       g2d.draw(selectedShape.fillPath.getShape());
 
       // fix right side due to swing stupidity (fill & draw will occupy different shapes)
@@ -157,7 +166,7 @@ public class
                                 selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
                                                                                                        selectedShape.labelPath.deltaY(4)));
     }
-    g2d.setColor(UIUtil.getPanelBackground());
+    g2d.setColor(panelBg);
     g2d.fillRect(2, selectedShape.labelPath.getMaxY() - 2, selectedShape.path.getMaxX() - 2, 3);
     g2d.drawLine(1, selectedShape.labelPath.getMaxY(), 1, getHeight() - 1);
     g2d.drawLine(selectedShape.path.getMaxX() - 1, selectedShape.labelPath.getMaxY() - 4,
@@ -172,7 +181,7 @@ public class
 
   @Override
   public Color getBackground() {
-    return Gray._142;
+    return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._142;
   }
 
   protected ShapeInfo _computeSelectedLabelShape(Rectangle r) {

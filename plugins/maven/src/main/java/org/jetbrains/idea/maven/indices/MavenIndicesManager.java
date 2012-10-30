@@ -171,8 +171,6 @@ public class MavenIndicesManager {
 
     MavenIndices indicesObjectCache = getIndicesObject();
 
-    if (!MavenServerManager.getInstance().isUseMaven2()) return new ArrayList<MavenIndex>(result);
-
     try {
       MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
       result.add(localIndex);

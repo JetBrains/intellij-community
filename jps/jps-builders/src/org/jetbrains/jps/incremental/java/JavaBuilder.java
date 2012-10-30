@@ -172,6 +172,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
+  private static boolean hasRemovedSources(CompileContext context) {
+    final Map<ModuleBuildTarget, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
+    return removed != null && !removed.isEmpty();
+  }
+
   @Override
   public String getName() {
     return BUILDER_NAME;
@@ -306,7 +311,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && !Utils.hasRemovedSources(context)) {
+    if (!hasSourcesToCompile && !hasRemovedSources(context)) {
       return exitCode;
     }
 

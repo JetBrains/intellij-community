@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import java.awt.*;
 
 /**
  * Callback which allows to customize colors used at the arrangement UI on the basis of existing coloring scheme.
+ * <p/>
+ * It's save to return 'null' from all color retrieval services - default values will be used then.
  * 
  * @author Denis Zhdanov
  * @since 10/23/12 11:53 PM
@@ -31,11 +34,8 @@ import java.awt.*;
 public interface ArrangementColorsAware {
   
   @Nullable
-  TextAttributesKey getTextKey(@NotNull ArrangementSettingType type, boolean selected);
-
+  TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme, @NotNull ArrangementSettingType type, boolean selected);
+  
   @Nullable
-  TextAttributesKey getTextBackgroundKey(@NotNull ArrangementSettingType type, boolean selected);
-
-  @Nullable
-  Color getBorderColor(boolean selected);
+  Color getBorderColor(@NotNull EditorColorsScheme scheme, boolean selected);
 }

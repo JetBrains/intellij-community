@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,7 +28,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ilyas
  */
 public class TupleParse {
-  public static boolean parseTuple(PsiBuilder builder, IElementType tupleType, IElementType componentType) {
+  public static boolean parseTuple(PsiBuilder builder, @Nullable IElementType tupleType, IElementType componentType) {
     if (builder.getTokenType() != mLPAREN) return false;
 
     final PsiBuilder.Marker marker = builder.mark();
@@ -51,15 +52,23 @@ public class TupleParse {
       if (!ParserUtils.getToken(builder, mIDENT)) {
         builder.error(GroovyBundle.message("identifier.expected"));
         varMarker.drop();
-      } else {
+      }
+      else {
         varMarker.done(componentType);
       }
-    } while (ParserUtils.getToken(builder, mCOMMA));
+    }
+    while (ParserUtils.getToken(builder, mCOMMA));
 
     if (ParserUtils.getToken(builder, mRPAREN)) {
-      marker.done(tupleType);
+      if (tupleType != null) {
+        marker.done(tupleType);
+      }
+      else {
+        marker.drop();
+      }
       return true;
-    } else {
+    }
+    else {
       marker.rollbackTo();
       return false;
     }

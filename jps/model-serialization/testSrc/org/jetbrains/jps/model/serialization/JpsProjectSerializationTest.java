@@ -28,6 +28,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
+    assertEquals("sampleProjectName", myProject.getName());
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
@@ -58,6 +59,16 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
+  }
+
+  public void testFileBasedProjectName() {
+    loadProject("/jps/model-serialization/testData/run-configurations/run-configurations.ipr");
+    assertEquals("run-configurations", myProject.getName());
+  }
+
+  public void testDirectoryBasedProjectName() {
+    loadProject("/jps/model-serialization/testData/run-configurations-dir");
+    assertEquals("run-configurations-dir", myProject.getName());
   }
 
   public void testLoadEncoding() {

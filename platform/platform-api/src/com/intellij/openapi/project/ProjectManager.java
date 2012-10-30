@@ -118,4 +118,15 @@ public abstract class ProjectManager {
    * @param project the project to reload.
    */
   public abstract void reloadProject(@NotNull Project project);
+
+  /**
+   * Create new project in given location.
+   *
+   * @param name project name
+   * @param path project location
+   *
+   * @return newly crated project
+   */
+  @Nullable
+  public abstract Project createProject(String name, String path);
 }

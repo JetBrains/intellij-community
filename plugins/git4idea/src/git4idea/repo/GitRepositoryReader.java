@@ -157,7 +157,11 @@ class GitRepositoryReader {
       return null;
     }
     String branchName = tryLoadFile(headName).trim();
-    Hash hash = Hash.create(readBranchFile(findBranchFile(branchName)));
+    File branchFile = findBranchFile(branchName);
+    if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
+      return null;
+    }
+    Hash hash = Hash.create(readBranchFile(branchFile));
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
@@ -209,7 +213,7 @@ class GitRepositoryReader {
                   return;
                 }
                 if (branchName.endsWith(ref)) {
-                  hashRef.set(hash);
+                  hashRef.set(shortBuffer(hash));
                 }
               }
             });
@@ -340,6 +344,7 @@ class GitRepositoryReader {
           if (hash == null || branchName == null) {
             return;
           }
+          hash = shortBuffer(hash);
           if (branchName.startsWith(REFS_HEADS_PREFIX)) {
             localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
           }
@@ -472,6 +477,11 @@ class GitRepositoryReader {
     finally {
       resultHandler.handleResult(null, null);
     }
+  }
+
+  @NotNull
+  private static String shortBuffer(String raw) {
+    return new String(raw);
   }
 
   private interface PackedRefsLineResultHandler {

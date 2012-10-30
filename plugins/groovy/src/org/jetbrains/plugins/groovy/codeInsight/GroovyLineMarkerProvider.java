@@ -51,7 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
@@ -113,7 +113,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
         element1 = element1.getParent();
-        if (element1 instanceof PsiMember || element1 instanceof GrVariableDeclarationBase) {
+        if (element1 instanceof PsiMember || element1 instanceof GrVariableDeclarationImpl) {
           isMember = true;
           break;
         }
@@ -164,8 +164,8 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   private static int getGroovyCategory(PsiElement element, CharSequence documentChars) {
-    if (element instanceof GrVariableDeclarationBase) {
-      GrVariable[] variables = ((GrVariableDeclarationBase)element).getVariables();
+    if (element instanceof GrVariableDeclarationImpl) {
+      GrVariable[] variables = ((GrVariableDeclarationImpl)element).getVariables();
       if (variables.length == 1 && variables[0] instanceof GrField && variables[0].getInitializerGroovy() instanceof GrClosableBlock) {
         return 2;
       }

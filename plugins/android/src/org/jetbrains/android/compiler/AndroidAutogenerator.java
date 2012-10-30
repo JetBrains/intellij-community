@@ -396,7 +396,7 @@ public class AndroidAutogenerator {
                   f.delete(module.getProject());
                 }
                 catch (IOException e) {
-                  LOG.error(e);
+                  LOG.debug(e);
                 }
               }
             }

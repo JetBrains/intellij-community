@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.serialization.module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementReference;
@@ -52,7 +53,9 @@ public class JpsModuleRootModelSerializer {
   public static final String MODULE_NAME_ATTRIBUTE = "module-name";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";
 
-  public static void loadRootModel(JpsModule module, Element rootModelComponent, JpsSdkType<?> projectSdkType) {
+  public static void loadRootModel(JpsModule module, @Nullable Element rootModelComponent, @Nullable JpsSdkType<?> projectSdkType) {
+    if (rootModelComponent == null) return;
+
     for (Element contentElement : getChildren(rootModelComponent, CONTENT_TAG)) {
       final String url = contentElement.getAttributeValue(URL_ATTRIBUTE);
       module.getContentRootsList().addUrl(url);

@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,7 +28,7 @@ class FileIconKey {
   private final Project myProject;
   @Iconable.IconFlags private final int myFlags;
 
-  FileIconKey(final VirtualFile file, final Project project, @Iconable.IconFlags int flags) {
+  FileIconKey(@NotNull VirtualFile file, final Project project, @Iconable.IconFlags int flags) {
     myFile = file;
     myProject = project;
     myFlags = flags;

@@ -105,13 +105,13 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
 
   @Tag("resolved-info")
   public static class MyResolvedInfo {
-    private String mySdkPath;
     private String myApiLevel;
+    private String mySdkPath;
     private List<MavenDependencyInfo> myApklibDependencies = new ArrayList<MavenDependencyInfo>();
 
-    public MyResolvedInfo(String sdkPath, String apiLevel, Collection<MavenDependencyInfo> dependencyInfos) {
-      mySdkPath = sdkPath;
+    public MyResolvedInfo(String apiLevel, String sdkPath, Collection<MavenDependencyInfo> dependencyInfos) {
       myApiLevel = apiLevel;
+      mySdkPath = sdkPath;
 
       myApklibDependencies = new ArrayList<MavenDependencyInfo>(dependencyInfos);
     }
@@ -119,12 +119,12 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
     public MyResolvedInfo() {
     }
 
-    public String getSdkPath() {
-      return mySdkPath;
-    }
-
     public String getApiLevel() {
       return myApiLevel;
+    }
+
+    public String getSdkPath() {
+      return mySdkPath;
     }
 
     @Tag("dependencies")
@@ -137,12 +137,12 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
       myApklibDependencies = apklibDependencies;
     }
 
-    public void setSdkPath(String sdkPath) {
-      mySdkPath = sdkPath;
-    }
-
     public void setApiLevel(String apiLevel) {
       myApiLevel = apiLevel;
+    }
+
+    public void setSdkPath(String sdkPath) {
+      mySdkPath = sdkPath;
     }
   }
   

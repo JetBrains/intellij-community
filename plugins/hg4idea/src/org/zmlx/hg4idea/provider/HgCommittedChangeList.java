@@ -14,17 +14,24 @@ public class HgCommittedChangeList extends CommittedChangeListImpl {
 
   @NotNull private final HgVcs myVcs;
   @NotNull private HgRevisionNumber myRevision;
+  @NotNull private String myBranch;
 
-  public HgCommittedChangeList(@NotNull HgVcs vcs, @NotNull HgRevisionNumber revision, String comment, String committerName,
-                               Date commitDate, Collection<Change> changes) {
+  public HgCommittedChangeList(@NotNull HgVcs vcs, @NotNull HgRevisionNumber revision, @NotNull String branch, String comment,
+                               String committerName, Date commitDate, Collection<Change> changes) {
     super(revision.asString() + ": " + comment, comment, committerName, revision.getRevisionAsLong(), commitDate, changes);
     myVcs = vcs;
     myRevision = revision;
+    myBranch = branch;
   }
 
   @NotNull
   public HgRevisionNumber getRevision() {
     return myRevision;
+  }
+
+  @NotNull
+  public String getBranch() {
+    return myBranch;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +31,10 @@ public class ExceptionFilters {
   private ExceptionFilters() {
   }
 
-  public static List<Filter> getFilters(final GlobalSearchScope searchScope) {
-    List<Filter> filters = new ArrayList<Filter>();
+  @NotNull
+  public static List<Filter> getFilters(@NotNull GlobalSearchScope searchScope) {
     ExceptionFilterFactory[] extensions = ExceptionFilterFactory.EP_NAME.getExtensions();
+    List<Filter> filters = new ArrayList<Filter>(extensions.length);
     for (ExceptionFilterFactory extension : extensions) {
       filters.add(extension.create(searchScope));
     }

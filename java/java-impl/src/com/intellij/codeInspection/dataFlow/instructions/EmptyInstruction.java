@@ -25,14 +25,25 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 
 public class EmptyInstruction extends Instruction {
+  @Nullable private final PsiElement myAnchor;
+
+  public EmptyInstruction(@Nullable PsiElement anchor) {
+    myAnchor = anchor;
+  }
+
+  @Nullable
+  public PsiElement getAnchor() {
+    return myAnchor;
+  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, stateBefore)};
+    return visitor.visitEmptyInstruction(this, runner, stateBefore);
   }
 
   public String toString() {

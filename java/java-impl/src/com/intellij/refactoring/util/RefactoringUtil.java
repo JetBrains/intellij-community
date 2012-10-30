@@ -238,7 +238,12 @@ public class RefactoringUtil {
       if (importList != null) {
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
         for(PsiImportStaticStatement stmt: importStaticStatements) {
-          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == member.getContainingClass() && Comparing.strEqual(stmt.getReferenceName(), member.getName())) {
+          final PsiClass containingClass = member.getContainingClass();
+          final String referenceName = stmt.getReferenceName();
+          if (!stmt.isOnDemand() && stmt.resolveTargetClass() == containingClass && Comparing.strEqual(referenceName, member.getName())) {
+            if (member instanceof PsiMethod) {
+              return containingClass.findMethodsByName(referenceName, false).length == 1;
+            }
             return true;
           }
         }

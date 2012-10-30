@@ -35,7 +35,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false, false);
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
 
-  private final JCheckBox myUseMaven2CheckBox;
+  private final JCheckBox myUseMaven3CheckBox;
 
   public MavenImportingConfigurable(Project project) {
     myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
@@ -45,8 +45,8 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }
 
-    myUseMaven2CheckBox = new JCheckBox("Use Maven2 to import project");
-    myUseMaven2CheckBox.setToolTipText("If this option is disabled maven 3 will be used");
+    myUseMaven3CheckBox = new JCheckBox("Use Maven3 to import project");
+    myUseMaven3CheckBox.setToolTipText("If this option is disabled maven 2 will be used");
   }
 
   public JComponent createComponent() {
@@ -54,7 +54,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     JPanel useMaven3Panel = new JPanel(new BorderLayout());
-    useMaven3Panel.add(myUseMaven2CheckBox, BorderLayout.WEST);
+    useMaven3Panel.add(myUseMaven3CheckBox, BorderLayout.WEST);
 
     panel.add(useMaven3Panel);
 
@@ -77,7 +77,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       }
     }
 
-    if (myUseMaven2CheckBox.isSelected() != MavenServerManager.getInstance().isUseMaven2()) {
+    if ((!myUseMaven3CheckBox.isSelected()) != MavenServerManager.getInstance().isUseMaven2()) {
       return true;
     }
 
@@ -87,7 +87,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     mySettingsForm.getData(myImportingSettings);
 
-    MavenServerManager.getInstance().setUseMaven2(myUseMaven2CheckBox.isSelected());
+    MavenServerManager.getInstance().setUseMaven2(!myUseMaven3CheckBox.isSelected());
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.apply();
@@ -97,7 +97,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   public void reset() {
     mySettingsForm.setData(myImportingSettings);
 
-    myUseMaven2CheckBox.setSelected(MavenServerManager.getInstance().isUseMaven2());
+    myUseMaven3CheckBox.setSelected(!MavenServerManager.getInstance().isUseMaven2());
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.reset();

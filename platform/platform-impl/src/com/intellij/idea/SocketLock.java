@@ -45,7 +45,7 @@ public class SocketLock {
   public static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
 
   // IMPORTANT: Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
-  private static final int[] FORBIDDEN_PORTS = new int[]{6953, 6969, 6970};
+  private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
   private ServerSocket mySocket;
   private final List<String> myLockedPaths = new ArrayList<String>();
@@ -209,6 +209,7 @@ public class SocketLock {
 
   private class MyRunnable implements Runnable {
 
+    @Override
     public void run() {
       try {
         while (true) {

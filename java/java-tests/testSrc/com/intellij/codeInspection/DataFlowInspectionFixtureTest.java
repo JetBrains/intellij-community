@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -47,6 +48,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testNullableAnonymousParameter() throws Throwable { doTest(); }
   public void testNullableAnonymousVolatile() throws Throwable { doTest(); }
   public void testNullableAnonymousVolatileNotNull() throws Throwable { doTest(); }
+  public void testLocalClass() throws Throwable { doTest(); }
 
   public void testFieldInAnonymous() throws Throwable { doTest(); }
   public void testNullableField() throws Throwable { doTest(); }
@@ -81,6 +83,40 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
 
   public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
+  public void testThisFieldGetters() throws Throwable { doTest(); }
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
+
+  public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
+  public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
+
+  public void testSynchronizingOnNullable() throws Throwable { doTest(); }
+  public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
+
+  public void testCatchRuntimeException() throws Throwable { doTest(); }
+
+  public void testAssertFailInCatch() throws Throwable {
+    myFixture.addClass("package org.junit; public class Assert { public static void fail() {}}");
+    doTest();
+  }
+
+  public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
+
+  public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+
+  public void testAnnotatedTypeParameters() throws Throwable {
+    myFixture.addClass("package foo; public @interface Nullable {}");
+    myFixture.addClass("package foo; public @interface NotNull {}");
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setNotNulls("foo.NotNull");
+    nnnManager.setNullables("foo.Nullable");
+    try {
+      doTest();
+    }
+    finally {
+      nnnManager.setNotNulls();
+      nnnManager.setNullables();
+    }
+  }
 
 }

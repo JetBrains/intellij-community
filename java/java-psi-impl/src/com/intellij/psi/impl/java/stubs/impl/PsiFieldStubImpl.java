@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
@@ -30,7 +26,11 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
   private final StringRef myName;
   private final TypeInfo myType;
@@ -41,7 +41,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private static final int DEPRECATED = 0x02;
   private static final int DEPRECATED_ANNOTATION = 0x04;
 
-  public PsiFieldStubImpl(final StubElement parent, final String name, @NotNull TypeInfo type, final String initializer, final byte flags) {
+  public PsiFieldStubImpl(final StubElement parent, final String name, @NotNull TypeInfo type, @Nullable String initializer, final byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
   }
 
@@ -69,7 +69,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     for (StubElement child: modifierList.getChildrenStubs()){
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getTreeElement().getPsi();
+      PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getPsiElement();
       if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
         typeInfo.addAnnotation(annotationStub);
       }

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -33,6 +34,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private JComponent myComponent;
   private JLabel myErrorMessage;
   private JButton myReloadButton;
+  private JPanel myVersionPanel;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
     String ghUserName = generator.getGithubUserName();
@@ -142,6 +144,11 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @Override
   public JComponent getComponent() {
     return myComponent;
+  }
+
+  @Override
+  public Pair<String, JComponent> getSettingsField() {
+    return new Pair<String, JComponent>("\u001BVersion:", myVersionPanel);
   }
 
   @NotNull

@@ -4,9 +4,8 @@
 
 package pkg;
 
-class $BuckClass  {
-    
+class $BuckClass {
     $BuckClass() { /* compiled code */ }
-    
+
     static pkg.$BuckClass getInstance() { /* compiled code */ }
 }

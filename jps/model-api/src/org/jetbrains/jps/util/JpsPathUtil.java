@@ -13,6 +13,9 @@ import java.util.Set;
 public class JpsPathUtil {
 
   public static boolean isUnder(Set<File> ancestors, File file) {
+    if (ancestors.isEmpty()) {
+      return false; // optimization
+    }
     File current = file;
     while (current != null) {
       if (ancestors.contains(current)) {

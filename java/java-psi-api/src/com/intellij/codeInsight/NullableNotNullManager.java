@@ -68,13 +68,13 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     }
   }
 
-  public void setNotNulls(String[] annotations) {
+  public void setNotNulls(String... annotations) {
     myNotNulls.clear();
     addAllIfNotPresent(myNotNulls, DEFAULT_NOT_NULLS);
     addAllIfNotPresent(myNotNulls, annotations);
   }
 
-  public void setNullables(String[] annotations) {
+  public void setNullables(String... annotations) {
     myNullables.clear();
     addAllIfNotPresent(myNullables, DEFAULT_NULLABLES);
     addAllIfNotPresent(myNullables, annotations);

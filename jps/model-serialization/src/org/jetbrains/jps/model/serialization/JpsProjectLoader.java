@@ -1,7 +1,10 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
@@ -37,6 +40,7 @@ import java.util.concurrent.Future;
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
+  private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
   private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor(SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
@@ -75,7 +79,20 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
+  public static String getDirectoryBaseProjectName(File dir) {
+    File nameFile = new File(dir, ".name");
+    if (nameFile.isFile()) {
+      try {
+        return FileUtilRt.loadFile(nameFile).trim();
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return StringUtil.replace(dir.getParentFile().getName(), ":", "");
+  }
+
   private void loadFromDirectory(File dir) {
+    myProject.setName(getDirectoryBaseProjectName(dir));
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
@@ -125,7 +142,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromIpr(File iprFile) {
     final Element iprRoot = loadRootElement(iprFile);
 
-    File iwsFile = new File(iprFile.getParent(), FileUtil.getNameWithoutExtension(iprFile) + ".iws");
+    String projectName = FileUtil.getNameWithoutExtension(iprFile);
+    myProject.setName(projectName);
+    File iwsFile = new File(iprFile.getParent(), projectName + ".iws");
     Element iwsRoot = iwsFile.exists() ? loadRootElement(iwsFile) : null;
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
@@ -170,7 +189,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
+  private void loadModules(Element root, final @Nullable JpsSdkType<?> projectSdkType) {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
@@ -186,7 +205,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
     try {
       for (Future<JpsModule> future : futures) {
-        myProject.addModule(future.get());
+        JpsModule module = future.get();
+        if (module != null) {
+          myProject.addModule(module);
+        }
       }
     }
     catch (Exception e) {
@@ -194,9 +216,15 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  private JpsModule loadModule(String path, JpsSdkType<?> projectSdkType) {
+  @Nullable
+  private JpsModule loadModule(@NotNull String path, @Nullable JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
+    if (!file.exists()) {
+      LOG.info("Module '" + name + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+      return null;
+    }
+
     final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
     final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");

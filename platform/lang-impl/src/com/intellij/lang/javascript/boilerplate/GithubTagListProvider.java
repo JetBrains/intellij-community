@@ -53,7 +53,7 @@ public class GithubTagListProvider {
   public void updateTagListAsynchronously(final GithubProjectGeneratorPeer peer) {
     final String url = formatTagListDownloadUrl();
     LOG.info(getGeneratorName() + " starting cache update from " + url + " ...");
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    Runnable action = new Runnable() {
       public void run() {
         File cacheFile = getCacheFile();
         try {
@@ -73,7 +73,13 @@ public class GithubTagListProvider {
           peer.setErrorMessage(getGeneratorName() + " cache update failed");
         }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      action.run();
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(action);
+    }
   }
 
   private String getGeneratorName() {
