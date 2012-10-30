@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
@@ -43,7 +43,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
     PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
     PsiElement element = elementUsage.getElement();
-    VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
 
     if (virtualFile == null) {
       return null;

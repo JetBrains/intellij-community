@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -40,9 +42,18 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
   @NotNull
   public abstract StructureViewModel createStructureViewModel();
 
+  @Override
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
-    return StructureViewFactory.getInstance(project).createStructureView(fileEditor, createStructureViewModel(), project, isRootNodeShown());
+    final StructureViewModel model = createStructureViewModel();
+    StructureView view = StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
+    Disposer.register(view, new Disposable() {
+      @Override
+      public void dispose() {
+        model.dispose();
+      }
+    });
+    return view;
   }
 
   /**

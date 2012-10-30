@@ -25,12 +25,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaCallHierarchyProvider implements HierarchyProvider {
-  public PsiElement getTarget(final DataContext dataContext) {
+  @Override
+  public PsiElement getTarget(@NotNull final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -38,11 +40,14 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 
+  @Override
+  @NotNull
   public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
     return new CallHierarchyBrowser(target.getProject(), (PsiMethod) target);
   }
 
-  public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
+  @Override
+  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     ((CallHierarchyBrowser) hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
   }
 }

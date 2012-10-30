@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,25 @@
  * User: anna
  * Date: 11-Nov-2008
  */
-package org.jetbrains.idea.eclipse.importWizard;
+package org.jetbrains.idea.eclipse;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Processor;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 public class EclipseProjectFinder implements EclipseXml {
-  public static void findModuleRoots(final List<String> paths, final String rootPath) {
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator.isCanceled()) return;
-      progressIndicator.setText2(rootPath);
+  public static void findModuleRoots(final List<String> paths, final String rootPath, @Nullable Processor<String> progressUpdater) {
+    if (progressUpdater != null) {
+      progressUpdater.process(rootPath);
     }
 
     final String project = findProjectName(rootPath);
@@ -53,7 +49,7 @@ public class EclipseProjectFinder implements EclipseXml {
       final File[] files = root.listFiles();
       if (files != null) {
         for (File file : files) {
-          findModuleRoots(paths, file.getPath());
+          findModuleRoots(paths, file.getPath(), progressUpdater);
         }
       }
     }

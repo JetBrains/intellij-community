@@ -25,12 +25,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaTypeHierarchyProvider implements HierarchyProvider {
-  public PsiElement getTarget(final DataContext dataContext) {
+  public PsiElement getTarget(@NotNull final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -68,11 +69,12 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
     }
   }
 
+  @NotNull
   public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
     return new TypeHierarchyBrowser(target.getProject(), (PsiClass) target);
   }
 
-  public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
+  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
     final String typeName =
       browser.isInterface() ? TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE : TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;

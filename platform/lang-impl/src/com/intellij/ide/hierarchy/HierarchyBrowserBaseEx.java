@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -752,6 +753,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           selectScope(SCOPE_ALL);
         }
       }
+    }
+  }
+
+  // will throw PCE during update when canceled
+  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
+    for (HierarchyTreeBuilder builder : myBuilders.values()) {
+      builder.setProgressIndicator(indicator);
     }
   }
 }

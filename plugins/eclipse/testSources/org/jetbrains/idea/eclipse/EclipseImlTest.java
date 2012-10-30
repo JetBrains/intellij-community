@@ -42,7 +42,6 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.ArrayList;

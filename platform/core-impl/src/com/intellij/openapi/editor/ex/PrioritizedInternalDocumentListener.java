@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.eclipse.conversion;
+package com.intellij.openapi.editor.ex;
 
-import java.text.MessageFormat;
-
-public class ConversionException extends Exception {
-  public ConversionException(String message) {
-    super(message);
-  }
-
-  public ConversionException(String message, Object... param) {
-    super(MessageFormat.format(message, param));
-  }
+public interface PrioritizedInternalDocumentListener extends PrioritizedDocumentListener {
+  void moveTextHappened(int start, int end, int base);
 }

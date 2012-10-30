@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -47,11 +48,12 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   private AnAction myPreviousTabAction = null;
   public PrevNextActionsDescriptor myInstallKeyboardNavigation = null;
 
-  public TabbedPaneImpl(final int tabPlacement) {
+  public TabbedPaneImpl(@JdkConstants.TabPlacement int tabPlacement) {
     super(tabPlacement);
     setFocusable(false);
     addMouseListener(
       new MouseAdapter() {
+        @Override
         public void mousePressed(final MouseEvent e) {
           _requestDefaultFocus();
         }
@@ -59,10 +61,12 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     );
   }
 
+  @Override
   public void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation) {
     myInstallKeyboardNavigation = installKeyboardNavigation;
   }
 
+  @Override
   public JComponent getComponent() {
     return this;
   }
@@ -90,6 +94,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
         setEnabledInModalContext(true);
       }
 
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         int index = getSelectedIndex() + 1;
         if (index >= getTabCount()) {
@@ -107,6 +112,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
         setEnabledInModalContext(true);
       }
 
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         int index = getSelectedIndex() - 1;
         if (index < 0) {
@@ -132,6 +138,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   }
 
 
+  @Override
   public void setUI(final TabbedPaneUI ui){
     super.setUI(ui);
     if(ui instanceof BasicTabbedPaneUI){
@@ -146,6 +153,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
    * the method does nothing.
    * @param index index of tab to be scrolled.
    */
+  @Override
   public final void scrollTabToVisible(final int index){
     if(myScrollableTabSupport==null|| WRAP_TAB_LAYOUT==getTabLayoutPolicy()){ // tab scrolling isn't supported by UI
       return;
@@ -188,6 +196,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     }
   }
 
+  @Override
   public void setSelectedIndex(final int index){
     if (index >= getTabCount()) return;
 
@@ -206,6 +215,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
 
  //http://www.jetbrains.net/jira/browse/IDEADEV-22331
  //to let repaint happen since AIOBE is thrown from Mac OSX's UI
+ @Override
  protected void fireStateChanged() {
    // Guaranteed to return a non-null array
    Object[] listeners = listenerList.getListenerList();
@@ -219,6 +229,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
        if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
 
          SwingUtilities.invokeLater(new Runnable() {
+           @Override
            public void run() {
              revalidate();
              repaint();
@@ -234,6 +245,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
  }
 
 
+  @Override
   public final void removeTabAt (final int index) {
     super.removeTabAt (index);
     //This event should be fired necessarily because when swing fires an event
@@ -323,6 +335,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     }
   }
 
+  @Override
   public boolean isDisposed() {
     return false;
   }

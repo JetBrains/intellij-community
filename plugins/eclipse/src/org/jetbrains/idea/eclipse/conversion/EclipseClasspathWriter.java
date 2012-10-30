@@ -31,9 +31,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,7 +66,7 @@ public class EclipseClasspathWriter {
 
     @NonNls String outputPath = "bin";
     final String compilerOutputUrl = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-    final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(myModel.getModule());
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(myModel.getModule());
     final String linkedPath = eclipseModuleManager.getEclipseLinkedVarPath(compilerOutputUrl);
     if (linkedPath != null) {
       outputPath = linkedPath;
@@ -87,7 +89,7 @@ public class EclipseClasspathWriter {
   }
 
   private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
-    final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(entry.getOwnerModule());
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
       final boolean shouldPlaceSeparately =
         eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(myModel.getOrderEntries(), entry));
@@ -98,7 +100,7 @@ public class EclipseClasspathWriter {
           final String srcUrl = sourceFolder.getUrl();
           String relativePath = EPathUtil.collapse2EclipsePath(srcUrl, myModel);
           if (!Comparing.equal(contentRoot, EPathUtil.getContentRoot(myModel))) {
-            final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
+            final String linkedPath = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
             if (linkedPath != null) {
               relativePath = linkedPath;
             }
@@ -205,7 +207,7 @@ public class EclipseClasspathWriter {
     }
     else if (entry instanceof JdkOrderEntry) {
       if (entry instanceof InheritedJdkOrderEntry) {
-        if (!EclipseModuleManager.getInstance(entry.getOwnerModule()).isForceConfigureJDK()) {
+        if (!EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).isForceConfigureJDK()) {
           addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER, classpathRoot);
         }
       }

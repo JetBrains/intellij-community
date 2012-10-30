@@ -398,6 +398,9 @@ public def layoutCommunityPlugins(String home) {
       jar("eclipse-jps-plugin.jar") {
         module("eclipse-jps-plugin")
       }
+      jar("common-eclipse-util.jar") {
+        module("common-eclipse-util")
+      }
     }
 
     layoutPlugin("android") {

@@ -164,7 +164,7 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private Insets empty = new Insets(0, 0, 0, 0);
+    private final Insets empty = new Insets(0, 0, 0, 0);
 
     @Override
     public Insets getBorderInsets(Component c) {
@@ -2452,8 +2452,6 @@ public class UIUtil {
   }
 
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component == null || insets == null) return;
-
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }
