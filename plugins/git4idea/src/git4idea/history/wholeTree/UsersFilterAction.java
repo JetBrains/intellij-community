@@ -54,6 +54,7 @@ public class UsersFilterAction extends BasePopupAction {
   public static final String ALL = "All";
   public static final String USER = "User:";
   private final UserFilterI myUserFilterI;
+  private final DumbAwareAction mySelectCurrent;
   private AnAction myAllAction;
   private AnAction mySelectMe;
   private AnAction mySelect;
@@ -98,6 +99,30 @@ public class UsersFilterAction extends BasePopupAction {
         super.update(e);
         e.getPresentation().setVisible(myUserFilterI.isMeKnown());
         e.getPresentation().setText(getMeText());
+      }
+    };
+    mySelectCurrent = new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final String user = myUserFilterI.getUserIfOne();
+        if (user != null) {
+          final String newText = StringUtil.shortenTextWithEllipsis(user, 20, 0);
+          myLabel.setText(newText);
+          myPanel.setToolTipText(USER + " " + user);
+          myUserFilterI.filter(user);
+          myCurrentText = user;
+          myPreselectedUser = null;
+        }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        final String user = myUserFilterI.getUserIfOne();
+        final boolean enabled = user != null && !user.equals(myUserFilterI.getMe()) && !user.equals(myCurrentText);
+        e.getPresentation().setEnabledAndVisible(enabled);
+        if (enabled) {
+          e.getPresentation().setText(StringUtil.shortenTextWithEllipsis(user, 20, 0));
+        }
       }
     };
     myPresetUserAction = new DumbAwareAction() {
@@ -201,9 +226,9 @@ public class UsersFilterAction extends BasePopupAction {
     if (pieces.length == 0) {
       myLabel.setText(ALL);
     } else if (pieces.length == 1) {
-      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 15, 0));
+      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 20, 0));
     } else {
-      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 15, 0) + "+");
+      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 20, 0) + "+");
     }
   }
 
@@ -225,7 +250,7 @@ public class UsersFilterAction extends BasePopupAction {
   }
   
   private String getMeText(final String name) {
-    return "me ( " + StringUtil.shortenTextWithEllipsis(name, 15, 0) + " )";
+    return "me ( " + StringUtil.shortenTextWithEllipsis(name, 20, 0) + " )";
   }
 
   @Override
@@ -234,9 +259,10 @@ public class UsersFilterAction extends BasePopupAction {
     actionConsumer.consume(myAllAction);
     actionConsumer.consume(mySelectMe);
     actionConsumer.consume(mySelect);
+    actionConsumer.consume(mySelectCurrent);
   }
 
   public void setPreselectedUser(String preselectedUser) {
-    myPreselectedUser = StringUtil.shortenTextWithEllipsis(preselectedUser, 15, 0);
+    myPreselectedUser = StringUtil.shortenTextWithEllipsis(preselectedUser, 20, 0);
   }
 }

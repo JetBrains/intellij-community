@@ -1861,7 +1861,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private static class MyFilterUi implements UserFilterI {
+  private class MyFilterUi implements UserFilterI {
     private boolean myMeIsKnown;
     private String myMe;
     private String myFilter;
@@ -1905,6 +1905,20 @@ public class GitLogUI implements Disposable {
     @Override
     public String getMe() {
       return myMe;
+    }
+
+    @Override
+    public String getUserIfOne() {
+      final int[] selectedRows = myJBTable.getSelectedRows();
+      if (selectedRows != null && selectedRows.length > 0) {
+        for (int row : selectedRows) {
+          final CommitI commitAt = myTableModel.getCommitAt(row);
+          if (commitAt.holdsDecoration()) continue;
+          final GitCommit atRow = getCommitAtRow(row);
+          if (atRow != null && atRow.getCommitter() != null) return atRow.getCommitter();
+        }
+      }
+      return null;
     }
 
     public void setMe(final String me) {
