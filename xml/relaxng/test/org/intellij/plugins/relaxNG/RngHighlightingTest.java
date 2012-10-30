@@ -61,6 +61,10 @@ public class RngHighlightingTest extends HighlightingTestBase {
     doHighlightingTest("bad-ref-3.rng");
   }
 
+  public void testBadRef4() throws Throwable {
+    doHighlightingTest("bad-ref-4.rng");
+  }
+
   public void testCreateDefinition1() throws Throwable {
     doTestQuickFix("create-definition-1", "rng");
   }
