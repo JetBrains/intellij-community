@@ -94,6 +94,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private JTextField myModuleName;
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
+  private JPanel myModulePanel;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -122,7 +123,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     myNamePathComponent = initNamePathComponent(context);
-    mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
+    if (context.isCreatingNewProject()) {
+      mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
+      addExpertPanel(myModulePanel);
+    }
+    else {
+      mySettingsPanel.add(myModulePanel, BorderLayout.NORTH);
+    }
     bindModuleSettings();
 
     myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
@@ -300,7 +307,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private void setupPanels(@Nullable ProjectTemplate template) {
 
     restorePanel(myNamePathComponent, 4);
-    restorePanel(myExpertPanel, 6);
+    restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
 
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
@@ -317,17 +324,20 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
     mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myModuleBuilder != null && !myModuleBuilder.isTemplateBased());
+    myExpertPlaceholder.setVisible(myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
   }
 
-  private static void restorePanel(JPanel component, int i) {
+  private static int restorePanel(JPanel component, int i) {
+    int removed = 0;
     while (component.getComponentCount() > i) {
       component.remove(component.getComponentCount() - 1);
+      removed++;
     }
+    return removed;
   }
 
   @Override

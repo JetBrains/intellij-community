@@ -37,7 +37,7 @@ public abstract class ProjectBuilder {
   }
 
   @Nullable
-  public abstract List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider);
+  public abstract List<Module> commit(final Project project, @Nullable final ModifiableModuleModel model, final ModulesProvider modulesProvider);
 
   public boolean validate(Project current, Project dest) {
     return true;

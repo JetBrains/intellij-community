@@ -39,6 +39,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ModuleTypeManager.getInstance().findByID(JAVA_MODULE);
   }
 
+  public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
+  public static final String JAVA_GROUP = "Java";
   private static final String JAVA_MODULE = "JAVA_MODULE";
 
   public JavaModuleType() {
@@ -56,7 +58,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Override
   public String getName() {
-    return ProjectBundle.message("module.type.java.name");
+    return MODULE_NAME;
   }
 
   @Override
