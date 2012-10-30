@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class CollectionComboBoxModel extends AbstractListModel implements ComboB
   private final List myItems;
   private Object mySelection;
 
-  public CollectionComboBoxModel(final List items, final Object selection) {
+  public CollectionComboBoxModel(final List items, @Nullable final Object selection) {
     myItems = items;
     mySelection = selection;
   }
@@ -38,10 +40,11 @@ public class CollectionComboBoxModel extends AbstractListModel implements ComboB
     return myItems.get(index);
   }
 
-  public void setSelectedItem(final Object anItem) {
+  public void setSelectedItem(@Nullable final Object anItem) {
     mySelection = anItem;
   }
 
+  @Nullable
   public Object getSelectedItem() {
     return mySelection;
   }
