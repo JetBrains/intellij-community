@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.actions.MergeOperations;
 import com.intellij.openapi.diff.impl.DiffLineMarkerRenderer;
@@ -31,7 +30,6 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
@@ -111,10 +109,11 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     saveHighlighter(rangeMarker);
   }
 
-  public void addLineMarker(int line, @Nullable TextAttributesKey type) {
-    RangeHighlighter marker = createLineMarker(type, line);
-    if (marker == null) return;
-    saveHighlighter(marker);
+  public void addLineMarker(int line, @Nullable TextDiffType type, SeparatorPlacement separatorPlacement) {
+    RangeHighlighter marker = createLineMarker(type, line, separatorPlacement);
+    if (marker != null) {
+      saveHighlighter(marker);
+    }
   }
 
   void setSeparatorMarker(int line, Consumer<Integer> consumer) {
@@ -133,54 +132,40 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
   }
 
   @Nullable
-  private RangeHighlighter createLineMarker(@Nullable TextAttributesKey type, int line) {
+  private RangeHighlighter createLineMarker(@Nullable TextDiffType type, int line, SeparatorPlacement placement) {
     MarkupModel markupModel = getMarkupModel();
     Document document = getDocument();
-    if (markupModel == null || document == null) {
+    if (markupModel == null || document == null || type == null) {
       return null;
     }
 
-    Color color = getLineSeparatorColorForType(type);
-    RangeHighlighter lastHighlighter = getLastHighlighter();
-    if (lastHighlighter != null &&
-        lastHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE &&
-        SeparatorPlacement.BOTTOM == lastHighlighter.getLineSeparatorPlacement()) {
-      int lastLine = document.getLineNumber(lastHighlighter.getStartOffset());
-      LOG.assertTrue(lastLine <= line);
-      if (lastLine == line) {
-        Color lastLineColor = lastHighlighter.getLineSeparatorColor();
-        if (Color.GRAY.equals(color) || !Color.GRAY.equals(lastLineColor)) {
-          return null;
-        }
-        else {
-          removeHighlighter(lastHighlighter);
-        }
-      }
+    final Color color = getLineSeparatorColorForType(type);
+    if (color == null) {
+      return null;
     }
+
     RangeHighlighter marker = markupModel.addLineHighlighter(line, LAYER, null);
     marker.setLineSeparatorColor(color);
-    marker.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
-    if (type == DiffColors.DIFF_DELETED) marker.setErrorStripeMarkColor(color);
+    marker.setLineSeparatorPlacement(placement);
+    marker.setLineSeparatorRenderer(new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        DiffUtil.drawDoubleShadowedLine((Graphics2D)g, x1, x2, y, color);
+      }
+    });
+    if (type.getType().equals(TextDiffTypeEnum.DELETED)) {
+      marker.setErrorStripeMarkColor(color);
+    }
     return marker;
   }
 
-  private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
-    highlighter.dispose();
-    myHighLighters.remove(highlighter);
-    myActionHighlighters.remove(highlighter);
-  }
-
   @Nullable
-  private Color getLineSeparatorColorForType(@Nullable TextAttributesKey type) {
-    LOG.assertTrue(type == DiffColors.DIFF_DELETED || type == DiffColors.DIFF_MODIFIED || type == null);
-    if (type == null || type == DiffColors.DIFF_MODIFIED) return Color.GRAY;
-    return TextDiffType.DELETED.getTextBackground(getEditor());
-  }
-
-  @Nullable
-  private RangeHighlighter getLastHighlighter() {
-    int size = myHighLighters.size();
-    return size > 0 ? myHighLighters.get(size - 1) : null;
+  private Color getLineSeparatorColorForType(@NotNull TextDiffType type) {
+    EditorEx editor = getEditor();
+    if (editor == null) {
+      return null;
+    }
+    return type.getPolygonColor(editor);
   }
 
   private void saveHighlighter(@NotNull RangeHighlighter marker) {
