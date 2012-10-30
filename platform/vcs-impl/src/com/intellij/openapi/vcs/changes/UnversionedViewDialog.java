@@ -58,7 +58,7 @@ public class UnversionedViewDialog extends DialogWrapper {
 
   public UnversionedViewDialog(final Project project) {
     super(project, true);
-    setTitle("Unversioned files");
+    setTitle("Unversioned Files");
     myProject = project;
     final Runnable closer = new Runnable() {
       public void run() {
