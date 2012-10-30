@@ -97,16 +97,27 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
 
-    if (!(fragment instanceof InlineFragment)) {
-      rangeMarker.setLineMarkerRenderer(DiffLineMarkerRenderer.createInstance(type));
+    setLineMarkerRenderer(rangeMarker, fragment, type);
+    setErrorStripes(rangeMarker, fragment, attributes.getErrorStripeColor());
+    saveHighlighter(rangeMarker);
+  }
 
-      Color stripeBarColor = attributes.getErrorStripeColor();
+  private static void setErrorStripes(@NotNull RangeHighlighter rangeMarker, @NotNull Fragment fragment, @Nullable Color stripeBarColor) {
+    if (DiffUtil.isInlineWrapper(fragment)) {
+      rangeMarker.setErrorStripeMarkColor(null);
+    }
+    else {
       if (stripeBarColor != null) {
         rangeMarker.setErrorStripeMarkColor(stripeBarColor);
         rangeMarker.setThinErrorStripeMark(true);
       }
     }
-    saveHighlighter(rangeMarker);
+  }
+
+  private static void setLineMarkerRenderer(RangeHighlighter rangeMarker, Fragment fragment, TextDiffType type) {
+    if (!(fragment instanceof InlineFragment)) {
+      rangeMarker.setLineMarkerRenderer(DiffLineMarkerRenderer.createInstance(type));
+    }
   }
 
   public void addLineMarker(int line, @Nullable TextDiffType type, SeparatorPlacement separatorPlacement) {
@@ -153,9 +164,6 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
         DiffUtil.drawDoubleShadowedLine((Graphics2D)g, x1, x2, y, color);
       }
     });
-    if (type.getType().equals(TextDiffTypeEnum.DELETED)) {
-      marker.setErrorStripeMarkColor(color);
-    }
     return marker;
   }
 
