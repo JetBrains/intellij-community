@@ -16,12 +16,13 @@
 package com.intellij.openapi.diff.impl.fragments;
 
 import com.intellij.openapi.diff.actions.MergeOperations;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -79,12 +80,12 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
     otherWrapper.addAction(MergeOperations.mostSensible(otherDocument, document, otherRange, range), otherRange.getStartOffset());
   }
 
-  private static void addSeparatingLine(final Fragment fragment, DiffMarkup appender, int startLine, int endLine) {
+  private static void addSeparatingLine(@NotNull LineFragment fragment, @NotNull DiffMarkup appender, int startLine, int endLine) {
     if (endLine <= 0) return;
     TextDiffTypeEnum type = fragment.getType();
-    appender.addLineMarker(endLine - 1, type == null ? null : TextDiffType.create(type), SeparatorPlacement.BOTTOM);
+    appender.addLineMarker(endLine - 1, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.BOTTOM);
     if (fragment.getRange(appender.getSide()).getLength() > 0) {
-      appender.addLineMarker(startLine, type == null ? null : TextDiffType.create(type), SeparatorPlacement.TOP);
+      appender.addLineMarker(startLine, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.TOP);
     }
   }
 }

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,7 +144,7 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
   }
 
   @Nullable
-  private RangeHighlighter createLineMarker(@Nullable TextDiffType type, int line, SeparatorPlacement placement) {
+  private RangeHighlighter createLineMarker(@Nullable final TextDiffType type, int line, SeparatorPlacement placement) {
     MarkupModel markupModel = getMarkupModel();
     Document document = getDocument();
     if (markupModel == null || document == null || type == null) {
@@ -161,7 +162,12 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     marker.setLineSeparatorRenderer(new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
-        DiffUtil.drawDoubleShadowedLine((Graphics2D)g, x1, x2, y, color);
+        if (type.isInlineWrapper()) {
+          UIUtil.drawLine((Graphics2D)g, x1, y, x2, y, null, DiffUtil.getFramingColor(color));
+        }
+        else {
+          DiffUtil.drawDoubleShadowedLine((Graphics2D)g, x1, x2, y, color);
+        }
       }
     });
     return marker;
