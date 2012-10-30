@@ -47,13 +47,12 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
   public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
-  private final CopyOnWriteArrayList<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
@@ -80,6 +79,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(@NotNull String text) {
     this(text, false);
   }
+
   public DocumentImpl(@NotNull CharSequence chars) {
     this(chars, false);
   }
@@ -116,7 +116,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     isStripTrailingSpacesEnabled = isEnabled;
   }
-  
+
   @TestOnly
   public boolean stripTrailingSpaces() {
     return stripTrailingSpaces(null, false, false, -1, -1);
@@ -206,7 +206,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myRangeMarkers.removeInterval(rangeMarker);
   }
 
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                             int start,
+                             int end,
+                             boolean greedyToLeft,
+                             boolean greedyToRight,
+                             int layer) {
     myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
@@ -214,6 +219,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public int getRangeMarkersSize() {
     return myRangeMarkers.size();
   }
+
   @TestOnly
   public int getRangeMarkersNodeSize() {
     return myRangeMarkers.nodeSize();
@@ -253,7 +259,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public RangeMarker getRangeGuard(int start, int end) {
     for (RangeMarker block : myGuardedBlocks) {
-      if (rangesIntersect(start, true, block.getStartOffset(), block.isGreedyToLeft(), end, true, block.getEndOffset(), block.isGreedyToRight())) {
+      if (rangesIntersect(start, true, block.getStartOffset(), block.isGreedyToLeft(), end, true, block.getEndOffset(),
+                          block.isGreedyToRight())) {
         return block;
       }
     }
@@ -300,8 +307,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       LOG.error("Incorrect offsets: startOffset=" + startOffset + ", endOffset=" + endOffset + ", text length=" + getTextLength());
     }
     return surviveOnExternalChange
-           ? new PersistentRangeMarker(this, startOffset, endOffset,true)
-           : new RangeMarkerImpl(this, startOffset, endOffset,true);
+           ? new PersistentRangeMarker(this, startOffset, endOffset, true)
+           : new RangeMarkerImpl(this, startOffset, endOffset, true);
   }
 
   @Override
@@ -330,7 +337,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
       throw new IndexOutOfBoundsException(
-        "Wrong offset: " + offset + "; documentLength: " + getTextLength()+ "; " + s.subSequence(Math.max(0, s.length() - 20), s.length())
+        "Wrong offset: " + offset + "; documentLength: " + getTextLength() + "; " + s.subSequence(Math.max(0, s.length() - 20), s.length())
       );
     }
     assertWriteAccess();
@@ -375,7 +382,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assert !srcRange.containsOffset(dstOffset) :
       String.format("Can't perform text move from range [%d; %d) to offset %d", srcStart, srcEnd, dstOffset);
 
-    //CharSequence replacement = getCharsSequence().subSequence(srcStart, srcEnd);
     String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
 
     insertString(dstOffset, replacement);
@@ -383,12 +389,17 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (dstOffset < srcStart) {
       shift = srcEnd - srcStart;
     }
-    retargetRangeMarkers(srcStart+shift, srcEnd+shift, dstOffset);
+    fireMoveText(srcStart + shift, srcEnd + shift, dstOffset);
+
     deleteString(srcStart + shift, srcEnd + shift);
   }
 
-  private void retargetRangeMarkers(int start, int end, int newBase) {
-    myRangeMarkers.retarget(start, end, newBase);
+  private void fireMoveText(int start, int end, int newBase) {
+    for (DocumentListener listener : getCachedListeners()) {
+      if (listener instanceof PrioritizedInternalDocumentListener) {
+        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(start, end, newBase);
+      }
+    }
   }
 
   @Override
@@ -437,13 +448,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void assertBounds(final int startOffset, final int endOffset) {
     if (startOffset < 0 || startOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset+"; documentLength: "+getTextLength());
+      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset + "; documentLength: " + getTextLength());
     }
     if (endOffset < 0 || endOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset+"; documentLength: "+getTextLength());
+      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset + "; documentLength: " + getTextLength());
     }
     if (endOffset < startOffset) {
-      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset+"; documentLength: "+getTextLength());
+      throw new IllegalArgumentException(
+        "endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
     }
   }
 
@@ -484,7 +496,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    * <p/>
    * Current method allows to check if document change is a <code>'nested call'</code>.
    *
-   * @throws IllegalStateException  if this method is called during a <code>'nested document modification'</code>
+   * @throws IllegalStateException if this method is called during a <code>'nested document modification'</code>
    */
   private void assertNotNestedModification() throws IllegalStateException {
     if (myChangeInProgress) {
@@ -585,7 +597,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
       }
     }
-    finally{
+    finally {
       myEventsHandling = false;
     }
   }
@@ -617,10 +629,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   /**
-   This method should be used very carefully - only to read the array, and to be sure, that nobody changes
-   text, while this array is processed.
-   Really it is used only to optimize paint in Editor.
-   [Valentin] 25.04.2001: More really, it is used in 61 places in 29 files across the project :-)))
+   * This method should be used very carefully - only to read the array, and to be sure, that nobody changes
+   * text, while this array is processed.
+   * Really it is used only to optimize paint in Editor.
+   * [Valentin] 25.04.2001: More really, it is used in 61 places in 29 files across the project :-)))
    */
   CharSequence getCharsNoThreadCheck() {
     return getCharsSequence();
@@ -636,7 +648,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
-    boolean added = myDocumentListeners.addIfAbsent(listener);
+    LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: "+listener);
+    boolean added = myDocumentListeners.add(listener);
     LOG.assertTrue(added, listener);
   }
 
@@ -656,7 +669,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
     if (!success) {
-      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: "+myDocumentListeners);
+      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + myDocumentListeners);
     }
   }
 
@@ -703,8 +716,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] getCachedListeners() {
     DocumentListener[] cachedListeners = myCachedDocumentListeners;
     if (cachedListeners == null) {
-      List<DocumentListener> copy = new ArrayList<DocumentListener>(myDocumentListeners);
-      DocumentListener[] listeners = copy.toArray(new DocumentListener[copy.size()]);
+      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
       myCachedDocumentListeners = cachedListeners = listeners;
     }
@@ -793,7 +805,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private static class DocumentBulkUpdateListenerHolder {
     private static final DocumentBulkUpdateListener ourBulkChangePublisher =
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
   }
 
   private static DocumentBulkUpdateListener getPublisher() {
@@ -824,7 +836,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     return result.toString();
   }
-  
+
   private class MyCharArray extends CharArray {
     private MyCharArray(@NotNull char[] chars, int length) {
       super(0, chars, length);
