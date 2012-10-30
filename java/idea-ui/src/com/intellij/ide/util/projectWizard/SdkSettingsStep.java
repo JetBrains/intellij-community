@@ -40,7 +40,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myWizardContext = settingsStep.getContext();
     myModel = new ProjectSdksModel();
     Project project = myWizardContext.getProject();
-    myModel.reset(project, sdkFilter);
+    myModel.reset(project);
 
     myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
 
