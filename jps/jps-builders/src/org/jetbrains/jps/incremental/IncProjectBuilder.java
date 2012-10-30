@@ -500,7 +500,7 @@ public class IncProjectBuilder {
     return false;
   }
 
-  private boolean runBuildersForChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
+  private boolean runBuildersForChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {
     Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
       Set<ModuleBuildTarget> moduleTargets = new HashSet<ModuleBuildTarget>();
@@ -524,12 +524,7 @@ public class IncProjectBuilder {
       return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)));
     }
     else {
-      try {
-        return runTargetBuilders(target, context);
-      }
-      catch (IOException e) {
-        throw new ProjectBuildException(e);
-      }
+      return runTargetBuilders(target, context);
     }
   }
 
@@ -750,7 +745,7 @@ public class IncProjectBuilder {
   }
 
   // return true if changed something, false otherwise
-  private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
+  private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException, IOException {
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;

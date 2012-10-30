@@ -171,7 +171,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
     final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(),
-                                                                                 new TestProjectBuilderLogger(rootPath, log)));
+                                                                                 new StringProjectBuilderLogger(rootPath, log)));
     try {
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
 
@@ -251,11 +251,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
   }
 
-  private static class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
+  private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
     private StringBuilder myLog;
 
-    private TestProjectBuilderLogger(String root, StringBuilder log) {
+    private StringProjectBuilderLogger(String root, StringBuilder log) {
       myRoot = root;
       myLog = log;
     }
