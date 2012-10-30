@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.settings;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -23,5 +24,5 @@ import com.intellij.openapi.components.StoragePathMacros;
  * @author Kirill Likhodedov
  */
 @State(name = "DiffToolSettings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class DiffToolSettings extends DiffMergeSettings {
+public class DiffToolSettings extends DiffMergeSettings implements PersistentStateComponent<DiffMergeSettings.State> {
 }
