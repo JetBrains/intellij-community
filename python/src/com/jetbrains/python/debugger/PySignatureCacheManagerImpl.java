@@ -33,7 +33,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Override
-  public void recordSignature(PySignature signature) {
+  public void recordSignature(@NotNull PySignature signature) {
     GlobalSearchScope scope = ProjectScopeBuilder.getInstance(myProject).buildProjectScope();
 
     VirtualFile file = getFile(signature);
@@ -101,7 +101,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Nullable
-  public static String findParameterType(@NotNull PyFunction function, @NotNull String name) {
+  public String findParameterType(@NotNull PyFunction function, @NotNull String name) {
     final PySignature signature = findSignature(function);
     if (signature != null) {
       return signature.getArgType(name);
@@ -110,7 +110,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Nullable
-  public static PySignature findSignature(@NotNull PyFunction function) {
+  public PySignature findSignature(@NotNull PyFunction function) {
     VirtualFile file = getFile(function);
     if (file != null) {
       return readSignatureAttributeFromFile(file, getFunctionName(function));

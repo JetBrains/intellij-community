@@ -75,11 +75,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
       if (docStringExpression != null) {
         final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
-        if (docString != null)
+        if (docString != null) {
           summary = docString.getSummary();
+        }
       }
       return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
-        .toString() + "\n" + summary;
+               .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
@@ -87,13 +88,15 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyStringLiteralExpression docStringExpression = cls.getDocStringExpression();
       if (docStringExpression == null) {
         final PyFunction initOrNew = cls.findInitOrNew(false);
-        if (initOrNew != null)
+        if (initOrNew != null) {
           docStringExpression = initOrNew.getDocStringExpression();
+        }
       }
       if (docStringExpression != null) {
         final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
-        if (docString != null)
+        if (docString != null) {
           summary = docString.getSummary();
+        }
       }
 
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
@@ -106,9 +109,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   /**
    * Creates a HTML description of function definition.
-   * @param fun the function
+   *
+   * @param fun               the function
    * @param func_name_wrapper puts a tag around the function name
-   * @param escaper sanitizes values that come directly from doc string or code
+   * @param escaper           sanitizes values that come directly from doc string or code
    * @return chain of strings for further chaining
    */
   static ChainIterable<String> describeFunction(
@@ -233,10 +237,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   /**
    * Creates a HTML description of function definition.
-   * @param cls the class
-   * @param name_wrapper wrapper to render the name with
+   *
+   * @param cls           the class
+   * @param name_wrapper  wrapper to render the name with
    * @param allow_html
-   *@param link_own_name if true, add link to class's own name  @return cat for easy chaining
+   * @param link_own_name if true, add link to class's own name  @return cat for easy chaining
    */
   static ChainIterable<String> describeClass(
     PyClass cls,
@@ -246,8 +251,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = cls.getName();
     cat.addItem("class ");
-    if (allow_html && link_own_name) cat.addWith(LinkMyClass, $(name));
-    else cat.addWith(name_wrapper, $(name));
+    if (allow_html && link_own_name) {
+      cat.addWith(LinkMyClass, $(name));
+    }
+    else {
+      cat.addWith(name_wrapper, $(name));
+    }
     final PyExpression[] ancestors = cls.getSuperClassExpressions();
     if (ancestors.length > 0) {
       cat.addItem("(");
@@ -257,10 +266,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         if (parentName == null) {
           continue;
         }
-        if (is_not_first) cat.addItem(", ");
-        else is_not_first = true;
-        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
-        else cat.addItem(parentName);
+        if (is_not_first) {
+          cat.addItem(", ");
+        }
+        else {
+          is_not_first = true;
+        }
+        if (allow_html) {
+          cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
+        }
+        else {
+          cat.addItem(parentName);
+        }
       }
       cat.addItem(")");
     }
@@ -306,7 +323,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   // provides ctrl+Q doc
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
-      originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)){
+        originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
     return new DocumentationBuilder(element, originalElement).build();
@@ -341,7 +358,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Nullable
   private static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
-    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
     if (file == null) return null;
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
@@ -358,7 +375,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     PythonDocumentationMap map = PythonDocumentationMap.getInstance();
     String pyVersion = pyVersion(sdk.getVersionString());
     PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
-                                   ? (PsiNamedElement) element
+                                   ? (PsiNamedElement)element
                                    : null;
     if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
       final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
@@ -414,7 +431,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       String version = versionString.substring(prefix.length());
       int dot = version.indexOf('.');
       if (dot > 0) {
-        dot = version.indexOf('.', dot+1);
+        dot = version.indexOf('.', dot + 1);
         if (dot > 0) {
           return version.substring(0, dot);
         }
@@ -456,26 +473,30 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, element);
     if (qName != null && qName.getComponentCount() > 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            int rc = Messages.showOkCancelDialog(project,
-                                                 "No external documentation URL configured for module " + qName.getComponents().get(0) +
-                                                 ".\nWould you like to configure it now?",
-                                                 "Python External Documentation",
-                                                 Messages.getQuestionIcon());
-            if (rc == 0) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(project, PythonDocumentationConfigurable.class);
-            }
+        @Override
+        public void run() {
+          int rc = Messages.showOkCancelDialog(project,
+                                               "No external documentation URL configured for module " + qName.getComponents().get(0) +
+                                               ".\nWould you like to configure it now?",
+                                               "Python External Documentation",
+                                               Messages.getQuestionIcon());
+          if (rc == 0) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, PythonDocumentationConfigurable.class);
           }
-        }, ModalityState.NON_MODAL);
+        }
+      }, ModalityState.NON_MODAL);
     }
   }
 
   @Nullable
   private static PyClass inferContainingClassOf(PsiElement context) {
     if (context instanceof PyClass) return (PyClass)context;
-    if (context instanceof PyFunction) return ((PyFunction)context).getContainingClass();
-    else return PsiTreeUtil.getParentOfType(context, PyClass.class);
+    if (context instanceof PyFunction) {
+      return ((PyFunction)context).getContainingClass();
+    }
+    else {
+      return PsiTreeUtil.getParentOfType(context, PyClass.class);
+    }
   }
 
   @Nullable
@@ -489,18 +510,22 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return null;
   }
 
-  public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
+  public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS);
+  // link item to containing class
 
   public static String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     String result = "";
-    if (documentationSettings.isEpydocFormat(element.getContainingFile()))
+    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
       result += generateContent(element, offset, EPYDOC_PREFIX, checkReturn);
-    else if (documentationSettings.isReSTFormat(element.getContainingFile()))
+    }
+    else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
       result += generateContent(element, offset, RST_PREFIX, checkReturn);
-    else
+    }
+    else {
       result += offset;
+    }
     return result;
   }
 
@@ -510,8 +535,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1)
+      if (spaces.length > 1) {
         ws += spaces[spaces.length - 1];
+      }
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
@@ -548,8 +574,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1)
+      if (spaces.length > 1) {
         ws += whitespace.getText().split("\n")[1];
+      }
     }
     return generateDocumentationContentStub(element, ws, checkReturn);
   }
@@ -557,9 +584,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
-    for(PyParameter p : list) {
-      if (p.getText().equals(PyNames.CANONICAL_SELF))
+    for (PyParameter p : list) {
+      if (p.getText().equals(PyNames.CANONICAL_SELF)) {
         continue;
+      }
       builder.append(prefix);
       builder.append("param ");
       builder.append(p.getName());
@@ -585,8 +613,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           builder.append(prefix).append("rtype:").append(offset);
         }
       }
-      if (visitor.myHasRaise)
+      if (visitor.myHasRaise) {
         builder.append(prefix).append("raise:").append(offset);
+      }
     }
     else {
       builder.append(prefix).append("return:").append(offset);
@@ -599,17 +628,24 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static Pair<String, Integer> addParamToDocstring(PyDocStringOwner function, String keyword, String paramName, String prefix) {
     final PyStringLiteralExpression docstring = function.getDocStringExpression();
-    String text;
-    if (docstring != null)
-      text = docstring.getText();
-    else
-      text = "\"\"\"\"\"\"";
+
+    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
+
     String[] lines = LineTokenizer.tokenize(text, true);
-    StringBuilder replacementText = new StringBuilder();
-    int ind = lines.length - 1;
     if (lines.length == 1) {
       return createSingleLineReplacement(function, keyword, paramName, prefix);
     }
+    else {
+      return createMultiLineReplacement(function, keyword, paramName, prefix, lines);
+    }
+  }
+
+  private static Pair<String, Integer> createMultiLineReplacement(PyDocStringOwner function,
+                                                                  String keyword,
+                                                                  String paramName,
+                                                                  String prefix, String[] lines) {
+    StringBuilder replacementText = new StringBuilder();
+    int ind = lines.length - 1;
     for (int i = 0; i != lines.length - 1; ++i) {
       String line = lines[i];
       if (line.contains(prefix)) {
@@ -623,11 +659,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       String line = lines[i];
       replacementText.append(line);
     }
+
     return new Pair<String, Integer>(replacementText.toString(), offset);
   }
 
   private static int addParamOrType(StringBuilder replacementText, PyDocStringOwner function, boolean addWS, String keyword,
-                                     String paramName, String prefix) {
+                                    String paramName, String prefix) {
     PsiWhiteSpace whitespace = null;
     if (function instanceof PyFunction) {
       whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)function).getStatementList(), PsiWhiteSpace.class);
@@ -639,8 +676,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         ws += whitespace.getText().split("\n")[1];
       }
     }
-    if (replacementText.length() > 0)
+    if (replacementText.length() > 0) {
       replacementText.deleteCharAt(replacementText.length() - 1);
+    }
     replacementText.append(ws);
 
     replacementText.append(prefix);
@@ -649,22 +687,24 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     replacementText.append(paramName);
     replacementText.append(": ");
     int offset = replacementText.length();
-    if (addWS)
+    if (addWS) {
       replacementText.append(ws);
-    else
+    }
+    else {
       replacementText.append("\n");
+    }
     return offset;
   }
 
-  private static Pair<String, Integer> createSingleLineReplacement(PyDocStringOwner function, String keyword, String paramName, String prefix) {
-    String text;
+  private static Pair<String, Integer> createSingleLineReplacement(PyDocStringOwner function,
+                                                                   String keyword,
+                                                                   String paramName,
+                                                                   String prefix) {
     final PyStringLiteralExpression docstring = function.getDocStringExpression();
-    if (docstring != null)
-      text = docstring.getText();
-    else
-      text = "\"\"\"\"\"\"";
+    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
+
     StringBuilder replacementText = new StringBuilder();
-    String closingQuotes = "";
+    String closingQuotes;
     if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
       replacementText.append(text.substring(0, text.length() - 2));
       closingQuotes = text.substring(text.length() - 3);
@@ -681,10 +721,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static class RaiseVisitor extends PyRecursiveElementVisitor {
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
+
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       myHasRaise = true;
     }
+
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
       myHasReturn = true;
