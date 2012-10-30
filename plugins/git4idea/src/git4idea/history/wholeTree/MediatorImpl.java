@@ -186,7 +186,7 @@ public class MediatorImpl implements Mediator {
     }
     if (! missing.isEmpty()) {
       final GitLogFilters filters =
-        new GitLogFilters(null, null, null, ObjectsConvertor.convert(missing, new Convertor<AbstractHash, String>() {
+        new GitLogFilters(null, null, null, null, ObjectsConvertor.convert(missing, new Convertor<AbstractHash, String>() {
           @Override
           public String convert(AbstractHash o) {
             return o.getString();
@@ -204,9 +204,9 @@ public class MediatorImpl implements Mediator {
   @Override
   public void reload(final RootsHolder rootsHolder,
                      final Collection<String> startingPoints,
-                     final GitLogFilters filters, final boolean topoOrder) {
+                     Collection<String> endPoints, final GitLogFilters filters, final boolean topoOrder) {
     myTicket.increment();
-    myTableWrapper.reset(filters.isEmpty(), startingPoints.isEmpty());
+    myTableWrapper.reset(! filters.haveDisordering(), startingPoints.isEmpty());
     myController.reset();
 
     myHaveRestrictingFilters = filters.haveCommitterOrCommentFilters();

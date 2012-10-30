@@ -26,6 +26,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * @author yole
@@ -39,10 +41,15 @@ public class DateFilterComponent {
   private JPanel myRootPanel;
 
   public DateFilterComponent() {
-    myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter"),
-                                                              true));
-    myDateAfter.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
-    myDateBefore.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
+    this(true, DateFormatUtil.getDateTimeFormat().getDelegate());
+  }
+
+  public DateFilterComponent(final boolean showBorder, final DateFormat dateFormat) {
+    if (showBorder) {
+      myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter"), true));
+    }
+    myDateAfter.setDateFormat(dateFormat);
+    myDateBefore.setDateFormat(dateFormat);
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateAllEnabled(e);
@@ -60,6 +67,36 @@ public class DateFilterComponent {
 
   public JPanel getPanel() {
     return myRootPanel;
+  }
+
+  public void setBefore(final long beforeTs) {
+    myUseDateBeforeFilter.setSelected(true);
+    try {
+      myDateBefore.setDate(new Date(beforeTs));
+      myDateBefore.setEnabled(true);
+    }
+    catch (PropertyVetoException e) {
+      //
+    }
+  }
+
+  public void setAfter(final long afterTs) {
+    myUseDateAfterFilter.setSelected(true);
+    try {
+      myDateAfter.setDate(new Date(afterTs));
+      myDateAfter.setEnabled(true);
+    }
+    catch (PropertyVetoException e) {
+      //
+    }
+  }
+
+  public long getBefore() {
+    return myUseDateBeforeFilter.isSelected() ? myDateBefore.getDate().getTime() : -1;
+  }
+
+  public long getAfter() {
+    return myUseDateAfterFilter.isSelected() ? myDateAfter.getDate().getTime() : -1;
   }
 
   public void initValues(ChangeBrowserSettings settings) {

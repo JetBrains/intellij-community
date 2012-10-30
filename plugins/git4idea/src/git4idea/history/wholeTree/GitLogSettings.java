@@ -16,7 +16,6 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,6 +62,15 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
     public boolean myShowTree = true;
     public boolean myTopoOrder = false;
     public boolean myShowDetails = true;
+
+    public MyDateState myDateState = new MyDateState();
+  }
+
+  public static class MyDateState {
+    public boolean mySelectedTime = false;
+    public long myTimeBefore = -1;
+    public long myTimeAfter = -1;
+    public String myPresetFilter = null;
   }
 
   @Override
@@ -73,6 +81,11 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   @Override
   public void loadState(MyState state) {
     myState = state;
+  }
+
+  // edit right here..
+  public MyDateState getDateState() {
+    return myState.myDateState;
   }
 
   public boolean isTopoOrder() {
