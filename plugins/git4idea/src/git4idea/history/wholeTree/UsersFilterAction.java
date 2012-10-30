@@ -201,9 +201,9 @@ public class UsersFilterAction extends BasePopupAction {
     if (pieces.length == 0) {
       myLabel.setText(ALL);
     } else if (pieces.length == 1) {
-      myLabel.setText(pieces[0].trim());
+      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 15, 0));
     } else {
-      myLabel.setText(pieces[0].trim() + "+");
+      myLabel.setText(StringUtil.shortenTextWithEllipsis(pieces[0].trim(), 15, 0) + "+");
     }
   }
 
@@ -225,7 +225,7 @@ public class UsersFilterAction extends BasePopupAction {
   }
   
   private String getMeText(final String name) {
-    return "me ( " + StringUtil.shortenTextWithEllipsis(name, 30, 0) + " )";
+    return "me ( " + StringUtil.shortenTextWithEllipsis(name, 15, 0) + " )";
   }
 
   @Override
@@ -237,6 +237,6 @@ public class UsersFilterAction extends BasePopupAction {
   }
 
   public void setPreselectedUser(String preselectedUser) {
-    myPreselectedUser = preselectedUser;
+    myPreselectedUser = StringUtil.shortenTextWithEllipsis(preselectedUser, 15, 0);
   }
 }

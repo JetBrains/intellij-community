@@ -23,7 +23,10 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
-import git4idea.history.browser.*;
+import git4idea.history.browser.ChangesFilter;
+import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.LowLevelAccessImpl;
+import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,13 +73,13 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
                                 Project project,
                                 MyRootHolder rootHolder,
                                 final UsersIndex usersIndex,
-                                final LoadGrowthController.ID id, boolean haveStructureFilter, boolean topoOrder) {
+                                final LoadGrowthController.ID id, boolean haveStructureFilter, boolean topoOrder, boolean haveDisordering) {
     myRootHolder = rootHolder;
     myUsersIndex = usersIndex;
     myId = id;
     myHaveStructureFilter = haveStructureFilter;
     myTopoOrder = topoOrder;
-    myLoadParents = filters == null || filters.isEmpty();
+    myLoadParents = ! haveDisordering;
     myTicket = ticket;
     myFilters = filters;
     myMediator = mediator;

@@ -34,20 +34,25 @@ public class GitLogFilters {
   @Nullable
   private final Set<ChangesFilter.Filter> myCommitterFilters;
   @Nullable
+  private final Set<ChangesFilter.Filter> myDateFilters;
+  @Nullable
   private final Map<VirtualFile, ChangesFilter.Filter> myStructureFilters;
   @Nullable
   private final List<String> myPossibleReferencies;
   private boolean myUseOnlyHashes;
 
   public GitLogFilters() {
-    this(null, null, null, null);
+    this(null, null, null, null, null);
   }
 
   public GitLogFilters(@Nullable ChangesFilter.Comment commentFilter,
                        @Nullable Set<ChangesFilter.Filter> committerFilters,
-                       @Nullable Map<VirtualFile, ChangesFilter.Filter> structureFilters, @Nullable List<String> possibleReferencies) {
+                       Set<ChangesFilter.Filter> filters,
+                       @Nullable Map<VirtualFile, ChangesFilter.Filter> structureFilters,
+                       @Nullable List<String> possibleReferencies) {
     myCommentFilter = commentFilter;
     myCommitterFilters = committerFilters;
+    myDateFilters = filters;
     myStructureFilters = structureFilters;
     myPossibleReferencies = possibleReferencies;
   }
@@ -65,6 +70,10 @@ public class GitLogFilters {
       if (filter != null) {
         filters.add(Collections.singleton(filter));
       }
+    }
+    if (myDateFilters != null) {
+      filters.add(Collections.<ChangesFilter.Filter>singleton(
+          new ChangesFilter.And(myDateFilters.toArray(new ChangesFilter.Filter[myDateFilters.size()]))));
     }
     final Set<List<ChangesFilter.Filter>> cartesian = Sets.cartesianProduct(filters);
     if (cartesian.isEmpty()) {
@@ -97,7 +106,14 @@ public class GitLogFilters {
 
   public boolean isEmpty() {
     return myCommentFilter == null && (myCommitterFilters == null || myCommitterFilters.isEmpty()) &&
-           (myStructureFilters == null || myStructureFilters.isEmpty());
+           (myStructureFilters == null || myStructureFilters.isEmpty()) && (myDateFilters == null || myDateFilters.isEmpty());
+  }
+
+  public boolean haveDisordering() {
+    return ! isEmpty();
+    // seems ordering by time does not coinside with structure -> dates filter also forbids tree. maybe should allow if "after" is used...
+    /*return myCommentFilter != null || (myCommitterFilters != null && ! myCommitterFilters.isEmpty()) ||
+           (myStructureFilters != null && ! myStructureFilters.isEmpty());*/
   }
 
   @Nullable

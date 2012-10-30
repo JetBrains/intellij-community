@@ -61,7 +61,7 @@ public class LoadController implements Loader {
   public void loadSkeleton(final Ticket ticket,
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
-                           final GitLogFilters filters,
+                           final GitLogFilters gitLogFilters,
                            final LoadGrowthController loadGrowthController, final boolean topoOrder) {
     if (myPreviousAlgorithm != null) {
       myPreviousAlgorithm.stop();
@@ -75,25 +75,25 @@ public class LoadController implements Loader {
         new LoaderAndRefresherImpl.OneRootHolder(root) :
         new LoaderAndRefresherImpl.ManyCaseHolder(i, rootsHolder);
 
-      if (! filters.isUseOnlyHashes()) {
-        final boolean haveStructureFilter = filters.haveStructureFilter();
+      if (! gitLogFilters.isUseOnlyHashes()) {
+        final boolean haveStructureFilter = gitLogFilters.haveStructureFilter();
         // check if no files under root are selected
-        if (haveStructureFilter && ! filters.haveStructuresForRoot(root)) {
+        if (haveStructureFilter && ! gitLogFilters.haveStructuresForRoot(root)) {
           ++ i;
           continue;
         }
-        filters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
+        gitLogFilters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
           @Override
           public void consume(final List<ChangesFilter.Filter> filters) {
             final LoaderAndRefresherImpl loaderAndRefresher =
               new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                         loadGrowthController.getId(), haveStructureFilter, topoOrder);
+                                         loadGrowthController.getId(), haveStructureFilter, topoOrder, gitLogFilters.haveDisordering());
             list.add(loaderAndRefresher);
           }
         }, true, root);
       }
 
-      shortLoaders.add(new ByRootLoader(myProject, rootHolder, myMediator, myDetailsCache, ticket, myUsersIndex, filters, startingPoints));
+      shortLoaders.add(new ByRootLoader(myProject, rootHolder, myMediator, myDetailsCache, ticket, myUsersIndex, gitLogFilters, startingPoints));
       ++ i;
     }
 

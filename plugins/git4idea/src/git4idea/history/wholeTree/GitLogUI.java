@@ -135,6 +135,7 @@ public class GitLogUI implements Disposable {
   private MyRefreshAction myRefreshAction;
   private MyStructureFilter myStructureFilter;
   private StructureFilterAction myStructureFilterAction;
+  private DatesFilterAction myDatesFilterAction;
   private AnAction myCopyHashAction;
   // todo group somewhere??
   private Consumer<CommitI> myDetailsLoaderImpl;
@@ -144,7 +145,7 @@ public class GitLogUI implements Disposable {
   private final TableCellRenderer myAuthorRenderer;
   private MyRootsAction myRootsAction;
   private JPanel myEqualToHeadr;
-  private boolean myThereAreFilters;
+  private boolean myThereIsDisordering;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
   private final GitLogShowOnlyStarredCommitsAction myFilterStarredAction;
   private boolean myIsFilterByStarOn;
@@ -159,10 +160,13 @@ public class GitLogUI implements Disposable {
   private final Splitter myDetailsSplitter;
   private JScrollPane myTableScrollPane;
   private GitLogUI.MyTextFieldAction myTextFieldAction;
+  private DatesFilterI myDatesFilter;
+  private GitLogSettings mySettings;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
     myVcs = GitVcs.getInstance(project);
+    mySettings = GitLogSettings.getInstance(myProject);
     myMediator = mediator;
     myCommentSearchContext = new CommentSearchContext();
     myUsersSearchContext = new ArrayList<String>();
@@ -226,6 +230,7 @@ public class GitLogUI implements Disposable {
       }
 
       private void toggleOtherFiltersPresentation() {
+        myDatesFilterAction.greyPanelFg(myIsFilterByStarOn);
         myStructureFilterAction.greyPanelFg(myIsFilterByStarOn);
         myBranchSelectorAction.greyPanelFg(myIsFilterByStarOn);
         myUsersFilterAction.greyPanelFg(myIsFilterByStarOn);
@@ -235,14 +240,13 @@ public class GitLogUI implements Disposable {
   }
 
   public void initFromSettings() {
-    final GitLogSettings settings = GitLogSettings.getInstance(myProject);
-    mySelectedBranch = settings.getSelectedBranch();
-    myUserFilterI.myFilter = settings.getSelectedUser();
-    myUserFilterI.myMeSelected = settings.isSelectedUserMe();
-    myUsersFilterAction.setSelectedPresets(settings.getSelectedUser(), settings.isSelectedUserMe());
+    mySelectedBranch = mySettings.getSelectedBranch();
+    myUserFilterI.myFilter = mySettings.getSelectedUser();
+    myUserFilterI.myMeSelected = mySettings.isSelectedUserMe();
+    myUsersFilterAction.setSelectedPresets(mySettings.getSelectedUser(), mySettings.isSelectedUserMe());
     myBranchSelectorAction.setPreset(mySelectedBranch);
 
-    final List<String> selectedPaths = settings.getSelectedPaths();
+    final List<String> selectedPaths = mySettings.getSelectedPaths();
     if (selectedPaths != null && ! selectedPaths.isEmpty()){
       final ArrayList<VirtualFile> paths = new ArrayList<VirtualFile>();
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -256,8 +260,11 @@ public class GitLogUI implements Disposable {
     }
     myStructureFilterAction.setPreset();
 
+    if (mySettings.getDateState().mySelectedTime) {
+      myDatesFilterAction.setPreset(mySettings.getDateState());
+    }
     final HashSet<VirtualFile> activeRoots = new HashSet<VirtualFile>();
-    final Set<String> saved = settings.getActiveRoots();
+    final Set<String> saved = mySettings.getActiveRoots();
     if (! saved.isEmpty()) {
       for (VirtualFile vf : myRootsUnderVcs) {
         if (saved.contains(vf.getPath())) {
@@ -759,7 +766,7 @@ public class GitLogUI implements Disposable {
     myDetailsSplitter.setFirstComponent(wrapper);
     JPanel details = myDetailsPanel.getComponent();
     details.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT));
-    setupDetailsSplitter(GitLogSettings.getInstance(myProject).isShowDetails());
+    setupDetailsSplitter(mySettings.isShowDetails());
     return myDetailsSplitter;
   }
 
@@ -869,6 +876,7 @@ public class GitLogUI implements Disposable {
       group.add(myBranchSelectorAction.asTextAction());
       group.add(myUsersFilterAction.asTextAction());
       group.add(myStructureFilterAction.asTextAction());
+      group.add(myDatesFilterAction.asTextAction());
       group.add(new Separator());
       group.add(myRefreshAction);
 
@@ -913,6 +921,46 @@ public class GitLogUI implements Disposable {
     myStructureFilter = new MyStructureFilter(myRefresh, rootsGetter);
     myStructureFilterAction = new StructureFilterAction(myProject, myStructureFilter);
     group.add(myStructureFilterAction);
+    myDatesFilter = new DatesFilterI() {
+      @Override
+      public long getBefore() {
+        return mySettings.getDateState().mySelectedTime ? mySettings.getDateState().myTimeBefore : -1;
+      }
+
+      @Override
+      public long getAfter() {
+        return mySettings.getDateState().mySelectedTime ? mySettings.getDateState().myTimeAfter : -1;
+      }
+
+      @Override
+      public boolean isAll() {
+        return ! mySettings.getDateState().mySelectedTime;
+      }
+
+      @Override
+      public long getCommitTimeIfOne() {
+        final CommitI commitAt = getCommitIfOneRealSelected();
+        return commitAt == null ? -1 : commitAt.getTime();
+      }
+
+      @Override
+      public void selectAll() {
+        mySettings.getDateState().mySelectedTime = false;
+        myRefresh.run();
+      }
+
+      @Override
+      public void filter(long before, long after, String presetFilterName) {
+        final GitLogSettings.MyDateState state = mySettings.getDateState();
+        state.myTimeBefore = before;
+        state.myTimeAfter = after;
+        state.mySelectedTime = true;
+        state.myPresetFilter = presetFilterName;
+        myRefresh.run();
+      }
+    };
+    myDatesFilterAction = new DatesFilterAction(myProject, myDatesFilter);
+    group.add(myDatesFilterAction);
     myCherryPickAction = new MyCherryPick();
     group.add(myFilterStarredAction);
     group.add(myCherryPickAction);
@@ -925,14 +973,14 @@ public class GitLogUI implements Disposable {
     group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
-          return !myProject.isDisposed() && GitLogSettings.getInstance(myProject).isShowDetails();
+          return !myProject.isDisposed() && mySettings.isShowDetails();
         }
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           setupDetailsSplitter(state);
           if (!myProject.isDisposed()) {
-            GitLogSettings.getInstance(myProject).setShowDetails(state);
+            mySettings.setShowDetails(state);
           }
         }
       });
@@ -1557,23 +1605,30 @@ public class GitLogUI implements Disposable {
 
   private void reloadRequest() {
     // store state
-    final GitLogSettings settings = GitLogSettings.getInstance(myProject);
-    settings.setSelectedBranch(mySelectedBranch);
-    settings.setSelectedUser(myUserFilterI.myFilter);
-    settings.setSelectedUserIsMe(myUserFilterI.isMeSelected());
-    settings.setSelectedPaths(myStructureFilter.myAllSelected ? null : myStructureFilter.getSelected());
+    mySettings.setSelectedBranch(mySelectedBranch);
+    mySettings.setSelectedUser(myUserFilterI.myFilter);
+    mySettings.setSelectedUserIsMe(myUserFilterI.isMeSelected());
+    mySettings.setSelectedPaths(myStructureFilter.myAllSelected ? null : myStructureFilter.getSelected());
 
     myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
     myDetailsCache.resetAsideCaches();
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
+    final GitLogSettings.MyDateState dateState = mySettings.getDateState();
+    Set<ChangesFilter.Filter> dateFilters = null;
+    if (dateState.mySelectedTime) {
+      dateFilters = applyDateFilter();
+    }
     myDescriptionRenderer.resetIcons();
     final boolean commentFilterEmpty = StringUtil.isEmptyOrSpaces(myPreviousFilter);
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    myThereAreFilters = (! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected)) || myIsFilterByStarOn;
-    final boolean topoOrder = (! myThereAreFilters) && myRootsUnderVcs.size() == 1 ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
+    final boolean haveFilters = (! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected &&
+                                (! mySettings.getDateState().mySelectedTime))) || myIsFilterByStarOn;
+    //myThereIsDisordering = (! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected)) || myIsFilterByStarOn;
+    myThereIsDisordering = haveFilters;
+    final boolean topoOrder = (!myThereIsDisordering) && myRootsUnderVcs.size() == 1 ? mySettings.isTopoOrder() : false;
     myOrderLabel.setVisible(false);
     setOrderText(topoOrder);
     if (topoOrder) {
@@ -1582,13 +1637,13 @@ public class GitLogUI implements Disposable {
       myTableModel.useDateGroupingStrategy();
     }
 
-    myEqualToHeadr.getParent().setVisible(false);
-    if (! myThereAreFilters) {
-      if (myMyShowTreeAction.isSelected(null)) {
+    myEqualToHeadr.getParent().setVisible(! myThereIsDisordering);
+    if (! haveFilters) {
+      /*if (myMyShowTreeAction.isSelected(null)) {
         myEqualToHeadr.getParent().setVisible(true);
-      }
+      }*/
       myUsersSearchContext.clear();
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(), topoOrder);
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, null, new GitLogFilters(), topoOrder);
     } else if (myIsFilterByStarOn) {
       myUsersSearchContext.clear();
       myMediator.reloadSetFixed(myMarked, new RootsHolder(myRootsUnderVcs));
@@ -1600,45 +1655,16 @@ public class GitLogUI implements Disposable {
       }
       Set<ChangesFilter.Filter> userFilters = null;
       if (myUserFilterI.myFilter != null) {
-        final String[] strings = myUserFilterI.myFilter.split(",");
-        userFilters = new HashSet<ChangesFilter.Filter>();
-        for (String string : strings) {
-          string = string.trim();
-          if (string.length() == 0) continue;
-          myUsersSearchContext.add(string.toLowerCase());
-          final String regexp = StringUtil.escapeToRegexp(string);
-          userFilters.add(new ChangesFilter.Committer(regexp));
-          userFilters.add(new ChangesFilter.Author(regexp));
-        }
+        userFilters = applyUserFilter();
       }
       Map<VirtualFile, ChangesFilter.Filter> structureFilters = null;
       if (! myStructureFilter.myAllSelected) {
-        structureFilters = new HashMap<VirtualFile, ChangesFilter.Filter>();
-        final Collection<VirtualFile> selected = new ArrayList<VirtualFile>(myStructureFilter.getSelected());
-        final ArrayList<VirtualFile> copy = new ArrayList<VirtualFile>(myRootsUnderVcs);
-        Collections.sort(copy, FilePathComparator.getInstance());
-        Collections.reverse(copy);
-        for (VirtualFile root : copy) {
-          final Collection<VirtualFile> selectedForRoot = new SmartList<VirtualFile>();
-          final Iterator<VirtualFile> iterator = selected.iterator();
-          while (iterator.hasNext()) {
-            VirtualFile next = iterator.next();
-            if (VfsUtil.isAncestor(root, next, false)) {
-              selectedForRoot.add(next);
-              iterator.remove();
-            }
-          }
-          if (! selectedForRoot.isEmpty()) {
-            final ChangesFilter.StructureFilter structureFilter = new ChangesFilter.StructureFilter();
-            structureFilter.addFiles(selectedForRoot);
-            structureFilters.put(root, structureFilter);
-          }
-        }
+        structureFilters = applyStructureFilter();
       }
 
       final List<String> possibleReferencies = commentFilterEmpty ? null : Arrays.asList(myPreviousFilter.split("[\\s]"));
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(comment, userFilters, structureFilters,
-                                                                                            possibleReferencies), topoOrder);
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, null, new GitLogFilters(comment, userFilters, dateFilters,
+        structureFilters, possibleReferencies), topoOrder);
     }
     myCommentSearchContext.addHighlighter(myDetailsPanel.getHtmlHighlighter());
     updateMoreVisibility();
@@ -1647,6 +1673,60 @@ public class GitLogUI implements Disposable {
     myTableModel.fireTableRowsDeleted(0, was);
     myGraphGutter.getComponent().revalidate();
     myGraphGutter.getComponent().repaint();
+  }
+
+  private Set<ChangesFilter.Filter> applyDateFilter() {
+    final Set<ChangesFilter.Filter> result = new HashSet<ChangesFilter.Filter>();
+    final long timeBefore = mySettings.getDateState().myTimeBefore;
+    if (timeBefore > 0) {
+      result.add(new ChangesFilter.BeforeTime(timeBefore));
+    }
+    final long timeAfter = mySettings.getDateState().myTimeAfter;
+    if (timeAfter > 0) {
+      result.add(new ChangesFilter.AfterTime(timeAfter));
+    }
+    return result;
+  }
+
+  private Map<VirtualFile, ChangesFilter.Filter> applyStructureFilter() {
+    Map<VirtualFile, ChangesFilter.Filter> structureFilters;
+    structureFilters = new HashMap<VirtualFile, ChangesFilter.Filter>();
+    final Collection<VirtualFile> selected = new ArrayList<VirtualFile>(myStructureFilter.getSelected());
+    final ArrayList<VirtualFile> copy = new ArrayList<VirtualFile>(myRootsUnderVcs);
+    Collections.sort(copy, FilePathComparator.getInstance());
+    Collections.reverse(copy);
+    for (VirtualFile root : copy) {
+      final Collection<VirtualFile> selectedForRoot = new SmartList<VirtualFile>();
+      final Iterator<VirtualFile> iterator = selected.iterator();
+      while (iterator.hasNext()) {
+        VirtualFile next = iterator.next();
+        if (VfsUtil.isAncestor(root, next, false)) {
+          selectedForRoot.add(next);
+          iterator.remove();
+        }
+      }
+      if (! selectedForRoot.isEmpty()) {
+        final ChangesFilter.StructureFilter structureFilter = new ChangesFilter.StructureFilter();
+        structureFilter.addFiles(selectedForRoot);
+        structureFilters.put(root, structureFilter);
+      }
+    }
+    return structureFilters;
+  }
+
+  private Set<ChangesFilter.Filter> applyUserFilter() {
+    Set<ChangesFilter.Filter> userFilters;
+    final String[] strings = myUserFilterI.myFilter.split(",");
+    userFilters = new HashSet<ChangesFilter.Filter>();
+    for (String string : strings) {
+      string = string.trim();
+      if (string.length() == 0) continue;
+      myUsersSearchContext.add(string.toLowerCase());
+      final String regexp = StringUtil.escapeToRegexp(string);
+      userFilters.add(new ChangesFilter.Committer(regexp));
+      userFilters.add(new ChangesFilter.Author(regexp));
+    }
+    return userFilters;
   }
 
   interface Colors {
@@ -1932,18 +2012,16 @@ public class GitLogUI implements Disposable {
     private static final String HIDE_GRAPH_DESCRIPTION = "Hide commit graph";
 
     private boolean myIsSelected;
-    private final GitLogSettings myInstance;
 
     public MyShowTreeAction() {
       super(SHOW_GRAPH_TITLE, SHOW_GRAPH_DESCRIPTION, Git4ideaIcons.Branch);
-      myInstance = GitLogSettings.getInstance(myProject);
-      myIsSelected = myInstance.isShowTree();
+      myIsSelected = mySettings.isShowTree();
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!myThereAreFilters);
+      e.getPresentation().setEnabled(!myThereIsDisordering);
       e.getPresentation().setText(isSelected(e) ? HIDE_GRAPH_TITLE : SHOW_GRAPH_TITLE);
       e.getPresentation().setDescription(isSelected(e) ? HIDE_GRAPH_DESCRIPTION : SHOW_GRAPH_DESCRIPTION);
     }
@@ -1956,8 +2034,8 @@ public class GitLogUI implements Disposable {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myIsSelected = state;
-      myInstance.setShowTree(state);
-      if (! myThereAreFilters) {
+      mySettings.setShowTree(state);
+      if (!myThereIsDisordering) {
         myEqualToHeadr.getParent().setVisible(state);
       }
     }
@@ -1970,7 +2048,6 @@ public class GitLogUI implements Disposable {
     private JLabel myLabel;
     private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
     private final DumbAwareAction myDateOrder;
-    private final GitLogSettings mySettings;
     private final DumbAwareAction myTopoOrder;
     private final Icon myMarkIcon;
 
@@ -2003,7 +2080,6 @@ public class GitLogUI implements Disposable {
         }
       };
 
-      mySettings = GitLogSettings.getInstance(myProject);
       myDateOrder = new DumbAwareAction("Date Order") {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -2120,7 +2196,7 @@ public class GitLogUI implements Disposable {
               }
 
               if (myProjectScope) {
-                GitLogSettings.getInstance(myProject).setActiveRoots(paths);
+                mySettings.setActiveRoots(paths);
               }
 
               myTableModel.setActiveRoots(set);
@@ -2172,12 +2248,8 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final int[] selectedRows = myJBTable.getSelectedRows();
-      if (selectedRows.length != 1) {
-        return;
-      }
-      final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
-      if (commitAt.holdsDecoration()) {
+      final CommitI commitAt = getCommitIfOneRealSelected();
+      if (commitAt == null) {
         return;
       }
       final VirtualFile root = commitAt.selectRepository(myRootsUnderVcs);
@@ -2188,12 +2260,24 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void update(AnActionEvent e) {
-      if (myThereAreFilters) {
+      if (myThereIsDisordering) {
         e.getPresentation().setEnabled(false);
         return;
       }
       weNeedOneCommitSelected(e);
     }
+  }
+
+  private CommitI getCommitIfOneRealSelected() {
+    final int[] selectedRows = myJBTable.getSelectedRows();
+    if (selectedRows.length != 1) {
+      return null;
+    }
+    final CommitI commitAt = myTableModel.getCommitAt(selectedRows[0]);
+    if (commitAt.holdsDecoration()) {
+      return null;
+    }
+    return commitAt;
   }
 
   private void weNeedOneCommitSelected(AnActionEvent e) {
@@ -2238,7 +2322,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        if (myThereAreFilters) {
+        if (myThereIsDisordering) {
           e.getPresentation().setEnabled(false);
           return;
         }
@@ -2258,7 +2342,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        if (myThereAreFilters) {
+        if (myThereIsDisordering) {
           e.getPresentation().setEnabled(false);
           return;
         }
@@ -2288,7 +2372,7 @@ public class GitLogUI implements Disposable {
 
       @Override
       public void update(AnActionEvent e) {
-        if (myThereAreFilters) {
+        if (myThereIsDisordering) {
           e.getPresentation().setEnabled(false);
           return;
         }
@@ -2348,7 +2432,7 @@ public class GitLogUI implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(! myThereAreFilters);
+      e.getPresentation().setEnabled(!myThereIsDisordering);
     }
 
     @NotNull
