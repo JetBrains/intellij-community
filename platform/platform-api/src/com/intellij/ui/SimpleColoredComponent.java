@@ -594,7 +594,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     UIUtil.applyRenderingHints(g);
     applyAdditionalHints(g);
     final Font ownFont = getFont();
-    offset += computeTextAlignShift(ownFont);
+    if (ownFont != null) {
+      offset += computeTextAlignShift(ownFont);
+    }
     int baseSize = ownFont != null ? ownFont.getSize() : g.getFont().getSize();
     boolean wasSmaller = false;
     for (int i = 0; i < myFragments.size(); i++) {
