@@ -225,6 +225,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       return myResult == null;
     }
 
+    @Nullable
     public Set<Define> getResult() {
       return myResult != null ? Collections.singleton(myResult) : null;
     }
