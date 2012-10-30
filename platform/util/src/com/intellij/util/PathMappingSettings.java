@@ -18,8 +18,10 @@ package com.intellij.util;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,7 @@ public class PathMappingSettings implements Cloneable {
     myPathMappings = create(pathMappings);
   }
 
-  private List<PathMapping> create(List<PathMapping> mappings) {
+  private static List<PathMapping> create(List<PathMapping> mappings) {
     List<PathMapping> result = ContainerUtil.newArrayList();
     for (PathMapping m : mappings) {
       if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
@@ -105,11 +107,6 @@ public class PathMappingSettings implements Cloneable {
     return FileUtil.toSystemIndependentName(s);
   }
 
-  private static String normReplace(String s) {
-    return FileUtil.toSystemIndependentName(s);
-  }
-
-
   public boolean isUseMapping() {
     return myPathMappings.size() > 0;
   }
@@ -134,6 +131,27 @@ public class PathMappingSettings implements Cloneable {
 
   public static boolean isEmpty(String localRoot, String remoteRoot) {
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
+  }
+
+  @Nullable
+  public static PathMappingSettings readExternal(@Nullable final Element element) {
+    if (element == null) {
+      return null;
+    }
+
+    final Element settingsElement = element.getChild(PathMappingSettings.class.getSimpleName());
+    if (settingsElement == null) {
+      return null;
+    }
+
+    return XmlSerializer.deserialize(settingsElement, PathMappingSettings.class);
+  }
+
+  public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
+    if (element == null || mappings == null) {
+      return;
+    }
+    element.addContent(XmlSerializer.serialize(mappings));
   }
 
   @Tag("mapping")
