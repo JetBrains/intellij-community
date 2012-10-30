@@ -113,10 +113,12 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
   }
 
   @Nullable
-  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {
+  private RunnerAndConfigurationSettings createConfiguration(@Nullable final PsiClass aClass) {
+    if (aClass == null) return null;
+
     final Project project = aClass.getProject();
     RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", getConfigurationFactory());
-    final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration) settings.getConfiguration();
+    final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
     final PsiFile file = aClass.getContainingFile().getOriginalFile();
     final PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return null;
