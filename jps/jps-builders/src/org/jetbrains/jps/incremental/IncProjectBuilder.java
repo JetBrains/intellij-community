@@ -525,17 +525,12 @@ public class IncProjectBuilder {
       return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)));
     }
 
-    try {
-      List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
-      for (TargetBuilder<?, ?> builder : builders) {
-        BuildOperations.buildTarget(target, context, builder);
-        updateDoneFraction(context, 1.0f / builders.size());
-      }
-      return true;
+    final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
+    for (TargetBuilder<?, ?> builder : builders) {
+      BuildOperations.buildTarget(target, context, builder);
+      updateDoneFraction(context, 1.0f / builders.size());
     }
-    catch (IOException e) {
-      throw new ProjectBuildException(e);
-    }
+    return true;
   }
 
   private void updateDoneFraction(CompileContext context, final float delta) {
