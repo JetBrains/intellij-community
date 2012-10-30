@@ -597,4 +597,13 @@ public class AndroidCommonUtils {
       writer.close();
     }
   }
+
+  public static boolean hasXmxParam(@NotNull List<String> parameters) {
+    for (String param : parameters) {
+      if (param.startsWith("-Xmx")) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

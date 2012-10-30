@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.android.compiler.tools.AndroidDxRunner;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.builder.AndroidBuildTarget;
+import org.jetbrains.jps.android.model.JpsAndroidDexCompilerConfiguration;
+import org.jetbrains.jps.android.model.JpsAndroidExtensionService;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -322,12 +325,28 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
         new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.find.file", dxJarPath)));
       return false;
     }
-
     final String outFilePath = outputDir + File.separatorChar + AndroidCommonUtils.CLASSES_FILE_NAME;
 
     final List<String> programParamList = new ArrayList<String>();
     programParamList.add(dxJarPath);
     programParamList.add(outFilePath);
+
+    final JpsAndroidDexCompilerConfiguration configuration =
+      JpsAndroidExtensionService.getInstance().getDexCompilerConfiguration(module.getProject());
+    final List<String> vmOptions;
+
+    if (configuration != null) {
+      vmOptions = new ArrayList<String>();
+      vmOptions.addAll(ParametersListUtil.parse(configuration.getVmOptions()));
+
+      if (!AndroidCommonUtils.hasXmxParam(vmOptions)) {
+        vmOptions.add("-Xmx" + configuration.getMaxHeapSize() + "M");
+      }
+      programParamList.addAll(Arrays.asList("--optimize", Boolean.toString(configuration.isOptimize())));
+    }
+    else {
+      vmOptions = Collections.singletonList("-Xmx1024M");
+    }
     programParamList.addAll(Arrays.asList(compileTargets));
     programParamList.add("--exclude");
 
@@ -350,12 +369,9 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       return false;
     }
 
-    // todo: pass additional vm params and max heap size from settings
-
-    final List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()),
-                                                                               AndroidDxRunner.class.getName(),
-                                                                               Collections.<String>emptyList(), classPath,
-                                                                               Arrays.asList("-Xmx1024M"), programParamList);
+    final List<String> commandLine = ExternalProcessUtil
+      .buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()), AndroidDxRunner.class.getName(),
+                            Collections.<String>emptyList(), classPath, vmOptions, programParamList);
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 

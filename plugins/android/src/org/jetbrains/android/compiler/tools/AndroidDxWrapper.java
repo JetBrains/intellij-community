@@ -93,7 +93,7 @@ public class AndroidDxWrapper {
     if (additionalVmParams.length() > 0) {
       vmParamList.addParametersString(additionalVmParams);
     }
-    if (!hasXmxParam(vmParamList)) {
+    if (!AndroidCommonUtils.hasXmxParam(vmParamList.getParameters())) {
       vmParamList.add("-Xmx" + maxHeapSize + "M");
     }
     final PathsList classPath = parameters.getClassPath();
@@ -120,14 +120,5 @@ public class AndroidDxWrapper {
     AndroidCommonUtils.handleDexCompilationResult(process, outFile, messages);
 
     return messages;
-  }
-
-  private static boolean hasXmxParam(ParametersList paramList) {
-    for (String param : paramList.getParameters()) {
-      if (param.startsWith("-Xmx")) {
-        return true;
-      }
-    }
-    return false;
   }
 }
