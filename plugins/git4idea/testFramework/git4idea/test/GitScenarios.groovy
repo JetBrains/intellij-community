@@ -60,21 +60,25 @@ class GitScenarios {
    * Make an unmerged file in the repository.
    */
   def unmergedFiles(GitRepository repository) {
+    conflict(repository, BRANCH_FOR_UNMERGED_CONFLICTS, "unmerged.txt")
+    git("merge $BRANCH_FOR_UNMERGED_CONFLICTS")
+    git("branch -D $BRANCH_FOR_UNMERGED_CONFLICTS")
+  }
+
+  def conflict(GitRepository repository, String branch, String file="conflict.txt") {
     cd repository
-    touch("unmerged.txt", "initial content")
-    git("add unmerged.txt")
+
+    touch(file, "initial content")
+    git("add $file")
     git("commit -m initial_content")
 
-    git("checkout -b $BRANCH_FOR_UNMERGED_CONFLICTS")
-    echo("unmerged.txt", "branch content")
+    git("checkout -b $branch")
+    echo(file, "branch content")
     git("commit -am branch_content")
 
     git("checkout master")
-    echo("unmerged.txt", "master content")
+    echo(file, "master content")
     git("commit -am master_content")
-
-    git("merge $BRANCH_FOR_UNMERGED_CONFLICTS")
-    git("branch -D $BRANCH_FOR_UNMERGED_CONFLICTS")
   }
 
   /**
