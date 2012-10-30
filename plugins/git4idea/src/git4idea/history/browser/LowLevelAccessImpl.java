@@ -26,10 +26,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
-import git4idea.GitBranch;
-import git4idea.GitTag;
-import git4idea.GitUtil;
-import git4idea.GitPlatformFacade;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.GitCommand;
@@ -122,7 +119,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
       repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject);
-      repository.update(GitRepository.TrackedTopic.BRANCHES);
+      repository.update();
       repository.getBranches();
     }
     GitBranchesCollection branches = repository.getBranches();
@@ -209,7 +206,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
    * List branches containing a commit. Specify null if no commit filtering is needed.
    */
   @NotNull
-  private static Collection<GitBranch> list(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted, boolean remoteWanted,
+  private static Collection<? extends GitBranch> list(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted, boolean remoteWanted,
                                            @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
     final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
@@ -236,7 +233,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         head = FileUtil.loadFile(new File(root.getPath(), GitRepositoryFiles.GIT_HEAD), GitUtil.UTF8_ENCODING).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ?
-               Collections.singletonList(new GitBranch(head.substring(prefix.length()), GitBranch.DUMMY_HASH, false)) :
+               Collections.singletonList(new GitLocalBranch(head.substring(prefix.length()), GitBranch.DUMMY_HASH)) :
                null;
       } catch (IOException e) {
         LOG.info(e);
@@ -258,7 +255,6 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     // origin/HEAD -> origin/master
     final String[] split = output.split("\n");
     for (String b : split) {
-      boolean current = b.charAt(0) == '*';
       b = b.substring(2).trim();
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
@@ -278,8 +274,18 @@ public class LowLevelAccessImpl implements LowLevelAccess {
           continue;
         }
       }
-      final GitBranch branch = new GitBranch(b, GitBranch.DUMMY_HASH, isRemote);
-      if ((isRemote && remoteWanted) || (!isRemote && localWanted)) {
+      GitBranch branch = null;
+      if (isRemote) {
+        GitRepository repository = GitUtil.getRepositoryForRootOrLogError(project, root);
+        if (repository != null) {
+          branch = GitBranchUtil.parseRemoteBranch(b, GitBranch.DUMMY_HASH, repository.getRemotes());
+        }
+      }
+      else {
+        branch = new GitLocalBranch(b, GitBranch.DUMMY_HASH);
+      }
+
+      if (branch != null && ((isRemote && remoteWanted) || (!isRemote && localWanted))) {
         branches.add(branch);
       }
     }

@@ -50,7 +50,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       panel.setBackground(bg);
       SimpleTextAttributes attr = getAttributes(sel, task.isClosed());
 
-      c.setIcon(isLocalTask && isOld ? IconLoader.getTransparentIcon(task.getIcon(), 0.5f) : task.getIcon());
+      c.setIcon(isLocalTask && isOld && task.getIcon() != null ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
       SpeedSearchUtil.appendColoredFragmentForMatcher(TaskUtil.getTrimmedSummary(task), c, attr, myMatcher, bg, sel);
       panel.add(c, BorderLayout.CENTER);
     }

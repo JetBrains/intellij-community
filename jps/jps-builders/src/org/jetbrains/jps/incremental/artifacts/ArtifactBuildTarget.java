@@ -3,12 +3,11 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -22,6 +21,7 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
     JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), new Processor<JpsPackagingElement>() {
       @Override
@@ -64,6 +64,16 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
         return true;
       }
     });
+    if (!dependencies.isEmpty()) {
+      final List<BuildTarget<?>> additional = new SmartList<BuildTarget<?>>();
+      for (BuildTarget<?> dependency : dependencies) {
+        if (dependency instanceof ModuleBasedTarget<?>) {
+          final ModuleBasedTarget target = (ModuleBasedTarget)dependency;
+          additional.addAll(targetRegistry.getModuleBasedTargets(target.getModule(), target.isTests()? BuildTargetRegistry.ModuleTargetSelector.TEST : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION));
+        }
+      }
+      dependencies.addAll(additional);
+    }
     return dependencies;
   }
 
@@ -81,7 +91,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
     out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
     for (ArtifactRootDescriptor descriptor : buildRootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out);
@@ -114,10 +124,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
     return "Artifact '" + myArtifact.getName() + "'";
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public File getOutputDir(BuildDataPaths paths) {
+  public Collection<File> getOutputDirs(CompileContext ccontext) {
     String outputPath = myArtifact.getOutputPath();
-    return !StringUtil.isEmpty(outputPath) ? new File(FileUtil.toSystemDependentName(outputPath)) : null;
+    return outputPath != null && !StringUtil.isEmpty(outputPath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputPath))) : Collections.<File>emptyList();
   }
 }

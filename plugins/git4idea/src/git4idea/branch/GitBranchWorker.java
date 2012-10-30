@@ -168,7 +168,7 @@ final class GitBranchWorker {
 
   private static void updateInfo(@NotNull Collection<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
-      repository.update(GitRepository.TrackedTopic.ALL);
+      repository.update();
     }
   }
 

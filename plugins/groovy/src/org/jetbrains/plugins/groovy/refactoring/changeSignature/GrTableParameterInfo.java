@@ -49,7 +49,7 @@ public class GrTableParameterInfo {
     else {
       myType = factory.createTypeCodeFragment("", parameter, true, JavaCodeFragmentFactory.ALLOW_VOID | JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     }
-    final GrExpression defaultInitializer = parameter.getDefaultInitializer();
+    final GrExpression defaultInitializer = parameter.getInitializerGroovy();
     if (defaultInitializer != null) {
       myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer.getText());
     }

@@ -99,7 +99,8 @@ public class AndroidCommonUtils {
   @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
   @NonNls public static final String PROGUARD_CFG_OUTPUT_FILE_NAME = "proguard.txt";
 
-  @NonNls public static final String PROJECT_BUILD_TARGET_TYPE_ID = "android-project";
+  @NonNls public static final String DEX_BUILD_TARGET_TYPE_ID = "android-dex";
+  @NonNls public static final String PACKAGING_BUILD_TARGET_TYPE_ID = "android-packaging";
 
   private AndroidCommonUtils() {
   }
@@ -457,7 +458,7 @@ public class AndroidCommonUtils {
           revisionNumber = Integer.parseInt(revision);
         }
         catch (NumberFormatException e) {
-          LOG.info(e);
+          LOG.debug(e);
         }
       }
     }
@@ -595,5 +596,14 @@ public class AndroidCommonUtils {
     finally {
       writer.close();
     }
+  }
+
+  public static boolean hasXmxParam(@NotNull List<String> parameters) {
+    for (String param : parameters) {
+      if (param.startsWith("-Xmx")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

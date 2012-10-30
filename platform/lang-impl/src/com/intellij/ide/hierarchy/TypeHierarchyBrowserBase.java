@@ -57,11 +57,12 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected void setHierarchyBase(PsiElement element) {
+  protected void setHierarchyBase(@NotNull PsiElement element) {
     super.setHierarchyBase(element);
     myIsInterface = isInterface(element);
   }
 
+  @Override
   protected void prependActions(final DefaultActionGroup actionGroup) {
     actionGroup.add(new ViewClassHierarchyAction());
     actionGroup.add(new ViewSupertypesHierarchyAction());
@@ -69,16 +70,19 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     actionGroup.add(new AlphaSortAction());
   }
 
+  @Override
   @NotNull
   protected String getBrowserDataKey() {
     return DATA_KEY.getName();
   }
 
+  @Override
   @NotNull
   protected String getActionPlace() {
     return ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR;
   }
 
+  @Override
   public final Object getData(final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
@@ -86,23 +90,26 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     return super.getData(dataId);
   }
 
+  @Override
   @NotNull
   protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.type.prev.occurence.name");
   }
 
+  @Override
   @NotNull
   protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.type.next.occurence.name");
   }
 
   private final class MyDeleteProvider implements DeleteProvider {
+    @Override
     public final void deleteElement(@NotNull final DataContext dataContext) {
       final PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
       try {
-        final PsiElement[] elements = new PsiElement[]{aClass};
+        final PsiElement[] elements = {aClass};
         DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
@@ -110,12 +117,13 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       }
     }
 
+    @Override
     public final boolean canDeleteElement(@NotNull final DataContext dataContext) {
       final PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) {
         return false;
       }
-      final PsiElement[] elements = new PsiElement[]{aClass};
+      final PsiElement[] elements = {aClass};
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
   }

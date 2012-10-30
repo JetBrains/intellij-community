@@ -47,7 +47,7 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
     final GrParameter[] parameters = myMethod.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];
-      GrExpression initializer = parameter.getDefaultInitializer();
+      GrExpression initializer = parameter.getInitializerGroovy();
       String initializerText = initializer != null ? initializer.getText() : null;
       GrParameterInfo info = new GrParameterInfo(parameter.getName(), "", initializerText, parameter.getType(), i, false);
       result.add(info);

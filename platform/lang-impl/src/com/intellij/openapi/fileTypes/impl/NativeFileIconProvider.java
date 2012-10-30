@@ -46,7 +46,7 @@ public class NativeFileIconProvider implements FileIconProvider {
 
   private static final Ext CLOSED_DIR = new Ext(null, 0);
 
-  public Icon getIcon(VirtualFile file, final int flags, @Nullable Project project) {
+  public Icon getIcon(@NotNull VirtualFile file, final int flags, @Nullable Project project) {
     if (!isNativeFileType(file)) return null;
 
     final Ext ext = getExtension(file, flags);

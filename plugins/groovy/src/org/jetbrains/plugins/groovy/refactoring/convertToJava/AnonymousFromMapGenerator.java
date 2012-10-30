@@ -32,8 +32,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
 
 /**
  * @author Maxim.Medvedev
@@ -56,7 +57,7 @@ public class AnonymousFromMapGenerator {
       substitutor = PsiSubstitutor.EMPTY;
     }
     builder.append("new ");
-    writeType(builder, type, operand);
+    writeTypeForNew(builder, type, operand);
     builder.append("() {\n");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(operand.getProject());
@@ -83,7 +84,7 @@ public class AnonymousFromMapGenerator {
 
         if (param < allParameters.length) {
           final GrParameter opt = actual.remove(param);
-          args[param] = opt.getDefaultInitializer();
+          args[param] = opt.getInitializerGroovy();
         }
 
         final GrParameter[] parameters = actual.toArray(new GrParameter[actual.size()]);

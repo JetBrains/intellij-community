@@ -50,7 +50,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   @Nullable
-  public SettingsStep createSettingsStep(WizardContext context, ModuleBuilder moduleBuilder) {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder) {
     return null;
   }
 

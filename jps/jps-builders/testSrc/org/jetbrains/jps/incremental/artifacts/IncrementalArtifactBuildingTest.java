@@ -85,6 +85,19 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  public void testAddFileToArchive() {
+    String file = createFile("dir/a.txt");
+    JpsArtifact a = addArtifact("a", archive("a.jar").parentDirCopy(file));
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").file("a.txt"));
+
+    createFile("dir/b.txt");
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").file("a.txt").file("b.txt"));
+    assertCopied("dir/a.txt", "dir/b.txt");
+    buildAllAndAssertUpToDate();
+  }
+
   public void testOneFileInTwoArtifacts() {
     final String file = createFile("file.txt");
     final JpsArtifact a1 = addArtifact("a1", root().dir("dir").fileCopy(file));

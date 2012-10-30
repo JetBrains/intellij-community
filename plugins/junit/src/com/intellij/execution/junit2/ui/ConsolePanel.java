@@ -160,7 +160,7 @@ public class ConsolePanel extends TestResultsPanel {
       myModel = new DefaultTreeModel(myRootNode);
       myTree.setModel(myModel);
       myStartingLabel = new SimpleColoredComponent();
-
+      myTree.setPaintBusy(true);
       //myStartingLabel.setBackground(UIManager.getColor("Tree.background"));
       myTree.setCellRenderer(new TreeCellRenderer() {
         public Component getTreeCellRendererComponent(final JTree tree, final Object value,
@@ -183,6 +183,7 @@ public class ConsolePanel extends TestResultsPanel {
 
     private void doStop() {
       myStopped = true;
+      myTree.setPaintBusy(false);
       myModel.nodeChanged(myRootNode);
       myAlarm.cancelAllRequests();
       if (myProcess != null) myProcess.removeProcessListener(myProcessListener);

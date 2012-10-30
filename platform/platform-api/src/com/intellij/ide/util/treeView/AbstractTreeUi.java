@@ -195,13 +195,6 @@ public class AbstractTreeUi {
 
   private final Set<Runnable> myUserRunnables = new HashSet<Runnable>();
 
-  private final Alarm myMaybeReady = new Alarm();
-  private final Runnable myMaybeReadyRunnable = new Runnable() {
-    @Override
-    public void run() {
-      maybeReady();
-    }
-  };
   private UiActivityMonitor myActivityMonitor;
   @NonNls private UiActivity myActivityId;
 
@@ -1041,19 +1034,6 @@ public class AbstractTreeUi {
 
   public void doUpdateFromRoot() {
     updateSubtree(getRootNode(), false);
-  }
-
-  @NotNull
-  public ActionCallback doUpdateFromRootCB() {
-    final ActionCallback cb = new ActionCallback();
-    getUpdater().runAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        cb.setDone();
-      }
-    });
-    updateSubtree(getRootNode(), false);
-    return cb;
   }
 
   public final void updateSubtree(@NotNull DefaultMutableTreeNode node, boolean canSmartExpand) {
@@ -2462,18 +2442,23 @@ public class AbstractTreeUi {
   }
 
   private void setCancelRequested(boolean requested) {
+    boolean acquired = false;
     try {
       if (isUnitTestingMode()) {
         acquireLock();
-      } else {
-        attemptLock();
+        acquired = true;
+      }
+      else {
+        acquired = attemptLock();
       }
       myCancelRequest.set(requested);
     }
     catch (InterruptedException ignored) {
     }
     finally {
-      releaseLock();
+      if (acquired) {
+        releaseLock();
+      }
     }
   }
 

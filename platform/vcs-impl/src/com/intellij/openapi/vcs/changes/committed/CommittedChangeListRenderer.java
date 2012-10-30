@@ -57,13 +57,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   }
 
   public static Pair<String, Boolean> getDescriptionOfChangeList(final String text) {
-    String description = text;
-    int pos = description.indexOf("\n");
-    if (pos >= 0) {
-      description = description.substring(0, pos).trim();
-      return new Pair<String, Boolean>(description, Boolean.TRUE);
-    }
-    return new Pair<String, Boolean>(description, Boolean.FALSE);
+    return new Pair<String, Boolean>(text.replaceAll("\n", " // "), text.contains("\n"));
   }
 
   public static String truncateDescription(final String initDescription, final FontMetrics fontMetrics, int maxWidth) {
@@ -142,14 +136,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
     if (description.isEmpty() && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      appendAlign(descMaxWidth);
+      appendFixedTextFragmentWidth(descMaxWidth);
     }
     else if (descMaxWidth < 0) {
       myRenderer.appendTextWithLinks(description);
     }
     else if (descWidth < descMaxWidth && !truncated) {
       myRenderer.appendTextWithLinks(description);
-      appendAlign(descMaxWidth);
+      appendFixedTextFragmentWidth(descMaxWidth);
     }
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
@@ -164,7 +158,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
         append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       }
       // align value is for the latest added piece
-      appendAlign(descMaxWidth);
+      appendFixedTextFragmentWidth(descMaxWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

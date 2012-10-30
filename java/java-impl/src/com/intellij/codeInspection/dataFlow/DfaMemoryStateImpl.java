@@ -267,7 +267,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     flushVariable(var);
-    if (value instanceof DfaUnknownValue) return;
+    if (value instanceof DfaUnknownValue) {
+      getVariableState(var).setNullable(false);
+      return;
+    }
 
     getVariableState(var).setValue(value);
     if (value instanceof DfaNotNullValue) {
@@ -277,6 +280,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(compareToNull(var, true));
     }
     else if (value instanceof DfaTypeValue) {
+      getVariableState(var).setNullable(((DfaTypeValue)value).isNullable());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       applyInstanceofOrNull(dfaInstanceof);
     }
@@ -608,15 +612,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    if (dfaRight == myFactory.getConstFactory().getNull() && dfaLeft instanceof DfaVariableValue) {
-      final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
-      if (varState.isNotNull()) return isNegated;
-      varState.setNullable(true);
+    if (isNull(dfaRight) && compareVariableWithNull(dfaLeft) || isNull(dfaLeft) && compareVariableWithNull(dfaRight)) {
+      return isNegated;
     }
 
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
     return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+  }
+
+  private boolean compareVariableWithNull(DfaValue val) {
+    if (val instanceof DfaVariableValue) {
+      DfaVariableValue dfaVar = (DfaVariableValue)val;
+      if (isNotNull(dfaVar)) {
+        return true;
+      }
+      getVariableState(dfaVar).setNullable(true);
+    }
+    return false;
   }
 
   private boolean applyEquivalenceRelation(DfaRelationValue dfaRelation, DfaValue dfaLeft, DfaValue dfaRight) {
@@ -745,11 +758,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {
-      final PsiVariable psiVariable = dfaVar.getPsiVariable();
-      state = createVariableState(psiVariable);
+      state = createVariableState(dfaVar);
       myVariableStates.put(dfaVar, state);
-      if (psiVariable != null) {
-        state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
+      PsiType type = dfaVar.getVariableType();
+      if (type != null) {
+        state.setInstanceofValue(myFactory.getTypeFactory().create(type));
       }
     }
 
@@ -760,8 +773,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myVariableStates;
   }
 
-  protected DfaVariableState createVariableState(final PsiVariable psiVariable) {
-    return new DfaVariableState(psiVariable);
+  protected DfaVariableState createVariableState(final DfaVariableValue var) {
+    return new DfaVariableState(var);
   }
 
   public void flushFields(DataFlowRunner runner) {

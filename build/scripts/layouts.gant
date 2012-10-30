@@ -238,8 +238,7 @@ public def layoutCommunityPlugins(String home) {
       }
 
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "maven-dependency-tree-*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "nexus-indexer-*.jar")}
+        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "*.jar")}
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/boot")
       }
@@ -398,6 +397,9 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("eclipse") {
       jar("eclipse-jps-plugin.jar") {
         module("eclipse-jps-plugin")
+      }
+      jar("common-eclipse-util.jar") {
+        module("common-eclipse-util")
       }
     }
 
@@ -591,6 +593,7 @@ def layout_core_upsource(String home, String target) {
     jar("intellij-core-upsource.jar") {
       module("util-rt")
       module("util")
+      module("icons")
       module("core-api")
       module("core-impl")
       module("boot")

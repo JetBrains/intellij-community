@@ -1,0 +1,12 @@
+def x = 5
+print "abc${writer -> writer.append(x)}"
+-----
+0(1) element: null
+1(2) WRITE x
+2(3) READ print
+3(4) WRITE owner
+4(5) READ writer
+5(6) READ x
+6(7) ARGUMENT element: Reference expression
+7(8) element: Call expression MAYBE_RETURN
+8() element: null

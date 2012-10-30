@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.impl;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
@@ -31,6 +32,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
     JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsElementReference<?>>create("external reference"));
   private static final JpsElementCollectionRole<JpsRunConfiguration> RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsRunConfiguration>create("run configuration"));
   private final JpsLibraryCollection myLibraryCollection;
+  private String myName = "";
 
   public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
@@ -44,6 +46,20 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   public JpsProjectImpl(JpsProjectImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(original, model, eventDispatcher);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  @Override
+  public void setName(@NotNull String name) {
+    if (!Comparing.equal(myName, name)) {
+      myName = name;
+      fireElementChanged();
+    }
   }
 
   public void addExternalReference(@NotNull JpsElementReference<?> reference) {

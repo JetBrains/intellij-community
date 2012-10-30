@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.xml.dom;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.xml.SubTagList;
 import org.intellij.plugins.relaxNG.model.Pattern;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ import java.util.List;
  * User: sweinreuter
  * Date: 16.08.2007
  */
+@SuppressWarnings("UnusedDeclaration")
 public interface RngOpenPatterns extends RngDomElement, Pattern<XmlElement> {
   /**
    * Returns the list of element children.
@@ -34,7 +36,7 @@ public interface RngOpenPatterns extends RngDomElement, Pattern<XmlElement> {
    * @return the list of element children.
    */
   @NotNull
-  java.util.List<RngElement> getElements();
+  List<RngElement> getElements();
 
   /**
    * Adds new child to the list of element children.
@@ -79,6 +81,7 @@ public interface RngOpenPatterns extends RngDomElement, Pattern<XmlElement> {
    * @return the list of interleave children.
    */
   @NotNull
+  @SubTagList(value = "interleave")
   List<RngInterleave> getInterleaves();
 
   /**

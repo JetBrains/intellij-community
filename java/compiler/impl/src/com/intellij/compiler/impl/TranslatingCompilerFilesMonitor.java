@@ -1601,7 +1601,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
-      final Set<File> pathsToMark = notifyServer ? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : Collections.<File>emptySet();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
@@ -1616,9 +1615,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
-                  if (notifyServer) {
-                    pathsToMark.add(new File(file.getPath()));
-                  }
                   if (!projectSuspended && isCompilable(file)) {
                     loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
@@ -1647,6 +1643,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       });
       if (notifyServer) {
+        final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        processRecursively(file, false, new FileProcessor() {
+          @Override
+          public void execute(VirtualFile file) {
+            pathsToMark.add(new File(file.getPath()));
+          }
+        });
         notifyFilesChanged(pathsToMark);
       }
     }

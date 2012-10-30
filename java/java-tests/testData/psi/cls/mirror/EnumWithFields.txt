@@ -1,0 +1,18 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+public final enum EnumWithFields {
+    public static final E1, public static final E2;
+
+    boolean f1;
+    boolean f2;
+
+    public static pkg.EnumWithFields[] values() { /* compiled code */ }
+
+    public static pkg.EnumWithFields valueOf(java.lang.String s) { /* compiled code */ }
+
+    private EnumWithFields() { /* compiled code */ }
+}

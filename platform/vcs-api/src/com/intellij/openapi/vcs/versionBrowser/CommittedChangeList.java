@@ -45,4 +45,6 @@ public interface CommittedChangeList extends ChangeList {
    * @return true if this change list can be modified, for example, by reverting some of the changes.
    */
   boolean isModifiable();
+
+  void setDescription(final String newMessage);
 }

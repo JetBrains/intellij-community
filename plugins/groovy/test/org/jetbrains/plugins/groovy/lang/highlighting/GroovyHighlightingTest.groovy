@@ -79,7 +79,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   public void testAnonymousClassConstructor() {doTest();}
   public void testAnonymousClassAbstractMethod() {doTest();}
-  public void testAnonymousClassStaticMethod() {doTest();}
+  public void _testAnonymousClassStaticMethod() {doTest();}
   public void testAnonymousClassShoudImplementMethods() {doTest();}
   public void testAnonymousClassShouldImplementSubstitutedMethod() {doTest();}
 
@@ -893,6 +893,13 @@ def methodMissing(String methodName, args) {
     testHighlighting('''\
 enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> {
 }
+''')
+  }
+
+  void testVarInTupleDuplicate() {
+    testHighlighting('''\
+def (a, b)
+def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>)
 ''')
   }
 }

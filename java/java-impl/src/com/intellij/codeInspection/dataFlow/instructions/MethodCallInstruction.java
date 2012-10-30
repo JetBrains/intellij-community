@@ -42,7 +42,7 @@ public class MethodCallInstruction extends Instruction {
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
   @Nullable private DfaValue myPrecalculatedReturnValue;
-  public static enum MethodType {
+  public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
 

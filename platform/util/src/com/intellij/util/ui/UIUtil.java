@@ -164,7 +164,7 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private Insets empty = new Insets(0, 0, 0, 0);
+    private final Insets empty = new Insets(0, 0, 0, 0);
 
     @Override
     public Insets getBorderInsets(Component c) {
@@ -430,6 +430,10 @@ public class UIUtil {
       return new Color(Math.min(defColor.getRed() + 50, 255), Math.min(defColor.getGreen() + 50, 255), Math.min(defColor.getBlue() + 50, 255));
     }
     return defColor;
+  }
+
+  public static int getScrollBarWidth() {
+    return UIManager.getInt("ScrollBar.width");
   }
 
   public static Font getLabelFont() {
@@ -1746,7 +1750,7 @@ public class UIUtil {
   }
 
   public static Color getBorderColor() {
-    return BORDER_COLOR;
+    return isUnderDarcula() ? Gray._0.withAlpha(80) : BORDER_COLOR;
   }
 
   public static Font getTitledBorderFont() {
@@ -2448,8 +2452,6 @@ public class UIUtil {
   }
 
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component == null || insets == null) return;
-
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }

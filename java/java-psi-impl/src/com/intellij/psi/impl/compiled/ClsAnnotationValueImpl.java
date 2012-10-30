@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -32,16 +31,15 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationValueImpl");
-  public static final ClsAnnotationImpl[] EMPTY_ARRAY = new ClsAnnotationImpl[0];
+  private final ClsElementImpl myParent;
   private final ClsJavaCodeReferenceElementImpl myReferenceElement;
   private final ClsAnnotationParameterListImpl myParameterList;
-  private final ClsElementImpl myParent;
 
-  public ClsAnnotationValueImpl(ClsElementImpl parent) {
+  @SuppressWarnings("AbstractMethodCallInConstructor")
+  public ClsAnnotationValueImpl(@NotNull ClsElementImpl parent) {
+    myParent = parent;
     myReferenceElement = createReference();
     myParameterList = createParameterList();
-    myParent = parent;
   }
 
   protected abstract ClsAnnotationParameterListImpl createParameterList();
@@ -49,18 +47,18 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
   protected abstract ClsJavaCodeReferenceElementImpl createReference();
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append("@").append(myReferenceElement.getCanonicalText());
     myParameterList.appendMirrorText(indentLevel, buffer);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
-    PsiAnnotation mirror = (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(element);
-      ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
-      ((ClsElementImpl)getNameReferenceElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
+    PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirror(getNameReferenceElement(), mirror.getNameReferenceElement());
+    setMirror(getParameterList(), mirror.getParameterList());
   }
 
   @Override
@@ -91,9 +89,9 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
   }
 
   @Override
-  @Nullable public String getQualifiedName() {
-    if (myReferenceElement == null) return null;
-    return myReferenceElement.getCanonicalText();
+  @Nullable
+  public String getQualifiedName() {
+    return myReferenceElement != null ? myReferenceElement.getCanonicalText() : null;
   }
 
   @Override
@@ -113,7 +111,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
   }
 
   @Override
-  public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
+  public <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, T value) {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 

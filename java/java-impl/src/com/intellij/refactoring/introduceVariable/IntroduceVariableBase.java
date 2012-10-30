@@ -501,7 +501,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
 
     final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
-    if (originalType == null) {
+    if (originalType == null || LambdaUtil.notInferredType(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
       showErrorMessage(project, editor, message);
       return false;

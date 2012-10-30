@@ -99,23 +99,28 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
-  private List<PsiType> computePreciseCatchTypes(final PsiParameter parameter) {
+  private List<PsiType> computePreciseCatchTypes(@Nullable final PsiParameter parameter) {
+    if (parameter == null) {
+      return ContainerUtil.emptyList();
+    }
+
     final PsiType declaredType = parameter.getType();
 
-    // When the thrown expression is a ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
-    final LanguageLevel level = PsiUtil.getLanguageLevel(parameter);
-    if (level.isAtLeast(LanguageLevel.JDK_1_7)) {
-      if (isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
-        final PsiCodeBlock tryBlock = getTryStatement().getTryBlock();
-        if (tryBlock != null) {
-          // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
-          final List<PsiClassType> thrownTypes = ExceptionUtil.getThrownExceptions(tryBlock);
+    // When the thrown expression is an ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
+    if (PsiUtil.getLanguageLevel(parameter).isAtLeast(LanguageLevel.JDK_1_7) &&
+        isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+      final PsiCodeBlock tryBlock = getTryStatement().getTryBlock();
+      if (tryBlock != null) {
+        // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
+        final List<PsiClassType> thrownTypes = ExceptionUtil.getThrownExceptions(tryBlock);
+        if (!thrownTypes.isEmpty()) {
           // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
           //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
           final PsiParameter[] parameters = getTryStatement().getCatchBlockParameters();
           final List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
-            @Override public PsiType fun(final PsiClassType thrownType) {
-              for (int i = 0; i < parameters.length && parameters[i] != parameter && thrownTypes.size() > 0; i++) {
+            @Override
+            public PsiType fun(final PsiClassType thrownType) {
+              for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
                 final PsiType catchType = parameters[i].getType();
                 if (catchType.isAssignableFrom(thrownType)) return null;
               }
@@ -123,15 +128,17 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
             }
           });
           // ... and T is assignable to Ej ...
-          boolean passed = true;
-          for (PsiType type : uncaughtTypes) {
-            if (!declaredType.isAssignableFrom(type)) {
-              passed = false;
-              break;
+          if (!uncaughtTypes.isEmpty()) {
+            boolean passed = true;
+            for (PsiType type : uncaughtTypes) {
+              if (!declaredType.isAssignableFrom(type)) {
+                passed = false;
+                break;
+              }
             }
+            // ... the throw statement throws precisely the set of exception types T.
+            if (passed) return uncaughtTypes;
           }
-          // ... the throw statement throws precisely the set of exception types T.
-          if (passed) return uncaughtTypes;
         }
       }
     }
@@ -140,7 +147,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   // do not use control flow here to avoid dead loop
-  private static boolean isCatchParameterEffectivelyFinal(final PsiParameter parameter, final PsiCodeBlock catchBlock) {
+  private static boolean isCatchParameterEffectivelyFinal(final PsiParameter parameter, @Nullable final PsiCodeBlock catchBlock) {
     final boolean[] result = {true};
     if (catchBlock != null) {
       catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {

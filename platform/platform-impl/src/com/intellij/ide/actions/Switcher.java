@@ -402,6 +402,7 @@ public class Switcher extends AnAction implements DumbAware {
           final Component c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
+          myLabel.setFont(list.getFont());
           myLabel.setForeground(open ? fg : bg);
 
           myPanel.removeAll();

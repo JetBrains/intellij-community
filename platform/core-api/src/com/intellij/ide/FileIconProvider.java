@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,5 +32,5 @@ public interface FileIconProvider {
   ExtensionPointName<FileIconProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIconProvider");
 
   @Nullable
-  Icon getIcon(VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project);
+  Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project);
 }

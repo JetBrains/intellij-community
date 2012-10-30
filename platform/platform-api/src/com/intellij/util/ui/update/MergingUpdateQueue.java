@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
-
   public static final JComponent ANY_COMPONENT = new JComponent() {
   };
 
@@ -124,7 +123,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void cancelAllUpdates() {
     synchronized (myScheduledUpdates) {
-      for (Update each : myScheduledUpdates.keySet()) {
+      Update[] updates = myScheduledUpdates.keySet().toArray(new Update[myScheduledUpdates.size()]);
+      for (Update each : updates) {
         try {
           each.setRejected();
         }
@@ -400,7 +400,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates.size();
+    synchronized (myScheduledUpdates) {
+      return myName + " active=" + myActive + " scheduled=" + myScheduledUpdates.size();
+    }
   }
 
   @Nullable

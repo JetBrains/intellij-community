@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -25,24 +24,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
-  public static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeImpl");
   static final char VARIANCE_NONE = '\0';
   static final char VARIANCE_EXTENDS = '+';
   static final char VARIANCE_SUPER = '-';
   static final char VARIANCE_INVARIANT = '*';
-
-  private final PsiElement myParent;
-  private final String myTypeText;
-
-  private volatile ClsElementImpl myChild = null;
-  private boolean myChildSet = false;  //guarded by PsiLock
-  private volatile PsiType myCachedType;
-  private final char myVariance;
   @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
   @NonNls private static final String VARIANCE_SUPER_PREFIX = "? super ";
 
-  public ClsTypeElementImpl(PsiElement parent, String typeText, char variance) {
+  private final PsiElement myParent;
+  private final String myTypeText;
+  private volatile ClsElementImpl myChild = null;
+  private boolean myChildSet = false;
+  private volatile PsiType myCachedType;
+  private final char myVariance;
+
+  public ClsTypeElementImpl(@NotNull PsiElement parent, String typeText, char variance) {
     myParent = parent;
     myTypeText = typeText;
     myVariance = variance;
@@ -50,25 +46,24 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @Override
   @NotNull
-  public PsiElement[] getChildren(){
+  public PsiElement[] getChildren() {
     loadChild();
-    if (myChild == null) return PsiElement.EMPTY_ARRAY;
-    return new PsiElement[] {myChild};
+    return myChild != null ? new PsiElement[]{myChild} : PsiElement.EMPTY_ARRAY;
   }
 
   @Override
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return myParent;
   }
 
   @Override
-  public String getText(){
+  public String getText() {
     final String shortClassName = PsiNameHelper.getShortClassName(myTypeText);
     return decorateTypeText(shortClassName);
   }
 
   private String decorateTypeText(final String shortClassName) {
-    switch(myVariance) {
+    switch (myVariance) {
       case VARIANCE_NONE:
         return shortClassName;
       case VARIANCE_EXTENDS:
@@ -78,22 +73,22 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       case VARIANCE_INVARIANT:
         return "?";
       default:
-        LOG.assertTrue(false);
+        assert false : myVariance;
         return null;
     }
   }
 
-  public String getCanonicalText(){
+  public String getCanonicalText() {
     return decorateTypeText(myTypeText);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(decorateTypeText(myTypeText));
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element){
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
 
     loadChild();
@@ -172,7 +167,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
         case VARIANCE_SUPER:
           return PsiWildcardType.createSuper(getManager(), ((PsiTypeElement)myChild).getType());
         default:
-          LOG.assertTrue(false);
+          assert false : myVariance;
           return null;
       }
     }
@@ -200,7 +195,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       case VARIANCE_INVARIANT:
         return PsiWildcardType.createUnbounded(getManager());
       default:
-        LOG.assertTrue(false);
+        assert false : myVariance;
         return null;
     }
   }
@@ -231,7 +226,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
           myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance);
         }
         else {
-          LOG.assertTrue(false);
+          assert false : myTypeText;
         }
         myChildSet = true;
       }
@@ -239,17 +234,13 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  public void accept(@NotNull PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
     }
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public String toString() {
-    return "PsiTypeElement:" + getText();
   }
 
   @Override
@@ -273,5 +264,10 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
+  }
+
+  @Override
+  public String toString() {
+    return "PsiTypeElement:" + getText();
   }
 }

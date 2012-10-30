@@ -34,6 +34,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -64,7 +64,7 @@ public class ArrangementRuleTree {
   private static final int EMPTY_RULE_REMOVE_DELAY_MILLIS = 300;
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners            = new ArrayList<ArrangementRuleSelectionListener>();
-  @NotNull private final TreeSelectionModel                     mySelectionModel       = new MySelectionModel();
+  @NotNull private final MySelectionModel                       mySelectionModel       = new MySelectionModel();
   @NotNull private final MyModelChangeListener                  myModelChangeListener  = new MyModelChangeListener();
   @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher  = new MyModelNodesRefresher();
   @NotNull private final ArrangementRuleEditingModelBuilder     myModelBuilder         = new ArrangementRuleEditingModelBuilder();
@@ -85,6 +85,8 @@ public class ArrangementRuleTree {
 
   @Nullable private final MutableTreeNode myGroupingsRoot;
 
+  private int myRowUnderMouse = -1;
+
   private int     myCanvasWidth;
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
@@ -92,10 +94,11 @@ public class ArrangementRuleTree {
   public ArrangementRuleTree(@Nullable StdArrangementSettings settings,
                              @NotNull List<Set<ArrangementMatchCondition>> uiGroupingRules,
                              @NotNull ArrangementNodeDisplayManager displayManager,
+                             @NotNull ArrangementColorsProvider colorsProvider,
                              @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, new Runnable() {
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, new Runnable() {
       @Override
       public void run() {
         notifySelectionListeners(); 
@@ -121,7 +124,7 @@ public class ArrangementRuleTree {
       }
     };
     myTree = new Tree(myTreeModel) {
-      
+
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
         // Don't allow node collapse
@@ -183,6 +186,17 @@ public class ArrangementRuleTree {
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        onMouseEntered(e);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        onMouseExited();
+      }
+
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
@@ -221,6 +235,35 @@ public class ArrangementRuleTree {
       protected boolean shouldPaintExpandControl(TreePath path, int row, boolean isExpanded, boolean hasBeenExpanded, boolean isLeaf) {
         return false;
       }
+
+      @Override
+      protected void paintSelectedRows(Graphics g, JTree tr) {
+        if (myRowUnderMouse < 0) {
+          super.paintSelectedRows(g, tr);
+          return;
+        }
+        final Rectangle rect = tr.getVisibleRect();
+        final int firstVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y);
+        final int lastVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y + rect.height);
+
+        for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
+          Color color = null;
+          if (tr.getSelectionModel().isRowSelected(row) && wideSelectionCondition.value(row)) {
+            color = UIUtil.getTreeSelectionBackground(tr.hasFocus());
+          }
+          else if (row == myRowUnderMouse) {
+            color = UIUtil.getDecoratedRowColor();
+          }
+
+          if (color == null) {
+            color = myTree.getBackground();
+          }
+
+          final Rectangle bounds = tr.getRowBounds(row);
+          g.setColor(color);
+          g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
+        }
+      }
     });
   }
 
@@ -243,7 +286,7 @@ public class ArrangementRuleTree {
     if (component == null) {
       return;
     }
-    if (!component.onCanvasWidthChange(myCanvasWidth)) {
+    if (!component.onCanvasWidthChange(myCanvasWidth - myTree.getRowBounds(row).x)) {
       return;
     }
 
@@ -356,7 +399,7 @@ public class ArrangementRuleTree {
       if (component != null) {
         component.setSelected(selected);
         myTreeModel.nodeChanged(node);
-        repaintComponent(component);
+        repaintComponent(component, false);
       }
     }
   }
@@ -380,7 +423,7 @@ public class ArrangementRuleTree {
     for (StdArrangementMatchRule rule : rules) {
       Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair
         = myModelBuilder.build(rule, myTree, myMatchRulesRoot, null, myUiGroupingRules);
-      if (pair != null) {
+      if (pair != null && pair.first != null) {
         myModels.put(pair.first.getRow(), pair.first);
         pair.first.addListener(myModelChangeListener);
       }
@@ -501,23 +544,55 @@ public class ArrangementRuleTree {
   {
     ArrangementMatchNodeComponent result = myRenderers.get(row);
     if (result == null || !result.getMatchCondition().equals(condition)) {
-      myRenderers.put(row, result = myFactory.getComponent(condition, model));
+      myRenderers.put(row, result = myFactory.getComponent(condition, model, true));
       doUpdateCanvasWidth(row);
     }
     return result;
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
-    ArrangementMatchNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
+    int row = myTree.getRowForLocation(e.getX(), e.getY());
+    if (row < 0 || row != myRowUnderMouse) {
+      onMouseExited();
+    }
+    ArrangementMatchNodeComponent component = myRenderers.get(row);
     if (component == null) {
       return;
     }
+    
+    onMouseEntered(e);
     Rectangle changedScreenRectangle = component.handleMouseMove(e);
     if (changedScreenRectangle != null) {
-      repaintScreenBounds(changedScreenRectangle);
+      repaintScreenBounds(changedScreenRectangle, false);
     }
   }
-  
+
+  private void onMouseEntered(@NotNull MouseEvent e) {
+    int row = myTree.getRowForLocation(e.getX(), e.getY());
+    if (row < 0) {
+      return;
+    }
+    
+    myRowUnderMouse = row;
+    ArrangementMatchNodeComponent component = myRenderers.get(row);
+    if (component == null) {
+      return;
+    }
+    repaintComponent(component, true);
+  }
+
+  private void onMouseExited() {
+    if (myRowUnderMouse < 0) {
+      return;
+    }
+
+    ArrangementMatchNodeComponent component = myRenderers.get(myRowUnderMouse);
+    myRowUnderMouse = -1;
+    if (component != null) {
+      repaintComponent(component, true);
+    }
+  }
+
   private void onMouseClicked(@NotNull MouseEvent e) {
     ArrangementMatchNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
     if (component != null) {
@@ -540,17 +615,23 @@ public class ArrangementRuleTree {
     return myRenderers.get(row);
   }
 
-  private void repaintComponent(@NotNull ArrangementMatchNodeComponent component) {
+  private void repaintComponent(@NotNull ArrangementMatchNodeComponent component, boolean fromLeftEdge) {
     Rectangle bounds = component.getScreenBounds();
     if (bounds != null) {
-      repaintScreenBounds(bounds);
+      repaintScreenBounds(bounds, fromLeftEdge);
     }
   }
 
-  private void repaintScreenBounds(@NotNull Rectangle bounds) {
+  private void repaintScreenBounds(@NotNull Rectangle bounds, boolean fromLeftEdge) {
     Point location = bounds.getLocation();
     SwingUtilities.convertPointFromScreen(location, myTree);
-    myTree.repaint(location.x, location.y, bounds.width, bounds.height);
+    int x = location.x;
+    int width = bounds.width;
+    if (fromLeftEdge) {
+      x = 0;
+      width += location.x;
+    }
+    myTree.repaint(x, location.y, width, bounds.height);
   }
 
   private void notifySelectionListeners() {
@@ -618,9 +699,10 @@ public class ArrangementRuleTree {
       @Override
       public boolean execute(int oldRow, int newRow) {
         refreshTreeNode(oldRow);
-        refreshTreeNode(newRow); 
+        refreshTreeNode(newRow);
         return true;
       }
+
       private void refreshTreeNode(int row) {
         TreePath path = myTree.getPathForRow(row);
         if (path == null) {
@@ -659,6 +741,8 @@ public class ArrangementRuleTree {
       ArrangementRuleEditingModel.EMPTY_RULE, myTree, myMatchRulesRoot, anchor, myUiGroupingRules
     );
     assert pair != null;
+    assert pair.first != null;
+    assert pair.second != null;
     processRowChanges(pair.second);
     myModels.put(pair.first.getRow(), pair.first);
     pair.first.addListener(myModelChangeListener);
@@ -699,7 +783,7 @@ public class ArrangementRuleTree {
       }
 
       if (row < 0) {
-        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null);
+        ArrangementMatchNodeComponent component = myFactory.getComponent(node, null, true);
         doUpdateCanvasWidth(row);
         return component.getUiComponent();
       }
@@ -775,6 +859,19 @@ public class ArrangementRuleTree {
       }
       
       notifySelectionListeners();
+    }
+
+    public boolean isRowSelected(int row) {
+      int[] rows = getSelectionRows();
+      if (rows == null) {
+        return false;
+      }
+      for (int i : rows) {
+        if (i == row) {
+          return true;
+        }
+      }
+      return false;
     }
   }
   

@@ -17,10 +17,10 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +37,6 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   @NotNull private final C myConfiguration;
   private final Facet myUnderlyingFacet;
   private String myName;
-  private boolean myImplicit;
   private boolean isDisposed;
 
   public Facet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final C configuration, Facet underlyingFacet) {

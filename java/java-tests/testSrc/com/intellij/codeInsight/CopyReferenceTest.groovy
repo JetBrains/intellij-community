@@ -1,4 +1,4 @@
-package com.intellij.codeInsight;
+package com.intellij.codeInsight
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.actions.CopyReferenceAction;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls
-import com.intellij.openapi.util.io.FileUtil;
 
 public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/copyReference";
@@ -53,11 +52,10 @@ public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText 'a.java', '''
 <caret>class Foo {
 }'''
-    def path = FileUtil.toSystemDependentName(myFixture.file.virtualFile.path)
     performCopy()
     myFixture.configureByText 'a.txt', ''
     performPaste()
-    myFixture.checkResult "$path:2"
+    myFixture.checkResult "/a.java:2"
   }
 
   private void doTest() throws Exception {

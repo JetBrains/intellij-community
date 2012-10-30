@@ -316,6 +316,7 @@ public class CustomMaven3Artifact implements Artifact {
   }
 
   public int compareTo(Artifact o) {
+    if (o instanceof CustomMaven3Artifact) o = ((CustomMaven3Artifact)o).myWrapee;
     return myWrapee.compareTo(o);
   }
 

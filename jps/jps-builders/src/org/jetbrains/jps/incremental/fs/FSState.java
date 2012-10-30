@@ -1,8 +1,10 @@
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -26,6 +28,7 @@ public class FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FSState");
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
   protected final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
+  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<File>(FileUtil.FILE_HASHING_STRATEGY);
 
   public void save(DataOutput out) throws IOException {
     MultiMap<BuildTargetType<?>, BuildTarget<?>> targetsByType = new MultiMap<BuildTargetType<?>, BuildTarget<?>>();
@@ -73,18 +76,28 @@ public class FSState {
 
   public void clearAll() {
     myDeltas.clear();
+    myRegistrationStamps.clear();
   }
 
   public final void clearRecompile(final BuildRootDescriptor rd) {
     getDelta(rd.getTarget()).clearRecompile(rd);
   }
 
-  public boolean markDirty(@Nullable CompileContext context, final File file, final BuildRootDescriptor rd, final @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, final File file, final BuildRootDescriptor rd, final @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompile(rd, file);
-    if (marked && tsStorage != null) {
-      tsStorage.removeStamp(file, rd.getTarget());
+    if (marked) {
+      if (saveEventStamp) {
+        myRegistrationStamps.put(file, System.currentTimeMillis());
+      }
+      if (tsStorage != null) {
+        tsStorage.removeStamp(file, rd.getTarget());
+      }
     }
     return marked;
+  }
+
+  public long getEventRegistrationStamp(File file) {
+    return myRegistrationStamps.get(file);
   }
 
   public boolean markDirtyIfNotDeleted(@Nullable CompileContext context,

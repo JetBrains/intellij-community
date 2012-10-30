@@ -1,0 +1,15 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+final enum EmptyEnum {
+    ;
+
+    public static pkg.EmptyEnum[] values() { /* compiled code */ }
+
+    public static pkg.EmptyEnum valueOf(java.lang.String s) { /* compiled code */ }
+
+    private EmptyEnum() { /* compiled code */ }
+}

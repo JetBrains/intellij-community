@@ -103,6 +103,7 @@ import java.util.*;
 
 import static com.intellij.psi.PsiModifier.*;
 import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.ANNOTATION;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.MAP_KEY;
 
 /**
  * @author ven
@@ -289,6 +290,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
+    if (ResolveUtil.isKeyOfMap(referenceExpression)) {
+      PsiElement nameElement = referenceExpression.getReferenceNameElement();
+      LOG.assertTrue(nameElement != null);
+      myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(MAP_KEY);
+    }
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
@@ -1542,9 +1548,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           checkModifierIsNotAllowed(modifiersList, PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PROTECTED), holder);
         }
         else if (containingTypeDef.isAnonymous()) {
-          //anonymous class
-          checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("static.declaration.in.inner.class"), holder);
-
           if (isMethodAbstract) {
             final Annotation annotation = holder.createErrorAnnotation(getModifierOrList(modifiersList, ABSTRACT), GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
             registerMakeAbstractMethodNotAbstractFix(annotation, method, false);

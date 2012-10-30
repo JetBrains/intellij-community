@@ -32,6 +32,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
     super(shortDescription, longDescription, icon);
   }
 
+  @Override
   public final boolean isSelected(final AnActionEvent event) {
     final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
     return browser != null && getTypeName().equals(browser.getCurrentViewType());
@@ -39,11 +40,13 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
 
   protected abstract String getTypeName();
 
+  @Override
   public final void setSelected(final AnActionEvent event, final boolean flag) {
     if (flag) {
       final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
       //        setWaitCursor();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (browser != null) {
             browser.changeView(getTypeName());
@@ -53,6 +56,7 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
     }
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     // its important to assign the myTypeHierarchyBrowser first
     super.update(event);

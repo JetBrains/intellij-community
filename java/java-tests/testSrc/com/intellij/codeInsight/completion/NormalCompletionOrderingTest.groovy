@@ -200,7 +200,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(0, "value", "validate", "validateTree", "valueOf");
+    checkPreferredItems(1, "value", "valueOf");
   }
 
   public void testCurrentClassBest() {
@@ -281,12 +281,12 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
 
-    myFixture.addClass("package foo; public class Elxaaaaaaaaaaaaaaaaaaaa {}");
+    myFixture.addClass("package foo; public class ELXaaaaaaaaaaaaaaaaaaaa {}");
     invokeCompletion(getTestName(false) + ".java");
     myFixture.completeBasic();
     LookupImpl lookup = getLookup();
     assertPreferredItems(lookup.getList().getSelectedIndex());
-    assertEquals("Elxaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELXaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
     assertEquals("ELXEMENT_A", lookup.getCurrentItem().getLookupString());
   }
 
@@ -356,6 +356,19 @@ import java.lang.annotation.Target;
     checkPreferredItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
+  public void testPreferApplicableAnnotationsMethod() throws Throwable {
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.TYPE})
+@interface TClassAnno {}
+
+@Target({ElementType.METHOD})
+@interface TMethodAnno {}'''
+    checkPreferredItems 0, 'TMethodAnno', 'TClassAnno'
+  }
+
   public void testJComponentAddNewWithStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
     assertPreferredItems(0, "FooBean3", "JComponent", "Component");
@@ -382,7 +395,7 @@ import java.lang.annotation.Target;
     myFixture.addClass('public class fooAClass {}')
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
+    assertPreferredItems(0, 'fooy', 'fooAClass', 'fooBar', 'foox');
   }
 
   public void testChangePreselectionOnSecondInvocation() {
@@ -472,6 +485,23 @@ import java.lang.annotation.Target;
 
   public void _testCommonPrefixMoreImportantThanExpectedType() {
     checkPreferredItems 0, 'myStep', 'myCurrentStep'
+  }
+
+  public void testIfConditionStats() {
+    invokeCompletion(getTestName(false) + ".java")
+    myFixture.completeBasic()
+    myFixture.type('cont')
+    assertPreferredItems 1, 'contains', 'containsAll'
+    myFixture.lookup.currentItem = myFixture.lookupElements[0]
+    myFixture.type('\nc)) {\nif (set.')
+    myFixture.completeBasic()
+    myFixture.type('cont')
+    assertPreferredItems 0, 'contains', 'containsAll'
+  }
+
+  public void testCommonPrefixMoreImportantThanKind() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems(0, 'PsiElement', 'psiElement')
   }
 
 }

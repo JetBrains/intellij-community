@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -50,7 +51,10 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   public void ensureFsStateInitialized(final BuildDataManager dataManager, final CompileContext context) throws IOException {
     BuildFSState fsState = myProjectDescriptor.fsState;
     BuildTargetConfiguration configuration = myProjectDescriptor.getTargetsState().getTargetConfiguration(myTarget);
-    if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget)) {
+    String outputFilePath = myTarget.getArtifact().getOutputFilePath();
+    boolean outputDirWasDeleted = !StringUtil.isEmpty(outputFilePath) && !new File(FileUtil.toSystemDependentName(outputFilePath)).exists();
+
+    if (context.isProjectRebuild() || configuration.isTargetDirty() || context.getScope().isRecompilationForced(myTarget) || outputDirWasDeleted) {
       IncProjectBuilder.clearOutputFiles(context, myTarget);
       ((SourceToOutputMappingImpl)myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget)).clean();
       getOrCreateOutSrcMapping().clean();
@@ -102,7 +106,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
         currentPaths.add(file);
       }
       if (forceMarkDirty || myProjectDescriptor.timestamps.getStorage().getStamp(file, myTarget) != FileSystemUtil.lastModified(file)) {
-        myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage());
+        myProjectDescriptor.fsState.markDirty(null, file, descriptor, myProjectDescriptor.timestamps.getStorage(), false);
       }
     }
   }

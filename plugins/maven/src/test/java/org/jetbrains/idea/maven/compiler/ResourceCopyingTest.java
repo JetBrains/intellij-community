@@ -25,7 +25,24 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
-public class ResourceCopyingTest extends MavenImportingTestCase {
+import java.io.File;
+
+public abstract class ResourceCopyingTest extends MavenImportingTestCase {
+
+  public static class IdeaModeTest extends ResourceCopyingTest {
+    @Override
+    protected boolean useJps() {
+      return false;
+    }
+  }
+
+  public static class JpsModeTest extends ResourceCopyingTest {
+    @Override
+    protected boolean useJps() {
+      return true;
+    }
+  }
+
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -198,7 +215,6 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
       }
     }.execute().throwException();
 
-
     compileModules("project");
     assertNotCopied("target/classes/file.properties");
   }
@@ -242,8 +258,10 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotCopyExcludedStandardResources() throws Exception {
-    if (ignore()) return;
-    
+    if (!useJps()) {
+      if (ignore()) return;
+    }
+
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     configuration.addResourceFilePattern("*.zzz");
 
@@ -326,6 +344,10 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   public void testCopyManuallyDeletedFiles() throws Exception {
+    if (useJps()) {
+      ignore();
+      return;
+    }
     createProjectSubFile("res/file.properties");
 
     importProject("<groupId>test</groupId>" +
@@ -604,10 +626,20 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   private void assertCopied(String path) {
-    assertNotNull(myProjectPom.getParent().findFileByRelativePath(path));
+    if (useJps()) {
+      assertTrue(new File(myProjectPom.getParent().getPath(), path).exists());
+    }
+    else {
+      assertNotNull(myProjectPom.getParent().findFileByRelativePath(path));
+    }
   }
 
   private void assertNotCopied(String path) {
-    assertNull(myProjectPom.getParent().findFileByRelativePath(path));
+    if (useJps()) {
+      assertFalse(new File(myProjectPom.getParent().getPath(), path).exists());
+    }
+    else {
+      assertNull(myProjectPom.getParent().findFileByRelativePath(path));
+    }
   }
 }

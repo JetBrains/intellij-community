@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -63,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
@@ -128,11 +131,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
-  private UsagePreviewPanel myUsagePreviewPanel;
+  private UsageContextPanel myCurrentUsageContextPanel;
+  private List<UsageContextPanel.Provider> myUsageContextPanelProviders;
+  private UsageContextPanel.Provider myCurrentUsageContextProvider;
+
   private JPanel myCentralPanel;
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
+  private Splitter myTreeSplitter;
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -190,21 +197,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
             myRootPanel.setLayout(new BorderLayout());
 
-            final SimpleToolWindowPanel twPanel = new SimpleToolWindowPanel(false, true);
-            myRootPanel.add(twPanel, BorderLayout.CENTER);
+            SimpleToolWindowPanel toolWindowPanel = new SimpleToolWindowPanel(false, true);
+            myRootPanel.add(toolWindowPanel, BorderLayout.CENTER);
 
             JPanel toolbarPanel = new JPanel(new BorderLayout());
             toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
             toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-            twPanel.setToolbar(toolbarPanel);
+            toolWindowPanel.setToolbar(toolbarPanel);
 
-            myCentralPanel = new JPanel();
-            myCentralPanel.setLayout(new BorderLayout());
+            myCentralPanel = new JPanel(new BorderLayout());
             setupCentralPanel();
 
             initTree();
-            twPanel.setContent(myCentralPanel);
-
+            toolWindowPanel.setContent(myCentralPanel);
 
             myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
             collapseAll();
@@ -226,11 +231,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    if (isDisposed) return;
-                    List<UsageInfo> infos = getSelectedUsageInfos();
-                    if (infos != null && myUsagePreviewPanel != null) {
-                      myUsagePreviewPanel.updateLayout(infos);
-                    }
+                    if (isDisposed || myProject.isDisposed()) return;
+                    updateOnSelectionChanged();
                   }
                 });
               }
@@ -261,29 +263,82 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
-    if (myUsagePreviewPanel != null) {
-      Disposer.dispose(myUsagePreviewPanel);
-      myUsagePreviewPanel = null;
-    }
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    disposeUsageContextPanels();
+
+    JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
+    myTreeSplitter = new Splitter();
+    myTreeSplitter.setFirstComponent(treePane);
+
+    myCentralPanel.add(myTreeSplitter, BorderLayout.CENTER);
 
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
-      Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
-      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
+      myTreeSplitter.setProportion(UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
+      treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
+      final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
+        @NotNull
+        @Override
+        protected Insets getInsetsForTabComponent() {
+          return new Insets(0,0,0,0);
+        }
+      };
 
-      splitter.setFirstComponent(pane);
-      myUsagePreviewPanel = new UsagePreviewPanel(myProject);
-      myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-      Disposer.register(this, myUsagePreviewPanel);
-      splitter.setSecondComponent(myUsagePreviewPanel);
-      myCentralPanel.add(splitter, BorderLayout.CENTER);
+      UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
+      myUsageContextPanelProviders = ContainerUtil.filter(extensions, new Condition<UsageContextPanel.Provider>() {
+        @Override
+        public boolean value(UsageContextPanel.Provider provider) {
+          return provider.isAvailableFor(UsageViewImpl.this);
+        }
+      });
+      for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
+        JComponent component;
+        if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
+          myCurrentUsageContextProvider = provider;
+          myCurrentUsageContextPanel = provider.create(this);
+          component = myCurrentUsageContextPanel.createComponent();
+        }
+        else {
+          component = new JLabel();
+        }
+
+        tabbedPane.addTab(provider.getTabTitle(), component);
+      }
+      int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
+      tabbedPane.setSelectedIndex(index);
+      tabbedPane.addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          int currentIndex = tabbedPane.getSelectedIndex();
+          UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
+          if (selectedProvider != myCurrentUsageContextProvider) {
+            tabSelected(selectedProvider);
+          }
+        }
+      });
+
+      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+      myTreeSplitter.setSecondComponent(tabbedPane);
     }
     else {
-      myCentralPanel.add(pane, BorderLayout.CENTER);
+      myTreeSplitter.setProportion(1);
     }
+
     myCentralPanel.add(myButtonPanel, BorderLayout.SOUTH);
 
     myRootPanel.revalidate();
+    myRootPanel.repaint();
+  }
+
+  private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
+    myCurrentUsageContextProvider = provider;
+    setupCentralPanel();
+    updateOnSelectionChanged();
+  }
+
+  private void disposeUsageContextPanels() {
+    if (myCurrentUsageContextPanel != null) {
+      Disposer.dispose(myCurrentUsageContextPanel);
+      myCurrentUsageContextPanel = null;
+    }
   }
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
@@ -295,7 +350,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
-  private static UsageGroupingRule[] getActiveGroupingRules(final Project project) {
+  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
@@ -362,6 +417,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
   }
 
+  @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup group = new DefaultActionGroup() {
       @Override
@@ -385,18 +441,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return toUsageViewToolbar(group);
   }
 
-  private JComponent toUsageViewToolbar(final DefaultActionGroup group) {
+  @NotNull
+  private JComponent toUsageViewToolbar(@NotNull DefaultActionGroup group) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, false);
     actionToolbar.setTargetComponent(myRootPanel);
     return actionToolbar.getComponent();
   }
 
+  @NotNull
   private JComponent createFiltersToolbar() {
-    final DefaultActionGroup group = createFilteringActionsGroup();
-    return toUsageViewToolbar(group);
-  }
-
-  private DefaultActionGroup createFilteringActionsGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final AnAction[] groupingActions = createGroupingActions();
@@ -406,11 +459,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     addFilteringActions(group);
     group.add(new PreviewUsageAction(this));
+
     group.add(new SortMembersAlphabeticallyAction(this));
-    return group;
+    return toUsageViewToolbar(group);
   }
 
-  public void addFilteringActions(DefaultActionGroup group) {
+  public void addFilteringActions(@NotNull DefaultActionGroup group) {
     final JComponent component = getComponent();
     final MergeDupLines mergeDupLines = new MergeDupLines();
     mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
@@ -429,6 +483,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     Disposer.register(this, disposable);
   }
 
+  @NotNull
   private AnAction[] createActions() {
     final TreeExpander treeExpander = new TreeExpander() {
       @Override
@@ -487,6 +542,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
+  @NotNull
   private AnAction showSettings() {
     return new AnAction("Options...", "show find usages settings dialog", AllIcons.General.ProjectSettings) {
       {
@@ -502,16 +558,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
+  @NotNull
   private AnAction createRecentFindUsagesAction() {
     AnAction action = ActionManager.getInstance().getAction(SHOW_RECENT_FIND_USAGES_ACTION_ID);
     action.registerCustomShortcutSet(action.getShortcutSet(), getComponent());
     return action;
   }
 
+  @NotNull
   private static AnAction createImportToFavorites() {
     return ActionManager.getInstance().getAction("UsageView.ImportToFavorites");
   }
 
+  @NotNull
   private AnAction[] createGroupingActions() {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<AnAction> list = new ArrayList<AnAction>(providers.length);
@@ -523,7 +582,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void rulesChanged() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final ArrayList<UsageState> states = new ArrayList<UsageState>();
+    final List<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
     Collections.sort(allUsages, USAGE_COMPARATOR);
@@ -577,7 +636,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private void restoreUsageExpandState(final Collection<UsageState> states) {
+  private void restoreUsageExpandState(@NotNull Collection<UsageState> states) {
     //always expand the last level group
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
     for (int i = root.getChildCount() - 1; i >= 0; i--) {
@@ -843,8 +902,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void updateImmediately() {
     if (myProject.isDisposed()) return;
     checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
-    if (myUsagePreviewPanel != null) {
-      myUsagePreviewPanel.updateLayout(getSelectedUsageInfos());
+    updateOnSelectionChanged();
+  }
+
+  private void updateOnSelectionChanged() {
+    List<UsageInfo> infos = getSelectedUsageInfos();
+    if (myCurrentUsageContextPanel != null) {
+      myCurrentUsageContextPanel.updateLayout(infos);
     }
   }
 
@@ -871,20 +935,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
+    if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
+      UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = myTreeSplitter.getProportion();
+    }
+
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
   @Override
   public void dispose() {
+    disposeUsageContextPanels();
     synchronized (lock) {
       isDisposed = true;
       ToolTipManager.sharedInstance().unregisterComponent(myTree);
       myModelTracker.removeListener(this);
       myUpdateAlarm.cancelAllRequests();
-      if (myUsagePreviewPanel != null) {
-        UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
-        myUsagePreviewPanel = null;
-      }
     }
   }
 
@@ -1074,24 +1139,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return usages;
   }
 
-  /*public MultiMap<VirtualFile, Usage> getUsagesGroupedByFile() {
-    final MultiMap<VirtualFile, Usage> result = new MultiMap<VirtualFile, Usage>();
-    final ArrayDeque<Pair<Node, VirtualFile>> queue = new ArrayDeque<Pair<Node, VirtualFile>>();
-    final Node[] nodes = getSelectedNodes();
-    for (Node node : nodes) {
-      if (node instanceof UsageNode) {
-        final VirtualFile vf = fileForUsage((UsageNode) node);
-        if (vf != null) {
-          result.putValue(vf, ((UsageNode)node).getUsage());
-        }
-      } else if (node instanceof GroupNode) {
-        if (node instanceof TypeSafeDataProvider) {
-          ((TypeSafeDataProvider)node).calcData();
-        }
-      }
-    }
-  }*/
-
   @Override
   @NotNull
   public Set<Usage> getUsages() {
@@ -1131,7 +1178,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (lastPathComponent instanceof UsageTargetNode) {
         UsageTargetNode usageTargetNode = (UsageTargetNode)lastPathComponent;
         UsageTarget target = usageTargetNode.getTarget();
-        if (target != null && target.isValid()) {
+        if (target.isValid()) {
           targets.add(target);
         }
       }
@@ -1440,5 +1487,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public boolean isVisible(@NotNull Usage usage) {
     return myBuilder != null && myBuilder.isVisible(usage);
+  }
+
+  @NotNull
+  public UsageTarget[] getTargets() {
+    return myTargets;
   }
 }

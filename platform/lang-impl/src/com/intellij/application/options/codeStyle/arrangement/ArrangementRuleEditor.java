@@ -49,10 +49,14 @@ public class ArrangementRuleEditor extends JPanel {
     new HashMap<Object, ArrangementAtomMatchNodeComponent>();
 
   @NotNull private final ArrangementStandardSettingsAware myFilter;
+  @NotNull private final ArrangementColorsProvider        myColorsProvider;
   @Nullable private      ArrangementRuleEditingModel      myModel;
 
-  public ArrangementRuleEditor(@NotNull ArrangementStandardSettingsAware filter, @NotNull ArrangementNodeDisplayManager displayManager) {
+  public ArrangementRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
+                               @NotNull ArrangementColorsProvider provider,
+                               @NotNull ArrangementNodeDisplayManager displayManager) {
     myFilter = filter;
+    myColorsProvider = provider;
     init(displayManager);
     addMouseListener(new MouseAdapter() {
       @Override
@@ -82,7 +86,7 @@ public class ArrangementRuleEditor extends JPanel {
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
       ArrangementAtomMatchNodeComponent component =
-        new ArrangementAtomMatchNodeComponent(manager, new ArrangementAtomMatchCondition(key, value), null);
+        new ArrangementAtomMatchNodeComponent(manager, myColorsProvider, new ArrangementAtomMatchCondition(key, value), null);
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }

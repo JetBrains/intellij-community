@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EPathCommonUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -99,8 +100,8 @@ public class EJavadocUtil {
             return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath);
           }
           else {
-            final String moduleName = getRelativeModuleName(relativeToPlatform);
-            final String relativeToModulePathWithJarSuffix = getRelativeToModulePath(relativeToPlatform);
+            final String moduleName = EPathCommonUtil.getRelativeModuleName(relativeToPlatform);
+            final String relativeToModulePathWithJarSuffix = EPathCommonUtil.getRelativeToModulePath(relativeToPlatform);
             final String relativeToModulePath = stripPathInsideJar(relativeToModulePathWithJarSuffix);
             final Module otherModule = ModuleManager.getInstance(model.getModule().getProject()).findModuleByName(moduleName);
             String url = null;
@@ -108,7 +109,7 @@ public class EJavadocUtil {
               url = expandEclipseRelative2OtherModule(otherModule, relativeToModulePath);
             }
             else if (currentRoots != null) {
-              url = expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToModulePath);
+              url = EPathCommonUtil.expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToModulePath);
             }
 
             if (url != null) {

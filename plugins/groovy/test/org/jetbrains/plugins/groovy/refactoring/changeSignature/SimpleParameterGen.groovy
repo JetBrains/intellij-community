@@ -52,7 +52,7 @@ class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
       if (oldIndex > -1) {
         final GrParameter p = params[oldIndex];
         name = p.getName();
-        final GrExpression initializer = p.getDefaultInitializer();
+        final GrExpression initializer = p.getInitializerGroovy();
         defInitializer = initializer != null ? initializer.getText() : null;
         type = p.getDeclaredType();
       }

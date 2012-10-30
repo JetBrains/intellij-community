@@ -69,8 +69,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Nullable
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
-    return (selected && focused) || UIUtil.isUnderDarcula() ? UIUtil.getListSelectionForeground()
-                               : inactive ? UIUtil.getInactiveTextColor() : null;
+    return (selected && focused) /*|| UIUtil.isUnderDarcula()*/ ? UIUtil.getListSelectionForeground()
+                                                                : inactive ? UIUtil.getInactiveTextColor() : null;
   }
 
   @Override
@@ -91,7 +91,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
 
     Map<ImageType, BufferedImage> cached = myCache.get(item);
-    
+
     ImageType type;
     if (floating) {
       type = selected ? ImageType.ACTIVE_FLOATING : nextSelected ? ImageType.NEXT_ACTIVE_FLOATING : ImageType.INACTIVE_FLOATING;
@@ -107,7 +107,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       cached = new HashMap<ImageType, BufferedImage>();
       myCache.put(item, cached);
     }
-    
+
     BufferedImage image = cached.get(type);
     if (image == null) {
       image = drawToBuffer(item, floating, toolbarVisible, selected, navbar);

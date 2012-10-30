@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -58,7 +57,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     final PsiAnnotationStub stub = getStub();
     if (stub != null) {
-      return (PsiJavaCodeReferenceElement)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+      return PsiTreeUtil.getRequiredChildOfType(stub.getPsiElement(), PsiJavaCodeReferenceElement.class);
     }
 
     final Object result = PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
@@ -123,7 +122,9 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     if (parent instanceof PsiTypeElement) {
       return ((PsiTypeElement)parent).getOwner(this);
     }
-    if (parent instanceof PsiMethodReceiver || parent instanceof PsiTypeParameter) return (PsiAnnotationOwner)parent;
+    if (parent instanceof PsiTypeParameter) {
+      return (PsiAnnotationOwner)parent;
+    }
     PsiElement member = parent.getParent();
     String[] elementTypeFields = getApplicableElementTypeFields(member);
     if (elementTypeFields == null) return null;

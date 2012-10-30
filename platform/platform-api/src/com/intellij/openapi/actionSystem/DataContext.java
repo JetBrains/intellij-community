@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.actionSystem.AnActionEvent#getDataContext()
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
  * @see com.intellij.openapi.actionSystem.DataKey
+ * @see com.intellij.ide.DataManager
  * @see DataProvider
  */
 public interface DataContext {

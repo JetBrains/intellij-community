@@ -69,6 +69,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
+  private Consumer<String> myIfNotCachedReloader;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -108,6 +109,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
     myBrowser.addFilter(myFilterComponent);
+    myIfNotCachedReloader = myLocation == null ? null : new Consumer<String>() {
+      @Override
+      public void consume(String s) {
+        refreshChanges(false);
+      }
+    };
   }
 
   public RepositoryLocation getRepositoryLocation() {
@@ -278,9 +285,14 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(VcsDataKeys.CHANGES) || key.equals(VcsDataKeys.CHANGE_LISTS)) {
-      myBrowser.calcData(key, sink);
+    if (key.equals(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER)) {
+      sink.put(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, myIfNotCachedReloader);
+    } else if (VcsDataKeys.REMOTE_HISTORY_LOCATION.equals(key)) {
+      sink.put(VcsDataKeys.REMOTE_HISTORY_LOCATION, myLocation);
     }
+    //if (key.equals(VcsDataKeys.CHANGES) || key.equals(VcsDataKeys.CHANGE_LISTS)) {
+      myBrowser.calcData(key, sink);
+    //}
   }
 
   public void dispose() {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
@@ -79,6 +80,16 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testStripFieldQualifier() throws Exception {
     doTest(false, 0);
+  }
+
+  public void testMethodReference() throws Exception {
+    try {
+      doTest(true, 0);
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method reference would be broken after move", e.getMessage());
+    }
   }
 
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {

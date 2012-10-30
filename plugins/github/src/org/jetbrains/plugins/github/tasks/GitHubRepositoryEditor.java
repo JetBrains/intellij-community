@@ -55,7 +55,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
   public void apply() {
     myRepository.setRepoName(myRepoName.getText().trim());
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
-    myUseHTTPAuthentication.setSelected(!StringUtil.isEmpty(myUserNameText.getText()));
+    myUseHttpAuthenticationCheckBox.setSelected(!StringUtil.isEmpty(myUserNameText.getText()));
     super.apply();
   }
 

@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,7 +53,12 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
   private static final ThreadLocal<Set<PsiFile>> myVisitedFiles = new ThreadLocal<Set<PsiFile>>();
-  private static final ThreadLocal<Map<String, Set<Define>>> myDefines = new ThreadLocal<Map<String, Set<Define>>>();
+  private static final ThreadLocal<Map<String, Set<Define>>> myDefines = new ThreadLocal<Map<String, Set<Define>>>() {
+    @Override
+    protected Map<String, Set<Define>> initialValue() {
+      return ContainerUtil.newHashMap();
+    }
+  };
 
   private final Grammar myScope;
 
@@ -116,11 +120,9 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   }
 
   public Result<Map<String, Set<Define>>> compute() {
-    myDefines.set(new HashMap<String, Set<Define>>());
-
-    myScope.acceptChildren(this);
-
     try {
+      myScope.acceptChildren(this);
+
       final PsiElement psiElement = myScope.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) {
         return Result.create(null, ModificationTracker.EVER_CHANGED);
@@ -134,8 +136,8 @@ public class DefinitionResolver extends CommonElement.Visitor implements
         return Result.create(myDefines.get(), file);
       }
     } finally {
-      myVisitedFiles.set(null);
-      myDefines.set(null);
+      myVisitedFiles.remove();
+      myDefines.remove();
     }
   }
 
@@ -223,6 +225,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       return myResult == null;
     }
 
+    @Nullable
     public Set<Define> getResult() {
       return myResult != null ? Collections.singleton(myResult) : null;
     }

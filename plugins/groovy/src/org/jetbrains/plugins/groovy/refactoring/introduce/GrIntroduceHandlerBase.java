@@ -432,23 +432,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     final GrVariable resolved = resolveLocalVar(context);
 
     final PsiElement parent = resolved.getParent();
-    if (parent instanceof GrTupleDeclaration) {
-      if (((GrTupleDeclaration)parent).getVariables().length == 1) {
-        parent.getParent().delete();
-      }
-      else {
-        final GrExpression initializerGroovy = resolved.getInitializerGroovy();
-        if (initializerGroovy != null) initializerGroovy.delete();
-        resolved.delete();
-      }
+    if (((GrVariableDeclaration)parent).getVariables().length == 1) {
+      parent.delete();
     }
     else {
-      if (((GrVariableDeclaration)parent).getVariables().length == 1) {
-        parent.delete();
-      }
-      else {
-        resolved.delete();
-      }
+      GrExpression initializer = resolved.getInitializerGroovy();
+      if (initializer != null) initializer.delete(); //don't special check for tuple, but this line is for the tuple case
+      resolved.delete();
     }
   }
 

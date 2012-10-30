@@ -52,8 +52,6 @@ public class MavenIndices {
     if (indices == null) return;
     Arrays.sort(indices);
 
-    if (!MavenServerManager.getInstance().isUseMaven2()) return;
-
     for (File each : indices) {
       if (!each.isDirectory()) continue;
 

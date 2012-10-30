@@ -17,10 +17,12 @@ package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +45,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   public static final int VERTICAL_PADDING   = 2;
   public static final int HORIZONTAL_PADDING = 8;
 
-  @NotNull private final ArrangementColorsService myColorsService = ServiceManager.getService(ArrangementColorsService.class);
-
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
@@ -61,7 +61,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   };
 
   @NotNull
-  private final JLabel myLabel = new JLabel() {
+  private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
     @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
@@ -74,18 +74,21 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
 
     @Override
     public Dimension getPreferredSize() {
-      return myLabelSize == null ? super.getPreferredSize() : myLabelSize;
+      return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
     }
   };
-  @NotNull private final RoundedLineBorder myBorder;
+  
+  @NotNull private final String myText;
+  @NotNull private final ArrangementColorsProvider     myColorsProvider;
+  @NotNull private final RoundedLineBorder             myBorder;
+  @NotNull private final ArrangementAtomMatchCondition myCondition;
 
-  @NotNull private final  ArrangementAtomMatchCondition myCondition;
-  @Nullable private final ActionButton                  myCloseButton;
-  @Nullable private final Runnable                      myCloseCallback;
+  @Nullable private final ActionButton myCloseButton;
+  @Nullable private final Runnable     myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
-  @Nullable private Dimension myLabelSize;
+  @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
 
   private boolean myEnabled = true;
@@ -93,14 +96,17 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   private boolean myCloseButtonHovered;
 
   public ArrangementAtomMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                           @NotNull ArrangementColorsProvider colorsProvider,
                                            @NotNull ArrangementAtomMatchCondition condition,
                                            @Nullable Runnable closeCallback)
   {
+    myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
-    myLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    myLabel.setText(manager.getDisplayValue(condition));
-    myLabelSize = new Dimension(manager.getMaxWidth(condition.getType()), myLabel.getPreferredSize().height);
+    myText = manager.getDisplayValue(condition);
+    myTextControl.setTextAlign(SwingConstants.CENTER);
+    myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
+    myTextControlSize = new Dimension(manager.getMaxWidth(condition.getType()), myTextControl.getPreferredSize().height);
 
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
@@ -114,12 +120,12 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
 
-    JPanel labelPanel = new JPanel(new GridBagLayout());
-    labelPanel.add(myLabel, constraints);
-    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, HORIZONTAL_PADDING));
-    labelPanel.setOpaque(false);
+    JPanel insetsPanel = new JPanel(new GridBagLayout());
+    insetsPanel.add(myTextControl, constraints);
+    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, 0));
+    insetsPanel.setOpaque(false);
 
-    final int arcSize = myLabel.getFont().getSize();
+    final int arcSize = myTextControl.getFont().getSize();
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
@@ -135,7 +141,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
         super.paint(g);
       }
     };
-    roundBorderPanel.add(labelPanel, new GridBag().fillCellHorizontally());
+    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally());
     roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
@@ -186,9 +192,12 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   public void setSelected(boolean selected) {
-    myLabel.setForeground(myColorsService.getTextColor(selected));
-    myBorder.setColor(myColorsService.getBorderColor(selected));
-    myBackgroundColor = myColorsService.getBackgroundColor(selected);
+    myTextControl.clear();
+    TextAttributes attributes = myColorsProvider.getTextAttributes(myCondition.getType(), selected);
+    myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(attributes));
+    myBorder.setColor(myColorsProvider.getBorderColor(selected));
+    myBackgroundColor = attributes.getBackgroundColor();
+    myTextControl.setBackground(myBackgroundColor);
   }
 
   public boolean isEnabled() {
@@ -249,6 +258,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
 
   @Override
   public String toString() {
-    return myLabel.getText();
+    return myText;
   }
 }

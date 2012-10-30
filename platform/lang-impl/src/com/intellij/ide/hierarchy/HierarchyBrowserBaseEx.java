@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -44,7 +45,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -85,26 +86,32 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private final HashMap<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
+    @Override
     public boolean hasNextOccurence() {
       return false;
     }
 
+    @Override
     public boolean hasPreviousOccurence() {
       return false;
     }
 
+    @Override
     public OccurenceInfo goNextOccurence() {
       return null;
     }
 
+    @Override
     public OccurenceInfo goPreviousOccurence() {
       return null;
     }
 
+    @Override
     public String getNextOccurenceActionName() {
       return "";
     }
 
+    @Override
     public String getPreviousOccurenceActionName() {
       return "";
     }
@@ -115,7 +122,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
   protected final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
 
-  public HierarchyBrowserBaseEx(final Project project, final PsiElement element) {
+  public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
 
     setHierarchyBase(element);
@@ -135,6 +142,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       final String key = keys.nextElement();
       final JTree tree = myType2TreeMap.get(key);
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
+        @Override
         @Nullable
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           final HierarchyNodeDescriptor descriptor = getDescriptor(node);
@@ -146,12 +154,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return new OpenFileDescriptor(psiElement.getProject(), virtualFile, psiElement.getTextOffset());
         }
 
+        @Override
         public String getNextOccurenceActionName() {
-          return HierarchyBrowserBaseEx.this.getNextOccurenceActionNameImpl();
+          return getNextOccurenceActionNameImpl();
         }
 
+        @Override
         public String getPreviousOccurenceActionName() {
-          return HierarchyBrowserBaseEx.this.getPrevOccurenceActionNameImpl();
+          return getPrevOccurenceActionNameImpl();
         }
       });
       myTreePanel.add(ScrollPaneFactory.createScrollPane(tree), key);
@@ -175,6 +185,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getElementFromDescriptor(descriptor);
   }
 
+  @Override
   @Nullable
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
@@ -236,16 +247,20 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         DnDManager.getInstance().registerSource(new DnDSource() {
+          @Override
           public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
             return getSelectedElements().length > 0;
           }
 
+          @Override
           public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
             return new DnDDragStartBean(new TransferableWrapper() {
+              @Override
               public TreeNode[] getTreeNodes() {
                 return tree.getSelectedNodes(TreeNode.class, null);
               }
 
+              @Override
               public PsiElement[] getPsiElements() {
                 return getSelectedElements();
               }
@@ -257,13 +272,16 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
             });
           }
 
+          @Override
           public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
             return null;
           }
 
+          @Override
           public void dragDropEnd() {
           }
 
+          @Override
           public void dropActionChanged(final int gestureModifiers) {
           }
         }, tree);
@@ -295,7 +313,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return tree;
   }
 
-  protected void setHierarchyBase(final PsiElement element) {
+  protected void setHierarchyBase(@NotNull PsiElement element) {
     mySmartPsiElementPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
   }
 
@@ -306,6 +324,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private void setWaitCursor() {
     myAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
       }
@@ -349,6 +368,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         final HierarchyNodeDescriptor descriptor = structure.getBaseDescriptor();
         builder.select(descriptor, new Runnable() {
+          @Override
           public void run() {
             builder.expand(descriptor, null);
           }
@@ -367,9 +387,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     if (element instanceof PsiNamedElement) {
       return MessageFormat.format(typeName, ((PsiNamedElement)element).getName());
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @Override
@@ -382,6 +400,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected void prependActions(final DefaultActionGroup actionGroup) {
   }
 
+  @Override
   public boolean hasNextOccurence() {
     return getOccurrenceNavigator().hasNextOccurence();
   }
@@ -394,26 +413,32 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return navigator != null ? navigator : EMPTY_NAVIGATOR;
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return getOccurrenceNavigator().hasPreviousOccurence();
   }
 
+  @Override
   public OccurenceInfo goNextOccurence() {
     return getOccurrenceNavigator().goNextOccurence();
   }
 
+  @Override
   public OccurenceInfo goPreviousOccurence() {
     return getOccurrenceNavigator().goPreviousOccurence();
   }
 
+  @Override
   public String getNextOccurenceActionName() {
     return getOccurrenceNavigator().getNextOccurenceActionName();
   }
 
+  @Override
   public String getPreviousOccurenceActionName() {
     return getOccurrenceNavigator().getPreviousOccurenceActionName();
   }
 
+  @Override
   protected HierarchyTreeBuilder getCurrentBuilder() {
     return myBuilders.get(myCurrentViewType);
   }
@@ -428,6 +453,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return myCachedIsValidBase;
   }
 
+  @Override
   protected JTree getCurrentTree() {
     if (myCurrentViewType == null) return null;
     return myType2TreeMap.get(myCurrentViewType);
@@ -444,19 +470,21 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       PsiElement element = getElementFromDescriptor(descriptor);
       if (element != null) elements.add(element);
     }
-    return PsiUtilBase.toPsiElementArray(elements);
+    return PsiUtilCore.toPsiElementArray(elements);
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (getBrowserDataKey().equals(dataId)) {
       return this;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);
   }
 
+  @Override
   public void dispose() {
     final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
     for (final HierarchyTreeBuilder builder : builders) {
@@ -472,7 +500,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    final Ref<Object> storedInfo = new Ref<Object>();
+    final Ref<Pair<ArrayList<Object>, ArrayList<Object>>> storedInfo = new Ref<Pair<ArrayList<Object>, ArrayList<Object>>>();
     if (myCurrentViewType != null) {
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       storedInfo.set(builder.storeExpandedAndSelectedInfo());
@@ -494,12 +522,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     setHierarchyBase(element);
     validate();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         changeView(currentViewType);
-        if (storedInfo != null) {
-          final HierarchyTreeBuilder builder = getCurrentBuilder();
-          builder.restoreExpandedAndSelectedInfo(storedInfo.get());
-        }
+        final HierarchyTreeBuilder builder = getCurrentBuilder();
+        builder.restoreExpandedAndSelectedInfo(storedInfo.get());
       }
     });
   }
@@ -515,10 +542,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
             AllIcons.ObjectBrowser.Sorted);
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return HierarchyBrowserManager.getInstance(myProject).getState().SORT_ALPHABETICALLY;
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       final HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(myProject);
       hierarchyBrowserManager.getState().SORT_ALPHABETICALLY = flag;
@@ -529,6 +558,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
@@ -546,6 +576,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myBrowserDataKey = browserDataKey;
     }
 
+    @Override
     public final void actionPerformed(final AnActionEvent event) {
       final DataContext dataContext = event.getDataContext();
       final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);
@@ -559,6 +590,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       browser.setHierarchyBase(selectedElement);
       browser.validate();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           browser.changeView(correctViewType(browser, currentViewType));
         }
@@ -569,6 +601,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return viewType;
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
 
@@ -613,10 +646,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh);
     }
 
+    @Override
     public final void actionPerformed(final AnActionEvent e) {
       doRefresh(false);
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
@@ -624,6 +659,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   public class ChangeScopeAction extends ComboBoxAction {
+    @Override
     public final void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -636,6 +672,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return true;
     }
 
+    @Override
     @NotNull
     protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -672,12 +709,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       // invokeLater is called to update state of button before long tree building operation
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           doRefresh(true); // scope is kept per type so other builders doesn't need to be refreshed
         }
       });
     }
 
+    @Override
     public final JComponent createCustomComponent(final Presentation presentation) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
@@ -695,6 +734,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         myScopeType = scopeType;
       }
 
+      @Override
       public final void actionPerformed(final AnActionEvent e) {
         selectScope(myScopeType);
 
@@ -713,6 +753,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           selectScope(SCOPE_ALL);
         }
       }
+    }
+  }
+
+  // will throw PCE during update when canceled
+  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
+    for (HierarchyTreeBuilder builder : myBuilders.values()) {
+      builder.setProgressIndicator(indicator);
     }
   }
 }

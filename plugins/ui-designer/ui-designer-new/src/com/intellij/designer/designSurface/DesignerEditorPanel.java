@@ -395,9 +395,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
                                          info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
                                          new Attachment(myFile)));
     }
-    else {
-      LOG.info(info.myDisplayMessage + "\n" + info.myMessage, info.myThrowable);
-    }
   }
 
   protected abstract void configureError(final @NotNull ErrorInfo info);

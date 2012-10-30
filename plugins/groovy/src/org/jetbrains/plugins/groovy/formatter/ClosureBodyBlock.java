@@ -70,4 +70,9 @@ public class ClosureBodyBlock extends GroovyBlock {
     init();
     return mySubBlocks;
   }
+
+  @Override
+  public boolean isIncomplete() {
+    return true;
+  }
 }

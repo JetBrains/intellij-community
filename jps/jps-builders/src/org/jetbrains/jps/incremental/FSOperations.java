@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +12,6 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -34,7 +34,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, file, rd, pd.timestamps.getStorage());
+      pd.fsState.markDirty(context, file, rd, pd.timestamps.getStorage(), false);
     }
   }
 
@@ -111,22 +111,25 @@ public class FSOperations {
   }
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
-    final BuildFSState fsState = context.getProjectDescriptor().fsState;
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      fsState.processFilesToRecompile(context, target, processor);
+      processFilesToRecompile(context, target, processor);
     }
   }
 
-  static void markDirtyFiles(CompileContext context,
-                             BuildTarget<?> target,
-                             Timestamps timestamps, boolean forceMarkDirty,
-                             @Nullable THashSet<File> currentFiles) throws IOException {
-    final ModuleExcludeIndex rootsIndex = context.getProjectDescriptor().getModuleExcludeIndex();
-    Set<File> excludes = target instanceof ModuleBuildTarget ? new HashSet<File>(rootsIndex.getModuleExcludes(((ModuleBuildTarget)target).getModule())) : Collections.<File>emptySet();
-    markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles, excludes);
+  public static void processFilesToRecompile(CompileContext context, ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+    context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
-  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles, final Set<File> excludes) throws IOException {
+  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles) throws IOException {
+    final Set<File> excludes;
+    if (target instanceof ModuleBuildTarget) {
+      excludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final ModuleExcludeIndex index = context.getProjectDescriptor().getModuleExcludeIndex();
+      excludes.addAll(index.getModuleExcludes(((ModuleBuildTarget)target).getModule()));
+    }
+    else {
+      excludes = Collections.emptySet();
+    }
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
@@ -138,7 +141,16 @@ public class FSOperations {
     }
   }
 
-  private static void traverseRecursively(CompileContext context, final BuildRootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
+  private static void traverseRecursively(CompileContext context,
+                                          final BuildRootDescriptor rd,
+                                          final File file,
+                                          Set<File> excludes,
+                                          @NotNull final Timestamps tsStorage,
+                                          final boolean forceDirty,
+                                          @Nullable Set<File> currentFiles) throws IOException {
+    if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
+      return;
+    }
     final File[] children = file.listFiles();
     if (children != null) { // is directory
       if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {
@@ -156,7 +168,7 @@ public class FSOperations {
         // if it is full project rebuild, all storages are already completely cleared;
         // so passing null because there is no need to access the storage to clear non-existing data
         final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
-        context.getProjectDescriptor().fsState.markDirty(context, file, rd, marker);
+        context.getProjectDescriptor().fsState.markDirty(context, file, rd, marker, false);
       }
       if (currentFiles != null) {
         currentFiles.add(file);

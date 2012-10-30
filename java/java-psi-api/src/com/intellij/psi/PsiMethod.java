@@ -208,8 +208,5 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   HierarchicalMethodSignature getHierarchicalMethodSignature();
 
   @Nullable
-  PsiMethodReceiver getMethodReceiver();
-
-  @Nullable
   PsiType getReturnTypeNoResolve();
 }

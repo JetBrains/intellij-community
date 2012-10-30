@@ -20,12 +20,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.*;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+
 /**
  * User: cdr
  */
 public class CanItBeNullAction  extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
-  private static final String TEXT = "Can it be null?";
+  private static final String TEXT = "Group by leaf expression nullness";
 
   public CanItBeNullAction(SliceTreeBuilder treeBuilder) {
     super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
@@ -42,7 +44,9 @@ public class CanItBeNullAction  extends AnAction {
     if (myTreeBuilder.analysisInProgress) return false;
     if (!myTreeBuilder.dataFlowToThis) return false;
     if (myTreeBuilder.splitByLeafExpressions) return false;
-    SliceRootNode rootNode = (SliceRootNode)myTreeBuilder.getRootNode().getUserObject();
+    DefaultMutableTreeNode root = myTreeBuilder.getRootNode();
+    if (root == null) return false;
+    SliceRootNode rootNode = (SliceRootNode)root.getUserObject();
     PsiElement element = rootNode == null ? null : rootNode.getRootUsage().getUsageInfo().getElement();
     PsiType type;
     if (element instanceof PsiVariable) {

@@ -34,6 +34,6 @@ public class BuildDataPathsImpl implements BuildDataPaths {
 
   @Override
   public File getTargetDataRoot(BuildTarget<?> target) {
-    return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(target.getId(), true, true));
+    return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(target.getId(), true, false));
   }
 }

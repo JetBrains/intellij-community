@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -27,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implements PsiArrayInitializerMemberValue {
   private final ClsElementImpl myParent;
   private final PsiAnnotationMemberValue[] myInitializers;
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsArrayInitializerMemberValueImpl");
 
-  public ClsArrayInitializerMemberValueImpl(ClsElementImpl parent, PsiAnnotationMemberValue[] initializers) {
+  public ClsArrayInitializerMemberValueImpl(@NotNull ClsElementImpl parent, @NotNull PsiAnnotationMemberValue[] initializers) {
     myParent = parent;
     myInitializers = initializers;
   }
@@ -42,26 +40,19 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append('{');
     for (int i = 0; i < myInitializers.length; i++) {
       if (i > 0) buffer.append(", ");
-      ((ClsElementImpl)myInitializers[i]).appendMirrorText(0, buffer);
+      appendText(myInitializers[i], 0, buffer);
     }
     buffer.append('}');
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiArrayInitializerMemberValue mirror = (PsiArrayInitializerMemberValue)SourceTreeToPsiMap.treeElementToPsi(element);
-    PsiAnnotationMemberValue[] initializers = mirror.getInitializers();
-    LOG.assertTrue(myInitializers.length == initializers.length);
-    for (int i = 0; i < myInitializers.length; i++) {
-      ClsElementImpl value = (ClsElementImpl)myInitializers[i];
-      value.setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(initializers[i]));
-    }
+    setMirrors(getInitializers(), SourceTreeToPsiMap.<PsiArrayInitializerMemberValue>treeToPsiNotNull(element).getInitializers());
   }
 
   @Override

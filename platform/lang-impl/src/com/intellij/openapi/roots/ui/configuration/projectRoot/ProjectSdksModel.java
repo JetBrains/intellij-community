@@ -33,7 +33,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
@@ -86,15 +86,12 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset(@Nullable Project project, @Nullable Condition<SdkType> filter) {
+  public void reset(@Nullable Project project) {
     myProjectSdks.clear();
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
-        SdkTypeId type = sdk.getSdkType();
-        if (filter == null || (type instanceof SdkType && filter.value((SdkType)type))) {
-          myProjectSdks.put(sdk, (Sdk)sdk.clone());
-        }
+        myProjectSdks.put(sdk, (Sdk)sdk.clone());
       }
       catch (CloneNotSupportedException e) {
         LOG.error(e);
@@ -105,10 +102,6 @@ public class ProjectSdksModel implements SdkModel {
     }
     myModified = false;
     myInitialized = true;
-  }
-
-  public void reset(@Nullable Project project) {
-    reset(project, null);
   }
 
   public void disposeUIResources() {
@@ -164,7 +157,7 @@ public class ProjectSdksModel implements SdkModel {
         final Sdk[] allJdks = jdkTable.getAllJdks();
         for (final Sdk projectJdk : myProjectSdks.keySet()) {
           LOG.assertTrue(projectJdk != null);
-          if (ArrayUtil.find(allJdks, projectJdk) == -1) {
+          if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
             jdkTable.addJdk(projectJdk);
           }
         }
@@ -235,7 +228,7 @@ public class ProjectSdksModel implements SdkModel {
   public void createAddActions(DefaultActionGroup group,
                                final JComponent parent,
                                final Consumer<Sdk> updateTree,
-                               @Nullable Condition<SdkType> filter) {
+                               @Nullable Condition<SdkTypeId> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
       if (filter != null && !filter.value(type)) continue;

@@ -73,7 +73,7 @@ import java.util.Set;
 public class ActionMacroManager implements ExportableApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actionMacro.ActionMacroManager");
 
-  private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWWWWWW";
+  private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   private static final String RECORDED = "Recorded: ";
 
   private boolean myIsRecording;
@@ -91,7 +91,6 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private ActionMacroManager.Widget myWidget;
 
   private String myLastTyping = new String();
-  private boolean myLastWasTyping;
 
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
@@ -231,7 +230,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
       final NonOpaquePanel top = new NonOpaquePanel(new BorderLayout());
       top.add(tb.getComponent(), BorderLayout.WEST);
-      myText = new JLabel(TYPING_SAMPLE, SwingConstants.LEFT);
+      myText = new JLabel(RECORDED + "..." + TYPING_SAMPLE, SwingConstants.LEFT);
       final Dimension preferredSize = myText.getPreferredSize();
       myText.setPreferredSize(preferredSize);
       myText.setText("Macro recording started...");
@@ -587,23 +586,19 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
   private void notifyUser(String text, boolean typing) {
     String actualText = text;
-    if (typing && myLastWasTyping) {
-      int maxLength = TYPING_SAMPLE.length() + RECORDED.length();
+    if (typing) {
+      int maxLength = TYPING_SAMPLE.length();
       myLastTyping += text;
       if (myLastTyping.length() > maxLength) {
-        myLastTyping = myLastTyping.substring(myLastTyping.length() - maxLength);
+        myLastTyping = "..." + myLastTyping.substring(myLastTyping.length() - maxLength);
       }
       actualText = myLastTyping;
+    } else {
+      myLastTyping = "";
     }
 
     if (myWidget != null) {
       myWidget.notifyUser(RECORDED + actualText);
-    }
-
-    myLastWasTyping = typing;
-
-    if (!typing) {
-      myLastTyping = "";
     }
   }
 }

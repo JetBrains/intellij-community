@@ -30,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -44,8 +45,7 @@ public class ExceptionWorker {
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
 
-  private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager
-    .getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+  private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
 
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
@@ -55,7 +55,7 @@ public class ExceptionWorker {
   private String myMethod;
   private Trinity<TextRange, TextRange, TextRange> myInfo;
 
-  public ExceptionWorker(Project project, final GlobalSearchScope searchScope) {
+  public ExceptionWorker(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     myProject = project;
     mySearchScope = searchScope;
   }
@@ -104,35 +104,7 @@ public class ExceptionWorker {
       final int highlightEndOffset = textStartOffset + rparenthIndex;
       final VirtualFile virtualFile = myFile.getVirtualFile();
 
-      HyperlinkInfo linkInfo = new HyperlinkInfo() {
-        @Override
-        public void navigate(Project project) {
-          VirtualFile currentVirtualFile = null;
-
-          AccessToken accessToken = ReadAction.start();
-
-          try {
-            if (!virtualFile.isValid()) return;
-
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-            if (psiFile != null) {
-              PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
-              if (navigationElement instanceof PsiFile) {
-                currentVirtualFile = ((PsiFile)navigationElement).getVirtualFile();
-              }
-            }
-
-            if (currentVirtualFile == null) {
-              currentVirtualFile = virtualFile;
-            }
-          }
-          finally {
-            accessToken.finish();
-          }
-
-          new OpenFileHyperlinkInfo(myProject, currentVirtualFile, lineNumber - 1).navigate(project);
-        }
-      };
+      HyperlinkInfo linkInfo = new MyHyperlinkInfo(myProject, virtualFile, lineNumber);
 
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
@@ -225,5 +197,45 @@ public class ExceptionWorker {
       pos += delta;
     }
     return pos;
+  }
+
+  private static class MyHyperlinkInfo implements HyperlinkInfo {
+    private final VirtualFile myVirtualFile;
+    private final int myLineNumber;
+    private final Project myProject;
+
+    public MyHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNumber) {
+      myProject = project;
+      myVirtualFile = virtualFile;
+      myLineNumber = lineNumber;
+    }
+
+    @Override
+    public void navigate(Project project) {
+      VirtualFile currentVirtualFile = null;
+
+      AccessToken accessToken = ReadAction.start();
+
+      try {
+        if (!myVirtualFile.isValid()) return;
+
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(myVirtualFile);
+        if (psiFile != null) {
+          PsiElement navigationElement = psiFile.getNavigationElement(); // Sources may be downloaded.
+          if (navigationElement instanceof PsiFile) {
+            currentVirtualFile = ((PsiFile)navigationElement).getVirtualFile();
+          }
+        }
+
+        if (currentVirtualFile == null) {
+          currentVirtualFile = myVirtualFile;
+        }
+      }
+      finally {
+        accessToken.finish();
+      }
+
+      new OpenFileHyperlinkInfo(myProject, currentVirtualFile, myLineNumber - 1).navigate(project);
+    }
   }
 }

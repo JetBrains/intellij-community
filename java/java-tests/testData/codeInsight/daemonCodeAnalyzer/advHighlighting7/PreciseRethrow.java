@@ -155,4 +155,14 @@ class C {
       <error descr="Unhandled exception: C.E">throw x;</error>
     }
   }
+
+  void m11() throws E1 {
+    try {
+      System.out.println();
+    }
+    catch (Exception e) {
+      // test for precise types calculation fix
+      <error descr="Unhandled exception: java.lang.Exception">throw e;</error>
+    }
+  }
 }

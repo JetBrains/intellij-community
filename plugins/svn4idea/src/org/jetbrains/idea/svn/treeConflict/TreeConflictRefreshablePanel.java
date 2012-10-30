@@ -562,7 +562,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       }
       myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, null, new FileHistoryRefresherI() {
         @Override
-        public void run(boolean isRefresh) {
+        public void run(boolean isRefresh, boolean canUseCache) {
           //we will not refresh
         }
 

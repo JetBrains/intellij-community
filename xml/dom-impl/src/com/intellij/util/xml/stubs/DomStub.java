@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.stubs.ObjectStubBase;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,16 +62,18 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return myLocalName.getString();
   }
 
+  @Nullable
   public String getNamespaceKey() {
-    return myNamespace.getString();
+    return myNamespace == null ? null : myNamespace.getString();
   }
 
-  public List<DomStub> getChildrenByName(final CharSequence name, final String nsKey) {
+  public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
     final String s = nsKey == null ? "" : nsKey;
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
-        return XmlUtil.getLocalName(stub.getName()).equals(name) && stub.getNamespaceKey().equals(s);
+        return XmlUtil.getLocalName(stub.getName()).equals(name) &&
+               Comparing.equal(s, stub.getNamespaceKey());
       }
     });
   }

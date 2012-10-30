@@ -1287,7 +1287,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MySaveAction extends AnAction {
 
     public MySaveAction() {
-      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.RunConfigurations.SaveTempConfig);
+      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.Actions.Menu_saveall);
     }
 
     public void actionPerformed(final AnActionEvent e) {

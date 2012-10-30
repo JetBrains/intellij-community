@@ -118,6 +118,16 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
   }
 
+  public File getAaptGenDir() throws IOException {
+    File aaptGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_APT, false);
+    return aaptGenDir != null ? aaptGenDir.getCanonicalFile() : null;
+  }
+
+  public File getAidlGenDir() throws IOException {
+    File aidlGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_AIDL, false);
+    return aidlGenDir != null ? aidlGenDir.getCanonicalFile() : null;
+  }
+
   public JpsAndroidModuleProperties getProperties() {
     return myProperties;
   }

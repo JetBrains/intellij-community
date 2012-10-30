@@ -266,11 +266,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     this(project, viewer, null);
   }
 
-  public ConsoleViewImpl(final Project project, boolean viewer, FileType fileType) {
+  public ConsoleViewImpl(@NotNull final Project project, boolean viewer, @Nullable FileType fileType) {
     this(project, GlobalSearchScope.allScope(project), viewer, fileType);
   }
 
-  public ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType) {
+  public ConsoleViewImpl(@NotNull final Project project, @NotNull GlobalSearchScope searchScope, boolean viewer, @Nullable FileType fileType) {
     this(project, searchScope, viewer, fileType,
          new ConsoleState.NotStartedStated() {
            @Override
@@ -280,7 +280,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
          });
   }
 
-  protected ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType,
+  protected ConsoleViewImpl(@NotNull final Project project, @NotNull GlobalSearchScope searchScope, boolean viewer, @Nullable FileType fileType,
                             @NotNull final ConsoleState initialState) {
     super(new BorderLayout());
     isViewer = viewer;

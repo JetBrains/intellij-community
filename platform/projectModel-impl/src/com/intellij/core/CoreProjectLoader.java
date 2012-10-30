@@ -41,16 +41,16 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreProjectLoader {
-  public static void loadProject(MockProject project, @NotNull VirtualFile virtualFile)
+  public static boolean loadProject(MockProject project, @NotNull VirtualFile virtualFile)
     throws IOException, JDOMException, InvalidDataException {
     if (virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
       project.setBaseDir(virtualFile);
       loadDirectoryProject(project, virtualFile);
+      return true;
     }
-    else {
-      // TODO load .ipr
-      throw new UnsupportedOperationException();
-    }
+
+    // TODO load .ipr
+    return false;
   }
 
   private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,

@@ -46,6 +46,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     myExtension = extension;
   }
 
+  @Override
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -81,6 +82,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     hierarchyBrowser.setContent(content);
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         provider.browserActivated(hierarchyBrowser);
       }

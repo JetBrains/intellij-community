@@ -98,6 +98,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private CommitContext myCommitContext;
   private VirtualFileAdapter myListener;
   private boolean myCanChangePatchFile;
+  private String myHelpId = "reference.dialogs.vcs.patch.apply";
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
@@ -218,7 +219,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void init(List<TextFilePatch> patches, final LocalChangeList localChangeList) {
-    final List<FilePatchInProgress> matchedPathes = new AutoMatchIterator(myProject).execute(patches);
+    final List<FilePatchInProgress> matchedPathes = new MatchPatchPaths(myProject).execute(patches);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -285,7 +286,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "reference.dialogs.vcs.patch.apply";
+    return myHelpId;
   }
 
   private void setPathFileChangeDefault() {
@@ -296,6 +297,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.setText(patchFile.getPresentableUrl());
     myRecentPathFileChange.set(new FilePresentation(patchFile));
     queueRequest();
+  }
+
+  public void setHelpId(String s) {
+    myHelpId = s;
   }
 
   private class MyUpdater implements Runnable {
@@ -311,7 +316,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (patchReader == null) return;
 
       final List<FilePatchInProgress> matchedPathes = patchReader == null ? Collections.<FilePatchInProgress>emptyList() :
-                                                      new AutoMatchIterator(myProject).execute(patchReader.getPatches());
+                                                      new MatchPatchPaths(myProject).execute(patchReader.getPatches());
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

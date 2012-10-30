@@ -25,6 +25,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.EmptyInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -35,6 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +73,11 @@ public class DataFlowRunner {
   protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     if (psiBlock.getParent() instanceof PsiMethod) {
       final PsiClass containingClass = ((PsiMethod)psiBlock.getParent()).getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) {
-        final PsiElement newExpression = containingClass.getParent();
-        final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(newExpression);
-        if (newExpression instanceof PsiNewExpression && block != null) {
-          final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, (PsiNewExpression)newExpression);
+      if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+        final PsiElement parent = containingClass.getParent();
+        final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(parent);
+        if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
+          final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, parent);
           final RunnerResult result = analyzeMethod(block, envVisitor);
           if (result == RunnerResult.OK) {
             final Collection<DfaMemoryState> closureStates = envVisitor.getClosureStates();
@@ -225,22 +227,32 @@ public class DataFlowRunner {
   }
 
   private static class EnvironmentalInstructionVisitor extends DelegatingInstructionVisitor {
-    private final PsiNewExpression myNewExpression;
+    private final PsiElement myClassParent;
     private final Set<DfaMemoryState> myClosureStates = new THashSet<DfaMemoryState>();
 
-    public EnvironmentalInstructionVisitor(@NotNull InstructionVisitor delegate, @NotNull PsiNewExpression newExpression) {
+    private EnvironmentalInstructionVisitor(InstructionVisitor delegate, PsiElement classParent) {
       super(delegate);
-      myNewExpression = newExpression;
+      myClassParent = classParent;
+    }
+
+    @Override
+    public DfaInstructionState[] visitEmptyInstruction(EmptyInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
+      checkEnvironment(runner, before, instruction.getAnchor());
+      return super.visitEmptyInstruction(instruction, runner, before);
     }
 
     @Override
     public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myNewExpression == instruction.getCallExpression()) {
+      checkEnvironment(runner, memState, instruction.getCallExpression());
+      return super.visitMethodCall(instruction, runner, memState);
+    }
+
+    private void checkEnvironment(DataFlowRunner runner, DfaMemoryState memState, @Nullable PsiElement anchor) {
+      if (myClassParent == anchor) {
         DfaMemoryState copy = memState.createCopy();
         copy.flushFields(runner);
         myClosureStates.add(copy);
       }
-      return super.visitMethodCall(instruction, runner, memState);
     }
 
     @NotNull

@@ -90,14 +90,15 @@ public class JavacMain {
         return false;
       }
     }
-    if (!sourcePath.isEmpty()) {
-      try {
-        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
-      }
+    try {
+    // ensure the source path is set;
+    // otherwise, if not set, javac attempts to search both classes and sources in classpath;
+    // so if some classpath jars contain sources, it will attempt to compile them
+      fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+    }
+    catch (IOException e) {
+      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+      return false;
     }
 
     //noinspection IOResourceOpenedButNotSafelyClosed

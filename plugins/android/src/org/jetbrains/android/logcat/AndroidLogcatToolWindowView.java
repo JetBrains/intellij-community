@@ -161,6 +161,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         if (value == null) {
           setText("<html><font color='red'>[none]</font></html>");
         }
+        else if (value instanceof IDevice) {
+          setText(((IDevice)value).getSerialNumber());
+        }
       }
     });
     final AndroidLogFilterModel logFilterModel =

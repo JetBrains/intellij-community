@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -29,40 +28,28 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypeParameterListStub> implements PsiTypeParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParametersListImpl");
-
-  public ClsTypeParametersListImpl(final PsiTypeParameterListStub stub) {
+  public ClsTypeParametersListImpl(@NotNull PsiTypeParameterListStub stub) {
     super(stub);
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     final PsiTypeParameter[] params = getTypeParameters();
     if (params.length != 0) {
       buffer.append('<');
       for (int i = 0; i < params.length; i++) {
-        ClsTypeParameterImpl parameter = (ClsTypeParameterImpl)params[i];
         if (i > 0) buffer.append(", ");
-        parameter.appendMirrorText(indentLevel, buffer);
+        appendText(params[i], indentLevel, buffer);
       }
       buffer.append("> ");
     }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-
-    PsiTypeParameter[] parms = getTypeParameters();
-    PsiTypeParameter[] parmMirrors = ((PsiTypeParameterList)SourceTreeToPsiMap.treeElementToPsi(element)).getTypeParameters();
-    LOG.assertTrue(parms.length == parmMirrors.length);
-    if (parms.length == parmMirrors.length) {
-      for (int i = 0; i < parms.length; i++) {
-          ((ClsElementImpl)parms[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(parmMirrors[i]));
-      }
-    }
+    setMirrors(getTypeParameters(), SourceTreeToPsiMap.<PsiTypeParameterList>treeToPsiNotNull(element).getTypeParameters());
   }
-
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -81,12 +68,8 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
 
   @Override
   public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
-    LOG.assertTrue(typeParameter.getParent() == this);
+    assert typeParameter.getParent() == this;
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
-  }
-
-  public String toString() {
-    return "PsiTypeParameterList";
   }
 
   @Override
@@ -99,5 +82,10 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
       if (!processor.execute(parameter, state)) return false;
     }
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiTypeParameterList";
   }
 }

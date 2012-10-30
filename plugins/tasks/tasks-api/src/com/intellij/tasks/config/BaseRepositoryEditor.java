@@ -25,10 +25,9 @@ import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected JTextField myURLText;
   protected JTextField myUserNameText;
   protected JBLabel myUsernameLabel;
-  protected JCheckBox myShareURL;
+  protected JCheckBox myShareUrlCheckBox;
   protected JPasswordField myPasswordText;
   protected JBLabel myPasswordLabel;
 
@@ -58,13 +57,14 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JPanel myPanel;
   private JBCheckBox myUseProxy;
   private JButton myProxySettingsButton;
-  protected JCheckBox myUseHTTPAuthentication;
+  protected JCheckBox myUseHttpAuthenticationCheckBox;
 
   private JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
   private JBLabel myComment;
   private JPanel myEditorPanel;
   protected JBCheckBox myLoginAnonymouslyJBCheckBox;
+  protected JBTabbedPane myTabbedPane;
 
   private boolean myApplying;
   protected Project myProject;
@@ -95,11 +95,11 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myURLText.setText(repository.getUrl());
     myUserNameText.setText(repository.getUsername());
     myPasswordText.setText(repository.getPassword());
-    myShareURL.setSelected(repository.isShared());
+    myShareUrlCheckBox.setSelected(repository.isShared());
     myUseProxy.setSelected(repository.isUseProxy());
 
-    myUseHTTPAuthentication.setSelected(repository.isUseHttpAuthentication());
-    myUseHTTPAuthentication.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
+    myUseHttpAuthenticationCheckBox.setSelected(repository.isUseHttpAuthentication());
+    myUseHttpAuthenticationCheckBox.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
 
     myLoginAnonymouslyJBCheckBox.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.LOGIN_ANONYMOUSLY));
     myLoginAnonymouslyJBCheckBox.setSelected(repository.isLoginAnonymously());
@@ -113,7 +113,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
     myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
-    myEditorPanel.add(ScrollPaneFactory.createScrollPane(myEditor.getComponent(), SideBorder.NONE), BorderLayout.CENTER);
+    myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
     myComment.setText("Available placeholders: " + repository.getComment());
 
     installListener(myAddCommitMessage);
@@ -123,9 +123,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myUserNameText);
     installListener(myPasswordText);
 
-    installListener(myShareURL);
+    installListener(myShareUrlCheckBox);
     installListener(myUseProxy);
-    installListener(myUseHTTPAuthentication);
+    installListener(myUseHttpAuthenticationCheckBox);
     installListener(myLoginAnonymouslyJBCheckBox);
 
     enableButtons();
@@ -139,11 +139,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
   }
 
-  protected void loginAnonymouslyChanged(boolean enabled) {
+  private void loginAnonymouslyChanged(boolean enabled) {
     myUsernameLabel.setEnabled(enabled);
     myUserNameText.setEnabled(enabled);
     myPasswordLabel.setEnabled(enabled);
     myPasswordText.setEnabled(enabled);
+    myUseHttpAuthenticationCheckBox.setEnabled(enabled);
   }
 
   @Nullable
@@ -232,9 +233,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUsername(myUserNameText.getText().trim());
     //noinspection deprecation
     myRepository.setPassword(myPasswordText.getText());
-    myRepository.setShared(myShareURL.isSelected());
+    myRepository.setShared(myShareUrlCheckBox.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
-    myRepository.setUseHttpAuthentication(myUseHTTPAuthentication.isSelected());
+    myRepository.setUseHttpAuthentication(myUseHttpAuthenticationCheckBox.isSelected());
     myRepository.setLoginAnonymously(myLoginAnonymouslyJBCheckBox.isSelected());
 
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());

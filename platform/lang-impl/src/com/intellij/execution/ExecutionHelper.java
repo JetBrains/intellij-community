@@ -78,7 +78,7 @@ public class ExecutionHelper {
 
   public static void showErrors(
     @NotNull final Project myProject,
-    @NotNull final List<Exception> errors,
+    @NotNull final List<? extends Exception> errors,
     @NotNull final String tabDisplayName,
     @Nullable final VirtualFile file)
   {
@@ -87,8 +87,8 @@ public class ExecutionHelper {
 
   public static void showExceptions(
     @NotNull final Project myProject,
-    @NotNull final List<Exception> errors,
-    @NotNull final List<Exception> warnings,
+    @NotNull final List<? extends Exception> errors,
+    @NotNull final List<? extends Exception> warnings,
     @NotNull final String tabDisplayName,
     @Nullable final VirtualFile file)
   {
@@ -133,7 +133,7 @@ public class ExecutionHelper {
 
   private static void addMessages(
     final int messageCategory,
-    @NotNull final List<Exception> exceptions,
+    @NotNull final List<? extends Exception> exceptions,
     @NotNull ErrorViewPanel errorTreeView,
     @NotNull final VirtualFile file,
     @NotNull final String defaultMessage)

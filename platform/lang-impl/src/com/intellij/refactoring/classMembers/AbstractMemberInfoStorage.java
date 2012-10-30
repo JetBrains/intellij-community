@@ -30,7 +30,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   private final HashMap<C, List<M>> myClassToMemberInfoMap = new HashMap<C, List<M>>();
   protected final C myClass;
   protected final MemberInfoBase.Filter<T> myFilter;
-  private final HashMap<C, List<M>> myTargetClassToMemberInfosMap = new HashMap<C, List<M>>();
+  private final HashMap<C, List<M>> myTargetClassToIntermediateMemberInfosMap = new HashMap<C, List<M>>();
   private final HashMap<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new HashMap<C, LinkedHashSet<M>>();
   private final HashMap<C, HashSet<M>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<C, HashSet<M>>();
 
@@ -78,13 +78,13 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
 
   protected abstract void extractClassMembers(C aClass, ArrayList<M> temp);
 
-  public List<M> getMemberInfosList(C baseClass) {
-    List<M> result = myTargetClassToMemberInfosMap.get(baseClass);
+  public List<M> getIntermediateMemberInfosList(C baseClass) {
+    List<M> result = myTargetClassToIntermediateMemberInfosMap.get(baseClass);
 
     if (result == null) {
       Set<M> list = getIntermediateClassesMemberInfosList(baseClass);
       result = Collections.unmodifiableList(new ArrayList<M>(list));
-      myTargetClassToMemberInfosMap.put(baseClass, result);
+      myTargetClassToIntermediateMemberInfosMap.put(baseClass, result);
     }
 
     return result;
@@ -128,15 +128,15 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
 
   private HashSet<M> buildDuplicatedMemberInfos(C baseClass) {
     HashSet<M> result = new HashSet<M>();
-    List<M> memberInfos = getMemberInfosList(baseClass);
+    List<M> memberInfos = getIntermediateMemberInfosList(baseClass);
 
     for (int i = 0; i < memberInfos.size(); i++) {
       final M memberInfo = memberInfos.get(i);
-      final PsiElement member = memberInfo.getMember();
+      final T member = memberInfo.getMember();
 
       for(int j = 0; j < i; j++) {
         final M memberInfo1 = memberInfos.get(j);
-        final PsiElement member1 = memberInfo1.getMember();
+        final T member1 = memberInfo1.getMember();
         if(memberConflict(member1,  member)) {
           result.add(memberInfo);
 //        We let the first one be...
@@ -147,5 +147,5 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     return result;
   }
 
-  protected abstract boolean memberConflict(PsiElement member1, PsiElement member);
+  protected abstract boolean memberConflict(T member1, T member);
 }

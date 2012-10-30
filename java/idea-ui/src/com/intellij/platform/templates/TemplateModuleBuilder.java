@@ -17,15 +17,17 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -33,6 +35,7 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +48,7 @@ import java.util.zip.ZipInputStream;
 class TemplateModuleBuilder extends ModuleBuilder {
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
+  private boolean myProjectMode;
 
   public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType) {
     myTemplate = template;
@@ -57,8 +61,37 @@ class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
+  public Module commitModule(@NotNull Project project, ModifiableModuleModel model) {
+    if (myProjectMode) {
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      if (modules.length > 0) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              setupModule(modules[0]);
+            }
+            catch (ConfigurationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+      return null;
+    }
+    else {
+      return super.commitModule(project, model);
+    }
+  }
+
+  @Override
   public ModuleType getModuleType() {
     return myType;
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
   }
 
   @NotNull
@@ -66,24 +99,58 @@ class TemplateModuleBuilder extends ModuleBuilder {
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
-    String iml;
+    unzip(path, true);
+    return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+  }
+
+  private void unzip(String path, boolean renameModule) {
     try {
       File dir = new File(path);
       ZipInputStream zipInputStream = myTemplate.getStream();
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-      iml = ContainerUtil.find(dir.list(), new Condition<String>() {
+      String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
           return s.endsWith(".iml");
         }
       });
-      new File(path, iml).renameTo(new File(getModuleFilePath()));
+      if (renameModule) {
+        File from = new File(path, iml);
+        File to = new File(getModuleFilePath());
+        if (!from.renameTo(to)) {
+          throw new IOException("Can't rename " + from + " to " + to);
+        }
+      }
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+      if (virtualFile == null) {
+        throw new IOException("Can't find " + dir);
+      }
       RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
   }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, final String path) {
+    myProjectMode = true;
+    unzip(path, false);
+    return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
+      @Nullable
+      @Override
+      public Project compute() {
+        try {
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
+        }
+      }
+    });
+  }
+
+  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 }

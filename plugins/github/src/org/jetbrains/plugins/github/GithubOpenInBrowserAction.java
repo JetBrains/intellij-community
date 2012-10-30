@@ -22,14 +22,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
+import git4idea.Notificator;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
@@ -94,6 +93,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (virtualFile == null || project == null || project.isDisposed()) {
+      return;
+    }
+
     while (!checkCredentials(project)) {
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
@@ -102,24 +106,19 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       }
     }
 
-    final VirtualFile root = project.getBaseDir();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return;
-    }
-    final GitRepository gitRepository = manager.getRepositoryForFile(root);
-    // Check that given repository is properly configured git repository
-    final String githubRemoteUrl = findGithubRemoteUrl(gitRepository);
+    final GitRepository repository = manager.getRepositoryForFile(virtualFile);
 
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    final String rootPath = root.getPath();
+    final String githubRemoteUrl = findGithubRemoteUrl(repository);
+
+    final String rootPath = repository.getRoot().getPath();
     final String path = virtualFile.getPath();
     if (!path.startsWith(rootPath)) {
-      Messages.showErrorDialog(project, "File is not under project root", CANNOT_OPEN_IN_BROWSER);
+      notifyError(project, "File is not under repository root", "Root: " + rootPath + ", file: " + path);
       return;
     }
 
-    String branch = getBranchNameOnRemote(project, root);
+    String branch = getBranchNameOnRemote(project, repository);
     if (branch == null) {
       return;
     }
@@ -127,6 +126,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     String relativePath = path.substring(rootPath.length());
     String urlToOpen = makeUrlToOpen(e, relativePath, branch, githubRemoteUrl);
     BrowserUtil.launchBrowser(urlToOpen);
+  }
+
+  private static void notifyError(@NotNull Project project, @NotNull String message, @Nullable String logDetails) {
+    Notificator.getInstance(project).notifyError(CANNOT_OPEN_IN_BROWSER, message);
+    LOG.info(message + (logDetails == null ? "" : logDetails));
   }
 
   private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
@@ -142,29 +146,21 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   }
 
   @Nullable
-  public static String getBranchNameOnRemote(@NotNull Project project, @NotNull VirtualFile root) {
-    final GitBranch tracked;
-    try {
-      final GitBranch current = GitBranchUtil.getCurrentBranch(project, root);
-      if (current == null) {
-        Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
-        return null;
-      }
-      tracked = GitBranchUtil.tracked(project, root, current.getName());
-      if (tracked == null || !tracked.isRemote()) {
-        Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
-        return null;
-      }
-    }
-    catch (VcsException e1) {
-      Messages.showErrorDialog(project, "Error occurred while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
+  public static String getBranchNameOnRemote(@NotNull Project project, @NotNull GitRepository repository) {
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    if (currentBranch == null) {
+      notifyError(project, "Can't open the file on GitHub when repository is on detached HEAD. Please checkout a branch.", null);
       return null;
     }
-    String branch = tracked.getName();
-    if (branch.startsWith("origin/")) {
-      branch = branch.substring(7);
+
+    GitRemoteBranch tracked = currentBranch.findTrackedBranch(repository);
+    if (tracked == null) {
+      notifyError(project, "Can't open the file on GitHub when current branch doesn't have a tracked branch.",
+                  "Current branch: " + currentBranch + ", tracked info: " + repository.getBranchTrackInfos());
+      return null;
     }
-    return branch;
+
+    return tracked.getNameForRemoteOperations();
   }
 
 }

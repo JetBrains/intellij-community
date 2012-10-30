@@ -35,14 +35,14 @@ import javax.swing.*;
 import java.util.Comparator;
 import java.util.Map;
 
-public final class CallHierarchyBrowser extends CallHierarchyBrowserBase {
-
+public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.call.CallHierarchyBrowser");
 
-  public CallHierarchyBrowser(final Project project, final PsiMethod method) {
+  public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMethod method) {
     super(project, method);
   }
 
+  @Override
   protected void createTrees(@NotNull final Map<String, JTree> type2TreeMap) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
     final JTree tree1 = createTree(false);
@@ -59,6 +59,7 @@ public final class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     type2TreeMap.put(CALLER_TYPE, tree2);
   }
 
+  @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof CallHierarchyNodeDescriptor) {
       CallHierarchyNodeDescriptor nodeDescriptor = (CallHierarchyNodeDescriptor)descriptor;
@@ -76,10 +77,12 @@ public final class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     return null;
   }
 
+  @Override
   protected boolean isApplicableElement(@NotNull final PsiElement element) {
     return element instanceof PsiMethod;
   }
 
+  @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
     if (CALLER_TYPE.equals(typeName)) {
       return new CallerMethodsTreeStructure(myProject, (PsiMethod)psiElement, getCurrentScopeType());
@@ -93,6 +96,7 @@ public final class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     }
   }
 
+  @Override
   protected Comparator<NodeDescriptor> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }

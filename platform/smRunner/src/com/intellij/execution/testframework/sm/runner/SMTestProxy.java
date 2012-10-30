@@ -48,7 +48,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private AbstractState myState = NotRunState.getInstance();
   private final String myName;
-  private Integer myDuration = null; // duration is unknown
+  private Long myDuration = null; // duration is unknown
   @Nullable private final String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
@@ -280,7 +280,7 @@ public class SMTestProxy extends AbstractTestProxy {
    */
   @Nullable
   @Override
-  public Integer getDuration() {
+  public Long getDuration() {
     // Returns duration value for tests
     // or cached duration for suites
     if (myDurationIsCached || !isSuite()) {
@@ -307,7 +307,7 @@ public class SMTestProxy extends AbstractTestProxy {
    * Sets duration of test
    * @param duration In milliseconds
    */
-  public void setDuration(final int duration) {
+  public void setDuration(final long duration) {
     invalidateCachedDurationForContainerSuites();
 
     if (!isSuite()) {
@@ -635,15 +635,15 @@ public class SMTestProxy extends AbstractTestProxy {
 
 
   @Nullable
-  private Integer calcSuiteDuration() {
-    int partialDuration = 0;
+  private Long calcSuiteDuration() {
+    long partialDuration = 0;
     boolean durationOfChildrenIsUnknown = true;
 
     for (SMTestProxy child : getChildren()) {
-      final Integer duration = child.getDuration();
+      final Long duration = child.getDuration();
       if (duration != null) {
         durationOfChildrenIsUnknown = false;
-        partialDuration += duration.intValue();
+        partialDuration += duration.longValue();
       }
     }
     // Lets convert partial duration in integer object. Negative partial duration

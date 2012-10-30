@@ -26,11 +26,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 public class EnterActionTest extends GroovyFormatterTestCase {
 
-  @Override
-  protected String getBasePath() {
-    return "${TestUtils.testDataPath}groovy/enterAction/";
-  }
-
+  final String basePath = TestUtils.testDataPath + 'groovy/enterAction/'
 
   void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
@@ -40,7 +36,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   }
 
   private def doEnter() {
-    myFixture.type((char)'\n')
+    myFixture.type('\n' as char)
   }
 
   public void testClos1() throws Throwable { doTest(); }
@@ -338,6 +334,19 @@ protected void z() {<caret>
 protected void z() {
   <caret>
 }'''
+  }
+
+  void testAfterArrow() {
+    doTest '''\
+def cl =  {
+  String s -><caret>
+}
+''', '''\
+def cl =  {
+  String s ->
+    <caret>
+}
+'''
   }
 
 }

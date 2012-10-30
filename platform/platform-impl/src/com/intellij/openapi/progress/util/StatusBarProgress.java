@@ -29,10 +29,12 @@ public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final HashMap<StatusBarEx, Pair<String, String>> myStatusBar2SavedText = new HashMap<StatusBarEx, Pair<String, String>>();
 
+  @Override
   public void start() {
     super.start();
     SwingUtilities.invokeLater (
       new Runnable() {
+        @Override
         public void run() {
           if (ApplicationManager.getApplication().isDisposed()) return;
           final WindowManager windowManager = WindowManager.getInstance();
@@ -56,10 +58,12 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     );
   }
 
+  @Override
   public void stop() {
     super.stop();
     SwingUtilities.invokeLater (
       new Runnable() {
+        @Override
         public void run() {
           for (final StatusBarEx statusBar : myStatusBar2SavedText.keySet()) {
             final String textToRestore = updateRestoreText(statusBar);
@@ -71,11 +75,13 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     );
   }
 
+  @Override
   public void setText(String text) {
     super.setText(text);
     update();
   }
 
+  @Override
   public void setFraction(double fraction) {
     super.setFraction(fraction);
     update();
@@ -96,6 +102,7 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     final String text1 = text;
     SwingUtilities.invokeLater (
       new Runnable() {
+        @Override
         public void run() {
           for (final StatusBarEx statusBarEx : myStatusBar2SavedText.keySet()) {
             setStatusBarText(statusBarEx, text1);

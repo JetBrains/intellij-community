@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,10 +48,23 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private final MessageBus myBus;
   private CommittedChangesTreeBrowser myBrowser;
   private MessageBusConnection myConnection;
+  private Consumer<List<CommittedChangeList>> myListConsumer;
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
+    myListConsumer = new Consumer<List<CommittedChangeList>>() {
+      @Override
+      public void consume(final List<CommittedChangeList> lists) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+            myBrowser.setItems(lists, CommittedChangesBrowserUseCase.INCOMING);
+          }
+        });
+      }
+    };
   }
 
   public JComponent initContent() {
@@ -62,7 +76,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
-    loadChangesToBrowser(false);
+    loadChangesToBrowser(false, true);
 
     JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(myBrowser, BorderLayout.CENTER);
@@ -75,18 +89,18 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBrowser = null;
   }
 
-  private void updateModel(final boolean inBackground) {
+  private void updateModel(final boolean inBackground, final boolean refresh) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
         if (myBrowser != null) {
-          loadChangesToBrowser(inBackground);
+          loadChangesToBrowser(inBackground, refresh);
         }
       }
     });
   }
 
-  private void loadChangesToBrowser(final boolean inBackground) {
+  private void loadChangesToBrowser(final boolean inBackground, final boolean refresh) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
       public void consume(final Boolean notEmpty) {
@@ -95,9 +109,11 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
           if (list != null) {
             myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
             myBrowser.setItems(list, CommittedChangesBrowserUseCase.INCOMING);
-          }
-          else {
-            cache.loadIncomingChangesAsync(null, inBackground);
+          } else if (refresh) {
+            cache.loadIncomingChangesAsync(myListConsumer, inBackground);
+          } else {
+            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+            myBrowser.setItems(Collections.<CommittedChangeList>emptyList(), CommittedChangesBrowserUseCase.INCOMING);
           }
         }
       }
@@ -106,11 +122,16 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {
     public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-      updateModel(true);
+      updateModel(true, true);
     }
 
     public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
-      updateModel(true);
+      updateModel(true, true);
+    }
+
+    @Override
+    public void presentationChanged() {
+      updateModel(true, false);
     }
 
     @Override

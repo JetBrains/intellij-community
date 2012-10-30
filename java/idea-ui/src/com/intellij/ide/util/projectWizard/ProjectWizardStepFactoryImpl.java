@@ -20,6 +20,7 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -133,18 +134,13 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
     if (!FrameworkSupportUtil.getProviders(builder).isEmpty()) {
       final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
-      return new SupportForFrameworksStep(builder, container);
+      return new SupportForFrameworksStep(context, builder, container);
     }
     return null;
   }
 
   @Override
-  public SettingsStep createSettingsStep(WizardContext context) {
-    return new ProjectSettingsStep(context);
-  }
-
-  @Override
-  public SettingsStep createJavaSettingsStep(final WizardContext context, final ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
-   return new JavaSettingsStep(context, moduleBuilder, sdkFilter);
+  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
+   return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

@@ -24,13 +24,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TestFinishedEvent extends TreeNodeEvent {
 
-  private final int myDuration;
+  private final long myDuration;
 
-  public TestFinishedEvent(@NotNull TestFinished testFinished, int duration) {
+  public TestFinishedEvent(@NotNull TestFinished testFinished, long duration) {
     this(testFinished.getTestName(), TreeNodeEvent.getNodeId(testFinished), duration);
   }
 
-  public TestFinishedEvent(@Nullable String name, int id, int duration) {
+  public TestFinishedEvent(@Nullable String name, int id, long duration) {
     super(name, id);
     myDuration = duration;
   }
@@ -39,7 +39,7 @@ public class TestFinishedEvent extends TreeNodeEvent {
     this(name, -1, duration);
   }
 
-  public int getDuration() {
+  public long getDuration() {
     return myDuration;
   }
 

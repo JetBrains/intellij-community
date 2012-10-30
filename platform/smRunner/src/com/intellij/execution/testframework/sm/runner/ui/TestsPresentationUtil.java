@@ -393,7 +393,7 @@ public class TestsPresentationUtil {
   }
 
   private static String getDurationTimePresentation(final SMTestProxy proxy) {
-    final Integer duration = proxy.getDuration();
+    final Long duration = proxy.getDuration();
 
     if (duration == null) {
       // if suite without children

@@ -48,8 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeTypeParameters;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev
@@ -201,7 +201,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       }
       else {
         LOG.assertTrue(parameter.isOptional());
-        final GrExpression initializer = parameter.getDefaultInitializer();
+        final GrExpression initializer = parameter.getInitializerGroovy();
         LOG.assertTrue(initializer != null);
         builder.append(initializer.getText());
       }

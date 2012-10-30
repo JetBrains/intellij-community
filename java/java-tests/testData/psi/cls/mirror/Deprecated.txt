@@ -1,0 +1,22 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+/**
+ * @deprecated
+ */
+class Deprecated {
+    /**
+     * @deprecated
+     */
+    int f;
+
+    Deprecated() { /* compiled code */ }
+
+    /**
+     * @deprecated
+     */
+    void m() { /* compiled code */ }
+}

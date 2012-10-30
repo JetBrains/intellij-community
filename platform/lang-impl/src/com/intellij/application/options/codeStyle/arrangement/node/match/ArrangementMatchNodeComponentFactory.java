@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementRuleEditingModel;
 import com.intellij.openapi.util.Ref;
@@ -37,13 +38,15 @@ public class ArrangementMatchNodeComponentFactory {
 
   @NotNull private final Set<ArrangementMatchCondition> myGroupingConditions = ContainerUtilRt.newHashSet();
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
+  @NotNull private final ArrangementColorsProvider     myColorsProvider;
   @NotNull private final Runnable                      myRemoveConditionCallback;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                              @NotNull Runnable removeConditionCallback,
+                                              @NotNull ArrangementColorsProvider provider, @NotNull Runnable removeConditionCallback,
                                               @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
     myDisplayManager = manager;
+    myColorsProvider = provider;
     myRemoveConditionCallback = removeConditionCallback;
     for (Set<ArrangementMatchCondition> rules : groupingRules) {
       myGroupingConditions.addAll(rules);
@@ -52,7 +55,8 @@ public class ArrangementMatchNodeComponentFactory {
 
   @NotNull
   public ArrangementMatchNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
-                                                    @Nullable final ArrangementRuleEditingModel model)
+                                                    @Nullable final ArrangementRuleEditingModel model,
+                                                    boolean showEditIcon)
   {
     final Ref<ArrangementMatchNodeComponent> ref = new Ref<ArrangementMatchNodeComponent>();
     node.invite(new ArrangementMatchConditionVisitor() {
@@ -63,7 +67,9 @@ public class ArrangementMatchNodeComponentFactory {
           component = new ArrangementGroupingMatchNodeComponent(myDisplayManager, condition);
         }
         else {
-          component = new ArrangementAtomMatchNodeComponent(myDisplayManager, condition, prepareRemoveCallback(condition, model));
+          component = new ArrangementAtomMatchNodeComponent(
+            myDisplayManager, myColorsProvider, condition, prepareRemoveCallback(condition, model)
+          );
         }
         ref.set(component);
       }
@@ -78,7 +84,12 @@ public class ArrangementMatchNodeComponentFactory {
         }
       }
     });
-    return ref.get();
+    if (showEditIcon) {
+      return new ArrangementEditIconMatchNodeComponent(ref.get());
+    }
+    else {
+      return ref.get();
+    }
   }
 
   @Nullable

@@ -17,7 +17,7 @@ package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
@@ -29,7 +29,13 @@ import org.jetbrains.annotations.NotNull;
  * Date: 2/20/12
  */
 public class LocationUtil {
-  public static boolean isJarAttached(@NotNull Location location, final PsiPackage aPackage, final String fqn) {
+  public static boolean isJarAttached(@NotNull Location location, @NotNull final PsiPackage aPackage, final String fqn) {
+    return isJarAttached(location, fqn, aPackage.getDirectories());
+  }
+
+  public static boolean isJarAttached(@NotNull Location location,
+                                      final String fqn,
+                                      final PsiDirectory[] directories) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(location.getProject());
     boolean testngJarFound = false;
     final Module locationModule = location.getModule();
@@ -37,8 +43,8 @@ public class LocationUtil {
       testngJarFound = facade.findClass(fqn, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(locationModule, true)) != null;
     }
     else {
-      for (PsiDirectory directory : aPackage.getDirectories()) {
-        final Module module = ModuleUtil.findModuleForFile(directory.getVirtualFile(), location.getProject());
+      for (PsiDirectory directory : directories) {
+        final Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), location.getProject());
         if (module != null) {
           if (facade.findClass(fqn, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)) != null) {
             testngJarFound = true;

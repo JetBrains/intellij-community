@@ -86,7 +86,7 @@ public abstract class CreateClassFix {
         if (targetClass == null) return;
 
         PsiType[] argTypes = getArgTypes(myRefElement);
-        if (argTypes != null) {
+        if (argTypes != null && argTypes.length > 0) {
           generateConstructor(myRefElement, name, argTypes, targetClass, project);
         }
         else {

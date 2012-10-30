@@ -56,12 +56,12 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
     }
-    return super.markDirty(context, file, rd, tsStorage);
+    return super.markDirty(context, file, rd, tsStorage, saveEventStamp);
   }
 
   private static boolean isInCurrentContextTargets(CompileContext context, BuildRootDescriptor rd) {
@@ -147,8 +147,8 @@ public class BuildFSState extends FSState {
       for (File file : files) {
         if (filter.accept(file)) {
           if (scope.isAffected(rd.getTarget(), file)) {
-            final long stamp = FileSystemUtil.lastModified(file);
-            if (!rd.isGenerated() && stamp > compilationStartStamp) {
+            final long currentFileStamp = FileSystemUtil.lastModified(file);
+            if (!rd.isGenerated() && (currentFileStamp > compilationStartStamp || getEventRegistrationStamp(file) > compilationStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               delta.markRecompile(rd, file);
@@ -158,7 +158,7 @@ public class BuildFSState extends FSState {
             }
             else {
               marked = true;
-              stamps.saveStamp(file, rd.getTarget(), stamp);
+              stamps.saveStamp(file, rd.getTarget(), currentFileStamp);
             }
           }
           else {

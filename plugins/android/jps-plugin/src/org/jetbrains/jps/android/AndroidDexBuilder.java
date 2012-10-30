@@ -24,13 +24,16 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.android.compiler.tools.AndroidDxRunner;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidBuildTarget;
+import org.jetbrains.jps.android.model.JpsAndroidDexCompilerConfiguration;
+import org.jetbrains.jps.android.model.JpsAndroidExtensionService;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -56,7 +59,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidProjectBuildTarget> {
+public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
 
   @NonNls private static final String BUILDER_NAME = "android-dex";
@@ -65,20 +68,20 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
 
   public AndroidDexBuilder() {
-    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+    super(Collections.singletonList(AndroidBuildTarget.TargetType.DEX));
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target,
-                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+  public void build(@NotNull AndroidBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
-    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.DEX && AndroidJpsUtil.isLightBuild(context)) {
+    if (AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
 
     try {
-      doBuild(context);
+      doBuild(target.getModule(), context);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -88,7 +91,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     }
   }
 
-  private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
+  private static void doBuild(JpsModule module, CompileContext context) throws IOException, ProjectBuildException {
     final File root = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
 
     AndroidFileSetStorage dexStateStorage = null;
@@ -97,7 +100,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       dexStateStorage = new AndroidFileSetStorage(root, "dex");
       proguardStateStorage = new AndroidFileSetStorage(root, "proguard");
 
-      if (!doDexBuild(context, dexStateStorage, proguardStateStorage)) {
+      if (!doDexBuild(module, context, dexStateStorage, proguardStateStorage)) {
         throw new ProjectBuildException();
       }
     }
@@ -111,171 +114,164 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     }
   }
 
-  private static boolean doDexBuild(@NotNull CompileContext context,
+  private static boolean doDexBuild(@NotNull JpsModule module,
+                                    @NotNull CompileContext context,
                                     @NotNull AndroidFileSetStorage dexStateStorage,
                                     @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
-    boolean success = true;
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+    assert extension != null && !extension.isLibrary();
 
-    for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
-      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-      if (extension == null || extension.isLibrary()) {
-        continue;
-      }
+    final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
+    if (platform == null) {
+      return false;
+    }
 
-      final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
-      if (platform == null) {
-        success = false;
-        continue;
-      }
+    final ProjectPaths projectPaths = context.getProjectPaths();
+    File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+    dexOutputDir = AndroidJpsUtil.createDirIfNotExist(dexOutputDir, context, BUILDER_NAME);
+    if (dexOutputDir == null) {
+      return false;
+    }
 
-      final ProjectPaths projectPaths = context.getProjectPaths();
-      File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
-      dexOutputDir = AndroidJpsUtil.createDirIfNotExist(dexOutputDir, context, BUILDER_NAME);
-      if (dexOutputDir == null) {
-        success = false;
-        continue;
-      }
+    final File classesDir = projectPaths.getModuleOutputDir(module, false);
+    if (classesDir == null || !classesDir.isDirectory()) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
+        .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
+      return true;
+    }
+    final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(context, module, platform);
 
-      final File classesDir = projectPaths.getModuleOutputDir(module, false);
-      if (classesDir == null || !classesDir.isDirectory()) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
-          .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
-        continue;
-      }
-      final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(context, module, platform);
+    boolean includeSystemProguardCfg = false;
+    String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
 
-      boolean includeSystemProguardCfg = false;
-      String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
-
-      if (proguardCfgPath != null) {
-        final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
-        includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
-      }
-      else if (extension.isRunProguard()) {
-        final File proguardCfgFile = extension.getProguardConfigFile();
-        if (proguardCfgFile == null) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                     AndroidJpsBundle.message("android.jps.errors.cannot.find.proguard.cfg", module.getName())));
-          success = false;
-          continue;
-        }
-
-        proguardCfgPath = proguardCfgFile != null ? proguardCfgFile.getPath() : null;
-        includeSystemProguardCfg = extension.isIncludeSystemProguardCfgFile();
-      }
-
-      final Set<String> fileSet;
-      final Set<String> jars;
-      final Set<String> outputDirs;
-
-      try {
-        if (proguardCfgPath != null) {
-          final File proguardCfgOutputFile = new File(dexOutputDir, AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME);
-          final String[] proguardCfgFilePaths = new String[] {proguardCfgPath, proguardCfgOutputFile.getPath()};
-          final String outputJarPath =
-            FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
-
-          if (!runProguardIfNecessary(extension, classesDir, platform, externalLibraries, context, outputJarPath,
-                                      proguardCfgFilePaths, includeSystemProguardCfg, proguardStateStorage)) {
-            success = false;
-            continue;
-          }
-          fileSet = jars = Collections.singleton(outputJarPath);
-          outputDirs = Collections.emptySet();
-        }
-        else {
-          fileSet = new HashSet<String>();
-          jars = new HashSet<String>();
-          outputDirs = new HashSet<String>();
-
-          AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
-          outputDirs.add(classesDir.getPath());
-
-          fileSet.addAll(externalLibraries);
-          jars.addAll(externalLibraries);
-
-          AndroidJpsUtil.processClasspath(context, module, new AndroidDependencyProcessor() {
-            @Override
-            public void processExternalLibrary(@NotNull File file) {
-              fileSet.add(file.getPath());
-              jars.add(file.getPath());
-            }
-
-            @Override
-            public void processAndroidLibraryPackage(@NotNull File file) {
-              fileSet.add(file.getPath());
-              jars.add(file.getPath());
-            }
-
-            @Override
-            public void processJavaModuleOutputDirectory(@NotNull File dir) {
-              fileSet.add(dir.getPath());
-              outputDirs.add(dir.getPath());
-            }
-
-            @Override
-            public boolean isToProcess(@NotNull AndroidDependencyType type) {
-              return type == AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR ||
-                     type == AndroidDependencyType.ANDROID_LIBRARY_PACKAGE ||
-                     type == AndroidDependencyType.EXTERNAL_LIBRARY;
-            }
-          });
-
-          if (extension.isPackTestCode()) {
-            final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
-
-            if (testsClassDir != null && testsClassDir.isDirectory()) {
-              AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
-              outputDirs.add(testsClassDir.getPath());
-            }
-          }
-        }
-        final AndroidFileSetState newState = new AndroidFileSetState(jars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
-
-        if (context.isMake()) {
-          final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
-          if (oldState != null && oldState.equalsTo(newState)) {
-            final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
-            boolean outputDirsDirty = false;
-
-            for (String outputDir : outputDirs) {
-              if (dirtyOutputDirs.contains(outputDir)) {
-                outputDirsDirty = true;
-                break;
-              }
-            }
-            if (!outputDirsDirty) {
-              continue;
-            }
-          }
-        }
-
-        if (fileSet.size() == 0) {
-          continue;
-        }
-
-        final String[] files = new String[fileSet.size()];
-        int i = 0;
-        for (String filePath : fileSet) {
-          files[i++] = FileUtil.toSystemDependentName(filePath);
-        }
-
-        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
-
-        if (!runDex(platform, dexOutputDir.getPath(), files, context, module)) {
-          success = false;
-          dexStateStorage.update(module.getName(), null);
-        }
-        else {
-          dexStateStorage.update(module.getName(), newState);
-        }
-      }
-      catch (IOException e) {
-        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+    if (proguardCfgPath != null) {
+      final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
+      includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
+    }
+    else if (extension.isRunProguard()) {
+      final File proguardCfgFile = extension.getProguardConfigFile();
+      if (proguardCfgFile == null) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle
+                                                     .message("android.jps.errors.cannot.find.proguard.cfg", module.getName())));
         return false;
       }
+
+      proguardCfgPath = proguardCfgFile.getPath();
+      includeSystemProguardCfg = extension.isIncludeSystemProguardCfgFile();
     }
-    return success;
+
+    final Set<String> fileSet;
+    final Set<String> jars;
+    final Set<String> outputDirs;
+
+    try {
+      if (proguardCfgPath != null) {
+        final File proguardCfgOutputFile = new File(dexOutputDir, AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME);
+        final String[] proguardCfgFilePaths = new String[]{proguardCfgPath, proguardCfgOutputFile.getPath()};
+        final String outputJarPath =
+          FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
+
+        if (!runProguardIfNecessary(extension, classesDir, platform, externalLibraries, context, outputJarPath,
+                                    proguardCfgFilePaths, includeSystemProguardCfg, proguardStateStorage)) {
+          return false;
+        }
+        fileSet = jars = Collections.singleton(outputJarPath);
+        outputDirs = Collections.emptySet();
+      }
+      else {
+        fileSet = new HashSet<String>();
+        jars = new HashSet<String>();
+        outputDirs = new HashSet<String>();
+
+        AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
+        outputDirs.add(classesDir.getPath());
+
+        fileSet.addAll(externalLibraries);
+        jars.addAll(externalLibraries);
+
+        AndroidJpsUtil.processClasspath(context, module, new AndroidDependencyProcessor() {
+          @Override
+          public void processExternalLibrary(@NotNull File file) {
+            fileSet.add(file.getPath());
+            jars.add(file.getPath());
+          }
+
+          @Override
+          public void processAndroidLibraryPackage(@NotNull File file) {
+            fileSet.add(file.getPath());
+            jars.add(file.getPath());
+          }
+
+          @Override
+          public void processJavaModuleOutputDirectory(@NotNull File dir) {
+            fileSet.add(dir.getPath());
+            outputDirs.add(dir.getPath());
+          }
+
+          @Override
+          public boolean isToProcess(@NotNull AndroidDependencyType type) {
+            return type == AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR ||
+                   type == AndroidDependencyType.ANDROID_LIBRARY_PACKAGE ||
+                   type == AndroidDependencyType.EXTERNAL_LIBRARY;
+          }
+        });
+
+        if (extension.isPackTestCode()) {
+          final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
+
+          if (testsClassDir != null && testsClassDir.isDirectory()) {
+            AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
+            outputDirs.add(testsClassDir.getPath());
+          }
+        }
+      }
+      final AndroidFileSetState newState = new AndroidFileSetState(jars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
+
+      if (context.isMake()) {
+        final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
+        if (oldState != null && oldState.equalsTo(newState)) {
+          final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
+          assert dirtyOutputDirs != null;
+          boolean outputDirsDirty = false;
+
+          for (String outputDir : outputDirs) {
+            if (dirtyOutputDirs.contains(outputDir)) {
+              outputDirsDirty = true;
+              break;
+            }
+          }
+          if (!outputDirsDirty) {
+            return true;
+          }
+        }
+      }
+
+      if (fileSet.size() == 0) {
+        return true;
+      }
+
+      final String[] files = new String[fileSet.size()];
+      int i = 0;
+      for (String filePath : fileSet) {
+        files[i++] = FileUtil.toSystemDependentName(filePath);
+      }
+
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
+
+      if (!runDex(platform, dexOutputDir.getPath(), files, context, module)) {
+        dexStateStorage.update(module.getName(), null);
+        return false;
+      }
+      else {
+        dexStateStorage.update(module.getName(), newState);
+      }
+    }
+    catch (IOException e) {
+      AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -329,12 +325,28 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
         new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.find.file", dxJarPath)));
       return false;
     }
-
     final String outFilePath = outputDir + File.separatorChar + AndroidCommonUtils.CLASSES_FILE_NAME;
 
     final List<String> programParamList = new ArrayList<String>();
     programParamList.add(dxJarPath);
     programParamList.add(outFilePath);
+
+    final JpsAndroidDexCompilerConfiguration configuration =
+      JpsAndroidExtensionService.getInstance().getDexCompilerConfiguration(module.getProject());
+    final List<String> vmOptions;
+
+    if (configuration != null) {
+      vmOptions = new ArrayList<String>();
+      vmOptions.addAll(ParametersListUtil.parse(configuration.getVmOptions()));
+
+      if (!AndroidCommonUtils.hasXmxParam(vmOptions)) {
+        vmOptions.add("-Xmx" + configuration.getMaxHeapSize() + "M");
+      }
+      programParamList.addAll(Arrays.asList("--optimize", Boolean.toString(configuration.isOptimize())));
+    }
+    else {
+      vmOptions = Collections.singletonList("-Xmx1024M");
+    }
     programParamList.addAll(Arrays.asList(compileTargets));
     programParamList.add("--exclude");
 
@@ -352,16 +364,14 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     final String jdkName = sdk.getSdkProperties().getData().getJdkName();
     final JpsLibrary javaSdk = context.getProjectDescriptor().getModel().getGlobal().getLibraryCollection().findLibrary(jdkName);
     if (javaSdk == null || !javaSdk.getType().equals(JpsJavaSdkType.INSTANCE)) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.errors.java.sdk.not.specified", jdkName)));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                 AndroidJpsBundle.message("android.jps.errors.java.sdk.not.specified", jdkName)));
       return false;
     }
 
-    // todo: pass additional vm params and max heap size from settings
-
-    final List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()),
-                                                                               AndroidDxRunner.class.getName(),
-                                                                               Collections.<String>emptyList(), classPath,
-                                                                               Arrays.asList("-Xmx1024M"), programParamList);
+    final List<String> commandLine = ExternalProcessUtil
+      .buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()), AndroidDxRunner.class.getName(),
+                            Collections.<String>emptyList(), classPath, vmOptions, programParamList);
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 

@@ -17,6 +17,12 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +37,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.Function;
@@ -39,7 +46,9 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
@@ -49,7 +58,7 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
  * @since 7/20/12 2:31 PM
  */
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware,
-                                       ArrangementConditionsGrouper
+                                       ArrangementConditionsGrouper, ArrangementColorsAware
 {
 
   // Type
@@ -201,6 +210,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
             break;
           case OVERRIDDEN_METHODS:
             setupOverriddenMethods(parseInfo);
+          default: // Do nothing
         }
       }
     }
@@ -373,5 +383,67 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       return false;
     }
     return orderType == null || orderTypes.contains(orderType);
+  }
+
+  @Nullable
+  @Override
+  public TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme, @NotNull ArrangementSettingType type, boolean selected) {
+    if (selected) {
+      TextAttributes attributes = new TextAttributes();
+      attributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
+      attributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
+      return attributes;
+    }
+    if (type == ArrangementSettingType.MODIFIER) {
+      return getAttributes(scheme, SyntaxHighlighterColors.KEYWORD);
+    }
+    else if (type == ArrangementSettingType.TYPE) {
+      return getAttributes(scheme, CodeInsightColors.CLASS_NAME_ATTRIBUTES, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
+    }
+    return null;
+  }
+  
+  @Nullable
+  private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey ... keys) {
+    TextAttributes result = null;
+    for (TextAttributesKey key : keys) {
+      TextAttributes attributes = scheme.getAttributes(key);
+      if (attributes == null) {
+        continue;
+      }
+      
+      if (result == null) {
+        result = attributes;
+      }
+      
+      Color currentForegroundColor = result.getForegroundColor();
+      if (currentForegroundColor == null) {
+        result.setForegroundColor(attributes.getForegroundColor());
+      }
+
+      Color currentBackgroundColor = result.getBackgroundColor();
+      if (currentBackgroundColor == null) {
+        result.setBackgroundColor(attributes.getBackgroundColor());
+      }
+
+      if (result.getForegroundColor() != null && result.getBackgroundColor() != null) {
+        return result;
+      }
+    }
+
+    if (result != null && result.getForegroundColor() == null) {
+      return null;
+    }
+    
+    if (result != null && result.getBackgroundColor() == null) {
+      result.setBackgroundColor(scheme.getDefaultBackground());
+    }
+    return result;
+  }
+
+  @Nullable
+  @Override
+  public Color getBorderColor(@NotNull EditorColorsScheme scheme, boolean selected) {
+    return null;
   }
 }

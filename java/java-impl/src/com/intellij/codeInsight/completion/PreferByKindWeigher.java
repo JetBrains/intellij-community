@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,11 +92,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
       assert annotation != null;
       PsiAnnotationOwner owner = annotation.getOwner();
-      if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement ||
-          owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter) {
-        PsiElement member = ((PsiElement)owner).getParent();
-        final String[] elementTypeFields = PsiAnnotationImpl
-          .getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
+      if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiTypeParameter) {
+        PsiElement member = (PsiElement)owner;
+        if (member instanceof PsiModifierList) {
+          member = member.getParent();
+        }
+        if (member instanceof PsiTypeElement && member.getParent() instanceof PsiMethod) {
+          member = member.getParent();
+        }
+        final String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(member);
         return new Condition<PsiClass>() {
           @Override
           public boolean value(PsiClass psiClass) {

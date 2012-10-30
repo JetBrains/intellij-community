@@ -15,7 +15,8 @@
  */
 package git4idea.push;
 
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,33 +25,31 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitPushSpec {
 
-  @NotNull private final GitRemote myRemote;
-  @NotNull private final GitBranch mySource;
-  @NotNull private final GitBranch myDest;
+  @NotNull private final GitLocalBranch mySource;
+  @NotNull private final GitRemoteBranch myDest;
 
-  GitPushSpec(@NotNull GitRemote remote, @NotNull GitBranch source, @NotNull GitBranch dest) {
-    myRemote = remote;
-    mySource = source;
+  GitPushSpec(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch dest) {
     myDest = dest;
+    mySource = source;
   }
 
   @NotNull
   public GitRemote getRemote() {
-    return myRemote;
+    return myDest.getRemote();
   }
 
   @NotNull
-  public GitBranch getSource() {
+  public GitLocalBranch getSource() {
     return mySource;
   }
 
   @NotNull
-  public GitBranch getDest() {
+  public GitRemoteBranch getDest() {
     return myDest;
   }
 
   @Override
   public String toString() {
-    return myRemote + " " + mySource + "->" + myDest;
+    return mySource + "->" + myDest;
   }
 }

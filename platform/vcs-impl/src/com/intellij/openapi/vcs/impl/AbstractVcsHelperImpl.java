@@ -127,7 +127,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
                               final String repositoryPath, final AbstractVcs vcs) {
     final FileHistoryRefresherI refresherI = new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs);
-    refresherI.run(false);
+    refresherI.run(false, true);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {

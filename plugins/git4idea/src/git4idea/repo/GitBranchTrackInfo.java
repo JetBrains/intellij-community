@@ -15,7 +15,8 @@
  */
 package git4idea.repo;
 
-import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,75 +24,46 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GitBranchTrackInfo {
 
-  @NotNull private final String myBranch;
-  @NotNull private final GitRemote myRemote;
-  @NotNull private final String myRemoteBranch;
+  @NotNull private final GitLocalBranch myLocalBranch;
+  @NotNull private final GitRemoteBranch myRemoteBranch;
   private final boolean myMerge;
 
-  GitBranchTrackInfo(@NotNull String branch, @NotNull GitRemote remote, @NotNull String remoteBranch, boolean merge) {
-    myBranch = branch;
+  GitBranchTrackInfo(@NotNull GitLocalBranch localBranch, @NotNull GitRemoteBranch remoteBranch, boolean merge) {
+    myLocalBranch = localBranch;
+    myRemoteBranch = remoteBranch;
     myMerge = merge;
-    if (remoteBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-      myRemoteBranch = remoteBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
-    }
-    else {
-      myRemoteBranch = remoteBranch;
-    }
-    myRemote = remote;
   }
 
   @NotNull
-  public String getBranch() {
-    return myBranch;
+  public GitLocalBranch getLocalBranch() {
+    return myLocalBranch;
   }
 
   @NotNull
   public GitRemote getRemote() {
-    return myRemote;
+    return myRemoteBranch.getRemote();
   }
 
-  /**
-   * Returns the name of the remote branch.<br/>
-   * The name is local for that remote (i.e. without the remote prefix),
-   * and the name is simplified (i.e. without the {@code refs/heads/} prefix).<br/>
-   * For example, returns {@code master}, and not {@code origin/master} or {@code refs/heads/master} or {@code refs/remotes/origin/master}.
-   * @see #getRemoteBranchInLocalFormat()
-   */
   @NotNull
-  public String getRemoteBranch() {
+  public GitRemoteBranch getRemoteBranch() {
     return myRemoteBranch;
-  }
-
-  /**
-   * Returns the name of the remote branch in the local format, i.e. {@code origin/master}.
-   * @see #getRemoteBranch()
-   */
-  @NotNull
-  public String getRemoteBranchInLocalFormat() {
-    return getRemote().getName() + "/" + getRemoteBranch();
-  }
-
-  public boolean isMerge() {
-    return myMerge;
   }
 
   @Override
   public String toString() {
-    return String.format("%s %s %s %b", myBranch, myRemote, myRemoteBranch, myMerge);
+    return String.format("%s->%s", myLocalBranch.getName(), myRemoteBranch.getName());
   }
 
   @SuppressWarnings("ConstantConditions") // fields may possibly become null in future
   @Override
   public boolean equals(Object o) {
-
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     GitBranchTrackInfo that = (GitBranchTrackInfo)o;
 
     if (myMerge != that.myMerge) return false;
-    if (myBranch != null ? !myBranch.equals(that.myBranch) : that.myBranch != null) return false;
-    if (myRemote != null ? !myRemote.equals(that.myRemote) : that.myRemote != null) return false;
+    if (myLocalBranch != null ? !myLocalBranch.equals(that.myLocalBranch) : that.myLocalBranch != null) return false;
     if (myRemoteBranch != null ? !myRemoteBranch.equals(that.myRemoteBranch) : that.myRemoteBranch != null) return false;
 
     return true;
@@ -100,8 +72,7 @@ public class GitBranchTrackInfo {
   @SuppressWarnings("ConstantConditions") // fields may possibly become null in future
   @Override
   public int hashCode() {
-    int result = myBranch != null ? myBranch.hashCode() : 0;
-    result = 31 * result + (myRemote != null ? myRemote.hashCode() : 0);
+    int result = myLocalBranch != null ? myLocalBranch.hashCode() : 0;
     result = 31 * result + (myRemoteBranch != null ? myRemoteBranch.hashCode() : 0);
     result = 31 * result + (myMerge ? 1 : 0);
     return result;

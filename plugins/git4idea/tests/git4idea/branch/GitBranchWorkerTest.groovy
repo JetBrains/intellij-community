@@ -712,7 +712,7 @@ class GitBranchWorkerTest extends GitLightTest {
   }
 
   def assertBranchExists(GitRepository repo, String branch) {
-    assertTrue("Branch $branch should exist in $repo", git(repo, "branch").contains(branch))
+    assertTrue("Branch $branch should exist in $repo", branchExists(repo, branch))
   }
 
   private void assertFile(GitRepository repository, String path, String content) throws IOException {

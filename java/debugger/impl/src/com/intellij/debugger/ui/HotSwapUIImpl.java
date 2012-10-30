@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -301,13 +302,16 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       myGeneratedPaths = new AtomicReference<Map<String, List<String>>>(new HashMap<String, List<String>>());
 
     public void fileGenerated(String outputRoot, String relativePath) {
-      final Map<String, List<String>> map = myGeneratedPaths.get();
-      List<String> paths = map.get(outputRoot);
-      if (paths == null) {
-        paths = new ArrayList<String>();
-        map.put(outputRoot, paths);
+      if (StringUtil.endsWith(relativePath, ".class")) {
+        // collect only classes
+        final Map<String, List<String>> map = myGeneratedPaths.get();
+        List<String> paths = map.get(outputRoot);
+        if (paths == null) {
+          paths = new ArrayList<String>();
+          map.put(outputRoot, paths);
+        }
+        paths.add(relativePath);
       }
-      paths.add(relativePath);
     }
 
     public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {

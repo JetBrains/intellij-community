@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,10 +33,11 @@ public class CompositeFilter implements Filter, FilterMixin {
   private boolean myIsAnyHeavy;
   private final DumbService myDumbService;
 
-  public CompositeFilter(Project project) {
+  public CompositeFilter(@NotNull Project project) {
     myDumbService = DumbService.getInstance(project);
   }
 
+  @Override
   @Nullable
   public Result applyFilter(final String line, final int entireLength) {
     final boolean dumb = myDumbService.isDumb();
@@ -47,8 +49,10 @@ public class CompositeFilter implements Filter, FilterMixin {
       if (!dumb || DumbService.isDumbAware(filter)) {
         long t0 = System.currentTimeMillis();
         final Result info = filter.applyFilter(line, entireLength);
-        t0 = (System.currentTimeMillis() - t0);
-        LOG.assertTrue(t0 < 100, filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
+        t0 = System.currentTimeMillis() - t0;
+        if (t0 > 100) {
+          LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
+        }
         if (info != null) {
           return info;
         }

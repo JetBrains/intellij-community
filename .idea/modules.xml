@@ -40,6 +40,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs/dvcs.iml" filepath="$PROJECT_DIR$/platform/dvcs/dvcs.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/eclipse.iml" filepath="$PROJECT_DIR$/plugins/eclipse/eclipse.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/eclipse-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/eclipse-jps-plugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />

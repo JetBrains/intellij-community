@@ -29,6 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,7 +64,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     }
   }
 
-  protected void showUsages(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final UsageInfo[] usageInfos) {
+  protected void showUsages(@NotNull UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, @NotNull UsageInfo[] usageInfos) {
     if (myCurrentUsageView != null) {
       Disposer.dispose(myCurrentUsageView);
     }
@@ -85,10 +86,11 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
 
   protected void setToComponent(final JComponent cmp) {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myCurrentComponent != null) {
           if (myCurrentUsageView != null && myCurrentComponent == myCurrentUsageView.getComponent()){
-            myCurrentUsageView.dispose();
+            Disposer.dispose(myCurrentUsageView);
           }
           remove(myCurrentComponent);
         }
@@ -99,6 +101,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     });
   }
 
+  @Override
   public void dispose(){
     if (myCurrentUsageView != null){
       Disposer.dispose(myCurrentUsageView);
@@ -111,6 +114,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     return label;
   }
 
+  @Override
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {

@@ -154,15 +154,15 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   @Override
-  public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
+  public void updateRepository(VirtualFile root) {
     GitRepository repo = getRepositoryForRoot(root);
     if (repo != null) {
-      repo.update(topics);
+      repo.update();
     }
   }
 
   @Override
-  public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
+  public void updateAllRepositories() {
     Map<VirtualFile, GitRepository> repositories;
     try {
       REPO_LOCK.readLock().lock();
@@ -173,7 +173,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     }
 
     for (VirtualFile root : repositories.keySet()) {
-      updateRepository(root, topics);
+      updateRepository(root);
     }
   }
 

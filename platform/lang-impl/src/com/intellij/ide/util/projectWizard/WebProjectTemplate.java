@@ -25,11 +25,13 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -62,6 +64,11 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       }
 
       @Override
+      public boolean isTemplateBased() {
+        return true;
+      }
+
+      @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
         List<Module> modules = builder.commit(project, model, modulesProvider);
         if (modules != null && !modules.isEmpty()) {
@@ -69,6 +76,25 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
           generateProject(module.getProject(), module.getProject().getBaseDir(), myPeer.getValue().getSettings(), module);
         }
         return modules;
+      }
+
+      @Nullable
+      @Override
+      public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+        Pair<String, JComponent> pair = myPeer.getValue().getSettingsField();
+        if (pair != null) {
+          settingsStep.addSettingsField(pair.first, pair.second);
+        }
+        return new ModuleWizardStep() {
+          @Override
+          public JComponent getComponent() {
+            return null;
+          }
+
+          @Override
+          public void updateDataModel() {
+          }
+        };
       }
     };
   }
