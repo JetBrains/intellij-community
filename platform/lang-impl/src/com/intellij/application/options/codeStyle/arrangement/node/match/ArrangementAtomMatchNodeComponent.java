@@ -42,8 +42,7 @@ import java.awt.event.MouseEvent;
  */
 public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeComponent {
 
-  public static final int VERTICAL_PADDING   = 2;
-  public static final int HORIZONTAL_PADDING = 8;
+  public static final int VERTICAL_PADDING   = 4;
 
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
@@ -122,7 +121,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
 
     JPanel insetsPanel = new JPanel(new GridBagLayout());
     insetsPanel.add(myTextControl, constraints);
-    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, 0));
+    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
     insetsPanel.setOpaque(false);
 
     final int arcSize = myTextControl.getFont().getSize();
@@ -147,7 +146,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING));
+    myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING, 0, 0, 0));
     myRenderer.add(roundBorderPanel, constraints);
     myRenderer.setOpaque(false);
     setSelected(false);

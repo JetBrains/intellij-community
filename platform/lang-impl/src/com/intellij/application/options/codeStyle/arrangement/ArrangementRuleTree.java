@@ -63,20 +63,20 @@ public class ArrangementRuleTree {
 
   private static final int EMPTY_RULE_REMOVE_DELAY_MILLIS = 300;
 
-  @NotNull private final List<ArrangementRuleSelectionListener> myListeners            = new ArrayList<ArrangementRuleSelectionListener>();
-  @NotNull private final MySelectionModel                       mySelectionModel       = new MySelectionModel();
-  @NotNull private final MyModelChangeListener                  myModelChangeListener  = new MyModelChangeListener();
-  @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher  = new MyModelNodesRefresher();
-  @NotNull private final ArrangementRuleEditingModelBuilder     myModelBuilder         = new ArrangementRuleEditingModelBuilder();
-  @NotNull private final Alarm                                  myAlarm                = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  @NotNull private final RemoveInactiveNewModelRequest          myRequest              = new RemoveInactiveNewModelRequest();
-  @NotNull private final ArrangementGroupingRulesManager        myGroupingRulesManager = ArrangementGroupingRulesManager.INSTANCE;
+  @NotNull private final MySelectionModel                   mySelectionModel       = new MySelectionModel();
+  @NotNull private final MyModelChangeListener              myModelChangeListener  = new MyModelChangeListener();
+  @NotNull private final MyModelNodesRefresher              myModelNodesRefresher  = new MyModelNodesRefresher();
+  @NotNull private final ArrangementRuleEditingModelBuilder myModelBuilder         = new ArrangementRuleEditingModelBuilder();
+  @NotNull private final Alarm                              myAlarm                = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final RemoveInactiveNewModelRequest      myRequest              = new RemoveInactiveNewModelRequest();
+  @NotNull private final ArrangementGroupingRulesManager    myGroupingRulesManager = ArrangementGroupingRulesManager.INSTANCE;
 
   @NotNull private final TIntObjectHashMap<ArrangementMatchNodeComponent>   myRenderers =
     new TIntObjectHashMap<ArrangementMatchNodeComponent>();
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myModels    =
     new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
+  @NotNull private final ArrangementRuleEditor                myEditor;
   @NotNull private final ArrangementTreeNode                  myMatchRulesRoot;
   @NotNull private final DefaultTreeModel                     myTreeModel;
   @NotNull private final Tree                                 myTree;
@@ -98,12 +98,8 @@ public class ArrangementRuleTree {
                              @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     myUiGroupingRules = uiGroupingRules;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, new Runnable() {
-      @Override
-      public void run() {
-        notifySelectionListeners(); 
-      }
-    }, uiGroupingRules);
+    myEditor = new ArrangementRuleEditor(settingsFilter, colorsProvider, displayManager);
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, null, uiGroupingRules);
     myGroupingsRoot = myGroupingRulesManager.buildAvailableRules(settingsFilter, displayManager);
     ArrangementTreeNode root = new ArrangementTreeNode(null);
     if (myGroupingsRoot != null) {
@@ -153,7 +149,7 @@ public class ArrangementRuleTree {
           super.processMouseEvent(e);
           List<ArrangementRuleEditingModelImpl> activeModels = getActiveModels();
           if (mySkipSelectionChange && activeModels.isEmpty()) {
-            notifySelectionListeners();
+            hideEditor();
           }
         }
         finally {
@@ -265,8 +261,32 @@ public class ArrangementRuleTree {
         }
       }
     });
+    
+    myEditor.applyBackground(myTree.getBackground());
   }
 
+  private void showEditor() {
+    List<ArrangementRuleEditingModelImpl> models = getActiveModels();
+    if (models.size() != 1) {
+      return;
+    }
+    ArrangementRuleEditingModelImpl model = models.get(0);
+    int indent = myTree.getRowBounds(model.getRow()).x;
+    myEditor.updateState(model);
+    ArrangementTreeNode prevSibling = model.getBottomMost();
+    ArrangementTreeNode parent = prevSibling.getParent();
+    if (parent == null) {
+      return;
+    }
+    // TODO den check
+    ArrangementEditorTreeNode editorNode = new ArrangementEditorTreeNode(myEditor, myTreeModel, myCanvasWidth - indent);
+    myTreeModel.insertNodeInto(editorNode, parent, parent.getIndex(prevSibling) + 1);
+  }
+  
+  private void hideEditor() {
+    // TODO den implement
+  }
+  
   public void updateCanvasWidth(final int width) {
     myCanvasWidth = width;
     myRenderers.forEachKey(new TIntProcedure() {
@@ -430,10 +450,6 @@ public class ArrangementRuleTree {
     }
   }
 
-  public void addEditingListener(@NotNull ArrangementRuleSelectionListener listener) {
-    myListeners.add(listener);
-  }
-  
   /**
    * @return    matcher model for the selected tree row(s) if any; null otherwise
    */
@@ -632,13 +648,6 @@ public class ArrangementRuleTree {
       width += location.x;
     }
     myTree.repaint(x, location.y, width, bounds.height);
-  }
-
-  private void notifySelectionListeners() {
-    List<ArrangementRuleEditingModelImpl> models = getActiveModels();
-    for (ArrangementRuleSelectionListener listener : myListeners) {
-      listener.onSelectionChange(models);
-    }
   }
 
   private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
@@ -858,7 +867,7 @@ public class ArrangementRuleTree {
         }
       }
       
-      notifySelectionListeners();
+      showEditor();
     }
 
     public boolean isRowSelected(int row) {

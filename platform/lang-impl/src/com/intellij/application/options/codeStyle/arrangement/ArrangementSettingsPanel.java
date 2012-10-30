@@ -51,8 +51,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -117,19 +115,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       treeComponent, ArrangementConstants.ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
     );
 
-    final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
-    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(mySettingsAware, colorsProvider, displayManager);
-    ruleEditor.applyBackground(treeComponent.getBackground());
-    editorPane.getContentPane().setBackground(treeComponent.getBackground());
-    editorPane.add(ruleEditor);
-    editorPane.setCollapsed(true);
-    myContent.add(editorPane, new GridBag().weightx(1).fillCellHorizontally().coverLine());
-    final Ref<Boolean> resetEditor = new Ref<Boolean>(Boolean.TRUE);
-    linkTreeAndEditor(editorPane, ruleEditor, resetEditor);
-    setupRuleManagementActions(treeComponent, editorPane, ruleEditor, resetEditor);
+    // TODO den check
+    //setupRuleManagementActions(treeComponent, editorPane, ruleEditor, resetEditor);
     setupKeyboardActions(actionManager, treeComponent);
 
-    setupScrollingHelper(treeComponent, scrollPane, editorPane);
+    // TODO den check
+    //setupScrollingHelper(treeComponent, scrollPane, editorPane);
     setupCanvasWidthUpdater(scrollPane);
   }
 
@@ -216,40 +207,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     });
   }
 
-  private void linkTreeAndEditor(@NotNull final JXTaskPane editorPane,
-                                 @NotNull final ArrangementRuleEditor ruleEditor,
-                                 @NotNull final Ref<Boolean> resetEditor)
-  {
-    editorPane.addPropertyChangeListener("collapsed", new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getNewValue() == Boolean.FALSE && resetEditor.get()) {
-          ruleEditor.updateState(null);
-        }
-      }
-    });
-    myRuleTree.addEditingListener(new ArrangementRuleSelectionListener() {
-
-      @Override
-      public void onSelectionChange(@NotNull List<? extends ArrangementRuleEditingModel> selectedModels) {
-        if (selectedModels.size() != 1) {
-          editorPane.setCollapsed(true);
-        }
-        else {
-          ruleEditor.updateState(selectedModels.get(0));
-          resetEditor.set(Boolean.FALSE);
-          try {
-            editorPane.setCollapsed(false);
-          }
-          finally {
-            resetEditor.set(Boolean.TRUE);
-          }
-        }
-      }
-    });
-  }
-
   private void setupRuleManagementActions(@NotNull final Tree treeComponent,
+                                          @NotNull final JBScrollPane scrollPane,
                                           @NotNull final JXTaskPane editorPane,
                                           @NotNull final ArrangementRuleEditor ruleEditor,
                                           @NotNull final Ref<Boolean> resetEditor)
@@ -259,7 +218,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       public void run() {
         treeComponent.requestFocus();
         ArrangementRuleEditingModel model = myRuleTree.newModel();
-        ruleEditor.updateState(model);
+        //ruleEditor.updateState(model, scrollPane.getVisibleRect().width);
         resetEditor.set(Boolean.FALSE);
         try {
           editorPane.setCollapsed(false);

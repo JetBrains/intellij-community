@@ -39,10 +39,11 @@ public class ArrangementMatchNodeComponentFactory {
   @NotNull private final Set<ArrangementMatchCondition> myGroupingConditions = ContainerUtilRt.newHashSet();
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
-  @NotNull private final Runnable                      myRemoveConditionCallback;
+  @Nullable private final Runnable                      myRemoveConditionCallback;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                              @NotNull ArrangementColorsProvider provider, @NotNull Runnable removeConditionCallback,
+                                              @NotNull ArrangementColorsProvider provider,
+                                              @Nullable Runnable removeConditionCallback,
                                               @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
   {
     myDisplayManager = manager;
@@ -103,7 +104,9 @@ public class ArrangementMatchNodeComponentFactory {
       @Override
       public void run() {
         model.removeAndCondition(condition);
-        myRemoveConditionCallback.run();
+        if (myRemoveConditionCallback != null) {
+          myRemoveConditionCallback.run();
+        }
       }
     };
   }

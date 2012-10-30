@@ -112,7 +112,7 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
     if (yDiff > 0) {
       y -= yDiff;
     }
-    int width = buttonBounds.x + buttonBounds.width + ArrangementAtomMatchNodeComponent.HORIZONTAL_PADDING;
+    int width = buttonBounds.x + buttonBounds.width + ArrangementConstants.HORIZONTAL_PADDING;
     return new Rectangle(delegateBounds.x, y, width, Math.max(delegateBounds.height, buttonBounds.height));
   }
 
@@ -162,7 +162,7 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
   public boolean onCanvasWidthChange(int width) {
     myDelegate.onCanvasWidthChange(width);
     if (width > myDelegate.getUiComponent().getPreferredSize().width) {
-      myEditButton.setBounds(width - myActiveEditIcon.getIconWidth() - ArrangementAtomMatchNodeComponent.HORIZONTAL_PADDING,
+      myEditButton.setBounds(width - myActiveEditIcon.getIconWidth() - ArrangementConstants.HORIZONTAL_PADDING,
                              myEditButton.getBounds().y,
                              myActiveEditIcon.getIconWidth(),
                              myActiveEditIcon.getIconHeight());

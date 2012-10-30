@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.MultiRowFlowPanel;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +45,9 @@ import java.util.List;
  */
 public class ArrangementRuleEditor extends JPanel {
 
-  @NotNull private final List<JComponent>                               myColoredComponents = new ArrayList<JComponent>();
-  @NotNull private final Map<Object, ArrangementAtomMatchNodeComponent> myComponents        =
+  @NotNull private final List<MultiRowFlowPanel> myRows = new ArrayList<MultiRowFlowPanel>();
+
+  @NotNull private final Map<Object, ArrangementAtomMatchNodeComponent> myComponents =
     new HashMap<Object, ArrangementAtomMatchNodeComponent>();
 
   @NotNull private final ArrangementStandardSettingsAware myFilter;
@@ -54,7 +56,8 @@ public class ArrangementRuleEditor extends JPanel {
 
   public ArrangementRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
                                @NotNull ArrangementColorsProvider provider,
-                               @NotNull ArrangementNodeDisplayManager displayManager) {
+                               @NotNull ArrangementNodeDisplayManager displayManager)
+  {
     myFilter = filter;
     myColorsProvider = provider;
     init(displayManager);
@@ -68,6 +71,7 @@ public class ArrangementRuleEditor extends JPanel {
 
   private void init(@NotNull ArrangementNodeDisplayManager displayManager) {
     setLayout(new GridBagLayout());
+    setBorder(IdeBorderFactory.createEmptyBorder(5));
 
     Map<ArrangementSettingType, Collection<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
@@ -83,7 +87,7 @@ public class ArrangementRuleEditor extends JPanel {
       return;
     }
 
-    JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
+    MultiRowFlowPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
       ArrangementAtomMatchNodeComponent component =
         new ArrangementAtomMatchNodeComponent(manager, myColorsProvider, new ArrangementAtomMatchCondition(key, value), null);
@@ -94,7 +98,7 @@ public class ArrangementRuleEditor extends JPanel {
     int top = ArrangementAtomMatchNodeComponent.VERTICAL_PADDING;
     add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(top, 0, 0, 0));
     add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
-    myColoredComponents.add(valuesPanel);
+    myRows.add(valuesPanel);
   }
 
   /**
@@ -130,10 +134,17 @@ public class ArrangementRuleEditor extends JPanel {
     }
     repaint();
   }
+
+  public void applyAvailableWidth(int width) {
+    for (MultiRowFlowPanel row : myRows) {
+      row.setForcedWidth(width);
+    }
+    validate();
+  }
   
   public void applyBackground(@NotNull Color color) {
     setBackground(color);
-    for (JComponent component : myColoredComponents) {
+    for (JComponent component : myRows) {
       component.setBackground(color);
     }
   }

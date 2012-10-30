@@ -45,7 +45,7 @@ import java.util.Map;
  */
 public class ArrangementAndMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
 
-  private static final int BUBBLE_CONNECTOR_LENGTH = 10;
+  private static final int BUBBLE_CONNECTOR_LENGTH = 5;
 
   @NotNull private final List<ArrangementMatchNodeComponent> myComponents = new ArrayList<ArrangementMatchNodeComponent>();
 
@@ -199,7 +199,8 @@ public class ArrangementAndMatchNodeComponent extends JPanel implements Arrangem
       int y = bounds.y + bounds.height / 2;
       x += bounds.width;
       if (i < components.length - 1) {
-        g.drawLine(x, y, x + BUBBLE_CONNECTOR_LENGTH, y);
+        // TODO den check
+        //g.drawLine(x, y, x + BUBBLE_CONNECTOR_LENGTH, y);
       }
       x += BUBBLE_CONNECTOR_LENGTH;
     }
