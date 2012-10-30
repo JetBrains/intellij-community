@@ -17,7 +17,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -28,10 +27,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,16 +41,30 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class UsagePreviewPanel extends JPanel implements Disposable {
+public class UsagePreviewPanel extends UsageContextPanelBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
-  private final Project myProject;
-  private volatile boolean isDisposed = false;
 
   public UsagePreviewPanel(@NotNull Project project) {
-    myProject = project;
-    setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createBorder());
+    super(project);
+  }
+
+  public static class Provider implements UsageContextPanel.Provider {
+    @NotNull
+    @Override
+    public UsageContextPanel create(@NotNull UsageView usageView) {
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject());
+    }
+
+    @Override
+    public boolean isAvailableFor(@NotNull UsageView usageView) {
+      return true;
+    }
+    @NotNull
+    @Override
+    public String getTabTitle() {
+      return "Preview";
+    }
   }
 
   private void resetEditor(@NotNull final List<UsageInfo> infos) {
@@ -171,22 +184,17 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     }
   }
 
-  public void updateLayout(@Nullable final List<UsageInfo> infos) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (infos == null) {
-          releaseEditor();
-          removeAll();
-          JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
-          add(titleComp, BorderLayout.CENTER);
-          revalidate();
-        }
-        else {
-          resetEditor(infos);
-        }
-      }
-    });
+  @Override
+  public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
+    if (infos == null) {
+      releaseEditor();
+      removeAll();
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
+      add(titleComp, BorderLayout.CENTER);
+      revalidate();
+    }
+    else {
+      resetEditor(infos);
+    }
   }
 }

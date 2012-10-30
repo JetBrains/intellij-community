@@ -45,7 +45,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
-    if (StringUtil.isEmpty(artifact.getOutputPath())) {
+    String outputFilePath = artifact.getOutputFilePath();
+    if (StringUtil.isEmpty(outputFilePath)) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
       return;
     }
@@ -133,18 +134,21 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           DestinationInfo destination = descriptor.getDestinationInfo();
           if (destination instanceof ExplodedDestinationInfo) {
             descriptor.copyFromRoot(sourcePath, descriptor.getRootIndex(), destination.getOutputPath(), context,
-                                    srcOutMapping, outSrcMapping);
+                                    outputConsumer, outSrcMapping);
           }
-          else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
-            outSrcMapping
-              .update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
-            changedJars.add(((JarDestinationInfo)destination).getJarInfo());
+          else {
+            List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(destination.getOutputFilePath());
+            if (sources == null || sources.size() > 0 && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
+              outSrcMapping.update(destination.getOutputFilePath(),
+                                   Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+              changedJars.add(((JarDestinationInfo)destination).getJarInfo());
+            }
           }
         }
       }
       context.checkCanceled();
 
-      JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping);
+      JarsBuilder builder = new JarsBuilder(changedJars, context, outputConsumer, outSrcMapping);
       builder.buildJars();
     }
     catch (IOException e) {

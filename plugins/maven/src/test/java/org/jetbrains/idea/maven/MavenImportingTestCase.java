@@ -21,9 +21,13 @@ import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -81,6 +85,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     Messages.setTestDialog(TestDialog.DEFAULT);
     myProjectsManager.projectClosed();
     removeFromLocalRepository("test");
+    if (useJps()) {
+      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+    }
     super.tearDown();
   }
 
@@ -521,6 +528,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
           setupJdkForModule(each);
           modules.add(getModule(each));
         }
+        if (useJps()) {
+          MavenProjectsManager.getInstance(myProject).generateBuildConfigurationIfNeed();
+        }
       }
     });
 
@@ -554,15 +564,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-  }
-
-  private static String collectMessages(CompileContext compileContext, CompilerMessageCategory messageType) {
-    String result = "";
-    for (CompilerMessage each : compileContext.getMessages(messageType)) {
-      VirtualFile file = each.getVirtualFile();
-      result += each.getMessage() + " FILE: " + (file == null ? "null" : file.getPath()) + "\n";
+    if (SwingUtilities.isEventDispatchThread()) {
+      UIUtil.dispatchAllInvocationEvents();
     }
-    return result;
   }
 
   protected static AtomicInteger configConfirmationForYesAnswer() {

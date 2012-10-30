@@ -34,6 +34,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,23 +51,25 @@ import java.util.List;
  */
 public class JdkComboBox extends ComboBoxWithWidePopup {
 
+  private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
+
   @Nullable
-  private final Condition<SdkType> myFilter;
+  private final Condition<SdkTypeId> myFilter;
   @Nullable
-  private final Condition<SdkType> myCreationFilter;
+  private final Condition<SdkTypeId> myCreationFilter;
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
-    this(jdkModel, null, null);
+    this(jdkModel, null);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     Condition<SdkType> filter) {
+                     @Nullable Condition<SdkTypeId> filter) {
     this(jdkModel, filter, filter);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<SdkType> filter,
-                     @Nullable Condition<SdkType> creationFilter) {
+                     @Nullable Condition<SdkTypeId> filter,
+                     @Nullable Condition<SdkTypeId> creationFilter) {
     super(new JdkComboBoxModel(jdkModel, getSdkFilter(filter)));
     myFilter = filter;
     myCreationFilter = creationFilter;
@@ -74,6 +77,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       @Override
       public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {
+          setIcon(EMPTY_ICON);    // to fix vertical size
           if (value instanceof InvalidJdkComboBoxItem) {
             final String str = value.toString();
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -299,12 +303,11 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
   }
 
-  private static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkType> filter) {
+  private static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
     return filter == null ? Conditions.<Sdk>alwaysTrue() : new Condition<Sdk>() {
       @Override
       public boolean value(Sdk sdk) {
-        SdkTypeId type = sdk.getSdkType();
-        return type instanceof SdkType && filter.value((SdkType)type);
+        return filter.value(sdk.getSdkType());
       }
     };
   }

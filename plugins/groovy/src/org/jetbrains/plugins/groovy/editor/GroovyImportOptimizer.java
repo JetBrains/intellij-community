@@ -75,15 +75,17 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     if (!(file instanceof GroovyFile)) return;
 
     ((GroovyFile)file).accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          if (element instanceof GrReferenceElement) {
-            visitRefElement((GrReferenceElement)element);
-          }
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (element instanceof GrReferenceElement) {
+          visitRefElement((GrReferenceElement)element);
         }
+      }
 
       private void visitRefElement(GrReferenceElement refElement) {
+        if ("super".equals(refElement.getReferenceName())) return;
+
         final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
         for (GroovyResolveResult resolveResult : resolveResults) {
           final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
@@ -195,7 +197,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
         return true;
       }
-
     });
   }
 
@@ -236,7 +237,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       Map<String, String> aliasImported = ContainerUtil.newHashMap();
       Map<String, String> annotatedImports = ContainerUtil.newHashMap();
 
-      processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, implicitlyImportedClasses, innerClasses, aliasImported, annotatedImports);
+      processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, implicitlyImportedClasses, innerClasses,
+                  aliasImported, annotatedImports);
       final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
       if (myRemoveUnusedOnly) {
         for (GrImportStatement oldImport : oldImports) {
@@ -248,7 +250,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       }
 
       // Add new import statements
-      GrImportStatement[] newImports = prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported, annotatedImports);
+      GrImportStatement[] newImports =
+        prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported,
+                annotatedImports);
       if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) {
         return;
       }
@@ -285,7 +289,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                         Map<String, String> aliased,
                                         final Map<String, String> annotations) {
       final Project project = myFile.getProject();
-      final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
+      final GroovyCodeStyleSettings settings =
+        CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<String>();

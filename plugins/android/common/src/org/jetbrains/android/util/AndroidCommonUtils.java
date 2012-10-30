@@ -458,7 +458,7 @@ public class AndroidCommonUtils {
           revisionNumber = Integer.parseInt(revision);
         }
         catch (NumberFormatException e) {
-          LOG.info(e);
+          LOG.debug(e);
         }
       }
     }
@@ -596,5 +596,14 @@ public class AndroidCommonUtils {
     finally {
       writer.close();
     }
+  }
+
+  public static boolean hasXmxParam(@NotNull List<String> parameters) {
+    for (String param : parameters) {
+      if (param.startsWith("-Xmx")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

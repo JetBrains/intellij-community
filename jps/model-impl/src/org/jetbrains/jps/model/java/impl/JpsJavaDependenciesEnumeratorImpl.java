@@ -1,13 +1,11 @@
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesEnumeratorBase;
-import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,16 +25,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
 
   public JpsJavaDependenciesEnumeratorImpl(Collection<JpsModule> rootModules) {
     super(rootModules);
-    List<JpsJavaDependenciesEnumerationHandler> handlers = null;
-    for (JpsJavaDependenciesEnumerationHandler.Factory factory : JpsServiceManager.getInstance().getExtensions(JpsJavaDependenciesEnumerationHandler.Factory.class)) {
-      JpsJavaDependenciesEnumerationHandler handler = factory.createHandler(rootModules);
-      if (handler != null) {
-        if (handlers == null) {
-          handlers = new SmartList<JpsJavaDependenciesEnumerationHandler>();
-        }
-        handlers.add(handler);
-      }
-    }
+    List<JpsJavaDependenciesEnumerationHandler> handlers = JpsJavaDependenciesEnumerationHandler.createHandlers(rootModules);
     myHandlers = handlers != null ? handlers : Collections.<JpsJavaDependenciesEnumerationHandler>emptyList();
   }
 
@@ -92,12 +81,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
 
   @Override
   protected boolean shouldProcessDependenciesRecursively() {
-    for (JpsJavaDependenciesEnumerationHandler handler : myHandlers) {
-      if (!handler.shouldProcessDependenciesRecursively()) {
-        return false;
-      }
-    }
-    return true;
+    return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(myHandlers);
   }
 
   @Override

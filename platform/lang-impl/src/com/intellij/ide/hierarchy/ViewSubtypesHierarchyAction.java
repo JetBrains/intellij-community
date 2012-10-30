@@ -28,6 +28,7 @@ public final class ViewSubtypesHierarchyAction extends ChangeViewTypeActionBase 
           IdeBundle.message("action.description.view.subtypes.hierarchy"), AllIcons.Hierarchy.Subtypes);
   }
 
+  @Override
   protected final String getTypeName() {
     return TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE;
   }

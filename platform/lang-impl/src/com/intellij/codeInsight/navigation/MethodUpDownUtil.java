@@ -64,7 +64,12 @@ public class MethodUpDownUtil {
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
       StructureViewModel model = builder.createStructureViewModel();
-      addStructureViewElements(model.getRoot(), array, element);
+      try {
+        addStructureViewElements(model.getRoot(), array, element);
+      }
+      finally {
+        model.dispose();
+      }
     }
   }
 

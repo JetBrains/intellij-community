@@ -53,6 +53,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
   private boolean mySingleton;
+  private String myFolderName;
 
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
@@ -64,6 +65,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
 
     myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
+    setFolderName(getSettings().getFolderName());
 
     setNameText(configuration.getName());
     myNameDocument.addDocumentListener(new DocumentAdapter() {
@@ -93,6 +95,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
+    settings.setFolderName(myFolderName);
     super.apply();
     RunManagerImpl.getInstanceImpl(getConfiguration().getProject()).fireRunConfigurationChanged(settings);
   }
@@ -215,6 +218,20 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     final SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
     return editor == null ? null : editor.getSnapshot();
+  }
+
+  @Override
+  public String toString() {
+    return myDisplayName;
+  }
+
+  public void setFolderName(@Nullable String folderName) {
+    myFolderName = folderName;
+  }
+
+  @Nullable
+  public String getFolderName() {
+    return myFolderName;
   }
 
   private class MyValidatableComponent {

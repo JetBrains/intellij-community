@@ -15,8 +15,8 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -39,14 +39,13 @@ import java.awt.event.MouseEvent;
 public class ArrangementEditIconMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
 
   @NotNull private final ArrangementMatchNodeComponent myDelegate;
-  @NotNull private final Icon                          myEditIcon;
+  @NotNull private final Icon                          myActiveEditIcon;
+  @NotNull private final Icon                          myInactiveEditIcon;
   @NotNull private final ActionButton                  myEditButton;
 
-  public ArrangementEditIconMatchNodeComponent(@NotNull ArrangementMatchNodeComponent delegate,
-                                               @NotNull ArrangementColorsProvider colorsProvider)
-  {
+  public ArrangementEditIconMatchNodeComponent(@NotNull ArrangementMatchNodeComponent delegate) {
     myDelegate = delegate;
-    
+
     setLayout(null);
     JComponent delegateComponent = myDelegate.getUiComponent();
     add(delegateComponent);
@@ -55,17 +54,31 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
 
     AnAction action = ActionManager.getInstance().getAction("Arrangement.Rule.Edit");
     Presentation presentation = action.getTemplatePresentation().clone();
-    myEditIcon = presentation.getIcon();
-    Dimension buttonSize = new Dimension(myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
-    myEditButton = new ActionButton(action, presentation, ArrangementConstants.RULE_TREE_PLACE, buttonSize);
+    myActiveEditIcon = presentation.getIcon();
+    myInactiveEditIcon = AllIcons.Actions.Edit;
+    Dimension buttonSize = new Dimension(myActiveEditIcon.getIconWidth(), myActiveEditIcon.getIconHeight());
+    myEditButton = new ActionButton(action, presentation, ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
+      @Override
+      protected Icon getIcon() {
+        Rectangle bounds = getScreenBounds();
+        if (bounds == null) {
+          return myInactiveEditIcon;
+        }
+        Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+        if (bounds.contains(mouseLocation)) {
+          return myActiveEditIcon;
+        }
+        else {
+          return myInactiveEditIcon;
+        }
+      }
+    };
     add(myEditButton);
     int y = 0;
-    if (size.height > myEditIcon.getIconHeight()) {
-      y = (size.height - myEditIcon.getIconHeight()) / 2;
+    if (size.height > myActiveEditIcon.getIconHeight()) {
+      y = (size.height - myActiveEditIcon.getIconHeight()) / 2;
     }
-    myEditButton.setBounds(size.width, y, myEditIcon.getIconWidth(), myEditIcon.getIconHeight());
-
-    setBackground(colorsProvider.getRowUnderMouseBackground());
+    myEditButton.setBounds(size.width, y, myActiveEditIcon.getIconWidth(), myActiveEditIcon.getIconHeight());
   }
 
   @Override
@@ -103,6 +116,26 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
     return new Rectangle(delegateBounds.x, y, width, Math.max(delegateBounds.height, buttonBounds.height));
   }
 
+  @Nullable
+  private Rectangle getEditButtonScreenBounds() {
+    Rectangle delegateScreenBounds = myDelegate.getScreenBounds();
+    if (delegateScreenBounds == null) {
+      return null;
+    }
+
+    Rectangle buttonBounds = myEditButton.getBounds();
+    if (buttonBounds == null) {
+      return null;
+    }
+
+    int y = delegateScreenBounds.y;
+    int yDiff = buttonBounds.height - delegateScreenBounds.height;
+    if (yDiff > 0) {
+      y -= yDiff;
+    }
+    return new Rectangle(delegateScreenBounds.x + buttonBounds.x, y, buttonBounds.width, buttonBounds.height);
+  }
+  
   @Override
   public void setScreenBounds(@Nullable Rectangle bounds) {
     myDelegate.setScreenBounds(bounds);
@@ -128,10 +161,12 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
   @Override
   public boolean onCanvasWidthChange(int width) {
     myDelegate.onCanvasWidthChange(width);
-    myEditButton.setBounds(width - myEditIcon.getIconWidth() - ArrangementAtomMatchNodeComponent.HORIZONTAL_PADDING,
-                           myEditButton.getBounds().y,
-                           myEditIcon.getIconWidth(),
-                           myEditIcon.getIconHeight());
+    if (width > myDelegate.getUiComponent().getPreferredSize().width) {
+      myEditButton.setBounds(width - myActiveEditIcon.getIconWidth() - ArrangementAtomMatchNodeComponent.HORIZONTAL_PADDING,
+                             myEditButton.getBounds().y,
+                             myActiveEditIcon.getIconWidth(),
+                             myActiveEditIcon.getIconHeight());
+    }
     return true;
   }
 

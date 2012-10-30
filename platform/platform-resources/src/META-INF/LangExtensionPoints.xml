@@ -396,6 +396,9 @@
                   interface="com.intellij.usages.impl.rules.UsageTypeProvider"/>
   <extensionPoint name="fileStructureGroupRuleProvider"
                   interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
+  <extensionPoint name="usageContextPanelProvider"
+                  interface="com.intellij.usages.UsageContextPanel$Provider"
+                  area="IDEA_PROJECT"/>
 
   <extensionPoint name="treeStructureProvider"
                   interface="com.intellij.ide.projectView.TreeStructureProvider"

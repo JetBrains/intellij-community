@@ -43,7 +43,6 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
-import com.intellij.platform.templates.EmptyModuleTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
@@ -95,6 +94,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private JTextField myModuleName;
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
+  private JPanel myModulePanel;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -123,18 +123,24 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     myNamePathComponent = initNamePathComponent(context);
-    mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
+    if (context.isCreatingNewProject()) {
+      mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
+      addExpertPanel(myModulePanel);
+    }
+    else {
+      mySettingsPanel.add(myModulePanel, BorderLayout.NORTH);
+    }
     bindModuleSettings();
 
-    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e settings", false);
+    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
     final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
-      for (String string : factory.getGroups()) {
-        groups.putValues(string, Arrays.asList(factory.createTemplates(string, context)));
+      for (String group : factory.getGroups()) {
+        groups.putValues(group, Arrays.asList(factory.createTemplates(group, context)));
       }
     }
     final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
@@ -145,7 +151,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
           !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
 
         if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
-          sorted.putValues("Other", templates);
+          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
           continue;
         }
       }
@@ -177,12 +183,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         if (o1 instanceof FilteringTreeStructure.FilteringNode) {
           if (((FilteringTreeStructure.FilteringNode)o1).getDelegate() instanceof GroupNode) {
             String name = ((GroupNode)((FilteringTreeStructure.FilteringNode)o1).getDelegate()).getName();
-            if (name.equals(EmptyModuleTemplatesFactory.GROUP_NAME)) {
-//              return 1;
-            }
-            else if (name.equals(ArchivedTemplatesFactory.CUSTOM_GROUP)) {
-//              return -1;
-            }
           }
         }
         return AlphaComparator.INSTANCE.compare(o1, o2);
@@ -307,7 +307,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private void setupPanels(@Nullable ProjectTemplate template) {
 
     restorePanel(myNamePathComponent, 4);
-    restorePanel(myExpertPanel, 6);
+    restorePanel(myModulePanel, 6);
+    restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
 
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
@@ -324,17 +325,20 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
     mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myModuleBuilder != null && !myModuleBuilder.isTemplateBased());
+    myExpertPlaceholder.setVisible(template != null && myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
   }
 
-  private static void restorePanel(JPanel component, int i) {
+  private static int restorePanel(JPanel component, int i) {
+    int removed = 0;
     while (component.getComponentCount() > i) {
       component.remove(component.getComponentCount() - 1);
+      removed++;
     }
+    return removed;
   }
 
   @Override
@@ -492,10 +496,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
-    myNamePathComponent.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                                       GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myNamePathComponent.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                      GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
+                                                 GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
   }
 
   @Override
@@ -693,7 +698,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myContentRootDocListenerEnabled = true;
   }
 
-  private void setModuleName(String moduleName) {
+  public void setModuleName(String moduleName) {
     myModuleNameDocListenerEnabled = false;
     myModuleName.setText(moduleName);
     myModuleNameDocListenerEnabled = true;
@@ -718,5 +723,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;
+  }
+
+  @TestOnly
+  public void dumpTree() {
+    myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
+      @Override
+      public boolean accept(SimpleNode simpleNode) {
+        System.out.println(simpleNode.getName());
+        return false;
+      }
+    });
   }
 }

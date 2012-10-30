@@ -11,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Date;
 
-public class GenericWebTask extends Task {
+public class GenericTask extends Task {
   private final String myId;
   private final String myDescription;
   private TaskRepository myRepository;
 
-  public GenericWebTask(final String id, final String description, final TaskRepository repository) {
+  public GenericTask(final String id, final String description, final TaskRepository repository) {
     myId = id;
     myDescription = description;
     myRepository = repository;

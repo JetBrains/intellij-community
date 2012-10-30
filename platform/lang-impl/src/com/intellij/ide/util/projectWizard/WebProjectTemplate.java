@@ -64,11 +64,6 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       }
 
       @Override
-      public boolean isTemplateBased() {
-        return true;
-      }
-
-      @Override
       public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
         List<Module> modules = builder.commit(project, model, modulesProvider);
         if (modules != null && !modules.isEmpty()) {

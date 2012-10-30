@@ -88,7 +88,8 @@ public class StringUtil extends StringUtilRt {
     };
   }
 
-  @NotNull public static Function<String, String> TRIMMER = new Function<String, String>() {
+  @NotNull
+  public static Function<String, String> TRIMMER = new Function<String, String>() {
     @Nullable
     @Override
     public String fun(@Nullable String s) {
@@ -96,7 +97,8 @@ public class StringUtil extends StringUtilRt {
     }
   };
 
-  @NotNull public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
+  @NotNull
+  public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
@@ -887,7 +889,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String notNullize(final @Nullable String s) {
+  public static String notNullize(@Nullable final String s) {
     return notNullize(s, "");
   }
 

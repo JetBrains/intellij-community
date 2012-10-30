@@ -210,7 +210,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
             break;
           case OVERRIDDEN_METHODS:
             setupOverriddenMethods(parseInfo);
-          default: assert false;
+          default: // Do nothing
         }
       }
     }
@@ -439,16 +439,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       result.setBackgroundColor(scheme.getDefaultBackground());
     }
     return result;
-  }
-
-  @Nullable
-  @Override
-  public Color getRowUnderMouseBackground(@NotNull EditorColorsScheme scheme) {
-    Color baseColor = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    if (baseColor == null) {
-      return baseColor;
-    }
-    return baseColor.brighter().brighter();
   }
 
   @Nullable

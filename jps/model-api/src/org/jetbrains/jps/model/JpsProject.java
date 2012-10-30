@@ -48,4 +48,8 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
   @NotNull
   <P extends JpsElement>
   JpsTypedRunConfiguration<P> addRunConfiguration(@NotNull String name, @NotNull JpsRunConfigurationType<P> type, @NotNull P properties);
+
+  @NotNull String getName();
+
+  void setName(@NotNull String name);
 }

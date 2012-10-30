@@ -60,12 +60,17 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     if (builder instanceof TreeBasedStructureViewBuilder) {
       StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
       boolean goOneLevelUp = true;
-      if (container == null) {
-        goOneLevelUp = false;
-        Object element = model.getCurrentEditorElement();
-        if (element instanceof PsiElement) {
-          container = (PsiElement) element;
+      try {
+        if (container == null) {
+          goOneLevelUp = false;
+          Object element = model.getCurrentEditorElement();
+          if (element instanceof PsiElement) {
+            container = (PsiElement) element;
+          }
         }
+      }
+      finally {
+        model.dispose();
       }
       while(true) {
         if (container == null || container instanceof PsiFile) {

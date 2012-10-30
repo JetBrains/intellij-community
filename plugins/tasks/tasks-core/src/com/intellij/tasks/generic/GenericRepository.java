@@ -1,10 +1,10 @@
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
-import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,13 +24,14 @@ import java.util.regex.Pattern;
  * Date: 10/4/12
  */
 @Tag("Generic")
-public class GenericWebRepository extends BaseRepositoryImpl {
+public class GenericRepository extends BaseRepositoryImpl {
   private String myTasksListURL = "";
   private String myTaskPattern = "";
   private String myLoginURL = "";
-  private String myLoginMethodType = GenericWebRepositoryEditor.GET;
-  private String myTasksListMethodType = GenericWebRepositoryEditor.GET;
+  private String myLoginMethodType = GenericRepositoryEditor.GET;
+  private String myTasksListMethodType = GenericRepositoryEditor.GET;
   private ResponseType myResponseType = ResponseType.XML;
+  private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
   final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
   final static String USERNAME_PLACEHOLDER = "{username}";
@@ -45,14 +46,15 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   final static String PAGE_PLACEHOLDER = "{page}";
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GenericWebRepository() {
+  public GenericRepository() {
   }
 
-  public GenericWebRepository(final TaskRepositoryType type) {
+  public GenericRepository(final TaskRepositoryType type) {
     super(type);
+    resetToDefaults();
   }
 
-  public GenericWebRepository(final GenericWebRepository other) {
+  public GenericRepository(final GenericRepository other) {
     super(other);
     myTasksListURL = other.getTasksListURL();
     myTaskPattern = other.getTaskPattern();
@@ -60,6 +62,12 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     myLoginMethodType = other.getLoginMethodType();
     myTasksListMethodType = other.getTasksListMethodType();
     myResponseType = other.getResponseType();
+    myTemplateVariables = other.getTemplateVariables();
+  }
+
+  @Override
+  public boolean isConfigured() {
+    return StringUtil.isNotEmpty(myTasksListURL) && StringUtil.isNotEmpty(myTaskPattern);
   }
 
   @Override
@@ -68,7 +76,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) login(httpClient);
 
-    final List<String> placeholders = getPlaceholders(myTaskPattern);
+    final List<String> placeholders = getPlaceholders(getTaskPattern());
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");
     }
@@ -78,7 +86,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
     final String response = method.getResponseBodyAsString();
 
-    final String taskPatternWithoutPlaceholders = myTaskPattern.replaceAll("\\{.+?\\}", "");
+    final String taskPatternWithoutPlaceholders = getTaskPattern().replaceAll("\\{.+?\\}", "");
     Matcher matcher = Pattern
       .compile(taskPatternWithoutPlaceholders,
                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL | Pattern.UNICODE_CASE | Pattern.CANON_EQ)
@@ -88,7 +96,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
     while (matcher.find()) {
       final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericWebTask(id, summary, this));
+      tasks.add(new GenericTask(id, summary, this));
     }
 
     tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
@@ -100,7 +108,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   private HttpMethod getTaskListsMethod(final String query, final int max) {
     String requestUrl = getFullTasksUrl(query, max);
     final HttpMethod method =
-      GenericWebRepositoryEditor.GET.equals(myTasksListMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+      GenericRepositoryEditor.GET.equals(getTasksListMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
     configureHttpMethod(method);
     return method;
   }
@@ -108,7 +116,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(final HttpMethod method) {
     super.configureHttpMethod(method);
-    method.addRequestHeader("accept", myResponseType.getMimeType());
+    method.addRequestHeader("accept", getResponseType().getMimeType());
   }
 
   private void login(final HttpClient httpClient) throws Exception {
@@ -119,7 +127,7 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   private HttpMethod getLoginMethod() {
     String requestUrl = getFullLoginUrl();
-    return GenericWebRepositoryEditor.GET.equals(myLoginMethodType) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
+    return GenericRepositoryEditor.GET.equals(getLoginMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
   }
 
   private static HttpMethod getPostMethodFromURL(final String requestUrl) {
@@ -156,14 +164,14 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   }
 
   private String getFullTasksUrl(final String query, final int max) {
-    return getTasksListURL()
+    return replaceTemplateVariables(getTasksListURL())
       .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
       .replaceAll(Pattern.quote(QUERY_PLACEHOLDER), encodeUrl(query))
       .replaceAll(Pattern.quote(MAX_COUNT_PLACEHOLDER), String.valueOf(max));
   }
 
   private String getFullLoginUrl() {
-    return getLoginURL()
+    return replaceTemplateVariables(getLoginURL())
       .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
       .replaceAll(Pattern.quote(USERNAME_PLACEHOLDER), encodeUrl(getUsername()))
       .replaceAll(Pattern.quote(PASSWORD_PLACEHOLDER), encodeUrl(getPassword()));
@@ -176,22 +184,23 @@ public class GenericWebRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public BaseRepository clone() {
-    return new GenericWebRepository(this);
+  public GenericRepository clone() {
+    return new GenericRepository(this);
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof GenericWebRepository)) return false;
+    if (!(o instanceof GenericRepository)) return false;
     if (!super.equals(o)) return false;
-    GenericWebRepository that = (GenericWebRepository)o;
+    GenericRepository that = (GenericRepository)o;
     if (!Comparing.equal(getTasksListURL(), that.getTasksListURL())) return false;
     if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
     if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;
     if (!Comparing.equal(getLoginMethodType(), that.getLoginMethodType())) return false;
     if (!Comparing.equal(getTasksListMethodType(), that.getTasksListMethodType())) return false;
     if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
+    if (!Comparing.equal(getTemplateVariables(), that.getTemplateVariables())) return false;
     return true;
   }
 
@@ -209,6 +218,14 @@ public class GenericWebRepository extends BaseRepositoryImpl {
       public void cancel() {
       }
     };
+  }
+
+  private String replaceTemplateVariables(String s) {
+    String answer = new String(s);
+    for (TemplateVariable templateVariable : getTemplateVariables()) {
+      answer = answer.replaceAll(Pattern.quote("{" + templateVariable.getName() + "}"), templateVariable.getValue());
+    }
+    return answer;
   }
 
   @Nullable
@@ -263,5 +280,51 @@ public class GenericWebRepository extends BaseRepositoryImpl {
 
   public void setTaskPattern(final String taskPattern) {
     myTaskPattern = taskPattern;
+  }
+
+  public List<TemplateVariable> getTemplateVariables() {
+    return myTemplateVariables;
+  }
+
+  public void setTemplateVariables(final List<TemplateVariable> templateVariables) {
+    myTemplateVariables = templateVariables;
+  }
+
+  public void resetToDefaults() {
+    myTasksListURL = getTasksListURLDefault();
+    myTaskPattern = getTaskPatternDefault();
+    myLoginURL = getLoginURLDefault();
+    myLoginMethodType = getLoginMethodTypeDefault();
+    myTasksListMethodType = getTasksListMethodTypeDefault();
+    myResponseType = getResponseTypeDefault();
+    myTemplateVariables = getTemplateVariablesDefault();
+  }
+
+  protected List<TemplateVariable> getTemplateVariablesDefault() {
+    return new ArrayList<TemplateVariable>();
+  }
+
+  protected ResponseType getResponseTypeDefault() {
+    return ResponseType.XML;
+  }
+
+  protected String getTasksListMethodTypeDefault() {
+    return GenericRepositoryEditor.GET;
+  }
+
+  protected String getLoginMethodTypeDefault() {
+    return GenericRepositoryEditor.GET;
+  }
+
+  protected String getLoginURLDefault() {
+    return "";
+  }
+
+  protected String getTaskPatternDefault() {
+    return "";
+  }
+
+  protected String getTasksListURLDefault() {
+    return "";
   }
 }

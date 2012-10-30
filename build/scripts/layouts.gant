@@ -222,10 +222,8 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("maven") {
-      dir("jps") {
-        jar("maven-jps-plugin.jar") {
-          module("maven-jps-plugin")
-        }
+      jar("maven-jps-plugin.jar") {
+        module("maven-jps-plugin")
       }
       jar("maven-server-api.jar") {
         module("maven-server-api")
@@ -397,6 +395,9 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("eclipse") {
       jar("eclipse-jps-plugin.jar") {
         module("eclipse-jps-plugin")
+      }
+      jar("common-eclipse-util.jar") {
+        module("common-eclipse-util")
       }
     }
 

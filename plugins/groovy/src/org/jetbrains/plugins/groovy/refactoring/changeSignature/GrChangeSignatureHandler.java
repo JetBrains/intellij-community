@@ -71,6 +71,12 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     invokeOnElement(project, editor, elements[0]);
   }
 
+  @Nullable
+  @Override
+  public String getTargetNotFoundMessage() {
+    return null;
+  }
+
   private static void invoke(PsiMethod method, final Project project) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();

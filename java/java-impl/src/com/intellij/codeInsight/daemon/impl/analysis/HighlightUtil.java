@@ -2545,9 +2545,12 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
-    if (PsiUtil.isAnnotationMethod(list.getParent()) && list.getParametersCount() > 0) {
+    final PsiElement parent = list.getParent();
+    if (PsiUtil.isAnnotationMethod(parent) && list.getParametersCount() > 0) {
       final String message = JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters");
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, message);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, message);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveParameterListFix((PsiMethod)parent));
+      return highlightInfo;
     }
     return null;
   }

@@ -18,7 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -46,7 +46,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private TextFieldWithBrowseButton mySourcePath;
   private JPanel myPanel;
 
-  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
     super(settingsStep, sdkFilter);
     myModuleBuilder = moduleBuilder;
 

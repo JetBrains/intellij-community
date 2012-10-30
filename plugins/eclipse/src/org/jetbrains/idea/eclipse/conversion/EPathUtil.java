@@ -34,8 +34,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EPathCommonUtil;
 import org.jetbrains.idea.eclipse.EclipseXml;
-import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.List;
@@ -47,62 +48,23 @@ public class EPathUtil {
   private EPathUtil() {
   }
 
-  /**
-   * @param path path in format /module_root/relative_path
-   * @return module_root
-   */
-  @NotNull
-  public static String getRelativeModuleName(String path) {
-    int secondSlIdx = path.indexOf('/', 1);
-    return secondSlIdx > 1 ? path.substring(1, secondSlIdx) : path.substring(1);
-  }
-
-  /**
-   * @param path path in format /module_root/relative_path
-   * @return relative_path or null if /module_root
-   */
-  @Nullable
-  public static String getRelativeToModulePath(String path) {
-    final int secondSlIdx = path.indexOf('/', 1);
-    return secondSlIdx != -1 && secondSlIdx + 1 < path.length() ? path.substring(secondSlIdx + 1) : null;
-  }
-
   public static boolean areUrlsPointTheSame(String ideaUrl, String eclipseUrl) {
-    final String path = VfsUtil.urlToPath(eclipseUrl);
+    final String path = VfsUtilCore.urlToPath(eclipseUrl);
     if (ideaUrl.contains(path)) {
       return true;
     }
     else {
-      final String relativeToModulePath = getRelativeToModulePath(path);
+      final String relativeToModulePath = EPathCommonUtil.getRelativeToModulePath(path);
       final int relativeIdx = ideaUrl.indexOf(relativeToModulePath);
       if (relativeIdx != -1) {
-        final String pathToProjectFile = VfsUtil.urlToPath(ideaUrl.substring(0, relativeIdx));
-        if (Comparing.strEqual(getRelativeModuleName(path),
+        final String pathToProjectFile = VfsUtilCore.urlToPath(ideaUrl.substring(0, relativeIdx));
+        if (Comparing.strEqual(EPathCommonUtil.getRelativeModuleName(path),
                                EclipseProjectFinder.findProjectName(pathToProjectFile))) {
           return true;
         }
       }
     }
     return false;
-  }
-
-  @Nullable
-  static String expandEclipseRelative2ContentRoots(final @NotNull List<String> currentRoots,
-                                              final @NotNull String rootPath,
-                                              final @Nullable String relativeToRootPath) {
-    for (String currentRoot : currentRoots) {
-      if (currentRoot.endsWith(rootPath)
-          || Comparing.strEqual(rootPath, EclipseProjectFinder.findProjectName(currentRoot))) { //rootPath = content_root <=> applicable root: abs_path/content_root
-        if (relativeToRootPath == null) {
-          return VfsUtil.pathToUrl(currentRoot);
-        }
-        final File relativeToOtherModuleFile = new File(currentRoot, relativeToRootPath);
-        if (relativeToOtherModuleFile.exists()) {
-          return VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
-        }
-      }
-    }
-    return null;
   }
 
   /**
@@ -134,28 +96,28 @@ public class EPathUtil {
     final String rootPath = contentRoot.getPath();
     String url = null;
     if (new File(path).exists()) {  //absolute path
-      url = VfsUtil.pathToUrl(path);
+      url = EPathCommonUtil.pathToUrl(path);
     }
     else {
       final String relativePath = new File(rootPath, path).getPath(); //inside current project
       final File file = new File(relativePath);
       if (file.exists()) {
-        url = VfsUtil.pathToUrl(relativePath);
+        url = EPathCommonUtil.pathToUrl(relativePath);
       } else if (path.startsWith("/")) { //relative to other project
-        final String moduleName = getRelativeModuleName(path);
-        final String relativeToRootPath = getRelativeToModulePath(path);
+        final String moduleName = EPathCommonUtil.getRelativeModuleName(path);
+        final String relativeToRootPath = EPathCommonUtil.getRelativeToModulePath(path);
 
         final Module otherModule = ModuleManager.getInstance(model.getModule().getProject()).findModuleByName(moduleName);
         if (otherModule != null && otherModule != model.getModule()) {
           url = expandEclipseRelative2OtherModule(otherModule, relativeToRootPath);
         }
         else if (currentRoots != null) {
-          url = expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToRootPath);
+          url = EPathCommonUtil.expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToRootPath);
         }
       }
     }
     if (url == null) {
-      url = VfsUtil.pathToUrl(path);
+      url = EPathCommonUtil.pathToUrl(path);
     }
 
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -191,7 +153,7 @@ public class EPathUtil {
   private static String collapse2eclipsePathRelative2Module(VirtualFile file, Module module) {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile otherRoot : contentRoots) {
-      if (VfsUtil.isAncestor(otherRoot, file, false)) {
+      if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
         return "/" + module.getName() + "/" + VfsUtilCore.getRelativePath(file, otherRoot, '/');
       }
     }
@@ -265,7 +227,7 @@ public class EPathUtil {
       final Project project = libraryOrderEntry.getOwnerModule().getProject();
       final VirtualFile baseDir = project.getBaseDir();
       final String filePath = jarFile.getPath();
-      if (baseDir != null && !VfsUtil.isAncestor(baseDir, jarFile, false)) {
+      if (baseDir != null && !VfsUtilCore.isAncestor(baseDir, jarFile, false)) {
          final String ideaCollapsed = PathMacroManager.getInstance(project).collapsePath(filePath);
          if (ideaCollapsed.contains("..")) return null;
         final int index = ideaCollapsed.indexOf('$');

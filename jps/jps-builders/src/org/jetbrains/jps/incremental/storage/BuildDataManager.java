@@ -30,7 +30,6 @@ public class BuildDataManager implements StorageOwner {
 
   private final OneToManyPathsMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
-  private final ModuleOutputRootsLayout myOutputRootsLayout;
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
@@ -40,14 +39,9 @@ public class BuildDataManager implements StorageOwner {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
-    myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
     myArtifactsBuildData = new ArtifactsBuildData();
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
-  }
-
-  private File getOutputsLayoutRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), "output-roots");
   }
 
   public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
@@ -70,10 +64,6 @@ public class BuildDataManager implements StorageOwner {
     return mySrcToFormMap;
   }
 
-  public ModuleOutputRootsLayout getOutputRootsLayout() {
-    return myOutputRootsLayout;
-  }
-
   public Mappings getMappings() {
     return myMappings;
   }
@@ -93,19 +83,14 @@ public class BuildDataManager implements StorageOwner {
           wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
         }
         finally {
-          try {
-            wipeStorage(getOutputsLayoutRoot(), myOutputRootsLayout);
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            synchronized (mappings) {
+              mappings.clean();
+            }
           }
-          finally {
-            final Mappings mappings = myMappings;
-            if (mappings != null) {
-              synchronized (mappings) {
-                mappings.clean();
-              }
-            }
-            else {
-              FileUtil.delete(getMappingsRoot());
-            }
+          else {
+            FileUtil.delete(getMappingsRoot());
           }
         }
       }
@@ -122,7 +107,6 @@ public class BuildDataManager implements StorageOwner {
       }
     }
     mySrcToFormMap.flush(memoryCachesOnly);
-    myOutputRootsLayout.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
     if (mappings != null) {
       synchronized (mappings) {
@@ -147,22 +131,17 @@ public class BuildDataManager implements StorageOwner {
           closeStorage(mySrcToFormMap);
         }
         finally {
-          try {
-            closeStorage(myOutputRootsLayout);
-          }
-          finally {
-            final Mappings mappings = myMappings;
-            if (mappings != null) {
-              try {
-                mappings.close();
+          final Mappings mappings = myMappings;
+          if (mappings != null) {
+            try {
+              mappings.close();
+            }
+            catch (RuntimeException e) {
+              final Throwable cause = e.getCause();
+              if (cause instanceof IOException) {
+                throw ((IOException)cause);
               }
-              catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof IOException) {
-                  throw ((IOException)cause);
-                }
-                throw e;
-              }
+              throw e;
             }
           }
         }

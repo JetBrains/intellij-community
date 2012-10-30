@@ -45,7 +45,7 @@ import java.util.List;
 
 public class HighlightNamesUtil {
   @Nullable
-  public static HighlightInfo highlightMethodName(final PsiMethod method,
+  public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
                                                   @NotNull EditorColorsScheme colorsScheme) {
@@ -54,7 +54,7 @@ public class HighlightNamesUtil {
     if (!isDeclaration) {
       if (isCalledOnThis(elementToHighlight)) {
         PsiClass enclosingClass = PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
-        isInherited = enclosingClass.isInheritor(method.getContainingClass(), true);
+        isInherited = enclosingClass != null && enclosingClass.isInheritor(method.getContainingClass(), true);
       }
     }
 
@@ -79,7 +79,7 @@ public class HighlightNamesUtil {
   }
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
-                                                         final HighlightInfoType type,
+                                                         @NotNull HighlightInfoType type,
                                                          @NotNull EditorColorsScheme colorsScheme) {
     TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type, colorsScheme);
     if (element == null) return regularAttributes;
@@ -147,7 +147,7 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static HighlightInfoType getMethodNameHighlightType(PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
+  private static HighlightInfoType getMethodNameHighlightType(@NotNull PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
     if (method.isConstructor()) {
       return isDeclaration ? HighlightInfoType.CONSTRUCTOR_DECLARATION : HighlightInfoType.CONSTRUCTOR_CALL;
     }
@@ -169,9 +169,9 @@ public class HighlightNamesUtil {
       return HighlightInfoType.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
-      return var.hasModifierProperty(PsiModifier.STATIC) ? (var.hasModifierProperty(PsiModifier.FINAL)
+      return var.hasModifierProperty(PsiModifier.STATIC) ? var.hasModifierProperty(PsiModifier.FINAL)
                                                             ? HighlightInfoType.STATIC_FINAL_FIELD
-                                                            : HighlightInfoType.STATIC_FIELD) : HighlightInfoType.INSTANCE_FIELD;
+                                                            : HighlightInfoType.STATIC_FIELD : HighlightInfoType.INSTANCE_FIELD;
     }
     if (var instanceof PsiParameter) {
       return HighlightInfoType.PARAMETER;
@@ -207,8 +207,7 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static TextAttributes getScopeAttributes(final PsiElement element,
-                                                   final EditorColorsScheme colorsScheme) {
+  private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull EditorColorsScheme colorsScheme) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;
@@ -261,7 +260,7 @@ public class HighlightNamesUtil {
     return new TextRange(start, end);
   }
 
-  private static int stripAnnotationsFromModifierList(PsiElement element) {
+  private static int stripAnnotationsFromModifierList(@NotNull PsiElement element) {
     TextRange textRange = element.getTextRange();
     if (textRange == null) return 0;
     PsiAnnotation lastAnnotation = null;
@@ -281,5 +280,4 @@ public class HighlightNamesUtil {
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
   }
-
 }

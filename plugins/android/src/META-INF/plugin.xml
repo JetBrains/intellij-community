@@ -328,7 +328,6 @@
 
     <compileServer.plugin classpath="jps/android-jps-plugin.jar;android-common.jar;android-rt.jar"/>
     <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
-    <compiler.buildTargetScopeProvider implementation="org.jetbrains.android.compiler.AndroidTargetBuildScopeProvider"/>
 
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
     <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler" order="first"/>

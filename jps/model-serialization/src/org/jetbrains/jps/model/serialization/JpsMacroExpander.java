@@ -47,4 +47,12 @@ public class JpsMacroExpander {
   public void substitute(Element element, boolean caseSensitive) {
     myExpandMacroMap.substitute(element, caseSensitive);
   }
+
+  public ExpandMacroToPathMap getExpandMacroMap() {
+    return myExpandMacroMap;
+  }
+
+  public String substitute(String element, boolean caseSensitive) {
+    return myExpandMacroMap.substitute(element, caseSensitive);
+  }
 }

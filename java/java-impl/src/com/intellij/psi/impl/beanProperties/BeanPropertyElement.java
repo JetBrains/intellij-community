@@ -125,4 +125,24 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   public TextRange getTextRange() {
     return TextRange.from(0, 0);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BeanPropertyElement element = (BeanPropertyElement)o;
+
+    if (myMethod != null ? !myMethod.equals(element.myMethod) : element.myMethod != null) return false;
+    if (myName != null ? !myName.equals(element.myName) : element.myName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myMethod != null ? myMethod.hashCode() : 0;
+    result = 31 * result + (myName != null ? myName.hashCode() : 0);
+    return result;
+  }
 }

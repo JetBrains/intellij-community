@@ -26,7 +26,6 @@ import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -135,7 +134,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByScopeAction extends RuleAction {
     private GroupByScopeAction(UsageViewImpl view) {
-      super(view, "Group by test/production", PlatformIcons.TEST_SOURCE_FOLDER);
+      super(view, "Group by test/production", AllIcons.Actions.GroupByTestProduction);
     }
     @Override
     protected boolean getOptionValue() {

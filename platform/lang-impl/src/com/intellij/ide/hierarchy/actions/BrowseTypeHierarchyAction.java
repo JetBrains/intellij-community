@@ -27,6 +27,7 @@ public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase {
     super(LanguageTypeHierarchy.INSTANCE);
   }
 
+  @Override
   public final void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {

@@ -3,6 +3,8 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jdom.Element;
@@ -17,6 +19,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
+import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
+import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -49,6 +53,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
+    myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
   }
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
@@ -77,7 +82,20 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
+  public static String getDirectoryBaseProjectName(File dir) {
+    File nameFile = new File(dir, ".name");
+    if (nameFile.isFile()) {
+      try {
+        return FileUtilRt.loadFile(nameFile).trim();
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return StringUtil.replace(dir.getParentFile().getName(), ":", "");
+  }
+
   private void loadFromDirectory(File dir) {
+    myProject.setName(getDirectoryBaseProjectName(dir));
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
@@ -127,7 +145,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromIpr(File iprFile) {
     final Element iprRoot = loadRootElement(iprFile);
 
-    File iwsFile = new File(iprFile.getParent(), FileUtil.getNameWithoutExtension(iprFile) + ".iws");
+    String projectName = FileUtil.getNameWithoutExtension(iprFile);
+    myProject.setName(projectName);
+    File iwsFile = new File(iprFile.getParent(), projectName + ".iws");
     Element iwsRoot = iwsFile.exists() ? loadRootElement(iwsFile) : null;
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
@@ -177,12 +197,16 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
     List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
+    final List<String> paths = new ArrayList<String>(); 
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
+      paths.add(path);
+    }
+    for (final String path : paths) {
       futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
         @Override
         public JpsModule call() throws Exception {
-          return loadModule(path, projectSdkType);
+          return loadModule(path, paths, projectSdkType);
         }
       }));
     }
@@ -200,7 +224,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @Nullable
-  private JpsModule loadModule(@NotNull String path, @Nullable JpsSdkType<?> projectSdkType) {
+  private JpsModule loadModule(@NotNull String path, List<String> paths, @Nullable JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
     if (!file.exists()) {
@@ -213,6 +237,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
+    module.getContainer().setChild(JpsModuleSerializationDataExtensionImpl.ROLE,
+                                    new JpsModuleSerializationDataExtensionImpl(file.getParentFile()));
 
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       extension.loadModuleOptions(module, moduleRoot);
@@ -229,7 +255,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths);
         }
       }
     }
