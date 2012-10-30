@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
   static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
-    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/([\\S ]+)\\((\\d+)\\):(.*)");
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+([A-Z]+)/([\\S ]+)\\((\\d+)\\):(.*)");
 
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
@@ -138,6 +138,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     }
 
 
+    Log.LogLevel logLevel = null;
     String tag = null;
     String pid = null;
     String message = text;
@@ -146,15 +147,20 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     if (matcher.matches()) {
       String s = matcher.group(1).trim();
       if (s.length() > 0) {
+        logLevel = getLogLevel(s);
+      }
+
+      s = matcher.group(2).trim();
+      if (s.length() > 0) {
         tag = s;
       }
       
-      s = matcher.group(2).trim();
+      s = matcher.group(3).trim();
       if (s.length() > 0) {
         pid = s;
       }
       
-      s = matcher.group(3).trim();
+      s = matcher.group(4).trim();
       if (s.length() > 0) {
         message = s;
       }
@@ -167,8 +173,10 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     if (pid == null) {
       pid = myPrevPid;
     }
-
-    return configuredFilterName.isApplicable(message, tag, pid, getLogLevel(text));
+    if (logLevel == null) {
+      logLevel = myPrevMessageLogLevel;
+    }
+    return configuredFilterName.isApplicable(message, tag, pid, logLevel);
   }
 
   public List<? extends LogFilter> getLogFilters() {
@@ -185,18 +193,27 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
 
     @Override
     public boolean isAcceptable(String line) {
-      Log.LogLevel logLevel = getLogLevel(line);
+      final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
+      Log.LogLevel logLevel = null;
+
+      if (matcher.matches()) {
+        logLevel = getLogLevel(matcher.group(1));
+      }
+      if (logLevel == null) {
+        logLevel = myPrevMessageLogLevel;
+      }
       return logLevel != null && logLevel.getPriority() >= myLogLevel.getPriority();
     }
   }
 
   @Nullable
-  Log.LogLevel getLogLevel(String line) {
-    Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
-    if (logLevel == null) {
-      logLevel = myPrevMessageLogLevel;
+  private static Log.LogLevel getLogLevel(@NotNull String name) {
+    for (Log.LogLevel level : Log.LogLevel.values()) {
+      if (name.equals(level.name())) {
+        return level;
+      }
     }
-    return logLevel;
+    return null;
   }
 
   public boolean isFilterSelected(LogFilter filter) {
@@ -226,24 +243,24 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     final boolean messageHeader = matcher.matches();
 
     if (messageHeader) {
-      String s = matcher.group(1).trim();
+      String s = matcher.group(1);
+      if (s.length() > 0) {
+        final Log.LogLevel logLevel = getLogLevel(s);
+        if (logLevel != null) {
+          myPrevMessageLogLevel = logLevel;
+        }
+      }
+
+      s = matcher.group(2).trim();
       if (s.length() > 0) {
         myPrevTag = s;
       }
       
-      s = matcher.group(2).trim();
+      s = matcher.group(3).trim();
       if (s.length() > 0) {
         myPrevPid = s;
       }
     }
-    
-    Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
-    if (logLevel != null) {
-      myPrevMessageLogLevel = logLevel;
-    }
-    final Key key = myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
-    
-    
     final boolean applicable = isApplicable(line); 
     final boolean applicableByCustomFilter = isApplicableByCustomFilter(line);
 
@@ -266,6 +283,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
       myFullMessageApplicable = myFullMessageApplicable || applicable;
       myFullMessageApplicableByCustomFilter = myFullMessageApplicableByCustomFilter || applicableByCustomFilter;
     }
+    final Key key = myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
     
     return new MyProcessingResult(key,
                                   myFullMessageApplicable && myFullMessageApplicableByCustomFilter,
