@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
@@ -31,7 +31,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
 
   public void copyFromRoot(String filePath,
                            int rootIndex, String outputPath,
-                           CompileContext context, SourceToOutputMapping srcOutMapping,
+                           CompileContext context, BuildOutputConsumer outputConsumer,
                            ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     final File file = new File(FileUtil.toSystemDependentName(filePath));
     if (!file.exists()) return;
@@ -48,7 +48,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
       final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
       FileUtil.copyContent(file, targetFile);
-      srcOutMapping.appendOutput(filePath, targetPath);
+      outputConsumer.registerOutputFile(targetPath, Collections.singletonList(filePath));
     }
     outSrcMapping.appendData(targetPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
   }

@@ -68,7 +68,9 @@ public class VfsTestUtil {
         }
         else {
           file = parent.createChildData(VfsTestUtil.class, PathUtil.getFileName(relativePath));
-          VfsUtil.saveText(file, text);
+          if (!text.isEmpty()) {
+            VfsUtil.saveText(file, text);
+          }
         }
         return file;
       }
