@@ -23,6 +23,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,11 +52,7 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-    ModuleBuilder[] builders = context.getAllBuilders();
-    for (ModuleBuilder builder : builders) {
-      if (builder.getGroupName().equals(group)) return new ProjectTemplate[] {new PlainModuleTemplate(builder)};
-    }
+  public ProjectTemplate[] createTemplates(final String group, WizardContext context) {
     if (OTHER_GROUP.equals(group)) {
       return new ProjectTemplate[] { new PlainModuleTemplate(new EmptyModuleBuilder() {
         @Override
@@ -69,7 +66,14 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
         }
       })};
     }
-    return new ProjectTemplate[0];
+    ModuleBuilder[] builders = context.getAllBuilders();
+    return ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {
+      @Nullable
+      @Override
+      public ProjectTemplate fun(ModuleBuilder builder) {
+        return builder.getGroupName().equals(group) ? new PlainModuleTemplate(builder) : null;
+      }
+    }, ProjectTemplate.EMPTY_ARRAY);
   }
 
   private static class PlainModuleTemplate implements ProjectTemplate {

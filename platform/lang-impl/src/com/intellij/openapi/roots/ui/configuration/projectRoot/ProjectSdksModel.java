@@ -33,7 +33,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +56,7 @@ public class ProjectSdksModel implements SdkModel {
 
   private Sdk myProjectSdk;
   private boolean myInitialized = false;
+  private Condition<SdkTypeId> myFilter;
 
   @Override
   public Listener getMulticaster() {
@@ -86,13 +87,14 @@ public class ProjectSdksModel implements SdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset(@Nullable Project project, @Nullable Condition<SdkType> filter) {
+  public void reset(@Nullable Project project, @Nullable Condition<SdkTypeId> filter) {
     myProjectSdks.clear();
+    myFilter = filter;
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
         SdkTypeId type = sdk.getSdkType();
-        if (filter == null || (type instanceof SdkType && filter.value((SdkType)type))) {
+        if (acceptSdkType(type)) {
           myProjectSdks.put(sdk, (Sdk)sdk.clone());
         }
       }
@@ -105,6 +107,10 @@ public class ProjectSdksModel implements SdkModel {
     }
     myModified = false;
     myInitialized = true;
+  }
+
+  private boolean acceptSdkType(SdkTypeId type) {
+    return myFilter == null || myFilter.value(type);
   }
 
   public void reset(@Nullable Project project) {
@@ -144,7 +150,7 @@ public class ProjectSdksModel implements SdkModel {
           if (myProjectSdks.containsKey(tableItem)) {
             itemsInTable.add(tableItem);
           }
-          else {
+          else if (acceptSdkType(tableItem.getSdkType())){
             jdkTable.removeJdk(tableItem);
           }
         }
@@ -164,7 +170,7 @@ public class ProjectSdksModel implements SdkModel {
         final Sdk[] allJdks = jdkTable.getAllJdks();
         for (final Sdk projectJdk : myProjectSdks.keySet()) {
           LOG.assertTrue(projectJdk != null);
-          if (ArrayUtil.find(allJdks, projectJdk) == -1) {
+          if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
             jdkTable.addJdk(projectJdk);
           }
         }
@@ -235,7 +241,7 @@ public class ProjectSdksModel implements SdkModel {
   public void createAddActions(DefaultActionGroup group,
                                final JComponent parent,
                                final Consumer<Sdk> updateTree,
-                               @Nullable Condition<SdkType> filter) {
+                               @Nullable Condition<SdkTypeId> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
       if (filter != null && !filter.value(type)) continue;

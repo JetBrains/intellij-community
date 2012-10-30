@@ -20,6 +20,7 @@ import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -139,7 +140,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
+  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
    return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

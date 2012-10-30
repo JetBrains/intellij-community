@@ -8,8 +8,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -201,19 +200,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   }
 
   @Override
-  public boolean isSuitableSdk(Sdk sdk) {
-    JavaSdk javaSdk = JavaSdk.getInstance();
-    if (sdk == null || sdk.getSdkType() != javaSdk) {
-      return false;
-    }
-    if (myGradleProject == null) {
-      return true;
-    }
-    JavaSdkVersion version = javaSdk.getVersion(sdk);
-    if (version == null) {
-      return false;
-    } 
-    return version.getMaxLanguageLevel().isAtLeast(myGradleProject.getLanguageLevel());
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == JavaSdk.getInstance();
   }
 
   /**

@@ -23,7 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -74,8 +74,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   @Override
-  public boolean isSuitableSdk(Sdk sdk) {
-    return sdk.getSdkType() == JavaSdk.getInstance();
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == JavaSdk.getInstance();
   }
 
   private Parameters getParameters() {

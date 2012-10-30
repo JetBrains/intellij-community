@@ -42,14 +42,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -744,12 +743,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return getClass().getName();
   }
 
-  @Nullable
-  @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, Conditions.<SdkType>is(AndroidSdkType.getInstance()));
-  }
-
   private static boolean hasAppropriateJdk() {
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (AndroidSdkUtils.isApplicableJdk(sdk)) {
@@ -774,5 +767,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       LOG.debug(result);
     }
     return Pair.create(result, success);
+  }
+
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdkType) {
+    return AndroidSdkType.getInstance() == sdkType;
   }
 }
