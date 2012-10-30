@@ -126,8 +126,8 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext ccontext) {
-    String outputPath = myArtifact.getOutputPath();
-    return outputPath != null && !StringUtil.isEmpty(outputPath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputPath))) : Collections.<File>emptyList();
+  public Collection<File> getOutputRoots(CompileContext context) {
+    String outputFilePath = myArtifact.getOutputFilePath();
+    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.<File>emptyList();
   }
 }

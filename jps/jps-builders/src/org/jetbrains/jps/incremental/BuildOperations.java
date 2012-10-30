@@ -139,17 +139,17 @@ public class BuildOperations {
       myTarget = target;
       myContext = context;
       myFileGeneratedEvent = new FileGeneratedEvent();
-      myOutputs = myTarget.getOutputDirs(context);
+      myOutputs = myTarget.getOutputRoots(context);
     }
 
     @Override
     public void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException {
       final File outputFile = new File(outputFilePath);
-      for (File outputDir : myOutputs) {
-        if (FileUtil.isAncestor(outputDir, outputFile, true)) {
-          final String relativePath = FileUtil.getRelativePath(outputDir, outputFile);
+      for (File outputRoot : myOutputs) {
+        if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
+          final String relativePath = FileUtil.getRelativePath(outputRoot, outputFile);
           if (relativePath != null) {
-            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputDir.getPath()), FileUtil.toSystemIndependentName(relativePath));
+            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputRoot.getPath()), FileUtil.toSystemIndependentName(relativePath));
           }
           break;
         }

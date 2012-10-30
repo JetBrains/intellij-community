@@ -51,7 +51,7 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext context) {
+  public Collection<File> getOutputRoots(CompileContext context) {
     Collection<File> result = new SmartList<File>();
     final File outputDir = getOutputDir();
     if (outputDir != null) {

@@ -47,7 +47,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
   public abstract String getPresentableName();
 
   @NotNull
-  public abstract Collection<File> getOutputDirs(CompileContext context);
+  public abstract Collection<File> getOutputRoots(CompileContext context);
 
   @Override
   public String toString() {

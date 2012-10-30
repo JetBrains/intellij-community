@@ -107,7 +107,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext context) {
+  public Collection<File> getOutputRoots(CompileContext context) {
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {

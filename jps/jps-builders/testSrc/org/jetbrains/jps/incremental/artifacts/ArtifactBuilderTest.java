@@ -273,11 +273,27 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     String file = createFile("d/a.txt");
     JpsArtifact a = addArtifact(root().parentDirCopy(file));
     buildAll();
-    new File(a.getOutputPath(), "b.txt").createNewFile();
+    createFileInArtifactOutput(a, "b.txt");
     buildAllAndAssertUpToDate();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
     rebuildAll();
     assertOutput(a, fs().file("a.txt"));
+  }
+
+  public void testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() throws IOException {
+    String file = createFile("a.txt");
+    JpsArtifact a = addArtifact(archive("a.jar").fileCopy(file));
+    buildAll();
+    createFileInArtifactOutput(a, "b.txt");
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
+
+    rebuildAll();
+    assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
+  }
+
+  private static void createFileInArtifactOutput(JpsArtifact a, final String fileName) throws IOException {
+    assertTrue(new File(a.getOutputPath(), fileName).createNewFile());
   }
 }

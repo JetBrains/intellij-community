@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
@@ -37,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -222,7 +222,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     public ToggleShowFlattenAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
-            PlatformIcons.DIRECTORY_CLOSED_ICON);
+            AllIcons.Actions.GroupByPackage);
       myFlattenState = false;
     }
 
