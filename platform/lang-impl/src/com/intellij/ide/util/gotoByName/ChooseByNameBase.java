@@ -622,7 +622,7 @@ public abstract class ChooseByNameBase {
           int selectedIndex = myList.getSelectedIndex();
           Rectangle selectedCellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
 
-          if (selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
+          if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
               rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current());
