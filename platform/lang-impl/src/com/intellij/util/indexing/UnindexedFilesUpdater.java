@@ -72,6 +72,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void updatingDone() {
     if (myFinishedUpdate.compareAndSet(false, true)) {
+      IndexingStamp.flushCache(null);
       myIndex.filesUpdateFinished();
       LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
     }
