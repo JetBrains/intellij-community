@@ -221,11 +221,12 @@ public class DefaultHighlighter {
 
   public static final TextAttributes UNRESOLVED_ACCESS_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
-  static{
+  static {
     UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.GRAY);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
+
   public static final TextAttributes LITERAL_CONVERSION_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
   static{
@@ -240,6 +241,7 @@ public class DefaultHighlighter {
   static {
     MAP_KEY_ATTRIBUTES.setForegroundColor(MAP_KEY_COLOR);
   }
+
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey
     .createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
   public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey
