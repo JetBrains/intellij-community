@@ -54,7 +54,7 @@ public class HighlightNamesUtil {
     if (!isDeclaration) {
       if (isCalledOnThis(elementToHighlight)) {
         PsiClass enclosingClass = PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
-        isInherited = enclosingClass.isInheritor(method.getContainingClass(), true);
+        isInherited = enclosingClass != null && enclosingClass.isInheritor(method.getContainingClass(), true);
       }
     }
 
