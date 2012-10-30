@@ -119,7 +119,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
 
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
     final String targetName = ((GenericValue)context.getInvocationElement()).getStringValue();
-    if (targetName == null) return super.getQuickFixes(context);
+    if (!JavaPsiFacade.getInstance(context.getProject()).getNameHelper().isIdentifier(targetName)) return super.getQuickFixes(context);
     final PsiClass targetClass = getTargetClass(context);
     if (targetClass == null) return super.getQuickFixes(context);
     final PropertyMemberType memberType = getMemberTypes(context)[0];
