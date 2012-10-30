@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -60,7 +59,8 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
       if (height > 2) {
         g.setColor(color);
         g.fillRect(x, y, width, height);
-        UIUtil.drawFramingLines(g2, x, x + width, y - 1, y + height - 1, color.darker());
+        DiffUtil.drawDoubleShadowedLine(g2, x, x + width, y - 1, color);
+        DiffUtil.drawDoubleShadowedLine(g2, x, x + width, y + height - 1, color);
       }
       else {
         // insertion or deletion, when a range is null. matching the text highlighter which is a 2 pixel line
