@@ -151,10 +151,10 @@ public class BuildFSState extends FSState {
             if (!rd.isGenerated() && (currentFileStamp > compilationStartStamp || getEventRegistrationStamp(file) > compilationStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
-              delta.markRecompile(rd, file);
               if (Utils.IS_TEST_MODE) {
                 LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
               }
+              delta.markRecompile(rd, file);
             }
             else {
               marked = true;

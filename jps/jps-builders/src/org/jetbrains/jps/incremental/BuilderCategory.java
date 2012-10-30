@@ -5,6 +5,7 @@ package org.jetbrains.jps.incremental;
  *         Date: 9/17/11
  */
 public enum BuilderCategory {
+  INITIAL,
   SOURCE_GENERATOR,
   SOURCE_INSTRUMENTER,
   SOURCE_PROCESSOR,
