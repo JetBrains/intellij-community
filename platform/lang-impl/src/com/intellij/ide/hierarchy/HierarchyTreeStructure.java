@@ -44,37 +44,37 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   private HierarchyNodeDescriptor myRoot;
   protected final Project myProject;
 
-  protected HierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor baseDescriptor) {
+  protected HierarchyTreeStructure(@NotNull Project project, HierarchyNodeDescriptor baseDescriptor) {
     myBaseDescriptor = baseDescriptor;
     myProject = project;
-    myRoot = myBaseDescriptor;
+    myRoot = baseDescriptor;
   }
 
   public final HierarchyNodeDescriptor getBaseDescriptor() {
     return myBaseDescriptor;
   }
 
-  protected final void setBaseElement(final HierarchyNodeDescriptor baseElement) {
+  protected final void setBaseElement(@NotNull HierarchyNodeDescriptor baseElement) {
     myBaseDescriptor = baseElement;
-    myRoot = myBaseDescriptor;
+    myRoot = baseElement;
     while(myRoot.getParentDescriptor() != null){
       myRoot = (HierarchyNodeDescriptor)myRoot.getParentDescriptor();
     }
   }
 
+  @Override
   @NotNull
   public final NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;
     }
-    else if (element instanceof String) {
+    if (element instanceof String) {
       return new TextInfoNodeDescriptor(parentDescriptor, (String)element, myProject);
     }
-    else {
-      return null;
-    }
+    throw new IllegalArgumentException("Unknown element type: " + element);
   }
 
+  @Override
   public final boolean isToBuildChildrenInBackground(final Object element) {
     if (element instanceof HierarchyNodeDescriptor){
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
@@ -86,6 +86,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return false;
   }
 
+  @Override
   public final Object[] getChildElements(final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
@@ -98,24 +99,12 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
           descriptor.setCachedChildren(buildChildren(descriptor));
         }
       }
-      else{
-/*
-        for(int i = 0; i < cachedChildren.length; i++){
-          Object child = cachedChildren[i];
-          if (child instanceof HierarchyElement){
-            if (!((HierarchyElement)child).getValue().isValid()){
-              hierarchyElement.setCachedChildren(new Object[0]); //?
-              break;
-            }
-          }
-        }
-*/
-      }
       return descriptor.getCachedChildren();
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public final Object getParentElement(final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       return ((HierarchyNodeDescriptor)element).getParentDescriptor();
@@ -124,10 +113,12 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @Override
   public final void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @Override
   public final boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
@@ -139,6 +130,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   protected abstract Object[] buildChildren(HierarchyNodeDescriptor descriptor);
 
+  @Override
   public final Object getRootElement() {
     return myRoot;
   }
@@ -204,10 +196,12 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       myColor = Color.red;
     }
 
+    @Override
     public final Object getElement() {
       return myName;
     }
 
+    @Override
     public final boolean update() {
       return true;
     }

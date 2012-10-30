@@ -43,6 +43,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     myScopeType = scopeType;
   }
 
+  @Override
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
@@ -62,6 +63,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     final Map<PsiMember, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
     for (final PsiMethod methodToFind : methodsToFind) {
       MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(new Processor<PsiReference>() {
+        @Override
         public boolean process(final PsiReference reference) {
           if (reference instanceof PsiReferenceExpression) {
             final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();

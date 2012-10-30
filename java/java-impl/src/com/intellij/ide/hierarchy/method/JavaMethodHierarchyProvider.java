@@ -25,13 +25,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class JavaMethodHierarchyProvider implements HierarchyProvider {
-  public PsiElement getTarget(final DataContext dataContext) {
+  public PsiElement getTarget(@NotNull final DataContext dataContext) {
     final PsiMethod method = getMethodImpl(dataContext);
     if (
       method != null &&
@@ -88,11 +89,12 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 
+  @NotNull
   public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
     return new MethodHierarchyBrowser(target.getProject(), (PsiMethod) target);
   }
 
-  public void browserActivated(final HierarchyBrowser hierarchyBrowser) {
+  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.METHOD_TYPE);
   }
 }

@@ -39,6 +39,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     myIsBase = isBase;
   }
 
+  @Override
   public final Object getElement() {
     return this;
   }
@@ -58,10 +59,12 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     myCachedChildren = cachedChildren;
   }
 
+  @Override
   protected final boolean isMarkReadOnly() {
     return true;
   }
 
+  @Override
   protected final boolean isMarkModified() {
     return true;
   }
@@ -82,6 +85,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return getUsageCountPrefixAttributes();
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return false;
   }

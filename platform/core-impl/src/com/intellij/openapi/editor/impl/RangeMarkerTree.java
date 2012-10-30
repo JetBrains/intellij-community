@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Getter;
@@ -44,7 +45,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   protected RangeMarkerTree(@NotNull Document document) {
     myDocument = document;
-    myListener = new PrioritizedDocumentListener() {
+    myListener = new PrioritizedInternalDocumentListener() {
       @Override
       public int getPriority() {
         return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
@@ -56,6 +57,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       @Override
       public void documentChanged(DocumentEvent e) {
         updateMarkersOnChange(e);
+      }
+
+      @Override
+      public void moveTextHappened(int start, int end, int newBase) {
+        reTarget(start, end, newBase);
       }
     };
 
@@ -368,7 +374,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return true;
   }
 
-  public void retarget(int start, int end, int newBase) {
+  private void reTarget(int start, int end, int newBase) {
     l.writeLock().lock();
     try {
       //updateMarkersOnChange(new DocumentEventImpl(myDocument, ));

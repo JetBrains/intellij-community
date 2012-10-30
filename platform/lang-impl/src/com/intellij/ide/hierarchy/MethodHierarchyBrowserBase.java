@@ -41,11 +41,13 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     super(project, method);
   }
 
+  @Override
   @NotNull
   protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.prev.occurence.name");
   }
 
+  @Override
   @NotNull
   protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.next.occurence.name");
@@ -86,11 +88,13 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     actionGroup.add(new ShowImplementationsOnlyAction());
   }
 
+  @Override
   @NotNull
   protected String getBrowserDataKey() {
     return DATA_KEY.getName();
   }
 
+  @Override
   @NotNull
   protected String getActionPlace() {
     return ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR;
@@ -102,21 +106,25 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
             AllIcons.Ant.Filter); // TODO[anton] use own icon!!!
     }
 
+    @Override
     public final boolean isSelected(final AnActionEvent event) {
       return HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
     }
 
+    @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED = flag;
 
       // invokeLater is called to update state of button before long tree building operation
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           doRefresh(true);
         }
       });
     }
 
+    @Override
     public final void update(final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();

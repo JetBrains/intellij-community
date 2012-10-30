@@ -28,6 +28,7 @@ public final class ViewSupertypesHierarchyAction extends ChangeViewTypeActionBas
           IdeBundle.message("action.description.view.supertypes.hierarchy"), AllIcons.Hierarchy.Supertypes);
   }
 
+  @Override
   protected final String getTypeName() {
     return TypeHierarchyBrowserBase.SUPERTYPES_HIERARCHY_TYPE;
   }

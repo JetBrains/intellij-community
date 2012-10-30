@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import icons.EclipseIcons;
 import org.jdom.Element;
@@ -56,6 +57,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
@@ -100,7 +102,17 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         final ArrayList<String> roots = new ArrayList<String>();
-        EclipseProjectFinder.findModuleRoots(roots, path);
+        EclipseProjectFinder.findModuleRoots(roots, path, new Processor<String>() {
+          @Override
+          public boolean process(String path) {
+            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            if (progressIndicator != null) {
+              if (progressIndicator.isCanceled()) return false;
+              progressIndicator.setText2(path);
+            }
+            return true;
+          }
+        });
         Collections.sort(roots, new Comparator<String>() {
           @Override
           public int compare(String path1, String path2) {
@@ -276,7 +288,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
         } else {
-          EclipseClasspathReader.setupOutput(rootModel, path + "/bin");
+          EclipseClasspathReader.setOutputUrl(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
                                       getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClasspathStorage.DEFAULT_STORAGE);

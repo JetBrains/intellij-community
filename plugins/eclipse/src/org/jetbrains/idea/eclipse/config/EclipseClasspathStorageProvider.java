@@ -35,9 +35,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.eclipse.EclipseBundle;
-import org.jetbrains.idea.eclipse.EclipseXml;
-import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.conversion.*;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
@@ -98,7 +96,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public void detach(Module module) {
-    EclipseModuleManager.getInstance(module).setDocumentSet(null);
+    EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
   }
 
   public ClasspathConverter createConverter(Module module) {
@@ -113,7 +111,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   @Override
   public void modulePathChanged(Module module, String path) {
-    final EclipseModuleManager moduleManager = EclipseModuleManager.getInstance(module);
+    final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     if (moduleManager != null) {
       moduleManager.setDocumentSet(null);
     }
@@ -130,7 +128,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   static CachedXmlDocumentSet getFileCache(final Module module) {
-    final EclipseModuleManager moduleManager = EclipseModuleManager.getInstance(module);
+    final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
       fileCache = new CachedXmlDocumentSet(module.getProject());
@@ -198,7 +196,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
         }
         else {
-          EclipseClasspathReader.setupOutput(model, path + "/bin");
+          EclipseClasspathReader.setOutputUrl(model, path + "/bin");
         }
         final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {

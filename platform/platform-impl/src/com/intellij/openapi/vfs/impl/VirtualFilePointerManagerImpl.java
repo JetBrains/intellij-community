@@ -176,7 +176,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     if (fileSystem == TEMP_FILE_SYSTEM) {
       // for tests, recreate always
-      VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
+      VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
       return new IdentityVirtualFilePointer(found, url);
     }
     if (fileSystem != LOCAL_FILE_SYSTEM && fileSystem != JAR_FILE_SYSTEM) {
