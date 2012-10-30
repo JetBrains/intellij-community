@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -84,7 +85,25 @@ public class HgAnnotation implements FileAnnotation {
   }
 
   public String getToolTip(int lineNumber) {
-    return null;
+
+    if ( lines.size() <= lineNumber || lineNumber < 0 ) {
+      return "";
+    }
+
+    HgAnnotationLine info = lines.get(lineNumber);
+    if (info == null) {
+      return "";
+    }
+
+    for (HgFileRevision revision : vcsFileRevisions) {
+      if ( revision.getRevisionNumber().equals(info.getVcsRevisionNumber()) ) {
+
+        return HgVcsMessages.message( "hg4idea.annotation.tool.tip", revision.getRevisionNumber().asString(),
+                                      revision.getAuthor(), revision.getRevisionDate(), revision.getCommitMessage() );
+      }
+    }
+
+    return "";
   }
 
   public String getAnnotatedContent() {
