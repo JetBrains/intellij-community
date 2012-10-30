@@ -157,7 +157,11 @@ class GitRepositoryReader {
       return null;
     }
     String branchName = tryLoadFile(headName).trim();
-    Hash hash = Hash.create(readBranchFile(findBranchFile(branchName)));
+    File branchFile = findBranchFile(branchName);
+    if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
+      return null;
+    }
+    Hash hash = Hash.create(readBranchFile(branchFile));
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }

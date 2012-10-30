@@ -65,7 +65,13 @@ class GitScenarios {
     git("branch -D $BRANCH_FOR_UNMERGED_CONFLICTS")
   }
 
+  /**
+   * Creates a branch with the given name, and produces conflicted content in a file between this branch and master.
+   * Branch must not exist at this point.
+   */
   def conflict(GitRepository repository, String branch, String file="conflict.txt") {
+    assert "Branch [$branch] shouldn't exist for this scenario" : !branchExists(repository, branch)
+
     cd repository
 
     touch(file, "initial content")
@@ -139,6 +145,17 @@ class GitScenarios {
   def prepend(String fileName, String content) {
     def previousContent = cat(fileName)
     new File(pwd(), fileName).withWriter("UTF-8") { it.write(content + previousContent) }
+  }
+
+  def commit(GitRepository repository, String file = "just_a_file_${Math.random()}.txt") {
+    cd repository
+    touch(file)
+    git("add $file")
+    git("commit -m just_a_commit")
+  }
+
+  public boolean branchExists(GitRepository repo, String branch) {
+    git(repo, "branch").contains(branch)
   }
 
 }
