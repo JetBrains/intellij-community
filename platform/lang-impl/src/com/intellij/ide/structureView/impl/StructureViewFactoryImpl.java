@@ -82,15 +82,18 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     myProject = project;
   }
 
+  @Override
   public StructureViewWrapper getStructureViewWrapper() {
     return myStructureViewWrapperImpl;
   }
 
+  @Override
   @NotNull
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }
@@ -103,6 +106,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
+  @Override
   public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
@@ -121,6 +125,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return result;
   }
 
+  @Override
   public void setActiveAction(final String name, final boolean state) {
     Collection<String> activeActions = collectActiveActions();
 
@@ -143,6 +148,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return new HashSet<String>(Arrays.asList(strings));
   }
 
+  @Override
   public boolean isActionActive(final String name) {
     return collectActiveActions().contains(name);
   }
@@ -157,10 +163,12 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
+  @Override
   public StructureView createStructureView(final FileEditor fileEditor, final StructureViewModel treeModel, final Project project) {
     return new StructureViewComponent(fileEditor, treeModel, project);
   }
 
+  @Override
   public StructureView createStructureView(final FileEditor fileEditor,
                                            final StructureViewModel treeModel, final Project project, final boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);

@@ -191,7 +191,13 @@ public class Bookmark {
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
     if (builder instanceof TreeBasedStructureViewBuilder) {
       StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel();
-      Object element = model.getCurrentEditorElement();
+      Object element;
+      try {
+        element = model.getCurrentEditorElement();
+      }
+      finally {
+        model.dispose();
+      }
       if (element instanceof NavigationItem) {
         ItemPresentation presentation = ((NavigationItem)element).getPresentation();
         if (presentation != null) {
