@@ -30,6 +30,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="xml" scope="TEST" />
     <orderEntry type="module" module-name="appEngine-runtime" />
+    <orderEntry type="module" module-name="google-app-engine-jps-plugin" />
   </component>
 </module>
 

@@ -48,6 +48,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

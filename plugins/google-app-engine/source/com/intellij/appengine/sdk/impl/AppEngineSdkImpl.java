@@ -18,6 +18,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.appengine.model.impl.JpsAppEngineModuleExtensionImpl;
 
 import java.io.*;
 import java.util.*;
@@ -45,7 +46,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   public File getToolsApiJarFile() {
-    final String path = FileUtil.toSystemDependentName(myHomePath + "/lib/appengine-tools-api.jar");
+    final String path = FileUtil.toSystemDependentName(myHomePath + JpsAppEngineModuleExtensionImpl.LIB_APPENGINE_TOOLS_API_JAR);
     return new File(path);
   }
 

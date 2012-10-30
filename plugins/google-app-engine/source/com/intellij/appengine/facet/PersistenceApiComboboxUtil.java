@@ -2,6 +2,7 @@ package com.intellij.appengine.facet;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import javax.swing.*;
 

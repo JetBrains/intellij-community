@@ -1,4 +1,4 @@
-package com.intellij.appengine.facet;
+package org.jetbrains.jps.appengine.model;
 
 /**
 * @author nik

@@ -1,7 +1,6 @@
 package com.intellij.appengine.enhancement;
 
 import com.intellij.appengine.facet.AppEngineFacet;
-import com.intellij.appengine.facet.PersistenceApi;
 import com.intellij.appengine.rt.EnhancerRunner;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.compiler.SymbolTable;
@@ -13,8 +12,6 @@ import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -30,7 +27,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -39,6 +35,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.appengine.model.PersistenceApi;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -189,15 +186,6 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
       final Process process = commandLine.createProcess();
       EnhancerProcessHandler handler = new EnhancerProcessHandler(process, commandLine.getCommandLineString(), myContext);
       handler.startNotify();
-      handler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          final int exitCode = event.getExitCode();
-          if (exitCode != 0) {
-            myContext.addMessage(CompilerMessageCategory.ERROR, "Enhancement process terminated with exit code " + exitCode, null, -1, -1);
-          }
-        }
-      });
       handler.waitFor();
     }
     catch (ProcessCanceledException e) {
@@ -227,8 +215,6 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
   }
 
   private static class ClassFilesCollector {
-    private static final Key<String> FULL_NAME = Key.create("gae.enhancer.visitor.full.name");
-
     private CompileContextEx myContext;
     private List<ClassFileItem> myItems;
     private AppEngineFacet myFacet;
