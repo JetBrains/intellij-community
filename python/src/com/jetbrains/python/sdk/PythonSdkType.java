@@ -160,7 +160,7 @@ public class PythonSdkType extends SdkType {
     return s;
   }
 
-  public boolean isValidSdkHome(final String path) {
+  public boolean isValidSdkHome(@Nullable final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
   }
 

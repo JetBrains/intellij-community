@@ -18,7 +18,6 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.intellij.util.PathMappingSettings;
@@ -55,7 +54,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     return myMappingSettings;
   }
 
-  public void setMappingSettings(PathMappingSettings mappingSettings) {
+  public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
     myMappingSettings = mappingSettings;
   }
 
@@ -193,12 +192,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     getConfigurationModule().readExternal(element);
 
-    Element settingsElement = element.getChild(PathMappingSettings.class.getSimpleName());
-    if (settingsElement != null) {
-      setMappingSettings(
-        XmlSerializer.deserialize(settingsElement, PathMappingSettings.class));
-    }
-
+    setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
   }
@@ -223,9 +217,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
 
-    if (getMappingSettings() != null) {
-      element.addContent(XmlSerializer.serialize(getMappingSettings()));
-    }
+    PathMappingSettings.writeExternal(element, getMappingSettings());
   }
 
   protected void writeEnvs(Element element) {
