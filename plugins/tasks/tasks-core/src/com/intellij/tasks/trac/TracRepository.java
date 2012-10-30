@@ -16,16 +16,18 @@
 package com.intellij.tasks.trac;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.xmlrpc.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -119,24 +121,79 @@ public class TracRepository extends BaseRepositoryImpl {
     XmlRpcRequest request = new XmlRpcRequest("ticket.get", new Vector(Arrays.asList(id)));
     Object response = client.execute(request, transport);
     if (response == null) return null;
-    Vector<Object> vector = (Vector<Object>)response;
-    LocalTaskImpl task = new LocalTaskImpl();
-    task.setId(vector.get(0).toString());
-    task.setCreated(getDate(vector.get(1)));
-    task.setUpdated(getDate(vector.get(2)));
+    final Vector<Object> vector = (Vector<Object>)response;
+    final Hashtable<String, String> map = (Hashtable<String, String>)vector.get(3);
+    return new Task() {
 
-    Hashtable<String, String> map = (Hashtable<String, String>)vector.get(3);
-    task.setSummary(map.get("summary"));
+      @NotNull
+      @Override
+      public String getId() {
+        return vector.get(0).toString();
+      }
 
-    TaskType taskType = TaskType.OTHER;
-    String type = map.get("type");
-    if ("Feature".equals(type) || type.equals("enhancement")) taskType = TaskType.FEATURE;
-    else if ("Bug".equals(type) || type.equals("defect") || type.equals("error")) taskType = TaskType.BUG;
-    else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
-    task.setType(taskType);
+      @NotNull
+      @Override
+      public String getSummary() {
+        return map.get("summary");
+      }
 
-    task.setIssue(true);
-    return task;
+      @Nullable
+      @Override
+      public String getDescription() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public Comment[] getComments() {
+        return new Comment[0];
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public TaskType getType() {
+        TaskType taskType = TaskType.OTHER;
+        String type = map.get("type");
+        if ("Feature".equals(type) || type.equals("enhancement")) taskType = TaskType.FEATURE;
+        else if ("Bug".equals(type) || type.equals("defect") || type.equals("error")) taskType = TaskType.BUG;
+        else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
+        return taskType;
+      }
+
+      @Nullable
+      @Override
+      public Date getUpdated() {
+        return getDate(vector.get(2));
+      }
+
+      @Nullable
+      @Override
+      public Date getCreated() {
+        return getDate(vector.get(1));
+      }
+
+      @Override
+      public boolean isClosed() {
+        return false;
+      }
+
+      @Override
+      public boolean isIssue() {
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public String getIssueUrl() {
+        return null;
+      }
+    };
   }
 
   private static Date getDate(Object o) {
