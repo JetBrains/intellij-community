@@ -15,12 +15,12 @@ public class PyDocstringTest extends PyTestCase {
   }
 
   public void testWelcome() {
-    doTestLexer("  >>> foo()", "Py:SPACE", "Py:INDENT", "Py:GTGT", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:STATEMENT_BREAK");
+    doTestLexer("  >>> foo()", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:STATEMENT_BREAK");
   }
 
   public void testDots() {
-    doTestLexer(">>> grouped == { 2:2,\n" +
-                "  ...              3:3}", "Py:GTGT","Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQEQ", "Py:SPACE", "Py:LBRACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:COMMA", "Py:LINE_BREAK", "Py:DOT", "Py:SPACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:STATEMENT_BREAK");
+    doTestLexer(" >>> grouped == { 2:2,\n" +
+                "  ...              3:3}", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQEQ", "Py:SPACE", "Py:LBRACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:COMMA", "Py:LINE_BREAK", "Py:DOT", "Py:DOT", "Py:DOT", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:STATEMENT_BREAK");
   }
 
   public void testFunctionName() throws Throwable {
