@@ -177,7 +177,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             try {
               if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) return true;
 
-              generateBuildConfiguration(!context.isRebuild());
+              generateBuildConfiguration(context.isRebuild());
             }
             finally {
               token.finish();
@@ -1023,7 +1023,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return importer.get().getCreatedModules();
   }
 
-  public void generateBuildConfiguration(boolean onlyIfNeed) {
+  public void generateBuildConfiguration(boolean force) {
     if (!isMavenizedProject()) {
       return;
     }
@@ -1041,7 +1041,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
 
-    if (onlyIfNeed) {
+    if (!force) {
       try {
         DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
         try {

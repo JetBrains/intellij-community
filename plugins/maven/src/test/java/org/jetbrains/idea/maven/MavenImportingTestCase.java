@@ -529,7 +529,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
           modules.add(getModule(each));
         }
         if (useJps()) {
-          MavenProjectsManager.getInstance(myProject).generateBuildConfiguration(true);
+          MavenProjectsManager.getInstance(myProject).generateBuildConfiguration(false);
         }
       }
     });
