@@ -15,7 +15,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
   private final JpsLibraryCollectionImpl myLibraryCollection;
 
-  public JpsGlobalImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
+  public JpsGlobalImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
     myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
