@@ -36,6 +36,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   public String myExternalName;
   public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
 
+  private TextAttributesKey myFallbackAttributeKey;
+
   private TextAttributesKey(String externalName) {
     myExternalName = externalName;
   }
@@ -125,6 +127,21 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
       key.myDefaultAttributes = defaultAttributes;
     }
     return key;
+  }
+
+  @NotNull
+  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
+    TextAttributesKey key = find(externalName);
+    key.setFallbackAttributeKey(fallbackAttributeKey);
+    return key;
+  }
+
+  public TextAttributesKey getFallbackAttributeKey() {
+    return myFallbackAttributeKey;
+  }
+
+  public void setFallbackAttributeKey(TextAttributesKey fallbackAttributeKey) {
+    myFallbackAttributeKey = fallbackAttributeKey;
   }
 
   public interface TextAttributeKeyDefaultsProvider {
