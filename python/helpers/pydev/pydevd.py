@@ -171,7 +171,7 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
-        #self.setDaemon(False) #Strange but sometimes that prevents threads from correct termination
+        self.setDaemon(False)
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
@@ -180,6 +180,10 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                 if not self.pyDb.haveAliveThreads():
                     pydev_log.debug("No alive threads, finishing debug session")
                     self.pyDb.FinishDebuggingSession()
+                    threads = threadingEnumerate()
+                    for t in threads:
+                        if hasattr(t, 'doKillPydevThread'):
+                            t.doKillPydevThread()
                     return
 
                 time.sleep(0.3)
