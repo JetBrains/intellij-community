@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/**
- * @author Yura Cangea
  */
 package com.intellij.openapi.editor.colors.impl;
 
@@ -31,16 +27,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * @author Yura Cangea
+ */
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   private final ExternalInfo myExternalInfo = new ExternalInfo();
 
-  public EditorColorsSchemeImpl(EditorColorsScheme parenScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
-    super(parenScheme, defaultColorSchemesManager);
+  public EditorColorsSchemeImpl(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
+    super(parentScheme, defaultColorSchemesManager);
   }
 
-  // -------------------------------------------------------------------------
-  // Getters & Setters
-  // -------------------------------------------------------------------------
   @Override
   public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
     if (!Comparing.equal(attributes, getAttributes(key))) {
@@ -60,9 +56,11 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     if (myAttributesMap.containsKey(key)) {
       return myAttributesMap.get(key);
     }
-    TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-    if (fallbackKey != null && myAttributesMap.containsKey(fallbackKey)) {
-      return myAttributesMap.get(fallbackKey);
+    if (key != null) {
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null && myAttributesMap.containsKey(fallbackKey)) {
+        return myAttributesMap.get(fallbackKey);
+      }
     }
     return myParentScheme.getAttributes(key);
   }
@@ -71,7 +69,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   public Color getColor(ColorKey key) {
     if (myColorsMap.containsKey(key)) {
       return myColorsMap.get(key);
-    } else {
+    }
+    else {
       return myParentScheme.getColor(key);
     }
   }
