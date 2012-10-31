@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -1043,7 +1044,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             filesSet.add(((VirtualFileWithId)fileOrDir).getId());
             return true;
           }
-        }, project, ProgressManager.getInstance().getProgressIndicator());
+        }, project, SilentProgressIndicator.create());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
 
@@ -1740,6 +1741,38 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     public VirtualFile getSubj() {
       return mySubj;
+    }
+  }
+
+  private static class SilentProgressIndicator extends DelegatingProgressIndicator {
+    // suppress verbose messages
+
+    private SilentProgressIndicator(ProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Nullable
+    public static SilentProgressIndicator create(){
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      return indicator != null? new SilentProgressIndicator(indicator) : null;
+    }
+
+    @Override
+    public void setText(String text) {
+    }
+
+    @Override
+    public String getText() {
+      return "";
+    }
+
+    @Override
+    public void setText2(String text) {
+    }
+
+    @Override
+    public String getText2() {
+      return "";
     }
   }
 
