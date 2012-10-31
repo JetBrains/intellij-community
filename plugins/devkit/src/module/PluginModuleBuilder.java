@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
@@ -56,6 +57,6 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
 
   @Override
   public String getGroupName() {
-    return "Java";
+    return JavaModuleType.MODULE_NAME;
   }
 }
