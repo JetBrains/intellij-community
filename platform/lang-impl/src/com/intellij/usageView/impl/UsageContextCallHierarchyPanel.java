@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.usageView;
+package com.intellij.usageView.impl;
 
 import com.intellij.ide.hierarchy.*;
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageTarget;
