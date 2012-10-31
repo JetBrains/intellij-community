@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -93,7 +92,6 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     myWorkingCopyDir.refresh(false, true);
   }
 
-  @Bombed(year = 2012, month = 11, day = 2)
   @Test
   public void testMineFull() throws Exception {
     int cnt = 0;
@@ -204,7 +202,6 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     return "Check failed for test: " + getTestName(data) + " and file: " + path + " in: " + myWorkingCopyDir.getPath();
   }
 
-  @Bombed(year = 2012, month = 11, day = 2)
   @Test
   public void testTheirsFull() throws Exception {
     int cnt = 0;
