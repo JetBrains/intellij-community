@@ -39,13 +39,13 @@ public class MemberInfoStorage extends AbstractMemberInfoStorage<PsiMember, PsiC
   }
 
   @Override
-  protected boolean memberConflict(PsiElement member1, PsiElement member) {
+  protected boolean memberConflict(PsiMember member1, PsiMember member) {
     if(member instanceof PsiMethod && member1 instanceof PsiMethod) {
       return MethodSignatureUtil.areSignaturesEqual((PsiMethod) member, (PsiMethod) member1);
     }
     else if(member instanceof PsiField && member1 instanceof PsiField
             || member instanceof PsiClass && member1 instanceof PsiClass) {
-      return ((PsiNamedElement) member).getName().equals(((PsiNamedElement) member1).getName());
+      return member.getName().equals(member1.getName());
     }
     return false;
   }

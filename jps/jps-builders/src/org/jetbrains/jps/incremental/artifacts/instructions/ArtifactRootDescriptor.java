@@ -1,8 +1,8 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
@@ -77,7 +77,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   public abstract void copyFromRoot(String filePath,
                                     int rootIndex, String outputPath,
-                                    CompileContext context, SourceToOutputMapping srcOutMapping,
+                                    CompileContext context, BuildOutputConsumer outputConsumer,
                                     ArtifactOutputToSourceMapping outSrcMapping) throws IOException;
 
   public SourceFileFilter getFilter() {

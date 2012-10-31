@@ -43,7 +43,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -278,7 +278,7 @@ public class IdeaSpecificSettings {
           isModified = true;
         }
       }
-      if (entry instanceof InheritedJdkOrderEntry && EclipseModuleManager.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
+      if (entry instanceof InheritedJdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
         root.setAttribute(INHERIT_JDK, "true");
         isModified = true;
       }

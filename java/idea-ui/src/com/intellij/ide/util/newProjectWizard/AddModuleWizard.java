@@ -64,7 +64,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
-  public AddModuleWizard(final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
+  public AddModuleWizard(@Nullable final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
     super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project);
     myCurrentProject = project;
     myModulesProvider = modulesProvider;
@@ -288,7 +288,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
       return ProjectJdkTable.getInstance().findMostRecentSdk(new Condition<Sdk>() {
         public boolean value(Sdk sdk) {
-          return projectBuilder == null || projectBuilder.isSuitableSdk(sdk);
+          return projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType());
         }
       });
     }

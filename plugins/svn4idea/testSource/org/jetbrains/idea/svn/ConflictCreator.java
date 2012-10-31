@@ -20,10 +20,6 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,6 +115,7 @@ public class ConflictCreator {
     VfsUtil.processFilesRecursively(myTheirsDir, new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile file) {
+        if (myTheirsDir.equals(file)) return true;
         if (file.isDirectory() && file.getChildren().length == 0) {
           try {
             myClientRunner.delete(myTheirsDir, file.getPath());

@@ -27,19 +27,19 @@ import com.intellij.openapi.components.StorageScheme;
 import javax.swing.*;
 
 public class ProjectFormatPanel {
+
+  private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
   public static final String DIR_BASED = ".idea (directory based)";
   private static final String FILE_BASED = ".ipr (file based)";
+
   private JComboBox myStorageFormatCombo;
   private JPanel myWholePanel;
-
-  public static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
 
   public ProjectFormatPanel() {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
     myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getOrInit(STORAGE_FORMAT_PROPERTY, DIR_BASED));
   }
-
 
   public JPanel getPanel() {
     return myWholePanel;
@@ -50,9 +50,14 @@ public class ProjectFormatPanel {
   }
 
   public void updateData(WizardContext context) {
-    context.setProjectStorageFormat(
-      FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED);
-    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, isDefault() ? FILE_BASED : DIR_BASED);
+    StorageScheme format =
+      FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
+    context.setProjectStorageFormat(format);
+    setDefaultFormat(isDefault());
+  }
+
+  public static void setDefaultFormat(boolean aDefault) {
+    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, aDefault ? FILE_BASED : DIR_BASED);
   }
 
   public void setVisible(boolean visible) {

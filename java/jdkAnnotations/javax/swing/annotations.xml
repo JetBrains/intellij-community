@@ -436,4 +436,29 @@
   <item name='javax.swing.JTable void sorterChanged(javax.swing.event.RowSorterEvent) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='javax.swing.JTabbedPane JTabbedPane(int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JTabbedPane JTabbedPane(int, int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JTable int getTabPlacement()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JTabbedPane JTabbedPane(int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JTable int getTabLayoutPolicy()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}"/>
+    </annotation>
+  </item>
 </root>

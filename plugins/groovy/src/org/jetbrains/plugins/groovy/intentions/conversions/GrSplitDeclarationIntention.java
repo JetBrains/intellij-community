@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -51,8 +50,7 @@ public class GrSplitDeclarationIntention extends Intention {
       processSingleVar(project, declaration, variables[0]);
     }
     else if (variables.length > 1) {
-      GrTupleDeclaration tuple = declaration.getTupleDeclaration();
-      if (tuple == null || tuple.getInitializerGroovy() instanceof GrListOrMap) {
+      if (!declaration.isTuple() || declaration.getTupleInitializer() instanceof GrListOrMap) {
         processMultipleVars(project, declaration);
       }
       else {
@@ -62,9 +60,7 @@ public class GrSplitDeclarationIntention extends Intention {
   }
 
   private static void processTuple(Project project, GrVariableDeclaration declaration) {
-    GrTupleDeclaration tuple = declaration.getTupleDeclaration();
-    assert tuple != null;
-    GrExpression initializer = tuple.getInitializerGroovy();
+    GrExpression initializer = declaration.getTupleInitializer();
     assert initializer != null;
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -92,7 +88,7 @@ public class GrSplitDeclarationIntention extends Intention {
     String modifiers = declaration.getModifierList().getText();
     GrStatement[] sts = new GrStatement[variables.length];
     for (int i = 0; i < variables.length; i++) {
-      sts[i] = createVarDeclaration(project, variables[i], modifiers, declaration.getTupleDeclaration() != null);
+      sts[i] = createVarDeclaration(project, variables[i], modifiers, declaration.isTuple());
     }
 
     declaration = GroovyRefactoringUtil.addBlockIntoParent(declaration);
@@ -127,12 +123,12 @@ public class GrSplitDeclarationIntention extends Intention {
     if (initializer != null) {
       builder.append('=').append(initializer.getText());
     }
-    GrVariableDeclaration var =
-      (GrVariableDeclaration)GroovyPsiElementFactory.getInstance(project).createStatementFromText(builder.toString());
-    if (isTuple && (variable.getDeclaredType() != null || var.getModifierList().getModifiers().length > 1)) {
-      ((GrVariableDeclaration)var).getModifierList().setModifierProperty(GrModifier.DEF, false);
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    GrVariableDeclaration decl = (GrVariableDeclaration)factory.createStatementFromText(builder);
+    if (isTuple && (variable.getDeclaredType() != null || decl.getModifierList().getModifiers().length > 1)) {
+      decl.getModifierList().setModifierProperty(GrModifier.DEF, false);
     }
-    return var;
+    return decl;
   }
 
   private String myText = "";
@@ -150,10 +146,10 @@ public class GrSplitDeclarationIntention extends Intention {
       @Override
       public boolean satisfiedBy(PsiElement element) {
         if (element instanceof GrVariableDeclaration) {
-          GrVariable[] variables = ((GrVariableDeclaration)element).getVariables();
+          GrVariableDeclaration decl = (GrVariableDeclaration)element;
+          GrVariable[] variables = decl.getVariables();
           if (variables.length > 1 && GroovyRefactoringUtil.isLocalVariable(variables[0])) {
-            GrTupleDeclaration tuple = ((GrVariableDeclaration)element).getTupleDeclaration();
-            if (tuple == null || tuple.getInitializerGroovy() instanceof GrListOrMap) {
+            if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
               myText = GroovyIntentionsBundle.message("split.into.separate.declaration");
             }
             else {

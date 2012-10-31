@@ -172,6 +172,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
+  private static boolean hasRemovedSources(CompileContext context) {
+    final Map<ModuleBuildTarget, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
+    return removed != null && !removed.isEmpty();
+  }
+
   @Override
   public String getName() {
     return BUILDER_NAME;
@@ -306,7 +311,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && !Utils.hasRemovedSources(context)) {
+    if (!hasSourcesToCompile && !hasRemovedSources(context)) {
       return exitCode;
     }
 
@@ -1138,7 +1143,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           kind = BuildMessage.Kind.INFO;
       }
       final JavaFileObject source = diagnostic.getSource();
-      final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      File sourceFile = null;
+      try {
+        sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       String message = diagnostic.getMessage(Locale.US);
       if (Utils.IS_TEST_MODE) {

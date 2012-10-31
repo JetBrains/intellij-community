@@ -341,7 +341,9 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     if (isToShowAutoScrollButton()) {
       actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     }
-    actionGroup.add(new CloseAction());
+    if (isToShowCloseButton()) {
+      actionGroup.add(new CloseAction());
+    }
     if (isToShowPreviewButton()) {
       actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.Preview) {
         @Override
@@ -371,6 +373,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   public abstract boolean isAutoScroll();
 
   public abstract void setAutoScroll(boolean autoScroll);
+
+  public boolean isToShowCloseButton() {return true;}
 
   public boolean isToShowPreviewButton() {return true;}
   public abstract boolean isPreview();

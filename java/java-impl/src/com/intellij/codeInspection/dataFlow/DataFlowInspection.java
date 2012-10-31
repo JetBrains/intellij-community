@@ -283,7 +283,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           createSimplifyToAssignmentFix()
         );
       }
-      else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue) && !visitor.silenceConstantCondition(instruction)) {
+      else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue) && !visitor.silenceConstantCondition(psiAnchor)) {
         final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
         String message = InspectionsBundle.message(underBinary ?
                                                    "dataflow.message.constant.condition.when.reached" :

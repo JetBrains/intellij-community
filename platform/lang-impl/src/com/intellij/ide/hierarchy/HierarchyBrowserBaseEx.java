@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -44,7 +45,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -65,7 +65,6 @@ import java.util.*;
 import java.util.List;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
@@ -462,16 +461,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return myCurrentViewType;
   }
 
-  private PsiElement[] getSelectedElements() {
-    HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-    for (HierarchyNodeDescriptor descriptor : descriptors) {
-      PsiElement element = getElementFromDescriptor(descriptor);
-      if (element != null) elements.add(element);
-    }
-    return PsiUtilCore.toPsiElementArray(elements);
-  }
-
   @Override
   public Object getData(final String dataId) {
     if (getBrowserDataKey().equals(dataId)) {
@@ -499,7 +488,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    final Ref<Object> storedInfo = new Ref<Object>();
+    final Ref<Pair<ArrayList<Object>, ArrayList<Object>>> storedInfo = new Ref<Pair<ArrayList<Object>, ArrayList<Object>>>();
     if (myCurrentViewType != null) {
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       storedInfo.set(builder.storeExpandedAndSelectedInfo());
@@ -640,7 +629,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  protected class RefreshAction extends com.intellij.ide.actions.RefreshAction {
+  private class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh);
     }
@@ -736,7 +725,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       @Override
       public final void actionPerformed(final AnActionEvent e) {
         selectScope(myScopeType);
-
       }
     }
     
@@ -752,6 +740,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           selectScope(SCOPE_ALL);
         }
       }
+    }
+  }
+
+  // will throw PCE during update when canceled
+  public void setProgressIndicator(@NotNull ProgressIndicator indicator) {
+    for (HierarchyTreeBuilder builder : myBuilders.values()) {
+      builder.setProgressIndicator(indicator);
     }
   }
 }

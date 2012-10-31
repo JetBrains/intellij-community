@@ -126,6 +126,12 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(false, 30);
+  public static GrayFilter getGrayFilter() {
+    return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
@@ -164,7 +170,7 @@ public class UIUtil {
 
 
   public static final Border DEBUG_MARKER_BORDER = new Border() {
-    private Insets empty = new Insets(0, 0, 0, 0);
+    private final Insets empty = new Insets(0, 0, 0, 0);
 
     @Override
     public Insets getBorderInsets(Component c) {
@@ -2452,8 +2458,6 @@ public class UIUtil {
   }
 
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
-    if (component == null || insets == null) return;
-
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }

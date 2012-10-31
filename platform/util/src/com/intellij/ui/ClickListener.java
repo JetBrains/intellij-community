@@ -44,7 +44,7 @@ public abstract class ClickListener {
         final Point point = e.getPoint();
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
-        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || (lastClickPoint != null && !isWithinEps(lastClickPoint, point))) {
+        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || lastClickPoint != null && !isWithinEps(lastClickPoint, point)) {
           clickCount = 0;
           lastClickPoint = null;
         }
@@ -70,10 +70,8 @@ public abstract class ClickListener {
         if (e.isPopupTrigger()) return;
         if (!e.getComponent().contains(e.getPoint())) return;
 
-        if (isWithinEps(releasedAt, clickedAt)) {
-          if (onClick(e, clickCount)) {
-            e.consume();
-          }
+        if (isWithinEps(releasedAt, clickedAt) && onClick(e, clickCount)) {
+          e.consume();
         }
       }
     };

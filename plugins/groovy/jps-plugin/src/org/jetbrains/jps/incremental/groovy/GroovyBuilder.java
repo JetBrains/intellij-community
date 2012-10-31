@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
@@ -88,7 +89,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
       final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
-      List<String> patchers = Collections.emptyList(); //todo patchers
+      List<String> patchers = new ArrayList<String>();
+
+      for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
+        patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
+      }
 
       Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
@@ -345,7 +350,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return JavaBuilderUtil.updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
   }
 
-  private static List<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
+  private static Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
     final Set<String> cp = new LinkedHashSet<String>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
@@ -354,7 +359,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
-    return new ArrayList<String>(cp);
+
+    for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
+      cp.addAll(extension.getCompilationClassPath(context, chunk));
+    }
+
+    return cp;
   }
 
   private static File getGroovyRtRoot() {

@@ -51,6 +51,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -64,9 +65,9 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private THashMap<PsiAnchor, RefElement> myRefTable;
+  private Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>();
 
-  private THashMap<Module, RefModule> myModules;
+  private Map<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private final PsiManager myPsiManager;
@@ -77,7 +78,7 @@ public class RefManagerImpl extends RefManager {
   private GlobalInspectionContextImpl myContext;
 
   private final Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
-  private final HashMap<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
+  private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
@@ -88,7 +89,6 @@ public class RefManagerImpl extends RefManager {
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    myRefTable = new THashMap<PsiAnchor, RefElement>();
     myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
@@ -103,6 +103,7 @@ public class RefManagerImpl extends RefManager {
     return myContext;
   }
 
+  @Override
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
@@ -136,6 +137,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  @Override
   public AnalysisScope getScope() {
     return myScope;
   }
@@ -167,15 +169,18 @@ public class RefManagerImpl extends RefManager {
     myGraphAnnotators.add(annotator);
   }
 
+  @Override
   public int getLastUsedMask() {
     myLastUsedMask *= 2;
     return myLastUsedMask;
   }
 
+  @Override
   public <T> T getExtension(final Key<T> key) {
     return (T)myExtensions.get(key);
   }
 
+  @Override
   @Nullable
   public String getType(final RefEntity ref) {
     for (RefManagerExtension extension : myExtensions.values()) {
@@ -185,17 +190,19 @@ public class RefManagerImpl extends RefManager {
     if (ref instanceof RefFile) {
       return SmartRefElementPointer.FILE;
     }
-    else if (ref instanceof RefModule) {
+    if (ref instanceof RefModule) {
       return SmartRefElementPointer.MODULE;
     }
-    else if (ref instanceof RefProject) {
+    if (ref instanceof RefProject) {
       return SmartRefElementPointer.PROJECT;
-    } else if (ref instanceof RefDirectory) {
+    }
+    if (ref instanceof RefDirectory) {
       return SmartRefElementPointer.DIR;
     }
     return null;
   }
 
+  @Override
   public RefEntity getRefinedElement(RefEntity ref) {
     for (RefManagerExtension extension : myExtensions.values()) {
       ref = extension.getRefinedElement(ref);
@@ -203,6 +210,7 @@ public class RefManagerImpl extends RefManager {
     return ref;
   }
 
+  @Override
   public Element export(RefEntity refEntity, final Element element, final int actualLine) {
     refEntity = getRefinedElement(refEntity);
 
@@ -224,7 +232,7 @@ public class RefManagerImpl extends RefManager {
         final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
         LOG.assertTrue(document != null);
         final Segment range = pointer.getRange();
-        lineElement.addContent(String.valueOf(range != null ? (document.getLineNumber(range.getStartOffset()) + 1) : -1));
+        lineElement.addContent(String.valueOf(range != null ? document.getLineNumber(range.getStartOffset()) + 1 : -1));
       }
       else {
         lineElement.addContent(String.valueOf(actualLine));
@@ -253,6 +261,7 @@ public class RefManagerImpl extends RefManager {
     return problem;
   }
 
+  @Override
   @Nullable
   public String getGroupName(final RefElement entity) {
     for (RefManagerExtension extension : myExtensions.values()) {
@@ -297,20 +306,24 @@ public class RefManagerImpl extends RefManager {
     return myIsInProcess;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public RefProject getRefProject() {
     return myRefProject;
   }
 
-  public THashMap<PsiAnchor, RefElement> getRefTable() {
+  @NotNull
+  public Map<PsiAnchor, RefElement> getRefTable() {
     return myRefTable;
   }
 
-  public ArrayList<RefElement> getSortedElements() {
-    ArrayList<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
+  @NotNull
+  public List<RefElement> getSortedElements() {
+    List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
     ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
       @Override
       public int compare(RefElement o1, RefElement o2) {
@@ -332,7 +345,7 @@ public class RefManagerImpl extends RefManager {
   public void removeReference(RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
+      final Map<PsiAnchor, RefElement> refTable = getRefTable();
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {
@@ -341,6 +354,7 @@ public class RefManagerImpl extends RefManager {
 
       if (element != null && refTable.remove(ApplicationManager.getApplication().runReadAction(
           new Computable<PsiAnchor>() {
+            @Override
             public PsiAnchor compute() {
               return PsiAnchor.create(element);
             }
@@ -401,6 +415,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  @Override
   @Nullable
   public RefElement getReference(final PsiElement elem) {
     return getReference(elem, false);
@@ -421,6 +436,7 @@ public class RefManagerImpl extends RefManager {
     }
 
     final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+      @Override
       @Nullable
       public RefElementImpl compute() {
         final RefManagerExtension extension = getExtension(elem.getLanguage());
@@ -431,12 +447,10 @@ public class RefManagerImpl extends RefManager {
         if (elem instanceof PsiFile) {
           return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
         }
-        else if (elem instanceof PsiDirectory) {
+        if (elem instanceof PsiDirectory) {
           return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
         }
-        else {
-          return null;
-        }
+        return null;
       }
     });
     if (refElement == null) return null;
@@ -444,6 +458,7 @@ public class RefManagerImpl extends RefManager {
     putToRefTable(elem, refElement);
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         refElement.initialize();
         for (RefManagerExtension extension : myExtensions.values()) {
@@ -460,8 +475,9 @@ public class RefManagerImpl extends RefManager {
     return myLanguageExtensions.get(language);
   }
 
-  public
   @Nullable
+  @Override
+  public
   RefEntity getReference(final String type, final String fqName) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
@@ -470,12 +486,13 @@ public class RefManagerImpl extends RefManager {
     if (SmartRefElementPointer.FILE.equals(type)) {
       return RefFileImpl.fileFromExternalName(this, fqName);
     }
-    else if (SmartRefElementPointer.MODULE.equals(type)) {
+    if (SmartRefElementPointer.MODULE.equals(type)) {
       return RefModuleImpl.moduleFromName(this, fqName);
     }
-    else if (SmartRefElementPointer.PROJECT.equals(type)) {
+    if (SmartRefElementPointer.PROJECT.equals(type)) {
       return getRefProject();
-    } else if (SmartRefElementPointer.DIR.equals(type)) {
+    }
+    if (SmartRefElementPointer.DIR.equals(type)) {
       final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(PathMacroManager.getInstance(getProject()).expandPath(fqName));
       if (vFile != null) {
         final PsiDirectory dir = PsiManager.getInstance(getProject()).findDirectory(vFile);
@@ -490,6 +507,7 @@ public class RefManagerImpl extends RefManager {
     try {
       return getRefTable().get(ApplicationManager.getApplication().runReadAction(
           new Computable<PsiAnchor>() {
+            @Override
             public PsiAnchor compute() {
               return PsiAnchor.create(element);
             }
@@ -506,6 +524,7 @@ public class RefManagerImpl extends RefManager {
     try {
       getRefTable().put(ApplicationManager.getApplication().runReadAction(
           new Computable<PsiAnchor>() {
+            @Override
             public PsiAnchor compute() {
               return PsiAnchor.create(element);
             }
@@ -517,6 +536,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  @Override
   public RefModule getRefModule(Module module) {
     if (module == null) {
       return null;
@@ -532,6 +552,7 @@ public class RefManagerImpl extends RefManager {
     return refModule;
   }
 
+  @Override
   public boolean belongsToScope(final PsiElement psiElement) {
     return belongsToScope(psiElement, false);
   }
@@ -540,6 +561,7 @@ public class RefManagerImpl extends RefManager {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
     final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
       public PsiFile compute() {
         return psiElement.getContainingFile();
       }
@@ -551,6 +573,7 @@ public class RefManagerImpl extends RefManager {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         return psiElement.getManager().isInProject(psiElement);
       }
@@ -558,6 +581,7 @@ public class RefManagerImpl extends RefManager {
     return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
+  @Override
   public String getQualifiedName(RefEntity refEntity) {
     if (refEntity == null || refEntity instanceof RefElementImpl && !refEntity.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
@@ -566,6 +590,7 @@ public class RefManagerImpl extends RefManager {
     return refEntity.getQualifiedName();
   }
 
+  @Override
   public void removeRefElement(RefElement refElement, List<RefElement> deletedRefs) {
     List<RefEntity> children = refElement.getChildren();
     if (children != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
@@ -26,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiReferenceExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceExpressionImpl");
-
   private final ClsElementImpl myParent;
   private final PsiReferenceExpression myPatternExpression;
   private final PsiReferenceExpression myQualifier;
@@ -39,10 +36,10 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     myPatternExpression = patternExpression;
 
     PsiReferenceExpression patternQualifier = (PsiReferenceExpression)myPatternExpression.getQualifierExpression();
-    if (patternQualifier != null){
+    if (patternQualifier != null) {
       myQualifier = new ClsReferenceExpressionImpl(this, patternQualifier);
     }
-    else{
+    else {
       myQualifier = null;
     }
 
@@ -83,10 +80,10 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    if (myQualifier != null){
+    if (myQualifier != null) {
       return new PsiElement[]{myQualifier, myNameElement};
     }
-    else{
+    else {
       return new PsiElement[]{myNameElement};
     }
   }
@@ -113,18 +110,16 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
 
   @Override
   @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode){
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
     return myPatternExpression.advancedResolve(incompleteCode);
   }
 
   @Override
   @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode){
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final JavaResolveResult result = advancedResolve(incompleteCode);
-    if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
-    return JavaResolveResult.EMPTY_ARRAY;
+    return result != JavaResolveResult.EMPTY ? new JavaResolveResult[]{result} : JavaResolveResult.EMPTY_ARRAY;
   }
-
 
   @Override
   public PsiElement getElement() {
@@ -184,13 +179,13 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(getText());
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, ElementType.REFERENCE_EXPRESSION);
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaElementType.REFERENCE_EXPRESSION);
   }
 
   @Override
@@ -203,10 +198,6 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     }
   }
 
-  public String toString() {
-    return "PsiReferenceExpression:" + getText();
-  }
-
   @Override
   @NotNull
   public PsiType[] getTypeParameters() {
@@ -216,5 +207,10 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   @Override
   public PsiElement getQualifier() {
     return getQualifierExpression();
+  }
+
+  @Override
+  public String toString() {
+    return "PsiReferenceExpression:" + getText();
   }
 }

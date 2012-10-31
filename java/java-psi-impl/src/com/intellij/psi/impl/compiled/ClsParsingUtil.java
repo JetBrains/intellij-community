@@ -132,7 +132,7 @@ public class ClsParsingUtil {
     }
     else if (expr instanceof PsiClassObjectAccessExpression) {
       final String canonicalClassText = ((PsiClassObjectAccessExpression)expr).getOperand().getType().getCanonicalText();
-      return new ClsClassObjectAccessExpressionImpl(canonicalClassText, parent);
+      return new ClsClassObjectAccessExpressionImpl(parent, canonicalClassText);
     }
     else if (expr instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)expr);

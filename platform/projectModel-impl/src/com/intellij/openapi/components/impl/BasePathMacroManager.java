@@ -76,7 +76,7 @@ public class BasePathMacroManager extends PathMacroManager {
     return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
   }
 
-  protected ExpandMacroToPathMap getExpandMacroMap() {
+  public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
       result.addMacroExpand(entry.getKey(), entry.getValue());
@@ -108,6 +108,11 @@ public class BasePathMacroManager extends PathMacroManager {
 
   public void collapsePathsRecursively(final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
+  }
+
+  @Override
+  public String collapsePathsRecursively(final String text) {
+    return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public void expandPaths(final Element element) {

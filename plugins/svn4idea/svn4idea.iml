@@ -52,11 +52,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/src/test/compatibility" />
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/src/test/benchmark" />
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/src/test/stress" />
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/src/test/java" />
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>

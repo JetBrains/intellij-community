@@ -65,4 +65,8 @@ public interface RunnerAndConfigurationSettings {
   void setSingleton(boolean singleton);
 
   boolean isSingleton();
+
+  void setFolderName(@Nullable String folderName);
+
+  @Nullable String getFolderName();
 }

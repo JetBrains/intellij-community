@@ -83,6 +83,58 @@ public class ChangesFilter {
     }
   }
 
+  public static class And implements Filter {
+    private final Filter[] myFilters;
+    private MemoryFilter myMemoryFilter;
+    private CommandParametersFilter myCommandParametersFilter;
+
+    public And(Filter... filters) {
+      myFilters = filters;
+      myMemoryFilter = new MemoryFilter() {
+        @Override
+        public boolean applyInMemory(GitCommit commit) {
+          for (Filter filter : myFilters) {
+            if (!filter.getMemoryFilter().applyInMemory(commit)) return false;
+          }
+          return true;
+        }
+      };
+      myCommandParametersFilter = new CommandParametersFilter() {
+        @Override
+        public void applyToCommandLine(List<String> sink) {
+          for (Filter filter : myFilters) {
+            final CommandParametersFilter commandParametersFilter = filter.getCommandParametersFilter();
+            if (commandParametersFilter != null) {
+              commandParametersFilter.applyToCommandLine(sink);
+            }
+          }
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+          for (Filter filter : myFilters) {
+            final CommandParametersFilter commandParametersFilter = filter.getCommandParametersFilter();
+            if (commandParametersFilter != null) {
+              commandParametersFilter.applyToPaths(paths);
+            }
+          }
+        }
+      };
+    }
+
+    @NotNull
+    @Override
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
+    }
+
+    @Nullable
+    @Override
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
+    }
+  }
+
   public static List<MemoryFilter> combineFilters(final Collection<Filter> filters) {
     final Merger[] mergers = {new UsersMerger()};
     if (filters.isEmpty()) return Collections.emptyList();
@@ -139,6 +191,82 @@ public class ChangesFilter {
     MemoryFilter getMemoryFilter();
     @Nullable
     CommandParametersFilter getCommandParametersFilter();
+  }
+
+  public static class BeforeTime implements Filter {
+    private final long myTs;
+    private final CommandParametersFilter myCommandParametersFilter;
+    private final MemoryFilter myMemoryFilter;
+
+    public BeforeTime(long ts) {
+      myTs = ts;
+      myCommandParametersFilter = new CommandParametersFilter() {
+        @Override
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--before='" + new Date(myTs + 24 * 60 * 60 * 1000).toString() + "'");
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        @Override
+        public boolean applyInMemory(GitCommit commit) {
+          return commit.getDate().getTime() <= myTs;
+        }
+      };
+    }
+
+    @NotNull
+    @Override
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
+    }
+
+    @Nullable
+    @Override
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
+    }
+  }
+
+  public static class AfterTime implements Filter {
+    private final long myTs;
+    private final CommandParametersFilter myCommandParametersFilter;
+    private final MemoryFilter myMemoryFilter;
+
+    public AfterTime(long ts) {
+      myTs = ts;
+      myCommandParametersFilter = new CommandParametersFilter() {
+        @Override
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--after='" + new Date(myTs - 24 * 60 * 60 * 1000).toString() + "'");
+        }
+
+        @Override
+        public void applyToPaths(Collection<VirtualFile> paths) {
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        @Override
+        public boolean applyInMemory(GitCommit commit) {
+          return commit.getDate().getTime() >= myTs;
+        }
+      };
+    }
+
+    @NotNull
+    @Override
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
+    }
+
+    @Nullable
+    @Override
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
+    }
   }
 
   public static class Author implements Filter {

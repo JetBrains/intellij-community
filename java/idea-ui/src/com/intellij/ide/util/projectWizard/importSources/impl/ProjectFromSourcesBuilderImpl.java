@@ -36,7 +36,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -363,12 +363,12 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
   }
 
   @Override
-  public boolean isSuitableSdk(final Sdk sdk) {
+  public boolean isSuitableSdkType(final SdkTypeId sdkTypeId) {
     for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
       for (ModuleDescriptor moduleDescriptor : projectDescriptor.getModules()) {
         try {
           final ModuleType moduleType = getModuleType(moduleDescriptor);
-          if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdk(sdk)) return false;
+          if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdkType(sdkTypeId)) return false;
         }
         catch (Exception ignore) {
         }

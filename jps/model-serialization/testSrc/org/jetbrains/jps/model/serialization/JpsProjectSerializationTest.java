@@ -28,6 +28,9 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
+    String baseDirPath = getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH);
+    assertTrue(FileUtil.filesEqual(new File(baseDirPath), JpsModelSerializationDataService.getBaseDirectory(myProject)));
+    assertEquals("sampleProjectName", myProject.getName());
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
@@ -36,6 +39,8 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("util", util.getName());
     JpsModule xxx = modules.get(2);
     assertEquals("xxx", xxx.getName());
+
+    assertTrue(FileUtil.filesEqual(new File(baseDirPath, "util"), JpsModelSerializationDataService.getBaseDirectory(util)));
 
     List<JpsLibrary> libraries = myProject.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
@@ -58,6 +63,26 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
     assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
+  }
+
+  public void testFileBasedProjectNameAndBaseDir() {
+    String relativePath = "/jps/model-serialization/testData/run-configurations/run-configurations.ipr";
+    String absolutePath = getTestDataFileAbsolutePath(relativePath);
+    loadProject(relativePath);
+    assertEquals("run-configurations", myProject.getName());
+    assertTrue(FileUtil.filesEqual(new File(absolutePath).getParentFile(), JpsModelSerializationDataService.getBaseDirectory(myProject)));
+  }
+
+  public void testDirectoryBasedProjectName() {
+    loadProject("/jps/model-serialization/testData/run-configurations-dir");
+    assertEquals("run-configurations-dir", myProject.getName());
+  }
+
+  public void testImlUnderDotIdea() {
+    loadProject("/jps/model-serialization/testData/imlUnderDotIdea");
+    JpsModule module = assertOneElement(myProject.getModules());
+    JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
+    assertEquals(getUrl("src"), root.getUrl());
   }
 
   public void testLoadEncoding() {

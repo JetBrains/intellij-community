@@ -51,29 +51,30 @@ import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
   private List<Data> myAllContents;
-  private Editor myViewer;
+  private Editor     myViewer;
 
   private final boolean myUseIdeaEditor;
 
-  private final JList myList;
-  private final Splitter mySplitter;
-  private final Project myProject;
-  private final boolean myAllowMultipleSelections;
-  private final Alarm myUpdateAlarm;
+  private final JList      myList;
+  private final JBSplitter mySplitter;
+  private final Project    myProject;
+  private final boolean    myAllowMultipleSelections;
+  private final Alarm      myUpdateAlarm;
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
   }
-  
+
   public ContentChooser(Project project, String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
     super(project, true);
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;
     myAllowMultipleSelections = allowMultipleSelections;
     myUpdateAlarm = new Alarm(getDisposable());
-    mySplitter = new Splitter(true, 0.3f);
-    myList = new JBList();
+    mySplitter = new JBSplitter(true, 0.3f);
+    mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
+      myList = new JBList();
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);

@@ -17,7 +17,9 @@ package org.jetbrains.idea.svn;
 
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,8 +32,8 @@ public interface TreeConflictData {
     FileToFile.MINE_DELETE_THEIRS_EDIT, FileToFile.MINE_EDIT_THEIRS_DELETE, FileToFile.MINE_EDIT_THEIRS_MOVE,
     FileToFile.MINE_UNV_THEIRS_ADD, FileToFile.MINE_UNV_THEIRS_MOVE, FileToFile.MINE_MOVE_THEIRS_EDIT,
     FileToFile.MINE_MOVE_THEIRS_ADD,
-
-    DirToDir.MINE_DELETE_THEIRS_EDIT, DirToDir.MINE_EDIT_THEIRS_DELETE, DirToDir.MINE_EDIT_THEIRS_MOVE,
+    /*removed: DirToDir.MINE_EDIT_THEIRS_DELETE - no more a conflict since 1.7.7*/
+    DirToDir.MINE_DELETE_THEIRS_EDIT, DirToDir.MINE_EDIT_THEIRS_MOVE,
     DirToDir.MINE_UNV_THEIRS_ADD, DirToDir.MINE_UNV_THEIRS_MOVE, DirToDir.MINE_MOVE_THEIRS_EDIT,
     DirToDir.MINE_MOVE_THEIRS_ADD,
 

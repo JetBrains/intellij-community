@@ -31,8 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,9 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class ModuleBuilder extends ProjectBuilder{
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
@@ -56,7 +53,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private String myName;
   @NonNls private String myModuleFilePath;
   private String myContentEntryPath;
-  private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
+  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   public static List<ModuleBuilder> getAllBuilders() {
@@ -94,10 +91,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     return type == null ? null : type.modifySettingsStep(settingsStep, this);
-  }
-
-  public boolean isTemplateBased() {
-    return false;
   }
 
   public void setName(String name) {
@@ -177,14 +170,18 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     deleteModuleFile(myModuleFilePath);
     final ModuleType moduleType = getModuleType();
     final Module module = moduleModel.newModule(myModuleFilePath, moduleType.getId());
+    setupModule(module);
+
+    return module;
+  }
+
+  protected void setupModule(Module module) throws ConfigurationException {
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
     for (ModuleConfigurationUpdater updater : myUpdaters) {
       updater.update(module, modifiableModel);
     }
     modifiableModel.commit();
-
-    return module;
   }
 
   private void onModuleInitialized(final Module module) {
@@ -241,8 +238,8 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return module != null ? Collections.singletonList(module) : null;
   }
 
-  public Module commitModule(@NotNull final Project project, final ModifiableModuleModel model) {
-    final Ref<Module> result = new Ref<Module>();
+  @Nullable
+  public Module commitModule(@NotNull final Project project, @Nullable final ModifiableModuleModel model) {
     if (canCreateModule()) {
       if (myName == null) {
         myName = project.getName();
@@ -250,24 +247,20 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       if (myModuleFilePath == null) {
         myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
-      Exception ex = ApplicationManager.getApplication().runWriteAction(new NullableComputable<Exception>() {
-        @Override
-        public Exception compute() {
-          try {
-            result.set(createAndCommitIfNeeded(project, model, true));
-            return null;
+      try {
+        return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
+          @Override
+          public Module compute() throws Exception {
+            return createAndCommitIfNeeded(project, model, true);
           }
-          catch (Exception e) {
-            return e;
-          }
-        }
-      });
-      if (ex != null) {
+        });
+      }
+      catch (Exception ex) {
         LOG.warn(ex);
         Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()), IdeBundle.message("title.add.module"));
       }
     }
-    return result.get();
+    return null;
   }
 
   public static void deleteModuleFile(String moduleFilePath) {
@@ -291,6 +284,16 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public String getPresentableName() {
     return getModuleType().getName();
+  }
+
+  public String getGroupName() {
+    return getPresentableName().split(" ")[0];
+  }
+
+  public void updateFrom(ModuleBuilder from) {
+    myName = from.getName();
+    myContentEntryPath = from.getContentEntryPath();
+    myModuleFilePath = from.getModuleFilePath();
   }
 
   public static abstract class ModuleConfigurationUpdater {

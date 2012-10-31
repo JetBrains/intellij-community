@@ -103,7 +103,7 @@ public class ByRootLoader extends TaskDescriptor {
     final List<GitCommit> details = new ArrayList<GitCommit>();
     final List<CommitI> commits = new ArrayList<CommitI>();
     final Map<AbstractHash, String> stashMap = new HashMap<AbstractHash, String>();
-    final List<List<AbstractHash>> parents = myGitLogFilters.isEmpty() ? new ArrayList<List<AbstractHash>>() : null;
+    final List<List<AbstractHash>> parents = ! myGitLogFilters.haveDisordering() ? new ArrayList<List<AbstractHash>>() : null;
 
     myGitLogFilters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
       @Override

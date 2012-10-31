@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.UIDesignerIcons;
@@ -472,7 +473,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         setIcon(getComponentIcon(component));
 
         if (component == myDropTargetComponent) {
-          setBorder(BorderFactory.createLineBorder(Color.BLUE, 1));
+          setBorder(BorderFactory.createLineBorder(PlatformColors.BLUE, 1));
         } else {
           setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
         }

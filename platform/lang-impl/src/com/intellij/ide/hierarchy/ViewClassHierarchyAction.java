@@ -29,10 +29,12 @@ public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
           IdeBundle.message("action.description.view.class.hierarchy"), AllIcons.Hierarchy.Class);
   }
 
+  @Override
   protected final String getTypeName() {
     return TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
   }
 
+  @Override
   public final void update(final AnActionEvent event) {
     super.update(event);
     final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());

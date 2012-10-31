@@ -131,7 +131,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     final MemberInfoStorage memberInfoStorage = new MemberInfoStorage(baseClass, MEMBER_INFO_FILTER);
 
     ArrayList<MemberInfo> memberInfoList = new ArrayList<MemberInfo>(memberInfoStorage.getClassMemberInfos(deepestBase));
-    List<MemberInfo> memberInfos = memberInfoStorage.getMemberInfosList(deepestBase);
+    List<MemberInfo> memberInfos = memberInfoStorage.getIntermediateMemberInfosList(deepestBase);
     for (final MemberInfo memberInfo : memberInfos) {
       memberInfoList.add(memberInfo);
     }

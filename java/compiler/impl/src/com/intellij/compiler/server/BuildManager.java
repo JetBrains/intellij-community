@@ -54,7 +54,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -243,9 +242,13 @@ public class BuildManager implements ApplicationComponent{
     doNotify(paths, true);
   }
 
+  public void runCommand(Runnable command) {
+    myRequestsProcessor.submit(command);
+  }
+
   private void doNotify(final Collection<File> paths, final boolean notifyDeletion) {
     // ensure events processed in the order they arrived
-    myRequestsProcessor.submit(new Runnable() {
+    runCommand(new Runnable() {
 
       @Override
       public void run() {
@@ -314,12 +317,11 @@ public class BuildManager implements ApplicationComponent{
 
   @Nullable
   private static String getProjectPath(final Project project) {
-    final String path = project.getPresentableUrl();
-    if (path == null) {
+    final String url = project.getPresentableUrl();
+    if (url == null) {
       return null;
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
-    return vFile != null ? vFile.getPath() : null;
+    return VirtualFileManager.extractPath(url);
   }
 
   private void scheduleAutoMake() {
@@ -466,7 +468,7 @@ public class BuildManager implements ApplicationComponent{
       });
       // by using the same queue that processes events we ensure that
       // the build will be aware of all events that have happened before this request
-      myRequestsProcessor.submit(new Runnable() {
+      runCommand(new Runnable() {
         @Override
         public void run() {
           if (future.isCancelled() || project.isDisposed()) {
@@ -492,7 +494,12 @@ public class BuildManager implements ApplicationComponent{
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {
-              LOG.info("Scheduling build for " + projectPath + "; CHANGED: " + new HashSet<String>(data.myChanged) + "; DELETED: " + new HashSet<String>(data.myDeleted));
+              LOG.info("Scheduling build for " +
+                       projectPath +
+                       "; CHANGED: " +
+                       new HashSet<String>(data.myChanged) +
+                       "; DELETED: " +
+                       new HashSet<String>(data.myDeleted));
             }
             currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
             projectTaskQueue = data.taskQueue;

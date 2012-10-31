@@ -16,11 +16,13 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -35,7 +37,16 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     for (final UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
         public void actionPerformed(AnActionEvent e) {
+          final UIManager.LookAndFeelInfo cur = manager.getCurrentLookAndFeel();
+          if (cur == lf) return;
+          if (UIUtil.isUnderDarcula()) {
+            DarculaInstaller.uninstall();
+          }
           manager.setCurrentLookAndFeel(lf);
+          if (UIUtil.isUnderDarcula()) {
+            DarculaInstaller.install();
+          }
+
           manager.updateUI();
         }
       });

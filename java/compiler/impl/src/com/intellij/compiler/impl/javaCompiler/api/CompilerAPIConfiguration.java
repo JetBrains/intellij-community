@@ -20,6 +20,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.project.Project;
 
 @State(
   name = "CompilerAPISettings",
@@ -29,4 +30,7 @@ import com.intellij.openapi.components.StorageScheme;
     }
 )
 public class CompilerAPIConfiguration extends JavacConfiguration {
+  public CompilerAPIConfiguration(Project project) {
+    super(project);
+  }
 }

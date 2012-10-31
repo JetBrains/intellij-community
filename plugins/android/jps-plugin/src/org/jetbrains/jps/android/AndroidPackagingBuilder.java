@@ -16,13 +16,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.android.builder.AndroidProjectBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -41,13 +44,13 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidProjectBuildTarget> {
+public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidBuildTarget> {
   @NonNls private static final String BUILDER_NAME = "android-packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
 
   public AndroidPackagingBuilder() {
-    super(Collections.singletonList(AndroidProjectBuildTarget.TargetType.INSTANCE));
+    super(Collections.singletonList(AndroidBuildTarget.TargetType.PACKAGING));
   }
 
   @Override
@@ -61,14 +64,18 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
   }
 
   @Override
-  public void build(@NotNull AndroidProjectBuildTarget target,
-                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidProjectBuildTarget> holder,
+  public void build(@NotNull AndroidBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
-    if (target.getKind() != AndroidProjectBuildTarget.AndroidBuilderKind.PACKAGING || AndroidJpsUtil.isLightBuild(context)) {
+    if (AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final Collection<JpsModule> modules = context.getProjectDescriptor().getProject().getModules();
+    final JpsModule module = target.getModule();
+
+    // todo: simplify
+    final Collection<JpsModule> modules = Collections.singletonList(module);
+
     final Map<JpsModule, AndroidFileSetState> resourcesStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, AndroidFileSetState> assetsStates = new HashMap<JpsModule, AndroidFileSetState>();
     final Map<JpsModule, File> manifestFiles = new HashMap<JpsModule, File>();
@@ -104,24 +111,41 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     for (JpsModule module : modules) {
       final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-      if (extension != null) {
-        final File resourceDir = extension.getResourceDir();
-        final List<String> resourceDirs = resourceDir != null
-                                          ? Arrays.asList(resourceDir.getPath())
-                                          : Collections.<String>emptyList();
-        resourcesStates.put(module, new AndroidFileSetState(resourceDirs, Condition.TRUE, true));
+      if (extension == null) {
+        continue;
+      }
+      final List<String> resourceDirs = new ArrayList<String>();
+      final List<String> assetsDirs = new ArrayList<String>();
+      final File resourceDir = extension.getResourceDir();
 
-        final File assetsDir = extension.getAssetsDir();
-        final List<String> assetDirs = assetsDir != null
-                                       ? Arrays.asList(assetsDir.getPath())
-                                       : Collections.<String>emptyList();
-        assetsStates.put(module, new AndroidFileSetState(assetDirs, Condition.TRUE, true));
+      if (resourceDir != null) {
+        resourceDirs.add(resourceDir.getPath());
+      }
+      final File assetsDir = extension.getAssetsDir();
 
-        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(extension);
-        if (manifestFile != null) {
-          manifestFiles.put(module, manifestFile);
+      if (assetsDir != null) {
+        assetsDirs.add(assetsDir.getPath());
+      }
+      final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(extension);
+
+      if (manifestFile != null) {
+        manifestFiles.put(module, manifestFile);
+      }
+
+      for (JpsAndroidModuleExtension libExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
+        final File libResDir = libExtension.getResourceDir();
+
+        if (libResDir != null) {
+          resourceDirs.add(libResDir.getPath());
+        }
+        final File libAssetsDir = libExtension.getAssetsDir();
+
+        if (libAssetsDir != null && extension.isIncludeAssetsFromLibraries()) {
+          assetsDirs.add(libAssetsDir.getPath());
         }
       }
+      resourcesStates.put(module, new AndroidFileSetState(resourceDirs, Condition.TRUE, true));
+      assetsStates.put(module, new AndroidFileSetState(assetsDirs, Condition.TRUE, true));
     }
   }
 
@@ -249,15 +273,12 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
           success = false;
           continue;
         }
-
         boolean updateState = true;
-
-        // todo: recompile if PACK_ASSETS_FROM_LIBRARIES was changed
 
         if (!extension.isLibrary() &&
             !(context.isMake() &&
-              checkUpToDate(module, resourcesStates, resourcesStorage, true) &&
-              checkUpToDate(module, assetsStates, assetsStorage, extension.isIncludeAssetsFromLibraries()) &&
+              checkUpToDate(module, resourcesStates, resourcesStorage) &&
+              checkUpToDate(module, assetsStates, assetsStorage) &&
               manifestFile.lastModified() == manifestStorage.getStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))) {
 
           updateState = packageResources(extension, manifestFile, context);
@@ -470,26 +491,10 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
 
   private static boolean checkUpToDate(@NotNull JpsModule module,
                                        @NotNull Map<JpsModule, AndroidFileSetState> module2state,
-                                       @NotNull AndroidFileSetStorage storage,
-                                       boolean withDependencies) throws IOException {
+                                       @NotNull AndroidFileSetStorage storage) throws IOException {
     final AndroidFileSetState moduleState = module2state.get(module);
     final AndroidFileSetState savedState = storage.getState(module.getName());
-    if (savedState == null || !savedState.equalsTo(moduleState)) {
-      return false;
-    }
-
-    if (withDependencies) {
-      for (JpsAndroidModuleExtension libExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
-        final JpsModule libModule = libExtension.getModule();
-        final AndroidFileSetState currentLibState = module2state.get(libModule);
-        final AndroidFileSetState savedLibState = storage.getState(libModule.getName());
-
-        if (savedLibState == null || !savedLibState.equalsTo(currentLibState)) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return savedState != null && savedState.equalsTo(moduleState);
   }
 
   private static boolean packageResources(@NotNull JpsAndroidModuleExtension extension, @NotNull File manifestFile, @NotNull CompileContext context) {

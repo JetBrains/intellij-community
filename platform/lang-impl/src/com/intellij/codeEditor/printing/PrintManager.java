@@ -126,10 +126,10 @@ class PrintManager {
       }
     };
 
-    printerJob.setPageable(document);
-    printerJob.setPrintable(painter, pageFormat);
 
     try {
+      printerJob.setPageable(document);
+      printerJob.setPrintable(painter, pageFormat);
       if(!printerJob.printDialog()) {
         return;
       }

@@ -63,22 +63,64 @@ public class RowsDnDSupport {
           event.setDropPossible(o instanceof RowDragInfo && ((RowDragInfo)o).component == component);
           int oldIndex = ((RowDragInfo)o).row;
           int newIndex = getRow(component, event.getPoint());
-          if (oldIndex != newIndex && newIndex != -1 && model.canExchangeRows(oldIndex, newIndex)) {
-            Rectangle cellBounds = getCellBounds(component, newIndex);
-            if (oldIndex < newIndex) {
-              cellBounds.y += cellBounds.height - 2;
-            }
-            RelativeRectangle rectangle = new RelativeRectangle(component, cellBounds);
-            rectangle.getDimension().height = 2;
-            event.setHighlighting(rectangle, 2);
-          }
-          else {
-            if (oldIndex != newIndex) // Drag&Drop always starts with new==old and we shouldn't display 'rejecting' cursor in this case
-              event.setDropPossible(false, "");
-            event.hideHighlighter();
+
+          if (newIndex == -1) {
+            event.setDropPossible(false, "");
             return true;
           }
-          return false;
+
+          Rectangle cellBounds = getCellBounds(component, newIndex);
+          if (model instanceof RefinedDropSupport) {
+            RefinedDropSupport.Position position = ((RefinedDropSupport)model).isDropInto(component, oldIndex, newIndex)
+                                                   ? RefinedDropSupport.Position.INTO
+                                                   : (event.getPoint().y < cellBounds.y + cellBounds.height / 2)
+                                                     ? RefinedDropSupport.Position.ABOVE
+                                                     : RefinedDropSupport.Position.BELOW;
+            boolean canDrop = ((RefinedDropSupport)model).canDrop(oldIndex, newIndex, position);
+            event.setDropPossible(canDrop);
+            if (canDrop && oldIndex != newIndex) {
+              if (position == RefinedDropSupport.Position.BELOW) {
+                cellBounds.y += cellBounds.height - 2;
+              }
+              RelativeRectangle rectangle = new RelativeRectangle(component, cellBounds);
+              switch (position) {
+                case INTO:
+                  event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.RECTANGLE);
+                  break;
+                case ABOVE:
+                case BELOW:
+                  rectangle.getDimension().height = 2;
+                  event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
+                  break;
+              }
+              return true;
+            }
+            else {
+              event.hideHighlighter();
+              return true;
+            }
+          }
+          else {
+
+            if (oldIndex == newIndex) {  // Drag&Drop always starts with new==old and we shouldn't display 'rejecting' cursor in this case
+              return true;
+            }
+
+            boolean canExchange = model.canExchangeRows(oldIndex, newIndex);
+            if (canExchange) {
+              if (oldIndex < newIndex) {
+                cellBounds.y += cellBounds.height - 2;
+              }
+              RelativeRectangle rectangle = new RelativeRectangle(component, cellBounds);
+              rectangle.getDimension().height = 2;
+              event.setDropPossible(true);
+              event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
+            }
+            else {
+              event.setDropPossible(false);
+            }
+            return true;
+          }
         }
       })
       .setDropHandler(new DnDDropHandler() {
@@ -93,22 +135,24 @@ public class RowsDnDSupport {
             if (newIndex == -1) {
               newIndex = getRowCount(component) - 1;
             }
-            if (model.canExchangeRows(oldIndex, newIndex)) {
-              int min = Math.min(oldIndex, newIndex);
-              int max = Math.max(oldIndex, newIndex);
-              if (newIndex > oldIndex) {
-                while (min < max) {
-                  model.exchangeRows(min, min + 1);
-                  min++;
+
+            if (oldIndex != newIndex) {
+              if (model instanceof RefinedDropSupport) {
+                Rectangle cellBounds = getCellBounds(component, newIndex);
+                RefinedDropSupport.Position position = ((RefinedDropSupport)model).isDropInto(component, oldIndex, newIndex)
+                                                       ? RefinedDropSupport.Position.INTO
+                                                       : (event.getPoint().y < cellBounds.y + cellBounds.height / 2)
+                                                         ? RefinedDropSupport.Position.ABOVE
+                                                         : RefinedDropSupport.Position.BELOW;
+                if (((RefinedDropSupport)model).canDrop(oldIndex, newIndex, position)) {
+                  ((RefinedDropSupport)model).drop(oldIndex, newIndex, position);
                 }
-                setSelectedRow(component, min);
               }
               else {
-                while (max > min) {
-                  model.exchangeRows(max, max - 1);
-                  max--;
+                if (model.canExchangeRows(oldIndex, newIndex)) {
+                  model.exchangeRows(oldIndex, newIndex);
+                  setSelectedRow(component, newIndex);
                 }
-                setSelectedRow(component, max);
               }
             }
           }
@@ -116,17 +160,19 @@ public class RowsDnDSupport {
         }
       })
       .install();
-
   }
 
   private static int getRow(JComponent component, Point point) {
     if (component instanceof JTable) {
       return ((JTable)component).rowAtPoint(point);
-    } else if (component instanceof JList) {
+    }
+    else if (component instanceof JList) {
       return ((JList)component).locationToIndex(point);
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       return ((JTree)component).getClosestRowForLocation(point.x, point.y);
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Unsupported component: " + component);
     }
   }
@@ -134,11 +180,14 @@ public class RowsDnDSupport {
   private static int getRowCount(JComponent component) {
     if (component instanceof JTable) {
       return ((JTable)component).getRowCount();
-    } else if (component instanceof JList) {
+    }
+    else if (component instanceof JList) {
       return ((JList)component).getModel().getSize();
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       return ((JTree)component).getRowCount();
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Unsupported component: " + component);
     }
   }
@@ -148,11 +197,14 @@ public class RowsDnDSupport {
       Rectangle rectangle = ((JTable)component).getCellRect(row, 0, true);
       rectangle.width = component.getWidth();
       return rectangle;
-    } else if (component instanceof JList) {
+    }
+    else if (component instanceof JList) {
       return ((JList)component).getCellBounds(row, row);
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       return ((JTree)component).getRowBounds(row);
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Unsupported component: " + component);
     }
   }
@@ -160,11 +212,14 @@ public class RowsDnDSupport {
   private static void setSelectedRow(JComponent component, int row) {
     if (component instanceof JTable) {
       ((JTable)component).getSelectionModel().setSelectionInterval(row, row);
-    } else if (component instanceof JList) {
+    }
+    else if (component instanceof JList) {
       ((JList)component).setSelectedIndex(row);
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       ((JTree)component).setSelectionRow(row);
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Unsupported component: " + component);
     }
   }
@@ -177,5 +232,16 @@ public class RowsDnDSupport {
       this.component = component;
       this.row = row;
     }
+  }
+
+  public interface RefinedDropSupport {
+    enum Position {ABOVE, INTO, BELOW}
+
+    boolean isDropInto(JComponent component, int oldIndex, int newIndex);
+    //oldIndex may be equal to newIndex
+    boolean canDrop(int oldIndex, int newIndex, @NotNull Position position);
+
+    //This method is also responsible for selection changing
+    void drop(int oldIndex, int newIndex, @NotNull Position position);
   }
 }

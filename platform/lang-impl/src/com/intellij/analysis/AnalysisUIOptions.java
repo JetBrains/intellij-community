@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
@@ -150,7 +149,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
     return new ToggleAction("Group by directory",
                             "Group by directory",
-                            PlatformIcons.DIRECTORY_CLOSED_ICON) {
+                            AllIcons.Actions.GroupByPackage) {
 
       @Override
       public boolean isSelected(AnActionEvent e) {

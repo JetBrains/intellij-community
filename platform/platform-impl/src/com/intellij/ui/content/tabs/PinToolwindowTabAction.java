@@ -23,13 +23,15 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
  */
 public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
-  public static final String ACTION_NAME = "PinToolwindowTab";
+  @NonNls public static final String ACTION_NAME = "PinToolwindowTab";
 
   public static AnAction getPinAction() {
     return ActionManager.getInstance().getAction(ACTION_NAME);
@@ -40,7 +42,7 @@ public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  private static Content getContextContent(AnActionEvent event) {
+  private static Content getContextContent(@NotNull AnActionEvent event) {
     final ToolWindow window = PlatformDataKeys.TOOL_WINDOW.getData(event.getDataContext());
     if (window != null) {
       final ContentManager contentManager = window.getContentManager();
@@ -52,16 +54,19 @@ public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
     return null;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     final Content content = getContextContent(event);
     return content != null && content.isPinned();
   }
 
+  @Override
   public void setSelected(AnActionEvent event, boolean flag) {
     final Content content = getContextContent(event);
     if (content != null) content.setPinned(flag);
   }
 
+  @Override
   public void update(AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();

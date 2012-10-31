@@ -146,7 +146,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     log.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
     for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
-      Set<FilePath> files = new HashSet<FilePath>();
       final VirtualFile root = entry.getKey();
       try {
         File messageFile = createMessageFile(root, message);
@@ -175,19 +174,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             }
           }
           try {
-            if (updateIndex(myProject, root, added, removed, exceptions)) {
-              try {
-                files.addAll(added);
-                files.addAll(removed);
-                commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
+            try {
+              Set<FilePath> files = new HashSet<FilePath>();
+              files.addAll(added);
+              files.addAll(removed);
+              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
+            }
+            catch (VcsException ex) {
+              if (!isMergeCommit(ex)) {
+                throw ex;
               }
-              catch (VcsException ex) {
-                if (!isMergeCommit(ex)) {
-                  throw ex;
-                }
-                if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
-                  throw ex;
-                }
+              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+                throw ex;
               }
             }
           }
@@ -333,9 +331,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.endOptions();
       handler.run();
       GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-      if (manager != null) {
-        manager.updateRepository(root);
-      }
+      manager.updateRepository(root);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -352,7 +348,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private static boolean isMergeCommit(final VcsException ex) {
     //noinspection HardCodedStringLiteral
-    return -1 != ex.getMessage().indexOf("fatal: cannot do a partial commit during a merge.");
+    return ex.getMessage().contains("fatal: cannot do a partial commit during a merge.");
   }
 
   /**

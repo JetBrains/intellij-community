@@ -21,12 +21,14 @@ package org.intellij.plugins.relaxNG.xml.dom;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.SubTag;
 import org.intellij.plugins.relaxNG.model.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * http://relaxng.org/ns/structure/1.0:open-pattern interface.
  */
+@SuppressWarnings("UnusedDeclaration")
 public interface RngOpenPattern extends DomElement, Pattern<XmlElement> {
 
   /**
@@ -62,6 +64,7 @@ public interface RngOpenPattern extends DomElement, Pattern<XmlElement> {
    * @return the value of the interleave child.
    */
   @NotNull
+  @SubTag(value = "interleave")
   RngInterleave getInterleave();
 
 

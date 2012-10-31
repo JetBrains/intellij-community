@@ -27,10 +27,12 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,9 +44,8 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
       @Override
       public JpsAndroidModuleExtension loadExtension(@NotNull Element facetConfigurationElement,
                                                      String name,
-                                                     String baseModulePath,
                                                      JpsElement parent, JpsModule module) {
-        return new JpsAndroidModuleExtensionImpl(XmlSerializer.deserialize(facetConfigurationElement, JpsAndroidModuleProperties.class), baseModulePath);
+        return new JpsAndroidModuleExtensionImpl(XmlSerializer.deserialize(facetConfigurationElement, JpsAndroidModuleProperties.class));
       }
 
       @Override
@@ -86,6 +87,12 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
   @Override
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return FACET_PROPERTIES_LOADERS;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Collections.singletonList(new JpsAndroidDexSettingsSerializer());
   }
 
   @NotNull

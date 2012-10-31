@@ -1197,6 +1197,10 @@
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaClassGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <usageTypeProvider implementation="com.intellij.usages.impl.rules.JavaUsageTypeProvider"/>
+    <usageContextPanelProvider implementation="com.intellij.usages.impl.UsagePreviewPanel$Provider"/>
+    <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowToPanel$Provider"/>
+    <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>
+    <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextCallHierarchyPanel$Provider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
 
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>

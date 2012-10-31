@@ -35,6 +35,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -149,7 +150,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected void setupInitialProject() {
-    if (new File(workDir, ".idea").exists()) {
+    if (new File(workDir, PathMacroUtil.DIRECTORY_STORE_NAME).exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
     }
@@ -171,7 +172,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
     final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(),
-                                                                                 new TestProjectBuilderLogger(rootPath, log)));
+                                                                                 new StringProjectBuilderLogger(rootPath, log)));
     try {
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
 
@@ -251,11 +252,11 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
   }
 
-  private static class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
+  private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
     private StringBuilder myLog;
 
-    private TestProjectBuilderLogger(String root, StringBuilder log) {
+    private StringProjectBuilderLogger(String root, StringBuilder log) {
       myRoot = root;
       myLog = log;
     }

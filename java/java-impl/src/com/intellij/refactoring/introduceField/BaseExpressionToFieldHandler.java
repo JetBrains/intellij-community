@@ -103,7 +103,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     final PsiType tempType = getTypeByExpression(selectedExpr);
-    if (tempType == null) {
+    if (tempType == null || LambdaUtil.notInferredType(tempType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;

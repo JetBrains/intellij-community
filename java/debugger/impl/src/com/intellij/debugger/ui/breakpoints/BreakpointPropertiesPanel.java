@@ -475,9 +475,8 @@ public abstract class BreakpointPropertiesPanel {
 
     myConditionCombo.setEnabled(breakpoint.CONDITION_ENABLED);
 
-    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
-
     myConditionCombo.setContext(context);
+    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
 
     myCbSuspend.setSelected(breakpoint.SUSPEND);
     myRbSuspendThread.setEnabled(myCbSuspend.isSelected());

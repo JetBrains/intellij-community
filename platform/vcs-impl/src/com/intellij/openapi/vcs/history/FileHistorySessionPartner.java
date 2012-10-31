@@ -152,7 +152,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
           // nothing to be done, exit
           return;
         }
-        ensureHistoryPanelCreated().scheduleRefresh();
+        ensureHistoryPanelCreated().scheduleRefresh(false);
       }
     });
   }

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -60,7 +61,7 @@ public class TreeViewUtil {
     return ret;
   }
 
-  private static boolean scanPackages(PsiPackage p, int packageNameOccurrencesFound) {
+  private static boolean scanPackages(@NotNull PsiPackage p, int packageNameOccurrencesFound) {
     final PsiPackage[] subPackages = p.getSubPackages();
     packageNameOccurrencesFound += subPackages.length;
     if (packageNameOccurrencesFound > SUBPACKAGE_LIMIT) {
@@ -74,7 +75,7 @@ public class TreeViewUtil {
     return false;
   }
 
-  public static String calcAbbreviatedPackageFQName(PsiPackage aPackage) {
+  public static String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
     final StringBuilder name = new StringBuilder(aPackage.getName());
     for (PsiPackage parentPackage = aPackage.getParentPackage(); parentPackage != null; parentPackage = parentPackage.getParentPackage()) {
       final String packageName = parentPackage.getName();

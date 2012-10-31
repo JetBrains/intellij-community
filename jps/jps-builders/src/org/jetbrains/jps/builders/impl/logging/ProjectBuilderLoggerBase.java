@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * @author nik
@@ -30,7 +29,7 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   }
 
   @Override
-  public void logCompiledFiles(Set<File> files, String builderName, final String description) throws IOException {
+  public void logCompiledFiles(Collection<File> files, String builderName, final String description) throws IOException {
     logLine(description);
     final String[] buffer = new String[files.size()];
     int i = 0;

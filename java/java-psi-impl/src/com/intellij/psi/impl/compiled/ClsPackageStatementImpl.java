@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,29 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsPackageStatementImpl");
-
   private final ClsFileImpl myFile;
   private final String myPackageName;
 
   public ClsPackageStatementImpl(@NotNull ClsFileImpl file) {
     myFile = file;
-    final PsiClass[] psiClasses = file.getClasses();
-    String className = psiClasses.length > 0 ? psiClasses[0].getQualifiedName() : "";
-    int index = className.lastIndexOf('.');
-    myPackageName = index < 0 ? null : className.substring(0, index);
+    String packageName = null;
+    PsiClass[] psiClasses = file.getClasses();
+    if (psiClasses.length > 0) {
+      String className = psiClasses[0].getQualifiedName();
+      if (className != null) {
+        int index = className.lastIndexOf('.');
+        if (index >= 0) {
+          packageName = className.substring(0, index);
+        }
+      }
+    }
+    myPackageName = packageName;
   }
 
   @Override
@@ -45,8 +50,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
    */
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
-    LOG.error("method not implemented");
-    return null;
+    throw new UnsupportedOperationException("Method not implemented");
   }
 
   /**
@@ -54,8 +58,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
    */
   @Override
   public PsiModifierList getAnnotationList() {
-    LOG.error("method not implemented");
-    return null;
+    throw new UnsupportedOperationException("Method not implemented");
   }
 
   /**
@@ -64,8 +67,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    LOG.error("method not implemented");
-    return null;
+    throw new UnsupportedOperationException("Method not implemented");
   }
 
   @Override
@@ -74,15 +76,15 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    buffer.append("package ");
-    buffer.append(getPackageName());
-    buffer.append(";");
+  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
+    if (myPackageName != null) {
+      buffer.append("package ").append(getPackageName()).append(";");
+    }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, ElementType.PACKAGE_STATEMENT);
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaElementType.PACKAGE_STATEMENT);
   }
 
   @Override
@@ -95,6 +97,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPackageStatement:" + getPackageName();
   }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -35,6 +36,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -72,9 +74,10 @@ public class AndroidJpsUtil {
   private AndroidJpsUtil() {
   }
 
-  public static boolean isMavenizedModule(JpsModule module) {
-    // todo: implement
-    return false;
+  private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
+    return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(
+      JpsJavaDependenciesEnumerationHandler.createHandlers(
+        Collections.singletonList(module)));
   }
 
   @Nullable
@@ -221,7 +224,7 @@ public class AndroidJpsUtil {
     // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
     // and compute all jars referred by library modules. Moreover it would be incorrect,
     // because Maven has dependency resolving algorithm based on versioning
-    final boolean recursive = isMavenizedModule(module);
+    final boolean recursive = shouldProcessDependenciesRecursively(module);
     processClasspath(context, module, processor, new HashSet<String>(), false, recursive);
   }
 
@@ -575,8 +578,8 @@ public class AndroidJpsUtil {
       return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
     }
 
-    final String moduleDirPath = extension.getBaseModulePath();
-    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + apkRelativePath) : null;
+    File moduleBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    return moduleBaseDirectory != null ? FileUtil.toSystemDependentName(moduleBaseDirectory.getAbsolutePath() + apkRelativePath) : null;
   }
 
   @NotNull
@@ -649,5 +652,22 @@ public class AndroidJpsUtil {
       }
     }
     return null;
+  }
+
+
+  @NotNull
+  public static Set<String> getGenDirs(@NotNull JpsAndroidModuleExtension extension) throws IOException {
+    final Set<String> result = new HashSet<String>();
+    File dir = extension.getAaptGenDir();
+
+    if (dir != null) {
+      result.add(dir.getPath());
+    }
+    dir = extension.getAidlGenDir();
+
+    if (dir != null) {
+      result.add(dir.getPath());
+    }
+    return result;
   }
 }

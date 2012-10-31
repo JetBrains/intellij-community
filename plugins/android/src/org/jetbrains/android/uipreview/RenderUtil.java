@@ -179,7 +179,7 @@ public class RenderUtil {
 
     reportMissingClassesWarning(warnMessages, callback.getMissingClasses());
 
-    reportBrokenClassesWarning(warnMessages, callback.getBrokenClasses());
+    reportBrokenClassesWarning(project, warnMessages, callback.getBrokenClasses());
 
     final Result result = session.getResult();
     if (!result.isSuccess()) {
@@ -232,21 +232,33 @@ public class RenderUtil {
     return projectResources;
   }
 
-  private static void reportBrokenClassesWarning(@NotNull List<FixableIssueMessage> warnMessages,
+  private static void reportBrokenClassesWarning(@NotNull final Project project,
+                                                 @NotNull List<FixableIssueMessage> warnMessages,
                                                  @NotNull Map<String, Throwable> brokenClasses) {
     if (brokenClasses.size() > 0) {
-      final StringBuilder builder = new StringBuilder();
+
       if (brokenClasses.size() > 1) {
+        final StringBuilder builder = new StringBuilder();
         builder.append("Unable to initialize:\n");
-        for (String brokenClass : brokenClasses.keySet()) {
-          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(brokenClass).append('\n');
+
+        for (Map.Entry<String, Throwable> entry : brokenClasses.entrySet()) {
+          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(entry.getKey()).append('\n');
         }
+        removeLastNewLineChar(builder);
+        // todo: show stack traces
+        warnMessages.add(new FixableIssueMessage(builder.toString()));
       }
       else {
-        builder.append("Unable to initialize ").append(brokenClasses.keySet().iterator().next());
+        final Map.Entry<String, Throwable> entry = brokenClasses.entrySet().iterator().next();
+        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+        final Throwable t = entry.getValue();
+        warnMessages.add(new FixableIssueMessage("Unable to initialize " + entry.getKey() + ' ', "Details", "", new Runnable() {
+          @Override
+          public void run() {
+            AndroidUtils.showStackStace(project, new Throwable[] {t});
+          }
+        }));
       }
-      removeLastNewLineChar(builder);
-      warnMessages.add(new FixableIssueMessage(builder.toString()));
     }
   }
 

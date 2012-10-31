@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,9 +55,14 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBus = bus;
     myListConsumer = new Consumer<List<CommittedChangeList>>() {
       @Override
-      public void consume(List<CommittedChangeList> lists) {
-        myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-        myBrowser.setItems(lists, CommittedChangesBrowserUseCase.INCOMING);
+      public void consume(final List<CommittedChangeList> lists) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+            myBrowser.setItems(lists, CommittedChangesBrowserUseCase.INCOMING);
+          }
+        });
       }
     };
   }

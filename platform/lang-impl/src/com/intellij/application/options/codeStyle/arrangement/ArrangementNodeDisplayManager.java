@@ -16,23 +16,22 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Encapsulates various functionality related to showing arrangement nodes to end-users.
@@ -46,32 +45,43 @@ import java.util.List;
 public class ArrangementNodeDisplayManager {
 
   @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
+  @NotNull private final ArrangementStandardSettingsAware myFilter;
+  @NotNull private final ArrangementColorsProvider        myColorsProvider;
   @NotNull private ArrangementStandardSettingsRepresentationAware myRepresentationManager;
-  private final int myMaxGroupTextWidth;
 
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter,
-                                       @NotNull ArrangementStandardSettingsRepresentationAware representationManager,
-                                       @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
+                                       @NotNull ArrangementColorsProvider colorsProvider,
+                                       @NotNull ArrangementStandardSettingsRepresentationAware representationManager)
   {
+    myFilter = filter;
+    myColorsProvider = colorsProvider;
     myRepresentationManager = representationManager;
-    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(filter, null);
-    for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
-      myMaxWidths.put(entry.getKey(), maxWidth(entry.getValue()));
-    }
-    myMaxGroupTextWidth = maxWidth(ArrangementUtil.flatten(groupingRules));
+    refreshMaxWidths();
   }
 
-  private int maxWidth(Collection<?> values) {
-    JLabel label = new JLabel();
-    FontMetrics metrics = label.getFontMetrics(label.getFont());
+  private void refreshMaxWidths() {
+    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
+    for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
+      myMaxWidths.put(entry.getKey(), maxWidth(entry.getKey(), entry.getValue()));
+    }
+  }
+
+  private int maxWidth(@NotNull ArrangementSettingType type, @NotNull Collection<?> values) {
+    SimpleColoredComponent renderer = new SimpleColoredComponent();
 
     int result = 0;
     for (Object value : values) {
-      result = Math.max(result, metrics.stringWidth(getDisplayValue(value)));
+      renderer.clear();
+      renderer.append(getDisplayValue(value), SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(type, true)));
+      result = Math.max(result, renderer.getPreferredSize().width);
+
+      renderer.clear();
+      renderer.append(getDisplayValue(value), SimpleTextAttributes.fromTextAttributes(myColorsProvider.getTextAttributes(type, false)));
+      result = Math.max(result, renderer.getPreferredSize().width);
     }
     return result;
   }
-
+  
   @NotNull
   public String getDisplayValue(@NotNull ArrangementAtomMatchCondition setting) {
     return getDisplayValue(setting.getValue());
@@ -111,10 +121,6 @@ public class ArrangementNodeDisplayManager {
     return myMaxWidths.get(type);
   }
 
-  public int getMaxGroupTextWidth() {
-    return myMaxGroupTextWidth;
-  }
-  
   /**
    * Asks current manager to sort in-place given arrangement condition ids ('field', 'class', 'method', 'public', 'static', 'final' etc).
    * 

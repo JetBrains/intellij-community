@@ -27,14 +27,12 @@ public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
     return myFacetTypeId;
   }
 
-  public E loadExtension(final Element configurationElement, final String facetName, JpsModule module,
-                         String baseModulePath, JpsElement parentFacet) {
-    final E e = loadExtension(configurationElement, facetName, baseModulePath, parentFacet, module);
+  public E loadExtension(final Element configurationElement, final String facetName, JpsModule module, JpsElement parentFacet) {
+    final E e = loadExtension(configurationElement, facetName, parentFacet, module);
     return module.getContainer().setChild(myRole, e);
   }
 
-  protected abstract E loadExtension(@NotNull Element facetConfigurationElement, String name, String baseModulePath, JpsElement parent,
-                                     JpsModule module);
+  protected abstract E loadExtension(@NotNull Element facetConfigurationElement, String name, JpsElement parent, JpsModule module);
 
   public boolean hasExtension(JpsModule module) {
     return module.getContainer().getChild(myRole) != null;

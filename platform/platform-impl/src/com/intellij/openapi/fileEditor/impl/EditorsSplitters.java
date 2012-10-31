@@ -151,7 +151,7 @@ public class EditorsSplitters extends JPanel {
     
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(UIUtil.isUnderDarcula() ? Gray._200: Gray._100);
+      g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground(): Gray._100);
       g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);

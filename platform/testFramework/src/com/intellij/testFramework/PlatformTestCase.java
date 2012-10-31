@@ -65,7 +65,6 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
@@ -569,6 +568,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @Nullable
   protected Sdk getTestProjectJdk() {
     return null;
   }

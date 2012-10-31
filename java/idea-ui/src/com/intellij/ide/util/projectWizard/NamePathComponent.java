@@ -15,9 +15,16 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
@@ -109,6 +116,53 @@ public class NamePathComponent extends JPanel{
     insets = new Insets(0, 0, 5, 0);
     this.add(myPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  insets, 0, 0));
+  }
+
+  private String getProjectFilePath(boolean isDefault) {
+    if (isDefault) {
+      return getPath() + "/" + getNameValue() + ProjectFileType.DOT_DEFAULT_EXTENSION;
+    }
+    else {
+      return getPath() + "/" + Project.DIRECTORY_STORE_FOLDER;
+    }
+  }
+
+  public boolean validateNameAndPath(WizardContext context, boolean defaultFormat) throws
+                                                                                    ConfigurationException {
+    final String name = getNameValue();
+    if (name.length() == 0) {
+      final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
+      throw new ConfigurationException(
+        IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), context.getPresentationName()));
+    }
+
+    final String projectFileDirectory = getPath();
+    if (projectFileDirectory.length() == 0) {
+      throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
+    }
+
+    final boolean shouldPromptCreation = isPathChangedByUser();
+    if (!ProjectWizardUtil
+      .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", context.getPresentationName()),
+                                  projectFileDirectory, shouldPromptCreation)) {
+      return false;
+    }
+
+    final File file = new File(projectFileDirectory);
+    if (file.exists() && !file.canWrite()) {
+      throw new ConfigurationException(String.format("Directory '%s' is not writable!\nPlease choose another project location.", projectFileDirectory));
+    }
+
+    boolean shouldContinue = true;
+    final File projectFile = new File(getProjectFilePath(defaultFormat));
+    if (projectFile.exists()) {
+      int answer = Messages.showYesNoDialog(
+        IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName()),
+        IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      shouldContinue = (answer == 0);
+    }
+
+    return shouldContinue;
   }
 
   public String getNameValue() {

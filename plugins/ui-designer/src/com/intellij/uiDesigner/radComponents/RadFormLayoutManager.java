@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.PlatformColors;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
@@ -381,7 +382,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       }
     }
 
-    g2d.setColor(Color.BLUE);
+    g2d.setColor(PlatformColors.BLUE);
     drawGroupLine(rc, isRow, g2d, true, haveTopLeft, haveTopRight, haveTopLine);
     drawGroupLine(rc, isRow, g2d, false, haveBottomLeft, haveBottomRight, haveBottomLine);
   }

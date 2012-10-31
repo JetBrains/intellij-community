@@ -1,11 +1,14 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -14,15 +17,15 @@ import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,16 +34,14 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
-  private final JpsModule myModule;
+public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
-    super(targetType);
+    super(targetType, module);
     myTargetType = targetType;
     myModuleName = module.getName();
-    myModule = module;
   }
 
   @Nullable
@@ -50,21 +51,27 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(BuildDataPaths paths) {
+  public Collection<File> getOutputRoots(CompileContext context) {
+    Collection<File> result = new SmartList<File>();
     final File outputDir = getOutputDir();
-    return outputDir != null? Collections.singleton(outputDir) : Collections.<File>emptyList();
-  }
-
-  @Override
-  @NotNull
-  public JpsModule getModule() {
-    return myModule;
+    if (outputDir != null) {
+      result.add(outputDir);
+    }
+    final ProcessorConfigProfile profile = context.getAnnotationProcessingProfile(getModule());
+    if (profile.isEnabled()) {
+      final File annotationOut = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(getModule(), isTests(), profile);
+      if (annotationOut != null) {
+        result.add(annotationOut);
+      }
+    }
+    return result;
   }
 
   public String getModuleName() {
     return myModuleName;
   }
 
+  @Override
   public boolean isTests() {
     return myTargetType.isTests();
   }
@@ -75,7 +82,7 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies() {
+  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
@@ -126,20 +133,44 @@ public class ModuleBuildTarget extends BuildTarget<JavaSourceRootDescriptor> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || !(o instanceof ModuleBuildTarget)) {
-      return false;
+  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+    final JpsModule module = getModule();
+
+    int fingerprint = getDependenciesFingerprint();
+
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level != null) {
+      fingerprint += level.name().hashCode();
     }
 
-    ModuleBuildTarget target = (ModuleBuildTarget)o;
-    return myTargetType == target.myTargetType && myModuleName.equals(target.myModuleName);
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
+    final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
+    if (bytecodeTarget != null) {
+      fingerprint += bytecodeTarget.hashCode();
+    }
+
+    // todo: can we tolerate project rebuild because of resource pattern changes?
+    //final List<String> patterns = config.getResourcePatterns();
+    //for (String pattern : patterns) {
+    //  fingerprint += pattern.hashCode();
+    //}
+
+    out.write(Integer.toHexString(fingerprint));
   }
 
-  @Override
-  public int hashCode() {
-    return 31 * myModuleName.hashCode() + myTargetType.hashCode();
+  private int getDependenciesFingerprint() {
+    final JpsModule module = getModule();
+
+    int fingerprint = 0;
+
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly();
+    if (!isTests()) {
+      enumerator = enumerator.productionOnly();
+    }
+
+    for (String url : enumerator.classes().getUrls()) {
+      fingerprint += 31 * fingerprint + url.hashCode();
+    }
+    return fingerprint;
   }
 }

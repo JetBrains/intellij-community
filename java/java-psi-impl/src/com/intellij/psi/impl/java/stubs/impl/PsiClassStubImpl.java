@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -23,8 +22,9 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.Nullable;
 
-/*
+/**
  * @author max
  */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
@@ -49,7 +49,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                           final StubElement parent,
                           final String qualifiedName,
                           final String name,
-                          final String baseRefText,
+                          @Nullable final String baseRefText,
                           final byte flags) {
     this(type, parent, StringRef.fromString(qualifiedName), StringRef.fromString(name), StringRef.fromString(baseRefText), flags);
   }

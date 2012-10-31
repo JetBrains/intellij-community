@@ -18,7 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -45,8 +46,8 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private TextFieldWithBrowseButton mySourcePath;
   private JPanel myPanel;
 
-  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkType> sdkFilter) {
-    super(settingsStep, sdkFilter);
+  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
+    super(settingsStep, moduleBuilder, sdkFilter);
     myModuleBuilder = moduleBuilder;
 
     if (moduleBuilder instanceof JavaModuleBuilder) {
@@ -83,13 +84,28 @@ public class JavaSettingsStep extends SdkSettingsStep {
   @Override
   public void updateDataModel() {
     super.updateDataModel();
-    if (myModuleBuilder instanceof JavaModuleBuilder && myCreateSourceRoot.isSelected()) {
-      String contentEntryPath = myModuleBuilder.getContentEntryPath();
-      if (contentEntryPath != null) {
-        final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
-        String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+    if (myModuleBuilder instanceof JavaModuleBuilder) {
+      if (myCreateSourceRoot.isSelected()) {
+        String contentEntryPath = myModuleBuilder.getContentEntryPath();
+        if (contentEntryPath != null) {
+          final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
+          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
+        }
+      }
+      else {
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
       }
     }
+  }
+
+  @TestOnly
+  public void setCreateSourceRoot(boolean create) {
+    myCreateSourceRoot.setSelected(create);
+  }
+
+  @TestOnly
+  public void setSourcePath(String path) {
+    mySourcePath.setText(path);
   }
 }

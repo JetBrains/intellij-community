@@ -66,18 +66,22 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.class"), CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.interface"), CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.enum"), CodeInsightColors.ENUM_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.local.variable"), CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.implicit.anonymous.parameter"), CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.field"), CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.field"), CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.final.field"), CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parameter"), CodeInsightColors.PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.call"), CodeInsightColors.METHOD_CALL_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.declaration"), CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.call"), CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.declaration"), CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.method"), CodeInsightColors.STATIC_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.method"), CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inherited.method"), CodeInsightColors.INHERITED_METHOD_ATTRIBUTES),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
 
@@ -100,18 +104,22 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("reassignedParameter", CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
     ourTags.put("implicitAnonymousParameter", CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
     ourTags.put("static", CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
+    ourTags.put("static_final", CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES);
     ourTags.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
     ourTags.put("constructorCall", CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
     ourTags.put("constructorDeclaration", CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
     ourTags.put("methodCall", CodeInsightColors.METHOD_CALL_ATTRIBUTES);
     ourTags.put("methodDeclaration", CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
     ourTags.put("static_method", CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
+    ourTags.put("abstract_method", CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
+    ourTags.put("inherited_method", CodeInsightColors.INHERITED_METHOD_ATTRIBUTES);
     ourTags.put("param", CodeInsightColors.PARAMETER_ATTRIBUTES);
     ourTags.put("class", CodeInsightColors.CLASS_NAME_ATTRIBUTES);
     ourTags.put("anonymousClass", CodeInsightColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
     ourTags.put("typeParameter", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
     ourTags.put("abstractClass", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
     ourTags.put("interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
+    ourTags.put("enum", CodeInsightColors.ENUM_NAME_ATTRIBUTES);
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   }
@@ -165,10 +173,11 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "\n" +
       "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>) {\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
-      "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <field>field</field> + <localVar>localVar</localVar>);\n" +
+      "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <inherited_method>toString</inherited_method>() + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
       "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning>; \n" +
       "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +
+      "    <field>field</field>.<abstract_method>run</abstract_method>(); \n" +
       "    new <anonymousClass>SomeClass</anonymousClass>() {\n" +
       "      {\n" +
       "        int <localVar>a</localVar> = <implicitAnonymousParameter>localVar</implicitAnonymousParameter>;\n" +
@@ -177,8 +186,9 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "    <reassignedParameter>reassignedParam</reassignedParameter> = new int[2];\n" +
       "  }\n" +
       "}\n" +
+      "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n"+
       "interface <interface>AnInterface</interface> {\n" +
-      "  int <static>CONSTANT</static> = 2;\n" +
+      "  int <static_final>CONSTANT</static_final> = 2;\n" +
       "  void <methodDeclaration>method</methodDeclaration>();\n" +
       "}\n" +
       "abstract class <abstractClass>SomeAbstractClass</abstractClass> {\n" +

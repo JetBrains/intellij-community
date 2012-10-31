@@ -20,7 +20,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,7 +59,7 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     }) {
       @Override
       protected Color getTextColor() {
-        return UIUtil.isUnderDarcula() ? Color.WHITE : Color.BLUE;
+        return PlatformColors.BLUE;
       }
     };
     label.setFont(label.getFont().deriveFont(Font.BOLD));

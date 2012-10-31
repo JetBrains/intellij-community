@@ -32,7 +32,7 @@ public final class GroupByScopeTypeAction extends ToggleAction {
 
   public GroupByScopeTypeAction(Runnable update) {
     super(IdeBundle.message("action.group.by.scope.type"),
-          IdeBundle.message("action.description.group.by.scope"), AllIcons.Nodes.TestSourceFolder);
+          IdeBundle.message("action.description.group.by.scope"), AllIcons.Actions.GroupByTestProduction);
     myUpdate = update;
   }
 

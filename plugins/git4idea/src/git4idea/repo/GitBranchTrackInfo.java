@@ -49,13 +49,9 @@ public class GitBranchTrackInfo {
     return myRemoteBranch;
   }
 
-  public boolean isMerge() {
-    return myMerge;
-  }
-
   @Override
   public String toString() {
-    return String.format("%s->%s %b", myLocalBranch.getName(), myRemoteBranch.getName(), myMerge);
+    return String.format("%s->%s", myLocalBranch.getName(), myRemoteBranch.getName());
   }
 
   @SuppressWarnings("ConstantConditions") // fields may possibly become null in future

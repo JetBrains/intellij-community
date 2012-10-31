@@ -1,21 +1,20 @@
 def (a,b,c), d
 -----
 Groovy script
-  Multiple variable definitions
+  Variable definitions
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    Tuple
-      PsiElement(()('(')
-      Variable
-        PsiElement(identifier)('a')
-      PsiElement(,)(',')
-      Variable
-        PsiElement(identifier)('b')
-      PsiElement(,)(',')
-      Variable
-        PsiElement(identifier)('c')
-      PsiElement())(')')
+    PsiElement(()('(')
+    Variable
+      PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    Variable
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    Variable
+      PsiElement(identifier)('c')
+    PsiElement())(')')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
     Variable

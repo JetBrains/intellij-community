@@ -36,7 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import java.util.Collection;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
 
 /**
  * @author Maxim.Medvedev
@@ -56,7 +57,7 @@ public class ClosureGenerator {
   public void generate(GrClosableBlock closure) {
     final String owner = getOwner(closure);
     builder.append("new ");
-    writeType(builder, closure.getType(), closure);
+    writeTypeForNew(builder, closure.getType(), closure);
     builder.append('(');
     builder.append(owner).append(", ").append(owner).append(") {\n");
 

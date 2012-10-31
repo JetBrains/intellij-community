@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   /**
    * Returns the value of the annotation element with the specified name.
    *
-   * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation, tha default
+   * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation, the default
    *                      value is returned.
    * @return the element value, or null if the annotation does not contain a value for
    *         the element and the element has no default value.

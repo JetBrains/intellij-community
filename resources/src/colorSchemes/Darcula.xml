@@ -493,6 +493,16 @@
         <option name="ERROR_STRIPE_COLOR" />
       </value>
     </option>
+    <option name="ENUM_NAME_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="da4939" />
+        <option name="BACKGROUND" />
+        <option name="FONT_TYPE" value="0" />
+        <option name="EFFECT_COLOR" />
+        <option name="EFFECT_TYPE" value="0" />
+        <option name="ERROR_STRIPE_COLOR" />
+      </value>
+    </option>
     <option name="ERRORS_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" />
@@ -2543,6 +2553,16 @@
         <option name="ERROR_STRIPE_COLOR" />
       </value>
     </option>
+    <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="d0d0ff" />
+        <option name="BACKGROUND" />
+        <option name="FONT_TYPE" value="2" />
+        <option name="EFFECT_COLOR" value="ffffff" />
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="ERROR_STRIPE_COLOR" />
+      </value>
+    </option>
     <option name="STATIC_METHOD_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" />
@@ -2596,6 +2616,16 @@
     <option name="Scala Number">
       <value>
         <option name="FOREGROUND" value="6897bb" />
+        <option name="BACKGROUND" />
+        <option name="FONT_TYPE" value="0" />
+        <option name="EFFECT_COLOR" />
+        <option name="EFFECT_TYPE" value="0" />
+        <option name="ERROR_STRIPE_COLOR" />
+      </value>
+    </option>
+    <option name="ABSTRACT_METHOD_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="da4939" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
         <option name="EFFECT_COLOR" />
@@ -2726,6 +2756,16 @@
     <option name="ScalaDoc wiki syntax elements">
       <value>
         <option name="FOREGROUND" value="7cb36f" />
+        <option name="BACKGROUND" />
+        <option name="FONT_TYPE" value="0" />
+        <option name="EFFECT_COLOR" />
+        <option name="EFFECT_TYPE" value="0" />
+        <option name="ERROR_STRIPE_COLOR" />
+      </value>
+    </option>
+    <option name="INHERITED_METHOD_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="da4939" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
         <option name="EFFECT_COLOR" />

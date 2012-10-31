@@ -129,11 +129,13 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     }
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public <T> T getExtension(final Key<T> key) {
     return (T)myExtensions.get(key);
   }
@@ -161,10 +163,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return (InspectionProfile)profile;
   }
 
+  @Override
   public boolean isSuppressed(RefEntity entity, String id) {
     return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(id);
   }
 
+  @Override
   public boolean shouldCheck(RefEntity entity, GlobalInspectionTool tool) {
     if (entity instanceof RefElementImpl) {
       final RefElementImpl refElement = (RefElementImpl)entity;
@@ -188,6 +192,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return true;
   }
 
+  @Override
   public boolean isSuppressed(PsiElement element, String id) {
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     if (refManager.isDeclarationsFound()) {
@@ -201,6 +206,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   public synchronized void addView(InspectionResultsView view, String title) {
     if (myContent != null) return;
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
+      @Override
       public void contentRemoved(ContentManagerEvent event) {
         if (event.getContent() == myContent){
           if (myView != null) {
@@ -269,6 +275,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     }
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         myCurrentScope = scope;
         launchInspections(scope, manager);
@@ -284,10 +291,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
 
+  @Override
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
       myRefManager = ApplicationManager.getApplication().runReadAction(new Computable<RefManagerImpl>() {
+        @Override
         public RefManagerImpl compute() {
           return new RefManagerImpl(myProject, myCurrentScope, GlobalInspectionContextImpl.this);
         }
@@ -310,6 +319,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     RUN_GLOBAL_TOOLS_ONLY = runGlobalToolsOnly;
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           performInspectionsWithProgress(scope, manager);
           @NonNls final String ext = ".xml";
@@ -459,6 +469,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     myView = new InspectionResultsView(myProject, getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(myProject));
     ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), InspectionsBundle.message("inspection.progress.title"), true,
                                                               new PerformAnalysisInBackgroundOption(myProject)) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         performInspectionsWithProgress(scope, manager);
       }
@@ -466,6 +477,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       @Override
       public void onSuccess() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             LOG.info("Code inspection finished");
 
@@ -498,6 +510,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       FIND_EXTERNAL_USAGES.setTotalAmount(0);
       //to override current progress in order to hide useless messages/%
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+          @Override
           public void run() {
             runTools(scope, manager);
           }

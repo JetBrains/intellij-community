@@ -31,5 +31,7 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
 
   public abstract void collapsePathsRecursively(Element element);
 
+  public abstract String collapsePathsRecursively(String text);
+
   public abstract TrackingPathMacroSubstitutor createTrackingSubstitutor();
 }

@@ -28,9 +28,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 public interface DiffPanelEx extends DiffPanel, Disposable {
+  @Nullable
   Editor getEditor1();
+  @Nullable
   Editor getEditor2();
 
   DiffPanelOptions getOptions();

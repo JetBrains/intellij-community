@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import java.util.Set;
 public class InheritanceUtil {
   private InheritanceUtil() { }
 
-  /**
-   * @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead.
-   */
+  /** @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead (to remove in IDEA 13) */
   public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep) {
     return candidateClass.isInheritor(baseClass, checkDeep);
   }
@@ -46,9 +44,7 @@ public class InheritanceUtil {
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
   }
 
-  /**
-   * @deprecated use {@linkplain #isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean)}.
-   */
+  /** @deprecated use {@linkplain #isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean) (to remove in IDEA 13)} */
   public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }

@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private static final Color ERROR_COLOR = Color.RED;
   private static final Color MESSAGE_COLOR = Color.BLACK;
-  private static final Color CODE_COLOR = Color.BLUE;
+  private static final Color CODE_COLOR = PlatformColors.BLUE;
   private static final Color TEST_COLOR = Color.green.darker();
 
   private JPanel myComponent;

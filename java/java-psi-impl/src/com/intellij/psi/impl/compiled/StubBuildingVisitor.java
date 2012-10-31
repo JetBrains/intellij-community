@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +27,7 @@ import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.*;
 
+import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -45,6 +43,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * @author max
+ */
 public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$\\.])\\${1}(?=[^\\$])"); // disallow .$ or $$
 
@@ -325,7 +326,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (!isCorrectName(name)) return null;
 
     final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
-    PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
+    final PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
     final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new AnnotationCollectingVisitor(modList);
   }
@@ -677,9 +678,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  private static String constToString(final Object value) {
+  private static String constToString(@Nullable Object value) {
     if (value == null) return null;
 
     if (value instanceof String) return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
@@ -708,6 +708,22 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
       else {
         return Float.toString(v) + "f";
+      }
+    }
+
+    if (value.getClass().isArray()) {
+      StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+      try {
+        buffer.append('{');
+        for (int i = 0, length = Array.getLength(value); i < length; i++) {
+          if (i > 0) buffer.append(", ");
+          buffer.append(Array.get(value, i));
+        }
+        buffer.append('}');
+        return buffer.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(buffer);
       }
     }
 

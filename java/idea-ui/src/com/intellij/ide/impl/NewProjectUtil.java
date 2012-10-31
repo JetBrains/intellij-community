@@ -43,7 +43,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -51,6 +50,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,39 +78,44 @@ public class NewProjectUtil {
       return;
     }
 
+    try {
+      doCreate(dialog, projectToClose);
+    }
+    catch (final IOException e) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
+        }
+      });
+    }
+  }
+
+  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {
+      File projectDir = new File(projectFilePath).getParentFile();
+      FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        if (!ideaDir.exists() && !ideaDir.mkdirs()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project Initialization Failed");
-            }
-          });
-
-          return;
-        }
+        FileUtil.ensureExists(ideaDir);
       }
 
       final Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
-        newProject = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Project, RuntimeException>() {
-          @Override
-          public Project compute() throws RuntimeException {
-            return projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false);
-          }
-        }, "Creating Project", true, null);
+        String name = dialog.getProjectName();
+        newProject = projectBuilder == null
+                   ? projectManager.newProject(name, projectFilePath, true, false)
+                   : projectBuilder.createProject(name, projectFilePath);
       }
       else {
         newProject = projectToClose;
       }
 
-      if (newProject == null) return;
+      if (newProject == null) return projectToClose;
 
       final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
@@ -148,10 +153,10 @@ public class NewProjectUtil {
 
 
       if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
-        return;
+        return projectToClose;
       }
 
-      if (newProject != projectToClose) {
+      if (newProject != projectToClose && !ApplicationManager.getApplication().isUnitTestMode()) {
         closePreviousProject(projectToClose);
       }
 
@@ -196,10 +201,11 @@ public class NewProjectUtil {
             }
           }
         }
-        
+
         projectManager.openProject(newProject);
       }
       newProject.save();
+      return newProject;
     }
     finally {
       if (projectBuilder != null) {

@@ -15,19 +15,21 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,46 +38,16 @@ import java.util.Set;
 public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
-  private final Set<BinopInstruction> myNotToReportReachability = new THashSet<BinopInstruction>();
+  private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
-  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNotNull = new FactoryMap<MethodCallInstruction, boolean[]>() {
+  private final FactoryMap<MethodCallInstruction, Map<PsiExpression, Boolean>> myParametersNullability = new FactoryMap<MethodCallInstruction, Map<PsiExpression, Boolean>>() {
+    @Nullable
     @Override
-    protected boolean[] create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
-      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
-      if (callee != null) {
-        final PsiParameter[] params = callee.getParameterList().getParameters();
-        boolean[] result = new boolean[params.length];
-        for (int i = 0; i < params.length; i++) {
-          result[i] = NullableNotNullManager.getInstance(params[i].getProject()).isNotNull(params[i], false);
-        }
-        return result;
-      }
-      else {
-        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
-      }
+    protected Map<PsiExpression, Boolean> create(MethodCallInstruction key) {
+      return calcParameterNullability(key.getCallExpression());
     }
   };
-  private final FactoryMap<MethodCallInstruction, boolean[]> myParametersNonAnnotated = new FactoryMap<MethodCallInstruction, boolean[]>() {
-    @Override
-    protected boolean[] create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
-      final PsiMethod callee = callExpression == null ? null : callExpression.resolveMethod();
-      if (callee != null) {
-        final PsiParameter[] params = callee.getParameterList().getParameters();
-        boolean[] result = new boolean[params.length];
-        final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(callee.getProject());
-        for (int i = 0; i < params.length; i++) {
-          result[i] = !notNullManager.isNotNull(params[i], false) && !notNullManager.isNullable(params[i], false);
-        }
-        return result;
-      }
-      else {
-        return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
-      }
-    }
-  };
-  private final FactoryMap<MethodCallInstruction, Boolean> myCalleeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
+  private final FactoryMap<MethodCallInstruction, Boolean> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Boolean>() {
     @Override
     protected Boolean create(MethodCallInstruction key) {
       final PsiCallExpression callExpression = key.getCallExpression();
@@ -83,20 +55,54 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return Boolean.FALSE;
       }
 
-      if (callExpression != null) {
-        final PsiMethod callee = callExpression.resolveMethod();
-        if (callee != null) {
-          if (NullableNotNullManager.isNullable(callee)) {
-            return Boolean.TRUE;
-          }
-          if (NullableNotNullManager.isNotNull(callee)) {
-            return Boolean.FALSE;
-          }
-        }
-      }
-      return null;
+      return callExpression != null ? DfaUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
   };
+
+  private static Map<PsiExpression, Boolean> calcParameterNullability(@Nullable PsiCallExpression callExpression) {
+    PsiExpressionList argumentList = callExpression == null ? null : callExpression.getArgumentList();
+    if (argumentList != null) {
+      JavaResolveResult result = callExpression.resolveMethodGenerics();
+      PsiMethod method = (PsiMethod)result.getElement();
+      if (method != null) {
+        PsiSubstitutor substitutor = result.getSubstitutor();
+        PsiExpression[] args = argumentList.getExpressions();
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        boolean varArg = isVarArgCall(method, substitutor, args, parameters);
+        int checkedCount = Math.min(args.length, parameters.length) - (varArg ? 1 : 0);
+
+        Map<PsiExpression, Boolean> map = ContainerUtil.newHashMap();
+        for (int i = 0; i < checkedCount; i++) {
+          map.put(args[i], DfaUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
+        }
+        return map;
+      }
+    }
+    return Collections.emptyMap();
+  }
+
+  private static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
+    if (!method.isVarArgs()) {
+      return false;
+    }
+
+    int argCount = args.length;
+    int paramCount = parameters.length;
+    if (argCount > paramCount) {
+      return true;
+    }
+    else if (paramCount > 0) {
+      if (argCount == paramCount) {
+        PsiType lastArgType = args[argCount - 1].getType();
+        if (lastArgType != null &&
+            !substitutor.substitute(parameters[paramCount - 1].getType()).isAssignableFrom(lastArgType)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -106,8 +112,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
-      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(psiVariable.getProject());
-      if (nullableManager.isNotNull(psiVariable, false)) {
+      if (DfaUtil.getElementNullability(var.getVariableType(), psiVariable) == Boolean.FALSE) {
         if (!memState.applyNotNull(dfaSource)) {
           onAssigningToNotNullableVariable(instruction, runner);
         }
@@ -115,6 +120,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
+    } else if (dfaDest instanceof DfaNotNullValue && !memState.applyNotNull(dfaSource)) {
+      onAssigningToNotNullableVariable(instruction, runner);
     }
 
     memState.push(dfaDest);
@@ -158,7 +165,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValueFactory factory = runner.getFactory();
-    DfaValue dfaExpr = factory.create(instruction.getCasted());
+    DfaValue dfaExpr = factory.createValue(instruction.getCasted());
     if (dfaExpr != null) {
       DfaTypeValue dfaType = factory.getTypeFactory().create(instruction.getCastTo());
       DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
@@ -179,24 +186,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final PsiExpression[] args = instruction.getArgs();
-    final boolean[] parametersNotNull = myParametersNotNull.get(instruction);
-    final boolean[] nonAnnotated = myParametersNonAnnotated.get(instruction);
+    Map<PsiExpression, Boolean> map = myParametersNullability.get(instruction);
     final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
-      final int revIdx = args.length - i - 1;
-      if (args.length <= parametersNotNull.length && revIdx < parametersNotNull.length) {
-        if (parametersNotNull[revIdx]) {
-          if (!memState.applyNotNull(arg)) {
-            onPassingNullParameter(runner, args[revIdx]);
-            if (arg instanceof DfaVariableValue) {
-              memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
-            }
+      PsiExpression expr = args[(args.length - i - 1)];
+      if (map.get(expr) == Boolean.FALSE) {
+        if (!memState.applyNotNull(arg)) {
+          onPassingNullParameter(runner, expr);
+          if (arg instanceof DfaVariableValue) {
+            memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
           }
         }
-        else if (nonAnnotated[revIdx] && !memState.checkNotNullable(arg)) {
-          onPassingNullParameterToNonAnnotated(runner, args[revIdx]);
-        }
+      }
+      else if (map.containsKey(expr) && map.get(expr) == null && !memState.checkNotNullable(arg)) {
+        onPassingNullParameterToNonAnnotated(runner, expr);
       }
     }
 
@@ -234,8 +238,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final PsiType type = instruction.getResultType();
     final MethodCallInstruction.MethodType methodType = instruction.getMethodType();
     if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
-      @Nullable final Boolean nullability = myCalleeNullability.get(instruction);
-      return nullability == Boolean.FALSE ? factory.getNotNullFactory().create(type) : factory.getTypeFactory().create(type, nullability == Boolean.TRUE);
+      @Nullable final Boolean nullability = myReturnTypeNullability.get(instruction);
+      return factory.createTypeValueWithNullability(type, nullability);
     }
 
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
@@ -328,7 +332,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (isViaMethods(dfaLeft) || isViaMethods(dfaRight)) {
-      myNotToReportReachability.add(instruction);
+      skipConstantConditionReporting(instruction.getPsiAnchor());
     }
     myCanBeNullInInstanceof.add(instruction);
 
@@ -359,6 +363,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(new DfaInstructionState[states.size()]);
+  }
+
+  public void skipConstantConditionReporting(@Nullable PsiElement anchor) {
+    ContainerUtil.addIfNotNull(myNotToReportReachability, anchor);
   }
 
   private static boolean isViaMethods(DfaValue dfa) {
@@ -435,7 +443,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return myCanBeNullInInstanceof.contains(instruction);
   }
 
-  public boolean silenceConstantCondition(BranchingInstruction instruction) {
-    return instruction instanceof BinopInstruction && myNotToReportReachability.contains(instruction);
+  public boolean silenceConstantCondition(@Nullable PsiElement element) {
+    for (PsiElement skipped : myNotToReportReachability) {
+      if (PsiTreeUtil.isAncestor(element, skipped, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -20,8 +20,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -71,9 +69,13 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     invokeOnElement(project, editor, elements[0]);
   }
 
-  private static void invoke(final PsiMethod method, final Project project, @Nullable final Editor editor) {
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
+  @Nullable
+  @Override
+  public String getTargetNotFoundMessage() {
+    return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
+  }
 
+  private static void invoke(final PsiMethod method, final Project project, @Nullable final Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (newMethod == null) return;
 
@@ -127,9 +129,16 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     final PsiElement elementParent = element.getParent();
     if (elementParent instanceof PsiMethod && ((PsiMethod)elementParent).getNameIdentifier()==element) {
+      final PsiClass containingClass = ((PsiMethod)elementParent).getContainingClass();
+      if (containingClass != null && containingClass.isAnnotationType()) {
+        return null;
+      }
       return elementParent;
     }
     if (elementParent instanceof PsiClass && ((PsiClass)elementParent).getNameIdentifier()==element) {
+      if (((PsiClass)elementParent).isAnnotationType()) {
+        return null;
+      }
       return elementParent;
     }
 

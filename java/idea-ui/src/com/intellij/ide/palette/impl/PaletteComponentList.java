@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -215,7 +216,7 @@ public class PaletteComponentList extends JBList {
         dropLineY = rc.y;
       }
       Graphics2D g2d = (Graphics2D) g;
-      g2d.setColor(Color.BLUE);
+      g2d.setColor(PlatformColors.BLUE);
       g2d.setStroke(new BasicStroke(2.0f));
       g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
       g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);

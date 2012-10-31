@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,12 @@ public class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinary
   }
 
   @Override
-  public void appendMirrorText(int indentLevel, StringBuilder buffer) {
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(getText());
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) {
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.BINARY_EXPRESSION);
   }
 
@@ -124,13 +124,14 @@ public class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinary
     return myLOperand.getType();
   }
 
-  @Override
-  public String toString() {
-    return "PsiBinaryExpression:" + getText();
-  }
   @NotNull
   @Override
   public PsiExpression[] getOperands() {
     return new PsiExpression[]{getLOperand(), getROperand()};
+  }
+
+  @Override
+  public String toString() {
+    return "PsiBinaryExpression:" + getText();
   }
 }

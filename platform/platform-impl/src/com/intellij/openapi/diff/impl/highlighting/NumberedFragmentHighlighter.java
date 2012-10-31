@@ -75,29 +75,29 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
   }
 
   @Override
-  protected void highlightFragmentImpl(Fragment fragment, boolean drawBorder) {
+  protected void highlightFragmentImpl(Fragment fragment) {
     if (! myDrawNumber || fragment.getType() == null || TextDiffTypeEnum.NONE.equals(fragment.getType())) {
-      myAppender1.highlightText(fragment, drawBorder, null);
-      myAppender2.highlightText(fragment, drawBorder, null);
+      myAppender1.highlightText(fragment, null);
+      myAppender2.highlightText(fragment, null);
       return;
     }
     int lineLeft = myAppender1.getDocument().getLineNumber(fragment.getRange(FragmentSide.SIDE1).getStartOffset());
     int lineRight = myAppender2.getDocument().getLineNumber(fragment.getRange(FragmentSide.SIDE2).getStartOffset());
     Pair<String, TextDiffTypeEnum> left = myLeftPrecalculated.get(lineLeft);
     if (myPreviousLineLeft == lineLeft || left == null) {
-      myAppender1.highlightText(fragment, drawBorder, null);
+      myAppender1.highlightText(fragment, null);
     } else {
       // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
-      myAppender1.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane(), myAppender1.getEditor()));
+      myAppender1.highlightText(fragment, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane(), myAppender1.getEditor()));
       myPreviousLineLeft = lineLeft;
     }
 
     Pair<String, TextDiffTypeEnum> right = myRightPrecalculated.get(lineRight);
     if (myPreviousLineRight == lineRight || right == null) {
-      myAppender2.highlightText(fragment, drawBorder, null);
+      myAppender2.highlightText(fragment, null);
     } else {
       // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
-      myAppender2.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane(),
+      myAppender2.highlightText(fragment, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane(),
                                                                                      myAppender1.getEditor()));
       myPreviousLineRight = lineRight;
     }

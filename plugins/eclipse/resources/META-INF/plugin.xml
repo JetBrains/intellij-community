@@ -6,7 +6,7 @@
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
-    <compileServer.plugin classpath="eclipse-jps-plugin.jar"/>
+    <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
@@ -16,7 +16,7 @@
   </extensions>
   <module-components>
     <component>
-      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManager</implementation-class>
+      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl</implementation-class>
     </component>
   </module-components>
   <actions>

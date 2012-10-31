@@ -17,7 +17,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,7 +29,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.SearchScope;
@@ -38,22 +36,16 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implements PsiAnnotationMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsMethodImpl");
-
-  private PsiIdentifier myNameIdentifier = null; //protected by PsiLock
-  private PsiTypeElement myReturnType = null; //protected by PsiLock
-  private PsiDocComment myDocComment = null; //protected by PsiLock
-  private PsiAnnotationMemberValue myDefaultValue = null; //protected by PsiLock
+public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
+  private PsiTypeElement myReturnType = null;
+  private PsiAnnotationMemberValue myDefaultValue = null;
 
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
@@ -62,64 +54,13 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    PsiDocComment docComment = getDocComment();
-    PsiModifierList modifierList = getModifierList();
-    PsiTypeElement returnType = getReturnTypeElement();
-    PsiIdentifier name = getNameIdentifier();
-    PsiParameterList parameterList = getParameterList();
-    PsiReferenceList throwsList = getThrowsList();
-    PsiAnnotationMemberValue defaultValue = getDefaultValue();
-
-    int count =
-      (docComment != null ? 1 : 0)
-      + (modifierList != null ? 1 : 0)
-      + (returnType != null ? 1 : 0)
-      + (name != null ? 1 : 0)
-      + (parameterList != null ? 1 : 0)
-      + (throwsList != null ? 1 : 0)
-      + (defaultValue != null ? 1 : 0);
-
-    PsiElement[] children = new PsiElement[count];
-
-    int offset = 0;
-    if (docComment != null) {
-      children[offset++] = docComment;
-    }
-    if (modifierList != null) {
-      children[offset++] = modifierList;
-    }
-    if (returnType != null) {
-      children[offset++] = returnType;
-    }
-    if (name != null) {
-      children[offset++] = name;
-    }
-    if (parameterList != null) {
-      children[offset++] = parameterList;
-    }
-    if (throwsList != null) {
-      children[offset++] = throwsList;
-    }
-    if (defaultValue != null) {
-      children[offset++] = defaultValue;
-    }
-
-    return children;
+    return getChildren(getDocComment(), getModifierList(), getReturnTypeElement(), getNameIdentifier(), getParameterList(),
+                       getThrowsList(), getDefaultValue());
   }
 
   @Override
   public PsiClass getContainingClass() {
     return (PsiClass)getParent();
-  }
-
-  @Override
-  public PsiIdentifier getNameIdentifier() {
-    synchronized (LAZY_BUILT_LOCK) {
-      if (myNameIdentifier == null) {
-        myNameIdentifier = new ClsIdentifierImpl(this, getName());
-      }
-      return myNameIdentifier;
-    }
   }
 
   @Override
@@ -159,20 +100,8 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
 
   @Override
   @NotNull
-  public String getName() {
-    return getStub().getName();
-  }
-
-  @Override
-  @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
-  }
-
-  @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiImplUtil.setName(getNameIdentifier(), name);
-    return this;
   }
 
   @Override
@@ -181,7 +110,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
 
     synchronized (LAZY_BUILT_LOCK) {
       if (myReturnType == null) {
-        String typeText = TypeInfo.createTypeText(getStub().getReturnTypeText(false));
+        PsiMethodStub stub = getStub();
+        String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
+        assert typeText != null : stub;
         myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
       }
       return myReturnType;
@@ -218,6 +149,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   @Override
+  public PsiTypeParameterList getTypeParameterList() {
+    return getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST).getPsi();
+  }
+
+  @Override
   public PsiCodeBlock getBody() {
     return null;
   }
@@ -232,26 +168,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     synchronized (LAZY_BUILT_LOCK) {
       if (myDefaultValue == null) {
         final String text = getStub().getDefaultValueText();
-        if (StringUtil.isEmpty(text)) return null;
-
+        if (text == null || StringUtil.isEmpty(text)) return null;
         myDefaultValue = ClsParsingUtil.createMemberValueFromText(text, getManager(), this);
       }
       return myDefaultValue;
     }
   }
-
-  @Override
-  public PsiDocComment getDocComment() {
-    if (!isDeprecated()) return null;
-
-    synchronized (LAZY_BUILT_LOCK) {
-      if (myDocComment == null) {
-        myDocComment = new ClsDocCommentImpl(this);
-      }
-      return myDocComment;
-    }
-  }
-
 
   @Override
   public boolean isConstructor() {
@@ -275,8 +197,27 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    appendMethodHeader(buffer, indentLevel);
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
+    appendText(getModifierList(), indentLevel, buffer, "");
+    appendText(getTypeParameterList(), indentLevel, buffer, " ");
+    if (!isConstructor()) {
+      appendText(getReturnTypeElement(), indentLevel, buffer, " ");
+    }
+    appendText(getNameIdentifier(), indentLevel, buffer, "");
+    appendText(getParameterList(), indentLevel, buffer);
+
+    PsiReferenceList throwsList = getThrowsList();
+    if (throwsList.getReferencedTypes().length > 0) {
+      buffer.append(' ');
+      appendText(throwsList, indentLevel, buffer);
+    }
+
+    PsiAnnotationMemberValue defaultValue = getDefaultValue();
+    if (defaultValue != null) {
+      buffer.append(" default ");
+      appendText(defaultValue, indentLevel, buffer);
+    }
 
     if (hasModifierProperty(PsiModifier.ABSTRACT) || hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(";");
@@ -286,54 +227,26 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
-  private void appendMethodHeader(@NonNls StringBuilder buffer, final int indentLevel) {
-    ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
-    if (docComment != null) {
-      docComment.appendMirrorText(indentLevel, buffer);
-      goNextLine(indentLevel, buffer);
-    }
-    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
-    ((ClsElementImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
+  @Override
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, null);
+
+    PsiMethod mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+
+    setMirrorIfPresent(getDocComment(), mirror.getDocComment());
+    setMirror(getModifierList(), mirror.getModifierList());
+    setMirror(getTypeParameterList(), mirror.getTypeParameterList());
     if (!isConstructor()) {
-      ((ClsElementImpl)getReturnTypeElement()).appendMirrorText(indentLevel, buffer);
-      buffer.append(' ');
+      setMirror(getReturnTypeElement(), mirror.getReturnTypeElement());
     }
-    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
-    ((ClsElementImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
-    final PsiReferenceList throwsList = getThrowsList();
-    if (throwsList.getReferencedTypes().length > 0) {
-      buffer.append(' ');
-      ((ClsElementImpl)throwsList).appendMirrorText(indentLevel, buffer);
-    }
+    setMirror(getNameIdentifier(), mirror.getNameIdentifier());
+    setMirror(getParameterList(), mirror.getParameterList());
+    setMirror(getThrowsList(), mirror.getThrowsList());
 
     PsiAnnotationMemberValue defaultValue = getDefaultValue();
     if (defaultValue != null) {
-      buffer.append(" default ");
-      ((ClsElementImpl)defaultValue).appendMirrorText(indentLevel, buffer);
-    }
-  }
-
-  @Override
-  public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, null);
-
-    PsiMethod mirror = (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(element);
-    if (getDocComment() != null) {
-        ((ClsElementImpl)getDocComment()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
-    }
-      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-    if (!isConstructor() && mirror.getReturnTypeElement() != null) {
-        ((ClsElementImpl)getReturnTypeElement()).setMirror(
-        (TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getReturnTypeElement()));
-    }
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
-      ((ClsElementImpl)getParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getParameterList()));
-      ((ClsElementImpl)getThrowsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getThrowsList()));
-      ((ClsElementImpl)getTypeParameterList()).setMirror(
-      (TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeParameterList()));
-    if (getDefaultValue() != null) {
-      LOG.assertTrue(mirror instanceof PsiAnnotationMethod);
-        ((ClsElementImpl)getDefaultValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(((PsiAnnotationMethod)mirror).getDefaultValue()));
+      assert mirror instanceof PsiAnnotationMethod : this;
+      setMirror(defaultValue, ((PsiAnnotationMethod)mirror).getDefaultValue());
     }
   }
 
@@ -345,10 +258,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public String toString() {
-    return "PsiMethod:" + getName();
   }
 
   @Override
@@ -396,11 +305,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   @Override
-  public PsiTypeParameterList getTypeParameterList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST).getPsi();
-  }
-
-  @Override
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
   }
@@ -441,5 +345,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   @Override
   protected boolean isVisibilitySupported() {
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiMethod:" + getName();
   }
 }

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public class GrVariableJoinLinesHandler extends GrJoinLinesHandlerBase {
   @Override
   public int tryJoinStatements(@NotNull GrStatement first, @NotNull GrStatement second) {
-    if (first instanceof GrVariableDeclaration && ((GrVariableDeclaration)first).getTupleDeclaration() == null && second instanceof GrAssignmentExpression) {
+    if (first instanceof GrVariableDeclaration && !((GrVariableDeclaration)first).isTuple() && second instanceof GrAssignmentExpression) {
       final GrExpression lvalue = ((GrAssignmentExpression)second).getLValue();
       final GrExpression rValue = ((GrAssignmentExpression)second).getRValue();
 

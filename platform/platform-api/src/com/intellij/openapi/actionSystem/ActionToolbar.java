@@ -54,6 +54,7 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   /**
    * @return component which represents the tool bar on UI
    */
+  @Override
   JComponent getComponent();
 
   /**

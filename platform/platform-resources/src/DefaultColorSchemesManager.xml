@@ -300,7 +300,7 @@
       <option name="DIFF_DELETED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="e0e0e0"/>
+          <option name="BACKGROUND" value="D6D6D6"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="cbcbcb"/>
         </value>
@@ -309,7 +309,7 @@
       <option name="DIFF_INSERTED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="d6f5d6"/>
+          <option name="BACKGROUND" value="C8F2C8"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="baeeba"/>
         </value>
@@ -318,7 +318,7 @@
       <option name="DIFF_MODIFIED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="d7e2fb"/>
+          <option name="BACKGROUND" value="CAD9FA"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="bccff9"/>
         </value>
@@ -454,6 +454,13 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
+      <option name="ENUM_NAME_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
 
       <option name="METHOD_CALL_ATTRIBUTES">
         <value>
@@ -490,6 +497,22 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+
+      <option name="ABSTRACT_METHOD_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
+
+      <option name="INHERITED_METHOD_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
         </value>
       </option>
 
@@ -735,6 +758,14 @@
       </option>
 
       <option name="STATIC_FIELD_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+      <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a"/>
           <option name="BACKGROUND"/>

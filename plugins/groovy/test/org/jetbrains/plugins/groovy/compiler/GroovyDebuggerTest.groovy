@@ -45,13 +45,12 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import junit.framework.Test
-import junit.framework.TestSuite
 /**
  * @author peter
  */
@@ -182,6 +181,83 @@ println 2 //4
     }
   }
 
+  public void testCall() {
+    myFixture.addFileToProject 'B.groovy', '''class B {
+    def getFoo() {2}
+
+    def call(Object... args){
+        -1  // 4
+    }
+
+    public static void main(String[] args) {
+        new B().call()
+    }
+}'''
+    addBreakpoint 'B.groovy', 4
+    runDebugger 'B', {
+      waitForBreakpoint()
+      eval 'foo', '2'
+      eval 'getFoo()', '2'
+      eval 'this.getFoo()', '2'
+      eval 'this.foo', '2'
+      eval 'this.call(2)', '-1'
+      eval 'call(2)', '-1'
+      eval 'call(foo)', '-1'
+    }
+
+  }
+
+  public void testStaticContext() {
+    myFixture.addFileToProject 'B.groovy', '''
+class B {
+    public static void main(String[] args) {
+        def cl = { a ->
+          hashCode() //4
+        }
+        cl.delegate = "string"
+        cl(42) //7
+    }
+}'''
+    addBreakpoint 'B.groovy', 4
+    addBreakpoint 'B.groovy', 7
+    runDebugger 'B', {
+      waitForBreakpoint()
+      eval 'args.size()', '0'
+      eval 'cl.delegate.size()', '6'
+      resume()
+      waitForBreakpoint()
+      eval 'a', '42'
+      eval 'size()', '6'
+      eval 'delegate.size()', '6'
+      eval 'owner.name', 'B'
+      eval 'this.name', 'B'
+    }
+
+  }
+
+  public void "test closures in instance context with delegation"() {
+    myFixture.addFileToProject 'B.groovy', '''
+def cl = { a ->
+  hashCode() //2
+}
+cl.delegate = "string"
+cl(42) // 5
+
+def getFoo() { 13 }
+'''
+    addBreakpoint 'B.groovy', 2
+    runDebugger 'B', {
+      waitForBreakpoint()
+      eval 'a', '42'
+      eval 'size()', '6'
+      eval 'delegate.size()', '6'
+      eval 'owner.foo', '13'
+      eval 'this.foo', '13'
+      eval 'foo', '13'
+    }
+
+  }
+
   public void testClassOutOfSourceRoots() {
     def tempDir = new TempDirTestFixtureImpl()
     edt {
@@ -295,7 +371,7 @@ foo()
   }
 
   private def resume() {
-    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invokeAndWait(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
@@ -328,6 +404,11 @@ foo()
       void threadAction() {
         result = cl()
         semaphore.up()
+      }
+
+      @Override
+      protected void commandCancelled() {
+        println DebugUtil.currentStackTrace()
       }
     })
     def finished = semaphore.waitFor(20000)

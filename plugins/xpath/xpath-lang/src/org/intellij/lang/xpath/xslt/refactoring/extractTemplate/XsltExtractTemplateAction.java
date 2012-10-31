@@ -96,7 +96,9 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         if (start == null || end == null) {
             return false;
         }
-        if (!(start.getParent() instanceof XmlTag)) {
+
+        final PsiElement parent = start.getParent();
+        if (!(parent instanceof XmlTag || parent instanceof XmlComment)) {
             return false;
         }
 
@@ -114,7 +116,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                 return true;
             }
         } else {
-            final XmlTag startTag = PsiTreeUtil.getParentOfType(start, XmlTag.class);
+            final XmlElement startTag = PsiTreeUtil.getParentOfType(start, XmlTag.class, XmlComment.class);
             if (startTag == null) {
                 return false;
             }
@@ -122,7 +124,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                 return false;
             }
 
-            final XmlTag endTag = PsiTreeUtil.getParentOfType(end, XmlTag.class);
+            final XmlElement endTag = PsiTreeUtil.getParentOfType(end, XmlTag.class, XmlComment.class);
             if (endTag == null) {
                 return false;
             }

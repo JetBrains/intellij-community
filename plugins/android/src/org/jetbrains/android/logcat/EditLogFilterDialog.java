@@ -143,12 +143,12 @@ class EditLogFilterDialog extends DialogWrapper {
         continue;
       }
 
-      final String tag = matcher.group(1).trim();
+      final String tag = matcher.group(2).trim();
       if (tag != null && tag.length() > 0) {
         tagSet.add(tag);
       }
 
-      final String pid = matcher.group(2).trim();
+      final String pid = matcher.group(3).trim();
       if (pid != null && pid.length() > 0) {
         try {
           Integer.parseInt(pid);

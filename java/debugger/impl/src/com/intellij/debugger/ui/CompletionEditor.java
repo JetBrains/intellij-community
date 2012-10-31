@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,7 +26,7 @@ public abstract class CompletionEditor extends JComponent{
 
   public abstract TextWithImports getText();
 
-  public abstract void setContext(PsiElement context);
+  public abstract void setContext(@Nullable PsiElement context);
 
   public abstract PsiElement getContext();
 

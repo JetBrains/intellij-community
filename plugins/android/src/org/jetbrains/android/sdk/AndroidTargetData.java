@@ -123,7 +123,7 @@ public class AndroidTargetData {
   }
 
   @Nullable
-  public RenderServiceFactory getRenderServiceFactory(@NotNull Project project) throws RenderingException, IOException {
+  public synchronized RenderServiceFactory getRenderServiceFactory(@NotNull Project project) throws RenderingException, IOException {
     if (myRenderServiceFactory == null) {
       final AttributeDefinitionsImpl attrDefs = getAttrDefsImpl(project);
       if (attrDefs == null) {

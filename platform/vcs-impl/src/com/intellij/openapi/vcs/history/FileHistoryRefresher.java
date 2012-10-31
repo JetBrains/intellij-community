@@ -45,13 +45,13 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   }
 
   /**
-   * @param refresh if true, than this is a refresh. If false, the history is shown for the first time.
+   * @param canUseLastRevision
    */
   @Override
-  public void run(boolean isRefresh) {
+  public void run(boolean isRefresh, boolean canUseLastRevision) {
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
       myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
-    proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache);
+    proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
     myCanUseCache = false;
     myIsRefresh = isRefresh;
   }

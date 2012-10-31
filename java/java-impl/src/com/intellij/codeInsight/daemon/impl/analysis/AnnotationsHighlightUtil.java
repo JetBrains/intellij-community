@@ -70,6 +70,7 @@ public class AnnotationsHighlightUtil {
     }
     else {
       PsiType returnType = method.getReturnType();
+      assert returnType != null : method;
       PsiAnnotationMemberValue value = pair.getValue();
       HighlightInfo info = checkMemberValueType(value, returnType);
       if (info != null) return info;
@@ -84,11 +85,10 @@ public class AnnotationsHighlightUtil {
     PsiNameValuePair[] attributes = annotation.getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       if (attribute == pair) break;
-      if (Comparing.equal(attribute.getName(), pair.getName())) {
+      String name = pair.getName();
+      if (Comparing.equal(attribute.getName(), name)) {
         String description = JavaErrorMessages.message("annotation.duplicate.attribute",
-                                                       pair.getName() == null
-                                                       ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
-                                                       : pair.getName());
+                                                       name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, pair, description);
       }
     }
@@ -101,28 +101,35 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkMemberValueType(PsiAnnotationMemberValue value, PsiType expectedType) {
+  public static HighlightInfo checkMemberValueType(@Nullable PsiAnnotationMemberValue value, PsiType expectedType) {
     if (value == null) return null;
+
+    if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+      if (!(value instanceof PsiClassObjectAccessExpression)) {
+        String description = JavaErrorMessages.message("annotation.non.class.literal.attribute.value");
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
+      }
+    }
+
     if (value instanceof PsiAnnotation) {
       PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
       if (nameRef == null) return null;
+
       if (expectedType instanceof PsiClassType) {
         PsiClass aClass = ((PsiClassType)expectedType).resolve();
-        if (nameRef.isReferenceTo(aClass)) return null;
+        if (aClass != null && nameRef.isReferenceTo(aClass)) return null;
       }
 
       if (expectedType instanceof PsiArrayType) {
         PsiType componentType = ((PsiArrayType)expectedType).getComponentType();
         if (componentType instanceof PsiClassType) {
           PsiClass aClass = ((PsiClassType)componentType).resolve();
-          if (nameRef.isReferenceTo(aClass)) return null;
+          if (aClass != null && nameRef.isReferenceTo(aClass)) return null;
         }
       }
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                     formatReference(nameRef),
-                                                     HighlightUtil.formatType(expectedType));
-
+                                                     formatReference(nameRef), HighlightUtil.formatType(expectedType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
     }
     else if (value instanceof PsiArrayInitializerMemberValue) {
@@ -134,7 +141,8 @@ public class AnnotationsHighlightUtil {
       PsiExpression expr = (PsiExpression)value;
       PsiType type = expr.getType();
       if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
-          expectedType instanceof PsiArrayType && TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expr)) {
+          expectedType instanceof PsiArrayType &&
+          TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expr)) {
         return null;
       }
 
@@ -143,7 +151,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
     }
 
-    LOG.error("Unknown annotation member value: "+value);
+    LOG.error("Unknown annotation member value: " + value);
     return null;
   }
 
