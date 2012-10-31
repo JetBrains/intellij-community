@@ -283,7 +283,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           createSimplifyToAssignmentFix()
         );
       }
-      else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue) && !visitor.silenceConstantCondition(psiAnchor)) {
+      else if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
         final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
         String message = InspectionsBundle.message(underBinary ?
                                                    "dataflow.message.constant.condition.when.reached" :
@@ -292,6 +292,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
       reportedAnchors.add(psiAnchor);
     }
+  }
+
+  private boolean skipReportingConstantCondition(StandardInstructionVisitor visitor, PsiElement psiAnchor, boolean evaluatesToTrue) {
+    return DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertionEffectively(psiAnchor, evaluatesToTrue) ||
+           visitor.silenceConstantCondition(psiAnchor);
   }
 
   private static void reportNullableArguments(StandardDataFlowRunner runner, ProblemsHolder holder) {
@@ -339,11 +344,24 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private boolean shouldReportConditionAlwaysTrueOrFalse(PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (psiAnchor.getParent() instanceof PsiAssertStatement && DONT_REPORT_TRUE_ASSERT_STATEMENTS && evaluatesToTrue) {
-      return false;
+  private static boolean isAssertionEffectively(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    PsiElement parent = psiAnchor.getParent();
+    if (parent instanceof PsiAssertStatement) {
+      return evaluatesToTrue;
     }
-    return true;
+    if (parent instanceof PsiIfStatement && psiAnchor == ((PsiIfStatement)parent).getCondition()) {
+      PsiStatement thenBranch = ((PsiIfStatement)parent).getThenBranch();
+      if (thenBranch instanceof PsiThrowStatement) {
+        return !evaluatesToTrue;
+      }
+      if (thenBranch instanceof PsiBlockStatement) {
+        PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiThrowStatement) {
+          return !evaluatesToTrue;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isAtRHSOfBooleanAnd(PsiElement expr) {
