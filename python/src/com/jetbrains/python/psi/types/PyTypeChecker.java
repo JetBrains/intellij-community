@@ -24,6 +24,17 @@ public class PyTypeChecker {
     return match(expected, actual, context, null, true);
   }
 
+  /**
+   * Checks whether a type *actual* can be placed where *expected* is expected.
+   * For example int matches object, while str doesn't match int.
+   * Work for builtin types, classes, tuples etc.
+   *
+   * @param expected expected type
+   * @param actual type to be matched against expected
+   * @param context
+   * @param substitutions
+   * @return
+   */
   public static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                               @Nullable Map<PyGenericType, PyType> substitutions) {
     return match(expected, actual, context, substitutions, true);
