@@ -32,12 +32,13 @@ import java.util.List;
  * @author peter
  */
 public class MockVirtualFile extends VirtualFile {
+  private static final MockVirtualFileSystem ourFileSystem = new MockVirtualFileSystem();
+
   private VirtualFile myParent;
   private final String myName;
   private final boolean myDirectory;
   private final List<VirtualFile> myChildren = new SmartList<VirtualFile>();
   private String myText;
-  private final MockVirtualFileSystem myFileSystem = new MockVirtualFileSystem();
   private boolean myIsWritable = true;
   private long myModStamp = LocalTimeCounter.currentTime();
 
@@ -86,7 +87,7 @@ public class MockVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return myFileSystem;
+    return ourFileSystem;
   }
 
   @Override
