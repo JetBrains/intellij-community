@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project;
 public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   public ProblemsViewPanel(Project project) {
     super(project, null, false, true, null);
+    myTree.getEmptyText().setText("No compilation problems found");
   }
+
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
