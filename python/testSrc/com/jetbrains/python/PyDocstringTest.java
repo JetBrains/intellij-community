@@ -20,7 +20,7 @@ public class PyDocstringTest extends PyTestCase {
 
   public void testDots() {
     doTestLexer(" >>> grouped == { 2:2,\n" +
-                "  ...              3:3}", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQEQ", "Py:SPACE", "Py:LBRACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:COMMA", "Py:LINE_BREAK", "Py:DOT", "Py:DOT", "Py:DOT", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:STATEMENT_BREAK");
+                "  ...              3:3}", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQEQ", "Py:SPACE", "Py:LBRACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:COMMA", "Py:LINE_BREAK", "Py:DOT", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:STATEMENT_BREAK");
   }
 
   public void testFunctionName() throws Throwable {

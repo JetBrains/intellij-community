@@ -8,6 +8,27 @@ import com.jetbrains.python.lexer.PythonIndentingLexer;
  * User : ktisha
  */
 public class PyDocstringLexer extends PythonIndentingLexer {
+  @Override
+  public void advance() {
+    if (super.getTokenType() == PyTokenTypes.DOT) {
+      advanceBase();
+      if (super.getTokenType() == PyTokenTypes.DOT) {
+        advanceBase();
+        if (super.getTokenType() == PyTokenTypes.DOT) {
+          super.advance();
+        }
+      }
+    }
+    else if (super.getTokenType() == PyTokenTypes.GTGT) {
+      advanceBase();
+      if (super.getTokenType() == PyTokenTypes.GT) {
+        advanceBase();
+      }
+    }
+    else {
+      super.advance();
+    }
+  }
 
   static final TokenSet ourIgnoreSet = TokenSet.create(PyTokenTypes.DOT, PyTokenTypes.GTGT, PyTokenTypes.GT);
 
