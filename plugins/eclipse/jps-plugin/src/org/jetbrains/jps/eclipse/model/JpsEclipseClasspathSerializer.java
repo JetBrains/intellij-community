@@ -31,7 +31,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
                             JpsMacroExpander expander, List<String> paths) {
     try {
       final Document document = JDOMUtil.loadDocument(new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT));
-      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(baseModulePath, paths, new HashSet<String>());
+      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>());
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
     }
     catch (Exception e) {

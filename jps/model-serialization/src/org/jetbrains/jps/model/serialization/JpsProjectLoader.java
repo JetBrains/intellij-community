@@ -197,16 +197,29 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
     List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
-    final List<String> paths = new ArrayList<String>(); 
+    final List<String> paths = new ArrayList<String>();
+    final List<String> classpathDirs = new ArrayList<String>();
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
+      final File file = new File(path);
+      if (!file.exists()) {
+        LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+        continue;
+      }
+
+      final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
+      final Element moduleRoot = loadRootElement(file, expander);
+      final String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
+      if (classpathDir != null) {
+        classpathDirs.add(classpathDir);
+      }
       paths.add(path);
     }
     for (final String path : paths) {
       futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
         @Override
         public JpsModule call() throws Exception {
-          return loadModule(path, paths, projectSdkType);
+          return loadModule(path, classpathDirs, projectSdkType);
         }
       }));
     }
