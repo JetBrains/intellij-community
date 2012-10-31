@@ -518,6 +518,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       if (element instanceof PsiClass && element.getParent() != null && ((PsiClass)element).getContainingClass() == null && !(element instanceof PsiAnonymousClass)) break;
       element = element.getParent();
     }
+    if (element instanceof PsiCompiledElement) return null;
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length > 0) {
