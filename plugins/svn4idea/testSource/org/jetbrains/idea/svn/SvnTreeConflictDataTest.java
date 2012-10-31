@@ -309,7 +309,8 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
   }
 
-  @Test
+  // not a conflict in Subversion 1.7.7. "mine" file becomes added
+  /*@Test
   public void testDir2Dir_MINE_EDIT_THEIRS_DELETE() throws Exception {
     final String conflictFile = createConflict(TreeConflictData.DirToDir.MINE_EDIT_THEIRS_DELETE);
 
@@ -337,7 +338,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     final SVNConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
     Assert.assertEquals(SVNNodeKind.NONE, version.getKind());
-  }
+  }*/
 
   @Test
   public void testDir2Dir_MINE_DELETE_THEIRS_EDIT() throws Exception {

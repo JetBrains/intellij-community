@@ -142,15 +142,17 @@ public class SvnLockingTest extends TestCase {
         //
       }
     } finally {
+      myLocks.dispose();
       operation1.stop();
       operation2.stop();
+      Thread.sleep(100);
 
       thread1.interrupt();
       thread2.interrupt();
     }
   }
 
-  @Bombed(year=2020, month = 1,day = 1,description = "waiting for http://issues.tmatesoft.com/issue/SVNKIT-317")
+  @Bombed(year=2020, month = 1,day = 1,description = "not clear. by specification, read should not get access if write lock is taken; sometimes it is not the case.")
   public void testReadInBetweenWrites() throws Exception {
     final HangInWrite operation1 = new HangInWrite("one1");
     final HangInWrite operation2 = new HangInWrite("two1");
@@ -170,7 +172,7 @@ public class SvnLockingTest extends TestCase {
       Assert.assertFalse(read.isRunning());     // not clear why read is allowed to run when write is active, but I've not thought it over so much
 
       operation1.go();
-      waitForRunning(read);
+      waitForRunning(read, 20);
       Assert.assertTrue(read.isRunning());
 
       thread2.start();
@@ -180,9 +182,13 @@ public class SvnLockingTest extends TestCase {
       read.go();
       waitForRunning(operation2);
       Assert.assertTrue(operation2.isRunning());
+      // have some time after read to complete
+      Thread.sleep(100);
     } finally {
+      myLocks.dispose();
       operation1.stop();
       operation2.stop();
+      Thread.sleep(100);
 
       thread1.interrupt();
       thread2.interrupt();
@@ -191,10 +197,14 @@ public class SvnLockingTest extends TestCase {
   }
 
   private void waitForRunning(HangRun operation1) {
-    int cnt = 10;
+    waitForRunning(operation1, 1);
+  }
+
+  private void waitForRunning(HangRun operation1, int multiply) {
+    int cnt = 10 * multiply;
     while (cnt > 0) {
       try {
-        Thread.sleep(10);
+        Thread.sleep(10 * multiply);
       } catch (InterruptedException e) {
         //
       }
@@ -234,7 +244,6 @@ public class SvnLockingTest extends TestCase {
         myLocks.wrapRead(myWorkingCopyRoot, new Runnable() {
           @Override
           public void run() {
-            myIsRunning.set(true);
             System.out.println("inside read " + myName);
             final SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
             try {
@@ -244,6 +253,7 @@ public class SvnLockingTest extends TestCase {
               e.printStackTrace();
               throw new RuntimeException(e);
             }
+            myIsRunning.set(true);
             System.out.println("got status " + myName);
             if (myWaitFor) {
               mySemaphore.waitFor();
