@@ -127,7 +127,7 @@ public class UIUtil {
   }
 
   private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
-  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(false, 30);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
   public static GrayFilter getGrayFilter() {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
