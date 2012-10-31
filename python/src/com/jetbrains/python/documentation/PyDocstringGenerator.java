@@ -1,5 +1,7 @@
 package com.jetbrains.python.documentation;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtilBase;
@@ -21,6 +23,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -91,21 +94,57 @@ public class PyDocstringGenerator {
 
   @NotNull
   public Pair<String, Integer> addParamToDocstring() {
-    final PyStringLiteralExpression docstring = myDocStringOwner.getDocStringExpression();
+    String text = getDocstringText();
 
-    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
+    StructuredDocString structuredDocString = StructuredDocString.parse(text);
+
+    Collection<DocstringParam> paramsToAdd = getParamsToAdd(structuredDocString, myParams);
 
     String[] lines = LineTokenizer.tokenize(text, true);
     if (lines.length == 1) {
-      return createSingleLineReplacement();
+      return createSingleLineReplacement(paramsToAdd);
     }
     else {
-      return createMultiLineReplacement(lines);
+
+      return createMultiLineReplacement(lines, paramsToAdd);
     }
   }
 
+  public boolean haveParametersToAdd() {
+    Collection<DocstringParam> paramsToAdd = collectParametersToAdd();
+
+    return paramsToAdd.size() > 0;
+  }
+
+  private Collection<DocstringParam> collectParametersToAdd() {
+    String text = getDocstringText();
+
+    StructuredDocString structuredDocString = StructuredDocString.parse(text);
+
+    return getParamsToAdd(structuredDocString, myParams);
+  }
+
   @NotNull
-  private Pair<String, Integer> createMultiLineReplacement(String[] lines) {
+  private String getDocstringText() {
+    final PyStringLiteralExpression docstring = myDocStringOwner.getDocStringExpression();
+
+    return docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
+  }
+
+  public static Collection<DocstringParam> getParamsToAdd(StructuredDocString structuredDocString,
+                                                          List<DocstringParam> params) {
+    final List<String> existingParameters =
+      structuredDocString != null ? structuredDocString.getParameters() : Lists.<String>newArrayList();
+    return Collections2.filter(params, new Predicate<DocstringParam>() {
+      @Override
+      public boolean apply(DocstringParam input) {
+        return !existingParameters.contains(input.getName());
+      }
+    });
+  }
+
+  @NotNull
+  private Pair<String, Integer> createMultiLineReplacement(String[] lines, Collection<DocstringParam> paramsToAdd) {
     StringBuilder replacementText = new StringBuilder();
     int ind = lines.length - 1;
     for (int i = 0; i != lines.length - 1; ++i) {
@@ -116,7 +155,7 @@ public class PyDocstringGenerator {
       }
       replacementText.append(line);
     }
-    int offset = addParams(replacementText, false);
+    int offset = addParams(replacementText, false, paramsToAdd);
     for (int i = ind; i != lines.length; ++i) {
       String line = lines[i];
       replacementText.append(line);
@@ -129,7 +168,9 @@ public class PyDocstringGenerator {
     return line.contains(getPrefix());    //TODO: use regexp here?
   }
 
-  private int addParams(StringBuilder replacementText, boolean addWS) {
+  private int addParams(StringBuilder replacementText,
+                        boolean addWS, Collection<DocstringParam> paramsToAdd) {
+
     PsiWhiteSpace whitespace = null;
     if (myDocStringOwner instanceof PyFunction) {
       whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)myDocStringOwner).getStatementList(), PsiWhiteSpace.class);
@@ -147,10 +188,12 @@ public class PyDocstringGenerator {
     replacementText.append(ws);
 
     int i = 0;
-    if (myParams.size() == 0) {
+
+    if (paramsToAdd.size() == 0) {
       throw new IllegalArgumentException("At least one parameter should be added");
     }
-    for (DocstringParam param : myParams) {
+
+    for (DocstringParam param : paramsToAdd) {
       replacementText.append(getPrefix());
       replacementText.append(param.getKind());
       replacementText.append(" ");
@@ -164,7 +207,7 @@ public class PyDocstringGenerator {
       }
       myParamTypesOffset.put(param.getName(), Pair.create(startOffset, endOffset));
       i++;
-      if (i < myParams.size()) {
+      if (i < paramsToAdd.size()) {
         replacementText.append(ws);
       }
     }
@@ -180,9 +223,8 @@ public class PyDocstringGenerator {
   }
 
   @NotNull
-  private Pair<String, Integer> createSingleLineReplacement() {
-    final PyStringLiteralExpression docstring = myDocStringOwner.getDocStringExpression();
-    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
+  private Pair<String, Integer> createSingleLineReplacement(Collection<DocstringParam> paramsToAdd) {
+    String text = getDocstringText();
 
     StringBuilder replacementText = new StringBuilder();
     String closingQuotes;
@@ -194,7 +236,7 @@ public class PyDocstringGenerator {
       replacementText.append(text.substring(0, text.length()));
       closingQuotes = text.substring(text.length() - 1);
     }
-    final int offset = addParams(replacementText, true);
+    final int offset = addParams(replacementText, true, paramsToAdd);
     replacementText.append(closingQuotes);
     return new Pair<String, Integer>(replacementText.toString(), offset);
   }
@@ -235,25 +277,10 @@ public class PyDocstringGenerator {
 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
     if (myDocStringExpression != null) {
-      if (myParams.size() > 1) {
-        throw new IllegalArgumentException("If docstring exists only one param could be added at a time");
-      }
-      String kind = myParams.get(0).getKind();
-      String name = myParams.get(0).getName();
-
-      final String typePattern = kind + " " + name + ":";
-      final int index = myDocStringExpression.getText().indexOf(typePattern);
-      if (index == -1) {
-        PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
-        myDocStringExpression.replace(str);
-        myStartOffset = replacementToOffset.getSecond();
-        myEndOffset = myStartOffset;
-      }
-      else {
-        myStartOffset = index + typePattern.length() + 1;
-        myEndOffset = myDocStringExpression.getText().indexOf("\n", myStartOffset);
-        if (myEndOffset == -1) myEndOffset = myStartOffset;
-      }
+      PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
+      myDocStringExpression.replace(str);
+      myStartOffset = replacementToOffset.getSecond();
+      myEndOffset = myStartOffset;
       myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
       myDocStringExpression = myFunction.getDocStringExpression();
     }

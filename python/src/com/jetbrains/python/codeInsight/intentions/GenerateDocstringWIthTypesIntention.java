@@ -43,7 +43,7 @@ public class GenerateDocstringWIthTypesIntention implements IntentionAction {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
     PyFunction function = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-    if (function == null || function.getDocStringValue() != null) {
+    if (function == null) {
       return false;
     }
     PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
@@ -51,7 +51,28 @@ public class GenerateDocstringWIthTypesIntention implements IntentionAction {
       return false;
     }
 
+    if (function.getDocStringValue() != null) {
+      PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
+      addFunctionArguments(function, signature, docstringGenerator);
+
+
+      if (docstringGenerator.haveParametersToAdd()) {
+        myText = PyBundle.message("INTN.add.types.to.docstring");
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+
+
     return true;
+  }
+
+  private void addFunctionArguments(PyFunction function, PySignature signature, PyDocstringGenerator docstringGenerator) {
+    for (PySignature.NamedParameter param : signature.getArgs()) {
+      docstringGenerator.withParam("type", param.getName(), getShortestImportableName(function, param.getType()));
+    }
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -70,9 +91,7 @@ public class GenerateDocstringWIthTypesIntention implements IntentionAction {
       return;
     }
 
-    for (PySignature.NamedParameter param : signature.getArgs()) {
-      docstringGenerator.withParam("type", param.getName(), getShortestImportableName(function, param.getType()));
-    }
+    addFunctionArguments(function, signature, docstringGenerator);
 
     docstringGenerator.build();
   }

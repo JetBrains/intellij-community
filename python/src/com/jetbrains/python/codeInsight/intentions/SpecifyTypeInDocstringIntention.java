@@ -22,6 +22,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
@@ -32,11 +33,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p/>
  * Helps to specify type
  */
 public class SpecifyTypeInDocstringIntention implements IntentionAction {
   private String myText = PyBundle.message("INTN.specify.type");
+
   public SpecifyTypeInDocstringIntention() {
   }
 
@@ -100,16 +102,19 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) reference = qualifier.getReference();
       }
-      if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
+      if (pyFunction != null &&
+          (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
         final String docstring = pyFunction.getDocStringValue();
         if (docstring != null) {
           String name = problemElement.getName();
           if (problemElement instanceof PyQualifiedExpression) {
             final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-            if (qualifier != null)
+            if (qualifier != null) {
               name = qualifier.getText();
+            }
           }
-          if (docstring.contains("type " + name + ":")) return false;
+          StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+          return structuredDocString.getParamType(name) == null;
         }
         return true;
       }
