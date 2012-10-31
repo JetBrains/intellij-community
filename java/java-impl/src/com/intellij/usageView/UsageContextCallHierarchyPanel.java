@@ -25,11 +25,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +90,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
       myBrowser = null;
     }
     if (element != null) {
-      myBrowser = createPanel(element);
+      myBrowser = createCallHierarchyPanel(element);
       if (myBrowser == null) {
         element = null;
       }
@@ -111,19 +110,6 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
       add(panel, BorderLayout.CENTER);
       revalidate();
     }
-  }
-
-  @Nullable
-  private static HierarchyBrowser createPanel(@NotNull PsiElement element) {
-    PsiElement resolve;
-
-    HierarchyBrowser result = null;
-    if (element instanceof PsiReference && (resolve = ((PsiReference)element).resolve()) != null) {
-      result = createCallHierarchyPanel(resolve);
-    }
-    if (result == null) result = createCallHierarchyPanel(element);
-
-    return result;
   }
 
   @Nullable
