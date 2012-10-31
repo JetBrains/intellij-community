@@ -54,16 +54,16 @@ public class PyDocstringGenerator {
     myProject = myFunction.getProject();
   }
 
-  public PyDocstringGenerator withParam(String kind, String name) {
+  public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
     return withParamTypedByName(kind, name, null);
   }
 
-  public PyDocstringGenerator withParamTypedByQualifiedName(String kind, String name, @NotNull String type, @NotNull PsiElement anchor) {
-    String typeName = PySignatureUtil.getShortestImportableName(anchor, type);
+  public PyDocstringGenerator withParamTypedByQualifiedName(String kind, String name, @Nullable String type, @NotNull PsiElement anchor) {
+    String typeName = type != null ? PySignatureUtil.getShortestImportableName(anchor, type) : null;
     return withParamTypedByName(kind, name, typeName);
   }
 
-  private PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
+  public PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
     myParams.add(new DocstringParam(kind, name, type));
     return this;
   }
