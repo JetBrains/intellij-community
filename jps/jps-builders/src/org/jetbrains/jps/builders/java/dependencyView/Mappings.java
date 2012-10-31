@@ -1190,7 +1190,7 @@ public class Mappings {
       for (final Pair<MethodRepr, Difference> mr : changed) {
         final MethodRepr m = mr.first;
         final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
-        final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
+        final boolean throwsChanged = !d.exceptions().unchanged();
 
         debug("Method: ", m.name);
 
