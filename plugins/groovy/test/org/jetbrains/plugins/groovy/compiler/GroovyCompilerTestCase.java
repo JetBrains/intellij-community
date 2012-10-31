@@ -96,6 +96,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
           CompilerTestUtil.enableExternalCompiler(getProject());
           ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
         }
+        else {
+          CompilerTestUtil.disableExternalCompiler(getProject());
+        }
       }
     }.execute();
   }

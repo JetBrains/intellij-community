@@ -78,6 +78,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (useJps()) {
       CompilerTestUtil.enableExternalCompiler(myProject);
     }
+    else {
+      CompilerTestUtil.disableExternalCompiler(myProject);
+    }
   }
 
   @Override
