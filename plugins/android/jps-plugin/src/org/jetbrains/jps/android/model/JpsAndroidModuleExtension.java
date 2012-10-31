@@ -60,8 +60,6 @@ public interface JpsAndroidModuleExtension extends JpsElement {
 
   String getApkRelativePath();
 
-  String getBaseModulePath();
-
   String getCustomDebugKeyStorePath();
 
   List<AndroidNativeLibData> getAdditionalNativeLibs();

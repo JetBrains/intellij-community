@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -575,8 +576,8 @@ public class AndroidJpsUtil {
       return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
     }
 
-    final String moduleDirPath = extension.getBaseModulePath();
-    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + apkRelativePath) : null;
+    File moduleBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    return moduleBaseDirectory != null ? FileUtil.toSystemDependentName(moduleBaseDirectory.getAbsolutePath() + apkRelativePath) : null;
   }
 
   @NotNull
