@@ -63,6 +63,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -533,7 +534,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   static JComponent createComponentForTitle(@Nullable String title, @NotNull final LineSeparator separator, boolean left) {
     JPanel bottomPanel = new JPanel(new BorderLayout());
     JLabel sepLabel = new JLabel(separator.name());
-    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? Color.RED : Color.BLUE);
+    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? Color.RED : PlatformColors.BLUE);
     bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
 
     JPanel panel = new JPanel(new BorderLayout());

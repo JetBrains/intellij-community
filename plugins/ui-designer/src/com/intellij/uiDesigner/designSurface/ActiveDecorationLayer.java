@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static class RectangleFeedbackPainter implements FeedbackPainter {
 
     public void paintFeedback(Graphics2D g2d, Rectangle rc) {
-      g2d.setColor(Color.BLUE);
+      g2d.setColor(PlatformColors.BLUE);
       g2d.setStroke(new BasicStroke(2.5f));
       // give space for stroke to be painted
       g2d.drawRect(rc.x+1, rc.y+1, rc.x+rc.width-2, rc.y+rc.height-2);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.util.ui.PlatformColors;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -238,7 +239,7 @@ public final class Painter {
                                               boolean focused) {
     if (component.isSelected()) {
       if (focused) {
-        g.setColor(Color.BLUE);
+        g.setColor(PlatformColors.BLUE);
       }
       else {
         g.setColor(Color.GRAY);
@@ -454,7 +455,7 @@ public final class Painter {
       }
       final Rectangle2D stringBounds = g.getFontMetrics().getStringBounds(tagBuilder.toString(), g);
       Graphics2D g2d = (Graphics2D)g;
-      g2d.setColor(Color.BLUE);
+      g2d.setColor(PlatformColors.BLUE);
       g2d.fillRect(0, 0, (int)stringBounds.getWidth(), (int)stringBounds.getHeight());
       g2d.setColor(Color.WHITE);
       g.drawString(tagBuilder.toString(), 0, g.getFontMetrics().getAscent());
