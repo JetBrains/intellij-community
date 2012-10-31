@@ -285,8 +285,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             final PsiSubstitutor eSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY);
             final PsiSubstitutor cSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY);
             if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
-              final PsiType returnType = cSubstitutor.substitute(method.getReturnType());
-              if (PsiUtil.captureToplevelWildcards(returnType, method).equals(returnType)) {
+              final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
+              if (!PsiUtil.captureToplevelWildcards(returnType, existingMethod).equals(returnType)) {
                 conflicts.remove(existing);
               } else {
                 conflicts.remove(i);
