@@ -84,17 +84,20 @@ public class PyDocstringInspection extends PyInspection {
           if (n != null) marker = n.getPsi();
         }
         else if (node instanceof PyFile) {
-          TextRange tr = new TextRange(0,0);
+          TextRange tr = new TextRange(0, 0);
           ProblemsHolder holder = getHolder();
-          if (holder != null)
+          if (holder != null) {
             holder.registerProblem(node, tr, PyBundle.message("INSP.no.docstring"));
+          }
           return;
         }
         if (marker == null) marker = node;
-        if (node instanceof PyFunction || (node instanceof PyClass && ((PyClass)node).findInitOrNew(false) != null))
+        if (node instanceof PyFunction || (node instanceof PyClass && ((PyClass)node).findInitOrNew(false) != null)) {
           registerProblem(marker, PyBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
-        else
+        }
+        else {
           registerProblem(marker, PyBundle.message("INSP.no.docstring"));
+        }
       }
       else {
         boolean registered = checkParameters(node, docStringExpression);
@@ -105,24 +108,23 @@ public class PyDocstringInspection extends PyInspection {
     }
 
     private boolean checkParameters(PyDocStringOwner pyDocStringOwner, PyStringLiteralExpression node) {
-      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(node.getProject());
-      List<String> docstringParams;
       final String text = node.getText();
       if (text == null) {
         return false;
       }
-      if (documentationSettings.isEpydocFormat(node.getContainingFile()))
-        docstringParams = new EpydocString(text).getParameters();
-      else if (documentationSettings.isReSTFormat(node.getContainingFile()))
-        docstringParams = new SphinxDocString(text).getParameters();
-      else
+
+      List<String> docstringParams = getDocstringParams(node, text);
+
+      if (docstringParams == null) {
         return false;
+      }
 
       if (pyDocStringOwner instanceof PyFunction) {
         PyDecoratorList decoratorList = ((PyFunction)pyDocStringOwner).getDecoratorList();
         boolean isClassMethod = false;
-        if (decoratorList != null)
+        if (decoratorList != null) {
           isClassMethod = decoratorList.findDecorator(PyNames.CLASSMETHOD) != null;
+        }
         PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
         List<PyParameter> missingParams = getMissingParams(realParams, docstringParams, isClassMethod);
@@ -138,11 +140,12 @@ public class PyDocstringInspection extends PyInspection {
         if (!unexpectedParams.isEmpty()) {
           for (String param : unexpectedParams) {
             ProblemsHolder holder = getHolder();
-            int index = text.indexOf("param " + param + ":") +6;
-            if (holder != null)
-              holder.registerProblem(node, TextRange.create(index, index+param.length()),
-                                   "Unexpected parameter " + param + " in docstring",
-                                    new DocstringQuickFix(null, param));
+            int index = text.indexOf("param " + param + ":") + 6;
+            if (holder != null) {
+              holder.registerProblem(node, TextRange.create(index, index + param.length()),
+                                     "Unexpected parameter " + param + " in docstring",
+                                     new DocstringQuickFix(null, param));
+            }
           }
           registered = true;
         }
@@ -165,16 +168,31 @@ public class PyDocstringInspection extends PyInspection {
       boolean hasMissing = false;
       for (PyParameter p : realParams) {
         if ((!isClassMethod && !p.getText().equals(PyNames.CANONICAL_SELF)) ||
-              (isClassMethod && !p.getText().equals("cls"))) {
+            (isClassMethod && !p.getText().equals("cls"))) {
           if (!docstringParams.contains(p.getName())) {
             hasMissing = true;
             missing.add(p);
           }
         }
       }
-      return hasMissing? missing : Collections.<PyParameter>emptyList();
+      return hasMissing ? missing : Collections.<PyParameter>emptyList();
     }
   }
+
+  private static List<String> getDocstringParams(PyStringLiteralExpression node,
+                                                 String text) {
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(node.getProject());
+    List<String> docstringParams = null;
+
+    if (documentationSettings.isEpydocFormat(node.getContainingFile())) {
+      docstringParams = new EpydocString(text).getParameters();
+    }
+    else if (documentationSettings.isReSTFormat(node.getContainingFile())) {
+      docstringParams = new SphinxDocString(text).getParameters();
+    }
+    return docstringParams;
+  }
+
   @Override
   public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
     List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
