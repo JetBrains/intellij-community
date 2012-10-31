@@ -28,7 +28,7 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 10/30/12 12:10 PM
  */
-public class ArrangementEditorTreeNode extends ArrangementTreeNode implements ArrangementRepresentationAwareNode {
+public class ArrangementEditorTreeNode /*extends ArrangementTreeNode implements ArrangementRepresentationAwareNode*/ {
 
   private static final int STEPS_NUMBER = 10;
 
@@ -41,7 +41,7 @@ public class ArrangementEditorTreeNode extends ArrangementTreeNode implements Ar
   private int     myStep      = 1;
 
   public ArrangementEditorTreeNode(@NotNull ArrangementRuleEditor editor, @NotNull DefaultTreeModel treeModel, int availableWidth) {
-    super(null);
+    //super(null);
     myTreeModel = treeModel;
     myAvailableWidth = availableWidth;
     editor.applyAvailableWidth(availableWidth - ArrangementConstants.HORIZONTAL_PADDING);
@@ -99,11 +99,11 @@ public class ArrangementEditorTreeNode extends ArrangementTreeNode implements Ar
   
   public void changeState() {
     myStep++;
-    myTreeModel.nodeChanged(this);
+    //myTreeModel.nodeChanged(this);
   }
 
   @NotNull
-  @Override
+  //@Override
   public JComponent getRenderer() {
     return myRenderer;
   }

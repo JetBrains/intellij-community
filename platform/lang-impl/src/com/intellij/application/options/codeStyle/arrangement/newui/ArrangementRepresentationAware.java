@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.newui;
+
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 8/27/12 10:30 AM
+ * @since 10/30/12 6:57 PM
  */
-public enum ArrangementOperator {
-  AND, OR
+public interface ArrangementRepresentationAware {
+
+  @NotNull
+  JComponent getRenderer();
 }

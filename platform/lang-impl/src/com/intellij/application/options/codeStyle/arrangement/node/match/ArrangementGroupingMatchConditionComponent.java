@@ -20,7 +20,6 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDis
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ import java.awt.event.MouseEvent;
  * @author Denis Zhdanov
  * @since 9/12/12 5:39 PM
  */
-public class ArrangementGroupingMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
+public class ArrangementGroupingMatchConditionComponent extends JPanel implements ArrangementMatchConditionComponent {
 
   private static final int TOP_INSET = 3;
 
@@ -43,8 +42,8 @@ public class ArrangementGroupingMatchNodeComponent extends JPanel implements Arr
   @Nullable private Rectangle myScreenBounds;
   @NotNull private  Dimension myPreferredSize;
 
-  public ArrangementGroupingMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                               @NotNull ArrangementAtomMatchCondition condition)
+  public ArrangementGroupingMatchConditionComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                                    @NotNull ArrangementAtomMatchCondition condition)
   {
     myCondition = condition;
     String text = StringUtil.capitalize(StringUtil.pluralize(manager.getDisplayValue(myCondition.getValue())));
@@ -64,12 +63,6 @@ public class ArrangementGroupingMatchNodeComponent extends JPanel implements Arr
   @Override
   public JComponent getUiComponent() {
     return this;
-  }
-
-  @Nullable
-  @Override
-  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
-    return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
   }
 
   @Nullable

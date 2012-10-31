@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +35,14 @@ import java.awt.event.MouseEvent;
  * @author Denis Zhdanov
  * @since 10/29/12 11:53 AM
  */
-public class ArrangementEditIconMatchNodeComponent extends JPanel implements ArrangementMatchNodeComponent {
+public class ArrangementEditIconMatchConditionComponent extends JPanel implements ArrangementMatchConditionComponent {
 
-  @NotNull private final ArrangementMatchNodeComponent myDelegate;
-  @NotNull private final Icon                          myActiveEditIcon;
-  @NotNull private final Icon                          myInactiveEditIcon;
-  @NotNull private final ActionButton                  myEditButton;
+  @NotNull private final ArrangementMatchConditionComponent myDelegate;
+  @NotNull private final Icon                               myActiveEditIcon;
+  @NotNull private final Icon                               myInactiveEditIcon;
+  @NotNull private final ActionButton                       myEditButton;
 
-  public ArrangementEditIconMatchNodeComponent(@NotNull ArrangementMatchNodeComponent delegate) {
+  public ArrangementEditIconMatchConditionComponent(@NotNull ArrangementMatchConditionComponent delegate) {
     myDelegate = delegate;
 
     setLayout(null);
@@ -91,12 +90,6 @@ public class ArrangementEditIconMatchNodeComponent extends JPanel implements Arr
   @NotNull
   public JComponent getUiComponent() {
     return this;
-  }
-
-  @Override
-  @Nullable
-  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
-    return myDelegate.getNodeComponentAt(point);
   }
 
   @Override

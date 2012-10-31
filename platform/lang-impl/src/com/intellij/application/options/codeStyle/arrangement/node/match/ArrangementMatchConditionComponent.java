@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,25 +24,25 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
- * // TODO den add doc
+ * Component which manages {@link ArrangementMatchCondition match condition} UI representation.
  * 
  * @author Denis Zhdanov
  * @since 8/10/12 11:22 AM
  */
-public interface ArrangementMatchNodeComponent {
+public interface ArrangementMatchConditionComponent {
   
   @NotNull
   ArrangementMatchCondition getMatchCondition();
-  
-  // TODO den add doc
+
+  /**
+   * @return    UI component for the {@link #getMatchCondition() target match condition}
+   */
   @NotNull
   JComponent getUiComponent();
 
-  // TODO den add doc
-  @Nullable
-  ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point);
-  
-  // TODO den add doc
+  /**
+   * @return    screen bounds for the {@link #getUiComponent() target UI component} (if known)
+   */
   @Nullable
   Rectangle getScreenBounds();
   
@@ -52,7 +51,7 @@ public interface ArrangementMatchNodeComponent {
   /**
    * Notifies current component that canvas (container where current component is painted) width has been changed.
    * <p/>
-   * The intended usage is to allow component to draw something up to/at the right screen size.
+   * The intended usage is to allow component to draw something up to/at the right edge.
    * 
    * @param width  new canvas width
    * @return       <code>true</code> if current component's representation has been changed;

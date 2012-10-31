@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
@@ -68,7 +67,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final Language                         myLanguage;
   @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
-  @NotNull private final ArrangementRuleTree              myRuleTree;
+  @NotNull private final ArrangementRuleTree              myRuleTree = null;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
@@ -106,8 +105,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
 
-    myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, colorsProvider, mySettingsAware);
-    final Tree treeComponent = myRuleTree.getTreeComponent();
+    //myRuleTree = new ArrangementRuleTree(getSettings(settings), groupingRules, displayManager, colorsProvider, mySettingsAware);
+    //final Tree treeComponent = myRuleTree.getTreeComponent();
+    final Tree treeComponent = null;
     actionToolbar.setTargetComponent(treeComponent);
     JBScrollPane scrollPane = new JBScrollPane(treeComponent);
     myContent.add(scrollPane, new GridBag().weightx(1).weighty(1).fillCell().coverLine());
@@ -138,7 +138,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
         if (myWidth != visibleRect.width) {
           myWidth = visibleRect.width;
-          myRuleTree.updateCanvasWidth(myWidth);
+          //myRuleTree.updateCanvasWidth(myWidth);
         }
       }
     });
@@ -178,20 +178,20 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
         else {
           myYToRestore = -1;
-          List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
-          if (models.size() == 1) {
-            Rectangle bounds = treeComponent.getPathBounds(new TreePath(models.get(0).getBottomMost().getPath()));
-            if (bounds != null) {
-              myYToRestore = bounds.y;
-              Rectangle viewRect = viewport.getViewRect();
-              if (bounds.y < viewRect.y) {
-                scroll(bounds.y);
-              }
-              else if (bounds.y + bounds.height >= viewRect.y + viewRect.height) {
-                scroll(bounds.y + bounds.height - viewRect.height);
-              }
-            }
-          }
+          //List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
+          //if (models.size() == 1) {
+          //  Rectangle bounds = treeComponent.getPathBounds(new TreePath(models.get(0).getBottomMost().getPath()));
+          //  if (bounds != null) {
+          //    myYToRestore = bounds.y;
+          //    Rectangle viewRect = viewport.getViewRect();
+          //    if (bounds.y < viewRect.y) {
+          //      scroll(bounds.y);
+          //    }
+          //    else if (bounds.y + bounds.height >= viewRect.y + viewRect.height) {
+          //      scroll(bounds.y + bounds.height - viewRect.height);
+          //    }
+          //  }
+          //}
         }
       }
 
@@ -217,7 +217,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       @Override
       public void run() {
         treeComponent.requestFocus();
-        ArrangementRuleEditingModel model = myRuleTree.newModel();
+        //ArrangementRuleEditingModel model = myRuleTree.newModel();
         //ruleEditor.updateState(model, scrollPane.getVisibleRect().width);
         resetEditor.set(Boolean.FALSE);
         try {
@@ -232,10 +232,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       @Override
       public void run() {
         treeComponent.requestFocus();
-        List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
-        for (ArrangementRuleEditingModelImpl model : models) {
-          model.destroy();
-        }
+        //List<ArrangementRuleEditingModelImpl> models = myRuleTree.getActiveModels();
+        //for (ArrangementRuleEditingModelImpl model : models) {
+        //  model.destroy();
+        //}
       }
     };
     final NotNullFunction<Boolean, Boolean> updateMoveFunction = new NotNullFunction<Boolean, Boolean>() {
@@ -320,17 +320,18 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public boolean isModified(@NotNull CodeStyleSettings settings) {
-    return !Comparing.equal(getSettings(settings), myRuleTree.getSettings());
+    //return !Comparing.equal(getSettings(settings), myRuleTree.getSettings());
+    return false;
   }
 
   @Override
   public void apply(@NotNull CodeStyleSettings settings) {
-    settings.getCommonSettings(myLanguage).setArrangementSettings(myRuleTree.getSettings());
+    //settings.getCommonSettings(myLanguage).setArrangementSettings(myRuleTree.getSettings());
   }
 
   @Override
   protected void resetImpl(@NotNull CodeStyleSettings settings) {
-    myRuleTree.setSettings(getSettings(settings));
+    //myRuleTree.setSettings(getSettings(settings));
   }
 
   @Override
@@ -346,6 +347,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @Override
   public void dispose() {
     super.dispose();
-    myRuleTree.disposeUI();
+    //myRuleTree.disposeUI();
   }
 }

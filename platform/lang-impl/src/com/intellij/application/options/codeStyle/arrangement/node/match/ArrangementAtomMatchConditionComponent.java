@@ -23,7 +23,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +33,16 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
- * {@link ArrangementMatchNodeComponent} for {@link ArrangementAtomMatchCondition} representation.
+ * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeComponent {
+public class ArrangementAtomMatchConditionComponent implements ArrangementMatchConditionComponent {
 
-  public static final int VERTICAL_PADDING   = 4;
+  public static final int VERTICAL_PADDING = 4;
 
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
@@ -76,14 +76,14 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
     }
   };
-  
-  @NotNull private final String myText;
+
+  @NotNull private final String                        myText;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
   @NotNull private final RoundedLineBorder             myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;
 
-  @Nullable private final ActionButton myCloseButton;
-  @Nullable private final Runnable     myCloseCallback;
+  @Nullable private final ActionButton                            myCloseButton;
+  @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
@@ -91,13 +91,12 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   @Nullable private Rectangle myScreenBounds;
 
   private boolean myEnabled = true;
-  private boolean myInverted;
   private boolean myCloseButtonHovered;
 
-  public ArrangementAtomMatchNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                           @NotNull ArrangementColorsProvider colorsProvider,
-                                           @NotNull ArrangementAtomMatchCondition condition,
-                                           @Nullable Runnable closeCallback)
+  public ArrangementAtomMatchConditionComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                                @NotNull ArrangementColorsProvider colorsProvider,
+                                                @NotNull ArrangementAtomMatchCondition condition,
+                                                @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
@@ -117,7 +116,7 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
       }
     };
     
-    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(0, 0, 0, 0);
 
     JPanel insetsPanel = new JPanel(new GridBagLayout());
     insetsPanel.add(myTextControl, constraints);
@@ -140,8 +139,8 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
         super.paint(g);
       }
     };
-    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally());
-    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
+    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST));
+    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).weightx(1).insets(VERTICAL_PADDING, 0, 0, 0));
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
@@ -180,11 +179,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     return false;
   }
 
-  @Override
-  public ArrangementMatchNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
-    return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
-  }
-
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
    *
@@ -212,17 +206,6 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
     myEnabled = enabled;
   }
 
-  /**
-   * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'inverted' state.
-   * <p/>
-   * For example, target rule might look like 'public' and inverting it produces 'not public'.
-   *
-   * @param inverted  flag that indicates if current component should be drawn as 'inverted'
-   */
-  public void setInverted(boolean inverted) {
-    myInverted = inverted;
-  }
-
   @Nullable
   @Override
   public Rectangle handleMouseMove(@NotNull MouseEvent event) {
@@ -237,8 +220,8 @@ public class ArrangementAtomMatchNodeComponent implements ArrangementMatchNodeCo
   @Override
   public void handleMouseClick(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenLocation();
-    if (buttonBounds != null && buttonBounds.contains(event.getLocationOnScreen()) && myCloseCallback != null) {
-      myCloseCallback.run();
+    if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
+      myCloseCallback.consume(getMatchCondition());
     }
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -72,14 +71,13 @@ public class DefaultArrangementEntryMatcherSerializer {
     }
   };
 
-  private static final Logger      LOG                 = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
-  private static final Set<String> COMPOSITE_OPERATORS = new HashSet<String>();
+  private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
+
+  @NotNull private static final String COMPOSITE_CONDITION_NAME = "AND";
+  
   private static final Set<String> ATOM_SETTINGS_TYPES = new HashSet<String>();
 
   static {
-    for (ArrangementOperator operator : ArrangementOperator.values()) {
-      COMPOSITE_OPERATORS.add(operator.toString());
-    }
     for (ArrangementSettingType type : ArrangementSettingType.values()) {
       ATOM_SETTINGS_TYPES.add(type.toString());
     }
@@ -115,7 +113,7 @@ public class DefaultArrangementEntryMatcherSerializer {
   @Nullable
   private static ArrangementMatchCondition deserializeCondition(@NotNull Element matcherElement) {
     String name = matcherElement.getName();
-    if (!COMPOSITE_OPERATORS.contains(name)) {
+    if (!COMPOSITE_CONDITION_NAME.equals(name)) {
       if (ATOM_SETTINGS_TYPES.contains(name)) {
         return deserializeAtomCondition(matcherElement);
       }
@@ -123,13 +121,13 @@ public class DefaultArrangementEntryMatcherSerializer {
         LOG.warn(String.format(
           "Can't deserialize an arrangement entry matcher from matchElement with name '%s'. Reason: only the following elements"
           + "are supported: %s and %s",
-          name, COMPOSITE_OPERATORS, ATOM_SETTINGS_TYPES
+          name, COMPOSITE_CONDITION_NAME, ATOM_SETTINGS_TYPES
         ));
         return null;
       }
     }
     else {
-      ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.valueOf(name));
+      ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
       for (Object child : matcherElement.getChildren()) {
         ArrangementMatchCondition deserialised = deserializeCondition((Element)child);
         if (deserialised != null) {
@@ -175,7 +173,7 @@ public class DefaultArrangementEntryMatcherSerializer {
 
     @Override
     public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-      Element composite = new Element(condition.getOperator().toString());
+      Element composite = new Element(COMPOSITE_CONDITION_NAME);
       if (result == null) {
         result = composite;
       }

@@ -16,7 +16,6 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -93,7 +92,6 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     @NotNull private final Set<ArrangementEntryType>     myTypes     = EnumSet.noneOf(ArrangementEntryType.class);
     @NotNull private final Set<ArrangementModifier>      myModifiers = EnumSet.noneOf(ArrangementModifier.class);
 
-    private ArrangementOperator myOperator;
     private boolean             nestedComposite;
 
     @Override
@@ -110,7 +108,6 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     @Override
     public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
       if (!nestedComposite) {
-        myOperator = condition.getOperator();
         nestedComposite = true;
         for (ArrangementMatchCondition c : condition.getOperands()) {
           c.invite(this);
@@ -126,7 +123,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     public ArrangementEntryMatcher getMatcher() {
       ByTypeArrangementEntryMatcher byType = myTypes.isEmpty() ? null : new ByTypeArrangementEntryMatcher(myTypes);
       ByModifierArrangementEntryMatcher byModifiers = myModifiers.isEmpty() ? null : new ByModifierArrangementEntryMatcher(myModifiers);
-      if (byType == null && byModifiers == null && (myOperator == null || myMatchers.isEmpty())) {
+      if (byType == null && byModifiers == null && myMatchers.isEmpty()) {
         return ArrangementEntryMatcher.EMPTY;
       }
       if (myMatchers.isEmpty() && (byType == null ^ byModifiers == null)) {
@@ -136,7 +133,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
         return myMatchers.get(0);
       }
       else {
-        CompositeArrangementEntryMatcher result = new CompositeArrangementEntryMatcher(myOperator);
+        CompositeArrangementEntryMatcher result = new CompositeArrangementEntryMatcher();
         for (ArrangementEntryMatcher matcher : myMatchers) {
           result.addMatcher(matcher);
         }

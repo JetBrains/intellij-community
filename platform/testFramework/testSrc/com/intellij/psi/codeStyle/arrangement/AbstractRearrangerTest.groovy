@@ -75,7 +75,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
       condition = atom(conditions[0])
     }
     else {
-      condition = ArrangementUtil.and(conditions.collect { atom(it) } as ArrangementMatchCondition[])
+      condition = ArrangementUtil.combine(conditions.collect { atom(it) } as ArrangementMatchCondition[])
     }
     
     new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition))
