@@ -23,11 +23,11 @@ public class JpsFacetSerializer {
   @NonNls public static final String CONFIGURATION_TAG = "configuration";
   @NonNls public static final String NAME_ATTRIBUTE = "name";
 
-  public static void loadFacets(JpsModule module, @Nullable Element facetManagerElement, final String baseModulePath) {
+  public static void loadFacets(JpsModule module, @Nullable Element facetManagerElement) {
     if (facetManagerElement == null) return;
     final FacetManagerState state = XmlSerializer.deserialize(facetManagerElement, FacetManagerState.class);
     if (state != null) {
-      addFacets(module, state.getFacets(), null, baseModulePath);
+      addFacets(module, state.getFacets(), null);
     }
   }
 
@@ -43,20 +43,19 @@ public class JpsFacetSerializer {
     XmlSerializer.serializeInto(managerState, facetManagerElement, new SkipDefaultValuesSerializationFilters());
   }
 
-  private static void addFacets(JpsModule module, List<FacetState> facets, @Nullable final JpsElement parentFacet,
-                                final String baseModulePath) {
+  private static void addFacets(JpsModule module, List<FacetState> facets, @Nullable final JpsElement parentFacet) {
     for (FacetState facetState : facets) {
       final JpsFacetConfigurationSerializer<?> serializer = getModuleExtensionSerializer(facetState.getFacetType());
       if (serializer != null) {
-        final JpsElement element = addExtension(module, serializer, facetState, parentFacet, baseModulePath);
-        addFacets(module, facetState.getSubFacets(), element, baseModulePath);
+        final JpsElement element = addExtension(module, serializer, facetState, parentFacet);
+        addFacets(module, facetState.getSubFacets(), element);
       }
     }
   }
 
   private static <E extends JpsElement> E addExtension(JpsModule module, JpsFacetConfigurationSerializer<E> serializer, FacetState facet,
-                                                       JpsElement parentFacet, final String baseModulePath) {
-    return serializer.loadExtension(facet.getConfiguration(), facet.getName(), module, baseModulePath, parentFacet);
+                                                       JpsElement parentFacet) {
+    return serializer.loadExtension(facet.getConfiguration(), facet.getName(), module, parentFacet);
   }
 
   @Nullable

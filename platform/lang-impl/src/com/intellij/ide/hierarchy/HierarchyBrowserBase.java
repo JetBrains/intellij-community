@@ -97,10 +97,15 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
-    if (myContent != null) { // sometimes there is no content to close, e.g. in usage view preview
-      actionGroup.add(PinToolwindowTabAction.getPinAction());
-      actionGroup.add(new CloseAction());
-    }
+    actionGroup.add(new PinToolwindowTabAction(){
+      @Override
+      public void update(AnActionEvent event) {
+        super.update(event);
+        // sometimes there is no content to close, e.g. in usage view preview
+        event.getPresentation().setVisible(myContent != null);
+      }
+    });
+    actionGroup.add(new CloseAction());
     if (helpID != null) {
       actionGroup.add(new ContextHelpAction(helpID));
     }
@@ -162,7 +167,8 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     return list.toArray(new HierarchyNodeDescriptor[list.size()]);
   }
 
-  private PsiElement[] getSelectedElements() {
+  @NotNull
+  protected PsiElement[] getSelectedElements() {
     HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
     ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
     for (HierarchyNodeDescriptor descriptor : descriptors) {
@@ -244,9 +250,14 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       }
       myContent.getManager().removeContent(myContent, true);
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setVisible(myContent != null);
+    }
   }
 
-  protected void configureTree(Tree tree) {
+  protected void configureTree(@NotNull Tree tree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());

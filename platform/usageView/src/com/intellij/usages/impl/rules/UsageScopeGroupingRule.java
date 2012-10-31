@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatus;
@@ -58,7 +59,7 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
     public Icon getIcon(boolean isOpen) {
-      return PlatformIcons.TEST_SOURCE_FOLDER;
+      return AllIcons.Modules.TestSourceFolder;
     }
 
     @Override

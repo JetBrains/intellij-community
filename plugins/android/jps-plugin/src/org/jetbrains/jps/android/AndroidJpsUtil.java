@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -35,6 +36,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -73,8 +75,9 @@ public class AndroidJpsUtil {
   }
 
   private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
-    // todo: return false for mavenized modules
-    return true;
+    return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(
+      JpsJavaDependenciesEnumerationHandler.createHandlers(
+        Collections.singletonList(module)));
   }
 
   @Nullable
@@ -575,8 +578,8 @@ public class AndroidJpsUtil {
       return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
     }
 
-    final String moduleDirPath = extension.getBaseModulePath();
-    return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + apkRelativePath) : null;
+    File moduleBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    return moduleBaseDirectory != null ? FileUtil.toSystemDependentName(moduleBaseDirectory.getAbsolutePath() + apkRelativePath) : null;
   }
 
   @NotNull

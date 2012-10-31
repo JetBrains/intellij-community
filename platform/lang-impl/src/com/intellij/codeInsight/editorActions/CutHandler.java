@@ -65,9 +65,20 @@ public class CutHandler extends EditorWriteActionHandler {
       if (!selectionModel.hasSelection()) return;
     }
 
+    int start = selectionModel.getSelectionStart();
+    int end = selectionModel.getSelectionEnd();
+
     EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, dataContext);
 
-    EditorModificationUtil.deleteSelectedText(editor);
+    if (start != end) {
+      // There is a possible case that 'sticky selection' is active. It's automatically removed on copying then, so, we explictly
+      // remove the text.
+      editor.getDocument().deleteString(start, end);
+    }
+    else {
+      EditorModificationUtil.deleteSelectedText(editor);
+    }
+    
     if (positionToRestore != null) {
       editor.getCaretModel().moveToVisualPosition(positionToRestore);
     }

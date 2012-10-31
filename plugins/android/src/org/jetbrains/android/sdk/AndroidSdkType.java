@@ -20,7 +20,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.ArrayUtil;
 import icons.AndroidIcons;
 import org.jdom.Element;
 import org.jetbrains.android.util.AndroidBundle;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -102,17 +102,6 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
       return false;
     }
 
-    int choice = Messages
-      .showChooseDialog("Please select Java SDK", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
-                        Messages.getQuestionIcon());
-
-    if (choice == -1) {
-      return false;
-    }
-
-    final String name = javaSdks.get(choice);
-    final Sdk jdk = sdkModel.findSdk(name);
-
     MessageBuildingSdkLog log = new MessageBuildingSdkLog();
     AndroidSdkData sdkData = AndroidSdkData.parse(sdk.getHomePath(), log);
 
@@ -144,16 +133,17 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
       }
     }
 
-    choice =
-      Messages.showChooseDialog("Select build target", "Create New Android SDK", targetNames,
-                                newestPlatform != null ? newestPlatform : targetNames[0], Messages.getQuestionIcon());
+    final AndroidNewSdkDialog dialog =
+      new AndroidNewSdkDialog(null, javaSdks, javaSdks.get(0), Arrays.asList(targetNames),
+                                       newestPlatform != null ? newestPlatform : targetNames[0]);
+    dialog.show();
 
-    if (choice == -1) {
+    if (!dialog.isOK()) {
       return false;
     }
-
-    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, targets[choice], true);
-
+    final String name = javaSdks.get(dialog.getSelectedJavaSdkIndex());
+    final Sdk jdk = sdkModel.findSdk(name);
+    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, targets[dialog.getSelectedTargetIndex()], true);
     return true;
   }
 

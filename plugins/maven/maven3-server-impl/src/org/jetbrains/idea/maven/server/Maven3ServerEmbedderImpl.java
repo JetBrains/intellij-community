@@ -338,7 +338,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
           project.setArtifacts(result.getArtifacts());
           // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ref.set(new MavenExecutionResult(project, new ArrayList<Exception>()));
+          ref.set(new MavenExecutionResult(project, result.getExceptions()));
         }
         catch (Exception e) {
           ref.set(handleException(e));

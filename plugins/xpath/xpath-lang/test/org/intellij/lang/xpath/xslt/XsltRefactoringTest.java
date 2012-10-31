@@ -49,6 +49,10 @@ public class XsltRefactoringTest extends TestBase {
     doExtractTemplate();
   }
 
+  public void testExtractTemplateWithComment() throws Throwable {
+    doExtractTemplate();
+  }
+
   public void testExtractTemplateOneVar() throws Throwable {
     doExtractTemplate();
   }

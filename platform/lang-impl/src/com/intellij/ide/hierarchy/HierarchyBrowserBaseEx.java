@@ -45,7 +45,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -66,7 +65,6 @@ import java.util.*;
 import java.util.List;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
 
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
@@ -463,16 +461,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return myCurrentViewType;
   }
 
-  private PsiElement[] getSelectedElements() {
-    HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-    for (HierarchyNodeDescriptor descriptor : descriptors) {
-      PsiElement element = getElementFromDescriptor(descriptor);
-      if (element != null) elements.add(element);
-    }
-    return PsiUtilCore.toPsiElementArray(elements);
-  }
-
   @Override
   public Object getData(final String dataId) {
     if (getBrowserDataKey().equals(dataId)) {
@@ -641,7 +629,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  protected class RefreshAction extends com.intellij.ide.actions.RefreshAction {
+  private class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh);
     }
@@ -737,7 +725,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       @Override
       public final void actionPerformed(final AnActionEvent e) {
         selectScope(myScopeType);
-
       }
     }
     

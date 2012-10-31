@@ -52,4 +52,7 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
   @NotNull String getName();
 
   void setName(@NotNull String name);
+
+  @NotNull
+  JpsModel getModel();
 }

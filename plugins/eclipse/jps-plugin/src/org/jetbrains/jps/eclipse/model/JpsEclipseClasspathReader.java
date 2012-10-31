@@ -23,10 +23,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
@@ -67,11 +66,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                  boolean exported,
                                  String name,
                                  boolean applicationLevel) {
-    JpsLibrary lib = findLibraryByName(rootModel.getProject(), name);
-    if (lib != null) {
-      final JpsLibraryDependency dependency = rootModel.getDependenciesList().addLibraryDependency(lib);
-      setLibraryEntryExported(exported, dependency);
-    }
+    JpsElementFactory factory = JpsElementFactory.getInstance();
+    JpsLibraryReference libraryReference = factory.createLibraryReference(name, applicationLevel ? factory.createGlobalReference() : factory.createProjectReference());
+    final JpsLibraryDependency dependency = rootModel.getDependenciesList().addLibraryDependency(libraryReference);
+    setLibraryEntryExported(dependency, exported);
   }
 
   @Override
@@ -160,7 +158,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     }
     jpsLibrary.addRoot(url, JpsOrderRootType.COMPILED);
 
-    setLibraryEntryExported(exported, dependency);
+    setLibraryEntryExported(dependency, exported);
   }
 
   @Override
@@ -239,23 +237,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     extension.setInheritOutput(false);
   }
 
-  private static void setLibraryEntryExported(boolean exported,
-                                              final JpsDependencyElement dependency) {
+  private static void setLibraryEntryExported(final JpsDependencyElement dependency, boolean exported) {
     final JpsJavaDependencyExtension extension = getService().getOrCreateDependencyExtension(dependency);
     extension.setExported(exported);
   }
-
-
-  public static JpsLibrary findLibraryByName(JpsProject project, String name) {
-    JpsLibrary lib = project.getLibraryCollection().findLibrary(name);
-    if (lib == null) {
-      final JpsModel model = JpsElementFactory.getInstance().createModel();
-      lib = model.getGlobal().getLibraryCollection().findLibrary(name);
-    }
-
-    return lib;
-  }
-
 
   private static JpsJavaExtensionService getService() {
     return JpsJavaExtensionService.getInstance();
