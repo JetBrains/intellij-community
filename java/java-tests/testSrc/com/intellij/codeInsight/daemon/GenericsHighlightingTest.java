@@ -201,13 +201,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest17Incompatibility() throws Exception {
-    final JavaVersionServiceImpl javaVersionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
-    try {
-      javaVersionService.setTestVersion(JavaSdkVersion.JDK_1_7);
-      doTest(false);
-    }
-    finally {
-      javaVersionService.setTestVersion(null);
-    }
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());
+    doTest(false);
   }
 }

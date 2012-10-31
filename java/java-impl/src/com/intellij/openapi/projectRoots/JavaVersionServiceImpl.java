@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,8 +30,14 @@ public class JavaVersionServiceImpl extends JavaVersionService {
   private JavaSdkVersion myTestVersion = null;
 
   @TestOnly
-  public void setTestVersion(@Nullable JavaSdkVersion testVersion) {
+  public void setTestVersion(@Nullable JavaSdkVersion testVersion, Disposable parentDisposable) {
     myTestVersion = testVersion;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myTestVersion = null;
+      }
+    });
   }
 
   @Override
