@@ -29,7 +29,6 @@ public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExte
     @Override
     protected JpsAppEngineModuleExtension loadExtension(@NotNull Element facetConfigurationElement,
                                                         String name,
-                                                        String baseModulePath,
                                                         JpsElement parent,
                                                         JpsModule module) {
       AppEngineModuleExtensionProperties properties = XmlSerializer.deserialize(facetConfigurationElement, AppEngineModuleExtensionProperties.class);
