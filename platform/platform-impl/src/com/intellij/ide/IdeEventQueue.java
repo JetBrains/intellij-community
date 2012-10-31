@@ -330,7 +330,7 @@ public class IdeEventQueue extends EventQueue {
     myCurrentEvent = e;
 
     try {
-      _dispatchEvent(e, true);
+      _dispatchEvent(e, false);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
