@@ -177,7 +177,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             try {
               if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) return true;
 
-              generateBuildConfigurationIfNeed();
+              generateBuildConfiguration(!context.isRebuild());
             }
             finally {
               token.finish();
@@ -1023,7 +1023,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return importer.get().getCreatedModules();
   }
 
-  public void generateBuildConfigurationIfNeed() {
+  public void generateBuildConfiguration(boolean onlyIfNeed) {
     if (!isMavenizedProject()) {
       return;
     }
@@ -1041,17 +1041,19 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     final File crcFile = new File(mavenConfigFile.getParent(), "configuration.crc");
 
-    try {
-      DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
+    if (onlyIfNeed) {
       try {
-        if (crcInput.readInt() == crc) return; // Project had not change since last config generation.
+        DataInputStream crcInput = new DataInputStream(new FileInputStream(crcFile));
+        try {
+          if (crcInput.readInt() == crc) return; // Project had not change since last config generation.
+        }
+        finally {
+          crcInput.close();
+        }
       }
-      finally {
-        crcInput.close();
+      catch (IOException ignored) {
+        // // Config file is not generated.
       }
-    }
-    catch (IOException ignored) {
-      // // Config file is not generated.
     }
 
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
