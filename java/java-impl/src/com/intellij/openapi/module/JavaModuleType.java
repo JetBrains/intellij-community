@@ -105,15 +105,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, final ModuleBuilder moduleBuilder) {
-    Project project = settingsStep.getContext().getProject();
-    if (project != null) {
-      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        // use default project SDK
-//        context.setProjectJdk(sdk);
-        return null;
-      }
-    }
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
       @Override
       public boolean value(SdkTypeId sdkType) {

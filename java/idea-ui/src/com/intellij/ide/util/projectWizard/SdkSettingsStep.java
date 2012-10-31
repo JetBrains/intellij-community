@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
@@ -35,7 +36,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final WizardContext myWizardContext;
   protected final ProjectSdksModel myModel;
 
-  public SdkSettingsStep(SettingsStep settingsStep, Condition<SdkTypeId> sdkFilter) {
+  public SdkSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
 
     myWizardContext = settingsStep.getContext();
     myModel = new ProjectSdksModel();
@@ -43,6 +44,14 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myModel.reset(project);
 
     myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
+
+    if (project != null) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
+        // use default project SDK
+        return;
+      }
+    }
 
     JButton button = new JButton("\u001BNew...");
     myJdkComboBox.setSetupButton(button, project, myModel,

@@ -242,18 +242,20 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     });
 
-    //if (myTemplatesTree.getModel().getSize() > 0) {
-    //  myTemplatesTree.setSelectedIndex(0);
-    //}
     mySearchField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         doFilter();
       }
     });
+
     myDescriptionPanel.setVisible(false);
-    mySettingsPanel.setVisible(false);
-    myExpertPanel.setVisible(false);
+    if (myWizardContext.isCreatingNewProject()) {
+      addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
+    }
+
+//    mySettingsPanel.setVisible(false);
+//    myExpertPanel.setVisible(false);
 
     new AnAction() {
       @Override
@@ -314,11 +316,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private void setupPanels(@Nullable ProjectTemplate template) {
 
     restorePanel(myNamePathComponent, 4);
-    restorePanel(myModulePanel, 6);
+    restorePanel(myModulePanel, myWizardContext.isCreatingNewProject() ? 8 : 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
-    if (myWizardContext.isCreatingNewProject()) {
-      addExpertField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox());
-    }
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
     String description = null;
@@ -333,8 +332,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     }
 
-    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(template != null && myExpertPanel.getComponentCount() > 0);
+//    mySettingsPanel.setVisible(template != null);
+    myExpertPlaceholder.setVisible(myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
