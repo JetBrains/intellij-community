@@ -470,6 +470,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  @NotNull
+  @Override
+  public byte[] contentsToByteArray() throws IOException {
+    throw new IOException("Cannot get content of directory: " + this);
+  }
+
   // MUST BE CALLED UNDER this LOCK
   @Nullable
   private VirtualFileSystemEntry[] asArray() {

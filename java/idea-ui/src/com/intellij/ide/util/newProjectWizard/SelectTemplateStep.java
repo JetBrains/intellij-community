@@ -43,6 +43,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
@@ -91,6 +92,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final HideableDecorator myExpertDecorator;
 
   private final NamePathComponent myNamePathComponent;
+  private final ProjectFormatPanel myFormatPanel;
+
   private JTextField myModuleName;
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
@@ -122,6 +125,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     mySequence = sequence;
     Messages.installHyperlinkSupport(myDescriptionPane);
 
+    myFormatPanel = new ProjectFormatPanel();
     myNamePathComponent = initNamePathComponent(context);
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
@@ -309,7 +313,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     restorePanel(myNamePathComponent, 4);
     restorePanel(myModulePanel, 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
-
+    if (myWizardContext.isCreatingNewProject()) {
+      addExpertField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox());
+    }
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
     String description = null;
@@ -458,6 +464,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myWizardContext.setProjectBuilder(myModuleBuilder);
     myWizardContext.setProjectName(myNamePathComponent.getNameValue());
     myWizardContext.setProjectFileDirectory(myNamePathComponent.getPath());
+    myFormatPanel.updateData(myWizardContext);
 
     if (myModuleBuilder != null) {
       final String moduleName = getModuleName();
@@ -494,9 +501,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Override
   public void addSettingsField(String label, JComponent field) {
 
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    addField(label, field, panel);
+  }
+
+  private static void addField(String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
-    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
     panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                  GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
@@ -513,6 +524,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   public void addExpertPanel(JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+  }
+
+  @Override
+  public void addExpertField(String label, JComponent field) {
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myModulePanel : myExpertPanel;
+    addField(label, field, panel);
   }
 
   private static class GroupNode extends SimpleNode {
