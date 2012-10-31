@@ -75,9 +75,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitField(PsiField field) {
-        if (isNullLiteralExpression(field.getInitializer()) && NullableNotNullManager.isNotNull(field)) {
-          holder.registerProblem(field.getInitializer(), InspectionsBundle.message("dataflow.message.initializing.field.with.null"));
-        }
+        analyzeCodeBlock(field, holder);
       }
 
       @Override
@@ -92,19 +90,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
-    if (body == null) return;
+  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
+    if (scope == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
         createDescription(dfaRunner, holder, visitor);
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
-      if (body.getParent() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)body.getParent();
+      if (scope.getParent() instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)scope.getParent();
         final PsiIdentifier name = method.getNameIdentifier();
         if (name != null) { // Might be null for synthetic methods like JSP page.
           holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);

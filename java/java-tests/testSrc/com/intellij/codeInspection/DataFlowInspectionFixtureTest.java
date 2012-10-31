@@ -126,4 +126,8 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testCheckFieldInitializers() {
+    doTest();
+  }
+
 }
