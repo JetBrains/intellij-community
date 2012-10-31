@@ -21,7 +21,7 @@ public class PySignature {
     myFunctionName = name;
   }
 
-  public String getArgType(String name) {
+  public String getArgTypeQualifiedName(String name) {
     return myTypeMap.get(name);
   }
 
@@ -50,7 +50,7 @@ public class PySignature {
       return myName;
     }
 
-    public String getType() {
+    public String getTypeQualifiedName() {
       return myType;
     }
   }

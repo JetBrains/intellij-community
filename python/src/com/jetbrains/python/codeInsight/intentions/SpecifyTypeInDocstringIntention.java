@@ -1,16 +1,9 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -19,9 +12,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -130,21 +123,21 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
     String kind = "type";
     PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+    PyFunction function = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
     if (callExpression != null) {
       PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
         PyType pyType = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
         if (pyType == null || pyType instanceof PyReturnTypeReference) {
-          pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+          function = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
           problemElement = null;
           kind = "rtype";
         }
       }
     }
-    if (pyFunction != null) {
-      final ASTNode nameNode = pyFunction.getNameNode();
+    if (function != null) {
+      final ASTNode nameNode = function.getNameNode();
       if (nameNode != null && nameNode.getPsi() == elementAt) {
         kind = "rtype";
       }
@@ -152,7 +145,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
     PsiReference reference = null;
 
-    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
+    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
 
 
     String name = "";
@@ -167,13 +160,19 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
           name = qualifier.getText();
         }
       }
-      pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
+      function = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
     }
 
-    docstringGenerator.withParam(kind, name);
+    PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
+    if (signature != null) {
+      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), function);
+    }
+    else {
+      docstringGenerator.withParam(kind, name);
+    }
 
-    final ASTNode nameNode = pyFunction.getNameNode();
-    if ((pyFunction != null &&
+    final ASTNode nameNode = function.getNameNode();
+    if ((function != null &&
          (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) ||
         elementAt == nameNode.getPsi() || callExpression != null) {
 

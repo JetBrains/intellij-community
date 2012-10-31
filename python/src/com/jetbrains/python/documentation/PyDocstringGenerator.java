@@ -14,11 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +45,6 @@ public class PyDocstringGenerator {
   private PyStringLiteralExpression myDocStringExpression;
 
   private final Map<String, Pair<Integer, Integer>> myParamTypesOffset = Maps.newHashMap();
-  private int myStartOffset;
-  private int myEndOffset;
-
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -55,10 +55,15 @@ public class PyDocstringGenerator {
   }
 
   public PyDocstringGenerator withParam(String kind, String name) {
-    return withParam(kind, name, null);
+    return withParamTypedByName(kind, name, null);
   }
 
-  public PyDocstringGenerator withParam(String kind, String name, @Nullable String type) {
+  public PyDocstringGenerator withParamTypedByQualifiedName(String kind, String name, @NotNull String type, @NotNull PsiElement anchor) {
+    String typeName = PySignatureUtil.getShortestImportableName(anchor, type);
+    return withParamTypedByName(kind, name, typeName);
+  }
+
+  private PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
     myParams.add(new DocstringParam(kind, name, type));
     return this;
   }
@@ -76,7 +81,7 @@ public class PyDocstringGenerator {
       throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
     }
 
-    builder.replaceRange(TextRange.create(myStartOffset, myEndOffset), PyNames.OBJECT);
+    builder.replaceRange(TextRange.create(getStartOffset(), getEndOffset()), getDefaultType());
 
     Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
 
@@ -89,6 +94,16 @@ public class PyDocstringGenerator {
     if (targetEditor != null) {
       targetEditor.getCaretModel().moveToOffset(myDocStringExpression.getTextOffset());
       TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
+    }
+  }
+
+  private String getDefaultType() {
+    DocstringParam param = getParamToEdit();
+    if (StringUtil.isEmpty(param.getType())) {
+      return PyNames.OBJECT;
+    }
+    else {
+      return param.getType();
     }
   }
 
@@ -246,6 +261,25 @@ public class PyDocstringGenerator {
     return replacementToOffset.first;
   }
 
+  public int getStartOffset() {
+    DocstringParam paramToEdit = getParamToEdit();
+    String paramName = paramToEdit.getName();
+    return myParamTypesOffset.get(paramName).first;
+  }
+
+  private DocstringParam getParamToEdit() {
+    if (myParams.size() == 0) {
+      throw new IllegalStateException("We should have at least one param to edit");
+    }
+    return myParams.get(0);
+  }
+
+  public int getEndOffset() {
+    DocstringParam paramToEdit = getParamToEdit();
+    String paramName = paramToEdit.getName();
+    return myParamTypesOffset.get(paramName).second;
+  }
+
   private static class DocstringParam {
     private String myKind;
     private String myName;
@@ -279,15 +313,12 @@ public class PyDocstringGenerator {
     if (myDocStringExpression != null) {
       PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
       myDocStringExpression.replace(str);
-      myStartOffset = replacementToOffset.getSecond();
-      myEndOffset = myStartOffset;
       myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
       myDocStringExpression = myFunction.getDocStringExpression();
     }
     else {
       final PyStatementList list = myFunction.getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      myStartOffset = replacementToOffset.getSecond();
 
       if (list != null && list.getStatements().length != 0) {
         if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset())) {
@@ -297,7 +328,6 @@ public class PyDocstringGenerator {
                                                             + ":\n\t" + replacementToOffset.getFirst() + "\n\t" + list.getText());
 
           myFunction = (PyFunction)myFunction.replace(func);
-          myStartOffset = replacementToOffset.getSecond() + 2;
         }
         else {
           PyExpressionStatement str = elementGenerator.createDocstring(replacementToOffset.getFirst());
@@ -307,8 +337,6 @@ public class PyDocstringGenerator {
 
       myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
       myDocStringExpression = myFunction.getDocStringExpression();
-
-      myEndOffset = myStartOffset;
     }
   }
 
@@ -321,3 +349,4 @@ public class PyDocstringGenerator {
     return prefix;
   }
 }
+
