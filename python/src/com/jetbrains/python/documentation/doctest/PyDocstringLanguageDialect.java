@@ -1,12 +1,13 @@
 package com.jetbrains.python.documentation.doctest;
 
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PythonLanguage;
 
 /**
  * User : ktisha
  */
-public class PyDocstringLanguageDialect extends Language {
+public class PyDocstringLanguageDialect extends Language implements InjectableLanguage {
   public static PyDocstringLanguageDialect getInstance() {
     return (PyDocstringLanguageDialect)PyDocstringFileType.INSTANCE.getLanguage();
   }

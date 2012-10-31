@@ -340,21 +340,27 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-      myHost.iterateCharacterRanges(new TextRangeConsumer() {
-        public boolean process(int startOffset, int endOffset, String value) {
-          int xsectStart = Math.max(startOffset, rangeInsideHost.getStartOffset());
-          int xsectEnd = Math.min(endOffset, rangeInsideHost.getEndOffset());
-          if (xsectEnd > xsectStart) {
-            outChars.append(value);
+      if (PyUtil.isDocString(myHost))
+        outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
+      else {
+        myHost.iterateCharacterRanges(new TextRangeConsumer() {
+          public boolean process(int startOffset, int endOffset, String value) {
+            int xsectStart = Math.max(startOffset, rangeInsideHost.getStartOffset());
+            int xsectEnd = Math.min(endOffset, rangeInsideHost.getEndOffset());
+            if (xsectEnd > xsectStart) {
+              outChars.append(value);
+            }
+            return endOffset < rangeInsideHost.getEndOffset();
           }
-          return endOffset < rangeInsideHost.getEndOffset();
-        }
-      });
+        });
+      }
       return true;
     }
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
+      if (!PyUtil.isDocString(myHost))
+        return myHost.valueOffsetToTextOffset(offsetInDecoded);
       int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
       if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
       if (offset > rangeInsideHost.getEndOffset()) offset = rangeInsideHost.getEndOffset();

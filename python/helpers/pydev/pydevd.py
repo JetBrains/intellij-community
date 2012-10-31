@@ -171,7 +171,7 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
-        #self.setDaemon(False) #Strange but sometimes that prevents threads from correct termination
+        self.setDaemon(False)
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
@@ -180,6 +180,10 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                 if not self.pyDb.haveAliveThreads():
                     pydev_log.debug("No alive threads, finishing debug session")
                     self.pyDb.FinishDebuggingSession()
+                    threads = threadingEnumerate()
+                    for t in threads:
+                        if hasattr(t, 'doKillPydevThread'):
+                            t.doKillPydevThread()
                     return
 
                 time.sleep(0.3)
@@ -962,6 +966,15 @@ class PyDB:
                 additionalInfo = t.additionalInfo
             except:
                 additionalInfo = t.additionalInfo = PyDBAdditionalThreadInfo()
+
+            if additionalInfo.is_tracing:
+                f = frame
+                while f is not None:
+                    fname, bs = GetFilenameAndBase(f)
+                    if bs == 'pydevd_frame.py':
+                        if 'trace_dispatch' == f.f_code.co_name:
+                            return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
+                    f = f.f_back
 
             # if thread is not alive, cancel trace_dispatch processing
             if not t.isAlive():

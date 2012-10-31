@@ -49,10 +49,6 @@ public class PyDocstringParsingContext extends ParsingContext {
 
   private static class PyDocstringStatementParsing extends StatementParsing {
 
-    protected IElementType getReferenceType() {
-      return PyDocstringTokenTypes.DOC_REFERENCE;
-    }
-
     protected PyDocstringStatementParsing(ParsingContext context,
                                           @Nullable FUTURE futureFlag) {
       super(context, futureFlag);
@@ -60,14 +56,15 @@ public class PyDocstringParsingContext extends ParsingContext {
     @Override
     public void parseStatement(ParsingScope scope) {
       IElementType type = myBuilder.getTokenType();
-      while (!myBuilder.eof() && type != PyDocstringTokenTypes.WELCOME) {
-        myBuilder.advanceLexer();
-        type = myBuilder.getTokenType();
-      }
       if (type == PyDocstringTokenTypes.WELCOME) { // >>> case
         myBuilder.advanceLexer();
-        super.parseStatement(scope);
+        while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.getTokenType() == PyDocstringTokenTypes.WELCOME) {
+          myBuilder.advanceLexer();
+        }
+        if (myBuilder.getTokenType() == PyTokenTypes.INDENT)
+          myBuilder.advanceLexer();
       }
+      super.parseStatement(scope);
     }
 
     @Override
