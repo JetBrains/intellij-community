@@ -226,7 +226,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   private static void addOverriddenAndImplemented(PsiMethod methodPrototype, final String newName, final Map<PsiElement, String> allRenames) {
     allRenames.put(methodPrototype, newName);
-    for (PsiMethod method : methodPrototype.findDeepestSuperMethods()) {
+    PsiMethod[] methods = methodPrototype.findDeepestSuperMethods();
+    if (methods.length == 0) {
+      methods = new PsiMethod[] {methodPrototype};
+    }
+    for (PsiMethod method : methods) {
       OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
         public boolean process(PsiMethod psiMethod) {
           RenameProcessor.assertNonCompileElement(psiMethod);
