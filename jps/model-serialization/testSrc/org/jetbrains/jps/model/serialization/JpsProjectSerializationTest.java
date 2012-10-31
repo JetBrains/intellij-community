@@ -78,6 +78,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("run-configurations-dir", myProject.getName());
   }
 
+  public void testImlUnderDotIdea() {
+    loadProject("/jps/model-serialization/testData/imlUnderDotIdea");
+    JpsModule module = assertOneElement(myProject.getModules());
+    JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
+    assertEquals(getUrl("src"), root.getUrl());
+  }
+
   public void testLoadEncoding() {
     loadProject(SAMPLE_PROJECT_PATH);
     JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();

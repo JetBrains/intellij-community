@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.net.URI;
@@ -57,11 +58,11 @@ public class Utils {
     }
     else {
       File directoryBased = null;
-      if (".idea".equals(rootFile.getName())) {
+      if (PathMacroUtil.DIRECTORY_STORE_NAME.equals(rootFile.getName())) {
         directoryBased = rootFile;
       }
       else {
-        File child = new File(rootFile, ".idea");
+        File child = new File(rootFile, PathMacroUtil.DIRECTORY_STORE_NAME);
         if (child.exists()) {
           directoryBased = child;
         }

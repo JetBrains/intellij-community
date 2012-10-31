@@ -35,6 +35,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -149,7 +150,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected void setupInitialProject() {
-    if (new File(workDir, ".idea").exists()) {
+    if (new File(workDir, PathMacroUtil.DIRECTORY_STORE_NAME).exists()) {
       getOrCreateJdk();
       loadProject(workDir.getAbsolutePath());
     }

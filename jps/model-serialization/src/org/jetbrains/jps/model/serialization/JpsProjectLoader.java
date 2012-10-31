@@ -58,7 +58,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    expander.addFileHierarchyReplacements("PROJECT_DIR", baseDir);
+    expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir);
     return expander;
   }
 
@@ -69,11 +69,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
     else {
       File directory;
-      if (file.isDirectory() && file.getName().equals(".idea")) {
+      if (file.isDirectory() && file.getName().equals(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directory = file;
       }
       else {
-        directory = new File(file, ".idea");
+        directory = new File(file, PathMacroUtil.DIRECTORY_STORE_NAME);
         if (!directory.isDirectory()) {
           throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
         }
@@ -265,7 +265,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, File moduleFile) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    expander.addFileHierarchyReplacements("MODULE_DIR", moduleFile.getParentFile());
+    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.getAbsolutePath());
+    if (moduleDirPath != null) {
+      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtil.toSystemDependentName(moduleDirPath)));
+    }
     return expander;
   }
 
