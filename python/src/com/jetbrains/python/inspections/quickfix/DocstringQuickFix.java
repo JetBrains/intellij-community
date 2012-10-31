@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
@@ -145,7 +146,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     return newText.toString();
   }
 
-  private String createMissingReplacement(PyDocStringOwner docstring) {
-    return PythonDocumentationProvider.addParamToDocstring(docstring, "param", myMissingText, myPrefix).getFirst();
+  private String createMissingReplacement(PyDocStringOwner docStringOwner) {
+    return new PyDocstringGenerator(docStringOwner).withParam("param", myMissingText).docStringAsText();
   }
 }

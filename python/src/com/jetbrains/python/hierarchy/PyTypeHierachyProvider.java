@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyTypeHierachyProvider implements HierarchyProvider {
   @Nullable
-  public PsiElement getTarget(DataContext dataContext) {
+  public PsiElement getTarget(@NotNull DataContext dataContext) {
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -42,7 +42,7 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
     return new PyTypeHierarchyBrowser((PyClass)target);
   }
 
-  public void browserActivated(HierarchyBrowser hierarchyBrowser) {
+  public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
     ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE);
   }
 }

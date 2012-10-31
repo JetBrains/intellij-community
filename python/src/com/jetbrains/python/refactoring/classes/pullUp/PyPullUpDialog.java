@@ -99,7 +99,7 @@ public class PyPullUpDialog extends UpDirectedMembersMovingDialog {
 
   private void updateMembersInfo() {
     final PyClass targetClass = (PyClass)myClassCombo.getSelectedItem();
-    myMemberInfos = myStorage.getMemberInfosList(targetClass);
+    myMemberInfos = myStorage.getIntermediateMemberInfosList(targetClass);
   }
 
   @Override
