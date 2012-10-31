@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -68,7 +69,7 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
   }
 
   @Override
-  public boolean isSuitableSdk(Sdk sdk) {
-    return sdk.getSdkType() instanceof PythonSdkType;
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk instanceof PythonSdkType;
   }
 }

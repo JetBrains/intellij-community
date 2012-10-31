@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 /**
  * User : ktisha
  */
-public class PyDocstingParser extends PyParser {
+public class PyDocstringParser extends PyParser {
   @Override
   protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     return new PyDocstringParsingContext(builder, languageLevel, futureFlag);

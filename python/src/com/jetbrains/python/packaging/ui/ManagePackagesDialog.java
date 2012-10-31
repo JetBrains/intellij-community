@@ -16,6 +16,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.packaging.*;
@@ -545,7 +546,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         String name = (String)((Pair)value).getFirst();
         myNameLabel.setText(name);
         myRepositoryLabel.setText((String)((Pair)value).getSecond());
-        myNameLabel.setForeground(myInstalledPackages.contains(name) ? Color.BLUE : Color.BLACK);
+        myNameLabel.setForeground(myInstalledPackages.contains(name) ? PlatformColors.BLUE : Color.BLACK);
       }
       myRepositoryLabel.setForeground(Color.GRAY);
 

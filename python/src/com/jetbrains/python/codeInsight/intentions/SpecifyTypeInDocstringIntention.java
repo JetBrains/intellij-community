@@ -19,10 +19,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -91,7 +93,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       return false;
     }
     final PyType type = problemElement.getType(TypeEvalContext.slow());
-    if (type == null || type instanceof PyReturnTypeReference) {
+    if (type == null || type instanceof PyReturnTypeReference || type instanceof PyDynamicallyEvaluatedType) {
       PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
       PsiReference reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {
@@ -117,41 +119,38 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-    if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER))
+    if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER)) {
       elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    }
 
-    String type = "type";
-    String name = "";
+    String kind = "type";
     PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
-    if (callExpression != null ) {
+    if (callExpression != null) {
       PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
         PyType pyType = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
         if (pyType == null || pyType instanceof PyReturnTypeReference) {
           pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
           problemElement = null;
-          type = "rtype";
+          kind = "rtype";
         }
       }
     }
     if (pyFunction != null) {
       final ASTNode nameNode = pyFunction.getNameNode();
       if (nameNode != null && nameNode.getPsi() == elementAt) {
-        type = "rtype";
+        kind = "rtype";
       }
-    }
-
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
-    String prefix = ":";
-    if (documentationSettings.isEpydocFormat(file)) {
-      prefix = "@";
     }
 
     PsiReference reference = null;
 
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
+
+
+    String name = "";
     if (problemElement != null) {
       name = problemElement.getName();
 
@@ -166,77 +165,18 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
     }
 
+    docstringGenerator.withParam(kind, name);
+
     final ASTNode nameNode = pyFunction.getNameNode();
-    if ((pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) ||
-      elementAt == nameNode.getPsi() || callExpression != null) {
-      PyStringLiteralExpression docStringExpression = pyFunction.getDocStringExpression();
-      int startOffset;
-      int endOffset;
-      final Pair<String, Integer> replacementToOffset =
-          PythonDocumentationProvider.addParamToDocstring(pyFunction, type, name, prefix);
+    if ((pyFunction != null &&
+         (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) ||
+        elementAt == nameNode.getPsi() || callExpression != null) {
 
-      if (docStringExpression != null) {
-        final String typePattern = type + " " + name + ":";
-        final int index = docStringExpression.getText().indexOf(typePattern);
-        if (index == -1) {
-          PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
-          docStringExpression.replace(str);
-          startOffset = replacementToOffset.getSecond();
-          endOffset = startOffset;
-        }
-        else {
-          startOffset = index + typePattern.length() + 1;
-          endOffset = docStringExpression.getText().indexOf("\n", startOffset);
-          if (endOffset == -1) endOffset = startOffset;
-        }
-        pyFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyFunction);
-        docStringExpression = pyFunction.getDocStringExpression();
-      }
-      else {
-        final PyStatementList list = pyFunction.getStatementList();
-        final Document document = editor.getDocument();
-        startOffset = replacementToOffset.getSecond();
-
-        if (list != null && list.getStatements().length != 0) {
-          if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(pyFunction.getTextOffset())) {
-            PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(pyFunction),
-                                      PyFunction.class, "def " + pyFunction.getName() + pyFunction.getParameterList().getText()
-                                      +":\n\t"+replacementToOffset.getFirst() + "\n\t" + list.getText());
-
-            pyFunction = (PyFunction)pyFunction.replace(func);
-            startOffset = replacementToOffset.getSecond() + 2;
-          }
-          else {
-            PyExpressionStatement str = elementGenerator.createDocstring(replacementToOffset.getFirst());
-            list.addBefore(str, list.getStatements()[0]);
-          }
-        }
-
-        pyFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyFunction);
-        docStringExpression = pyFunction.getDocStringExpression();
-
-        endOffset = startOffset;
-      }
-      assert docStringExpression != null;
-      int textOffSet = docStringExpression.getTextOffset();
-
-
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
-
-      builder.replaceRange(TextRange.create(startOffset, endOffset), PyNames.OBJECT);
-      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        project,
-        pyFunction.getContainingFile().getVirtualFile(),
-        pyFunction.getTextOffset() + pyFunction.getTextLength()
-      );
-      Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-      if (targetEditor != null) {
-        targetEditor.getCaretModel().moveToOffset(textOffSet);
-        TemplateManager.getInstance(project).startTemplate(targetEditor, template);
-      }
+      docstringGenerator.build();
     }
+
+
+    docstringGenerator.startTemplate();
   }
 
   public boolean startInWriteAction() {

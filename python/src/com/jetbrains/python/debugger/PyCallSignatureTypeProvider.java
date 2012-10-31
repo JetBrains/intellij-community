@@ -12,7 +12,7 @@ public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
   public PyType getParameterType(@NotNull final PyNamedParameter param, @NotNull final PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
-      final String typeName = ((PySignatureCacheManagerImpl)PySignatureCacheManager.getInstance(param.getProject())).findParameterType(func, name);
+      final String typeName = PySignatureCacheManager.getInstance(param.getProject()).findParameterType(func, name);
       if (typeName != null) {
         final PyType type = PyTypeParser.getTypeByName(param, typeName);
         if (type != null) {

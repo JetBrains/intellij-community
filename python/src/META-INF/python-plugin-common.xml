@@ -245,6 +245,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.GenerateDocstringWIthTypesIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
@@ -692,8 +697,6 @@
     <lang.parserDefinition language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
 
 
-
-    <lang.syntaxHighlighterFactory key="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringSyntaxHighlighterFactory"/>
 
     <!-- Mako files -->
     <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>

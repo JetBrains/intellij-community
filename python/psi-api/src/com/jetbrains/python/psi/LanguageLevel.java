@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,6 +102,9 @@ public enum LanguageLevel {
 
   @NotNull
   public static LanguageLevel forFile(@NotNull VirtualFile virtualFile) {
+    if (virtualFile instanceof VirtualFileWindow)
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
@@ -111,7 +115,7 @@ public enum LanguageLevel {
       // However this allows us to setup language level per file manually
       // in case when it is LightVirtualFile
       final LanguageLevel level = virtualFile.getUserData(KEY);
-      if (level != null) return level;      
+      if (level != null) return level;
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final LanguageLevel languageLevel = FORCE_LANGUAGE_LEVEL;
