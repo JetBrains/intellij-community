@@ -1,5 +1,6 @@
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -140,11 +141,14 @@ public class PyDocstringInspection extends PyInspection {
         if (!unexpectedParams.isEmpty()) {
           for (String param : unexpectedParams) {
             ProblemsHolder holder = getHolder();
-            int index = text.indexOf("param " + param + ":") + 6;
-            if (holder != null) {
-              holder.registerProblem(node, TextRange.create(index, index + param.length()),
-                                     "Unexpected parameter " + param + " in docstring",
-                                     new DocstringQuickFix(null, param));
+            int index = text.indexOf("param " + param + ":");
+            if (index != -1) {
+              index += 6;
+              if (holder != null) {
+                holder.registerProblem(node, TextRange.create(index, index + param.length()),
+                                       "Unexpected parameter " + param + " in docstring",
+                                       new DocstringQuickFix(null, param));
+              }
             }
           }
           registered = true;
@@ -154,16 +158,19 @@ public class PyDocstringInspection extends PyInspection {
       return false;
     }
 
-    private List<String> getUnexpectedParams(List<String> docstringParams, PyParameter[] realParams, PyStringLiteralExpression node) {
+    private static List<String> getUnexpectedParams(List<String> docstringParams,
+                                                    PyParameter[] realParams,
+                                                    PyStringLiteralExpression node) {
+      List<String> unexpected = Lists.newArrayList(docstringParams);
       for (PyParameter p : realParams) {
-        if (docstringParams.contains(p.getName())) {
-          docstringParams.remove(p.getName());
+        if (unexpected.contains(p.getName())) {
+          unexpected.remove(p.getName());
         }
       }
-      return docstringParams;
+      return unexpected;
     }
 
-    private List<PyParameter> getMissingParams(PyParameter[] realParams, List<String> docstringParams, boolean isClassMethod) {
+    private static List<PyParameter> getMissingParams(PyParameter[] realParams, List<String> docstringParams, boolean isClassMethod) {
       List<PyParameter> missing = new ArrayList<PyParameter>();
       boolean hasMissing = false;
       for (PyParameter p : realParams) {
