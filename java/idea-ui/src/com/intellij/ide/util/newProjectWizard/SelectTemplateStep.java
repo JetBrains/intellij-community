@@ -714,6 +714,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       @Override
       public boolean accept(SimpleNode simpleNode) {
         SimpleNode node = getDelegate(simpleNode);
+        //noinspection EqualsBetweenInconvertibleTypes
         return test.equals(node);
       }
     }, true);
@@ -723,16 +724,5 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;
-  }
-
-  @TestOnly
-  public void dumpTree() {
-    myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
-      @Override
-      public boolean accept(SimpleNode simpleNode) {
-        System.out.println(simpleNode.getName());
-        return false;
-      }
-    });
   }
 }
