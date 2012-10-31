@@ -93,7 +93,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
     if (scope == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor();
+    final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
@@ -596,38 +596,41 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+    private final StandardDataFlowRunner myRunner;
 
-    protected void onAssigningToNotNullableVariable(AssignInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onAssigningToNotNullableVariable(instruction.getRExpression());
+    private DataFlowInstructionVisitor(StandardDataFlowRunner runner) {
+      myRunner = runner;
     }
 
-    protected void onNullableReturn(CheckReturnValueInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onNullableReturn(instruction.getReturn());
+    protected void onAssigningToNotNullableVariable(AssignInstruction instruction) {
+      myRunner.onAssigningToNotNullableVariable(instruction.getRExpression());
     }
 
-    protected void onInstructionProducesNPE(FieldReferenceInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesNPE(instruction);
+    protected void onNullableReturn(CheckReturnValueInstruction instruction) {
+      myRunner.onNullableReturn(instruction.getReturn());
     }
 
-    protected void onInstructionProducesCCE(TypeCastInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesCCE(instruction);
+    protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
+      myRunner.onInstructionProducesCCE(instruction);
     }
 
-    protected void onInstructionProducesNPE(MethodCallInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesNPE(instruction);
+    protected void onInstructionProducesNPE(Instruction instruction) {
+      if (instruction instanceof MethodCallInstruction &&
+          ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING) {
+        myRunner.onUnboxingNullable(((MethodCallInstruction)instruction).getContext());
+      }
+      else {
+        myRunner.onInstructionProducesNPE(instruction);
+      }
     }
 
-    protected void onUnboxingNullable(MethodCallInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onUnboxingNullable(instruction.getContext());
-    }
-
-    protected void onPassingNullParameter(DataFlowRunner runner, PsiExpression arg) {
-      ((StandardDataFlowRunner)runner).onPassingNullParameter(arg); // Parameters on stack are reverted.
+    protected void onPassingNullParameter(PsiExpression arg) {
+      myRunner.onPassingNullParameter(arg);
     }
 
     @Override
     protected void onPassingNullParameterToNonAnnotated(DataFlowRunner runner, PsiExpression arg) {
-      ((StandardDataFlowRunner)runner).onPassingNullParameterToNonAnnotated(arg);
+      myRunner.onPassingNullParameterToNonAnnotated(arg);
     }
   }
 }
