@@ -105,7 +105,6 @@ public class SvnLockingTest extends TestCase {
     }
   }
 
-  @Bombed(year=2020, month = 1,day = 1,description = "waiting for http://issues.tmatesoft.com/issue/SVNKIT-317")
   public void testOnlyWrites() throws Exception {
     final OnlyWrite operation1 = new OnlyWrite("one");
     final OnlyWrite operation2 = new OnlyWrite("two");
@@ -151,6 +150,49 @@ public class SvnLockingTest extends TestCase {
       thread2.interrupt();
     }
   }
+
+  /*public void testDelays() throws Exception {
+    final HandlerCopy handler = new HandlerCopy(10000);
+    for (int i = 0; i < 1000; i++) {
+      final Pair<Boolean, Integer> pair = handler.call(i);
+      System.out.println("# " + i + " DELAY: " + pair.getSecond() + " CONTINUE: " + pair.getFirst());
+    }
+  }
+
+  private static class HandlerCopy {
+    private static final int[] delays = { 1, 2, 5, 10, 15, 20, 25, 25,  25,  50,  50, 100 };
+    private static final int[] totals = { 0, 1, 3,  8, 18, 33, 53, 78, 103, 128, 178, 228 };
+
+    private final int timeout;
+
+    public HandlerCopy(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public Pair<Boolean, Integer> call(int number) {
+        int delay;
+        int prior;
+        if (number < delays.length) {
+            delay = delays[number];
+            prior = totals[number];
+        } else {
+            delay = delays[delays.length - 1];
+            prior = totals[delays.length - 1] + delay*(number - (delays.length - 1));
+        }
+        if (prior + delay > timeout) {
+            delay = timeout - prior;
+            if (delay <= 0) {
+                return new Pair<Boolean, Integer>(false, delay);
+            }
+        }
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            //
+        }
+        return new Pair<Boolean, Integer>(true, delay);
+    }
+  }*/
 
   @Bombed(year=2020, month = 1,day = 1,description = "not clear. by specification, read should not get access if write lock is taken; sometimes it is not the case.")
   public void testReadInBetweenWrites() throws Exception {

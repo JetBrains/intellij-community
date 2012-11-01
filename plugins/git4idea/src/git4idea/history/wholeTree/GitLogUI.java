@@ -1637,7 +1637,7 @@ public class GitLogUI implements Disposable {
       myTableModel.useDateGroupingStrategy();
     }
 
-    myEqualToHeadr.getParent().setVisible(! myThereIsDisordering);
+    myEqualToHeadr.getParent().setVisible(! myThereIsDisordering && myMyShowTreeAction.isSelected(null));
     if (! haveFilters) {
       /*if (myMyShowTreeAction.isSelected(null)) {
         myEqualToHeadr.getParent().setVisible(true);
