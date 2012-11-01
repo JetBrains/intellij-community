@@ -77,6 +77,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -327,6 +328,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           final RenderSession session = mySession = result.getSession();
           mySessionAlarm.cancelAllRequests();
 
+          final List<FixableIssueMessage> warnMessages = result.getWarnMessages();
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -336,6 +339,19 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                   runnable.consume(session);
                   if (updatePalette) {
                     updatePalette(myLastTarget);
+                  }
+                  if (warnMessages.isEmpty()) {
+                    showWarnMessages(null);
+                  }
+                  else {
+                    List<FixableMessageInfo> messages = new ArrayList<FixableMessageInfo>();
+                    for (FixableIssueMessage message : warnMessages) {
+                      messages.add(
+                        new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText,
+                                               message.myQuickFix,
+                                               message.myAdditionalFixes));
+                    }
+                    showWarnMessages(messages);
                   }
                 }
               }
@@ -443,7 +459,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         @Override
         public void run() {
           myProfileAction.getProfileManager().showCustomDevicesDialog();
-          // XXX
         }
       }, null));
     }
@@ -479,6 +494,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       if (warnMessages == null) {
         info.myShowMessage = myParseTime || renderError;
         info.myShowLog = !renderError;
+        info.myShowStack = renderError;
       }
       else {
         info.myShowLog = false;
