@@ -244,6 +244,15 @@ public abstract class CoverageEngine {
   @Nullable
   public abstract String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy);
 
+  /**
+   * @return true to enable 'Generate Coverage Report...' action
+   */
+  public boolean isReportGenerationAvailable(@NotNull Project project,
+                                             @NotNull DataContext dataContext,
+                                             @NotNull CoverageSuitesBundle currentSuite) {
+    return false;
+  }
+
   public void generateReport(@NotNull final Project project,
                              @NotNull final DataContext dataContext,
                              @NotNull final CoverageSuitesBundle currentSuite) {

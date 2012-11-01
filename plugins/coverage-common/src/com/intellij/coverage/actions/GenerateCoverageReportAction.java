@@ -10,8 +10,6 @@ import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 
 public class GenerateCoverageReportAction extends AnAction {
 
@@ -40,10 +38,10 @@ public class GenerateCoverageReportAction extends AnAction {
     presentation.setVisible(false);
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      final Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (projectSdk != null) {
-        final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-        if (currentSuite != null) {
+      final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
+      if (currentSuite != null) {
+        final CoverageEngine coverageEngine = currentSuite.getCoverageEngine();
+        if (coverageEngine.isReportGenerationAvailable(project, dataContext, currentSuite)) {
           presentation.setEnabled(true);
           presentation.setVisible(true);
         }
