@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.util.newProjectWizard.ImportProjectWizard;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -53,7 +53,7 @@ public class ImportProjectAction extends AnAction {
         }
       });
       if (provider != null) {
-        ImportProjectWizard wizard = new ImportProjectWizard(project, provider, file);
+        AddModuleWizard wizard = new AddModuleWizard(e.getPresentation().getText(), project, provider, file.getPath());
         if (wizard.getStepCount() > 0) {
           boolean b = wizard.showAndGet();
         }

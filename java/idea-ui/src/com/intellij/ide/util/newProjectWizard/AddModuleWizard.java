@@ -84,7 +84,8 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     initModuleWizard(project, null);
   }
 
-  protected AddModuleWizard(String title, Project project, ProjectImportProvider importProvider, String filePath) {
+  /** Import mode */
+  public AddModuleWizard(String title, Project project, ProjectImportProvider importProvider, String filePath) {
     super(title, project);
     myCurrentProject = project;
     myImportProvider = importProvider;
