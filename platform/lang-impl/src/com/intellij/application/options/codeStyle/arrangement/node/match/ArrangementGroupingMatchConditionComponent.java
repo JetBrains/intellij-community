@@ -97,12 +97,12 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
 
   @Nullable
   @Override
-  public Rectangle handleMouseMove(@NotNull MouseEvent event) {
+  public Rectangle onMouseMove(@NotNull MouseEvent event) {
     return null;
   }
 
   @Override
-  public void handleMouseClick(@NotNull MouseEvent event) {
+  public void onMouseClick(@NotNull MouseEvent event) {
   }
 
   @Override
@@ -119,5 +119,9 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
     if (point != null) {
       myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
     }
+  }
+
+  @Override
+  public void onMouseExited() {
   }
 }

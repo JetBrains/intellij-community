@@ -170,17 +170,21 @@ public class ArrangementEditIconMatchConditionComponent extends JPanel implement
 
   @Override
   @Nullable
-  public Rectangle handleMouseMove(@NotNull MouseEvent event) {
-    return myDelegate.handleMouseMove(event);
+  public Rectangle onMouseMove(@NotNull MouseEvent event) {
+    return myDelegate.onMouseMove(event);
   }
 
   @Override
-  public void handleMouseClick(@NotNull MouseEvent event) {
-    myDelegate.handleMouseClick(event);
+  public void onMouseClick(@NotNull MouseEvent event) {
+    myDelegate.onMouseClick(event);
   }
 
   @Override
   public String toString() {
     return "'edit' decorator for " + myDelegate.toString();
+  }
+
+  @Override
+  public void onMouseExited() {
   }
 }

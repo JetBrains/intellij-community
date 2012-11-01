@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +47,8 @@ public class ArrangementMatchingRulesList extends JBList {
   @NotNull private final DefaultListModel myModel = new DefaultListModel();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
+  
+  private int myRowUnderMouse = -1;
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementColorsProvider colorsProvider,
@@ -53,6 +57,14 @@ public class ArrangementMatchingRulesList extends JBList {
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, myModel);
     setModel(myModel);
     setCellRenderer(new MyListCellRenderer());
+    addMouseMotionListener(new MouseAdapter() {
+      @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
+    });
+    addMouseListener(new MouseAdapter() {
+      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
+      @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
+      @Override public void mouseClicked(MouseEvent e) { onMouseClicked(e); }
+    });
   }
 
   public void setRules(@Nullable List<StdArrangementMatchRule> rules) {
@@ -73,6 +85,55 @@ public class ArrangementMatchingRulesList extends JBList {
         LOG.info("  " + rule.toString());
       }
     }
+  }
+  
+  private void onMouseMoved(@NotNull MouseEvent e) {
+    int i = locationToIndex(e.getPoint());
+    if (i != myRowUnderMouse) {
+      onMouseExited();
+    }
+    
+    if (i < 0) {
+      return;
+    }
+
+    ArrangementListRowDecorator decorator = myComponents.get(i);
+    if (decorator == null) {
+      return;
+    }
+
+    Rectangle rectangle = decorator.onMouseMove(e);
+    if (rectangle != null) {
+      repaintScreenBounds(rectangle);
+    }
+  }
+
+  private void repaintScreenBounds(@NotNull Rectangle bounds) {
+    Point location = bounds.getLocation();
+    SwingUtilities.convertPointFromScreen(location, this);
+    int x = location.x;
+    int width = bounds.width;
+    repaint(x, location.y, width, bounds.height);
+  }
+  
+  
+  private void onMouseClicked(@NotNull MouseEvent e) {
+    // TODO den implement
+  }
+  
+  private void onMouseExited() {
+    if (myRowUnderMouse < 0) {
+      return;
+    }
+
+    ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
+    if (decorator != null) {
+      decorator.onMouseExited();
+    }
+  }
+
+  private void onMouseEntered(@NotNull MouseEvent e) {
+    // TODO den implement
   }
 
   @NotNull

@@ -77,7 +77,9 @@ public interface ArrangementMatchConditionComponent {
    * @return       bounds to be repainted (in screen coordinates) if any; <code>null</code> otherwise
    */
   @Nullable
-  Rectangle handleMouseMove(@NotNull MouseEvent event);
+  Rectangle onMouseMove(@NotNull MouseEvent event);
 
-  void handleMouseClick(@NotNull MouseEvent event);
+  void onMouseClick(@NotNull MouseEvent event);
+
+  void onMouseExited();
 }

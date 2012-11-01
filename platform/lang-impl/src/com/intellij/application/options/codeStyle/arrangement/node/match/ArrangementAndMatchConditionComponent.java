@@ -161,26 +161,33 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   }
 
   @Override
-  public Rectangle handleMouseMove(@NotNull MouseEvent event) {
+  public Rectangle onMouseMove(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
     for (ArrangementMatchConditionComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
-        return component.handleMouseMove(event);
+        return component.onMouseMove(event);
       }
     }
     return null;
   }
 
   @Override
-  public void handleMouseClick(@NotNull MouseEvent event) {
+  public void onMouseClick(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
     for (ArrangementMatchConditionComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
-        component.handleMouseClick(event);
+        component.onMouseClick(event);
         return;
       }
+    }
+  }
+
+  @Override
+  public void onMouseExited() {
+    for (ArrangementMatchConditionComponent component : myComponents) {
+      component.onMouseExited();
     }
   }
 
