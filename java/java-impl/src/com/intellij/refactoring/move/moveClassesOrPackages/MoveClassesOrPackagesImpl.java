@@ -26,6 +26,7 @@ import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -324,7 +325,14 @@ public class MoveClassesOrPackagesImpl {
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
+    final Runnable analyzeConflicts = new Runnable() {
+      public void run() {
+        RefactoringConflictsUtil.analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
+      }
+    };
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(analyzeConflicts, "Analyze Module Conflicts...", true, project)) {
+      return;
+    }
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
