@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.editor.markup.AttributesFlyweight;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public class TextChunk {
@@ -42,5 +43,12 @@ public class TextChunk {
 
   public String toString() {
     return getText();
+  }
+
+  @NotNull
+  public SimpleTextAttributes getSimpleAttributesIgnoreBackground() {
+    SimpleTextAttributes simples = SimpleTextAttributes.fromTextAttributes(getAttributes());
+    simples = new SimpleTextAttributes(null, simples.getFgColor(), simples.getWaveColor(), simples.getStyle());
+    return simples;
   }
 }

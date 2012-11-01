@@ -63,10 +63,9 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
 
     TextChunk[] text = sliceUsage.getPresentation().getText();
     for (TextChunk textChunk : text) {
-      SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
+      SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
         attributes = attributes.derive(attributes.getStyle(), Color.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
-        //attributes = attributes.derive(SimpleTextAttributes.STYLE_UNDERLINE, attributes.getBgColor(), attributes.getBgColor(), attributes.getWaveColor());
       }
       append(textChunk.getText(), attributes);
     }

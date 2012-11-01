@@ -445,7 +445,7 @@ public class MigrationPanel extends JPanel implements Disposable {
           final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(typeElement), new UsageInfo(typeElement)).getPresentation();
           boolean isPrefix = true;  //skip usage position
           for (TextChunk chunk : presentation.getText()) {
-            if (!isPrefix) append(chunk.getText(), patchAttrs(usageInfo, SimpleTextAttributes.fromTextAttributes(chunk.getAttributes())));
+            if (!isPrefix) append(chunk.getText(), patchAttrs(usageInfo, chunk.getSimpleAttributesIgnoreBackground()));
             isPrefix = false;
           }
           setIcon(presentation.getIcon());
