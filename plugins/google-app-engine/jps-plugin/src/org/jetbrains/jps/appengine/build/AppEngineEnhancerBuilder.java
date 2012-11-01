@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.appengine.model.JpsAppEngineExtensionService;
 import org.jetbrains.jps.appengine.model.JpsAppEngineModuleExtension;
@@ -139,13 +140,9 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   }
 
 
+  @NotNull
   @Override
-  public String getName() {
-    return NAME;
-  }
-
-  @Override
-  public String getDescription() {
+  public String getPresentableName() {
     return NAME;
   }
 
