@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -126,16 +125,16 @@ public abstract class ContentRootPanel extends JPanel {
       }
     }
 
-    if (sources.size() > 0 && myCanMarkSources) {
+    if (!sources.isEmpty() && myCanMarkSources) {
       final JComponent sourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.sources.group"), sources.toArray(new ContentFolder[sources.size()]),
                                                                      SOURCES_COLOR);
       this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
-    if (testSources.size() > 0 && myCanMarkTestSources) {
+    if (!testSources.isEmpty() && myCanMarkTestSources) {
       final JComponent testSourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.test.sources.group"), testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
       this.add(testSourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
-    if (excluded.size() > 0) {
+    if (!excluded.isEmpty()) {
       final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
       this.add(excludedComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
@@ -152,6 +151,7 @@ public abstract class ContentRootPanel extends JPanel {
     final IconActionComponent deleteIconComponent = new IconActionComponent(AllIcons.Modules.DeleteContentRoot,
                                                                             AllIcons.Modules.DeleteContentRootRollover,
                                                                             ProjectBundle.message("module.paths.remove.content.tooltip"), new Runnable() {
+      @Override
       public void run() {
         myCallback.deleteContentEntry();
       }
@@ -213,12 +213,13 @@ public abstract class ContentRootPanel extends JPanel {
     final String packagePrefix = folder instanceof SourceFolder? ((SourceFolder)folder).getPackagePrefix() : "";
     if (folderFile != null && contentEntryFile != null) {
       String path = folderFile.equals(contentEntryFile)? "." : VfsUtilCore.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
-      if (packagePrefix.length() > 0) {
+      if (!packagePrefix.isEmpty()) {
         path = path + " (" + packagePrefix + ")";
       }
       HoverHyperlinkLabel hyperlinkLabel = new HoverHyperlinkLabel(path, foreground);
       hyperlinkLabel.setMinimumSize(new Dimension(0, 0));
       hyperlinkLabel.addHyperlinkListener(new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           myCallback.navigateFolder(getContentEntry(), folder);
         }
@@ -228,7 +229,7 @@ public abstract class ContentRootPanel extends JPanel {
     }
     else {
       String path = toRelativeDisplayPath(folder.getUrl(), getContentEntry().getUrl());
-      if (packagePrefix.length() > 0) {
+      if (!packagePrefix.isEmpty()) {
         path = path + " (" + packagePrefix + ")";
       }
       final JLabel pathLabel = new JLabel(path);
@@ -258,6 +259,7 @@ public abstract class ContentRootPanel extends JPanel {
       tooltipText = ProjectBundle.message("module.paths.remove.tooltip");
     }
     return new IconActionComponent(AllIcons.Modules.DeleteContentFolder, AllIcons.Modules.DeleteContentFolderRollover, tooltipText, new Runnable() {
+      @Override
       public void run() {
         myCallback.deleteContentFolder(getContentEntry(), folder);
       }
@@ -279,7 +281,7 @@ public abstract class ContentRootPanel extends JPanel {
       if (excludedDir == null) {
         continue;
       }
-      if (VfsUtil.isAncestor(excludedDir, file, true)) {
+      if (VfsUtilCore.isAncestor(excludedDir, file, true)) {
         return true;
       }
     }
@@ -340,7 +342,7 @@ public abstract class ContentRootPanel extends JPanel {
   }
 
   private static class UnderlinedPathLabel extends ResizingWrapper {
-    private static final float[] DASH = new float[]{0, 2, 0, 2};
+    private static final float[] DASH = {0, 2, 0, 2};
     private static final Color DASH_LINE_COLOR = new Color(0xC9C9C9);
 
     public UnderlinedPathLabel(JLabel wrappedComponent) {
@@ -348,6 +350,7 @@ public abstract class ContentRootPanel extends JPanel {
       FilePathClipper.install(wrappedComponent, this);
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       final int startX = myWrappedComponent.getWidth();

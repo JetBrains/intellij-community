@@ -25,27 +25,35 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author 2003
  */
 public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.ContentEntryEditorListener{
+  @Override
   public void editingStarted(ContentEntryEditor editor) {
   }
 
+  @Override
   public void beforeEntryDeleted(ContentEntryEditor editor) {
   }
 
+  @Override
   public void sourceFolderAdded(ContentEntryEditor editor, SourceFolder folder) {
   }
 
+  @Override
   public void sourceFolderRemoved(ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
   }
 
+  @Override
   public void folderExcluded(ContentEntryEditor editor, VirtualFile file) {
   }
 
+  @Override
   public void folderIncluded(ContentEntryEditor editor, VirtualFile file) {
   }
 
+  @Override
   public void navigationRequested(ContentEntryEditor editor, VirtualFile file) {
   }
 
+  @Override
   public void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder) {
   }
 }

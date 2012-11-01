@@ -25,10 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public final class GotoModuleDirectory extends FileChooserAction {
+  @Override
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final VirtualFile moduleDir = getModuleDir(e);
     if (moduleDir != null) {
       fileSystemTree.select(moduleDir, new Runnable() {
+        @Override
         public void run() {
           fileSystemTree.expand(moduleDir, null);
         }
@@ -36,6 +38,7 @@ public final class GotoModuleDirectory extends FileChooserAction {
     }
   }
 
+  @Override
   protected void update(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final VirtualFile moduleDir = getModuleDir(e);

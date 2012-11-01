@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAct
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -148,11 +149,12 @@ public class ContentEntryTreeEditor {
     final VirtualFile file = entry.getFile();
     myDescriptor.setRoots(file);
     if (file == null) {
-      final String path = VfsUtil.urlToPath(entry.getUrl());
+      final String path = VfsUtilCore.urlToPath(entry.getUrl());
       myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
     }
 
     final Runnable init = new Runnable() {
+      @Override
       public void run() {
         //noinspection ConstantConditions
         myFileSystemTree.updateTree();
@@ -161,6 +163,7 @@ public class ContentEntryTreeEditor {
     };
 
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(), init, null) {
+      @Override
       protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure,
                                                       Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor,
                                                       final Runnable onInitialized) {
@@ -215,22 +218,27 @@ public class ContentEntryTreeEditor {
   }
 
   private class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
+    @Override
     public void sourceFolderAdded(ContentEntryEditor editor, SourceFolder folder) {
       update();
     }
 
+    @Override
     public void sourceFolderRemoved(ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
       update();
     }
 
+    @Override
     public void folderExcluded(ContentEntryEditor editor, VirtualFile file) {
       update();
     }
 
+    @Override
     public void folderIncluded(ContentEntryEditor editor, VirtualFile file) {
       update();
     }
 
+    @Override
     public void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder) {
       update();
     }
@@ -243,6 +251,7 @@ public class ContentEntryTreeEditor {
             AllIcons.Actions.NewFolder);
     }
 
+    @Override
     public JComponent createCustomComponent(Presentation presentation) {
       return IconWithTextAction.createCustomComponentImpl(this, presentation);
     }
@@ -258,6 +267,7 @@ public class ContentEntryTreeEditor {
       super(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
     }
 
+    @Override
     protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
       return false; // need this in order to not show plus for empty directories
     }
@@ -268,6 +278,7 @@ public class ContentEntryTreeEditor {
       super(layout);
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (FileSystemTree.DATA_KEY.is(dataId)) {

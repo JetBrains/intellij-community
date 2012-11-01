@@ -18,6 +18,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.PathReferenceProviderBase");
 
+  @Override
   public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
 
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);

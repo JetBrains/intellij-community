@@ -22,6 +22,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 
+  @Override
   public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
@@ -75,6 +78,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     }
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
+      @Override
       public Module[] compute() {
         return myModuleManager.getModules();
       }
@@ -93,21 +97,24 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     }
   }
 
+  @Override
   public boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext) {
     if (matchContext != null) {
       return true;
     }
-    if (myBaseDir != null && VfsUtil.isAncestor(myBaseDir, file, false)) {
+    if (myBaseDir != null && VfsUtilCore.isAncestor(myBaseDir, file, false)) {
       return !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
     }
     return false;
   }
 
+  @Override
   @Nullable
   public Object getMatchContext(final VirtualFile file) {
-    return ModuleUtil.findModuleForFile(file, myProject);
+    return ModuleUtilCore.findModuleForFile(file, myProject);
   }
 
+  @Override
   @Nullable
   public VirtualFile getVcsRootFor(final VirtualFile file) {
     if (myBaseDir != null && PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class)
@@ -122,7 +129,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme) && (myBaseDir != null)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-        if (VfsUtil.isAncestor(ideaDir, file, false)) {
+        if (VfsUtilCore.isAncestor(ideaDir, file, false)) {
           return ideaDir;
         }
       }
@@ -130,6 +137,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return null;
   }
 
+  @Override
   public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
@@ -156,7 +164,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
         final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
         final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
-        final boolean haveDefaultMapping = (defaultMapping != null) && (defaultMapping.length() > 0);
+        final boolean haveDefaultMapping = (defaultMapping != null) && (!defaultMapping.isEmpty());
         if (haveDefaultMapping && (myBaseDir != null)) {
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
           if (vcs != null) {

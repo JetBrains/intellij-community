@@ -30,6 +30,7 @@ public class ChangesModuleGroupingPolicyFactory extends ChangesGroupingPolicyFac
     myProject = project;
   }
 
+  @Override
   public ChangesGroupingPolicy createGroupingPolicy(final DefaultTreeModel model) {
     return new ChangesModuleGroupingPolicy(myProject, model);
   }

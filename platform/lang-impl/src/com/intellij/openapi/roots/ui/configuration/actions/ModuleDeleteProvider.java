@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
+  @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     return modules != null && !isPrimaryModule(modules);
@@ -69,11 +71,13 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     return false;
   }
 
+  @Override
   public void deleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     assert modules != null;
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     String names = StringUtil.join(Arrays.asList(modules), new Function<Module, String>() {
+      @Override
       public String fun(final Module module) {
         return "\'" + module.getName() + "\'";
       }
@@ -81,8 +85,10 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     int ret = Messages.showOkCancelDialog(getConfirmationText(modules, names), getActionTitle(), Messages.getQuestionIcon());
     if (ret != 0) return;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         final Runnable action = new Runnable() {
+          @Override
           public void run() {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
             final Module[] currentModules = moduleManager.getModules();
@@ -91,7 +97,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
             for (final Module module : modules) {
               final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
               for (final Module otherModule : currentModules) {
-                if (otherModule == module || ArrayUtil.find(modules, otherModule) != -1) continue;
+                if (otherModule == module || ArrayUtilRt.find(modules, otherModule) != -1) continue;
                 if (!otherModuleRootModels.containsKey(otherModule)) {
                   otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
                 }

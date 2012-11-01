@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public class OptimizeOptionsCheckinHandlerFactory extends CheckinHandlerFactory {
+  @Override
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
     return new OptimizeImportsBeforeCheckinHandler(panel.getProject(), panel);

@@ -43,6 +43,7 @@ public class ModulesCombobox extends ComboBox {
     super(model);
     myModel = model;
     new ComboboxSpeedSearch(this){
+      @Override
       protected String getElementText(Object element) {
         if (element instanceof Module) {
           return ((Module)element).getName();

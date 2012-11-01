@@ -207,7 +207,7 @@ public class SdkConfigurationUtil {
     }
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
-      if (sdks.size() > 0) {
+      if (!sdks.isEmpty()) {
         if (comparator != null) {
           Collections.sort(sdks, comparator);
         }

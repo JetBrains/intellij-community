@@ -27,6 +27,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
     return new ModuleWizardStep[]{generationStep};
   }
 
+  @Override
   public ModuleBuilder createModuleBuilder() {
     return new WebModuleBuilder();
   }

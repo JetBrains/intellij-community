@@ -55,6 +55,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     myModule = module;
   }
 
+  @Override
   protected XmlElementStorage getMainStorage() {
     final XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
     assert storage != null;
@@ -83,6 +84,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
         final Project project = myModule.getProject();
 
           StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            @Override
             public void run() {
               StorageUtil.notifyUnknownMacros(substitutor, project, null);
             }
@@ -91,6 +93,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
   }
 
+  @Override
   public ModuleFileData getMainStorageData() throws StateStorageException {
     return (ModuleFileData)super.getMainStorageData();
   }
@@ -112,6 +115,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       myModule = storageData.myModule;
     }
 
+    @Override
     public void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
@@ -127,6 +131,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return super.isEmpty() && myOptions.isEmpty();
     }
 
+    @Override
     @NotNull
     protected Element save() {
       final Element root = super.save();
@@ -145,14 +150,17 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       return root;
     }
 
+    @Override
     public StorageData clone() {
       return new ModuleFileData(this);
     }
 
+    @Override
     protected int computeHash() {
       return super.computeHash()*31 + myOptions.hashCode();
     }
 
+    @Override
     @Nullable
     public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
       final ModuleFileData data = (ModuleFileData)storageData;
@@ -175,6 +183,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
   }
 
+  @Override
   public void setModuleFilePath(@NotNull final String filePath) {
     final String path = filePath.replace(File.separatorChar, '/');
     LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
@@ -183,6 +192,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     storageManager.addMacro(MODULE_FILE_MACRO, path);
   }
 
+  @Override
   @Nullable
   public VirtualFile getModuleFile() {
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
@@ -190,6 +200,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return storage.getVirtualFile();
   }
 
+  @Override
   @NotNull
   public String getModuleFilePath() {
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
@@ -197,6 +208,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return storage.getFilePath();
   }
 
+  @Override
   @NotNull
   public String getModuleFileName() {
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
@@ -204,6 +216,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return storage.getFileName();
   }
 
+  @Override
   public void setOption(final String optionName, final String optionValue) {
     try {
       getMainStorageData().setOption(optionName,  optionValue);
@@ -213,6 +226,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
   }
 
+  @Override
   public void clearOption(final String optionName) {
     try {
       getMainStorageData().clearOption(optionName);
@@ -222,6 +236,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     }
   }
 
+  @Override
   public String getOptionValue(final String optionName) {
     try {
       return getMainStorageData().getOptionValue(optionName);
@@ -237,6 +252,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
+  @Override
   protected StateStorageManager createStateStorageManager() {
     return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);
   }

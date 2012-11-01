@@ -43,24 +43,29 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
     myPanel = panel;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox optimizeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
 
     return new RefreshableOnComponent() {
+      @Override
       public JComponent getComponent() {
         final JPanel panel = new JPanel(new GridLayout(1, 0));
         panel.add(optimizeBox);
         return panel;
       }
 
+      @Override
       public void refresh() {
       }
 
+      @Override
       public void saveState() {
         getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = optimizeBox.isSelected();
       }
 
+      @Override
       public void restoreState() {
         optimizeBox.setSelected(getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT);
       }
@@ -72,11 +77,13 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
     return VcsConfiguration.getInstance(myProject);
   }
 
+  @Override
   public void runCheckinHandlers(final Runnable finishAction) {
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 
     final Runnable performCheckoutAction = new Runnable() {
+      @Override
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
         finishAction.run();

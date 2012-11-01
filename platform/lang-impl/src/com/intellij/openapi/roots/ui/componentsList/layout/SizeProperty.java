@@ -23,12 +23,14 @@ public interface SizeProperty {
   Dimension getSize(Component component);
 
   SizeProperty PREFERED_SIZE = new SizeProperty() {
+    @Override
     public Dimension getSize(Component component) {
       return component.getPreferredSize();
     }
   };
 
   SizeProperty MINIMUM_SIZE = new SizeProperty() {
+    @Override
     public Dimension getSize(Component component) {
       return component.getMinimumSize();
     }

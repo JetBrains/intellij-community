@@ -39,6 +39,7 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
+  @Override
   @Nullable
   public Object getData(final String dataId, final Editor e, final VirtualFile file) {
     if (!file.isValid()) return null;
@@ -93,6 +94,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       if (psiDirectory != null && psiDirectory.isPhysical()) {
         return new IdeView() {
 
+          @Override
           public void selectElement(final PsiElement element) {
             Editor editor = EditorHelper.openInEditor(element);
             if (editor != null) {
@@ -100,10 +102,12 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
             }
           }
 
+          @Override
           public PsiDirectory[] getDirectories() {
             return new PsiDirectory[]{psiDirectory};
           }
 
+          @Override
           public PsiDirectory getOrChooseDirectory() {
             return psiDirectory;
           }

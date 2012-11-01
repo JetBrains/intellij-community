@@ -17,6 +17,7 @@ package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
@@ -58,6 +59,7 @@ public class PersistentFileSetManager implements PersistentStateComponent<Elemen
     List<VirtualFile> sortedFiles = new ArrayList<VirtualFile>();
     sortedFiles.addAll(myFiles);
     Collections.sort(sortedFiles, new Comparator<VirtualFile>() {
+      @Override
       public int compare(final VirtualFile file1, final VirtualFile file2) {
         return file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase());
       }
@@ -70,7 +72,7 @@ public class PersistentFileSetManager implements PersistentStateComponent<Elemen
     final Element root = new Element("root");
     for (VirtualFile vf : getSortedFiles()) {
       final Element vfElement = new Element(FILE_ELEMENT);
-      final Attribute filePathAttr = new Attribute(PATH_ATTR, VfsUtil.pathToUrl(vf.getPath()));
+      final Attribute filePathAttr = new Attribute(PATH_ATTR, VfsUtilCore.pathToUrl(vf.getPath()));
       vfElement.setAttribute(filePathAttr);
       root.addContent(vfElement);
     }

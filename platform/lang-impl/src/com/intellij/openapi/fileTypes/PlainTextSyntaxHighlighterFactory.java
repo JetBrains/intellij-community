@@ -37,6 +37,7 @@ import java.util.ArrayList;
  * @author peter
  */
 public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+  @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
     return new SyntaxHighlighterBase() {

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
  * @author yole
  */
 public class CodeAnalysisCheckinHandlerFactory extends CheckinHandlerFactory {
+  @Override
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
     return new CodeAnalysisBeforeCheckinHandler(panel.getProject(), panel);

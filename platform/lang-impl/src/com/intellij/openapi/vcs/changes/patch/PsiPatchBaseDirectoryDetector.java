@@ -37,11 +37,12 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
     myProject = project;
   }
 
+  @Override
   @Nullable
   public Result detectBaseDirectory(final String patchFileName) {
     String[] nameComponents = patchFileName.split("/");
     String patchName = nameComponents[nameComponents.length - 1];
-    if (patchName.length() == 0) {
+    if (patchName.isEmpty()) {
       return null;
     }
     final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, patchName, GlobalSearchScope.projectScope(myProject));
@@ -59,6 +60,7 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
     return null;
   }
 
+  @Override
   public Collection<VirtualFile> findFiles(final String fileName) {
     return FilenameIndex.getVirtualFilesByName(myProject, fileName, GlobalSearchScope.projectScope(myProject));
   }

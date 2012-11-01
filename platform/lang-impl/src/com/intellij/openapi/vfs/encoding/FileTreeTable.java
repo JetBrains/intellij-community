@@ -44,6 +44,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
     reset(EncodingProjectManager.getInstance(project).getAllMappings());
 
     getValueColumn().setCellRenderer(new DefaultTableCellRenderer(){
+      @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value,
                                                      final boolean isSelected, final boolean hasFocus, final int row, final int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -77,21 +78,25 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
       private VirtualFile myVirtualFile;
       {
         delegate = new EditorDelegate() {
+            @Override
             public void setValue(Object value) {
               getTableModel().setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
             }
 
-	    public Object getCellEditorValue() {
+	    @Override
+            public Object getCellEditorValue() {
 		return getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
 	    }
         };
       }
 
+      @Override
       public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, int row, int column) {
         final Object o = table.getModel().getValueAt(row, 0);
         myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
 
         final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(myVirtualFile){
+          @Override
           protected void chosen(VirtualFile virtualFile, Charset charset) {
             getValueColumn().getCellEditor().stopCellEditing();
             if (clearSubdirectoriesOnDemandOrCancel(
