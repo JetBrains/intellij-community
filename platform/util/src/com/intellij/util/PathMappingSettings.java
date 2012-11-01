@@ -31,17 +31,21 @@ import java.util.List;
  * @author traff
  */
 public class PathMappingSettings implements Cloneable {
+  @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
-  private static List<PathMapping> create(List<PathMapping> mappings) {
+  @NotNull
+  private static List<PathMapping> create(@Nullable final List<PathMapping> mappings) {
     List<PathMapping> result = ContainerUtil.newArrayList();
-    for (PathMapping m : mappings) {
-      if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
-        result.add(m);
+    if (mappings != null) {
+      for (PathMapping m : mappings) {
+        if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
+          result.add(m);
+        }
       }
     }
     return result;
@@ -111,11 +115,12 @@ public class PathMappingSettings implements Cloneable {
     return myPathMappings.size() > 0;
   }
 
+  @NotNull
   public List<PathMapping> getPathMappings() {
     return myPathMappings;
   }
 
-  public void setPathMappings(List<PathMapping> pathMappings) {
+  public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
@@ -148,7 +153,7 @@ public class PathMappingSettings implements Cloneable {
   }
 
   public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
-    if (element == null || mappings == null) {
+    if (element == null || mappings == null || !mappings.isUseMapping()) {
       return;
     }
     element.addContent(XmlSerializer.serialize(mappings));
