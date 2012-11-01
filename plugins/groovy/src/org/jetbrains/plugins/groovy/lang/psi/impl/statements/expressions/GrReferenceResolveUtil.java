@@ -164,30 +164,28 @@ public class GrReferenceResolveUtil {
         }
       }
     }
-    else {
-      if (qualifierType instanceof PsiIntersectionType) {
-        for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
-          if (!processQualifierType(processor, conjunct, state, place)) return false;
-        }
+    else if (qualifierType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
+        if (!processQualifierType(processor, conjunct, state, place)) return false;
       }
-      else {
-        if (!processQualifierType(processor, qualifierType, state, place)) return false;
-        if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
-          PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-          if (resolved instanceof PsiClass) { //omitted .class
-            PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, place.getResolveScope());
-            if (javaLangClass != null) {
-              PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-              PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-              if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-              if (typeParameters.length == 1) {
-                substitutor = substitutor.put(typeParameters[0], qualifierType);
-                state = state.put(PsiSubstitutor.KEY, substitutor);
-              }
-              if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
-              PsiType javaLangClassType = TypesUtil.createJavaLangClassType(qualifierType, place.getProject(), place.getResolveScope());
-              if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
+    }
+    else {
+      if (!processQualifierType(processor, qualifierType, state, place)) return false;
+      if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
+        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass) { //omitted .class
+          PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, place.getResolveScope());
+          if (javaLangClass != null) {
+            PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+            PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+            if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+            if (typeParameters.length == 1) {
+              substitutor = substitutor.put(typeParameters[0], qualifierType);
+              state = state.put(PsiSubstitutor.KEY, substitutor);
             }
+            if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
+            PsiType javaLangClassType = TypesUtil.createJavaLangClassType(qualifierType, place.getProject(), place.getResolveScope());
+            if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
           }
         }
       }
