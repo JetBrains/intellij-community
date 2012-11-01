@@ -44,6 +44,7 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class ProfileManager {
+  private static final LayoutDevice NO_DEVICES = new LayoutDevice("[None]", LayoutDevice.Type.CUSTOM);
   private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit Devices", LayoutDevice.Type.CUSTOM);
 
   private final ModuleProvider myModuleProvider;
@@ -84,6 +85,9 @@ public class ProfileManager {
 
       @Override
       protected boolean selectionChanged(LayoutDevice item) {
+        if (item == NO_DEVICES) {
+          return false;
+        }
         if (item == CUSTOM_DEVICE) {
           configureCustomDevices(false);
         }
@@ -455,6 +459,9 @@ public class ProfileManager {
     if (sdkData != null) {
       myLayoutDeviceManager.loadDevices(sdkData);
       myDevices = new ArrayList<LayoutDevice>(myLayoutDeviceManager.getCombinedList());
+      if (myDevices.isEmpty()) {
+        myDevices.add(NO_DEVICES);
+      }
       myDevices.add(CUSTOM_DEVICE);
 
       targets = new ArrayList<IAndroidTarget>();
@@ -465,7 +472,7 @@ public class ProfileManager {
       }
     }
     else {
-      myDevices = Collections.emptyList();
+      myDevices = Arrays.asList(NO_DEVICES);
     }
 
     LayoutDevice newDevice = null;
@@ -536,8 +543,17 @@ public class ProfileManager {
   private void updateDevice(@Nullable LayoutDevice device, @Nullable String configurationName) {
     myProfile.setDevice(device == null ? null : device.getName());
 
-    List<LayoutDeviceConfiguration> configurations =
-      device == null ? Collections.<LayoutDeviceConfiguration>emptyList() : device.getConfigurations();
+    List<LayoutDeviceConfiguration> configurations;
+    if (device == null) {
+      configurations = Collections.emptyList();
+    }
+    else {
+      configurations = device.getConfigurations();
+      if (configurations == null) {
+        configurations = Collections.emptyList();
+      }
+    }
+
     LayoutDeviceConfiguration newConfiguration = null;
 
     if (configurationName != null) {
