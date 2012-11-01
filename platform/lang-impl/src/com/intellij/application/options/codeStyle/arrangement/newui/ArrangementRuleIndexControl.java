@@ -32,6 +32,7 @@ public class ArrangementRuleIndexControl extends JPanel {
   private int    myIndex;
   private char[] myChars;
   private int    myIndexWidth;
+  private int    myBaseLine;
 
   public ArrangementRuleIndexControl(int diameter, int height) {
     myDiameter = diameter;
@@ -77,9 +78,13 @@ public class ArrangementRuleIndexControl extends JPanel {
     g.setColor(UIUtil.getBorderColor());
     Rectangle bounds = getBounds();
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.drawOval(0, (bounds.height - myDiameter) / 2, myDiameter, myDiameter);
+    int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
+    g.drawOval(0, y, myDiameter, myDiameter);
     
-    int y = bounds.height - (bounds.height - myHeight) / 2;
-    g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, y);
+    g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, myBaseLine);
+  }
+
+  public void setBaseLine(int baseLine) {
+    myBaseLine = baseLine;
   }
 }

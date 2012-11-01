@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +68,19 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   private void init() {
     setLayout(new GridBagLayout());
     GridBag constraints = new GridBag().anchor(GridBagConstraints.CENTER)
-      .insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, ArrangementConstants.HORIZONTAL_PADDING * 3);
+      .insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, ArrangementConstants.HORIZONTAL_GAP * 2);
     add(myRowIndexControl, constraints);
     add(myDelegate.getUiComponent(), new GridBag().fillCellHorizontally().weightx(1).anchor(GridBagConstraints.WEST));
     add(myEditButton, new GridBag().anchor(GridBagConstraints.EAST));
     setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    FontMetrics metrics = g.getFontMetrics();
+    int baseLine = SimpleColoredComponent.getTextBaseLine(metrics, metrics.getHeight());
+    myRowIndexControl.setBaseLine(baseLine + ArrangementConstants.VERTICAL_GAP + myDelegate.getUiComponent().getBounds().y - myRowIndexControl.getBounds().y);
+    super.paintComponent(g);
   }
 
   public void setRowIndex(int row) {
@@ -128,5 +137,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public void onMouseExited() {
     myDelegate.onMouseExited(); 
+  }
+
+  @Override
+  public String toString() {
+    return "list row decorator for " + myDelegate.toString();
   }
 }

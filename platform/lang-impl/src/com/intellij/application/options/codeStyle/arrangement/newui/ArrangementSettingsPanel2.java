@@ -88,7 +88,6 @@ public abstract class ArrangementSettingsPanel2 extends CodeStyleAbstractPanel {
   @Nullable
   @Override
   protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-    // TODO den implement 
     return null;
   }
 
