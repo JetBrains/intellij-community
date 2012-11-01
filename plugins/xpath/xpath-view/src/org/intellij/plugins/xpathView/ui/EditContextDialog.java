@@ -35,6 +35,7 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.XPathFileType;
@@ -334,7 +335,7 @@ public class EditContextDialog extends DialogWrapper {
           setToolTipText("Duplicate Variable");
         }
         else if (variable.getExpression().length() == 0) {
-          setForeground(Color.BLUE);
+          setForeground(PlatformColors.BLUE);
           setToolTipText("Empty expression. Variable will evaluate to empty nodeset.");
         }
       }
@@ -411,7 +412,7 @@ public class EditContextDialog extends DialogWrapper {
 
       final String prefix = myNamespaces.get(row).getPrefix();
       if (column == 1 && prefix == null || prefix.length() == 0) {
-        setForeground(Color.BLUE);
+        setForeground(PlatformColors.BLUE);
       }
       else if (column == 0) {
         for (int i = 0; i < myNamespaces.size(); i++) {

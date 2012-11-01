@@ -36,6 +36,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -504,7 +505,7 @@ public class ActionsTree {
         }
         else {
           if (changed) {
-            foreground = Color.BLUE;
+            foreground = PlatformColors.BLUE;
           }
           else {
             foreground = UIUtil.getTreeForeground();

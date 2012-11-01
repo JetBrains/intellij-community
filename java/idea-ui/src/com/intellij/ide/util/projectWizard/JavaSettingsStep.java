@@ -47,7 +47,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private JPanel myPanel;
 
   public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
-    super(settingsStep, sdkFilter);
+    super(settingsStep, moduleBuilder, sdkFilter);
     myModuleBuilder = moduleBuilder;
 
     if (moduleBuilder instanceof JavaModuleBuilder) {

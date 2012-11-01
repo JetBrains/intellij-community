@@ -30,4 +30,5 @@ public interface SettingsStep {
   void addSettingsComponent(JComponent component);
 
   void addExpertPanel(JComponent panel);
+  void addExpertField(String label, JComponent field);
 }

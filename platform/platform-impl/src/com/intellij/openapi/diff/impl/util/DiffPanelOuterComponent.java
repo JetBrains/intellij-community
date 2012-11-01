@@ -24,6 +24,8 @@ import com.intellij.openapi.diff.impl.DiffToolbarComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +34,7 @@ import java.util.List;
 public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private final DiffStatusBar myStatusBar;
   private final DiffToolbarComponent myToolbar;
-  private final DiffRequest.ToolbarAddons myDefaultActions;
+  @Nullable private DiffRequest.ToolbarAddons myDefaultActions;
   private DataProvider myDataProvider = null;
   private DeferScrollToFirstDiff myScrollState = NO_SCROLL_NEEDED;
   private ScrollingPanel myScrollingPanel = null;
@@ -43,13 +45,13 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private int myPrefferedWidth;
   private Getter<Integer> myDefaultHeight;
 
-  public DiffPanelOuterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {
+  public DiffPanelOuterComponent(List<TextDiffType> diffTypes, @Nullable DiffRequest.ToolbarAddons toolbarAddons) {
     super(new BorderLayout());
     myStatusBar = new DiffStatusBar(diffTypes);
     myBottomContainer = new JPanel(new BorderLayout());
     myBottomContainer.add(myStatusBar, BorderLayout.SOUTH);
     add(myBottomContainer, BorderLayout.SOUTH);
-    myDefaultActions = defaultActions;
+    myDefaultActions = toolbarAddons;
     myToolbar = new DiffToolbarComponent(this);
     disableToolbar(false);
     myWrapper = new JPanel(new BorderLayout());
@@ -64,8 +66,14 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     myPrefferedWidth = 600;
   }
 
+  public void setToolbarActions(@NotNull DiffRequest.ToolbarAddons toolbarAddons) {
+    myDefaultActions = toolbarAddons;
+  }
+
   public DiffToolbar resetToolbar() {
-    myToolbar.resetToolbar(myDefaultActions);
+    if (myDefaultActions != null) {
+      myToolbar.resetToolbar(myDefaultActions);
+    }
     return myToolbar.getToolbar();
   }
 

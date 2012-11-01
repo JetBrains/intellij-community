@@ -586,7 +586,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
               return ((TemplateGroup)object).getName();
             }
             if (object instanceof TemplateImpl) {
-              return ((TemplateImpl)object).getKey();
+              TemplateImpl template = (TemplateImpl)object;
+              return StringUtil.notNullize(template.getKey()) + " " + StringUtil.notNullize(template.getDescription()) + " " + template.getTemplateText();
             }
             return "";
           }

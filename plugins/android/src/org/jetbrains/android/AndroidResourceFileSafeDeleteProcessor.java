@@ -65,15 +65,6 @@ public class AndroidResourceFileSafeDeleteProcessor extends SafeDeleteProcessorD
       // todo: support this case (we should ask once)
       return Collections.emptyList();
     }
-
-    if (askUser) {
-      final int r = Messages
-        .showYesNoDialog(element.getProject(), "Delete alternative resource files for other configurations?",
-                         "Delete", Messages.getQuestionIcon());
-      if (r != Messages.YES) {
-        return Collections.emptyList();
-      }
-    }
     final AndroidFacet facet = AndroidFacet.getInstance(element);
     assert facet != null;
 
@@ -96,6 +87,14 @@ public class AndroidResourceFileSafeDeleteProcessor extends SafeDeleteProcessorD
       if (!resourceFile.getManager().areElementsEquivalent(file, resourceFile) &&
           resourceFile.getName().equals(name)) {
         result.add(resourceFile);
+      }
+    }
+    if (result.size() > 0 && askUser) {
+      final int r = Messages
+        .showYesNoDialog(element.getProject(), "Delete alternative resource files for other configurations?",
+                         "Delete", Messages.getQuestionIcon());
+      if (r != Messages.YES) {
+        return Collections.emptyList();
       }
     }
     return result;

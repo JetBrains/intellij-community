@@ -254,7 +254,7 @@ public final class IconLoader {
   }
 
   private static Image createDisabled(BufferedImage image) {
-    final GrayFilter filter = new GrayFilter(true, UIUtil.isUnderDarcula() ? 30 : 65);
+    final GrayFilter filter = UIUtil.getGrayFilter();
     final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
     return Toolkit.getDefaultToolkit().createImage(prod);
   }

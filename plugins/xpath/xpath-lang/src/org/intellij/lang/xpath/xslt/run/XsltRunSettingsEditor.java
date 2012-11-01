@@ -51,6 +51,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
@@ -243,7 +244,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           setToolTipText(null);
           if (column == 0) {
             if (table.getModel().getValueAt(row, 1) == null) {
-              setForeground(Color.BLUE);
+              setForeground(PlatformColors.BLUE);
               setToolTipText("No value set for parameter '" + value + "'");
             }
           }

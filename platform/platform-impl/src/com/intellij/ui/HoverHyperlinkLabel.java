@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class HoverHyperlinkLabel extends JLabel {
   private final ArrayList<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
 
   public HoverHyperlinkLabel(String text) {
-    this(text, Color.BLUE);
+    this(text, PlatformColors.BLUE);
   }
 
   public HoverHyperlinkLabel(String text, Color color) {

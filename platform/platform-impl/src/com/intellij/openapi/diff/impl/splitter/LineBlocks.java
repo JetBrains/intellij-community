@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.splitter;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.fragments.LineBlock;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -178,9 +179,17 @@ public class LineBlocks {
     for (LineBlock block : blocks) {
       Interval interval1 = new Interval(block.getStartingLine1(), block.getModifiedLines1());
       Interval interval2 = new Interval(block.getStartingLine2(), block.getModifiedLines2());
-      diffs.add(new Diff(interval1, interval2, TextDiffType.create(block.getType())));
+      diffs.add(new Diff(interval1, interval2, makeTextDiffType(block)));
     }
     return new LineBlocks(diffs);
+  }
+
+  private static TextDiffType makeTextDiffType(LineBlock block) {
+    TextDiffType type = TextDiffType.create(block.getType());
+    if (block instanceof LineFragment) {
+      return DiffUtil.makeTextDiffType((LineFragment)block);
+    }
+    return type;
   }
 
   @NotNull

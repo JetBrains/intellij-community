@@ -226,6 +226,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitField(PsiField field) {
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      initializeVariable(field, initializer);
+    }
+  }
+
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(variable, false);
     addInstruction(new PushInstruction(dfaVariable, initializer));

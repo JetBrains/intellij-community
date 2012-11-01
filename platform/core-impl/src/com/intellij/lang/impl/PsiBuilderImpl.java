@@ -671,6 +671,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       type = myRemapper.filter(type, myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence());
       myLexTypes[myCurrentLexeme] = type; // filter may have changed the type
       skipWhitespace();
+      type = myLexTypes[myCurrentLexeme];
       return type;
     }
     return myLexTypes[myCurrentLexeme];

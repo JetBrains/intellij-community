@@ -1143,7 +1143,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           kind = BuildMessage.Kind.INFO;
       }
       final JavaFileObject source = diagnostic.getSource();
-      final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      File sourceFile = null;
+      try {
+        sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       String message = diagnostic.getMessage(Locale.US);
       if (Utils.IS_TEST_MODE) {

@@ -58,7 +58,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    expander.addFileHierarchyReplacements("PROJECT_DIR", baseDir);
+    expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir);
     return expander;
   }
 
@@ -69,11 +69,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
     else {
       File directory;
-      if (file.isDirectory() && file.getName().equals(".idea")) {
+      if (file.isDirectory() && file.getName().equals(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directory = file;
       }
       else {
-        directory = new File(file, ".idea");
+        directory = new File(file, PathMacroUtil.DIRECTORY_STORE_NAME);
         if (!directory.isDirectory()) {
           throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
         }
@@ -197,16 +197,29 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
     List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
-    final List<String> paths = new ArrayList<String>(); 
+    final List<String> paths = new ArrayList<String>();
+    final List<String> classpathDirs = new ArrayList<String>();
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
+      final File file = new File(path);
+      if (!file.exists()) {
+        LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+        continue;
+      }
+
+      final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
+      final Element moduleRoot = loadRootElement(file, expander);
+      final String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
+      if (classpathDir != null) {
+        classpathDirs.add(classpathDir);
+      }
       paths.add(path);
     }
     for (final String path : paths) {
       futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
         @Override
         public JpsModule call() throws Exception {
-          return loadModule(path, paths, projectSdkType);
+          return loadModule(path, classpathDirs, projectSdkType);
         }
       }));
     }
@@ -265,7 +278,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, File moduleFile) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    expander.addFileHierarchyReplacements("MODULE_DIR", moduleFile.getParentFile());
+    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.getAbsolutePath());
+    if (moduleDirPath != null) {
+      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtil.toSystemDependentName(moduleDirPath)));
+    }
     return expander;
   }
 

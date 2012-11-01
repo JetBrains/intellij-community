@@ -78,6 +78,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (useJps()) {
       CompilerTestUtil.enableExternalCompiler(myProject);
     }
+    else {
+      CompilerTestUtil.disableExternalCompiler(myProject);
+    }
   }
 
   @Override
@@ -529,7 +532,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
           modules.add(getModule(each));
         }
         if (useJps()) {
-          MavenProjectsManager.getInstance(myProject).generateBuildConfigurationIfNeed();
+          MavenProjectsManager.getInstance(myProject).generateBuildConfiguration(false);
         }
       }
     });

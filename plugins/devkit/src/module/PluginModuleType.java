@@ -66,6 +66,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
                                               PluginModuleBuilder moduleBuilder,
                                               ModulesProvider modulesProvider) {
+    if (wizardContext.isTemplateMode()) return ModuleWizardStep.EMPTY_ARRAY;
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     steps.add(stepFactory.createSourcePathsStep(wizardContext, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "reference.dialogs.new.project.fromScratch.source"));

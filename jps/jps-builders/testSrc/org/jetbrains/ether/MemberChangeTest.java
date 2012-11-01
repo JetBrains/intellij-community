@@ -176,6 +176,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testRemoveThrowsInBaseMethod() {
+    doTest();
+  }
+
   public void testAddMethod() {
     doTest();
   }

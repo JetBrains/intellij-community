@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -273,7 +274,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           } else if (component.getPreferredSize() != null &&
                      (component.getSize().width < component.getPreferredSize().width
                       || component.getSize().height < component.getPreferredSize().height)) {
-            foreground = Color.BLUE;
+            foreground = PlatformColors.BLUE;
           }
           
           if (componentNode.getToSelect() == componentNode.getOwnComponent()) {

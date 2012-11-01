@@ -206,8 +206,7 @@ public class VfsUtilCore {
       VirtualFile[] children = null;
 
       try {
-        if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
-        if (!visitor.depthLimitReached()) {
+        if (file.isValid() && visitor.allowVisitChildren(file) && !visitor.depthLimitReached()) {
           childrenIterable = visitor.getChildrenIterable(file);
           if (childrenIterable == null) {
             children = file.getChildren();

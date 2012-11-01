@@ -46,6 +46,10 @@ public class ConditionalExpression implements GroovyElementTypes {
       if (!AssignmentExpression.parse(builder, parser)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
+
+      if (ParserUtils.lookAhead(builder, mNLS, mCOLON)) {
+        ParserUtils.getToken(builder, mNLS);
+      }
       if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
         ParserUtils.getToken(builder, mNLS);
         parse(builder, parser);

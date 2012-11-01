@@ -126,6 +126,12 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+  public static GrayFilter getGrayFilter() {
+    return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}

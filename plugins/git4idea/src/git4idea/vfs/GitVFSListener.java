@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -137,50 +138,18 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
-    final Map<VirtualFile, List<VirtualFile>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
-    }
-    catch (VcsException e) {
-      gitVcs().showMessages(e.getMessage());
-      return;
-    }
-    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
-
-      public void run(@NotNull ProgressIndicator indicator) {
-        // note that copied files are not processed because they are included into added files.
-        for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
-          try {
-            final VirtualFile root = e.getKey();
-            indicator.setText(root.getPresentableUrl());
-            GitFileUtils.addFiles(myProject, root, e.getValue());
-            VcsFileUtil.markFilesDirty(myProject, e.getValue());
-          }
-          catch (final VcsException ex) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                gitVcs().showMessages(ex.getMessage());
-              }
-            });
-          }
-        }
-      }
-    });
+    // copied files (copyFromMap) are ignored, because they are included into added files.
+    performAdding(ObjectsConvertor.vf2fp(new ArrayList<VirtualFile>(addedFiles)));
   }
 
   private GitVcs gitVcs() {
     return ((GitVcs)myVcs);
   }
 
-  /**
-   * Perform adding the files using file paths
-   *
-   * @param addedFiles the added files
-   */
-  private void performAdding(Collection<FilePath> addedFiles) {
+  private void performAdding(Collection<FilePath> filesToAdd) {
     final Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(addedFiles, true);
+      sortedFiles = GitUtil.sortFilePathsByGitRoot(filesToAdd, true);
     }
     catch (VcsException e) {
       gitVcs().showMessages(e.getMessage());

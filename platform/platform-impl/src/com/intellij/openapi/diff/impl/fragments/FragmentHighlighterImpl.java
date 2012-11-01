@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.fragments;
 
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.actions.MergeOperations;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -40,32 +42,34 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
   }
 
   public void highlightInline(final InlineFragment fragment) {
-    highlightFragmentImpl(fragment, true);
+    highlightFragmentImpl(fragment);
   }
 
-  protected void highlightFragmentImpl(final Fragment fragment, final boolean drawBorder) {
-    myAppender1.highlightText(fragment, drawBorder, null);
-    myAppender2.highlightText(fragment, drawBorder, null);
+  protected void highlightFragmentImpl(final Fragment fragment) {
+    myAppender1.highlightText(fragment, null);
+    myAppender2.highlightText(fragment, null);
   }
 
   public void highlightLine(final LineFragment fragment) {
+    highlightFragmentImpl(fragment);
+
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
     if (iterator == null) {
-      highlightFragmentImpl(fragment, false);
+      highlightFragmentImpl(fragment);
     }
     else {
-      for (; iterator.hasNext();) {
+      while (iterator.hasNext()) {
         Fragment childFragment = iterator.next();
         childFragment.highlight(this);
       }
     }
     if (fragment.isEqual() && myIsLast) return;
-    addBottomLine(fragment, myAppender1, fragment.getEndLine1());
-    addBottomLine(fragment, myAppender2, fragment.getEndLine2());
+    addSeparatingLine(fragment, myAppender1, fragment.getStartingLine1(), fragment.getEndLine1());
+    addSeparatingLine(fragment, myAppender2, fragment.getStartingLine2(), fragment.getEndLine2());
   }
 
-  private void addModifyActions(final LineFragment fragment, DiffMarkup wrapper, DiffMarkup otherWrapper) {
+  private static void addModifyActions(final LineFragment fragment, DiffMarkup wrapper, DiffMarkup otherWrapper) {
     if (fragment.isEqual()) return;
     if (fragment.isHasLineChildren()) return;
     TextRange range = fragment.getRange(wrapper.getSide());
@@ -76,14 +80,12 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
     otherWrapper.addAction(MergeOperations.mostSensible(otherDocument, document, otherRange, range), otherRange.getStartOffset());
   }
 
-  private void addBottomLine(final Fragment fragment, DiffMarkup appender, int endLine) {
+  private static void addSeparatingLine(@NotNull LineFragment fragment, @NotNull DiffMarkup appender, int startLine, int endLine) {
     if (endLine <= 0) return;
-    TextRange range = fragment.getRange(appender.getSide());
-    appender.addLineMarker(endLine - 1, getRangeType(fragment, range));
-  }
-
-  private TextAttributesKey getRangeType(final Fragment fragment, final TextRange range) {
-    if (range.getLength() == 0) return DiffColors.DIFF_DELETED;
-    return fragment.getType() == null ? null : DiffColors.DIFF_MODIFIED;
+    TextDiffTypeEnum type = fragment.getType();
+    appender.addLineMarker(endLine - 1, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.BOTTOM);
+    if (fragment.getRange(appender.getSide()).getLength() > 0) {
+      appender.addLineMarker(startLine, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.TOP);
+    }
   }
 }

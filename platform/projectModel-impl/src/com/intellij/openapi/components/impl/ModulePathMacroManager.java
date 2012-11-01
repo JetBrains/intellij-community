@@ -21,10 +21,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 public class ModulePathMacroManager extends BasePathMacroManager {
   private final Module myModule;
@@ -39,7 +36,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     final ExpandMacroToPathMap result = new ExpandMacroToPathMap();
 
     if (!myModule.isDisposed()) {
-      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, getModuleDir(myModule.getModuleFilePath()));
+      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
     }
 
     result.putAll(super.getExpandMacroMap());
@@ -52,30 +49,10 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
 
     if (!myModule.isDisposed()) {
-      final String modulePath = getModuleDir(myModule.getModuleFilePath());
+      final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
       addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath, PathMacrosImpl.getUserHome());
     }
 
     return result;
-  }
-
-  @Nullable
-  private static String getModuleDir(String moduleFilePath) {
-    File moduleDirFile = new File(moduleFilePath).getParentFile();
-    if (moduleDirFile == null) return null;
-
-    // hack so that, if a module is stored inside the .idea directory, the base directory
-    // rather than the .idea directory itself is considered the module root
-    // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
-    File moduleDirParent = moduleDirFile.getParentFile();
-    if (moduleDirParent != null && moduleDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      moduleDirFile = moduleDirParent;
-    }
-    String moduleDir = moduleDirFile.getPath();
-    moduleDir = moduleDir.replace(File.separatorChar, '/');
-    if (moduleDir.endsWith(":/")) {
-      moduleDir = moduleDir.substring(0, moduleDir.length() - 1);
-    }
-    return moduleDir;
   }
 }

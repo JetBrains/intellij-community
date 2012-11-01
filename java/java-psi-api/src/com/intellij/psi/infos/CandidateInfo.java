@@ -118,7 +118,7 @@ public class CandidateInfo implements JavaResolveResult {
       if (element instanceof PsiMethod) {
         final PsiType returnType = ((PsiMethod)element).getReturnType();
         final PsiType substitutedReturnType = resolveResult.getSubstitutor().substitute(returnType);
-        if (substitutedReturnType instanceof PsiCapturedWildcardType) {
+        if (substitutedReturnType instanceof PsiCapturedWildcardType || substitutedReturnType instanceof PsiWildcardType) {
           return true;
         }
       }

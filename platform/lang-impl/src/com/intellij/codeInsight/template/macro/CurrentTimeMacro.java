@@ -16,8 +16,8 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.openapi.util.Clock;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
 
 /**
  * @author yole
@@ -28,7 +28,7 @@ public class CurrentTimeMacro extends SimpleMacro {
   }
 
   @Override
-  protected String evaluate() {
-    return DateFormatUtil.formatTime(Clock.getTime());
+  protected String evaluateSimpleMacro(Expression[] params, final ExpressionContext context) {
+    return CurrentDateMacro.formatUserDefined(params, context, false);
   }
 }

@@ -67,7 +67,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
           new GrLightModifierList(baseMethod), new LightReferenceListBuilder(baseMethod.getManager(), baseMethod.getLanguage(), null),
           new LightTypeParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage())
     );
-    
+
     initParameterList(baseMethod, optionalParams, categoryType);
     initTypeParameterList(baseMethod);
     initModifiers(baseMethod, categoryType != null);
@@ -99,7 +99,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         myModifierList.addModifier(modifier);
       }
     }
-    
+
     for (PsiElement modifier : baseMethod.getModifierList().getModifiers()) {
       if (modifier instanceof GrAnnotation) {
         final String qualifiedName = ((GrAnnotation)modifier).getQualifiedName();
@@ -135,7 +135,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         }
         optionalParams--;
       }
-      parameterList.addParameter(new GrLightParameter(parameter.getName(), parameter.getType(), this));
+      parameterList.addParameter(new GrLightParameter(parameter.getName(), parameter.getDeclaredType(), this));
     }
 
     LOG.assertTrue(optionalParams == 0, optionalParams + "methodText: " + baseMethod.getText());

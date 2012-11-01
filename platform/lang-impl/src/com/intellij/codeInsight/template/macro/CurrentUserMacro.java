@@ -16,6 +16,8 @@
 
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.util.SystemProperties;
 
 /**
@@ -27,7 +29,7 @@ public class CurrentUserMacro extends SimpleMacro {
   }
 
   @Override
-  protected String evaluate() {
+  protected String evaluateSimpleMacro(Expression[] params, final ExpressionContext context) {
     return SystemProperties.getUserName();
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -70,8 +69,9 @@ public class IntentionUtils {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project), method.getLanguage()== GroovyFileType.GROOVY_LANGUAGE,
-                                                         context.getResolveScope());
+    ChooseTypeExpression expr =
+      new ChooseTypeExpression(constraints, PsiManager.getInstance(project), method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE,
+                               context.getResolveScope());
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
     if (!isConstructor) {
       assert typeElement != null;

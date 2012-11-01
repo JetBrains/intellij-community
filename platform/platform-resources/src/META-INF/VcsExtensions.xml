@@ -10,8 +10,8 @@
                   serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
   <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
   <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
-  <projectService serviceImplementation="com.intellij.openapi.diff.impl.incrementalMerge.ui.MergeToolSettings"/>
-
+  <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
+  <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
 
   <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 

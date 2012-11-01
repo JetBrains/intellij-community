@@ -146,13 +146,7 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest(final boolean warnings) throws Exception {
-    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
-    try {
-      versionService.setTestVersion(JavaSdkVersion.JDK_1_8);
-      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
-    }
-    finally {
-      versionService.setTestVersion(null);
-    }
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_8, getTestRootDisposable());
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 }

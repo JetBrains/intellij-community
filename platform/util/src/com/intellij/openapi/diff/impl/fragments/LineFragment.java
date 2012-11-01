@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -64,6 +65,53 @@ public class LineFragment extends LineBlock implements Fragment {
                             myChildren.shift(range1, range2, startingLine1, startingLine2));
   }
 
+  /**
+   * <p>Adjusts the diff type of this line fragment based on the types of the inline child fragments.</p>
+   * <p>For example, a modification in terms of line fragment may be just one inline insertion.
+   * In this case it is better to think about the whole change as of insertion.</p>
+   */
+  public void adjustTypeFromChildrenTypes() {
+    if (getType() != TextDiffTypeEnum.CHANGED) { // if the change is already insertion or deletion, no need to adjust
+      return;
+    }
+
+    TextDiffTypeEnum candidateType = null;
+    for (Iterator<Fragment> children = getChildrenIterator(); children != null && children.hasNext(); ) {
+      TextDiffTypeEnum fragmentType = children.next().getType();
+      if (fragmentType == null) {
+        continue;
+      }
+      switch (fragmentType) {
+        case CHANGED: // inline change => everything is a change
+          return;
+        case INSERT:
+          if (candidateType == null) {
+            candidateType = TextDiffTypeEnum.INSERT;
+          }
+          else if (candidateType != TextDiffTypeEnum.INSERT) {
+            return; // different changes (insertion and deletion) inside a single line => everything is a change
+          }
+          break;
+        case DELETED:
+          if (candidateType == null) {
+            candidateType = TextDiffTypeEnum.DELETED;
+          }
+          else if (candidateType != TextDiffTypeEnum.DELETED) {
+            return;
+          }
+          break;
+        default:
+          // should not happen, because conflicts can happen only in merge tools, where there are no inline changes for now,
+          // but we don't want to modify the fragment in this doubtful case anyway.
+          return;
+      }
+    }
+
+    if (candidateType != null) {
+      setType(candidateType);
+    }
+  }
+
   static TextRange shiftRange(TextRange shift, TextRange range) {
     int start = shift.getStartOffset();
     int newEnd = start + range.getEndOffset();
@@ -90,6 +138,7 @@ public class LineFragment extends LineBlock implements Fragment {
     return childFragment != null ? childFragment : this;
   }
 
+  @Nullable
   public Iterator<Fragment> getChildrenIterator() {
     return myChildren == null || myChildren.isEmpty() ? null : myChildren.iterator();
   }

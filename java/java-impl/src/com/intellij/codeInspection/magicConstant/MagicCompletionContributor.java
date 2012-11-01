@@ -68,8 +68,8 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiMethod method = (PsiMethod)element;
         if (!resolveHelper.isAccessible(method, call, null)) continue;
         PsiElement argument = pos;
-        while (!(argument.getParent() instanceof PsiExpressionList)) argument = argument.getParent();
-        PsiExpressionList list = (PsiExpressionList)argument.getParent();
+        while (!(argument.getContext() instanceof PsiExpressionList)) argument = argument.getContext();
+        PsiExpressionList list = (PsiExpressionList)argument.getContext();
         int i = ArrayUtil.indexOf(list.getExpressions(), argument);
         if (i == -1) continue;
         PsiParameter[] params = method.getParameterList().getParameters();
