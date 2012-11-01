@@ -53,10 +53,10 @@ public class GitShelveUtils {
    * @param shelveManager     the shelve manager
    */
   @AsynchronousExecution
-  public static void doSystemUnshelve(final Project project,
-                                      final ShelvedChangeList shelvedChangeList,
+  public static void doSystemUnshelve(final Project project, final ShelvedChangeList shelvedChangeList,
                                       final ShelveChangesManager shelveManager,
-                                      final @NotNull ContinuationContext context) {
+                                      final @NotNull ContinuationContext context,
+                                      @Nullable final String leftConflictTitle, @Nullable final String rightConflictTitle) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -77,7 +77,8 @@ public class GitShelveUtils {
           LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
           // we pass null as target change list for Patch Applier to do NOTHING with change lists
           shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(project),
-                                                   shelvedChangeList.getBinaryFiles(), null, false, context, true);
+                                                   shelvedChangeList.getBinaryFiles(), null, false, context, true,
+                                                   true, leftConflictTitle, rightConflictTitle);
         }
       });
   }

@@ -99,7 +99,8 @@ public class GitShelveChangesSaver extends GitChangesSaver {
         }
       });
       for (ShelvedChangeList list : myShelvedLists.values()) {
-        GitShelveUtils.doSystemUnshelve(myProject, list, myShelveManager, context);
+        GitShelveUtils.doSystemUnshelve(myProject, list, myShelveManager, context,
+                                        getConflictLeftPanelTitle(), getConflictRightPanelTitle());
       }
     }
   }
