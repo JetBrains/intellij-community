@@ -123,7 +123,12 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
-    myWelcomePanel = new JPanel(new GridBagLayout());
+    myWelcomePanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(1024, 768);
+      }
+    };
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
@@ -147,8 +152,10 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.add(topPanel, gBC);
     gBC = new GridBagConstraints(0, 1, 1, 1, 0.7, 1, NORTHWEST, BOTH, new Insets(0, 7, 7, 7), 0, 0);
     myWelcomePanel.add(mainScrollPane, gBC);
+    /*
     gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, NORTHWEST, BOTH, new Insets(0, 0, 7, 7), 0, 0);
     myWelcomePanel.add(pluginsScrollPane, gBC);
+    */
   }
 
   @Override
