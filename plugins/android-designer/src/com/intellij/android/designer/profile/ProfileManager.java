@@ -85,38 +85,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LayoutDevice item) {
         if (item == CUSTOM_DEVICE) {
-          LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
-          configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
-          LayoutDeviceConfigurationsDialog dialog =
-            new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
-          dialog.show();
-
-          if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            myLayoutDeviceManager.saveUserDevices();
-          }
-
-          updatePlatform(getPlatform(null));
-
-          String deviceName = dialog.getSelectedDeviceName();
-          if (deviceName != null) {
-            LayoutDevice newDevice = null;
-            for (LayoutDevice device : myDevices) {
-              if (device.getName().equals(deviceName)) {
-                newDevice = device;
-                break;
-              }
-            }
-
-            if (newDevice != null) {
-              String configurationName = dialog.getSelectedDeviceConfigName();
-              if (configurationName == null) {
-                updateDevice(newDevice);
-              }
-              else {
-                updateDevice(newDevice, configurationName);
-              }
-            }
-          }
+          configureCustomDevices(false);
         }
         else {
           updateDevice(item);
@@ -232,6 +201,52 @@ public class ProfileManager {
   //
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+
+  public void showCustomDevicesDialog() {
+    if (configureCustomDevices(true)) {
+      myRefreshAction.run();
+    }
+  }
+
+  private boolean configureCustomDevices(boolean exitOnCancel) {
+    LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
+    configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
+    LayoutDeviceConfigurationsDialog dialog =
+      new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
+    dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      myLayoutDeviceManager.saveUserDevices();
+    }
+    else if (exitOnCancel) {
+      return false;
+    }
+
+    updatePlatform(getPlatform(null));
+
+    String deviceName = dialog.getSelectedDeviceName();
+    if (deviceName != null) {
+      LayoutDevice newDevice = null;
+      for (LayoutDevice device : myDevices) {
+        if (device.getName().equals(deviceName)) {
+          newDevice = device;
+          break;
+        }
+      }
+
+      if (newDevice != null) {
+        String configurationName = dialog.getSelectedDeviceConfigName();
+        if (configurationName == null) {
+          updateDevice(newDevice);
+        }
+        else {
+          updateDevice(newDevice, configurationName);
+        }
+      }
+    }
+
+    return true;
+  }
 
   public void setProfile(Profile profile) {
     myProfile = profile;

@@ -277,7 +277,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
           LayoutDeviceConfiguration deviceConfiguration = manager.getSelectedDeviceConfiguration();
           if (deviceConfiguration == null) {
-            throw new RenderingException("Device is not specified");
+            throw new DeviceIsNotSpecifiedException();
           }
 
           myLastRenderedConfiguration = new FolderConfiguration();
@@ -434,6 +434,18 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           }
         }, null));
       }
+    }
+    else if (info.myThrowable instanceof DeviceIsNotSpecifiedException) {
+      info.myShowLog = false;
+      info.myShowStack = false;
+
+      info.myMessages.add(new FixableMessageInfo(true, "Device is not specified, click ", "here", " to configure", new Runnable() {
+        @Override
+        public void run() {
+          myProfileAction.getProfileManager().showCustomDevicesDialog();
+          // XXX
+        }
+      }, null));
     }
     else if (((info.myThrowable instanceof ClassNotFoundException || info.myThrowable instanceof NoClassDefFoundError) &&
               myParseTime &&
