@@ -15,11 +15,11 @@
  */
 package org.zmlx.hg4idea.status.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -32,43 +32,52 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.status.HgChangesetStatus;
 
-import java.awt.*;
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-/**
- * Widget to display basic hg status in the IJ status bar.
- */
-public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, HgUpdater {
 
-  private static final String MAX_STRING = "hg: default branch (128)";
+/**
+ * @author Nadya Zabrodina
+ */
+public class HgIncomingOutgoingWidget extends EditorBasedWidget
+  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgAdditionalWidget {
 
   @NotNull private final HgVcs myVcs;
+  @NotNull final Project myProject;
   @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
+  @NotNull private final HgChangesetStatus myChangesStatus;
+  private final boolean myIsIncoming;
+  private boolean isAlreadyShown;
+
   private MessageBusConnection myBusConnection;
 
-  private volatile String myText = "";
   private volatile String myTooltip = "";
 
-  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
+  public HgIncomingOutgoingWidget(@NotNull HgVcs vcs,
+                                  @NotNull Project project,
+                                  @NotNull HgProjectSettings projectSettings,
+                                  boolean isIncoming) {
     super(project);
+    this.myProject = project;
+    this.myIsIncoming = isIncoming;
     myVcs = vcs;
     myProjectSettings = projectSettings;
-
-    myCurrentBranchStatus = new HgCurrentBranchStatus();
+    myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
+    isAlreadyShown = false;
   }
 
   @Override
   public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
+    return new HgIncomingOutgoingWidget(myVcs, getProject(), myProjectSettings, myIsIncoming);
   }
 
   @NotNull
   @Override
   public String ID() {
-    return HgStatusWidget.class.getName();
+    String name = HgIncomingOutgoingWidget.class.getName();
+    return myIsIncoming ? "In" + name : "Out" + name;
   }
 
   @Override
@@ -96,24 +105,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     return myTooltip;
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    final String text = myText;
-    return StringUtil.isEmpty(text) ? "" : "hg: " + text;
-  }
-
-  @NotNull
-  @Override
-  public String getMaxPossibleText() {
-    return MAX_STRING;
-  }
-
-  @Override
-  public float getAlignment() {
-    return Component.LEFT_ALIGNMENT;
-  }
-
   @Override
   // Updates branch information on click
   public Consumer<MouseEvent> getClickConsumer() {
@@ -124,30 +115,33 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     };
   }
 
+
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
     update();
   }
 
+  public boolean isVisible() {
+    return (myIsIncoming && myProjectSettings.isCheckIncoming()) || (!myIsIncoming && myProjectSettings.isCheckOutgoing());
+  }
+
   @Override
   public void update(final Project project) {
+    if (!isVisible()) {
+      return;
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         if ((project == null) || project.isDisposed()) {
-          emptyTextAndTooltip();
+          emptyTooltip();
           return;
         }
 
-        emptyTextAndTooltip();
-
-        if (null != myCurrentBranchStatus.getStatusText()) {
-          myText = myCurrentBranchStatus.getStatusText();
-          myTooltip = myCurrentBranchStatus.getToolTipText();
+        emptyTooltip();
+        if (myChangesStatus.getNumChanges() > 0) {
+          myTooltip = "\n" + myChangesStatus.getToolTip();
         }
-
-        int maxLength = MAX_STRING.length();
-        myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
 
         myStatusBar.updateWidget(ID());
       }
@@ -160,34 +154,57 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     if (null == project) {
       return;
     }
-
     myBusConnection = project.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    myBusConnection.subscribe(myIsIncoming ? HgVcs.INCOMING_CHECK_TOPIC : HgVcs.OUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (null != statusBar) {
+    if (null != statusBar && isVisible()) {
       statusBar.addWidget(this, project);
+      isAlreadyShown = true;
     }
   }
 
   public void deactivate() {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(getProject());
+    if (!isAlreadyShown) return;
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar) {
       statusBar.removeWidget(ID());
+      isAlreadyShown = false;
     }
+  }
+
+  public void show() {
+    if (isAlreadyShown) {
+      return;
+    }
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (null != statusBar && isVisible()) {
+      statusBar.addWidget(this, myProject);
+      isAlreadyShown = true;
+    }
+  }
+
+  public void hide() {
+    deactivate();
   }
 
   private void update() {
     update(getProject());
   }
 
-  private void emptyTextAndTooltip() {
-    myText = "";
+  private void emptyTooltip() {
     myTooltip = "";
   }
 
   @NotNull
-  public HgCurrentBranchStatus getCurrentBranchStatus() {
-    return myCurrentBranchStatus;
+  @Override
+  public Icon getIcon() {
+    return myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.IncomingChangesOff;
+  }
+
+  public HgChangesetStatus getChangesetStatus() {
+    return myChangesStatus;
   }
 }
+

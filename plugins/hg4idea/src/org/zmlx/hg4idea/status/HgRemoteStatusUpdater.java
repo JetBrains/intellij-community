@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
@@ -62,6 +63,10 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   public void update(final Project project) {
+    update(project, null);
+  }
+
+  public void update(final Project project, @Nullable final VirtualFile root) {
     if (!isCheckingEnabled() || myUpdateStarted.get()) {
       return;
     }
@@ -71,7 +76,9 @@ public class HgRemoteStatusUpdater implements HgUpdater {
         new Task.Backgroundable(project, getProgressTitle(), true) {
           public void run(@NotNull ProgressIndicator indicator) {
             if (project.isDisposed()) return;
-            VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
+            final VirtualFile[] roots =
+              root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
+            ;
             if (myProjectSettings.isCheckIncoming()) {
               updateChangesetStatus(project, roots, myIncomingStatus, true);
             }
