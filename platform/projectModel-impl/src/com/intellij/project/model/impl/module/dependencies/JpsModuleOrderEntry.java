@@ -56,6 +56,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
     return getModuleName();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     final OrderRootsEnumerator enumerator = getEnumerator(type);
@@ -70,6 +71,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
     return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module);
   }
 
+  @Override
   @NotNull
   public String[] getUrls(OrderRootType rootType) {
     final OrderRootsEnumerator enumerator = getEnumerator(rootType);

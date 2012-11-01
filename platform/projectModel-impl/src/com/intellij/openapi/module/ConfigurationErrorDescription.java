@@ -22,7 +22,7 @@ package com.intellij.openapi.module;
 public abstract class ConfigurationErrorDescription {
   private final String myElementName;
   private final String myDescription;
-  private ConfigurationErrorType myErrorType;
+  private final ConfigurationErrorType myErrorType;
 
   protected ConfigurationErrorDescription(String elementName, String description, ConfigurationErrorType errorType) {
     myElementName = elementName;

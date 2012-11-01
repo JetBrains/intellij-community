@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
  * @author nik
  */
 public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolder {
-  private JpsModuleSourceRoot mySourceRoot;
+  private final JpsModuleSourceRoot mySourceRoot;
 
   public JpsSourceFolder(JpsModuleSourceRoot sourceRoot, JpsContentEntry contentEntry) {
     super(sourceRoot.getUrl(), contentEntry);

@@ -92,28 +92,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
 
+  @Override
   @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     myModuleModel.disposeModel();
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCount;
   }
 
+  @Override
   public Element getState() {
     final Element e = new Element("state");
     writeExternal(e);
     return e;
   }
 
+  @Override
   public void loadState(Element state) {
     List<ModulePath> prevPaths = myModulePaths;
     readExternal(state);
@@ -198,7 +204,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void loadModules(final ModuleModelImpl moduleModel) {
-    if (myModulePaths != null && myModulePaths.size() > 0) {
+    if (myModulePaths != null && !myModulePaths.isEmpty()) {
       final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setText("Loading modules...");
@@ -293,6 +299,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myFailedModulePaths.remove(modulePath);
   }
 
+  @Override
   @NotNull
   public ModifiableModuleModel getModifiableModel() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -329,15 +336,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       myModule = module;
     }
 
+    @Override
     protected String getModuleName() {
       return myModule.getName();
     }
 
+    @Override
     protected String getGroupPathString() {
       String[] groupPath = getModuleGroupPath(myModule);
       return groupPath != null ? StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR) : null;
     }
 
+    @Override
     protected String getModuleFilePath() {
       return myModule.getModuleFilePath().replace(File.separatorChar, '/');
     }
@@ -360,14 +370,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       myName = myFilePath.substring(startIndex, endIndex);
     }
 
+    @Override
     protected String getModuleName() {
       return myName;
     }
 
+    @Override
     protected String getGroupPathString() {
       return myModulePath.getModuleGroup();
     }
 
+    @Override
     protected String getModuleFilePath() {
       return myFilePath;
     }
@@ -385,6 +398,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       sorted.add(new ModulePathSaveItem(modulePath));
     }
     Collections.sort(sorted, new Comparator<SaveItem>() {
+      @Override
       public int compare(SaveItem item1, SaveItem item2) {
         return item1.getModuleName().compareTo(item2.getModuleName());
       }
@@ -396,6 +410,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     element.addContent(modules);
   }
 
+  @Override
   @NotNull
   public Module newModule(@NotNull String filePath, final String moduleTypeId) {
     myModificationCount++;
@@ -405,6 +420,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return module;
   }
 
+  @Override
   @NotNull
   public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                    IOException,
@@ -417,8 +433,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return module;
   }
 
+  @Override
   public void disposeModule(@NotNull final Module module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ModifiableModuleModel modifiableModel = getModifiableModel();
         modifiableModel.disposeModule(module);
@@ -427,6 +445,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     });
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     if (myModuleModel.myIsWritable) {
@@ -437,6 +456,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   private Module[] myCachedSortedModules = null;
 
+  @Override
   @NotNull
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -447,6 +467,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myCachedSortedModules;
   }
 
+  @Override
   public Module findModuleByName(@NotNull String name) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.findModuleByName(name);
@@ -454,6 +475,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   private Comparator<Module> myCachedModuleComparator = null;
 
+  @Override
   @NotNull
   public Comparator<Module> moduleDependencyComparator() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -467,6 +489,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected void deliverPendingEvents() {
   }
 
+  @Override
   @NotNull
   public Graph<Module> moduleGraph() {
     return moduleGraph(true);
@@ -479,16 +502,19 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.moduleGraph(includeTests);
   }
 
+  @Override
   @NotNull public List<Module> getModuleDependentModules(@NotNull Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModuleDependentModules(module);
   }
 
+  @Override
   public boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.isModuleDependent(module, onModule);
   }
 
+  @Override
   public void projectOpened() {
     fireModulesAdded();
 
@@ -503,6 +529,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   protected void fireModuleAddedInWriteAction(final Module module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ((ModuleEx)module).moduleAdded();
         fireModuleAdded(module);
@@ -510,6 +537,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     });
   }
 
+  @Override
   public void projectClosed() {
     myModuleModel.projectClosed();
   }
@@ -550,6 +578,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       LOG.assertTrue(myIsWritable, "Attempt to modify committed ModifiableModuleModel");
     }
 
+    @Override
     @NotNull
     public Module[] getModules() {
       if (myModulesCache == null) {
@@ -565,6 +594,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return allModules;
     }
 
+    @Override
     public void renameModule(@NotNull Module module, @NotNull String newName) throws ModuleWithNameAlreadyExists {
       final Module oldModule = getModuleByNewName(newName);
       myNewNameToModule.remove(myModuleToNewName.get(module));
@@ -581,6 +611,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    @Override
     public Module getModuleToBeRenamed(@NotNull String newName) {
       return myNewNameToModule.get(newName);
     }
@@ -599,15 +630,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    @Override
     public String getNewName(@NotNull Module module) {
       return myModuleToNewName.get(module);
     }
 
+    @Override
     @NotNull
     public Module newModule(@NotNull String filePath, final String moduleTypeId) {
       return newModule(filePath, moduleTypeId, null);
     }
 
+    @Override
     @NotNull
     public Module newModule(@NotNull String filePath,
                             final String moduleTypeId,
@@ -650,6 +684,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return null;
     }
 
+    @Override
     @NotNull
     public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                      IOException,
@@ -708,6 +743,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       module.init();
     }
 
+    @Override
     public void disposeModule(@NotNull Module module) {
       assertWritable();
       myModulesCache = null;
@@ -720,6 +756,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    @Override
     public Module findModuleByName(@NotNull String name) {
       for (Module module : myPathToModule.values()) {
         if (!module.isDisposed() && module.getName().equals(name)) {
@@ -736,10 +773,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     private Graph<Module> moduleGraph(final boolean includeTests) {
       return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+        @Override
         public Collection<Module> getNodes() {
           return myPathToModule.values();
         }
 
+        @Override
         public Iterator<Module> getIn(Module m) {
           Module[] dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests);
           return Arrays.asList(dependentModules).iterator();
@@ -761,6 +800,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return ModuleRootManager.getInstance(module).isDependsOn(onModule);
     }
 
+    @Override
     public void commit() {
       ModifiableRootModel[] rootModels = new ModifiableRootModel[0];
       ModifiableModelCommitter.multiCommit(rootModels, this);
@@ -776,6 +816,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       myNewNameToModule.clear();
     }
 
+    @Override
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -794,6 +835,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       clearRenamingStuff();
     }
 
+    @Override
     public boolean isChanged() {
       if (!myIsWritable) {
         return false;
@@ -828,14 +870,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    @Override
     public String[] getModuleGroupPath(Module module) {
       return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
     }
 
+    @Override
     public boolean hasModuleGroups() {
       return myModuleGroupPath != null && !myModuleGroupPath.isEmpty();
     }
 
+    @Override
     public void setModuleGroupPath(Module module, String[] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<Module, String[]>();
@@ -867,6 +912,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     addedModules.removeAll(oldModules);
 
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
+      @Override
       public void run() {
         for (Module removedModule : removedModules) {
           fireBeforeModuleRemoved(removedModule);
@@ -921,12 +967,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   void fireModuleRenamedByVfsEvent(@NotNull final Module module) {
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
+      @Override
       public void run() {
         fireModulesRenamed(Collections.singletonList(module));
       }
     }, false, true);
   }
 
+  @Override
   public String[] getModuleGroupPath(@NotNull Module module) {
     return myModuleModel.getModuleGroupPath(module);
   }

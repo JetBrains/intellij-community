@@ -18,6 +18,7 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.ModuleAdapter;
@@ -70,6 +71,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
   private void registerPointer(final Module module, final ModulePointerImpl pointer) {
     myPointers.put(module, pointer);
     Disposer.register(module, new Disposable() {
+      @Override
       public void dispose() {
         unregisterPointer(module);
       }
@@ -104,7 +106,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
   @NotNull
   @Override
   public ModulePointer create(@NotNull String moduleName) {
-    final Module module = ModuleManagerImpl.getInstance(myProject).findModuleByName(moduleName);
+    final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
     if (module != null) {
       return create(module);
     }

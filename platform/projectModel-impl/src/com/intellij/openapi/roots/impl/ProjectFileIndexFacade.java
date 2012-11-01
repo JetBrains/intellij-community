@@ -38,6 +38,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     myFileIndex = rootManager.getFileIndex();
   }
 
+  @Override
   public boolean isInContent(@NotNull final VirtualFile file) {
     return myFileIndex.isInContent(file);
   }
@@ -62,6 +63,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isInLibrarySource(file);
   }
 
+  @Override
   public boolean isExcludedFile(@NotNull final VirtualFile file) {
     return myFileIndex.isIgnored(file);
   }
@@ -72,6 +74,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.getModuleForFile(file);
   }
 
+  @Override
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();

@@ -94,18 +94,22 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  @Override
   public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
     return new MyTrackingPathMacroSubstitutor();
   }
 
+  @Override
   public String expandPath(final String path) {
     return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public String collapsePath(final String path) {
     return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public void collapsePathsRecursively(final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
   }
@@ -115,10 +119,12 @@ public class BasePathMacroManager extends PathMacroManager {
     return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public void expandPaths(final Element element) {
     getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public void collapsePaths(final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
@@ -149,23 +155,28 @@ public class BasePathMacroManager extends PathMacroManager {
     public MyTrackingPathMacroSubstitutor() {
     }
 
+    @Override
     public void reset() {
       myMacroToComponentNames.clear();
       myComponentNameToMacros.clear();
     }
 
+    @Override
     public String expandPath(final String path) {
       return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
     }
 
+    @Override
     public String collapsePath(final String path) {
       return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
     }
 
+    @Override
     public void expandPaths(final Element element) {
       getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
     }
 
+    @Override
     public void collapsePaths(final Element element) {
       getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
     }
@@ -174,6 +185,7 @@ public class BasePathMacroManager extends PathMacroManager {
       return getExpandMacroMap().hashCode();
     }
 
+    @Override
     public void invalidateUnknownMacros(final Set<String> macros) {
       for (final String macro : macros) {
         final Set<String> components = myMacroToComponentNames.get(macro);
@@ -185,6 +197,7 @@ public class BasePathMacroManager extends PathMacroManager {
       }
     }
 
+    @Override
     public Collection<String> getComponents(final Collection<String> macros) {
       final Set<String> result = new HashSet<String>();
       for (String macro : myMacroToComponentNames.keySet()) {
@@ -196,12 +209,14 @@ public class BasePathMacroManager extends PathMacroManager {
       return result;
     }
 
+    @Override
     public Collection<String> getUnknownMacros(final String componentName) {
       final Set<String> result = new HashSet<String>();
       result.addAll(componentName == null ? myMacroToComponentNames.keySet() : myComponentNameToMacros.get(componentName));
       return Collections.unmodifiableCollection(result);
     }
 
+    @Override
     public void addUnknownMacros(final String componentName, final Collection<String> unknownMacros) {
       if (unknownMacros.isEmpty()) return;
       
