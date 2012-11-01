@@ -294,10 +294,10 @@ public class IdeaApplication {
         lifecyclePublisher.appFrameCreated(args, willOpenProject);
         LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
         PluginManager.dumpPluginClassStatistics();
-        if (!willOpenProject.get()) {
+        //if (!willOpenProject.get()) {
           WelcomeFrame.showNow();
           lifecyclePublisher.welcomeScreenDisplayed();
-        }
+        //}
       }
       catch (PluginException e) {
         Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
