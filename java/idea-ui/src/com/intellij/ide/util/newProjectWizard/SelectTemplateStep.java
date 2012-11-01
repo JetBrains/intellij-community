@@ -511,7 +511,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
-  public void addSettingsField(String label, JComponent field) {
+  public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
 
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
     addField(label, field, panel);
@@ -527,19 +527,19 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
-  public void addSettingsComponent(JComponent component) {
+  public void addSettingsComponent(@NotNull JComponent component) {
     myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override
-  public void addExpertPanel(JComponent panel) {
+  public void addExpertPanel(@NotNull JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override
-  public void addExpertField(String label, JComponent field) {
+  public void addExpertField(@NotNull String label, @NotNull JComponent field) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myModulePanel : myExpertPanel;
     addField(label, field, panel);
   }
