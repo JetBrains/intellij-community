@@ -127,7 +127,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
           isConstructor = psiMethod.isConstructor();
         }
         if (containingClass == null) return null;
-        boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
+        boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
         final boolean staticOrValidConstructorRef;
         if (isConstructor) {
           staticOrValidConstructorRef =
@@ -204,7 +204,7 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
-        boolean isReceiverType = LambdaUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
+        boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
         methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
