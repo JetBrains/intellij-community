@@ -282,6 +282,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
+  @Override
+  public PsiParameter createParameter(@NotNull @NonNls String name, PsiType type, PsiElement context) throws IncorrectOperationException {
+    final PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText() + " " + name + ") {}", context);
+    final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    return parameters[0];
+  }
+
   @NotNull
   @Override
   public PsiCodeBlock createCodeBlock() {

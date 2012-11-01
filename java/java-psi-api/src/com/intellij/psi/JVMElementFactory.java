@@ -111,6 +111,7 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiParameter createParameter(@NotNull @NonNls String name, PsiType type) throws IncorrectOperationException;
+  PsiParameter createParameter(@NotNull @NonNls String name, PsiType type, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a parameter list from the specified parameter names and types.
