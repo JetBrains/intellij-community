@@ -35,7 +35,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -121,7 +120,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return myWelcomePanel;
   }
 
-  public DefaultWelcomeScreen(IdeRootPane rootPane) {
+  public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
     myWelcomePanel = new JPanel(new GridBagLayout());
@@ -188,7 +187,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return topPanel;
   }
 
-  private void setUpMainPanel(IdeRootPane rootPane) {
+  private void setUpMainPanel(JComponent rootPane) {
     final ActionManager actionManager = ActionManager.getInstance();
 
     // Create QuickStarts group of actions
@@ -228,7 +227,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.setTransferHandler(new OpenProjectTransferHandler(myWelcomePanel));
   }
 
-  private void setUpRecentProjectsPanel(final IdeRootPane rootPane, final AnAction[] recentProjectsActions) {
+  private void setUpRecentProjectsPanel(final JComponent rootPane, final AnAction[] recentProjectsActions) {
     myRecentProjectsPanel.setBackground(MAIN_PANEL_BACKGROUND);
 
     JLabel caption = new JLabel("Recent Projects");

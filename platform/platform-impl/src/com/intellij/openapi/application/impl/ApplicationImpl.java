@@ -862,7 +862,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
-        return GeneralSettings.getInstance().isConfirmExit();
+        return GeneralSettings.getInstance().isConfirmExit() && ProjectManager.getInstance().getOpenProjects().length > 0;
       }
 
       @Override

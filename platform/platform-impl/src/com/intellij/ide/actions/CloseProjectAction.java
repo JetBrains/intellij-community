@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
@@ -33,6 +34,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
 
     ProjectUtil.closeAndDispose(project);
     RecentProjectsManagerBase.getInstance().updateLastProjectPath();
+    WelcomeFrame.showIfNoProjectOpened();
   }
 
   public void update(AnActionEvent event){

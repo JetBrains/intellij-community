@@ -35,13 +35,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
@@ -289,7 +287,17 @@ public class IdeaApplication {
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       // app.setupIdeQueue(IdeEventQueue.getInstance());
       try {
-        ((WindowManagerImpl)WindowManager.getInstance()).showFrame(args);
+        IdeEventQueue.getInstance().setWindowManager((WindowManagerEx)WindowManager.getInstance());
+
+        final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+        final AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+        lifecyclePublisher.appFrameCreated(args, willOpenProject);
+        LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+        PluginManager.dumpPluginClassStatistics();
+        if (!willOpenProject.get()) {
+          WelcomeFrame.showNow();
+          lifecyclePublisher.welcomeScreenDisplayed();
+        }
       }
       catch (PluginException e) {
         Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
