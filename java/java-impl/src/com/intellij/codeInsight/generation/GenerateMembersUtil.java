@@ -394,9 +394,9 @@ public class GenerateMembersUtil {
   private static PsiMethod createMethod(@NotNull JVMElementFactory factory,
                                         @NotNull PsiMethod method, PsiElement target) {
     if (method.isConstructor()) {
-      return factory.createMethodFromText(method.getName() + "(){}", target);
+      return factory.createConstructor(method.getName(), target);
     }
-    return factory.createMethodFromText("void " + method.getName() + "(){}", target);
+    return factory.createMethod(method.getName(), PsiType.VOID);
   }
 
   private static void substituteReturnType(@NotNull PsiManager manager,

@@ -1019,6 +1019,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createConstructorFromText(name, name + "(){}", null);
   }
 
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context) {
+    return createConstructorFromText(name, name + "(){}", context);
+  }
+
   @NotNull
   @Override
   public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor) {

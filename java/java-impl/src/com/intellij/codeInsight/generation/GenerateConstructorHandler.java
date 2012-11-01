@@ -218,7 +218,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), aClass.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
-    PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "() {}", aClass);
+    PsiMethod constructor = factory.createConstructor(aClass.getName(), aClass);
     String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
@@ -259,14 +259,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(aClass.getProject());
 
-    final PsiMethod dummyConstructor = factory.createMethodFromText(constructor.getText(), null);
+    final PsiMethod dummyConstructor = factory.createConstructor(aClass.getName());
+    dummyConstructor.getParameterList().replace(constructor.getParameterList().copy());
     List<PsiParameter> fieldParams = new ArrayList<PsiParameter>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
-      PsiParameter parm = factory.createParameter(parmName, field.getType());
+      PsiParameter parm = factory.createParameter(parmName, field.getType(), aClass);
 
       final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
       final String notNull = nullableManager.getNotNull(field);
@@ -275,6 +276,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
 
       constructor.getParameterList().add(parm);
+      dummyConstructor.getParameterList().add(parm.copy());
       fieldParams.add(parm);
     }
 

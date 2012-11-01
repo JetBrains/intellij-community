@@ -184,6 +184,7 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiMethod createConstructor(@NotNull @NonNls String name);
+  PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context);
 
   /**
    * Creates a class type for the specified class, using the specified substitutor

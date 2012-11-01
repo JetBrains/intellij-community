@@ -256,6 +256,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context) {
+    return createMethodFromText(name + "() {}", context);
+  }
+
   @NotNull
   @Override
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
