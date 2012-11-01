@@ -140,12 +140,11 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       }
     };
     roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST));
-    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).weightx(1).insets(VERTICAL_PADDING, 0, 0, 0));
+    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.EAST));
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING, 0, 0, 0));
     myRenderer.add(roundBorderPanel, constraints);
     myRenderer.setOpaque(false);
     setSelected(false);

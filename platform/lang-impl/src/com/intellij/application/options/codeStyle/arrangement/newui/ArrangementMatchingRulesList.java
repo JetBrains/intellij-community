@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle.arrangement.newui;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -41,8 +40,7 @@ public class ArrangementMatchingRulesList extends JBList {
 
   private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchingRulesList.class.getName());
 
-  @NotNull private final TIntObjectHashMap<ArrangementMatchConditionComponent> myComponents
-    = new TIntObjectHashMap<ArrangementMatchConditionComponent>();
+  @NotNull private final TIntObjectHashMap<ArrangementListRowDecorator> myComponents = new TIntObjectHashMap<ArrangementListRowDecorator>();
 
   @NotNull private final DefaultListModel myModel = new DefaultListModel();
 
@@ -83,20 +81,16 @@ public class ArrangementMatchingRulesList extends JBList {
     return Collections.emptyList();
   }
 
-  // TODO den remove
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-  }
-
   private class MyListCellRenderer implements ListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      ArrangementMatchConditionComponent component = myComponents.get(index);
+      ArrangementListRowDecorator component = myComponents.get(index);
       if (component == null) {
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
-        myComponents.put(index, component = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
+        component = new ArrangementListRowDecorator(myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
+        myComponents.put(index, component);
       }
+      component.setRowIndex(index + 1);
       return component.getUiComponent();
     }
   }

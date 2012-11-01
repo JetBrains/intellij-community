@@ -56,7 +56,7 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
   @NotNull
   @Override
   public Color getBorderColor(boolean selected) {
-    return selected ? myBorderColor : mySelectedBorderColor;
+    return selected ? mySelectedBorderColor : myBorderColor;
   }
 
   @NotNull
