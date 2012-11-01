@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -882,8 +883,11 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    final GrExpression qualifier = referenceExpression.getQualifier();
+    final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+
     if (PsiUtil.isThisOrSuperRef(referenceExpression)) {
-      GrExpression qualifier = referenceExpression.getQualifier();
       if (!context.isInAnonymousContext() && qualifier != null) {
         qualifier.accept(this);
       }
@@ -891,10 +895,12 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-
-    final GrExpression qualifier = referenceExpression.getQualifier();
-    final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
+    if (GrUnresolvedAccessInspection.isClassReference(referenceExpression)) {
+      LOG.assertTrue(qualifier != null);
+      qualifier.accept(this);
+      builder.append(".class");
+      return;
+    }
 
     //class name used as expression. Should be converted to <className>.class
     if (resolved instanceof PsiClass && PsiUtil.isExpressionUsed(referenceExpression)) {
@@ -1304,15 +1310,13 @@ public class ExpressionGenerator extends Generator {
           builder.append('}');
         }
       }
+      else if (listOrMap.getInitializers().length == 0) {
+        builder.append("()");
+      }
       else {
-        if (listOrMap.getInitializers().length == 0) {
-          builder.append("()");
-        }
-        else {
-          builder.append("(java.util.Arrays.asList(");
-          genInitializers(listOrMap);
-          builder.append("))");
-        }
+        builder.append("(java.util.Arrays.asList(");
+        genInitializers(listOrMap);
+        builder.append("))");
       }
     }
   }

@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInsight.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -210,7 +211,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getThisType(this), getTypeArguments());
+        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getThisType(this),
+                                      getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
 
@@ -336,7 +338,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getThisType(this), getTypeArguments());
+        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getThisType(this),
+                                      getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
@@ -394,7 +397,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getThisType(this), argTypes, getTypeArguments(), allVariants, byShape);
+    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getThisType(this), argTypes, getTypeArguments(),
+                                       allVariants, byShape);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -635,6 +639,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
       if (result != null) return result;
 
+      if (GrUnresolvedAccessInspection.isClassReference(refExpr)) {
+        GrExpression qualifier = refExpr.getQualifier();
+        LOG.assertTrue(qualifier != null);
+        return TypesUtil.createJavaLangClassType(qualifier.getType(), refExpr.getProject(), refExpr.getResolveScope());
+      }
+
       final PsiElement resolved = refExpr.resolve();
       final PsiType inferred = getInferredTypes(refExpr, resolved);
       final PsiType nominal = refExpr.getNominalType();
@@ -859,7 +869,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     PsiClass containingClass = member.getContainingClass();
-    if (containingClass==null) {
+    if (containingClass == null) {
       throw new IncorrectOperationException("Member has no containing class");
     }
     final PsiFile file = getContainingFile();
