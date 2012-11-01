@@ -88,6 +88,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     if (ex[0] != null) {
       throw ex[0];
     }
+    CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER = false;
     CompilerTestUtil.setupJavacForTests(myProject);
   }
 
