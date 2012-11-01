@@ -150,7 +150,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                     "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                     "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
       Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
-                            tempFile.getPath())
+                            tempFile.getPath()), true
     );
 
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));

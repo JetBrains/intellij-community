@@ -371,7 +371,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
 
     final List<String> commandLine = ExternalProcessUtil
       .buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()), AndroidDxRunner.class.getName(),
-                            Collections.<String>emptyList(), classPath, vmOptions, programParamList);
+                            Collections.<String>emptyList(), classPath, vmOptions, programParamList, true);
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 
