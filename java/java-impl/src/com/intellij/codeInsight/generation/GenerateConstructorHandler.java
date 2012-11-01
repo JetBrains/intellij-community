@@ -218,8 +218,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), aClass.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
-    PsiMethod constructor = factory.createConstructor();
-    constructor.setName(aClass.getName());
+    PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "() {}", aClass);
     String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
@@ -251,7 +250,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         }
         PsiParameter[] params = baseConstructor.getParameterList().getParameters();
         for (PsiParameter param : params) {
-          PsiParameter newParam = factory.createParameter(param.getName(), param.getType());
+          PsiParameter newParam = factory.createParameter(param.getName(), param.getType(), aClass);
           GenerateMembersUtil.copyOrReplaceModifierList(param, newParam);
           constructor.getParameterList().add(newParam);
         }
@@ -260,12 +259,13 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(aClass.getProject());
 
+    final PsiMethod dummyConstructor = factory.createMethodFromText(constructor.getText(), null);
     List<PsiParameter> fieldParams = new ArrayList<PsiParameter>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
-      parmName = javaStyle.suggestUniqueVariableName(parmName, constructor, true);
+      parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
       final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
