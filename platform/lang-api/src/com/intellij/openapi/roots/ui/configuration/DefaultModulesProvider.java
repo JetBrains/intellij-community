@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,17 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class DefaultModulesProvider implements ModulesProvider {
+
+  public static ModulesProvider createForProject(@Nullable Project project) {
+    return project == null ? EMPTY_MODULES_PROVIDER : new DefaultModulesProvider(project);
+  }
+
   private final Project myProject;
 
   public DefaultModulesProvider(final Project project) {

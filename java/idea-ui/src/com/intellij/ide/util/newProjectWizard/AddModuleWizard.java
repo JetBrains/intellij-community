@@ -37,11 +37,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
@@ -56,6 +58,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
   private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
   private final Project myCurrentProject;
+  private ProjectImportProvider myImportProvider;
   private final ModulesProvider myModulesProvider;
   private WizardContext myWizardContext;
   protected ProjectCreateModeStep myRootStep;
@@ -81,6 +84,14 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     initModuleWizard(project, null);
   }
 
+  protected AddModuleWizard(String title, Project project, ProjectImportProvider importProvider, String filePath) {
+    super(title, project);
+    myCurrentProject = project;
+    myImportProvider = importProvider;
+    myModulesProvider = DefaultModulesProvider.createForProject(project);
+    initModuleWizard(project, filePath);
+  }
+
   private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
     myWizardContext = new WizardContext(project);
     if (defaultPath != null) {
@@ -97,6 +108,20 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     });
 
+    if (myImportProvider == null) {
+      initSteps(defaultPath);
+    }
+    else {
+      myWizardContext.setProjectBuilder(myImportProvider.getBuilder());
+      ModuleWizardStep[] steps = myImportProvider.createSteps(myWizardContext);
+      for (ModuleWizardStep step : steps) {
+        addStep(step);
+      }
+    }
+    init();
+  }
+
+  protected void initSteps(final String defaultPath) {
     myRootStep = new ProjectCreateModeStep(defaultPath, myWizardContext){
       protected void update() {
         updateButtons();
@@ -106,7 +131,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     for (WizardMode mode : myRootStep.getModes()) {
       appendSteps(mode.getSteps(myWizardContext, myModulesProvider));
     }
-    init();
   }
 
   private void appendSteps(@Nullable final StepSequence sequence) {
@@ -126,9 +150,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   protected void updateStep() {
-    final ModuleWizardStep currentStep = getCurrentStepObject();
-    currentStep.updateStep();
-
+    if (!mySteps.isEmpty()) {
+      getCurrentStepObject().updateStep();
+    }
     super.updateStep();
   }
 
@@ -224,30 +248,40 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   protected final int getNextStep(int step) {
-    ModuleWizardStep nextStep = null;
-    final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
-    if (stepSequence != null) {
-      if (myRootStep == mySteps.get(step)) {
-        return mySteps.indexOf(stepSequence.getFirstStep());
+    if (myRootStep != null) {
+      ModuleWizardStep nextStep = null;
+      final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
+      if (stepSequence != null) {
+        if (myRootStep == mySteps.get(step)) {
+          return mySteps.indexOf(stepSequence.getFirstStep());
+        }
+        nextStep = stepSequence.getNextStep(mySteps.get(step));
+        while (nextStep != null && !nextStep.isStepVisible()) {
+          nextStep = stepSequence.getNextStep(nextStep);
+        }
       }
-      nextStep = stepSequence.getNextStep(mySteps.get(step));
-      while (nextStep != null && !nextStep.isStepVisible()) {
-        nextStep = stepSequence.getNextStep(nextStep);
-      }
+      return nextStep == null ? step : mySteps.indexOf(nextStep);
     }
-    return nextStep == null ? step : mySteps.indexOf(nextStep);
+    else {
+      return super.getNextStep(step);
+    }
   }
 
   protected final int getPreviousStep(final int step) {
-    ModuleWizardStep previousStep = null;
-    final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
-    if (stepSequence != null) {
-      previousStep = stepSequence.getPreviousStep(mySteps.get(step));
-      while (previousStep != null && !previousStep.isStepVisible()) {
-        previousStep = stepSequence.getPreviousStep(previousStep);
+    if (myRootStep != null) {
+      ModuleWizardStep previousStep = null;
+      final StepSequence stepSequence = getMode().getSteps(myWizardContext, myModulesProvider);
+      if (stepSequence != null) {
+        previousStep = stepSequence.getPreviousStep(mySteps.get(step));
+        while (previousStep != null && !previousStep.isStepVisible()) {
+          previousStep = stepSequence.getPreviousStep(previousStep);
+        }
       }
+      return previousStep == null ? 0 : mySteps.indexOf(previousStep);
     }
-    return previousStep == null ? 0 : mySteps.indexOf(previousStep);
+    else {
+      return super.getPreviousStep(step);
+    }
   }
 
   private WizardMode getMode() {

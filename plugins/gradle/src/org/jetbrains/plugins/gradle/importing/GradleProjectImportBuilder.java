@@ -49,6 +49,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   private GradleProject myGradleProject;
   private File myProjectFile;
 
+  @NotNull
   @Override
   public String getName() {
     return GradleBundle.message("gradle.name");
