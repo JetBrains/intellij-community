@@ -763,7 +763,7 @@ public class IncProjectBuilder {
             doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
             if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-              throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
+              throw new ProjectBuildException("Builder " + builder.getPresentableName() + " requested build stop");
             }
             context.checkCanceled();
             if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
@@ -777,7 +777,7 @@ public class IncProjectBuilder {
             }
             else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
               if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
-                LOG.info("Builder " + builder.getDescription() + " requested rebuild of module chunk " + chunk.getName());
+                LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
                 // allow rebuild from scratch only once per chunk
                 rebuildFromScratchRequested = true;
                 try {
@@ -795,7 +795,7 @@ public class IncProjectBuilder {
                 }
               }
               else {
-                LOG.debug("Builder " + builder.getDescription() + " requested second chunk rebuild");
+                LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
               }
             }
 

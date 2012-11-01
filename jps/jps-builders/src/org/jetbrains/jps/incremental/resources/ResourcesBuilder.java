@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.resources;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class ResourcesBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
-  public static final String BUILDER_NAME = "resources";
+  public static final String BUILDER_NAME = "Resource Compiler";
   private static final List<StandardResourceBuilderEnabler> ourEnablers = new ArrayList<StandardResourceBuilderEnabler>();
 
   public ResourcesBuilder() {
@@ -36,11 +37,6 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
 
   public static void registerEnabler(StandardResourceBuilderEnabler enabler) {
     ourEnablers.add(enabler);
-  }
-
-  @Override
-  public String getName() {
-    return BUILDER_NAME;
   }
 
   @Override
@@ -131,8 +127,9 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
   }
 
-  public String getDescription() {
-    return "Resource Builder";
+  @NotNull
+  public String getPresentableName() {
+    return "Resource Compiler";
   }
 
 }

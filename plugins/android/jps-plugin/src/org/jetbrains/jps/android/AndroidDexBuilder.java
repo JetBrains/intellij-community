@@ -61,8 +61,7 @@ import java.util.*;
  */
 public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
-
-  @NonNls private static final String BUILDER_NAME = "android-dex";
+  @NonNls private static final String BUILDER_NAME = "Android Dex";
 
   private static final Key<BuildListener> BUILD_LISTENER_KEY = Key.create("BUILD_LISTENER_KEY");
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
@@ -274,14 +273,10 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     return true;
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Android Dex Builder";
   }
 
   @Override

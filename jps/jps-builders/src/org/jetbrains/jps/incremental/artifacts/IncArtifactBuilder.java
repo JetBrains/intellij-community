@@ -34,7 +34,7 @@ import java.util.*;
  * @author nik
  */
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
-  public static final String BUILDER_NAME = "artifacts";
+  public static final String BUILDER_NAME = "Artifacts builder";
 
   public IncArtifactBuilder() {
     super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
@@ -245,13 +245,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     });
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Artifacts builder";
   }
 }

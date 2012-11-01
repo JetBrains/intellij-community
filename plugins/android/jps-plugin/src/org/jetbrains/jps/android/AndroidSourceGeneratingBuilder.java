@@ -52,7 +52,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String ANDROID_RENDERSCRIPT_COMPILER = "android-renderscript-compiler";
   @NonNls private static final String ANDROID_BUILD_CONFIG_GENERATOR = "android-buildconfig-generator";
   @NonNls private static final String ANDROID_APT_COMPILER = "android-apt-compiler";
-  @NonNls private static final String BUILDER_NAME = "android-source-generator";
+  @NonNls private static final String BUILDER_NAME = "Android Source Generator";
 
   @NonNls private static final String AIDL_EXTENSION = "aidl";
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
@@ -66,11 +66,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   public AndroidSourceGeneratingBuilder() {
     super(BuilderCategory.SOURCE_GENERATOR);
-  }
-
-  @Override
-  public String getName() {
-    return BUILDER_NAME;
   }
 
   @Override
@@ -985,9 +980,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return FileUtil.toSystemIndependentName(relPath).replace('/', '.');
   }
 
+  @NotNull
   @Override
-  public String getDescription() {
-    return "Android Source Generating Builder";
+  public String getPresentableName() {
+    return BUILDER_NAME;
   }
 
   // support for lib<->lib and app<->lib circular dependencies

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
@@ -47,7 +48,6 @@ import java.util.concurrent.Future;
  */
 public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
-  public static final String BUILDER_NAME = "groovy";
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private final boolean myForStubs;
@@ -56,15 +56,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   public GroovyBuilder(boolean forStubs) {
     super(forStubs ? BuilderCategory.SOURCE_GENERATOR : BuilderCategory.OVERWRITING_TRANSLATOR);
     myForStubs = forStubs;
-    myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
+    myBuilderName = "Groovy " + (forStubs ? "stub generator" : "compiler");
   }
 
   static {
     JavaBuilder.registerClassPostProcessor(new RecompileStubSources());
-  }
-
-  public String getName() {
-    return myBuilderName;
   }
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context,
@@ -254,12 +250,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
+  private Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<ModuleBuildTarget, String> finalOutputs = new HashMap<ModuleBuildTarget, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
         return null;
       }
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
@@ -406,13 +402,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Override
   public String toString() {
-    return "GroovyBuilder{" +
-           "myForStubs=" + myForStubs +
-           '}';
+    return myBuilderName;
   }
 
-  public String getDescription() {
-    return "Groovy builder";
+  @NotNull
+  public String getPresentableName() {
+    return myBuilderName;
   }
 
   private static class RecompileStubSources implements ClassPostProcessor {
