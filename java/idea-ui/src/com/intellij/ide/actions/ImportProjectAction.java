@@ -24,12 +24,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -45,25 +50,30 @@ public class ImportProjectAction extends AnAction {
     VirtualFile[] files = chooser.choose(null, project);
     if (files.length > 0) {
       final VirtualFile file = files[0];
-      ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-      ProjectImportProvider provider = ContainerUtil.find(providers, new Condition<ProjectImportProvider>() {
-        @Override
-        public boolean value(ProjectImportProvider provider) {
-          return (project != null || provider.canCreateNewProject()) && provider.isMyFile(file);
-        }
-      });
-      if (provider != null) {
-        AddModuleWizard wizard = new AddModuleWizard(e.getPresentation().getText(), project, provider, file.getPath());
-        if (wizard.getStepCount() > 0) {
-          boolean b = wizard.showAndGet();
-        }
-        else {
-          ProjectImportBuilder builder = provider.getBuilder();
-          builder.setFileToImport(file.getPath());
-          builder.commit(project);
-        }
+      doImport(project, file, e.getPresentation().getText());
+    }
+  }
+
+  public static List<Module> doImport(final Project project, @NotNull final VirtualFile file, String wizardTitle) {
+    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+    ProjectImportProvider provider = ContainerUtil.find(providers, new Condition<ProjectImportProvider>() {
+      @Override
+      public boolean value(ProjectImportProvider provider) {
+        return (project != null || provider.canCreateNewProject()) && provider.isMyFile(file);
+      }
+    });
+    if (provider != null) {
+      AddModuleWizard wizard = new AddModuleWizard(wizardTitle, project, provider, file.getPath());
+      if (wizard.getStepCount() > 0) {
+        boolean b = wizard.showAndGet();
+      }
+      else {
+        ProjectImportBuilder builder = provider.getBuilder();
+        builder.setFileToImport(file.getPath());
+        return builder.commit(project);
       }
     }
+    return Collections.emptyList();
   }
 
   @Override
