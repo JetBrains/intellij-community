@@ -205,7 +205,17 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
 
     for (HgFileRevision revision : localRevisions) {
       HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
-      HgRevisionNumber firstParent = vcsRevisionNumber.getParents().get(0);
+      List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
+
+      HgRevisionNumber firstParent;
+      if ( parents.isEmpty() ) {
+        // There's no parent...this is a root in the repository.
+        firstParent = null;
+      }
+      else {
+        firstParent = parents.get(0);
+      }
+
       List<Change> changes = new ArrayList<Change>();
       for (String file : revision.getModifiedFiles()) {
         changes.add(createChange(root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
