@@ -54,14 +54,7 @@ public class BuildOperations {
       configuration.save();
     }
     else if (pd.fsState.markInitialScanPerformed(target)) {
-      if (target instanceof ModuleBasedTarget) {
-        initTargetFSState(context, target, false);
-      }
-      else {
-        // todo: check why other non-associated with module targets have to initialize deleted outputs by themselves
-        // instead of getting this functionality out-of the box
-        FSOperations.markDirtyFiles(context, target, timestamps, false, null);
-      }
+      initTargetFSState(context, target, false);
     }
   }
 
