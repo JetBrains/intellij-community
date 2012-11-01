@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.BundleBase;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -143,7 +144,7 @@ public class ProblemsHolder {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-      message = pattern.contains("{0}") ? MessageFormat.format(pattern, reference.getCanonicalText()) : pattern;
+      message = BundleBase.format(pattern, reference.getCanonicalText()); // avoid double formatting
     }
     else {
       message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());

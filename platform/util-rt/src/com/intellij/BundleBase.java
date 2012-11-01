@@ -55,6 +55,10 @@ public abstract class BundleBase {
 
     value = replaceMnemonicAmpersand(value);
 
+    return format(value, params);
+  }
+
+  public static String format(String value, Object... params) {
     if (params.length > 0 && value.indexOf('{') >= 0) {
       return MessageFormat.format(value, params);
     }
