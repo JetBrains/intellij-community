@@ -236,5 +236,5 @@ public abstract class StructuredDocString {
   public abstract Substring getReturnTypeSubstring();
 
   @Nullable
-  abstract Substring getParamTypeSubstring(@Nullable String paramName);
+  public abstract Substring getParamTypeSubstring(@Nullable String paramName);
 }
