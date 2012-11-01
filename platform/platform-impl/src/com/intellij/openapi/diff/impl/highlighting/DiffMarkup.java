@@ -78,17 +78,27 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     TextDiffType type = fragment instanceof LineFragment
                         ? DiffUtil.makeTextDiffType((LineFragment)fragment)
                         : TextDiffType.create(diffTypeEnum);
-    TextRange range = fragment.getRange(getSide());
-    TextAttributes attributes = type.getTextAttributes(editor);
+    final TextRange range = fragment.getRange(getSide());
+    final TextAttributes attributes = type.getTextAttributes(editor);
     if (attributes == null) {
       return;
     }
 
     RangeHighlighter rangeMarker;
     if (range.getLength() == 0) {
-      TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN);
-      rangeMarker = markupModel.addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER,
-                                                    textAttributes, HighlighterTargetArea.EXACT_RANGE);
+      final int offset = range.getStartOffset();
+      rangeMarker = markupModel.addRangeHighlighter(offset, offset, LAYER,
+                                                    attributes, HighlighterTargetArea.EXACT_RANGE);
+      rangeMarker.setCustomRenderer(new CustomHighlighterRenderer() {
+        @Override
+        public void paint(@NotNull Editor ed, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+          g.setColor(attributes.getBackgroundColor());
+          Point point = ed.logicalPositionToXY(ed.offsetToLogicalPosition(offset));
+          int endy = point.y + ed.getLineHeight() - 1;
+          g.drawLine(point.x, point.y, point.x, endy);
+          g.drawLine(point.x - 1, point.y, point.x - 1, endy);
+        }
+      });
     }
     else {
       rangeMarker = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), LAYER,
