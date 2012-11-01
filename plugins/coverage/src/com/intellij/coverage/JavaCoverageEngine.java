@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -607,6 +608,13 @@ public class JavaCoverageEngine extends CoverageEngine {
     });
   }
 
+  @Override
+  public boolean isReportGenerationAvailable(@NotNull Project project,
+                                             @NotNull DataContext dataContext,
+                                             @NotNull CoverageSuitesBundle currentSuite) {
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    return projectSdk != null;
+  }
 
   @Override
   public final void generateReport(@NotNull final Project project,
