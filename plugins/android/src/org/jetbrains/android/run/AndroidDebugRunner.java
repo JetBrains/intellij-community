@@ -46,7 +46,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import icons.AndroidIcons;
 import org.jetbrains.android.dom.manifest.Instrumentation;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.logcat.AndroidLogcatToolWindowView;
+import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
@@ -196,7 +196,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
 
   private static class MyLogcatExecutionConsole implements ExecutionConsoleEx {
     private final Project myProject;
-    private final AndroidLogcatToolWindowView myToolWindowView;
+    private final AndroidLogcatView myToolWindowView;
     private final ConsoleView myConsoleView;
     private final boolean myResetSelectedTab;
 
@@ -208,7 +208,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
       myProject = project;
       myConsoleView = consoleView;
       myResetSelectedTab = resetSelectedTab;
-      myToolWindowView = new AndroidLogcatToolWindowView(project, device, true) {
+      myToolWindowView = new AndroidLogcatView(project, device, true) {
         @Override
         protected boolean isActive() {
           final DebuggerSessionTab sessionTab = DebuggerPanelsManager.getInstance(myProject).getSessionTab();

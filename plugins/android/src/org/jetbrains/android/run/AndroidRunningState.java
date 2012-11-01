@@ -63,7 +63,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.logcat.AndroidLogcatToolWindowView;
+import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -695,7 +695,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
         }
 
         for (Content content : toolWindow.getContentManager().getContents()) {
-          final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+          final AndroidLogcatView view = content.getUserData(AndroidLogcatView.ANDROID_LOGCAT_VIEW_KEY);
 
           if (view != null && device == view.getSelectedDevice()) {
             view.getLogConsole().clear();

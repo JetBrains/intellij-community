@@ -62,7 +62,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(TOOL_WINDOW_ID);
 
-    final AndroidLogcatToolWindowView view = new AndroidLogcatToolWindowView(project, null, false) {
+    final AndroidLogcatView view = new AndroidLogcatView(project, null, false) {
       @Override
       protected boolean isActive() {
         ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
@@ -96,7 +96,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
 
     final Content logcatContent =
       contentManager.getFactory().createContent(contentPanel, AndroidBundle.message("android.logcat.tab.title"), false);
-    logcatContent.putUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY, view);
+    logcatContent.putUserData(AndroidLogcatView.ANDROID_LOGCAT_VIEW_KEY, view);
     logcatContent.setDisposer(view);
     logcatContent.setCloseable(false);
     logcatContent.setPreferredFocusableComponent(contentPanel);
@@ -175,7 +175,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     return null;
   }
 
-  private static void checkFacetAndSdk(Project project, AndroidLogcatToolWindowView view) {
+  private static void checkFacetAndSdk(Project project, AndroidLogcatView view) {
     final List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
     final ConsoleView console = view.getLogConsole().getConsole();
 
@@ -210,11 +210,11 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
 
   private static class MyAndroidPlatformListener extends ModuleRootAdapter {
     private final Project myProject;
-    private final AndroidLogcatToolWindowView myView;
+    private final AndroidLogcatView myView;
     
     private AndroidPlatform myPrevPlatform;
 
-    private MyAndroidPlatformListener(@NotNull AndroidLogcatToolWindowView view) {
+    private MyAndroidPlatformListener(@NotNull AndroidLogcatView view) {
       myProject = view.getProject();
       myView = view;
       myPrevPlatform = getPlatform();

@@ -64,10 +64,10 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLogcatToolWindowView implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatToolWindowView");
+public abstract class AndroidLogcatView implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatView");
   static final String EMPTY_CONFIGURED_FILTER = "All messages";
-  public static final Key<AndroidLogcatToolWindowView> ANDROID_LOGCAT_VIEW_KEY = Key.create("ANDROID_LOGCAT_VIEW_KEY");
+  public static final Key<AndroidLogcatView> ANDROID_LOGCAT_VIEW_KEY = Key.create("ANDROID_LOGCAT_VIEW_KEY");
 
   private final Project myProject;
   private JComboBox myDeviceCombo;
@@ -144,7 +144,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public AndroidLogcatToolWindowView(final Project project, @Nullable IDevice preselectedDevice, boolean addBorderToScrollPane) {
+  public AndroidLogcatView(final Project project, @Nullable IDevice preselectedDevice, boolean addBorderToScrollPane) {
     myProject = project;
     myPreselectedDevice = preselectedDevice;
     Disposer.register(myProject, this);
@@ -521,7 +521,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     @Override
     public boolean isActive() {
-      return AndroidLogcatToolWindowView.this.isActive();
+      return AndroidLogcatView.this.isActive();
     }
   }
 
@@ -532,7 +532,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, null);
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatView.this, null);
       dialog.setTitle(AndroidBundle.message("android.logcat.new.filter.dialog.title"));
       dialog.show();
 
@@ -603,7 +603,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         return;
       }
 
-      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, filterEntry);
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatView.this, filterEntry);
       dialog.setTitle(AndroidBundle.message("android.logcat.edit.filter.dialog.title"));
       dialog.show();
 
