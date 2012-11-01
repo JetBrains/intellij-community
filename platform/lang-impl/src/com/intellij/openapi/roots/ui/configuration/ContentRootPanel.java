@@ -34,6 +34,7 @@ import com.intellij.ui.roots.ResizingWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -71,7 +72,7 @@ public abstract class ContentRootPanel extends JPanel {
     void deleteContentEntry();
     void deleteContentFolder(ContentEntry contentEntry, ContentFolder contentFolder);
     void navigateFolder(ContentEntry contentEntry, ContentFolder contentFolder);
-    void setPackagePrefix(SourceFolder folder, String prefix);
+    void setPackagePrefix(@NotNull SourceFolder folder, @NotNull String prefix);
   }
 
   public ContentRootPanel(ActionCallback callback, boolean canMarkSources, boolean canMarkTestSources) {

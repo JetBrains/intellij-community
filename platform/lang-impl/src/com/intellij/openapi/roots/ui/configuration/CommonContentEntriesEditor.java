@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -46,6 +45,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -337,12 +337,12 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     @Override
-    public void editingStarted(ContentEntryEditor editor) {
+    public void editingStarted(@NotNull ContentEntryEditor editor) {
       selectContentEntry(editor.getContentEntryUrl());
     }
 
     @Override
-    public void beforeEntryDeleted(ContentEntryEditor editor) {
+    public void beforeEntryDeleted(@NotNull ContentEntryEditor editor) {
       final String entryUrl = editor.getContentEntryUrl();
       if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(entryUrl)) {
         myRootTreeEditor.setContentEntryEditor(null);
@@ -354,7 +354,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public void navigationRequested(ContentEntryEditor editor, VirtualFile file) {
+    public void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file) {
       if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(editor.getContentEntryUrl())) {
         myRootTreeEditor.requestFocus();
         myRootTreeEditor.select(file);

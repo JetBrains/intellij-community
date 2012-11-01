@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,34 +27,34 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.ContentEntryEditorListener{
   @Override
-  public void editingStarted(ContentEntryEditor editor) {
+  public void editingStarted(@NotNull ContentEntryEditor editor) {
   }
 
   @Override
-  public void beforeEntryDeleted(ContentEntryEditor editor) {
+  public void beforeEntryDeleted(@NotNull ContentEntryEditor editor) {
   }
 
   @Override
-  public void sourceFolderAdded(ContentEntryEditor editor, SourceFolder folder) {
+  public void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder) {
   }
 
   @Override
-  public void sourceFolderRemoved(ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
+  public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
   }
 
   @Override
-  public void folderExcluded(ContentEntryEditor editor, VirtualFile file) {
+  public void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
   }
 
   @Override
-  public void folderIncluded(ContentEntryEditor editor, VirtualFile file) {
+  public void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
   }
 
   @Override
-  public void navigationRequested(ContentEntryEditor editor, VirtualFile file) {
+  public void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file) {
   }
 
   @Override
-  public void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder) {
+  public void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
   }
 }

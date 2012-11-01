@@ -50,6 +50,7 @@ import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -219,27 +220,27 @@ public class ContentEntryTreeEditor {
 
   private class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     @Override
-    public void sourceFolderAdded(ContentEntryEditor editor, SourceFolder folder) {
+    public void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder) {
       update();
     }
 
     @Override
-    public void sourceFolderRemoved(ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
+    public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
       update();
     }
 
     @Override
-    public void folderExcluded(ContentEntryEditor editor, VirtualFile file) {
+    public void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
       update();
     }
 
     @Override
-    public void folderIncluded(ContentEntryEditor editor, VirtualFile file) {
+    public void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
       update();
     }
 
     @Override
-    public void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder) {
+    public void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
       update();
     }
   }
