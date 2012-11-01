@@ -120,7 +120,8 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     }
     programParams.add("-v");
     List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(sdk), EnhancerRunner.class.getName(),
-                                                                    Collections.<String>emptyList(), classpath, vmParams, programParams);
+                                                                    Collections.<String>emptyList(), classpath, vmParams, programParams,
+                                                                    true);
 
     Process process = new ProcessBuilder(commandLine).start();
     ExternalEnhancerProcessHandler handler = new ExternalEnhancerProcessHandler(process, commandLine, context);
