@@ -20,7 +20,7 @@ class UncheckedCastFalsePositive1<T> {
     UncheckedCastFalsePositive1<T> outer = ( UncheckedCastFalsePositive1<T> ) one;
     System.out.println(outer);
 
-    UncheckedCastFalsePositive1<T>.InnerClass inner = <warning descr="Unchecked cast: 'java.lang.Object' to 'UncheckedCastFalsePositive1.InnerClass'">( UncheckedCastFalsePositive1<T>.InnerClass ) two</warning>;
+    UncheckedCastFalsePositive1<T>.InnerClass inner = <warning descr="Unchecked cast: 'java.lang.Object' to 'UncheckedCastFalsePositive1<T>.InnerClass'">( UncheckedCastFalsePositive1<T>.InnerClass ) two</warning>;
     System.out.println(inner);
   }
 
