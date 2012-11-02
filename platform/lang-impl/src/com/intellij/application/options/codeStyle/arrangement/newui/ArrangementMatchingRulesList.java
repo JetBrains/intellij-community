@@ -144,18 +144,20 @@ public class ArrangementMatchingRulesList extends JBList {
     }
 
     ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
-    if (decorator == null) {
-      return;
+    if (decorator != null) {
+      decorator.onMouseExited();
+      repaintRows(myRowUnderMouse, myRowUnderMouse, false);
     }
-
-    Rectangle rectangle = decorator.onMouseExited();
-    if (rectangle != null) {
-      repaintScreenBounds(rectangle);
-    }
+    myRowUnderMouse = -1;
   }
 
   private void onMouseEntered(@NotNull MouseEvent e) {
     myRowUnderMouse = locationToIndex(e.getPoint());
+    ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
+    if (decorator != null) {
+      decorator.onMouseEntered();
+      repaintRows(myRowUnderMouse, myRowUnderMouse, false);
+    }
   }
 
   private void onSelectionChange(@NotNull ListSelectionEvent e) {
@@ -183,10 +185,12 @@ public class ArrangementMatchingRulesList extends JBList {
     return result;
   }
   
-  public void repaintRows(int first, int last) {
+  public void repaintRows(int first, int last, boolean rowStructureChanged) {
     Rectangle bounds = getCellBounds(first, last);
-    for (int i = first; i <= last; i++) {
-      myComponents.remove(i);
+    if (rowStructureChanged) {
+      for (int i = first; i <= last; i++) {
+        myComponents.remove(i);
+      }
     }
     if (bounds != null) {
       repaint(bounds);

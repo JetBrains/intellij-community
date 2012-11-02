@@ -59,7 +59,7 @@ public class ArrangementMatchNodeComponentFactory {
 
     ArrangementMatchCondition existingCondition = rule.getMatcher().getCondition();
     if (existingCondition.equals(condition)) {
-      myList.repaintRows(i, model.getSize() - 1);
+      myList.repaintRows(i, model.getSize() - 1, true);
       model.remove(i);
       return;
     }
@@ -69,15 +69,15 @@ public class ArrangementMatchNodeComponentFactory {
     operands.remove(condition);
 
     if (operands.isEmpty()) {
-      myList.repaintRows(i, model.getSize() - 1);
+      myList.repaintRows(i, model.getSize() - 1, true);
       model.remove(i);
     }
     else if (operands.size() == 1) {
       model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), rule.getOrderType()));
-      myList.repaintRows(i, i);
+      myList.repaintRows(i, i, true);
     }
     else {
-      myList.repaintRows(i, i);
+      myList.repaintRows(i, i, true);
     }
   }
 

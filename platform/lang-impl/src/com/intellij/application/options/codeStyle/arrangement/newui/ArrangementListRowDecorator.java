@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,8 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     int diameter = Math.max(maxWidth, height) * 5 / 3;
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
-    setOpaque(false);
+    setOpaque(true);
+    setBackground(UIUtil.getListBackground());
     init();
   }
 
@@ -122,6 +124,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myDelegate.setSelected(selected); 
   }
 
+  public void onMouseEntered() {
+    setBackground(UIUtil.getDecoratedRowColor());
+  }
+
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
@@ -136,6 +142,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Nullable
   @Override
   public Rectangle onMouseExited() {
+    setBackground(UIUtil.getListBackground());
     return myDelegate.onMouseExited(); 
   }
 
