@@ -93,6 +93,7 @@ message Message {
       enum Type {
         BUILD_COMPLETED = 1;
         FILES_GENERATED = 2;
+        CUSTOM_BUILDER_MESSAGE = 3;
       }
 
       enum Status {
@@ -107,10 +108,17 @@ message Message {
         required string relative_path = 2;
       }
 
+      message CustomBuilderMessage {
+        required string builder_id = 1;
+        required string message_type = 2;
+        required string message_text = 3;
+      }
+
       required Type event_type = 1;
       optional string description = 2;
       optional Status completion_status = 3;
       repeated GeneratedFile generated_files = 4;
+      optional CustomBuilderMessage custom_builder_message = 5;
     }
 
     message CompileMessage {
