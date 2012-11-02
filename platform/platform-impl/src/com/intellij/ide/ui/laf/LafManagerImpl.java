@@ -66,9 +66,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -193,7 +191,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     updateUI();
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfo.isXWindow) {
       myThemeChangeListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
@@ -452,17 +450,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * as it's configured in <code>UISettings</code>.
    */
   public void updateUI() {
+    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+
     fixPopupWeight();
 
     fixGtkPopupStyle();
-    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+
     fixTreeWideSelection(uiDefaults);
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      // update ui for popup menu to get round corners
-      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
-      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
-    }
+
+    fixMenuIssues(uiDefaults);
 
     if (UIUtil.isWinLafOnVista()) {
       uiDefaults.put("ComboBox.border", null);
@@ -470,22 +466,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     initInputMapDefaults(uiDefaults);
 
-    if (UIUtil.isUnderJGoodiesLookAndFeel()) {
-      UIManager.put("Menu.opaque", true);
-      UIManager.put("MenuItem.opaque", true);
-    }
-
-    UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
-    UIManager.put("MenuItem.background", UIManager.getColor("Menu.background"));
+    uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
 
     patchFileChooserStrings(uiDefaults);
-    if (shouldPatchLAFFonts()) {
-      storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
-    }
-    else {
-      restoreOriginalFontDefaults(uiDefaults);
-    }
+
+    patchLafFonts(uiDefaults);
 
     patchOptionPaneIcons(uiDefaults);
 
@@ -496,6 +481,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     fireLookAndFeelChanged();
     
     fixSeparatorColor(uiDefaults);
+  }
+
+  private static void fixMenuIssues(UIDefaults uiDefaults) {
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      // update ui for popup menu to get round corners
+      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
+      uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
+      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
+    }
+    else if (UIUtil.isUnderJGoodiesLookAndFeel()) {
+      uiDefaults.put("Menu.opaque", true);
+      uiDefaults.put("MenuItem.opaque", true);
+    }
+    uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }
 
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
@@ -615,6 +614,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  private void patchLafFonts(UIDefaults uiDefaults) {
+    if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
+      storeOriginalFontDefaults(uiDefaults);
+      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
+    }
+    else {
+      restoreOriginalFontDefaults(uiDefaults);
+    }
+  }
+
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
@@ -635,10 +644,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
       myStoredDefaults.put(lf, lfDefaults);
     }
-  }
-
-  private static boolean shouldPatchLAFFonts() {
-    return UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS;
   }
 
   private static void updateUI(Window window){
