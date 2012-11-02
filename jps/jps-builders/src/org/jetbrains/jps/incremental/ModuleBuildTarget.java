@@ -51,7 +51,7 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext context) {
+  public Collection<File> getOutputRoots(CompileContext context) {
     Collection<File> result = new SmartList<File>();
     final File outputDir = getOutputDir();
     if (outputDir != null) {
@@ -169,7 +169,7 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
     }
 
     for (String url : enumerator.classes().getUrls()) {
-      fingerprint += 31 * fingerprint + url.hashCode();
+      fingerprint = 31 * fingerprint + url.hashCode();
     }
     return fingerprint;
   }

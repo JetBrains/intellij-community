@@ -15,16 +15,18 @@
  */
 package org.jetbrains.android.fileTypes;
 
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class AndroidFileTypeFactory extends FileTypeFactory {
-    public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
-      fileTypeConsumer.consume(AndroidIdlFileType.ourFileType, AndroidIdlFileType.DEFAULT_ASSOCIATED_EXTENSION);
-      fileTypeConsumer.consume(AndroidRenderscriptFileType.INSTANCE, AndroidRenderscriptFileType.DEFAULT_EXTENSION);
+    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+      consumer.consume(AndroidIdlFileType.ourFileType, AndroidIdlFileType.DEFAULT_ASSOCIATED_EXTENSION);
+      consumer.consume(AndroidRenderscriptFileType.INSTANCE, AndroidRenderscriptFileType.DEFAULT_EXTENSION);
+      consumer.consume(PlainTextFileType.INSTANCE, "rsh");
     }
 }

@@ -50,4 +50,9 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     dialog.show();
     return dialog.isOK();
   }
+
+  @Override
+  public boolean lookForProjectsInDirectory() {
+    return false;
+  }
 }

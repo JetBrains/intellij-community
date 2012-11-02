@@ -126,6 +126,12 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+  public static GrayFilter getGrayFilter() {
+    return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
@@ -2178,8 +2184,8 @@ public class UIUtil {
     private float myLineSpacing;
 
     public TextPainter() {
-      myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(180) : Gray._220;
+      myDrawShadow = isUnderAquaLookAndFeel() || isUnderDarcula();
+      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
 

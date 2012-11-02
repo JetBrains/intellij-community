@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
@@ -25,9 +27,10 @@ public interface SettingsStep {
 
   WizardContext getContext();
 
-  void addSettingsField(String label, JComponent field);
+  void addSettingsField(@NotNull String label, @NotNull JComponent field);
 
-  void addSettingsComponent(JComponent component);
+  void addSettingsComponent(@NotNull JComponent component);
 
-  void addExpertPanel(JComponent panel);
+  void addExpertPanel(@NotNull JComponent panel);
+  void addExpertField(@NotNull String label, @NotNull JComponent field);
 }

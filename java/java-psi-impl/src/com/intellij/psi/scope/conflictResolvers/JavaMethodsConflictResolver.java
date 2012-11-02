@@ -126,7 +126,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       else if (parameterType instanceof PsiMethodReferenceType) {
-        LambdaUtil.processMethodReferenceReturnType(conflicts, i);
+        PsiMethodReferenceUtil.processMethodReferenceReturnType(conflicts, i);
       }
     }
   }
@@ -282,9 +282,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           }
 
           if (currentClass != null && InheritanceUtil.isInheritorOrSelf(currentClass, class1, true) && InheritanceUtil.isInheritorOrSelf(currentClass, existingClass, true)) {
-            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY)), 
-                                                       method.getSignature(TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY)))) {
-              conflicts.remove(i);
+            final PsiSubstitutor eSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY);
+            final PsiSubstitutor cSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY);
+            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
+              final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
+              if (!PsiUtil.captureToplevelWildcards(returnType, existingMethod).equals(returnType)) {
+                conflicts.remove(existing);
+              } else {
+                conflicts.remove(i);
+              }
               i--;
               break;
             }

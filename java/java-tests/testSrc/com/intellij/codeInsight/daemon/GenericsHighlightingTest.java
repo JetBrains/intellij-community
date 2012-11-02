@@ -180,6 +180,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA57310() throws Exception { doTest(false); }
   public void testIDEA57311() throws Exception { doTest(false); }
   public void testIDEA57309() throws Exception { doTest(false); }
+  public void testIDEA90802() throws Exception { doTest(false); }
+  public void testInaccessibleThroughWildcard() throws Exception { doTest17Incompatibility();}
   public void testInconvertibleTypes() throws Exception { doTest(false); }
   public void testIncompatibleReturnType() throws Exception { doTest(false); }
   public void testContinueInferenceAfterFirstRawResult() throws Exception { doTest(false); }
@@ -187,6 +189,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticOverride() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }
+  public void _testIDEA94011() throws Exception { doTest(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
@@ -199,13 +202,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest17Incompatibility() throws Exception {
-    final JavaVersionServiceImpl javaVersionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
-    try {
-      javaVersionService.setTestVersion(JavaSdkVersion.JDK_1_7);
-      doTest(false);
-    }
-    finally {
-      javaVersionService.setTestVersion(null);
-    }
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());
+    doTest(false);
   }
 }

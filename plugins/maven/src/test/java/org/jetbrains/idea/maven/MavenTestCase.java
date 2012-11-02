@@ -290,7 +290,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File ioFile = new File(myDir, "settings.xml");
     ioFile.createNewFile();
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    setFileContent(f, content);
+    setFileContent(f, content, true);
     getMavenGeneralSettings().setUserSettingsFile(f.getPath());
     return f;
   }
@@ -360,7 +360,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }.execute().getResultObject();
       myAllPoms.add(f);
     }
-    setFileContent(f, createPomXml(xml));
+    setFileContent(f, createPomXml(xml), true);
     return f;
   }
 
@@ -414,7 +414,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
       }.execute().getResultObject();
     }
-    setFileContent(f, content);
+    setFileContent(f, content, true);
     return f;
   }
 
@@ -472,15 +472,20 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {
     VirtualFile file = createProjectSubFile(relativePath);
-    setFileContent(file, content);
+    setFileContent(file, content, false);
     return file;
   }
 
-  private static void setFileContent(final VirtualFile file, final String content) throws IOException {
+  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
     new WriteAction<VirtualFile>() {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
-        file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+        if (advanceStamps) {
+          file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+        }
+        else {
+          file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());
+        }
       }
     }.execute().getResultObject();
   }

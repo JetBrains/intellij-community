@@ -74,7 +74,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   public void testRemoveDeletedFileFromArchive() {
     String file1 = createFile("dir/a.txt");
     createFile("dir/b.txt");
-    final JpsArtifact a = addArtifact("a", archive("a.jar").parentDirCopy(file1));
+    final JpsArtifact a = addArtifact("a", root().archive("a.jar").parentDirCopy(file1));
     buildAll();
     assertOutput(a, fs().archive("a.jar").file("a.txt").file("b.txt"));
 

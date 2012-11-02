@@ -671,6 +671,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       type = myRemapper.filter(type, myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence());
       myLexTypes[myCurrentLexeme] = type; // filter may have changed the type
       skipWhitespace();
+      type = myLexTypes[myCurrentLexeme];
       return type;
     }
     return myLexTypes[myCurrentLexeme];
@@ -1366,13 +1367,26 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
                n2 instanceof Token && ((Token)n2).myBuilder.myWhitespaces.contains(n2.getTokenType());
       }
       IElementType n1t;
-      if (n1 instanceof ForeignLeafPsiElement)
+      IElementType n2t;
+      if (n1 instanceof ForeignLeafPsiElement) {
         n1t = ((ForeignLeafPsiElement)n1).getForeignType();
-      else
-        n1t = n1.getElementType();
+        n2t = n2.getTokenType();
+      }
+      else {
+        n1t = dereferenceToken(n1.getElementType());
+        n2t = dereferenceToken(n2.getTokenType());
+      }
 
-      return Comparing.equal(n1t, n2.getTokenType());
+      return Comparing.equal(n1t, n2t);
     }
+
+    public static IElementType dereferenceToken(IElementType probablyWrapper) {
+      if (probablyWrapper instanceof TokenWrapper) {
+        return dereferenceToken(((TokenWrapper)probablyWrapper).getDelegate());
+      }
+      return probablyWrapper;
+    }
+
 
     @Override
     public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {

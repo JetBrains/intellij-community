@@ -191,7 +191,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
 
     ((ProjectJdkImpl)modifiedJdk).copyTo((ProjectJdkImpl)originalJdk);
 
-    if (previousName != null ? !previousName.equals(newName) : newName != null) {
+    if (!previousName.equals(newName)) {
       // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
       myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkNameChanged(originalJdk, previousName);
     }

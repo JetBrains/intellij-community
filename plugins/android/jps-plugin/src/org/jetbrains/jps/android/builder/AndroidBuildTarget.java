@@ -88,7 +88,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext context) {
+  public Collection<File> getOutputRoots(CompileContext context) {
     return Collections.emptyList();
   }
 

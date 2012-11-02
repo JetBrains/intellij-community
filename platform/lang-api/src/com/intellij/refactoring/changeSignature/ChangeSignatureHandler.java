@@ -38,4 +38,7 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
   PsiElement findTargetMember(PsiElement element);
 
   void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext);
+
+  @Nullable
+  String getTargetNotFoundMessage();
 }

@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,41 +108,46 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     // When the thrown expression is an ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
     if (PsiUtil.getLanguageLevel(parameter).isAtLeast(LanguageLevel.JDK_1_7) &&
         isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+      // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
+      final List<PsiClassType> thrownTypes = ContainerUtil.newArrayList();
       final PsiCodeBlock tryBlock = getTryStatement().getTryBlock();
       if (tryBlock != null) {
-        // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
-        final List<PsiClassType> thrownTypes = ExceptionUtil.getThrownExceptions(tryBlock);
-        if (!thrownTypes.isEmpty()) {
-          // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
-          //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
-          final PsiParameter[] parameters = getTryStatement().getCatchBlockParameters();
-          final List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
-            @Override
-            public PsiType fun(final PsiClassType thrownType) {
-              for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
-                final PsiType catchType = parameters[i].getType();
-                if (catchType.isAssignableFrom(thrownType)) return null;
-              }
-              return thrownType;
+        thrownTypes.addAll(ExceptionUtil.getThrownExceptions(tryBlock));
+      }
+      final PsiResourceList resourceList = getTryStatement().getResourceList();
+      if (resourceList != null) {
+        thrownTypes.addAll(ExceptionUtil.getThrownExceptions(resourceList));
+      }
+      if (!thrownTypes.isEmpty()) {
+        // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
+        //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
+        final PsiParameter[] parameters = getTryStatement().getCatchBlockParameters();
+        final List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
+          @Override
+          public PsiType fun(final PsiClassType thrownType) {
+            for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
+              final PsiType catchType = parameters[i].getType();
+              if (catchType.isAssignableFrom(thrownType)) return null;
             }
-          });
-          // ... and T is assignable to Ej ...
-          if (!uncaughtTypes.isEmpty()) {
-            boolean passed = true;
-            for (PsiType type : uncaughtTypes) {
-              if (!declaredType.isAssignableFrom(type)) {
-                passed = false;
-                break;
-              }
-            }
-            // ... the throw statement throws precisely the set of exception types T.
-            if (passed) return uncaughtTypes;
+            return thrownType;
           }
+        });
+        // ... and T is assignable to Ej ...
+        if (!uncaughtTypes.isEmpty()) {
+          boolean passed = true;
+          for (PsiType type : uncaughtTypes) {
+            if (!declaredType.isAssignableFrom(type)) {
+              passed = false;
+              break;
+            }
+          }
+          // ... the throw statement throws precisely the set of exception types T.
+          if (passed) return uncaughtTypes;
         }
       }
     }
 
-    return Arrays.asList(declaredType);
+    return Collections.singletonList(declaredType);
   }
 
   // do not use control flow here to avoid dead loop

@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,27 +78,30 @@ public class NewProjectUtil {
       return;
     }
 
-    doCreate(dialog, projectToClose);
+    try {
+      doCreate(dialog, projectToClose);
+    }
+    catch (final IOException e) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
+        }
+      });
+    }
   }
 
-  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) {
+  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {
+      File projectDir = new File(projectFilePath).getParentFile();
+      FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        if (!ideaDir.exists() && !ideaDir.mkdirs()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project Initialization Failed");
-            }
-          });
-
-          return projectToClose;
-        }
+        FileUtil.ensureExists(ideaDir);
       }
 
       final Project newProject;

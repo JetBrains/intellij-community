@@ -54,7 +54,10 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
   @Override
   public ProjectTemplate[] createTemplates(final String group, WizardContext context) {
     if (OTHER_GROUP.equals(group)) {
-      return new ProjectTemplate[] { new PlainModuleTemplate(new EmptyModuleBuilder() {
+      if (!context.isCreatingNewProject()) {
+        return ProjectTemplate.EMPTY_ARRAY;
+      }
+      return new ProjectTemplate[]{new PlainModuleTemplate(new EmptyModuleBuilder() {
         @Override
         public String getPresentableName() {
           return "Empty Project";

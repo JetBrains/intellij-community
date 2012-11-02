@@ -50,7 +50,7 @@ public abstract class SimpleMacro extends Macro {
 
   @Override
   public Result calculateResult(@NotNull final Expression[] params, final ExpressionContext context) {
-    return new TextResult(evaluate());
+    return new TextResult(evaluateSimpleMacro(params, context));
   }
 
   @Override
@@ -58,5 +58,5 @@ public abstract class SimpleMacro extends Macro {
     return calculateResult(params, context);
   }
 
-  protected abstract String evaluate();
+  protected abstract String evaluateSimpleMacro(Expression[] params, final ExpressionContext context);
 }

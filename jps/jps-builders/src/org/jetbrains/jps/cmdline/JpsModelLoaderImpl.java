@@ -15,7 +15,6 @@ import java.util.Map;
  * @author nik
  */
 public class JpsModelLoaderImpl implements JpsModelLoader {
-  public static final String IDEA_PROJECT_DIRNAME = ".idea";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.JpsModelLoaderImpl");
   private final String myProjectPath;
   private final String myGlobalOptionsPath;

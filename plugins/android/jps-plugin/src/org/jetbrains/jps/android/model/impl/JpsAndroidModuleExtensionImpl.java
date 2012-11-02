@@ -20,6 +20,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.model.ex.JpsElementBase;
@@ -37,11 +38,9 @@ import java.util.List;
 public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModuleExtensionImpl> implements JpsAndroidModuleExtension {
   public static final JpsElementChildRoleBase<JpsAndroidModuleExtension> KIND = JpsElementChildRoleBase.create("android extension");
   private final JpsAndroidModuleProperties myProperties;
-  private final String myBaseModulePath;
 
-  public JpsAndroidModuleExtensionImpl(JpsAndroidModuleProperties properties, String baseModulePath) {
+  public JpsAndroidModuleExtensionImpl(JpsAndroidModuleProperties properties) {
     myProperties = properties;
-    myBaseModulePath = baseModulePath;
   }
 
   @Override
@@ -52,18 +51,13 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   @NotNull
   @Override
   public JpsAndroidModuleExtensionImpl createCopy() {
-    return new JpsAndroidModuleExtensionImpl(XmlSerializerUtil.createCopy(myProperties), myBaseModulePath);
+    return new JpsAndroidModuleExtensionImpl(XmlSerializerUtil.createCopy(myProperties));
   }
 
   @Override
   public void applyChanges(@NotNull JpsAndroidModuleExtensionImpl modified) {
     XmlSerializerUtil.copyBean(modified.myProperties, myProperties);
     fireElementChanged();
-  }
-
-  @Override
-  public String getBaseModulePath() {
-    return myBaseModulePath;
   }
 
   @Override
@@ -145,8 +139,9 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
     }
 
     final JpsModule module = getModule();
-    if (myBaseModulePath != null) {
-      String absPath = FileUtil.toSystemDependentName(myBaseModulePath + relativePath);
+    File moduleBaseDir = JpsModelSerializationDataService.getBaseDirectory(module);
+    if (moduleBaseDir != null) {
+      String absPath = FileUtil.toSystemDependentName(moduleBaseDir.getAbsolutePath() + relativePath);
       File f = new File(absPath);
 
       if (f.exists()) {

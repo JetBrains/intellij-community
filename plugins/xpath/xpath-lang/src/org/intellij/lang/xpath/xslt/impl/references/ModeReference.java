@@ -190,7 +190,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     public String getUnresolvedMessagePattern() {
         final QName qName = myImplicitModeElement.getQName();
         if (qName != null && qName != QNameUtil.UNRESOLVED) {
-            return "Undefined mode ''" + qName.toString() + "''";
+            return "Undefined mode '" + qName.toString() + "'";
         } else {
             return "Undefined mode ''{0}''";
         }

@@ -60,6 +60,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     if (useExternalCompiler()) {
       CompilerTestUtil.enableExternalCompiler(myProject);
     }
+    else {
+      CompilerTestUtil.disableExternalCompiler(myProject);
+    }
   }
 
   @Override

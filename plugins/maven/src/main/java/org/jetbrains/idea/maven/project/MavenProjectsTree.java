@@ -882,8 +882,11 @@ public class MavenProjectsTree {
     readLock();
     try {
       CRC32 crc = new CRC32();
-      crc.update(myRootProjects.size() & 0xFF);
-      for (MavenProject mavenProject : myRootProjects) {
+
+      Collection<MavenProject> allProjects = myVirtualFileToProjectMapping.values();
+
+      crc.update(allProjects.size() & 0xFF);
+      for (MavenProject mavenProject : allProjects) {
         VirtualFile pomFile = mavenProject.getFile();
         Module module = fileIndex.getModuleForFile(pomFile);
         if (module == null) continue;

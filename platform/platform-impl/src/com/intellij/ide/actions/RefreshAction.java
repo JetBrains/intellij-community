@@ -37,6 +37,7 @@ public class RefreshAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     // empty
   }

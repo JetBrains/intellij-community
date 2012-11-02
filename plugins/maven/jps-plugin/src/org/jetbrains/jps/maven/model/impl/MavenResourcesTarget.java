@@ -42,19 +42,6 @@ import java.util.*;
  */
 public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
 
-  private static final Comparator<String> STRING_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareTo(o2);
-    }
-  };
-  private static final Comparator<ResourceRootConfiguration> ROOT_CONFIG_COMPARATOR = new Comparator<ResourceRootConfiguration>() {
-    @Override
-    public int compare(ResourceRootConfiguration o1, ResourceRootConfiguration o2) {
-      return STRING_COMPARATOR.compare(o1.directory, o2.directory);
-    }
-  };
-
   MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
@@ -120,7 +107,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @NotNull
   @Override
-  public Collection<File> getOutputDirs(CompileContext context) {
+  public Collection<File> getOutputRoots(CompileContext context) {
     final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(context.getProjectDescriptor().dataManager.getDataPaths())) {

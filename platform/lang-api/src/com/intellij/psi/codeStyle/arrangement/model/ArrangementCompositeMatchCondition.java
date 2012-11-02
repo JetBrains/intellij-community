@@ -16,10 +16,10 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -33,10 +33,12 @@ import java.util.Set;
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 
   @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<ArrangementMatchCondition>();
-  @NotNull private final ArrangementOperator myOperator;
-  
-  public ArrangementCompositeMatchCondition(@NotNull ArrangementOperator operator) {
-    myOperator = operator;
+
+  public ArrangementCompositeMatchCondition() {
+  }
+
+  public ArrangementCompositeMatchCondition(@NotNull Collection<? extends ArrangementMatchCondition> conditions) {
+    myOperands.addAll(conditions);
   }
 
   @NotNull
@@ -54,11 +56,6 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
     myOperands.remove(condition);
   }
   
-  @NotNull
-  public ArrangementOperator getOperator() {
-    return myOperator;
-  }
-
   @Override
   public void invite(@NotNull ArrangementMatchConditionVisitor visitor) {
     visitor.visit(this);
@@ -67,7 +64,7 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
   @NotNull
   @Override
   public ArrangementCompositeMatchCondition clone() {
-    ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(myOperator);
+    ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition();
     for (ArrangementMatchCondition operand : myOperands) {
       result.addOperand(operand.clone());
     }
@@ -76,9 +73,7 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
 
   @Override
   public int hashCode() {
-    int result = myOperands.hashCode();
-    result = 31 * result + myOperator.hashCode();
-    return result;
+    return myOperands.hashCode();
   }
 
   @Override
@@ -92,18 +87,11 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
 
     ArrangementCompositeMatchCondition setting = (ArrangementCompositeMatchCondition)o;
 
-    if (!myOperands.equals(setting.myOperands)) {
-      return false;
-    }
-    if (myOperator != setting.myOperator) {
-      return false;
-    }
-
-    return true;
+    return myOperands.equals(setting.myOperands);
   }
 
   @Override
   public String toString() {
-    return String.format("(%s)", StringUtil.join(myOperands, myOperator == ArrangementOperator.AND ? " and " : " or "));
+    return String.format("(%s)", StringUtil.join(myOperands, " and "));
   }
 }

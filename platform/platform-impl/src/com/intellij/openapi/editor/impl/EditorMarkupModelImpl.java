@@ -85,6 +85,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myEditorTargetHeight = -1;
   private int myEditorSourceHeight = -1;
   private ProperTextRange myDirtyYPositions = null;
+  private static final ProperTextRange WHOLE_DOCUMENT = new ProperTextRange(0,0);
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
@@ -319,6 +320,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   void repaint(int startOffset, int endOffset) {
     ProperTextRange range = offsetsToYPositions(startOffset, endOffset);
     markDirtied(range);
+    if (startOffset == -1 || endOffset == -1) {
+      myDirtyYPositions = WHOLE_DOCUMENT;
+    }
 
     myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + getMinHeight());
   }
@@ -420,7 +424,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
-
+      if (myDirtyYPositions == WHOLE_DOCUMENT) {
+        myDirtyYPositions = docRange;
+      }
       if (myDirtyYPositions != null) {
         final Graphics2D imageGraphics = myCachedTrack.createGraphics();
 
@@ -759,12 +765,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                                                : Math.min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.getEndOffset() + myEditor.getLineHeight());
     ProperTextRange adj = new ProperTextRange(start, Math.max(end, start));
 
-    if (myDirtyYPositions == null) {
-      myDirtyYPositions = adj;
-    }
-    else {
-      myDirtyYPositions = myDirtyYPositions.union(adj);
-    }
+    myDirtyYPositions = myDirtyYPositions == null ? adj : myDirtyYPositions.union(adj);
 
     myEditorScrollbarTop = 0;
     myEditorSourceHeight = 0;

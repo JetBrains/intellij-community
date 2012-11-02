@@ -107,7 +107,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
         public void run() {
           if (project.isDisposed()) return;
           try {
-            JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, false, myReferenceExpression);
+            JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
             dialog.setParameterInfos(parameterInfos);
             dialog.show();
           }

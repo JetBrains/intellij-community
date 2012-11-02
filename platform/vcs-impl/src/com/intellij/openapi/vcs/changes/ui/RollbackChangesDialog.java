@@ -63,8 +63,9 @@ public class RollbackChangesDialog extends DialogWrapper {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
+      String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
+                                 VcsBundle.message("changes.action.rollback.nothing", operationName));
       return;
     }
 

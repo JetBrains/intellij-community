@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -73,5 +74,5 @@ public abstract class ProjectWizardStepFactory {
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider);
 
-  public abstract ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter);
+  public abstract ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter);
 }

@@ -26,4 +26,5 @@ public interface UserFilterI {
   void filter(final String s);
   boolean isMeKnown();
   String getMe();
+  String getUserIfOne();
 }

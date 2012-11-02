@@ -34,4 +34,6 @@ public @interface MapAnnotation  {
 
   boolean surroundKeyWithTag() default true;
   boolean surroundValueWithTag() default true;
+
+  boolean sortBeforeSave() default true;
 }

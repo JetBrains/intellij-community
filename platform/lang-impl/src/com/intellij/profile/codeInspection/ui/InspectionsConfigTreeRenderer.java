@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
     final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
     UIUtil.changeBackGround(this, background);
     Color foreground =
-      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? Color.BLUE : UIUtil.getTreeTextForeground();
+      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();
 
     @NonNls String text = null;
     int style = SimpleTextAttributes.STYLE_PLAIN;

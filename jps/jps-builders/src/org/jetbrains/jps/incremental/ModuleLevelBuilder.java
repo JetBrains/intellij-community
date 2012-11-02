@@ -5,6 +5,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Use {@link BuilderService} to register implementations of this class
@@ -25,7 +26,8 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
-                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException;
+                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder)
+    throws ProjectBuildException, IOException;
 
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;

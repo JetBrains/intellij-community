@@ -53,6 +53,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   
   public void setModelAndUpdateColumns(final ListTableModel<Item> model) {
     super.setModel(model);
+    createDefaultColumnsFromModel();
     updateColumnSizes();
   }
 

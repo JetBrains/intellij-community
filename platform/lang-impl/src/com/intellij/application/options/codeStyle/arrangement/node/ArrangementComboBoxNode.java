@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.node;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementTreeNode;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 9/27/12 5:01 PM
  */
-public class ArrangementComboBoxNode<T> extends ArrangementTreeNode implements ArrangementRepresentationAwareNode, ArrangementEditableNode {
+public class ArrangementComboBoxNode<T> /*extends ArrangementTreeNode implements ArrangementRepresentationAwareNode, ArrangementEditableNode*/ {
 
   @NotNull private final JPanel    myControl  = new JPanel(new GridBagLayout());
   @NotNull private final JLabel    myLabel    = new JLabel();
@@ -37,7 +36,7 @@ public class ArrangementComboBoxNode<T> extends ArrangementTreeNode implements A
   @NotNull private final List<T>   myData     = new ArrayList<T>();
 
   public ArrangementComboBoxNode(@NotNull ArrangementNodeDisplayManager displayManager, @NotNull String text, @NotNull Iterable<T> data) {
-    super(null);
+    //super(null);
     for (T t : data) {
       myData.add(t);
       myComboBox.addItem(displayManager.getDisplayValue(t));
@@ -48,13 +47,13 @@ public class ArrangementComboBoxNode<T> extends ArrangementTreeNode implements A
   }
 
   @NotNull
-  @Override
+  //@Override
   public JComponent getEditor() {
     return myControl;
   }
 
   @NotNull
-  @Override
+  //@Override
   public JComponent getRenderer() {
     return myControl;
   }

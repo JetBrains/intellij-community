@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
@@ -24,7 +23,10 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -44,7 +46,7 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getThrownExceptions(@NotNull PsiElement[] elements) {
-    List<PsiClassType> array = new ArrayList<PsiClassType>();
+    List<PsiClassType> array = ContainerUtil.newArrayList();
     for (PsiElement element : elements) {
       List<PsiClassType> exceptions = getThrownExceptions(element);
       addExceptions(array, exceptions);
@@ -63,7 +65,7 @@ public class ExceptionUtil {
 
   @NotNull
   private static List<PsiClassType> filterOutUncheckedExceptions(List<PsiClassType> exceptions) {
-    List<PsiClassType> array = new ArrayList<PsiClassType>();
+    List<PsiClassType> array = ContainerUtil.newArrayList();
     for (PsiClassType exception : exceptions) {
       if (!isUncheckedException(exception)) array.add(exception);
     }
@@ -104,11 +106,18 @@ public class ExceptionUtil {
     else if (element instanceof PsiTryStatement) {
       return getTryExceptions((PsiTryStatement)element);
     }
+    else if (element instanceof PsiResourceVariable) {
+      final PsiResourceVariable variable = (PsiResourceVariable)element;
+      final List<PsiClassType> types = getCloserExceptions(variable);
+      final PsiExpression initializer = variable.getInitializer();
+      if (initializer != null) addExceptions(types, getThrownExceptions(initializer));
+      return types;
+    }
     return getThrownExceptions(element.getChildren());
   }
 
   private static List<PsiClassType> getTryExceptions(PsiTryStatement tryStatement) {
-    List<PsiClassType> array = new ArrayList<PsiClassType>();
+    List<PsiClassType> array = ContainerUtil.newArrayList();
 
     PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
@@ -162,23 +171,30 @@ public class ExceptionUtil {
 
   @NotNull
   private static List<PsiClassType> getExceptionsByMethodAndChildren(PsiElement element, JavaResolveResult resolveResult) {
+    List<PsiClassType> result = ContainerUtil.newArrayList();
+
     PsiMethod method = (PsiMethod)resolveResult.getElement();
-    List<PsiClassType> result = new ArrayList<PsiClassType>();
     if (method != null) {
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final PsiClassType[] referenceTypes = method.getThrowsList().getReferencedTypes();
-      for (PsiType type : referenceTypes) {
-        type = substitutor.substitute(type);
-        if (type instanceof PsiClassType) {
-          result.add((PsiClassType)type);
-        }
+      addExceptions(result, getExceptionsByMethod(method, resolveResult.getSubstitutor()));
+    }
+
+    addExceptions(result, getThrownExceptions(element.getChildren()));
+
+    return result;
+  }
+
+  @NotNull
+  private static List<PsiClassType> getExceptionsByMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    List<PsiClassType> result = ContainerUtil.newArrayList();
+
+    PsiClassType[] referenceTypes = method.getThrowsList().getReferencedTypes();
+    for (PsiType type : referenceTypes) {
+      type = substitutor.substitute(type);
+      if (type instanceof PsiClassType) {
+        result.add((PsiClassType)type);
       }
     }
 
-    PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
-      addExceptions(result, getThrownExceptions(child));
-    }
     return result;
   }
 
@@ -201,22 +217,23 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
-                                                                    @Nullable PsiElement topElement) {
+  public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, @Nullable PsiElement topElement) {
     return collectUnhandledExceptions(element, topElement, true);
   }
 
   @NotNull
   public static Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
-                                                                    @Nullable PsiElement topElement, boolean includeSelfCalls) {
+                                                                    @Nullable PsiElement topElement,
+                                                                    boolean includeSelfCalls) {
     final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, includeSelfCalls);
     return set == null ? Collections.<PsiClassType>emptyList() : set;
   }
 
   @Nullable
   private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
-                                                              PsiElement topElement,
-                                                              @Nullable Set<PsiClassType> foundExceptions, boolean includeSelfCalls) {
+                                                              @Nullable PsiElement topElement,
+                                                              @Nullable Set<PsiClassType> foundExceptions,
+                                                              boolean includeSelfCalls) {
     Collection<PsiClassType> unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
@@ -303,7 +320,7 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(PsiElement[] elements) {
-    final List<PsiClassType> array = new ArrayList<PsiClassType>();
+    final List<PsiClassType> array = ContainerUtil.newArrayList();
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitCallExpression(PsiCallExpression expression) {
@@ -373,28 +390,15 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, @Nullable final PsiElement topElement) {
-    final Project project = resource.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
-    if (autoCloseable != null) {
-      final PsiMethod[] methods = autoCloseable.findMethodsByName("close", false);
-      if (methods.length == 1) {
-        final MethodSignature signature = methods[0].getSignature(PsiSubstitutor.EMPTY);
-        final PsiType resourceType = resource.getType();
-        if (resourceType instanceof PsiClassType) {
-          final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
-          if (resourceClass != null) {
-            final PsiMethod method = MethodSignatureUtil.findMethodBySignature(resourceClass, signature, true);
-            if (method != null) {
-              return getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY);
-            }
-          }
-        }
-      }
-    }
+  public static List<PsiClassType> getCloserExceptions(final PsiResourceVariable resource) {
+    final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
+    return method != null ? getExceptionsByMethod(method, PsiSubstitutor.EMPTY) : Collections.<PsiClassType>emptyList();
+  }
 
-    return Collections.emptyList();
+  @NotNull
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, @Nullable final PsiElement topElement) {
+    final PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
+    return method != null ? getUnhandledExceptions(method, resource, topElement, PsiSubstitutor.EMPTY) : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
@@ -444,7 +448,7 @@ public class ExceptionUtil {
     }
     final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
     if (referencedTypes.length > 0) {
-      List<PsiClassType> result = new ArrayList<PsiClassType>();
+      List<PsiClassType> result = ContainerUtil.newArrayList();
 
       for (PsiClassType referencedType : referencedTypes) {
         final PsiType type = substitutor.substitute(referencedType);
@@ -477,20 +481,20 @@ public class ExceptionUtil {
     return qualifierExpression != null && qualifierExpression.getType() instanceof PsiArrayType;
   }
 
-  public static boolean isUncheckedException(PsiClassType type) {
-    final GlobalSearchScope searchScope = type.getResolveScope();
+  public static boolean isUncheckedException(@NotNull PsiClassType type) {
     final PsiClass aClass = type.resolve();
     if (aClass == null) return false;
+
+    final GlobalSearchScope searchScope = ProjectScope.getLibrariesScope(aClass.getProject());
     final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
         new NullableComputable<PsiClass>() {
           @Override
           public PsiClass compute() {
-            return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.RuntimeException", searchScope);
+            return JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, searchScope);
           }
         }
     );
-    if (runtimeExceptionClass != null &&
-        InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) {
+    if (runtimeExceptionClass != null && InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) {
       return true;
     }
 
@@ -498,11 +502,15 @@ public class ExceptionUtil {
       new NullableComputable<PsiClass>() {
         @Override
         public PsiClass compute() {
-          return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Error", searchScope);
+          return JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_ERROR, searchScope);
         }
       }
     );
-    return errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true);
+    if (errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true)) {
+      return true;
+    }
+
+    return false;
   }
 
   public static boolean isUncheckedExceptionOrSuperclass(@NotNull final PsiClassType type) {

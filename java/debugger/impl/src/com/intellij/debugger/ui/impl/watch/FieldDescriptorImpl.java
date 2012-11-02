@@ -30,6 +30,7 @@ import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -139,7 +140,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   public String getName() {
     final String fieldName = myField.name();
-    return isOuterLocalVariableValue()? fieldName.substring(OUTER_LOCAL_VAR_FIELD_PREFIX.length()) : fieldName;
+    if (isOuterLocalVariableValue() && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
+      return StringUtil.trimStart(fieldName, OUTER_LOCAL_VAR_FIELD_PREFIX);
+    }
+    return fieldName;
   }
 
   public boolean isOuterLocalVariableValue() {
@@ -177,7 +181,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
     else {
       //noinspection HardCodedStringLiteral
-      fieldName = isOuterLocalVariableValue()? getName() : "this." + getName();
+      fieldName = isOuterLocalVariableValue()? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
     }
     try {
       return elementFactory.createExpressionFromText(fieldName, null);

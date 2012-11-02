@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.util.ui.PlatformColors;
+
 import java.awt.*;
 
 /**
@@ -25,7 +27,7 @@ class HorzInsertFeedbackPainter implements FeedbackPainter {
   public static HorzInsertFeedbackPainter INSTANCE = new HorzInsertFeedbackPainter();
 
   public void paintFeedback(Graphics2D g2d, Rectangle rc) {
-    g2d.setColor(Color.BLUE);
+    g2d.setColor(PlatformColors.BLUE);
     g2d.setStroke(new BasicStroke(1.5f));
     int midY = (int)rc.getCenterY();
     int right = rc.x + rc.width - 1;

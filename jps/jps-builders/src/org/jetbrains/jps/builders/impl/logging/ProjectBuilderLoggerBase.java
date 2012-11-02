@@ -5,20 +5,21 @@ import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   @Override
-  public void logDeletedFiles(Collection<String> outputs) {
-    if (outputs.isEmpty()) return;
-    final String[] buffer = new String[outputs.size()];
+  public void logDeletedFiles(Collection<String> paths) {
+    if (paths.isEmpty()) return;
+    final String[] buffer = new String[paths.size()];
     int i = 0;
-    for (final String o : outputs) {
+    for (final String o : paths) {
       buffer[i++] = o;
     }
     Arrays.sort(buffer);
@@ -30,7 +31,7 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   }
 
   @Override
-  public void logCompiledFiles(Set<File> files, String builderName, final String description) throws IOException {
+  public void logCompiledFiles(Collection<File> files, String builderName, final String description) throws IOException {
     logLine(description);
     final String[] buffer = new String[files.size()];
     int i = 0;
@@ -42,6 +43,15 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
       logLine(s);
     }
     logLine("End of files");
+  }
+
+  @Override
+  public void logCompiledPaths(Collection<String> paths, String builderName, String description) throws IOException {
+    List<File> files = new ArrayList<File>(paths.size());
+    for (String path : paths) {
+      files.add(new File(path));
+    }
+    logCompiledFiles(files, builderName, description);
   }
 
   protected abstract void logLine(String message);

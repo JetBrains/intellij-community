@@ -47,6 +47,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFileSystemItem)) return false;
       if (!element.isValid()) return false;
+      if (element instanceof PsiCompiledFile) return false;
 
       String name = ((PsiFileSystemItem) element).getName();
       if (names.contains(name)) {

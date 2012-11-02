@@ -36,7 +36,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  private void doTest() throws Throwable {
+  private void doTest() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
@@ -118,5 +118,18 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
       nnnManager.setNullables();
     }
   }
+
+  public void testSkipAssertions() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testCheckFieldInitializers() {
+    doTest();
+  }
+
+  public void testConstantDoubleComparisons() { doTest(); }
 
 }

@@ -30,17 +30,28 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 )
 public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompilerOptions> {
   private final JpsJavaCompilerOptions mySettings = new JpsJavaCompilerOptions();
+  private final Project myProject;
 
-  @NotNull
-  public JpsJavaCompilerOptions getState() {
-    return mySettings;
+  public JavacConfiguration(Project project) {
+    myProject = project;
   }
 
+  @Override
+  @NotNull
+  public JpsJavaCompilerOptions getState() {
+    JpsJavaCompilerOptions state = new JpsJavaCompilerOptions();
+    XmlSerializerUtil.copyBean(mySettings, state);
+    state.ADDITIONAL_OPTIONS_STRING = PathMacroManager.getInstance(myProject).collapsePathsRecursively(state.ADDITIONAL_OPTIONS_STRING);
+    return state;
+  }
+
+  @Override
   public void loadState(JpsJavaCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
   public static JpsJavaCompilerOptions getOptions(Project project, Class<? extends JavacConfiguration> aClass) {
-    return ServiceManager.getService(project, aClass).getState();
+    JavacConfiguration configuration = ServiceManager.getService(project, aClass);
+    return configuration.mySettings;
   }
 }

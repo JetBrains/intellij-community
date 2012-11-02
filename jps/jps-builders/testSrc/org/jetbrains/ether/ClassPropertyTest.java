@@ -28,6 +28,14 @@ public class ClassPropertyTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testRemoveExtendsAffectsFieldAccess() throws Exception {
+    doTest();
+  }
+
+  public void testRemoveExtendsAffectsMethodAccess() throws Exception {
+    doTest();
+  }
+
   public void testRemoveImplements() throws Exception {
     doTest();
   }

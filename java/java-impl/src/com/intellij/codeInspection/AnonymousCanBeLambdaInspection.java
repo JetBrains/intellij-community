@@ -26,8 +26,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * User: anna
@@ -69,13 +72,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
         super.visitAnonymousClass(aClass);
         if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiClassType baseClassType = aClass.getBaseClassType();
-          final String functionalInterfaceErrorMessage = LambdaUtil.checkInterfaceFunctional(baseClassType);
+          final String functionalInterfaceErrorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(baseClassType);
           if (functionalInterfaceErrorMessage == null) {
             final PsiMethod[] methods = aClass.getMethods();
             if (methods.length == 1 && aClass.getFields().length == 0) {
               final PsiCodeBlock body = methods[0].getBody();
               if (body != null) {
                 final boolean [] bodyContainsForbiddenRefs = new boolean[1];
+                final Set<PsiLocalVariable> locals = new HashSet<PsiLocalVariable>();
                 body.accept(new JavaRecursiveElementWalkingVisitor() {
                   @Override
                   public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
@@ -103,8 +107,19 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
                       bodyContainsForbiddenRefs[0] = true;
                     }
                   }
+
+                  @Override
+                  public void visitLocalVariable(PsiLocalVariable variable) {
+                    super.visitLocalVariable(variable);
+                    locals.add(variable);
+                  }
                 });
                 if (!bodyContainsForbiddenRefs[0]) {
+                  PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
+                  for (PsiLocalVariable local : locals) {
+                    final String localName = local.getName();
+                    if (localName != null && helper.resolveReferencedVariable(localName, aClass) != null) return;
+                  }
                   holder.registerProblem(aClass.getBaseClassReference(), "Anonymous #ref #loc can be replaced with lambda",
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithLambdaFix());
                 }
@@ -209,7 +224,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
     }
 
     private static boolean isInferred(PsiLambdaExpression lambdaExpression, PsiType interfaceType) {
-      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || LambdaUtil.checkInterfaceFunctional(interfaceType) != null;
+      return interfaceType == null || !LambdaUtil.isLambdaFullyInferred(lambdaExpression, interfaceType) || LambdaHighlightingUtil
+                                                                                                              .checkInterfaceFunctional(
+                                                                                                                interfaceType) != null;
     }
 
     private static String composeLambdaText(PsiMethod method, final boolean appendType) {

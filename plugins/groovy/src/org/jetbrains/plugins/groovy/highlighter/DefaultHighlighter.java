@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -220,15 +221,16 @@ public class DefaultHighlighter {
 
   public static final TextAttributes UNRESOLVED_ACCESS_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
-  static{
+  static {
     UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.GRAY);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
+
   public static final TextAttributes LITERAL_CONVERSION_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
   static{
-    LITERAL_CONVERSION_ATTRIBUTES.setForegroundColor(Color.BLUE);
+    LITERAL_CONVERSION_ATTRIBUTES.setForegroundColor(PlatformColors.BLUE);
     LITERAL_CONVERSION_ATTRIBUTES.setFontType(Font.BOLD);
   }
 
@@ -239,6 +241,7 @@ public class DefaultHighlighter {
   static {
     MAP_KEY_ATTRIBUTES.setForegroundColor(MAP_KEY_COLOR);
   }
+
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey
     .createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
   public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey

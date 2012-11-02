@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class ZipUtil {
         public Boolean call() throws IOException {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           ZipInputStream stream = new ZipInputStream(new FileInputStream(zipArchive));
-          unzip(progress, extractToDir, stream);
+          unzip(progress, extractToDir, stream, null);
           return true;
         }
       },
@@ -60,14 +61,17 @@ public class ZipUtil {
     }
   }
 
-  public static void unzip(@Nullable ProgressIndicator progress, File extractToDir, ZipInputStream stream) throws IOException {
+  public static void unzip(@Nullable ProgressIndicator progress,
+                           File extractToDir,
+                           ZipInputStream stream,
+                           @Nullable NullableFunction<String, String> pathConvertor) throws IOException {
     if (progress != null) {
       progress.setText("Extracting...");
     }
     try {
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
-        unzipEntryToDir(progress, entry, extractToDir, stream);
+        unzipEntryToDir(progress, entry, extractToDir, stream, pathConvertor);
       }
     } finally {
       stream.close();
@@ -77,9 +81,17 @@ public class ZipUtil {
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final File extractToDir,
-                                      ZipInputStream stream) throws IOException {
+                                      ZipInputStream stream,
+                                      @Nullable NullableFunction<String, String> pathConvertor) throws IOException {
 
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
+    if (pathConvertor != null) {
+      relativeExtractPath = pathConvertor.fun(relativeExtractPath);
+      if (relativeExtractPath == null) {
+        // should be skipped
+        return;
+      }
+    }
     File child = new File(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {

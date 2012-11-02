@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementTreeNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,13 +23,13 @@ import javax.swing.*;
  * @author Denis Zhdanov
  * @since 9/27/12 2:24 PM
  */
-public class ArrangementSectionNode extends ArrangementTreeNode implements ArrangementRepresentationAwareNode {
+public class ArrangementSectionNode /*extends ArrangementTreeNode implements ArrangementRepresentationAwareNode*/ {
 
   @NotNull private final JPanel myRenderer  = new JPanel();
   @NotNull private final JLabel myTextLabel = new JLabel();
 
   public ArrangementSectionNode(@NotNull String text) {
-    super(null);
+    //super(null);
     myTextLabel.setText(text);
     myRenderer.add(myTextLabel);
   }

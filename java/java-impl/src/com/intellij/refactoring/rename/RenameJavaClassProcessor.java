@@ -80,7 +80,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
 
     // do actual rename
-    ChangeContextUtil.encodeContextInfo(aClass, true, false);
+    ChangeContextUtil.encodeContextInfo(aClass.getContainingFile(), true, false);
     aClass.setName(newName);
 
     for (UsageInfo usage : usages) {
@@ -96,7 +96,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       }
     }
 
-    ChangeContextUtil.decodeContextInfo(aClass, null, null); //to make refs to other classes from this one resolve to their old referent
+    ChangeContextUtil.decodeContextInfo(aClass.getContainingFile(), null, null); //to make refs to other classes from this one resolve to their old referent
 
     // resolve collisions
     for (UsageInfo postponedCollision : postponedCollisions) {
@@ -104,11 +104,11 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       collision.resolveCollision();
     }
 
-    for (MemberHidesOuterMemberUsageInfo usage : hidesOut) {
+    /*for (MemberHidesOuterMemberUsageInfo usage : hidesOut) {
       PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)usage.getElement();
-     /* PsiReferenceExpression ref = RenameJavaMemberProcessor.createQualifiedMemberReference(aClass, collidingRef);
-      collidingRef.replace(ref);*/
-    }
+      PsiReferenceExpression ref = RenameJavaMemberProcessor.createQualifiedMemberReference(aClass, collidingRef);
+      collidingRef.replace(ref);
+    }*/
 
 
     listener.elementRenamed(aClass);

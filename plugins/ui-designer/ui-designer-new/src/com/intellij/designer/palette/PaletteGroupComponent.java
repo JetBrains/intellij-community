@@ -34,10 +34,11 @@ public class PaletteGroupComponent extends JCheckBox {
     setText(group.getName());
     setSelected(true);
     setIcon(AllIcons.Nodes.TreeClosed);
-    setSelectedIcon(AllIcons.Nodes.TreeOpen);
+    setSelectedIcon(AllIcons.Nodes.Folder);
     setFont(getFont().deriveFont(Font.BOLD));
     setFocusPainted(false);
     setMargin(new Insets(0, 3, 0, 3));
+    setOpaque(true);
 
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

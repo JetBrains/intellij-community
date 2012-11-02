@@ -9,7 +9,7 @@ public class BrokenAlignment {
       return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
     }
     catch (RuntimeException e) {
-      return null;
+      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
     }
   }
 

@@ -20,12 +20,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,9 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
   public static final ExtensionPointName<ProjectImportBuilder> EXTENSIONS_POINT_NAME = ExtensionPointName.create("com.intellij.projectImportBuilder");
 
   private boolean myUpdate;
+  private String myFileToImport;
 
+  @NotNull
   public abstract String getName();
 
   public abstract Icon getIcon();
@@ -58,6 +61,14 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
 
   @Nullable
   public abstract List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider, ModifiableArtifactModel artifactModel);
+
+  public void setFileToImport(String path) {
+    myFileToImport = path;
+  }
+
+  protected String getFileToImport() {
+    return myFileToImport;
+  }
 
   @Nullable
   public static Project getCurrentProject() {

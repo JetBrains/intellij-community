@@ -32,7 +32,7 @@ public class HgRebaseCommand {
 
   public void continueRebase() {
     new HgCommandExecutor(project).execute(repo, "rebase", Arrays.asList("--continue"), null);
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
   }
 
 }

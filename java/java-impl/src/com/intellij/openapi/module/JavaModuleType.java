@@ -17,9 +17,11 @@ package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -39,6 +41,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ModuleTypeManager.getInstance().findByID(JAVA_MODULE);
   }
 
+  public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
+  public static final String JAVA_GROUP = "Java";
   private static final String JAVA_MODULE = "JAVA_MODULE";
 
   public JavaModuleType() {
@@ -56,7 +60,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Override
   public String getName() {
-    return ProjectBundle.message("module.type.java.name");
+    return MODULE_NAME;
   }
 
   @Override
@@ -100,13 +104,13 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder) {
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, final ModuleBuilder moduleBuilder) {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
-          @Override
-          public boolean value(SdkTypeId sdk) {
-            return sdk instanceof JavaSdkType;
-          }
-        });
+      @Override
+      public boolean value(SdkTypeId sdkType) {
+        return moduleBuilder.isSuitableSdkType(sdkType);
+      }
+    });
   }
 
   private static Icon getJavaModuleIcon() {

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -121,10 +120,15 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return myWelcomePanel;
   }
 
-  public DefaultWelcomeScreen(IdeRootPane rootPane) {
+  public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
-    myWelcomePanel = new JPanel(new GridBagLayout());
+    myWelcomePanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(1024, 768);
+      }
+    };
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
@@ -148,8 +152,10 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.add(topPanel, gBC);
     gBC = new GridBagConstraints(0, 1, 1, 1, 0.7, 1, NORTHWEST, BOTH, new Insets(0, 7, 7, 7), 0, 0);
     myWelcomePanel.add(mainScrollPane, gBC);
+    /*
     gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, NORTHWEST, BOTH, new Insets(0, 0, 7, 7), 0, 0);
     myWelcomePanel.add(pluginsScrollPane, gBC);
+    */
   }
 
   @Override
@@ -188,7 +194,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return topPanel;
   }
 
-  private void setUpMainPanel(IdeRootPane rootPane) {
+  private void setUpMainPanel(JComponent rootPane) {
     final ActionManager actionManager = ActionManager.getInstance();
 
     // Create QuickStarts group of actions
@@ -228,7 +234,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.setTransferHandler(new OpenProjectTransferHandler(myWelcomePanel));
   }
 
-  private void setUpRecentProjectsPanel(final IdeRootPane rootPane, final AnAction[] recentProjectsActions) {
+  private void setUpRecentProjectsPanel(final JComponent rootPane, final AnAction[] recentProjectsActions) {
     myRecentProjectsPanel.setBackground(MAIN_PANEL_BACKGROUND);
 
     JLabel caption = new JLabel("Recent Projects");

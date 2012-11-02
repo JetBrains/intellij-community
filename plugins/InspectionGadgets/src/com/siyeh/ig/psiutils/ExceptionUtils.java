@@ -15,11 +15,8 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.siyeh.HardcodedMethodConstants;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,11 +214,7 @@ public class ExceptionUtils {
         final List<PsiResourceVariable> resourceVariables = resourceList.getResourceVariables();
         for (PsiResourceVariable resourceVariable : resourceVariables) {
           final Set<PsiClassType> resourceExceptions = calculateExceptionsThrown(resourceVariable);
-          final PsiType type = resourceVariable.getType();
-          if (type instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)type;
-            collectExceptionsThrown(findAutoCloseableCloseMethod(classType.resolve()), resourceExceptions);
-          }
+          collectExceptionsThrown(PsiUtil.getResourceCloserMethod(resourceVariable), resourceExceptions);
           for (PsiClassType resourceException : resourceExceptions) {
             if (!isExceptionHandled(exceptionsHandled, resourceException)) {
               m_exceptionsThrown.add(resourceException);
@@ -263,21 +256,6 @@ public class ExceptionUtils {
           out.add(factory.createType(exceptionClass));
         }
       }
-    }
-
-    @Nullable
-    private static PsiMethod findAutoCloseableCloseMethod(@Nullable PsiClass aClass) {
-      if (aClass == null || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
-        return null;
-      }
-      final Project project = aClass.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
-      if (autoCloseable == null) {
-        return null;
-      }
-      final PsiMethod closeMethod = autoCloseable.findMethodsByName(HardcodedMethodConstants.CLOSE, false)[0];
-      return aClass.findMethodBySignature(closeMethod, true);
     }
 
     private static boolean isExceptionHandled(Iterable<PsiType> exceptionsHandled, PsiType thrownType) {

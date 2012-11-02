@@ -53,8 +53,10 @@ public class GroovyRunnerUtil {
     return null;
   }
 
-  public static boolean isRunnable(final PsiClass psiClass) {
-    final PsiClass runnable = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNNABLE, psiClass.getResolveScope());
+  public static boolean isRunnable(@Nullable final PsiClass psiClass) {
+    if (psiClass == null) return false;
+    final PsiClass runnable =
+      JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNNABLE, psiClass.getResolveScope());
     if (runnable == null) return false;
 
     return psiClass instanceof GrTypeDefinition &&
@@ -76,7 +78,8 @@ public class GroovyRunnerUtil {
       return module.getModuleName();
     }
 
-    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.projectScope(project));
+    PsiClass psiClass =
+      JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.projectScope(project));
     if (psiClass != null) {
       return psiClass.getName();
     }

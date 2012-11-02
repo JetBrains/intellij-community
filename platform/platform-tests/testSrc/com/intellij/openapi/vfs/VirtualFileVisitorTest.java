@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.mock.MockVirtualFile;
+import com.intellij.mock.MockVirtualLink;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformUltraLiteTestFixture;
@@ -31,6 +32,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class VirtualFileVisitorTest {
   private static PlatformUltraLiteTestFixture myFixture;
@@ -53,7 +55,10 @@ public class VirtualFileVisitorTest {
                   file("f13.2"))),
           dir("d2",
               file("f2.1"),
-              file("f2.2")));
+              file("f2.2")),
+          dir("d3"));
+    link("/d1/d11", "/d1/d11_link");
+    link("/d3", "/d3/d3_rec_link");
   }
 
   @AfterClass
@@ -84,6 +89,12 @@ public class VirtualFileVisitorTest {
       "      -> f13.2 [3]\n" +
       "      <- f13.2 [4]\n" +
       "    <- d13 [3]\n" +
+      "    -> d11_link [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "      <- f11.1 [4]\n" +
+      "      -> f11.2 [3]\n" +
+      "      <- f11.2 [4]\n" +
+      "    <- d11_link [3]\n" +
       "  <- d1 [2]\n" +
       "  -> d2 [1]\n" +
       "    -> f2.1 [2]\n" +
@@ -91,6 +102,10 @@ public class VirtualFileVisitorTest {
       "    -> f2.2 [2]\n" +
       "    <- f2.2 [3]\n" +
       "  <- d2 [2]\n" +
+      "  -> d3 [1]\n" +
+      "    -> d3_rec_link [2]\n" +
+      "    <- d3_rec_link [3]\n" +
+      "  <- d3 [2]\n" +
       "<- / [1]\n");
   }
 
@@ -117,6 +132,12 @@ public class VirtualFileVisitorTest {
       "        -> f13.2 [3]\n" +
       "        <- f13.2 [4]\n" +
       "      <- d13 [3]\n" +
+      "      -> d11_link [2]\n" +
+      "        -> f11.1 [3]\n" +
+      "        <- f11.1 [4]\n" +
+      "        -> f11.2 [3]\n" +
+      "        <- f11.2 [4]\n" +
+      "      <- d11_link [3]\n" +
       "    <- d1 [2]\n" +
       "    -> d2 [1]\n" +
       "      -> f2.1 [2]\n" +
@@ -124,6 +145,10 @@ public class VirtualFileVisitorTest {
       "      -> f2.2 [2]\n" +
       "      <- f2.2 [3]\n" +
       "    <- d2 [2]\n" +
+      "    -> d3 [1]\n" +
+      "      -> d3_rec_link [2]\n" +
+      "      <- d3_rec_link [3]\n" +
+      "    <- d3 [2]\n" +
       "  <- / [1]\n");
   }
 
@@ -150,12 +175,20 @@ public class VirtualFileVisitorTest {
       "            -> f13.1 [3]\n" +
       "              -> f13.2 [3]\n" +
       "              <- d13 [3]\n" +
-      "            <- d1 [2]\n" +
-      "            -> d2 [1]\n" +
-      "              -> f2.1 [2]\n" +
-      "                -> f2.2 [2]\n" +
-      "                <- d2 [2]\n" +
-      "              <- / [1]\n");
+      "              -> d11_link [2]\n" +
+      "                -> f11.1 [3]\n" +
+      "                  -> f11.2 [3]\n" +
+      "                  <- d11_link [3]\n" +
+      "                <- d1 [2]\n" +
+      "                -> d2 [1]\n" +
+      "                  -> f2.1 [2]\n" +
+      "                    -> f2.2 [2]\n" +
+      "                    <- d2 [2]\n" +
+      "                    -> d3 [1]\n" +
+      "                      -> d3_rec_link [2]\n" +
+      "                      <- d3_rec_link [3]\n" +
+      "                    <- d3 [2]\n" +
+      "                  <- / [1]\n");
   }
 
   @Test
@@ -180,6 +213,10 @@ public class VirtualFileVisitorTest {
       "          -> f2.2 [2]\n" +
       "          <- f2.2 [3]\n" +
       "        <- d2 [2]\n" +
+      "        -> d3 [1]\n" +
+      "          -> d3_rec_link [2]\n" +
+      "          <- d3_rec_link [3]\n" +
+      "        <- d3 [2]\n" +
       "      <- / [1]\n");
   }
 
@@ -234,6 +271,8 @@ public class VirtualFileVisitorTest {
       "  <- d1 [2]\n" +
       "  -> d2 [1]\n" +
       "  <- d2 [2]\n" +
+      "  -> d3 [1]\n" +
+      "  <- d3 [2]\n" +
       "<- / [1]\n",
       VirtualFileVisitor.ONE_LEVEL_DEEP
     );
@@ -243,7 +282,9 @@ public class VirtualFileVisitorTest {
       "-> d1 [0]\n" +
       "<- d1 [1]\n" +
       "-> d2 [0]\n" +
-      "<- d2 [1]\n",
+      "<- d2 [1]\n" +
+      "-> d3 [0]\n" +
+      "<- d3 [1]\n",
       VirtualFileVisitor.SKIP_ROOT, VirtualFileVisitor.ONE_LEVEL_DEEP);
   }
 
@@ -273,6 +314,12 @@ public class VirtualFileVisitorTest {
       "      -> f13.2 [3]\n" +
       "      <- f13.2 [4]\n" +
       "    <- d13 [3]\n" +
+      "    -> d11_link [2]\n" +
+      "      -> f11.1 [3]\n" +
+      "      <- f11.1 [4]\n" +
+      "      -> f11.2 [3]\n" +
+      "      <- f11.2 [4]\n" +
+      "    <- d11_link [3]\n" +
       "  <- d1 [2]\n" +
       "  -> d2 [1]\n" +
       "    -> f2.1 [2]\n" +
@@ -280,6 +327,10 @@ public class VirtualFileVisitorTest {
       "    -> f2.2 [2]\n" +
       "    <- f2.2 [3]\n" +
       "  <- d2 [2]\n" +
+      "  -> d3 [1]\n" +
+      "    -> d3_rec_link [2]\n" +
+      "    <- d3_rec_link [3]\n" +
+      "  <- d3 [2]\n" +
       "<- / [1]\n");
   }
 
@@ -341,5 +392,14 @@ public class VirtualFileVisitorTest {
 
   private static MockVirtualFile file(@NonNls @NotNull String name) {
     return new MockVirtualFile(name);
+  }
+
+  private static void link(@NonNls @NotNull String targetPath, @NotNull @NonNls String linkPath) {
+    final VirtualFile target = myRoot.findFileByRelativePath(targetPath);
+    assertNotNull(targetPath, target);
+    final int pos = linkPath.lastIndexOf('/');
+    final VirtualFile linkParent = myRoot.findFileByRelativePath(linkPath.substring(0, pos));
+    assertNotNull(linkPath, linkParent);
+    ((MockVirtualFile)linkParent).addChild(new MockVirtualLink(linkPath.substring(pos + 1), target));
   }
 }

@@ -52,6 +52,7 @@ public class TextCompareProcessor {
       String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
       ArrayList<LineFragment> subFragments = findSubFragments(subText1, subText2);
       lineBlock.setChildren(new ArrayList<Fragment>(subFragments));
+      lineBlock.adjustTypeFromChildrenTypes();
     }
     return lineBlocks;
   }

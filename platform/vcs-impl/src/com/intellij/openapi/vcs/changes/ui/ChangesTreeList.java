@@ -42,7 +42,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -799,7 +798,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     public ToggleShowDirectoriesAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
-            PlatformIcons.DIRECTORY_CLOSED_ICON);
+            AllIcons.Actions.GroupByPackage);
     }
 
     public boolean isSelected(AnActionEvent e) {

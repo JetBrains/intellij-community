@@ -45,14 +45,8 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testRawCast1() throws Exception { doTest();}
 
   public void testTypeParameterAccessChecksJava7() throws Exception {
-    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
-    try {
-      versionService.setTestVersion(JavaSdkVersion.JDK_1_7);
-      doTest();
-    }
-    finally {
-      versionService.setTestVersion(null);
-    }
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());
+    doTest();
   }
 
   public void testIgnore() throws Exception {

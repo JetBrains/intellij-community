@@ -34,7 +34,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 
-  public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
+  public JpsProjectImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);

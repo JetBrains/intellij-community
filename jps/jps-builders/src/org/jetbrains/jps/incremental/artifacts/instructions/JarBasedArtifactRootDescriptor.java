@@ -5,10 +5,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
@@ -67,7 +68,10 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                            final int rootIndex, final String outputPath,
                            CompileContext context, final BuildOutputConsumer outputConsumer,
                            final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
-    context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
+    ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+    if (logger.isEnabled()) {
+      logger.logCompiledPaths(Collections.singletonList(filePath), IncArtifactBuilder.BUILDER_NAME, "Extracting archive:");
+    }
     processEntries(new EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {

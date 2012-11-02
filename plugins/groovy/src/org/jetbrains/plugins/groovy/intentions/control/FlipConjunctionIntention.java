@@ -31,16 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class FlipConjunctionIntention extends MutablyNamedIntention {
   protected String getTextForElement(PsiElement element) {
-    final GrBinaryExpression binaryExpression =
-        (GrBinaryExpression) element;
+    final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    final String conjunction;
-    assert tokenType != null;
-    if (tokenType.equals(GroovyTokenTypes.mLAND)) {
-      conjunction = "&&";
-    } else {
-      conjunction = "||";
-    }
+    final String conjunction = getConjunction(tokenType);
     return GroovyIntentionsBundle.message("flip.smth.intention.name", conjunction);
   }
 
@@ -49,10 +42,8 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
     return new ConjunctionPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrBinaryExpression exp =
-        (GrBinaryExpression) element;
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final GrBinaryExpression exp = (GrBinaryExpression)element;
     final IElementType tokenType = exp.getOperationTokenType();
 
     final GrExpression lhs = exp.getLeftOperand();
@@ -61,16 +52,13 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
     final GrExpression rhs = exp.getRightOperand();
     final String rhsText = rhs.getText();
 
-    final String conjunction;
-    if (tokenType.equals(GroovyTokenTypes.mLAND)) {
-      conjunction = "&&";
-    } else {
-      conjunction = "||";
-    }
+    final String conjunction = getConjunction(tokenType);
 
-    final String newExpression =
-        rhsText + conjunction + lhsText;
+    final String newExpression = rhsText + conjunction + lhsText;
     IntentionUtils.replaceExpression(newExpression, exp);
   }
 
+  private static String getConjunction(IElementType tokenType) {
+    return tokenType.equals(GroovyTokenTypes.mLAND) ? "&&" : "||";
+  }
 }

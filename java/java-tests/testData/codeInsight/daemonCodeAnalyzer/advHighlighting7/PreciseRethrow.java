@@ -156,13 +156,31 @@ class C {
     }
   }
 
-  void m11() throws E1 {
+  void m11() {
     try {
       System.out.println();
     }
     catch (Exception e) {
       // test for precise types calculation fix
       <error descr="Unhandled exception: java.lang.Exception">throw e;</error>
+    }
+  }
+
+  static class MyResource implements AutoCloseable {
+    public void close() throws E1 { }
+  }
+
+  MyResource getResource() throws E2 {
+    return null;
+  }
+
+  void m12() {
+    try (MyResource r = getResource()) {
+      System.out.println(r);
+    }
+    catch (Exception e) {
+      // test for another precise types calculation fix
+      <error descr="Unhandled exceptions: C.E1, C.E2">throw e;</error>
     }
   }
 }

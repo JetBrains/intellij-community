@@ -23,16 +23,35 @@ import java.util.ArrayList;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class EmptyAction extends AnAction {
+  private boolean myEnabled;
+
+  public EmptyAction() {
+  }
+
+  public EmptyAction(boolean enabled) {
+    myEnabled = enabled;
+  }
+
+  public EmptyAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public static AnAction createEmptyAction(@Nullable String name, @Nullable Icon icon, boolean alwaysEnabled) {
+    final EmptyAction emptyAction = new EmptyAction(name, null, icon);
+    emptyAction.myEnabled = alwaysEnabled;
+    return emptyAction;
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
   }
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(false);
-    e.getPresentation().setVisible(false);
+    e.getPresentation().setEnabledAndVisible(myEnabled);
   }
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {

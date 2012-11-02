@@ -34,21 +34,38 @@ public class MinusculeMatcher implements Matcher {
   private final char[] myPattern;
   private final NameUtil.MatchingCaseSensitivity myOptions;
   private final boolean myHasHumps;
+  private final boolean myHasDots;
 
   public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
+
     int i = 0;
     while (isWildcard(i)) i++;
-    i++;
+    myHasHumps = hasHumps(i + 1);
+    myHasDots = hasDots(i);
+  }
+
+  private boolean hasHumps(int start) {
+    int i = start;
     while (i < myPattern.length) {
       if (Character.isUpperCase(myPattern[i])) {
-        myHasHumps = true;
-        return;
+        return true;
       }
       i++;
     }
-    myHasHumps = false;
+    return false;
+  }
+
+  private boolean hasDots(int start) {
+    int i = start;
+    while (i < myPattern.length) {
+      if (myPattern[i] == '.') {
+        return true;
+      }
+      i++;
+    }
+    return false;
   }
 
   private static FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, int from, int length) {
@@ -176,7 +193,13 @@ public class MinusculeMatcher implements Matcher {
     char p = myPattern[patternIndex];
     while (true) {
       int nextOccurrence = star ? StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1) : indexOfWordStart(name, patternIndex, nameIndex);
-      if (nextOccurrence < 0 || !allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
+      if (nextOccurrence < 0) {
+        return null;
+      }
+      if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
+        return null;
+      }
+      if (myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
         return null;
       }
       if (!Character.isUpperCase(p) || NameUtil.isWordStart(name, nextOccurrence)) {

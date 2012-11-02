@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -300,7 +301,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     final JLabel ctxLabel = new JLabel();
     final JLabel change = new JLabel();
-    change.setForeground(Color.BLUE);
+    change.setForeground(PlatformColors.BLUE);
     change.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     panel.add(ctxLabel, BorderLayout.CENTER);
     panel.add(change, BorderLayout.EAST);

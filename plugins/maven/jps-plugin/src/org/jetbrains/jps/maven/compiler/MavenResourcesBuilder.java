@@ -19,9 +19,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -32,18 +30,13 @@ import java.util.regex.Pattern;
  *         Date: 10/6/11
  */
 public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
-  public static final String BUILDER_NAME = "maven-resources";
+  public static final String BUILDER_NAME = "Maven Resources Compiler";
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
   private static final String MAVEN_BUILD_TIMESTAMP_PROPERTY = "maven.build.timestamp";
   private static final String MAVEN_BUILD_TIMESTAMP_FORMAT_PROPERTY = "maven.build.timestamp.format";
 
   public MavenResourcesBuilder() {
     super(Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST));
-  }
-
-  @Override
-  public String getName() {
-    return BUILDER_NAME;
   }
 
   @Override
@@ -91,27 +84,46 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           context.processMessage(new CompilerMessage("MavenResources", BuildMessage.Kind.WARNING, "File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering", sourcePath));
           shouldFilter = false;
         }
-        if (shouldFilter) {
-          final PrintWriter printWriter = encoding != null? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);
-          try {
-            final byte[] bytes = FileUtil.loadFileBytes(file);
-            final String text = encoding != null? new String(bytes, encoding) : new String(bytes);
-            doFilterText(
-              getDelimitersPattern(), text, projectConfig, config, endsWith(file.getName(), ".properties") ? "\\" : null, getProperties(), null, printWriter
-            );
+        try {
+          if (shouldFilter) {
+            copyWithFiltering(file, outputFile);
           }
-          finally {
-            printWriter.close();
+          else {
+            FileUtil.copyContent(file, outputFile);
           }
+          outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
         }
-        else {
-          FileUtil.copyContent(file, outputFile);
+        catch (UnsupportedEncodingException e) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));
         }
-        outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
-        if (cleanedSources != null) {
-          cleanedSources.remove(file);
+        finally {
+          if (cleanedSources != null) {
+            cleanedSources.remove(file);
+          }
         }
         return true;
+      }
+
+      private void copyWithFiltering(File file, File outputFile) throws IOException {
+        PrintWriter writer;
+        try {
+          writer = encoding != null ? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);
+        }
+        catch (FileNotFoundException e) {
+          FileUtil.createIfDoesntExist(outputFile);
+          writer = encoding != null ? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);
+        }
+        try {
+          final byte[] bytes = FileUtil.loadFileBytes(file);
+          final String text = encoding != null? new String(bytes, encoding) : new String(bytes);
+          doFilterText(
+            getDelimitersPattern(), text, projectConfig, config, endsWith(file.getName(), ".properties") ? "\\" : null, getProperties(), null,
+            writer
+          );
+        }
+        finally {
+          writer.close();
+        }
       }
 
       private Pattern getDelimitersPattern() {
@@ -180,8 +192,9 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
 
-  public String getDescription() {
-    return "Maven Resource Builder";
+  @NotNull
+  public String getPresentableName() {
+    return BUILDER_NAME;
   }
 
   private static boolean endsWith(final String fileName, final String suffix) {

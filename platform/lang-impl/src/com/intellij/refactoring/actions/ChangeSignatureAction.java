@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,13 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
 
   protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
     PsiElement targetMember = findTargetMember(file, editor);
-    if (targetMember == null) return false;
+    if (targetMember == null) {
+      final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(file.getLanguage());
+      if (targetHandler != null) {
+        return true;
+      }
+      return false;
+    }
     final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(targetMember.getLanguage());
     if (targetHandler == null) return false;
     return true;
@@ -111,7 +118,16 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
         public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
           editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
           final PsiElement targetMember = findTargetMember(file, editor);
-          if (targetMember == null) return;
+          if (targetMember == null) {
+            final ChangeSignatureHandler handler = getChangeSignatureHandler(file.getLanguage());
+            if (handler != null) {
+              final String notFoundMessage = handler.getTargetNotFoundMessage();
+              if (notFoundMessage != null) {
+                CommonRefactoringUtil.showErrorHint(project, editor, notFoundMessage, ChangeSignatureHandler.REFACTORING_NAME, null);
+              }
+            }
+            return;
+          }
           final ChangeSignatureHandler handler = getChangeSignatureHandler(targetMember.getLanguage());
           if (handler == null) return;
           handler.invoke(project, new PsiElement[]{targetMember}, dataContext);

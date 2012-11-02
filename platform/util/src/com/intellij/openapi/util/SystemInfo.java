@@ -46,6 +46,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = SystemInfoRt.isUnix;
+  public static final boolean isXWindow = isUnix && !isMac;
 
   /** @deprecated inaccurate (to remove in IDEA 13) */
   public static final boolean isKDE = SUN_DESKTOP.toLowerCase().contains("kde");
@@ -146,12 +147,8 @@ public class SystemInfo extends SystemInfoRt {
    */
   public static final boolean isMacOSMountainLion = isMountainLion();
 
-  /**
-   * Operating system is supposed to have middle mouse button click occupied by paste action.
-   *
-   * @since 6.0
-   */
-  public static boolean X11PasteEnabledSystem = isUnix && !isMac;
+  /** @deprecated use {@linkplain #isXWindow} (to remove in IDEA 13) */
+  public static boolean X11PasteEnabledSystem = isXWindow;
 
   private static boolean isIntelMac() {
     return isMac && "i386".equals(OS_ARCH);

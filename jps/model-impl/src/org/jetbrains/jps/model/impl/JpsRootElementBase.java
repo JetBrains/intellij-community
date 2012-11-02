@@ -12,7 +12,7 @@ public abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extend
   private final JpsModel myModel;
   private final JpsEventDispatcher myEventDispatcher;
 
-  protected JpsRootElementBase(JpsModel model, JpsEventDispatcher eventDispatcher) {
+  protected JpsRootElementBase(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
     super();
     myModel = model;
     myEventDispatcher = eventDispatcher;
@@ -29,8 +29,9 @@ public abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extend
     return myEventDispatcher;
   }
 
+  @NotNull
   @Override
-  protected JpsModel getModel() {
+  public JpsModel getModel() {
     return myModel;
   }
 

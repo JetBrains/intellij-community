@@ -15,7 +15,10 @@ import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -40,6 +43,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
+
 /**
  * @author nik
  */
@@ -49,6 +54,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected JpsModel myModel;
   private JpsSdk<JpsDummyElement> myJdk;
   private File myDataStorageRoot;
+  private TestProjectBuilderLogger myLogger;
 
   @Override
   protected void setUp() throws Exception {
@@ -56,6 +62,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myModel = JpsElementFactory.getInstance().createModel();
     myProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
+    myLogger = new TestProjectBuilderLogger();
   }
 
   @Override
@@ -192,14 +199,27 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     doBuild(CompileScopeTestBuilder.rebuild().all()).assertSuccessful();
   }
 
+  protected BuildResult makeAll() {
+    return doBuild(make().all());
+  }
+
   protected BuildResult doBuild(CompileScopeTestBuilder scope) {
-    ProjectDescriptor descriptor = createProjectDescriptor(BuildLoggingManager.DEFAULT);
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myLogger));
     try {
+      myLogger.clear();
       return doBuild(descriptor, scope);
     }
     finally {
       descriptor.release();
     }
+  }
+
+  protected void assertCompiled(String builderName, String... paths) {
+    myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
+  }
+
+  protected void assertDeleted(String... paths) {
+    myLogger.assertDeleted(new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
@@ -255,20 +275,5 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       myJdk = addJdk("1.6");
     }
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
-  }
-
-  protected String getProjectRelativePath(String path) {
-    assertNotNull(myProjectDir);
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    String dataStorageRoot = FileUtil.toSystemIndependentName(myDataStorageRoot.getAbsolutePath());
-    if (FileUtil.isAncestor(projectDir, path, true)) {
-      return FileUtil.getRelativePath(projectDir, path, '/');
-    }
-    else if (FileUtil.isAncestor(dataStorageRoot, path, true)) {
-      return FileUtil.getRelativePath(dataStorageRoot, path, '/');
-    }
-    else {
-      return path;
-    }
   }
 }

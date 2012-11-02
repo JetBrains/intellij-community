@@ -625,7 +625,7 @@ def layout_core_upsource(String home, String target) {
       include(name: "cli-parser-1.1.jar")
       include(name: "jna.jar")
       include(name: "log4j.jar")
-      include(name: "xstream.jar")
+      include(name: "xstream-1.4.3.jar")
       include(name: "xpp3-1.1.4-min.jar")
       include(name: "jdom.jar")
     }

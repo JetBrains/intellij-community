@@ -32,6 +32,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 5, 2004
@@ -61,33 +63,42 @@ public class NewModuleAction extends AnAction implements DumbAware {
     wizard.show();
 
     if (wizard.isOK()) {
-      final ProjectBuilder builder = wizard.getProjectBuilder();
-      if (builder instanceof ModuleBuilder) {
-        final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
-        if (moduleBuilder.getName() == null) {
-          moduleBuilder.setName(wizard.getProjectName());
-        }
-        if (moduleBuilder.getModuleFilePath() == null) {
-          moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
-        }
-      }
-      if (!builder.validate(project, project)) {
-        return;
-      }
-      if (builder instanceof ModuleBuilder) {
-        Module module = ((ModuleBuilder) builder).commitModule(project, null);
-        if (module != null) {
-          processCreatedModule(module, dataFromContext);
-        }
-      }
-      else {
-        builder.commit(project, null, new DefaultModulesProvider(project));
-        if (builder.isOpenProjectSettingsAfter()) {
-          ModulesConfigurator.showDialog(project, null, null);
-        }
-      }
-      project.save();
+      createModuleFromWizard(project, dataFromContext, wizard);
     }
+  }
+
+  @Nullable
+  public Module createModuleFromWizard(Project project, @Nullable Object dataFromContext, AddModuleWizard wizard) {
+    final ProjectBuilder builder = wizard.getProjectBuilder();
+    if (builder instanceof ModuleBuilder) {
+      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+      if (moduleBuilder.getName() == null) {
+        moduleBuilder.setName(wizard.getProjectName());
+      }
+      if (moduleBuilder.getModuleFilePath() == null) {
+        moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
+      }
+    }
+    if (!builder.validate(project, project)) {
+      return null;
+    }
+    Module module;
+    if (builder instanceof ModuleBuilder) {
+      module = ((ModuleBuilder) builder).commitModule(project, null);
+      if (module != null) {
+        processCreatedModule(module, dataFromContext);
+      }
+      return module;
+    }
+    else {
+      List<Module> modules = builder.commit(project, null, new DefaultModulesProvider(project));
+      if (builder.isOpenProjectSettingsAfter()) {
+        ModulesConfigurator.showDialog(project, null, null);
+      }
+      module = modules == null || modules.isEmpty() ? null : modules.get(0);
+    }
+    project.save();
+    return module;
   }
 
   @Nullable
@@ -95,7 +106,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
     return null;
   }
 
-  protected void processCreatedModule(final Module module, final Object dataFromContext) {
+  protected void processCreatedModule(final Module module, @Nullable final Object dataFromContext) {
   }
 
   @Override

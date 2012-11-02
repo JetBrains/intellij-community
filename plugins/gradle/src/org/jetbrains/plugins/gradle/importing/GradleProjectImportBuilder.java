@@ -49,6 +49,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   private GradleProject myGradleProject;
   private File myProjectFile;
 
+  @NotNull
   @Override
   public String getName() {
     return GradleBundle.message("gradle.name");
@@ -91,7 +92,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
         languageLevelExtension.setLanguageLevel(gradleLanguageLevel);
       }
     }
-    final Runnable task = new Runnable() {
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
         GradleSettings.applyLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
@@ -103,13 +104,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
           GradleSettings.applyGradleHome(gradleHome, project);
         }
       }
-    };
-    if (project.isInitialized()) {
-      task.run();
-    }
-    else {
-      StartupManager.getInstance(project).registerPostStartupActivity(task);
-    }
+    });
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =
       importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath());

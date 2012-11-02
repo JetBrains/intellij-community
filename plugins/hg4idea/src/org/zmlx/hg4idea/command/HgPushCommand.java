@@ -74,7 +74,7 @@ public class HgPushCommand {
       @Override
       public void process(@Nullable HgCommandResult result) {
         if (!myProject.isDisposed()) {
-          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
         }
         resultHandler.process(result);
       }

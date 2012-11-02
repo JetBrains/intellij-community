@@ -234,7 +234,8 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
       else {
-        if (jdk.equals(elementAt.getJdk())) {
+        Sdk elementAtJdk = elementAt.getJdk();
+        if (elementAtJdk != null && jdk.getName().equals(elementAtJdk.getName())) {
           return idx;
         }
       }

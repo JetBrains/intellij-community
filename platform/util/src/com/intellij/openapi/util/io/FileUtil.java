@@ -611,9 +611,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
-    if (!toDir.exists() && !toDir.mkdirs()) {
-      throw new IOException(CommonBundle.message("exception.directory.can.not.create", toDir.getPath()));
-    }
+    ensureExists(toDir);
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
       return;
@@ -631,6 +629,12 @@ public class FileUtil extends FileUtilRt {
       else {
         copy(file, new File(toDir, file.getName()));
       }
+    }
+  }
+
+  public static void ensureExists(File dir) throws IOException {
+    if (!dir.exists() && !dir.mkdirs()) {
+      throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 

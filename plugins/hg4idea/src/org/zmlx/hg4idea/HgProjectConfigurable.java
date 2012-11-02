@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
@@ -23,8 +24,10 @@ import javax.swing.*;
 public class HgProjectConfigurable implements SearchableConfigurable {
 
   private final HgConfigurationProjectPanel myPanel;
+  @NotNull private final Project myProject;
 
-  public HgProjectConfigurable(HgProjectSettings projectSettings) {
+  public HgProjectConfigurable(@NotNull Project project, HgProjectSettings projectSettings) {
+    myProject = project;
     myPanel = new HgConfigurationProjectPanel(projectSettings);
   }
 
@@ -48,6 +51,12 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     myPanel.validate();
     myPanel.saveSettings();
+    if (myPanel.getProjectSettings().isCheckIncomingOutgoing()) {
+      myProject.getMessageBus().syncPublisher(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC).show();
+    }
+    else {
+      myProject.getMessageBus().syncPublisher(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC).hide();
+    }
   }
 
   public void reset() {
@@ -65,5 +74,4 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   public Runnable enableSearch(String option) {
     return null;
   }
-
 }

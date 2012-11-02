@@ -100,7 +100,7 @@ public class CodeBlockUtil {
     }
     else {
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
-      if (guide != null) {
+      if (guide != null && guide.startLine != editor.getCaretModel().getLogicalPosition().line) {
         editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.startLine, guide.indentLevel));
       }
       else {

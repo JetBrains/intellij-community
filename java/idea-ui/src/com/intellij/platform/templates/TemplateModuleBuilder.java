@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,14 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 *         Date: 10/19/12
 */
-class TemplateModuleBuilder extends ModuleBuilder {
+public class TemplateModuleBuilder extends ModuleBuilder {
+  private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
+    @Nullable
+    @Override
+    public String fun(String s) {
+      return s.contains(".idea") ? null : s;
+    }
+  };
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
@@ -89,11 +97,6 @@ class TemplateModuleBuilder extends ModuleBuilder {
     return myType;
   }
 
-  @Override
-  public boolean isTemplateBased() {
-    return true;
-  }
-
   @NotNull
   @Override
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
@@ -103,18 +106,18 @@ class TemplateModuleBuilder extends ModuleBuilder {
     return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
   }
 
-  private void unzip(String path, boolean renameModule) {
+  private void unzip(String path, boolean moduleMode) {
     try {
       File dir = new File(path);
       ZipInputStream zipInputStream = myTemplate.getStream();
-      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream);
+      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
           return s.endsWith(".iml");
         }
       });
-      if (renameModule) {
+      if (moduleMode) {
         File from = new File(path, iml);
         File to = new File(getModuleFilePath());
         if (!from.renameTo(to)) {

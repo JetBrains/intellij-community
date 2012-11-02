@@ -114,7 +114,17 @@ public abstract class WindowManager {
    */
   public abstract boolean isInsideScreenBounds(int x,int y);
 
-  public abstract IdeFrame[] getAllFrames();
+  public abstract IdeFrame[] getAllProjectFrames();
+
+  @Deprecated
+  /**
+   * Use #getAllProjectFrames() instead.
+   */
+  public IdeFrame[] getAllFrames() {
+    return getAllProjectFrames();
+  }
+
+  public abstract JFrame findVisibleFrame();
 
   public abstract void addListener(WindowManagerListener listener);
   public abstract void removeListener(WindowManagerListener listener);

@@ -34,6 +34,7 @@ import java.awt.*;
 public class MultiRowFlowPanel extends JPanel {
 
   private final int maximumWidth = GraphicsEnvironment.isHeadless() ? 400 : Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+  private int myForcedWidth;
 
   public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {
     super(new FlowLayout(align, getGapToUse(hGap), getGapToUse(vGap)));
@@ -68,11 +69,18 @@ public class MultiRowFlowPanel extends JPanel {
    *              width (when all components are layed in a single row) and half screen width
    */
   private int getMaxRowWidth() {
+    if (myForcedWidth > 0) {
+      return myForcedWidth;
+    }
     int result = getSize().width;
     if (result == 0) {
       result = Math.min(super.getPreferredSize().width, maximumWidth);
     }
     return result;
+  }
+
+  public void setForcedWidth(int forcedWidth) {
+    myForcedWidth = forcedWidth;
   }
 
   /**

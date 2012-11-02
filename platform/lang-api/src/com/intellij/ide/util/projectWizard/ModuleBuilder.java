@@ -93,10 +93,6 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return type == null ? null : type.modifySettingsStep(settingsStep, this);
   }
 
-  public boolean isTemplateBased() {
-    return false;
-  }
-
   public void setName(String name) {
     myName = acceptParameter(name);
   }
@@ -243,7 +239,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   @Nullable
-  public Module commitModule(@NotNull final Project project, final ModifiableModuleModel model) {
+  public Module commitModule(@NotNull final Project project, @Nullable final ModifiableModuleModel model) {
     if (canCreateModule()) {
       if (myName == null) {
         myName = project.getName();

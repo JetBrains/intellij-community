@@ -33,6 +33,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("a.Blubfoo", "BlubFoo");
   }
 
+  public void testInSameFile() throws Exception {
+    doTest("Two", "Object");
+  }
+  
   public void testConstructorJavadoc() throws Exception {
     doTest("Test", "Test1");
   }

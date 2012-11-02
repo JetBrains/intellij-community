@@ -72,7 +72,6 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testIDEADEV77819() { doTest(); }
   public void testIDEADEV78370() { doTest(); }
   public void testRegressionByPti() { doTest(); }
-  public void testJspTemplateStatement() { doTest(true); /* should not crash */ }
 
   public void testNotNullable() { doTest15(); }
   public void testNotNullableParameter() { doTest15(); }

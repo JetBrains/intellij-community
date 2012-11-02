@@ -16,7 +16,6 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,35 +27,19 @@ import java.util.*;
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<ArrangementEntryMatcher>();
-  @NotNull private final ArrangementOperator myOperator;
 
-  public CompositeArrangementEntryMatcher(@NotNull ArrangementOperator operator, @NotNull ArrangementEntryMatcher... matchers) {
-    myOperator = operator;
+  public CompositeArrangementEntryMatcher(@NotNull ArrangementEntryMatcher... matchers) {
     myMatchers.addAll(Arrays.asList(matchers));
   }
 
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     for (ArrangementEntryMatcher matcher : myMatchers) {
-      boolean matched = matcher.isMatched(entry);
-      if (matched && myOperator == ArrangementOperator.OR) {
-        return true;
-      }
-      else if (!matched && myOperator == ArrangementOperator.AND) {
+      if (!matcher.isMatched(entry)) {
         return false;
       }
     }
-    return myOperator == ArrangementOperator.AND;
-  }
-
-  @NotNull
-  public ArrangementOperator getOperator() {
-    return myOperator;
-  }
-
-  @NotNull
-  public Collection<ArrangementEntryMatcher> getMatchers() {
-    return myMatchers;
+    return true;
   }
 
   public void addMatcher(@NotNull ArrangementEntryMatcher rule) {
@@ -65,9 +48,7 @@ public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher
 
   @Override
   public int hashCode() {
-    int result = myMatchers.hashCode();
-    result = 31 * result + myOperator.hashCode();
-    return result;
+    return myMatchers.hashCode();
   }
 
   @Override
@@ -77,14 +58,11 @@ public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher
 
     CompositeArrangementEntryMatcher matcher = (CompositeArrangementEntryMatcher)o;
 
-    if (!myMatchers.equals(matcher.myMatchers)) return false;
-    if (myOperator != matcher.myOperator) return false;
-
-    return true;
+    return myMatchers.equals(matcher.myMatchers);
   }
 
   @Override
   public String toString() {
-    return String.format("%s of those: %s", myOperator == ArrangementOperator.AND ? "all" : "any", myMatchers);
+    return String.format("all of those: %s", myMatchers);
   }
 }

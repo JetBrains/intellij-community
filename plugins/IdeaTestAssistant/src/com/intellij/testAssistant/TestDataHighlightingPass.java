@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
 
   private static final GutterIconRenderer ICON_RENDERER = new MyGutterIconRenderer();
 
-  private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(Color.BLUE, null, null, null, Font.BOLD);
+  private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(PlatformColors.BLUE, null, null, null, Font.BOLD);
   private static final String CARET = "<caret>";
 
   protected TestDataHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
