@@ -187,18 +187,20 @@ class PyDocumentationBuilder {
       myBody.addItem(combUp("Named parameter " + PyUtil.getReadableRepr(followed, false)));
       if (!addTypeAndDescriptionFromDocstring((PyNamedParameter)followed)) {
         //didn't find type in docstring then infer element type
-        TypeEvalContext context = TypeEvalContext.slow();
-        PyType type = ((PyReferenceExpression)outer).getType(context);
-        if (type != null) {
-          String s;
-          if (type instanceof PyDynamicallyEvaluatedType) {
-            s = "\nDynamically inferred type: %s";
+        if (outer instanceof PyExpression) {
+          TypeEvalContext context = TypeEvalContext.slow();
+          PyType type = ((PyExpression)outer).getType(context);
+          if (type != null) {
+            String s;
+            if (type instanceof PyDynamicallyEvaluatedType) {
+              s = "\nDynamically inferred type: %s";
+            }
+            else {
+              s = "\nReassigned value has type: %s";
+            }
+            myBody
+              .addItem(combUp(String.format(s, PythonDocumentationProvider.getTypeName(type, context))));
           }
-          else {
-            s = "\nReassigned value has type: %s";
-          }
-          myBody
-            .addItem(combUp(String.format(s, PythonDocumentationProvider.getTypeName(type, context))));
         }
       }
     }
