@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.jps.model.module.JpsDependenciesList;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -29,6 +30,8 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
                             @Nullable String classpathDir,
                             @NotNull String baseModulePath,
                             JpsMacroExpander expander, List<String> paths) {
+    final JpsDependenciesList dependenciesList = module.getDependenciesList();
+    dependenciesList.clear();
     try {
       final Document document = JDOMUtil.loadDocument(new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT));
       final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>());
