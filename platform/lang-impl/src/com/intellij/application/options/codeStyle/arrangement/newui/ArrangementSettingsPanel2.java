@@ -112,8 +112,9 @@ public abstract class ArrangementSettingsPanel2 extends CodeStyleAbstractPanel {
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     StdArrangementSettings s = new StdArrangementSettings(myMatchingRulesPanel.getRules());
+    return false;
     // TODO den add grouping rules support
-    return !Comparing.equal(getSettings(settings), s);
+    //return !Comparing.equal(getSettings(settings), s);
   }
 
   @Override

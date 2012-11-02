@@ -33,6 +33,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -169,8 +170,17 @@ public class ArrangementMatchingRulesList extends JBList {
 
   @NotNull
   public List<StdArrangementMatchRule> getRules() {
-    // TODO den implement
-    return Collections.emptyList();
+    if (myModel.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
+    for (int i = 0; i < myModel.size(); i++) {
+      Object element = myModel.get(i);
+      if (element instanceof StdArrangementMatchRule) {
+        result.add((StdArrangementMatchRule)element);
+      }
+    }
+    return result;
   }
   
   public void repaintRows(int first, int last) {
