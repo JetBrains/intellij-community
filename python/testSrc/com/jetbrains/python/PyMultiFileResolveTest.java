@@ -385,6 +385,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFile.class, "m2.py");
   }
 
+  public void _testImplicitFromImport() {   // PY-7929
+    assertResolvesTo(PyClass.class, "Database");
+  }
+
   // PY-6866
   public void testFunctionAndSubmoduleNamedIdentically() {
     assertResolvesTo(PyFunction.class, "m1");

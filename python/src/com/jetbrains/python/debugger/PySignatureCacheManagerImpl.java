@@ -95,7 +95,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private static List<String> arguments(PySignature signature) {
     List<String> res = Lists.newArrayList();
     for (PySignature.NamedParameter param : signature.getArgs()) {
-      res.add(param.getName() + ":" + param.getType());
+      res.add(param.getName() + ":" + param.getTypeQualifiedName());
     }
     return res;
   }
@@ -104,7 +104,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   public String findParameterType(@NotNull PyFunction function, @NotNull String name) {
     final PySignature signature = findSignature(function);
     if (signature != null) {
-      return signature.getArgType(name);
+      return signature.getArgTypeQualifiedName(name);
     }
     return null;
   }

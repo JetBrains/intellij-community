@@ -54,6 +54,11 @@ public class Substring implements CharSequence {
   @NotNull
   @Override
   public String toString() {
+    return getValue();
+  }
+
+  @NotNull
+  public String getValue() {
     return getTextRange().substring(myString);
   }
 

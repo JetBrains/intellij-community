@@ -11,7 +11,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
@@ -23,11 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * User: ktisha
- *
+ * <p/>
  * Helps to specify type
  */
 public class SpecifyTypeInDocstringIntention implements IntentionAction {
   private String myText = PyBundle.message("INTN.specify.type");
+
   public SpecifyTypeInDocstringIntention() {
   }
 
@@ -78,10 +83,12 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
           String name = problemElement.getName();
           if (problemElement instanceof PyQualifiedExpression) {
             final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-            if (qualifier != null)
+            if (qualifier != null) {
               name = qualifier.getText();
+            }
           }
-          if (docstring.contains("type " + name + ":")) return false;
+          StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+          return structuredDocString.getParamType(name) == null;
         }
         return true;
       }
@@ -172,7 +179,13 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     }
     if (pyFunction == null || name == null) return;
 
-    docstringGenerator.withParam(kind, name);
+    PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
+    if (signature != null) {
+      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), function);
+    }
+    else {
+      docstringGenerator.withParam(kind, name);
+    }
 
     final ASTNode nameNode = pyFunction.getNameNode();
     if ((problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter) ||

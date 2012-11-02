@@ -41,7 +41,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     return PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
   }
 
-  @Nullable protected ProblemsHolder getHolder() {
+  @Nullable
+  protected ProblemsHolder getHolder() {
     return myHolder;
   }
 
@@ -51,8 +52,8 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   }
 
   protected final void registerProblem(final PsiElement element,
-                                       final String message){
-    if (element == null || element.getTextLength() == 0){
+                                       final String message) {
+    if (element == null || element.getTextLength() == 0) {
       return;
     }
     if (myHolder != null) {
@@ -62,10 +63,10 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   protected final void registerProblem(@Nullable final PsiElement element,
                                        @NotNull final String message,
-                                       @NotNull final LocalQuickFix quickFix){
-      if (element == null || element.getTextLength() == 0){
-          return;
-      }
+                                       @NotNull final LocalQuickFix quickFix) {
+    if (element == null || element.getTextLength() == 0) {
+      return;
+    }
     if (myHolder != null) {
       myHolder.registerProblem(element, message, quickFix);
     }
@@ -75,16 +76,17 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
                                        final String message,
                                        final ProblemHighlightType type,
                                        @Nullable final HintAction action) {
-    if (element == null || element.getTextLength() == 0){
-        return;
+    if (element == null || element.getTextLength() == 0) {
+      return;
     }
     if (myHolder != null) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action, myHolder.isOnTheFly()));
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type, action, myHolder.isOnTheFly()));
     }
   }
 
   /**
    * The most full-blown version.
+   *
    * @see com.intellij.codeInspection.ProblemDescriptor
    */
   protected final void registerProblem(
@@ -98,6 +100,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   /**
    * The most full-blown version.
+   *
    * @see ProblemDescriptor
    */
   protected final void registerProblem(
@@ -106,8 +109,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     final ProblemHighlightType highlightType,
     @Nullable final HintAction hintAction,
     @Nullable final TextRange rangeInElement,
-    final LocalQuickFix... fixes)
-  {
+    final LocalQuickFix... fixes) {
     if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
       myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));

@@ -99,7 +99,7 @@ public class SphinxDocString extends StructuredDocString {
   }
 
   @Override
-  Substring getParamTypeSubstring(@Nullable String paramName) {
+  public Substring getParamTypeSubstring(@Nullable String paramName) {
     return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
   }
 }

@@ -273,7 +273,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           is_not_first = true;
         }
         if (allow_html) {
-          cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
+          cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parentName), $(parentName));
         }
         else {
           cat.addItem(parentName);
@@ -303,21 +303,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     return cat;
-  }
-
-  private static boolean specifiesReturnType(PyStringLiteralExpression docStringExpression) {
-    String value = PyPsiUtils.strValue(docStringExpression);
-    if (value == null) {
-      return false;
-    }
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(docStringExpression.getProject());
-    if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
-      return value.contains("@rtype");
-    }
-    else if (documentationSettings.isReSTFormat(docStringExpression.getContainingFile())) {
-      return value.contains(":rtype:");
-    }
-    return false;
   }
 
   // provides ctrl+Q doc
@@ -510,7 +495,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return null;
   }
 
-  public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS);
+  public static final LinkWrapper LinkMyClass = new LinkWrapper(LINK_TYPE_CLASS);
   // link item to containing class
 
   public static String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
@@ -550,19 +535,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       editor.getCaretModel().moveToOffset(offset);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
     }
-  }
-
-  @NotNull
-  private static CharSequence appendBefore(@NotNull CharSequence toAdd, @NotNull CharSequence text) {
-    StringBuilder result = new StringBuilder(toAdd);
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      result.append(c);
-      if (c == '\n') {
-        result.append(toAdd);
-      }
-    }
-    return result;
   }
 
   public static void insertDocStub(PyFunction function, Project project, Editor editor) {
@@ -624,98 +596,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     return builder.toString();
-  }
-
-  public static Pair<String, Integer> addParamToDocstring(PyDocStringOwner function, String keyword, String paramName, String prefix) {
-    final PyStringLiteralExpression docstring = function.getDocStringExpression();
-
-    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
-
-    String[] lines = LineTokenizer.tokenize(text, true);
-    if (lines.length == 1) {
-      return createSingleLineReplacement(function, keyword, paramName, prefix);
-    }
-    else {
-      return createMultiLineReplacement(function, keyword, paramName, prefix, lines);
-    }
-  }
-
-  private static Pair<String, Integer> createMultiLineReplacement(PyDocStringOwner function,
-                                                                  String keyword,
-                                                                  String paramName,
-                                                                  String prefix, String[] lines) {
-    StringBuilder replacementText = new StringBuilder();
-    int ind = lines.length - 1;
-    for (int i = 0; i != lines.length - 1; ++i) {
-      String line = lines[i];
-      if (line.contains(prefix)) {
-        ind = i;
-        break;
-      }
-      replacementText.append(line);
-    }
-    int offset = addParamOrType(replacementText, function, false, keyword, paramName, prefix);
-    for (int i = ind; i != lines.length; ++i) {
-      String line = lines[i];
-      replacementText.append(line);
-    }
-
-    return new Pair<String, Integer>(replacementText.toString(), offset);
-  }
-
-  private static int addParamOrType(StringBuilder replacementText, PyDocStringOwner function, boolean addWS, String keyword,
-                                    String paramName, String prefix) {
-    PsiWhiteSpace whitespace = null;
-    if (function instanceof PyFunction) {
-      whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)function).getStatementList(), PsiWhiteSpace.class);
-    }
-    String ws = "\n";
-    if (whitespace != null) {
-      String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1) {
-        ws += whitespace.getText().split("\n")[1];
-      }
-    }
-    if (replacementText.length() > 0) {
-      replacementText.deleteCharAt(replacementText.length() - 1);
-    }
-    replacementText.append(ws);
-
-    replacementText.append(prefix);
-    replacementText.append(keyword);
-    replacementText.append(" ");
-    replacementText.append(paramName);
-    replacementText.append(": ");
-    int offset = replacementText.length();
-    if (addWS) {
-      replacementText.append(ws);
-    }
-    else {
-      replacementText.append("\n");
-    }
-    return offset;
-  }
-
-  private static Pair<String, Integer> createSingleLineReplacement(PyDocStringOwner function,
-                                                                   String keyword,
-                                                                   String paramName,
-                                                                   String prefix) {
-    final PyStringLiteralExpression docstring = function.getDocStringExpression();
-    String text = docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
-
-    StringBuilder replacementText = new StringBuilder();
-    String closingQuotes;
-    if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
-      replacementText.append(text.substring(0, text.length() - 2));
-      closingQuotes = text.substring(text.length() - 3);
-    }
-    else {
-      replacementText.append(text.substring(0, text.length()));
-      closingQuotes = text.substring(text.length() - 1);
-    }
-    final int offset = addParamOrType(replacementText, function, true, keyword, paramName, prefix);
-    replacementText.append(closingQuotes);
-    return new Pair<String, Integer>(replacementText.toString(), offset);
   }
 
   private static class RaiseVisitor extends PyRecursiveElementVisitor {

@@ -26,6 +26,15 @@ import org.jetbrains.annotations.Nullable;
 public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
 
   @Override
+  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
+    for (PsiElement element : elements) {
+      if (element instanceof PyClass || element instanceof PyFunction) continue;
+      return false;
+    }
+    return super.canMove(elements, targetContainer);
+  }
+
+  @Override
   public void doMove(Project project,
                      PsiElement[] elements,
                      @Nullable PsiElement targetContainer,
