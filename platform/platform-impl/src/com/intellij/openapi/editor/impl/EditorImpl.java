@@ -3739,7 +3739,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         newY = visibleLineToY(getVisibleLogicalLinesCount());
       }
       if (newY >= y) {
-        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d%nstate=%s", x, y, dumpState()));
+        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d\nstate=%s", x, y, dumpState()));
+        throw new IllegalStateException("cycled moveCaretToScreenPos() detected");
       } 
       moveCaretToScreenPos(x, newY);
       return;
