@@ -460,7 +460,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     fixMenuIssues(uiDefaults);
 
-    if (UIUtil.isWinLafOnVista()) {
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      uiDefaults.put("Panel.opaque", Boolean.TRUE);
+    }
+    else if (UIUtil.isWinLafOnVista()) {
       uiDefaults.put("ComboBox.border", null);
     }
 
@@ -474,13 +477,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     patchOptionPaneIcons(uiDefaults);
 
-    Frame[] frames = Frame.getFrames();
-    for (Frame frame : frames) {
+    fixSeparatorColor(uiDefaults);
+
+    for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
     fireLookAndFeelChanged();
-    
-    fixSeparatorColor(uiDefaults);
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
