@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -66,6 +67,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     myProjectSettings = projectSettings;
     myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
     isAlreadyShown = false;
+    Disposer.register(project, this);
   }
 
   @Override
