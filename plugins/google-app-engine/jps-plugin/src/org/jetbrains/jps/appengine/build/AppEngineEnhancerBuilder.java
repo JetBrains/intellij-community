@@ -130,11 +130,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     handler.waitFor();
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
     if (logger.isEnabled()) {
-      List<File> processed = new ArrayList<File>();
-      for (String path : pathsToProcess) {
-        processed.add(new File(path));
-      }
-      logger.logCompiledFiles(processed, NAME, "Enhancing classes:");
+      logger.logCompiledPaths(pathsToProcess, NAME, "Enhancing classes:");
     }
     return true;
   }
