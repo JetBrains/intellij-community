@@ -167,7 +167,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       // frame
       if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
         g2.setColor(FRAME_COLOR);
-        g2.drawRect(xOffset, yOffset, totalBarLength, barHeight);
+        g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
       }
 
       // label
