@@ -38,7 +38,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
     }
     catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 }
