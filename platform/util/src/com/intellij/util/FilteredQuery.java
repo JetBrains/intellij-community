@@ -34,25 +34,26 @@ public class FilteredQuery<T> implements Query<T> {
     myFilter = filter;
   }
 
+  @Override
   public T findFirst() {
     final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
     forEach(processor);
     return processor.getFoundValue();
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     myOriginal.forEach(new Processor<T>() {
+      @Override
       public boolean process(final T t) {
-        if (!myFilter.value(t)) return true;
-        if (!consumer.process(t)) return false;
-
-        return true;
+        return !myFilter.value(t) || consumer.process(t);
       }
     });
 
     return true;
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
@@ -60,10 +61,12 @@ public class FilteredQuery<T> implements Query<T> {
     return processor.getResults();
   }
 
+  @Override
   public T[] toArray(final T[] a) {
     return findAll().toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return findAll().iterator();
   }
