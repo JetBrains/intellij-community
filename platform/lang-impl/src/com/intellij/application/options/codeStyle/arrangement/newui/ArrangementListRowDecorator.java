@@ -125,13 +125,12 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
-    // TODO den implement
     return myDelegate.onMouseMove(event);
   }
 
   @Override
   public void onMouseClick(@NotNull MouseEvent event) {
-    // TODO den implement 
+    myDelegate.onMouseClick(event); 
   }
 
   @Override

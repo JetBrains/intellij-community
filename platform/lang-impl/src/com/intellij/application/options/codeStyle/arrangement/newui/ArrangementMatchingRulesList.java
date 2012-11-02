@@ -54,7 +54,7 @@ public class ArrangementMatchingRulesList extends JBList {
                                       @NotNull ArrangementColorsProvider colorsProvider,
                                       @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, myModel);
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
     setModel(myModel);
     setCellRenderer(new MyListCellRenderer());
     addMouseMotionListener(new MouseAdapter() {
@@ -118,7 +118,14 @@ public class ArrangementMatchingRulesList extends JBList {
   
   
   private void onMouseClicked(@NotNull MouseEvent e) {
-    // TODO den implement
+    int i = locationToIndex(e.getPoint());
+    if (i < 0) {
+      return;
+    }
+    ArrangementListRowDecorator decorator = myComponents.get(i);
+    if (decorator != null) {
+      decorator.onMouseClick(e);
+    }
   }
   
   private void onMouseExited() {
@@ -140,6 +147,16 @@ public class ArrangementMatchingRulesList extends JBList {
   public List<StdArrangementMatchRule> getRules() {
     // TODO den implement
     return Collections.emptyList();
+  }
+  
+  public void repaintRows(int first, int last) {
+    Rectangle bounds = getCellBounds(first, last);
+    for (int i = first; i <= last; i++) {
+      myComponents.remove(i);
+    }
+    if (bounds != null) {
+      repaint(bounds);
+    }
   }
 
   private class MyListCellRenderer implements ListCellRenderer {

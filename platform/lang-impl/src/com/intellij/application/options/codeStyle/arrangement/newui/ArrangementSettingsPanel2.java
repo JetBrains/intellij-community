@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -120,8 +123,17 @@ public abstract class ArrangementSettingsPanel2 extends CodeStyleAbstractPanel {
       myMatchingRulesPanel.setRules(null);
     }
     else {
-      myMatchingRulesPanel.setRules(s.getRules());
+      myMatchingRulesPanel.setRules(copy(s.getRules()));
     }
+  }
+
+  @NotNull
+  private static List<StdArrangementMatchRule> copy(@NotNull List<StdArrangementMatchRule> rules) {
+    List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
+    for (StdArrangementMatchRule rule : rules) {
+      result.add(rule.clone());
+    }
+    return result;
   }
 
   @Override
