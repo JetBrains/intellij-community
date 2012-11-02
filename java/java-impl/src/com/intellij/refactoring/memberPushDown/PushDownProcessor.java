@@ -384,7 +384,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         }
         else { //abstract method: remove @Override
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
-          if (annotation != null) {
+          if (annotation != null && !leaveOverrideAnnotation(substitutor, method)) {
             annotation.delete();
           }
           final PsiDocComment oldDocComment = method.getDocComment();
@@ -441,5 +441,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
       }
     }
+  }
+
+  private boolean leaveOverrideAnnotation(PsiSubstitutor substitutor, PsiMethod method) {
+    final PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySignature(myClass, method.getSignature(substitutor), false);
+    if (methodBySignature == null) return false;
+    final PsiMethod[] superMethods = methodBySignature.findDeepestSuperMethods();
+    if (superMethods.length == 0) return false;
+    final boolean is15 = !PsiUtil.isLanguageLevel6OrHigher(methodBySignature);
+    if (is15) {
+      for (PsiMethod psiMethod : superMethods) {
+        final PsiClass aClass = psiMethod.getContainingClass();
+        if (aClass != null && aClass.isInterface()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
