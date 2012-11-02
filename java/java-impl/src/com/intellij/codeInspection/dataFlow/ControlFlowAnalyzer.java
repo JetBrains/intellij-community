@@ -1003,7 +1003,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
                                          TypeConversionUtil.isNumericType(lType) &&
                                          TypeConversionUtil.isNumericType(rType);
 
-    PsiType castType = comparingPrimitiveNumerics ? PsiType.LONG : type;
+    PsiType castType = comparingPrimitiveNumerics ? TypeConversionUtil.isFloatOrDoubleType(lType) ? PsiType.DOUBLE : PsiType.LONG : type;
 
     if (!comparingRef) {
       generateBoxingUnboxingInstructionFor(lExpr,castType);
