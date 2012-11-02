@@ -181,16 +181,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     return myScreenBounds;
   }
 
-  @Override
-  public void setScreenBounds(@Nullable Rectangle screenBounds) {
-    myScreenBounds = screenBounds;
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    return false;
-  }
-
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
    *

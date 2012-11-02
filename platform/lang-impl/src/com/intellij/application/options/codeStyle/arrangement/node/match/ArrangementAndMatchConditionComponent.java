@@ -109,16 +109,6 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   }
 
   @Override
-  public void setScreenBounds(@Nullable Rectangle bounds) {
-    myScreenBounds = bounds;
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    return false;
-  }
-
-  @Override
   public void setSelected(boolean selected) {
     for (ArrangementMatchConditionComponent component : myComponents) {
       component.setSelected(selected);
