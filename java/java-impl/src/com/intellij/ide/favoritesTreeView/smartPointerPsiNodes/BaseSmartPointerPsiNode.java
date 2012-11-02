@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +45,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     super(project, value, viewSettings);
   }
 
+  @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
     PsiElement value = getPsiElement();
@@ -75,13 +76,14 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   private VirtualFile getVirtualFileForValue() {
     PsiElement value = getPsiElement();
     if (value == null) return null;
-    return PsiUtilBase.getVirtualFile(value);
+    return PsiUtilCore.getVirtualFile(value);
   }
   // Should be called in atomic action
 
   protected abstract void updateImpl(PresentationData data);
 
 
+  @Override
   public void update(PresentationData data) {
     final PsiElement value = getPsiElement();
     if (value == null || !value.isValid()) {
@@ -115,22 +117,26 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
            && ((PsiDocCommentOwner)element).isDeprecated();
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     if (getPsiElement() == null) return false;
     PsiFile containingFile = getPsiElement().getContainingFile();
     return file.equals(containingFile.getVirtualFile());
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       ((NavigationItem)getPsiElement()).navigate(requestFocus);
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return getPsiElement() instanceof NavigationItem && ((NavigationItem)getPsiElement()).canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return getPsiElement() instanceof NavigationItem && ((NavigationItem)getPsiElement()).canNavigateToSource();
   }

@@ -75,11 +75,12 @@ public class TreeViewUtil {
     return false;
   }
 
+  @NotNull
   public static String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
     final StringBuilder name = new StringBuilder(aPackage.getName());
     for (PsiPackage parentPackage = aPackage.getParentPackage(); parentPackage != null; parentPackage = parentPackage.getParentPackage()) {
       final String packageName = parentPackage.getName();
-      if (packageName == null || packageName.length() == 0) {
+      if (packageName == null || packageName.isEmpty()) {
         break; // reached default package
       }
       name.insert(0, ".");
@@ -99,7 +100,7 @@ public class TreeViewUtil {
    * @param strictlyEmpty if true, the package is considered empty if it has only 1 child and this child  is a directory
    *                      otherwise the package is considered as empty if all direct children that it has are directories
    */
-  public static boolean isEmptyMiddlePackage(PsiDirectory dir, boolean strictlyEmpty) {
+  public static boolean isEmptyMiddlePackage(@NotNull PsiDirectory dir, boolean strictlyEmpty) {
     final VirtualFile[] files = dir.getVirtualFile().getChildren();
     if (files.length == 0) {
       return false;

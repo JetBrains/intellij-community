@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
+  @Override
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) return null;
@@ -75,28 +76,27 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
         }
       }
       return result.isEmpty() ? null : result;
+    }
+    final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
+    if (modules != null) {
+      for (Module module : modules) {
+        if (PackageViewPane.ID.equals(currentViewId)) {
+          result.add(new PackageViewModuleNode(project, module, viewSettings));
+        }
+        else {
+          result.add(new ProjectViewModuleNode(project, module, viewSettings));
+        }
+      }
     } else {
-      final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
-      final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
-      if (modules != null) {
-        for (Module module : modules) {
+      final ModuleGroup[] data = ModuleGroup.ARRAY_DATA_KEY.getData(context);
+      if (data != null) {
+        for (ModuleGroup moduleGroup : data) {
           if (PackageViewPane.ID.equals(currentViewId)) {
-            result.add(new PackageViewModuleNode(project, module, viewSettings));
+            result.add(new PackageViewModuleGroupNode(project, moduleGroup, viewSettings));
           }
           else {
-            result.add(new ProjectViewModuleNode(project, module, viewSettings));
-          }
-        }
-      } else {
-        final ModuleGroup[] data = ModuleGroup.ARRAY_DATA_KEY.getData(context);
-        if (data != null) {
-          for (ModuleGroup moduleGroup : data) {
-            if (PackageViewPane.ID.equals(currentViewId)) {
-              result.add(new PackageViewModuleGroupNode(project, moduleGroup, viewSettings));
-            }
-            else {
-              result.add(new ProjectViewModuleGroupNode(project, moduleGroup, viewSettings));
-            }
+            result.add(new ProjectViewModuleGroupNode(project, moduleGroup, viewSettings));
           }
         }
       }
@@ -112,10 +112,12 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return super.createNode(project, element, viewSettings);
   }
 
+  @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PackageElement) {
       final Set<Boolean> find = new HashSet<Boolean>();
       final ContentIterator contentIterator = new ContentIterator() {
+        @Override
         public boolean processFile(VirtualFile fileOrDir) {
           if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
             find.add(Boolean.TRUE);
@@ -139,11 +141,13 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   public int getElementWeight(final Object element, final boolean isSortByType) {
     if (element instanceof PackageElement) return 2;
     return -1;
   }
 
+  @Override
   public String getElementLocation(final Object element) {
     if (element instanceof PackageElement) {
       final PackageElement packageElement = ((PackageElement)element);
@@ -153,15 +157,18 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean isInvalidElement(final Object element) {
     return element instanceof PackageElement && !((PackageElement)element).getPackage().isValid();
   }
 
+  @Override
   @NotNull
   public String getFavoriteTypeId() {
     return "package";
   }
 
+  @Override
   public String getElementUrl(final Object element) {
     if (element instanceof PackageElement) {
       PackageElement packageElement = (PackageElement)element;
@@ -172,6 +179,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public String getElementModuleName(final Object element) {
     if (element instanceof PackageElement) {
       PackageElement packageElement = (PackageElement)element;
@@ -181,6 +189,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     // module can be null if 'show module' turned off
