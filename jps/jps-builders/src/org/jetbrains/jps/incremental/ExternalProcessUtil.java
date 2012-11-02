@@ -8,6 +8,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public class ExternalProcessUtil {
                                                   List<String> bootClasspath,
                                                   List<String> classpath,
                                                   List<String> vmParams,
-                                                  List<String> programParams) {
+                                                  List<String> programParams, final boolean useCommandLineWrapper) {
     final List<String> cmdLine = new ArrayList<String>();
 
     cmdLine.add(javaExecutable);
@@ -50,33 +51,40 @@ public class ExternalProcessUtil {
     }
 
     if (!classpath.isEmpty()) {
-      File classpathFile = null;
-      final Class wrapperClass = getCommandLineWrapperClass();
-      if (wrapperClass != null) {
-        try {
-          classpathFile = FileUtil.createTempFile("classpath", null);
-          final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(classpathFile)));
+      List<String> commandLineWrapperArgs = null;
+      if (useCommandLineWrapper) {
+        final Class wrapperClass = getCommandLineWrapperClass();
+        if (wrapperClass != null) {
           try {
-            for (String path : classpath) {
-              writer.println(path);
+            File classpathFile = FileUtil.createTempFile("classpath", null);
+            final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(classpathFile)));
+            try {
+              for (String path : classpath) {
+                writer.println(path);
+              }
             }
+            finally {
+              writer.close();
+            }
+            commandLineWrapperArgs = Arrays.asList(
+              "-classpath",
+              ClasspathBootstrap.getResourcePath(wrapperClass).getPath(),
+              wrapperClass.getName(),
+              classpathFile.getAbsolutePath()
+            );
           }
-          finally {
-            writer.close();
+          catch (IOException ex) {
+            LOG.info("Error starting " + mainClass + "; Classpath wrapper will not be used: ", ex);
           }
         }
-        catch (IOException ex) {
-          LOG.info("Error starting " + mainClass + "; Classpath wrapper will not be used: ", ex);
+        else {
+          LOG.info("CommandLineWrapper class not found, classpath wrapper will not be used");
         }
       }
 
       // classpath
-      if (classpathFile != null) {
-        cmdLine.add("-classpath");
-        final File wrapperClasspath = ClasspathBootstrap.getResourcePath(wrapperClass);
-        cmdLine.add(wrapperClasspath.getPath());
-        cmdLine.add(wrapperClass.getName());
-        cmdLine.add(classpathFile.getAbsolutePath());
+      if (commandLineWrapperArgs != null) {
+        cmdLine.addAll(commandLineWrapperArgs);
       }
       else {
         cmdLine.add("-classpath");

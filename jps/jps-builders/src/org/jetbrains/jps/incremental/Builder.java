@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @see ModuleLevelBuilder
  * @see TargetBuilder
@@ -7,9 +9,8 @@ package org.jetbrains.jps.incremental;
  * @author nik
  */
 public abstract class Builder {
-  public abstract String getName();
-
-  public abstract String getDescription();
+  @NotNull
+  public abstract String getPresentableName();
 
   public void buildStarted(CompileContext context) {
   }

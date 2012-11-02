@@ -377,8 +377,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void moveText(int srcStart, int srcEnd, int dstOffset) {
     assertBounds(srcStart, srcEnd);
-    ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
     if (dstOffset == srcEnd) return;
+    ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
     assert !srcRange.containsOffset(dstOffset) :
       String.format("Can't perform text move from range [%d; %d) to offset %d", srcStart, srcEnd, dstOffset);
 

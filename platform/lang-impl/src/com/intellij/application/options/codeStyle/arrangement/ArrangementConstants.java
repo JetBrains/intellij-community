@@ -17,7 +17,6 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 
@@ -33,6 +32,10 @@ public class ArrangementConstants {
   @NonNls public static final String RULE_EDITOR_PLACE             = "Arrangement.RuleEditor.Place";
   @NonNls public static final String RULE_EDITOR_TOOL_WINDOW_PLACE = "Arrangement.RuleEditor.ToolWindow.Place";
   @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
+
+  public static final int HORIZONTAL_PADDING = 8;
+  public static final int HORIZONTAL_GAP     = 5;
+  public static final int VERTICAL_GAP       = 3;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 

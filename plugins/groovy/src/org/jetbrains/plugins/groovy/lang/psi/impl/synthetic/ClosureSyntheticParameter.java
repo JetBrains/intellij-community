@@ -44,7 +44,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
 
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
-      GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, null, null);
+      GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);
       myClosure.addParameter(parameter);
     }
     return this;

@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-class HgCurrentBranchStatusUpdater implements HgUpdater {
+public class HgCurrentBranchStatusUpdater implements HgUpdater {
 
   private final HgVcs vcs;
   private final HgCurrentBranchStatus currentBranchStatus;
@@ -45,6 +45,11 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
   public HgCurrentBranchStatusUpdater(HgVcs vcs, HgCurrentBranchStatus currentBranchStatus) {
     this.vcs = vcs;
     this.currentBranchStatus = currentBranchStatus;
+  }
+
+  @Override
+  public void update(final Project project, @Nullable VirtualFile root) {
+    update(project);
   }
 
   public void update(final Project project) {

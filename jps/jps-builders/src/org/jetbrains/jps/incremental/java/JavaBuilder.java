@@ -177,13 +177,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return removed != null && !removed.isEmpty();
   }
 
-  @Override
-  public String getName() {
+  @NotNull
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  public String getDescription() {
-    return "Java Builder";
   }
 
   public ExitCode build(final CompileContext context,

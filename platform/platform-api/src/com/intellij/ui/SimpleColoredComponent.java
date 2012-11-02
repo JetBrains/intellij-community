@@ -765,7 +765,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     myTransparentIconBackground = transparentIconBackground;
   }
 
-  private static int getTextBaseLine(FontMetrics metrics, final int height) {
+  public static int getTextBaseLine(FontMetrics metrics, final int height) {
     return (height - metrics.getHeight()) / 2 + metrics.getAscent();
   }
 

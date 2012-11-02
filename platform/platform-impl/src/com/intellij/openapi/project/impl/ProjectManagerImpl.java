@@ -54,9 +54,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
@@ -468,12 +466,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
     final Project project = convertAndLoadProject(filePath);
     if (project == null) {
-      showWelcomeScreenIfNoProjectOpened();
+      WelcomeFrame.showIfNoProjectOpened();
       return null;
     }
 
     if (!openProject(project)) {
-      showWelcomeScreenIfNoProjectOpened();
+      WelcomeFrame.showIfNoProjectOpened();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
@@ -483,15 +481,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return project;
-  }
-
-  private void showWelcomeScreenIfNoProjectOpened() {
-    if (getOpenProjects().length == 0) {
-      IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllFrames();
-      if (frames.length == 1) {
-        frames[0].showWelcomeScreen();
-      }
-    }
   }
 
   /**
@@ -554,6 +543,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private static void notifyProjectOpenFailed() {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    WelcomeFrame.showIfNoProjectOpened();
   }
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {

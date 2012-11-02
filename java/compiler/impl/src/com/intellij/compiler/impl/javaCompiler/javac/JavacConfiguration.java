@@ -36,7 +36,7 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
     myProject = project;
   }
 
-
+  @Override
   @NotNull
   public JpsJavaCompilerOptions getState() {
     JpsJavaCompilerOptions state = new JpsJavaCompilerOptions();
@@ -45,11 +45,13 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
     return state;
   }
 
+  @Override
   public void loadState(JpsJavaCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
   public static JpsJavaCompilerOptions getOptions(Project project, Class<? extends JavacConfiguration> aClass) {
-    return ((JavacConfiguration)ServiceManager.getService(project, aClass)).mySettings; // cast is not redundant for JDK 7 for accessing private members of T from class <? extends T>
+    JavacConfiguration configuration = ServiceManager.getService(project, aClass);
+    return configuration.mySettings;
   }
 }

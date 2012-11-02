@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
@@ -292,7 +293,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
             name = aClass.getName(); //?
           }
           final PsiType[] types = getTypeParameters();
-          if (types.length == 0) return name;
+          if (types.length == 0) {
+            final PsiElement qualifier = getQualifier();
+            if (qualifier instanceof PsiJavaCodeReferenceElement) {
+              return StringUtil.getQualifiedName(((PsiJavaCodeReferenceElement)qualifier).getCanonicalText(), aClass.getName());
+            }
+            return name;
+          }
 
           final StringBuilder buf = new StringBuilder();
           buf.append(name);

@@ -30,18 +30,13 @@ import java.util.regex.Pattern;
  *         Date: 10/6/11
  */
 public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
-  public static final String BUILDER_NAME = "maven-resources";
+  public static final String BUILDER_NAME = "Maven Resources Compiler";
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
   private static final String MAVEN_BUILD_TIMESTAMP_PROPERTY = "maven.build.timestamp";
   private static final String MAVEN_BUILD_TIMESTAMP_FORMAT_PROPERTY = "maven.build.timestamp.format";
 
   public MavenResourcesBuilder() {
     super(Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST));
-  }
-
-  @Override
-  public String getName() {
-    return BUILDER_NAME;
   }
 
   @Override
@@ -197,8 +192,9 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
 
-  public String getDescription() {
-    return "Maven Resource Builder";
+  @NotNull
+  public String getPresentableName() {
+    return BUILDER_NAME;
   }
 
   private static boolean endsWith(final String fileName, final String suffix) {

@@ -26,8 +26,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -63,8 +61,8 @@ public class ArrangementUtil {
   //endregion
 
   @NotNull
-  public static ArrangementMatchCondition and(@NotNull ArrangementMatchCondition... nodes) {
-    final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+  public static ArrangementMatchCondition combine(@NotNull ArrangementMatchCondition... nodes) {
+    final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition();
     final ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition node) {
@@ -73,13 +71,8 @@ public class ArrangementUtil {
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition node) {
-        if (node.getOperator() == ArrangementOperator.AND) {
-          for (ArrangementMatchCondition operand : node.getOperands()) {
-            operand.invite(this);
-          }
-        }
-        else {
-          result.addOperand(node);
+        for (ArrangementMatchCondition operand : node.getOperands()) {
+          operand.invite(this);
         }
       }
     };
@@ -157,81 +150,6 @@ public class ArrangementUtil {
     }
   }
 
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  @NotNull
-  public static HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition condition,
-                                                           @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
-  {
-    if (groupingRules.isEmpty()) {
-      // No grouping rules have been provided, use a flat structure. 
-      return new HierarchicalArrangementConditionNode(condition);
-    }
-
-    final List<ArrangementMatchCondition> conditions = new ArrayList<ArrangementMatchCondition>();
-    condition.invite(new ArrangementMatchConditionVisitor() {
-      @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        conditions.add(condition);
-      }
-
-      @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-        if (condition.getOperator() == ArrangementOperator.AND && conditions.isEmpty() /* Don't process nested composite conditions*/) {
-          for (ArrangementMatchCondition operand : condition.getOperands()) {
-            conditions.add(operand);
-          }
-        }
-        else {
-          conditions.add(condition);
-        }
-      }
-    });
-    if (conditions.isEmpty()) {
-      return new HierarchicalArrangementConditionNode(condition);
-    }
-    
-    HierarchicalArrangementConditionNode result = null;
-    for (Set<ArrangementMatchCondition> rules : groupingRules) {
-      for (ArrangementMatchCondition rule : rules) {
-        for (int i = 0; i < conditions.size(); i++) {
-          ArrangementMatchCondition c = conditions.get(i);
-          if (rule.equals(c)) {
-            conditions.remove(i--);
-            HierarchicalArrangementConditionNode node = new HierarchicalArrangementConditionNode(c);
-            if (result == null) {
-              result = node;
-            }
-            else {
-              result.setChild(node);
-            }
-          }
-        }
-      }
-    }
-
-    if (!conditions.isEmpty()) {
-      HierarchicalArrangementConditionNode node;
-      if (conditions.size() == 1) {
-        node = new HierarchicalArrangementConditionNode(conditions.get(0));
-      }
-      else {
-        ArrangementCompositeMatchCondition c = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
-        for (ArrangementMatchCondition operand : conditions) {
-          c.addOperand(operand);
-        }
-        node = new HierarchicalArrangementConditionNode(c);
-      }
-      if (result == null) {
-        result = node;
-      }
-      else {
-        result.setChild(node);
-      }
-    }
-    assert result != null;
-    return result;
-  }
-
   public static <T> Set<T> flatten(@NotNull Iterable<? extends Iterable<T>> data) {
     Set<T> result = ContainerUtilRt.newHashSet();
     for (Iterable<T> i : data) {
@@ -239,6 +157,25 @@ public class ArrangementUtil {
         result.add(t);
       }
     }
+    return result;
+  }
+
+  @NotNull
+  public static ArrangementConditionInfo extractConditions(@NotNull ArrangementMatchCondition condition) {
+    final ArrangementConditionInfo result = new ArrangementConditionInfo();
+    condition.invite(new ArrangementMatchConditionVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        result.addAtomCondition(condition); 
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+        for (ArrangementMatchCondition operand : condition.getOperands()) {
+          operand.invite(this);
+        } 
+      }
+    });
     return result;
   }
 }

@@ -68,12 +68,13 @@ public abstract class StatementUpDownMover {
   public void afterMove(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
   }
 
-  public static int getLineStartSafeOffset(final Document document, int line) {
+  public static int getLineStartSafeOffset(@NotNull Document document, int line) {
     if (line == document.getLineCount()) return document.getTextLength();
     return document.getLineStartOffset(line);
   }
 
-  protected static LineRange getLineRangeFromSelection(final Editor editor) {
+  @NotNull
+  protected static LineRange getLineRangeFromSelection(@NotNull Editor editor) {
     final int startLine;
     final int endLine;
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -93,7 +94,7 @@ public abstract class StatementUpDownMover {
   }
 
   @Nullable
-  protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {
+  protected static Pair<PsiElement, PsiElement> getElementRange(@NotNull Editor editor, @NotNull PsiFile file, @NotNull LineRange range) {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
     if (startingElement == null) return null;
@@ -112,7 +113,7 @@ public abstract class StatementUpDownMover {
   }
 
   @Nullable
-  protected static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
+  protected static PsiElement firstNonWhiteElement(int offset, @NotNull PsiFile file, final boolean lookRight) {
     final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
     return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }

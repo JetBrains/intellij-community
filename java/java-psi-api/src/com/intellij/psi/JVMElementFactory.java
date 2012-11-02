@@ -111,6 +111,7 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiParameter createParameter(@NotNull @NonNls String name, PsiType type) throws IncorrectOperationException;
+  PsiParameter createParameter(@NotNull @NonNls String name, PsiType type, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a parameter list from the specified parameter names and types.
@@ -183,6 +184,7 @@ public interface JVMElementFactory {
    */
   @NotNull
   PsiMethod createConstructor(@NotNull @NonNls String name);
+  PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context);
 
   /**
    * Creates a class type for the specified class, using the specified substitutor

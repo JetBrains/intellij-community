@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -51,10 +52,11 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
 
   public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified = super.isModified(settings, options);
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
 
     isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
     isModified |= isFieldModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
-    isModified |= isFieldModified(myCbDontIndentTopLevelMembers, settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+    isModified |= isFieldModified(myCbDontIndentTopLevelMembers, javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
     isModified |= isFieldModified(myCbUseRelativeIndent, options.USE_RELATIVE_INDENTS);
 
     return isModified;
@@ -65,7 +67,8 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, Integer.MIN_VALUE, options.LABEL_INDENT_SIZE);
 
     options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
-    settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
     options.USE_RELATIVE_INDENTS = myCbUseRelativeIndent.isSelected();
   }
 
@@ -73,7 +76,8 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     super.reset(settings, options);
     myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
     myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
-    myCbDontIndentTopLevelMembers.setSelected(settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    myCbDontIndentTopLevelMembers.setSelected(javaSettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
     myCbUseRelativeIndent.setSelected(options.USE_RELATIVE_INDENTS);
   }
 

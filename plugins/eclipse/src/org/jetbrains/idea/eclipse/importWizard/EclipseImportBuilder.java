@@ -85,6 +85,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   private Parameters parameters;
 
 
+  @NotNull
   public String getName() {
     return EclipseBundle.message("eclipse.name");
   }

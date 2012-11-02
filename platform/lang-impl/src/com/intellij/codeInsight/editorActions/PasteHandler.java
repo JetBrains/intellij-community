@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -384,6 +383,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     if (endOffset - startOffset > 1000) {
       DocumentUtil.executeInBulk(editor.getDocument(), true, task);
+    }
+    else {
+      task.run();
     }
   }
 

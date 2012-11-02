@@ -49,16 +49,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.fully.qualified.name.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.display.name");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessary.fully.qualified.name.ignore.option"),
-      this, "m_ignoreJavadoc");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.ignore.option"),
+                                          this, "m_ignoreJavadoc");
   }
 
   @Override
@@ -66,21 +63,17 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final boolean inSameFile = ((Boolean)infos[0]).booleanValue();
     if (inSameFile) {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.fully.qualified.name.problem.descriptor2");
+      return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor2");
     }
-    return InspectionGadgetsBundle.message(
-      "unnecessary.fully.qualified.name.problem.descriptor1");
+    return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor1");
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryFullyQualifiedNameFix(
-      ((Boolean)infos[0]).booleanValue());
+    return new UnnecessaryFullyQualifiedNameFix(((Boolean)infos[0]).booleanValue());
   }
 
-  private static class UnnecessaryFullyQualifiedNameFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryFullyQualifiedNameFix extends InspectionGadgetsFix {
 
     private final boolean inSameFile;
 
@@ -88,23 +81,20 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       this.inSameFile = inSameFile;
     }
 
+    @Override
     @NotNull
     public String getName() {
       if (inSameFile) {
-        return InspectionGadgetsBundle.message(
-          "unnecessary.fully.qualified.name.remove.quickfix");
+        return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix");
       }
       else {
-        return InspectionGadgetsBundle.message(
-          "unnecessary.fully.qualified.name.replace.quickfix");
+        return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix");
       }
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
       final PsiFile file = referenceElement.getContainingFile();
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass)) {
@@ -113,28 +103,26 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       final PsiClass aClass = (PsiClass)target;
       ImportUtils.addImportIfNeeded(aClass, referenceElement);
       final String fullyQualifiedText = referenceElement.getText();
-      final QualificationRemover qualificationRemover =
-        new QualificationRemover(fullyQualifiedText);
+      final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
       file.accept(qualificationRemover);
       if (isOnTheFly()) {
-        final Collection<PsiElement> shortenedElements =
-          qualificationRemover.getShortenedElements();
+        final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
         HighlightUtils.highlightElements(shortenedElements);
         showStatusMessage(file.getProject(), shortenedElements.size());
       }
     }
 
-    private static void showStatusMessage(Project project,
-                                          int elementCount) {
+    private static void showStatusMessage(Project project, int elementCount) {
       final WindowManager windowManager = WindowManager.getInstance();
       final StatusBar statusBar = windowManager.getStatusBar(project);
+      if (statusBar == null) {
+        return;
+      }
       if (elementCount == 1) {
-        statusBar.setInfo(InspectionGadgetsBundle.message(
-          "unnecessary.fully.qualified.name.status.bar.escape.highlighting.message1"));
+        statusBar.setInfo(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.status.bar.escape.highlighting.message1"));
       }
       else {
-        statusBar.setInfo(InspectionGadgetsBundle.message(
-          "unnecessary.fully.qualified.name.status.bar.escape.highlighting.message2",
+        statusBar.setInfo(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.status.bar.escape.highlighting.message2",
           Integer.valueOf(elementCount - 1)));
       }
     }
@@ -208,8 +196,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       if (parent instanceof PsiMethodCallExpression || parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable) {
         return;
       }
-      final PsiElement element = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class,
-                                                             JavaCodeFragment.class);
+      final PsiElement element =
+        PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class, JavaCodeFragment.class);
       if (element != null) {
         return;
       }

@@ -22,7 +22,6 @@
  */
 package com.intellij.find.actions;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -65,7 +64,8 @@ public class UsageListCellRenderer extends ColoredListCellRenderer {
 
     TextChunk[] text = presentation.getText();
     for (TextChunk textChunk : text) {
-      append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));
+      SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
+      append(textChunk.getText(), simples);
     }
   }
 

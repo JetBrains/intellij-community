@@ -256,6 +256,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context) {
+    return createMethodFromText(name + "() {}", context);
+  }
+
   @NotNull
   @Override
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
@@ -280,6 +285,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     GeneratedMarkerVisitor.markGenerated(parameter);
     parameter = (PsiParameter)JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
     return (PsiParameter)codeStyleManager.reformat(parameter);
+  }
+
+  @Override
+  public PsiParameter createParameter(@NotNull @NonNls String name, PsiType type, PsiElement context) throws IncorrectOperationException {
+    final PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText() + " " + name + ") {}", context);
+    final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    return parameters[0];
   }
 
   @NotNull

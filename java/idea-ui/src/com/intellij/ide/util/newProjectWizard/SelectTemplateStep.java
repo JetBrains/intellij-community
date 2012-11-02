@@ -181,7 +181,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myFilter = new ElementFilter.Active.Impl<SimpleNode>() {
       @Override
       public boolean shouldBeShowing(SimpleNode template) {
-        return matches(template);
+        return template instanceof TemplateNode && matches((TemplateNode)template);
       }
     };
     myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
@@ -393,13 +393,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     buildMatcher();
     SimpleNode selectedNode = myTemplatesTree.getSelectedNode();
     final Ref<SimpleNode> node = new Ref<SimpleNode>();
-    if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
+    if (!(selectedNode instanceof TemplateNode) || !matches((TemplateNode)selectedNode)) {
       myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
         @Override
         public boolean accept(SimpleNode simpleNode) {
           FilteringTreeStructure.FilteringNode wrapper = (FilteringTreeStructure.FilteringNode)simpleNode;
           Object delegate = wrapper.getDelegate();
-          if (delegate instanceof TemplateNode && matches((SimpleNode)delegate)) {
+          if (delegate instanceof TemplateNode && matches((TemplateNode)delegate)) {
             node.set((SimpleNode)delegate);
             return true;
           }
@@ -411,13 +411,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myFilter.fireUpdate(node.get(), true, false);
   }
 
-  private boolean matches(SimpleNode template) {
-    String name = template.getName();
-    if (name == null) return false;
+  private boolean matches(TemplateNode template) {
+    String name = template.getName() + " " + template.getGroupName();
     String[] words = NameUtil.nameToWords(name);
+    Set<Matcher> matched = new HashSet<Matcher>();
     for (String word : words) {
       for (Matcher matcher : myMatchers) {
-        if (matcher.matches(word)) return true;
+        if (matcher.matches(word)) {
+          matched.add(matcher);
+          if (matched.size() == myMatchers.length) return true;
+        }
       }
     }
     return false;
@@ -511,7 +514,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
-  public void addSettingsField(String label, JComponent field) {
+  public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
 
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
     addField(label, field, panel);
@@ -527,19 +530,19 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   @Override
-  public void addSettingsComponent(JComponent component) {
+  public void addSettingsComponent(@NotNull JComponent component) {
     myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override
-  public void addExpertPanel(JComponent panel) {
+  public void addExpertPanel(@NotNull JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                     GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override
-  public void addExpertField(String label, JComponent field) {
+  public void addExpertField(@NotNull String label, @NotNull JComponent field) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myModulePanel : myExpertPanel;
     addField(label, field, panel);
   }
@@ -586,7 +589,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     @NotNull
     @Override
     public Object[] getEqualityObjects() {
-      return new Object[] { myGroupNode.getName(), getName() };
+      return new Object[] {getGroupName(), getName() };
+    }
+
+    String getGroupName() {
+      return myGroupNode.getName();
     }
   }
 

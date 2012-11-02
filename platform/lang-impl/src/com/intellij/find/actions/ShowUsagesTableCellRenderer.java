@@ -94,14 +94,14 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         if (text.length != 0) {
           SimpleTextAttributes attributes = isSelected ?
             new SimpleTextAttributes(bg, fg, fg, SimpleTextAttributes.STYLE_ITALIC) :
-            deriveAttributesWithColor(SimpleTextAttributes.fromTextAttributes(text[0].getAttributes()), fileBgColor);
+            deriveAttributesWithColor(text[0].getSimpleAttributesIgnoreBackground(), fileBgColor);
           textChunks.append(text[0].getText(), attributes);
         }
       }
       else if (column == 2) {
         for (int i = 1; i < text.length; i++) {
           TextChunk textChunk = text[i];
-          final SimpleTextAttributes attrs = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
+          final SimpleTextAttributes attrs = textChunk.getSimpleAttributesIgnoreBackground();
           SimpleTextAttributes attributes = isSelected ?
             new SimpleTextAttributes(bg, fg, fg, attrs.getStyle()) : deriveAttributesWithColor(attrs, fileBgColor);
           textChunks.append(textChunk.getText(), attributes);

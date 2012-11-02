@@ -28,12 +28,11 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.status.HgChangesetStatus;
 import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
-import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -48,12 +47,7 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
   @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
-  @NotNull private final HgChangesetStatus myIncomingChangesStatus;
-  @NotNull private final HgChangesetStatus myOutgoingChangesStatus;
-
   private MessageBusConnection myBusConnection;
-  private HgRemoteStatusUpdater myRemoteStatusUpdater;
-  private HgCurrentBranchStatusUpdater myCurrentBranchStatusUpdater;
 
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -63,8 +57,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     myVcs = vcs;
     myProjectSettings = projectSettings;
 
-    myIncomingChangesStatus = new HgChangesetStatus("In");
-    myOutgoingChangesStatus = new HgChangesetStatus("Out");
     myCurrentBranchStatus = new HgCurrentBranchStatus();
   }
 
@@ -133,6 +125,11 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   @Override
+  public void update(final Project project, @Nullable VirtualFile root) {
+    update();
+  }
+
+  @Override
   public void update(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -147,14 +144,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
         if (null != myCurrentBranchStatus.getStatusText()) {
           myText = myCurrentBranchStatus.getStatusText();
           myTooltip = myCurrentBranchStatus.getToolTipText();
-        }
-
-        if (myIncomingChangesStatus.getNumChanges() > 0) {
-          myTooltip = "\n" + myIncomingChangesStatus.getToolTip();
-        }
-
-        if (myOutgoingChangesStatus.getNumChanges() > 0) {
-          myTooltip += "\n" + myOutgoingChangesStatus.getToolTip();
         }
 
         int maxLength = MAX_STRING.length();
@@ -175,12 +164,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     myBusConnection = project.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
 
-    myCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(myVcs, myCurrentBranchStatus);
-    myCurrentBranchStatusUpdater.activate();
-
-    myRemoteStatusUpdater = new HgRemoteStatusUpdater(myVcs, myIncomingChangesStatus, myOutgoingChangesStatus, myProjectSettings);
-    myRemoteStatusUpdater.activate();
-
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     if (null != statusBar) {
       statusBar.addWidget(this, project);
@@ -192,10 +175,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     if (null != statusBar) {
       statusBar.removeWidget(ID());
     }
-
-    myBusConnection.disconnect();
-    myRemoteStatusUpdater.deactivate();
-    myCurrentBranchStatusUpdater.deactivate();
   }
 
   private void update() {
@@ -207,4 +186,8 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     myTooltip = "";
   }
 
+  @NotNull
+  public HgCurrentBranchStatus getCurrentBranchStatus() {
+    return myCurrentBranchStatus;
+  }
 }

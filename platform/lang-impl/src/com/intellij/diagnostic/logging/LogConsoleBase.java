@@ -79,6 +79,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private LogFilterModel myModel;
 
   private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
+  private final List<? extends LogFilter> myFilters;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
@@ -100,6 +101,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myProject = project;
     myTitle = title;
     myModel = model;
+    myFilters = myModel.getLogFilters();
     myReaderThread = new ReaderThread(reader);
     myBuildInActions = buildInActions;
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
@@ -215,6 +217,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       return;
     }
     if (isActive() && !readerThread.myRunning) {
+      resetLogFilter();
       myFilter.setSelectedItem(myModel.getCustomFilter());
       readerThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(readerThread);
@@ -476,14 +479,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   public JComponent getSearchComponent() {
-    List<? extends LogFilter> filters = myModel.getLogFilters();
-    myLogFilterCombo.setModel(new DefaultComboBoxModel(filters.toArray(new LogFilter[filters.size()])));
-    for (LogFilter filter : filters) {
-      if (myModel.isFilterSelected(filter)) {
-        myLogFilterCombo.setSelectedItem(filter);
-        break;
-      }
-    }
+    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[myFilters.size()])));
+    resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
@@ -499,6 +496,15 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;
+  }
+
+  private void resetLogFilter() {
+    for (LogFilter filter : myFilters) {
+      if (myModel.isFilterSelected(filter)) {
+        myLogFilterCombo.setSelectedItem(filter);
+        break;
+      }
+    }
   }
 
   @NotNull
