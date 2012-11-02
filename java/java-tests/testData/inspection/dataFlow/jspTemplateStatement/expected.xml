@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
-  <!-- no problem -->
+  <problem>
+    <file>Test.jsp</file>
+    <line>90</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant conditions &amp; exceptions</problem_class>
+    <description>Method invocation &lt;code&gt;o.hashCode()&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
+  </problem>
 </problems>
