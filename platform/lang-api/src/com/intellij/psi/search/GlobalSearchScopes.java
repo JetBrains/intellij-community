@@ -38,23 +38,20 @@ public class GlobalSearchScopes {
   private GlobalSearchScopes() {
   }
 
-  public static GlobalSearchScope openFilesScope(Project project) {
+  @NotNull
+  public static GlobalSearchScope openFilesScope(@NotNull Project project) {
     final VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
     return GlobalSearchScope.filesScope(project, Arrays.asList(files), "Open Files");
   }
 
   @NotNull
   public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
-    return new GlobalSearchScope.IntersectionScope(GlobalSearchScope.projectScope(project),
-                                 new ProductionScopeFilter(project),
-                                 PsiBundle.message("psi.search.scope.production.files"));
+    return new ProductionScopeFilter(project);
   }
 
   @NotNull
   public static GlobalSearchScope projectTestScope(@NotNull Project project) {
-    return new GlobalSearchScope.IntersectionScope(GlobalSearchScope.projectScope(project),
-                                 new TestScopeFilter(project),
-                                 PsiBundle.message("psi.search.scope.test.files"));
+    return new TestScopeFilter(project);
   }
 
   @NotNull
@@ -77,31 +74,35 @@ public class GlobalSearchScopes {
       myManager = PsiManager.getInstance(project);
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       NamedScopesHolder holder = NamedScopeManager.getInstance(getProject());
       final PackageSet packageSet = mySet.getValue();
       if (packageSet != null) {
         if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, holder);
         PsiFile psiFile = myManager.findFile(file);
-        if (psiFile == null) return false;
-        return packageSet.contains(psiFile, holder);
+        return psiFile != null && packageSet.contains(psiFile, holder);
       }
       return false;
     }
 
+    @Override
     public String getDisplayName() {
       return mySet.getName();
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
 
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true; //TODO (optimization?)
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return true; //TODO (optimization?)
     }
@@ -119,24 +120,34 @@ public class GlobalSearchScopes {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       return myFileIndex.isInSourceContent(file) && !myFileIndex.isInTestSourceContent(file);
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
       return !testSources;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @Override
+    public String getDisplayName() {
+      return PsiBundle.message("psi.search.scope.production.files");
     }
   }
 
@@ -148,24 +159,34 @@ public class GlobalSearchScopes {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
       return myFileIndex.isInTestSourceContent(file);
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
       return testSources;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return false;
+    }
+
+    @Override
+    public String getDisplayName() {
+      return PsiBundle.message("psi.search.scope.test.files");
     }
   }
 
@@ -185,23 +206,22 @@ public class GlobalSearchScopes {
       myDirectory = directory;
     }
 
+    @Override
     public boolean contains(VirtualFile file) {
-      if (myWithSubdirectories) {
-        return VfsUtilCore.isAncestor(myDirectory, file, false);
-      }
-      else {
-        return myDirectory.equals(file.getParent());
-      }
+      return myWithSubdirectories ? VfsUtilCore.isAncestor(myDirectory, file, false) : myDirectory.equals(file.getParent());
     }
 
+    @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
       return 0;
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return false;
     }
