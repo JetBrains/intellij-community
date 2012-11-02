@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -56,7 +57,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
-
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
@@ -77,9 +77,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private final Alarm myAlarm = new Alarm();
 
-  private int           myX;
-  private int           myY;
-  private RegistryValue myMode;
+  private int myX;
+  private int myY;
 
   private IdeTooltip myCurrentTooltip;
   private Runnable   myShowRequest;
@@ -91,8 +90,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @Override
   public void initComponent() {
-    myMode = Registry.get("ide.tooltip.mode");
-
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myIsEnabled.addListener(new RegistryValueListener.Adapter() {
       @Override
@@ -343,59 +340,45 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }, tooltip.getDismissDelay());
   }
   
-  @Nullable
-  public IdeTooltip getCurrentTooltip() {
-    return myCurrentTooltip;
-  }
-
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? Color.white : UIUtil.getToolTipForeground();
+    return UIUtil.getToolTipForeground();
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? new Color(209, 209, 255) : Color.blue;
+    return Color.blue;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? GRAPHITE_COLOR : UIUtil.getToolTipBackground();
+    return UIUtil.getToolTipBackground();
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? "/general/mdot-white.png" : "/general/mdot.png";
+    AllIcons.General.Mdot.getIconWidth();  // keep icon reference
+    return "/general/mdot.png";
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
-    return useGraphite(awtTooltip) ? getTextBackground(awtTooltip).darker() : Color.darkGray;
+    return Color.darkGray;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
-  }
-
-  private boolean isUseSystemLook() {
-    boolean useSystem;
-
-    if ("default".equalsIgnoreCase(myMode.asString())) {
-      useSystem = true;
-    }
-    else if ("system".equalsIgnoreCase(myMode.asString())) {
-      useSystem = true;
-    }
-    else if ("graphite".equalsIgnoreCase(myMode.asString())) {
-      useSystem = false;
-    }
-    else {
-      useSystem = false;
-    }
-    return useSystem;
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
@@ -492,10 +475,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static IdeTooltipManager getInstance() {
     return ApplicationManager.getApplication().getComponent(IdeTooltipManager.class);
-  }
-
-  private boolean useGraphite(boolean awtHint) {
-    return false;
   }
 
   public void hide(@Nullable IdeTooltip tooltip) {
