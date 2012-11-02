@@ -50,7 +50,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   private static final Color UNUSED_COLOR_1 = Gray._200.withAlpha(100);
   private static final Color UNUSED_COLOR_2 = Gray._150.withAlpha(130);
   private static final Color UNUSED_COLOR_3 = Gray._175;
-  private static final Color FRAME_COLOR = Gray._110;
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -166,7 +165,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       // frame
       if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
-        g2.setColor(FRAME_COLOR);
+        g2.setColor(USED_COLOR_1);
         g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
       }
 
