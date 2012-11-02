@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -24,7 +22,6 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
@@ -206,13 +203,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
-      result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
-                                                            new Function<PyType, String>() {
-                                                              @Override
-                                                              public String fun(PyType t) {
-                                                                return getTypeName(t, context, visited, false);
-                                                              }
-                                                            }, ", "));
+      if (type instanceof PyDynamicallyEvaluatedType) {
+        result = getTypeName(((PyDynamicallyEvaluatedType)type).exclude(null, context), context);
+      }
+      else {
+        result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
+                                                              new Function<PyType, String>() {
+                                                                @Override
+                                                                public String fun(PyType t) {
+                                                                  return getTypeName(t, context, visited, false);
+                                                                }
+                                                              }, ", "));
+      }
     }
     if (result == null) {
       result = typeName != null ? typeName : UNKNOWN;
@@ -311,7 +313,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
-    return new DocumentationBuilder(element, originalElement).build();
+    return new PyDocumentationBuilder(element, originalElement).build();
   }
 
   @Override
