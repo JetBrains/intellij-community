@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1065,15 +1066,19 @@ public class PsiClassImplUtil {
       PsiParameter parameter2 = parameters2[i];
       PsiType type1 = parameter1.getType();
       PsiType type2 = parameter2.getType();
-      if (!compareParamTypes(manager, type1, type2)) return false;
+      if (!compareParamTypes(manager, type1, type2, new HashSet<String>())) return false;
     }
     return true;
   }
 
-  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2) {
+  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<String> visited) {
     if (type1 instanceof PsiArrayType) {
-      return type2 instanceof PsiArrayType &&
-             compareParamTypes(manager, ((PsiArrayType)type1).getComponentType(), ((PsiArrayType)type2).getComponentType());
+      if (type2 instanceof PsiArrayType) {
+        final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();
+        final PsiType componentType2 = ((PsiArrayType)type2).getComponentType();
+        if (compareParamTypes(manager, componentType1, componentType2, visited)) return true;
+      }
+      return false;
     }
 
     if (!(type1 instanceof PsiClassType) || !(type2 instanceof PsiClassType)) {
@@ -1082,10 +1087,23 @@ public class PsiClassImplUtil {
 
     PsiClass class1 = ((PsiClassType)type1).resolve();
     PsiClass class2 = ((PsiClassType)type2).resolve();
+    visited.add(type1.getCanonicalText());
+    visited.add(type2.getCanonicalText());
 
     if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
-      return Comparing.equal(class1.getName(), class2.getName()) &&
-             ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex();
+      if (!(Comparing.equal(class1.getName(), class2.getName()) && ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex())) return false;
+      final PsiClassType[] eTypes1 = class1.getExtendsListTypes();
+      final PsiClassType[] eTypes2 = class2.getExtendsListTypes();
+      if (eTypes1.length != eTypes2.length) return false;
+      for (int i = 0; i < eTypes1.length; i++) {
+        PsiClassType eType1 = eTypes1[i];
+        PsiClassType eType2 = eTypes2[i];
+        if (visited.contains(eType1.getCanonicalText()) || visited.contains(eType2.getCanonicalText())) {
+          return false;
+        }
+        if (!compareParamTypes(manager, eType1, eType2, visited)) return false;
+      }
+      return true;
     }
 
     return manager.areElementsEquivalent(class1, class2);
