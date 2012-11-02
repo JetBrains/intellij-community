@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.messages.MessageBus;
@@ -49,8 +48,7 @@ public class OpenJdkNotifier {
 
   private static void showWrongJavaVersionBaloon() {
     // Just a copy paste from ChangesViewBaloonProblemNotifier
-    final IdeFrame[] frames = WindowManager.getInstance().getAllFrames();
-    final JFrame frame = (JFrame)frames[0];
+    final JFrame frame = WindowManager.getInstance().findVisibleFrame();
     final JComponent component = frame.getRootPane();
     if (component == null) {
       return;

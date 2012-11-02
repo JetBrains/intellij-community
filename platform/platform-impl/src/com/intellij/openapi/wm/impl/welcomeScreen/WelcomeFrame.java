@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -49,6 +50,11 @@ public class WelcomeFrame extends JFrame {
 
     myScreen = screen;
     setupCloseAction();
+    new MnemonicHelper().register(this);
+  }
+
+  public static WelcomeFrame getInstance() {
+    return ourInstance;
   }
 
   @Override
@@ -134,7 +140,7 @@ public class WelcomeFrame extends JFrame {
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
-        IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllFrames();
+        IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllProjectFrames();
         if (frames.length == 0) {
           showNow();
         }

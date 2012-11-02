@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -352,10 +351,7 @@ public class MacMessagesImpl extends MacMessages {
       }
       
       if (_window == null) {
-        IdeFrame[] allFrames = WindowManager.getInstance().getAllFrames();
-        if (allFrames.length > 0) {
-          _window = SwingUtilities.getWindowAncestor(allFrames[0].getComponent());
-        }
+        _window = WindowManager.getInstance().findVisibleFrame();
       }
     }
     
