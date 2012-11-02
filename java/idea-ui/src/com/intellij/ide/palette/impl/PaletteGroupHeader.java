@@ -70,6 +70,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     setFont(getFont().deriveFont(Font.BOLD));
     setFocusPainted(false);
     setMargin(new Insets(0, 3, 0, 3));
+    setOpaque(true);
     if (getBorder() instanceof CompoundBorder) { // from BasicLookAndFeel
       Dimension pref = getPreferredSize();
       pref.height -= 3;

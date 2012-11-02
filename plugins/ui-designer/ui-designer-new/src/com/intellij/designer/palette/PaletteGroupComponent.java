@@ -38,6 +38,7 @@ public class PaletteGroupComponent extends JCheckBox {
     setFont(getFont().deriveFont(Font.BOLD));
     setFocusPainted(false);
     setMargin(new Insets(0, 3, 0, 3));
+    setOpaque(true);
 
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

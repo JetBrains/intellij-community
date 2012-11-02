@@ -93,7 +93,7 @@ public class PaletteItemsComponent extends JBList {
         setToolTipText(tooltip);
       }
     };
-    renderer.getIpad().left = UIUtil.getTreeLeftChildIndent();
+    renderer.getIpad().left = 2 * UIUtil.getTreeLeftChildIndent();
     renderer.getIpad().right = UIUtil.getTreeRightChildIndent();
     setCellRenderer(renderer);
 
