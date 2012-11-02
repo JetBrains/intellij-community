@@ -23,6 +23,7 @@ package com.intellij.projectImport;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +59,21 @@ public abstract class ProjectImportProvider {
     return getBuilder().getIcon();
   }
 
-  public boolean isMyFile(VirtualFile file) {
-    return false;
+  public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
+    if (fileOrDirectory.isDirectory()) {
+      VirtualFile[] children = fileOrDirectory.getChildren();
+      for (VirtualFile child : children) {
+        if (canImportFromFile(child)) return true;
+      }
+      return false;
+    }
+    else {
+      return canImportFromFile(fileOrDirectory);
+    }
   }
 
-  public boolean canCreateNewProject() {
-    return true;
+  protected boolean canImportFromFile(VirtualFile file) {
+    return false;
   }
 
   public abstract ModuleWizardStep[] createSteps(WizardContext context);

@@ -80,7 +80,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
   }
 
   @Override
-  public boolean isMyFile(VirtualFile file) {
+  protected boolean canImportFromFile(VirtualFile file) {
     return "pom.xml".equals(file.getName());
   }
 }

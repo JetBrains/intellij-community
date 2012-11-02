@@ -59,7 +59,7 @@ public class ImportProjectAction extends AnAction {
     ProjectImportProvider provider = ContainerUtil.find(providers, new Condition<ProjectImportProvider>() {
       @Override
       public boolean value(ProjectImportProvider provider) {
-        return (project != null || provider.canCreateNewProject()) && provider.isMyFile(file);
+        return provider.canImport(file, project);
       }
     });
     if (provider != null) {
