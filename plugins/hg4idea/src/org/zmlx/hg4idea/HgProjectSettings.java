@@ -22,7 +22,6 @@ import com.intellij.openapi.components.StoragePathMacros;
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
-
   private final HgGlobalSettings myAppSettings;
   private Boolean myCheckIncomingOutgoing = null;
 
@@ -44,15 +43,13 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
   public void loadState(State state) {
     myCheckIncomingOutgoing = state.myCheckIncomingOutgoing;
-    if(myCheckIncomingOutgoing == null){
-      myCheckIncomingOutgoing =  state.myCheckIncoming || state.myCheckOutgoing;
+    if (myCheckIncomingOutgoing == null) {
+      myCheckIncomingOutgoing = state.myCheckIncoming || state.myCheckOutgoing;
     }
-
-
   }
 
   public boolean isCheckIncomingOutgoing() {
-    return myCheckIncomingOutgoing;
+    return myCheckIncomingOutgoing != null && myCheckIncomingOutgoing.booleanValue();
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
@@ -82,5 +79,4 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   public void setRunViaBash(boolean runViaBash) {
     myAppSettings.setRunViaBash(runViaBash);
   }
-
 }
