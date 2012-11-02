@@ -621,10 +621,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
 
       final PsiType[] args = new PsiType[methodParameters.length];
-      Map<PsiMethodReferenceExpression,PsiType> map = LambdaUtil.ourRefs.get();
+      Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
       if (map == null) {
         map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-        LambdaUtil.ourRefs.set(map);
+        PsiMethodReferenceUtil.ourRefs.set(map);
       }
       final PsiType added = map.put(methodReferenceExpression, functionalInterfaceType);
       final JavaResolveResult methReferenceResolveResult;
@@ -642,7 +642,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         boolean hasReceiver = false;
         if (methodParamTypes.length == parameters.length + 1) {
-          if (!LambdaUtil.isReceiverType(methodParamTypes[0], method.getContainingClass(), methReferenceResolveResult.getSubstitutor())) return null;
+          if (!PsiMethodReferenceUtil
+            .isReceiverType(methodParamTypes[0], method.getContainingClass(), methReferenceResolveResult.getSubstitutor())) return null;
           hasReceiver = true;
         } else if (parameters.length != methodParameters.length) {
           return null;

@@ -820,7 +820,7 @@
             icon="AllIcons.ToolbarDecorator.Remove"/>
     <action id="Arrangement.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"
-            icon="AllIcons.ToolbarDecorator.Mac.Edit"/>
+            icon="AllIcons.Actions.Edit"/>
     <action id="Arrangement.Rule.Move.Up"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementRuleUpAction"
             icon="AllIcons.ToolbarDecorator.MoveUp"/>

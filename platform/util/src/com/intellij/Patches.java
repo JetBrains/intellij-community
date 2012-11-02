@@ -35,7 +35,7 @@ public class Patches {
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322854.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
-  public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isUnix && !SystemInfo.isMac;
+  public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isXWindow;
 
   /**
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4218084.

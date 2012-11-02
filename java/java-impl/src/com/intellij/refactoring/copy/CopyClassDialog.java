@@ -81,6 +81,7 @@ class CopyClassDialog extends DialogWrapper{
                               }
                             }, myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
+    myNameField.selectAll();
   }
 
   protected Action[] createActions(){

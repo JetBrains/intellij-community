@@ -2184,8 +2184,8 @@ public class UIUtil {
     private float myLineSpacing;
 
     public TextPainter() {
-      myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(180) : Gray._220;
+      myDrawShadow = isUnderAquaLookAndFeel() || isUnderDarcula();
+      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
 

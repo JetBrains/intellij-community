@@ -17,6 +17,7 @@ package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -62,14 +63,10 @@ public class MavenResourceBuilderRunner extends ModuleLevelBuilder{
 
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return "MavenResourceBuilder Runner";
-  }
-
-  @Override
-  public String getDescription() {
-    return getName();
   }
 
   @Override

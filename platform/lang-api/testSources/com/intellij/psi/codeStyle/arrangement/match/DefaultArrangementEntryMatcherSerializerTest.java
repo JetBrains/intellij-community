@@ -27,7 +27,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.psi.codeStyle.arrangement.ArrangementOperator.AND;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.METHOD;
@@ -52,12 +51,12 @@ public class DefaultArrangementEntryMatcherSerializerTest {
 
   @Test
   public void compositeMatchers() {
-    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(AND);
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     condition.addOperand(new ArrangementAtomMatchCondition(TYPE, METHOD));
     condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, SYNCHRONIZED));
     doTest(condition);
     
-    condition = new ArrangementCompositeMatchCondition(AND);
+    condition = new ArrangementCompositeMatchCondition();
     condition.addOperand(new ArrangementAtomMatchCondition(TYPE, FIELD));
     condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, PUBLIC));
     condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, STATIC));
@@ -67,7 +66,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
   @Test
   public void conditionsOrder() {
     // Inspired by IDEA-91826.
-    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(AND);
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     ArrangementEntryType typeToPreserve = FIELD;
     Set<ArrangementModifier> modifiersToPreserve = EnumSet.of(PUBLIC, STATIC, FINAL);
     condition.addOperand(new ArrangementAtomMatchCondition(TYPE, typeToPreserve));

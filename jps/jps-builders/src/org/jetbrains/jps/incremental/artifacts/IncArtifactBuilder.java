@@ -11,6 +11,7 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
@@ -34,7 +35,7 @@ import java.util.*;
  * @author nik
  */
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
-  public static final String BUILDER_NAME = "artifacts";
+  public static final String BUILDER_NAME = "Artifacts builder";
 
   public IncArtifactBuilder() {
     super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
@@ -192,7 +193,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       if (deleted) {
-        context.getLoggingManager().getArtifactBuilderLogger().fileDeleted(filePath);
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {
@@ -207,6 +207,10 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         }
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file '" + filePath + "'"));
       }
+    }
+    ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+    if (logger.isEnabled()) {
+      logger.logDeletedFiles(deletedPaths);
     }
   }
 
@@ -245,13 +249,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     });
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Artifacts builder";
   }
 }

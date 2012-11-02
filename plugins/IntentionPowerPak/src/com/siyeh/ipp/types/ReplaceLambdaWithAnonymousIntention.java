@@ -151,7 +151,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
         return functionalInterfaceType != null && 
                LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && 
                LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) && 
-               LambdaUtil.checkInterfaceFunctional(functionalInterfaceType) == null;
+               LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType) == null;
       }
       return false;
     }

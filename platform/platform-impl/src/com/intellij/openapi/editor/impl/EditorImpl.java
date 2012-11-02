@@ -2829,7 +2829,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visibleLineToY(logicalToVisualLine(line));
     }
     else if (line + 1 >= myDocument.getLineCount()) {
-      y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
+      y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()) + 1);
     }
     else {
       y = logicalLineToY(line + 1);

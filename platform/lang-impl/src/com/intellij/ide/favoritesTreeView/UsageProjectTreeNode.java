@@ -17,12 +17,10 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -75,9 +73,7 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
 
   public static void updatePresentationWithTextChunks(PresentationData presentation, TextChunk[] text) {
     for (TextChunk chunk : text) {
-      final TextAttributes attributes = chunk.getAttributes();
-      presentation.addText(chunk.getText(), new SimpleTextAttributes(attributes.getBackgroundColor(), attributes.getForegroundColor(),
-                                                                     attributes.getEffectColor(), attributes.getFontType()));
+      presentation.addText(chunk.getText(), chunk.getSimpleAttributesIgnoreBackground());
     }
   }
 

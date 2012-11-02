@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ import java.util.Map;
 public class ScreenUtil {
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
-    final boolean useCache = (SystemInfo.isLinux || SystemInfo.isSolaris)
-                             && !GraphicsEnvironment.isHeadless();
+    final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
     ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
 

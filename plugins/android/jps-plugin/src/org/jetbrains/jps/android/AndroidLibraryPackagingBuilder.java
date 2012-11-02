@@ -4,6 +4,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
@@ -21,7 +22,7 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
-  @NonNls private static final String BUILDER_NAME = "android-library-packager";
+  @NonNls private static final String BUILDER_NAME = "Android Library Packaging";
 
   protected AndroidLibraryPackagingBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -90,13 +91,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     return success ? (doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE) : ExitCode.ABORT;
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Android Library Packaging Builder";
   }
 }

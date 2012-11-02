@@ -17,18 +17,23 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.text.StringTokenizer;
 import junit.framework.Assert;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
  * @author nik
  */
 public class VfsTestUtil {
+  public static final Key<String> TEST_DATA_FILE_PATH = Key.create("TEST_DATA_FILE_PATH");
+
   private VfsTestUtil() {
   }
 
@@ -90,6 +95,16 @@ public class VfsTestUtil {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public static void overwriteTestData(String filePath, String actual) {
+    try {
+      FileUtil.writeToFile(new File(filePath), actual);
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
     }
   }
 }

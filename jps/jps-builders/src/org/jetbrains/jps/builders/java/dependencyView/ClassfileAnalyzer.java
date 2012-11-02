@@ -500,6 +500,11 @@ class ClassfileAnalyzer {
           if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
             myUsages.add(UsageRepr.createFieldAssignUsage(myContext, fieldName, fieldOwner, descr));
           }
+
+          if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
+            addClassUsage(TypeRepr.getType(myContext, descr));
+          }
+
           myUsages.add(UsageRepr.createFieldUsage(myContext, fieldName, fieldOwner, descr));
           super.visitFieldInsn(opcode, owner, name, desc);
         }
@@ -511,9 +516,27 @@ class ClassfileAnalyzer {
 
           myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, methodOwner, desc));
           myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner, desc));
+          addClassUsage(TypeRepr.getType(myContext, Type.getReturnType(desc)));
 
           super.visitMethodInsn(opcode, owner, name, desc);
         }
+
+        private void addClassUsage(final TypeRepr.AbstractType type) {
+          TypeRepr.ClassType classType = null;
+          if (type instanceof TypeRepr.ClassType) {
+            classType = (TypeRepr.ClassType)type;
+          }
+          else if (type instanceof TypeRepr.ArrayType) {
+            final TypeRepr.AbstractType elemType = ((TypeRepr.ArrayType)type).getDeepElementType();
+            if (elemType instanceof TypeRepr.ClassType) {
+              classType = (TypeRepr.ClassType)elemType;
+            }
+          }
+          if (classType != null) {
+            myUsages.add(UsageRepr.createClassUsage(myContext, classType.myClassName));
+          }
+        }
+
       };
     }
 

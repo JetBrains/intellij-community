@@ -665,7 +665,7 @@ public class TypeConversionUtil {
     if (right instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
       if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
+        return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
       } else if (left instanceof PsiLambdaExpressionType) {
         final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();
@@ -927,7 +927,10 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) return false;
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
+        if (allowUncheckedConversion && !(typeLeft instanceof PsiWildcardType) && typeRight instanceof PsiClassType && ((PsiClassType)typeRight).isRaw()) continue;
+        return false;
+      }
     }
     return true;
   }

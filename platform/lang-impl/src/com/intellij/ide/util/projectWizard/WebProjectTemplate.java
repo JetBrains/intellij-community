@@ -76,9 +76,13 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       @Nullable
       @Override
       public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-        Pair<String, JComponent> pair = myPeer.getValue().getSettingsField();
+        GeneratorPeer<T> peer = myPeer.getValue();
+        Pair<String, JComponent> pair = peer.getSettingsField();
         if (pair != null) {
           settingsStep.addSettingsField(pair.first, pair.second);
+        }
+        else {
+          settingsStep.addSettingsComponent(peer.getComponent());
         }
         return new ModuleWizardStep() {
           @Override

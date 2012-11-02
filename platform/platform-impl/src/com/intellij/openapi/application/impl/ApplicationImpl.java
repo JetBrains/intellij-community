@@ -55,7 +55,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.Consumer;
@@ -253,14 +252,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             @Override
             public void run() {
               final Project project = CommandLineProcessor.processExternalCommandLine(args);
-              final IdeFrame frame;
+              final JFrame frame;
               if (project != null) {
-                frame = WindowManager.getInstance().getIdeFrame(project);
+                frame = (JFrame)WindowManager.getInstance().getIdeFrame(project);
               }
               else {
-                frame = WindowManager.getInstance().getAllFrames() [0];
+                frame = WindowManager.getInstance().findVisibleFrame();
               }
-              ((IdeFrameImpl)frame).requestFocus();
+              frame.requestFocus();
             }
           });
         }
@@ -862,7 +861,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
-        return GeneralSettings.getInstance().isConfirmExit();
+        return GeneralSettings.getInstance().isConfirmExit() && ProjectManager.getInstance().getOpenProjects().length > 0;
       }
 
       @Override

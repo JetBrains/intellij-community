@@ -103,7 +103,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
                                                                               false, result);
 
     for (TextChunk chunk : result) {
-      renderer.append(chunk.getText(), SimpleTextAttributes.fromTextAttributes(chunk.getAttributes()));
+      renderer.append(chunk.getText(), chunk.getSimpleAttributesIgnoreBackground());
     }
   }
 }

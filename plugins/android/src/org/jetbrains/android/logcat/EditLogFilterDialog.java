@@ -54,14 +54,14 @@ class EditLogFilterDialog extends DialogWrapper {
   private JBLabel myLogTagLabel;
 
   private final AndroidConfiguredLogFilters.MyFilterEntry myEntry;
-  private final AndroidLogcatToolWindowView myView;
+  private final AndroidLogcatView myView;
 
   private boolean myExistingMessagesParsed = false;
 
   private String[] myUsedTags;
   private String[] myUsedPids;
 
-  protected EditLogFilterDialog(@NotNull final AndroidLogcatToolWindowView view,
+  protected EditLogFilterDialog(@NotNull final AndroidLogcatView view,
                                 @Nullable AndroidConfiguredLogFilters.MyFilterEntry entry) {
     super(view.getProject(), false);
 
@@ -206,7 +206,7 @@ class EditLogFilterDialog extends DialogWrapper {
       return new ValidationInfo(AndroidBundle.message("android.logcat.new.filter.dialog.name.not.specified.error"), myNameField);
     }
 
-    if (name.equals(AndroidLogcatToolWindowView.EMPTY_CONFIGURED_FILTER)) {
+    if (name.equals(AndroidLogcatView.EMPTY_CONFIGURED_FILTER)) {
       return new ValidationInfo(AndroidBundle.message("android.logcat.new.filter.dialog.name.busy.error", name));
     }
 

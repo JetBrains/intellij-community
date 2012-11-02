@@ -154,7 +154,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       return;
     }
 
-    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
     for (Object condition : conditions) {
       composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
     }

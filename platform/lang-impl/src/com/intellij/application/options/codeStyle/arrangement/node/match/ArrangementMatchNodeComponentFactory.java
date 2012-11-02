@@ -17,17 +17,18 @@ package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementRuleEditingModel;
+import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementMatchingRulesList;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import javax.swing.*;
 import java.util.Set;
 
 /**
@@ -36,75 +37,94 @@ import java.util.Set;
  */
 public class ArrangementMatchNodeComponentFactory {
 
-  @NotNull private final Set<ArrangementMatchCondition> myGroupingConditions = ContainerUtilRt.newHashSet();
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
-  @NotNull private final Runnable                      myRemoveConditionCallback;
+  @NotNull private final ArrangementMatchingRulesList  myList;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                              @NotNull ArrangementColorsProvider provider, @NotNull Runnable removeConditionCallback,
-                                              @NotNull List<Set<ArrangementMatchCondition>> groupingRules)
+                                              @NotNull ArrangementColorsProvider provider,
+                                              @NotNull ArrangementMatchingRulesList list)
   {
     myDisplayManager = manager;
     myColorsProvider = provider;
-    myRemoveConditionCallback = removeConditionCallback;
-    for (Set<ArrangementMatchCondition> rules : groupingRules) {
-      myGroupingConditions.addAll(rules);
+    myList = list;
+  }
+
+  private void removeCondition(@NotNull StdArrangementMatchRule rule, @NotNull ArrangementAtomMatchCondition condition) {
+    DefaultListModel model = (DefaultListModel)myList.getModel();
+    int i = model.indexOf(rule);
+    if (i < 0) {
+      return;
+    }
+
+    ArrangementMatchCondition existingCondition = rule.getMatcher().getCondition();
+    if (existingCondition.equals(condition)) {
+      myList.repaintRows(i, model.getSize() - 1, true);
+      model.remove(i);
+      return;
+    }
+
+    assert existingCondition instanceof ArrangementCompositeMatchCondition;
+    Set<ArrangementMatchCondition> operands = ((ArrangementCompositeMatchCondition)existingCondition).getOperands();
+    operands.remove(condition);
+
+    if (operands.isEmpty()) {
+      myList.repaintRows(i, model.getSize() - 1, true);
+      model.remove(i);
+    }
+    else if (operands.size() == 1) {
+      model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), rule.getOrderType()));
+      myList.repaintRows(i, i, true);
+    }
+    else {
+      myList.repaintRows(i, i, true);
     }
   }
 
+  /**
+   * Allows to build UI component for the given model.
+   *
+   * @param rendererTarget      target model element for which UI component should be built
+   * @param rule                rule which contains given 'renderer target' condition and serves as
+   *                            a data entry for the target list model
+   * @param allowModification   flag which indicates whether given model can be changed at future
+   * @return                    renderer for the given model
+   */
   @NotNull
-  public ArrangementMatchNodeComponent getComponent(@NotNull final ArrangementMatchCondition node,
-                                                    @Nullable final ArrangementRuleEditingModel model,
-                                                    boolean showEditIcon)
+  public ArrangementMatchConditionComponent getComponent(@NotNull final ArrangementMatchCondition rendererTarget,
+                                                         @NotNull final StdArrangementMatchRule rule,
+                                                         final boolean allowModification)
   {
-    final Ref<ArrangementMatchNodeComponent> ref = new Ref<ArrangementMatchNodeComponent>();
-    node.invite(new ArrangementMatchConditionVisitor() {
+    final Ref<ArrangementMatchConditionComponent> ref = new Ref<ArrangementMatchConditionComponent>();
+    rendererTarget.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        ArrangementMatchNodeComponent component;
-        if (myGroupingConditions.contains(condition)) {
-          component = new ArrangementGroupingMatchNodeComponent(myDisplayManager, condition);
-        }
-        else {
-          component = new ArrangementAtomMatchNodeComponent(
-            myDisplayManager, myColorsProvider, condition, prepareRemoveCallback(condition, model)
-          );
-        }
+        RemoveAtomConditionCallback callback = allowModification ? new RemoveAtomConditionCallback(rule) : null;
+        ArrangementMatchConditionComponent component = new ArrangementAtomMatchConditionComponent(
+          myDisplayManager, myColorsProvider, condition, callback
+        );
         ref.set(component);
       }
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-        switch (condition.getOperator()) {
-          case AND:
-            ref.set(new ArrangementAndMatchNodeComponent(condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager, model));
-            break;
-          case OR: // TODO den implement
-        }
+        ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager));
       }
     });
-    if (showEditIcon) {
-      return new ArrangementEditIconMatchNodeComponent(ref.get());
-    }
-    else {
-      return ref.get();
-    }
+    return ref.get();
   }
 
-  @Nullable
-  private Runnable prepareRemoveCallback(@NotNull final ArrangementMatchCondition condition,
-                                         @Nullable final ArrangementRuleEditingModel model)
-  {
-    if (model == null) {
-      return null;
+  private class RemoveAtomConditionCallback implements Consumer<ArrangementAtomMatchCondition> {
+
+    @NotNull private final StdArrangementMatchRule myRule;
+
+    RemoveAtomConditionCallback(@NotNull StdArrangementMatchRule rule) {
+      myRule = rule;
     }
-    return new Runnable() {
-      @Override
-      public void run() {
-        model.removeAndCondition(condition);
-        myRemoveConditionCallback.run();
-      }
-    };
+
+    @Override
+    public void consume(ArrangementAtomMatchCondition condition) {
+      removeCondition(myRule, condition);
+    }
   }
 }

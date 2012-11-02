@@ -806,14 +806,15 @@ public class JavaCompletionUtil {
 
         boolean insertAdditionalSemicolon = true;
         final PsiReferenceExpression referenceExpression = PsiTreeUtil.getTopmostParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiReferenceExpression.class);
-        if (referenceExpression instanceof PsiMethodReferenceExpression && LambdaUtil.insertSemicolon(referenceExpression.getParent())) {
+        if (referenceExpression instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil
+          .insertSemicolon(referenceExpression.getParent())) {
           insertAdditionalSemicolon = false;
         } else if (referenceExpression != null) {
           PsiElement parent = referenceExpression.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
-          if (parent instanceof PsiLambdaExpression && !LambdaUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
+          if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
             insertAdditionalSemicolon = false;
           }
         }

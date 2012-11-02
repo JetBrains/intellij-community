@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.node;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementTreeNode;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
@@ -33,8 +32,8 @@ import java.awt.event.ItemListener;
  * @author Denis Zhdanov
  * @since 9/27/12 3:10 PM
  */
-public class ArrangementCheckBoxNode<T> extends ArrangementTreeNode
-  implements ArrangementRepresentationAwareNode, ArrangementEditableNode
+public class ArrangementCheckBoxNode<T>/* extends ArrangementTreeNode
+  implements ArrangementRepresentationAwareNode, ArrangementEditableNode*/
 {
   @NotNull private final JPanel     myRenderer = new JPanel(new GridBagLayout());
   @NotNull private final JBCheckBox myCheckBox = new JBCheckBox();
@@ -44,7 +43,7 @@ public class ArrangementCheckBoxNode<T> extends ArrangementTreeNode
   @Nullable private Consumer<ArrangementCheckBoxNode<T>> myListener;
 
   public ArrangementCheckBoxNode(@NotNull ArrangementNodeDisplayManager displayManager, @NotNull T data) {
-    super(null);
+    //super(null);
     myCheckBox.setText(displayManager.getDisplayValue(data));
     myData = data;
     myCheckBox.setBackground(UIUtil.getTreeBackground());
@@ -60,13 +59,13 @@ public class ArrangementCheckBoxNode<T> extends ArrangementTreeNode
   }
 
   @NotNull
-  @Override
+  //@Override
   public JComponent getRenderer() {
     return myRenderer;
   }
 
   @NotNull
-  @Override
+  //@Override
   public JComponent getEditor() {
     return myRenderer;
   }

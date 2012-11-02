@@ -17,14 +17,11 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.builders.logging.BuildLoggingManager;
-import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -38,7 +35,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
@@ -47,13 +43,6 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
-  private TestArtifactBuilderLogger myArtifactBuilderLogger;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myArtifactBuilderLogger = new TestArtifactBuilderLogger();
-  }
-
   @Override
   protected void tearDown() throws Exception {
     for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
@@ -102,19 +91,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     doBuild(CompileScopeTestBuilder.make().allModules().artifacts(artifacts)).assertSuccessful();
   }
 
-  protected BuildResult doBuild(CompileScopeTestBuilder scope) {
-    BuildResult result;
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new ProjectBuilderLoggerImpl()));
-    try {
-      myArtifactBuilderLogger.clear();
-      result = doBuild(descriptor, scope);
-    }
-    finally {
-      descriptor.release();
-    }
-    return result;
-  }
-
   protected static String getJUnitJarPath() {
     final File file = PathManager.findFileInLibDirectory("junit.jar");
     assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
@@ -130,8 +106,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertCopied(String... filePaths) {
-    assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, filePaths);
-    assertEmpty(myArtifactBuilderLogger.myDeletedFilePaths);
+    assertDeletedAndCopied(ArrayUtil.EMPTY_STRING_ARRAY, filePaths);
   }
 
   protected void assertDeletedAndCopied(String deletedPath, String... copiedPaths) {
@@ -139,17 +114,17 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertDeletedAndCopied(String[] deletedPaths, String... copiedPaths) {
-    assertSameElements(myArtifactBuilderLogger.myDeletedFilePaths, deletedPaths);
-    assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, copiedPaths);
+    assertCompiled(IncArtifactBuilder.BUILDER_NAME, copiedPaths);
+    super.assertDeleted(deletedPaths);
+  }
+
+  @Override
+  protected void assertDeleted(String... paths) {
+    assertDeletedAndCopied(paths);
   }
 
   protected static void assertOutput(JpsArtifact a, TestFileSystemBuilder expected) {
     assertOutput(a.getOutputPath(), expected);
-  }
-
-  protected void assertDeleted(String... filePaths) {
-    assertSameElements(myArtifactBuilderLogger.myDeletedFilePaths, filePaths);
-    assertEmpty(myArtifactBuilderLogger.myCopiedFilePaths);
   }
 
   protected void buildAllAndAssertUpToDate() {
@@ -158,8 +133,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertUpToDate() {
-    assertEmpty(myArtifactBuilderLogger.myDeletedFilePaths);
-    assertEmpty(myArtifactBuilderLogger.myCopiedFilePaths);
+    assertDeletedAndCopied(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   protected static void rename(String path, String newName) {
@@ -173,31 +147,6 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private class TestArtifactBuilderLogger implements ArtifactBuilderLogger {
-    private Set<String> myCopiedFilePaths = new LinkedHashSet<String>();
-    private Set<String> myDeletedFilePaths = new LinkedHashSet<String>();
-
-    @Override
-    public void fileCopied(String sourceFilePath) {
-      myCopiedFilePaths.add(getProjectRelativePath(sourceFilePath));
-    }
-
-    @Override
-    public void fileDeleted(String targetFilePath) {
-      myDeletedFilePaths.add(getProjectRelativePath(targetFilePath));
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return true;
-    }
-
-    public void clear() {
-      myCopiedFilePaths.clear();
-      myDeletedFilePaths.clear();
     }
   }
 }

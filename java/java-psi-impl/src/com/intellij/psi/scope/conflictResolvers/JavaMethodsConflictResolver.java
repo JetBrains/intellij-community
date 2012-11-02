@@ -126,7 +126,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       else if (parameterType instanceof PsiMethodReferenceType) {
-        LambdaUtil.processMethodReferenceReturnType(conflicts, i);
+        PsiMethodReferenceUtil.processMethodReferenceReturnType(conflicts, i);
       }
     }
   }
