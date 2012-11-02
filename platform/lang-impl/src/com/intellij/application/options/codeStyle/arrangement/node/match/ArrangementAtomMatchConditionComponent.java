@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.*;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -25,12 +26,15 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
@@ -47,6 +51,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
+      if (myAnimationStepsLeft > 0 && myImage != null) {
+        //g.drawImage(myImage, )
+      }
+
       Point point = ArrangementConfigUtil.getLocationOnScreen(this);
       if (point != null) {
         Rectangle bounds = myRenderer.getBounds();
@@ -56,6 +64,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
       }
       super.paint(g);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // TODO den implement
+      return super.getPreferredSize();
     }
   };
 
@@ -91,6 +105,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
 
+  @Nullable private BufferedImage myImage;
+  private           int           myAnimationStepsLeft;
+  
   private boolean myEnabled = true;
   private boolean myCloseButtonHovered;
 
@@ -262,6 +279,23 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     return buttonBounds;
   }
 
+  public void startAnimation() {
+    myAnimationStepsLeft = ArrangementConstants.ATOM_CONDITION_REMOVAL_STEPS;
+    Rectangle bounds = myRenderer.getBounds();
+    myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+    myCloseButton.setVisible(false);
+    final Graphics2D graphics = myImage.createGraphics();
+    UISettings.setupAntialiasing(graphics);
+    graphics.translate(-bounds.x, -bounds.y);
+    graphics.setClip(bounds.x, bounds.y, bounds.width, bounds.height);
+    myRenderer.paint(graphics);
+    graphics.dispose();
+  }
+  
+  public boolean isAnimationInProgress() {
+    return myAnimationStepsLeft > 0;
+  }
+  
   @Override
   public String toString() {
     return myText;
