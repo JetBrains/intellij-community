@@ -180,7 +180,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
       UIUtil.applyRenderingHints(g2);
       g2.setColor(UIUtil.getLabelForeground());
-      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2);
+      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2 - 1);
 
       g2.dispose();
     }
