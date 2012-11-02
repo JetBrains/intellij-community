@@ -52,8 +52,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "public.method.without.logging.problem.descriptor");
+    return InspectionGadgetsBundle.message("public.method.without.logging.problem.descriptor");
   }
 
   @Override
@@ -80,8 +79,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
     return new PublicMethodWithoutLoggingVisitor();
   }
 
-  private class PublicMethodWithoutLoggingVisitor
-    extends BaseInspectionVisitor {
+  private class PublicMethodWithoutLoggingVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -92,7 +90,8 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (method.getBody() == null) {
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
         return;
       }
       if (method.isConstructor()) {
@@ -101,15 +100,15 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
       if (PropertyUtils.isSimpleGetter(method) || PropertyUtils.isSimpleSetter(method)) {
         return;
       }
-      if (containsLoggingCall(method)) {
+      if (containsLoggingCall(body)) {
         return;
       }
       registerMethodError(method);
     }
 
-    private boolean containsLoggingCall(PsiMethod method) {
+    private boolean containsLoggingCall(PsiCodeBlock block) {
       final ContainsLoggingCallVisitor visitor = new ContainsLoggingCallVisitor();
-      method.accept(visitor);
+      block.accept(visitor);
       return visitor.containsLoggingCall();
     }
   }
