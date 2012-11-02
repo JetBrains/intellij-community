@@ -89,13 +89,13 @@ public class DynamicMemberUtils {
     return true;
   }
 
-  public static boolean checkVersion(PsiMethod method, String grailsVersion) {
-    String since = getCommentValue(method, "@since");
+  public static boolean checkVersion(PsiMethod method, String version) {
+    String since = getCommentValue(method, "since");
     if (since == null) return true;
 
-    return grailsVersion.compareTo(since) >= 0;
+    return version.compareTo(since) >= 0;
   }
-  
+
   @Nullable
   public static String getCommentValue(PsiMethod method, String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
