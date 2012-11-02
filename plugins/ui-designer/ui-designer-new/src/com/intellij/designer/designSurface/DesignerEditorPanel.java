@@ -992,11 +992,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
           }
         }
         else {
-          action = new AnAction() {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-            }
-          };
+          action = new EmptyAction(true);
         }
         actionGroup.add(action);
         update(message, action.getTemplatePresentation(), true);
