@@ -1,16 +1,9 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -18,10 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
@@ -29,6 +19,7 @@ import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: ktisha
@@ -55,32 +46,9 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
-    if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
-      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-      if (assignmentStatement != null) {
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-        if (assignedValue != null) {
-          PyType type = assignedValue.getType(TypeEvalContext.slow());
-          if (type == null || type instanceof PyReturnTypeReference) {
-            myText = PyBundle.message("INTN.specify.return.type");
-            return true;
-          }
-        }
-      }
-    }
-    else {
-      PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-      if (parentFunction != null) {
-        final ASTNode nameNode = parentFunction.getNameNode();
-        if (nameNode != null && nameNode.getPsi() == elementAt) {
-          myText = PyBundle.message("INTN.specify.return.type");
-          return true;
-        }
-      }
-    }
+    if (checkAvailableForReturn(elementAt, callExpression)) return true;
 
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
-
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
     if (problemElement == null) return false;
     if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
@@ -93,6 +61,10 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       return false;
     }
     final PyType type = problemElement.getType(TypeEvalContext.slow());
+    return checkType(problemElement, type);
+  }
+
+  private boolean checkType(PyExpression problemElement, @Nullable PyType type) {
     if (type == null || type instanceof PyReturnTypeReference || type instanceof PyDynamicallyEvaluatedType) {
       PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
       PsiReference reference = problemElement.getReference();
@@ -117,24 +89,52 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-    if (elementAt != null && !(elementAt.getNode().getElementType() == PyTokenTypes.IDENTIFIER)) {
-      elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+  private boolean checkAvailableForReturn(PsiElement elementAt, @Nullable PyCallExpression callExpression) {
+    if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
+      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+      if (assignmentStatement != null) {
+        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue != null) {
+          PyType type = assignedValue.getType(TypeEvalContext.slow());
+          if (type == null || type instanceof PyReturnTypeReference) {
+            myText = PyBundle.message("INTN.specify.return.type");
+            return true;
+          }
+        }
+      }
     }
+    else {
+      PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+      if (parentFunction != null) {
+        final ASTNode nameNode = parentFunction.getNameNode();
+        if (nameNode != null && nameNode.getPsi() == elementAt) {
+          myText = PyBundle.message("INTN.specify.return.type");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
 
     String kind = "type";
-    PyCallExpression callExpression = PyUtil.findProblemElement(editor, file, PyCallExpression.class);
+    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
     if (callExpression != null) {
       PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
-        PyType pyType = assignmentStatement.getAssignedValue().getType(TypeEvalContext.slow());
-        if (pyType == null || pyType instanceof PyReturnTypeReference) {
-          pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-          problemElement = null;
-          kind = "rtype";
+        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue != null) {
+          PyType pyType = assignedValue.getType(TypeEvalContext.slow());
+          if (pyType == null || pyType instanceof PyReturnTypeReference) {
+            pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+            problemElement = null;
+            kind = "rtype";
+          }
         }
       }
     }
@@ -145,10 +145,16 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       }
     }
 
+    generateDocstring(elementAt, kind, callExpression, pyFunction, problemElement);
+  }
+
+  private void generateDocstring(PsiElement elementAt, String kind,
+                                 @Nullable PyCallExpression callExpression,
+                                 PyFunction pyFunction,
+                                 PyExpression problemElement) {
     PsiReference reference = null;
 
     PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
-
 
     String name = "";
     if (problemElement != null) {
@@ -164,17 +170,15 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       }
       pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
     }
+    if (pyFunction == null || name == null) return;
 
     docstringGenerator.withParam(kind, name);
 
     final ASTNode nameNode = pyFunction.getNameNode();
-    if ((pyFunction != null &&
-         (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) ||
-        elementAt == nameNode.getPsi() || callExpression != null) {
-
+    if ((problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter) ||
+        (nameNode != null && elementAt == nameNode.getPsi()) || callExpression != null) {
       docstringGenerator.build();
     }
-
 
     docstringGenerator.startTemplate();
   }
