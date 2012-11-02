@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,14 +55,7 @@ public class BuildOperations {
       configuration.save();
     }
     else if (pd.fsState.markInitialScanPerformed(target)) {
-      if (target instanceof ModuleBasedTarget) {
-        initTargetFSState(context, target, false);
-      }
-      else {
-        // todo: check why other non-associated with module targets have to initialize deleted outputs by themselves
-        // instead of getting this functionality out-of the box
-        FSOperations.markDirtyFiles(context, target, timestamps, false, null);
-      }
+      initTargetFSState(context, target, false);
     }
   }
 
@@ -107,7 +101,7 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-      boolean marked = false;
+      boolean marked = dropRemovedPaths(context, chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
         if (context.isMake() && target instanceof ModuleBuildTarget) {
           // ensure non-incremental flag cleared
@@ -126,6 +120,24 @@ public class BuildOperations {
         context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
       }
     }
+  }
+
+  private static boolean dropRemovedPaths(CompileContext context, BuildTargetChunk chunk) throws IOException {
+    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    boolean dropped = false;
+    if (map != null) {
+      for (BuildTarget<?> target : chunk.getTargets()) {
+        final Collection<String> paths = map.remove(target);
+        if (paths != null) {
+          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+          for (String path : paths) {
+            storage.remove(path);
+            dropped = true;
+          }
+        }
+      }
+    }
+    return dropped;
   }
 
   private static class BuildOutputConsumerImpl implements BuildOutputConsumer {

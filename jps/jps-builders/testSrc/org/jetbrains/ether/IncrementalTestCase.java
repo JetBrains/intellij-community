@@ -26,7 +26,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -171,8 +170,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   protected BuildResult doTestBuild(int makesCount) {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
-    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(),
-                                                                                 new StringProjectBuilderLogger(rootPath, log)));
+    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
     try {
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
 

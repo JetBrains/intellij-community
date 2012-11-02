@@ -32,6 +32,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -173,7 +174,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean hasRemovedSources(CompileContext context) {
-    final Map<ModuleBuildTarget, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
+    final Map<BuildTarget<?>, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
     return removed != null && !removed.isEmpty();
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -19,7 +20,7 @@ import java.util.*;
  *         Date: 10/20/11
  */
 public class Utils {
-  public static final Key<Map<ModuleBuildTarget, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
+  public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");

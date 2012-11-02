@@ -4,7 +4,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
-import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
 /**
@@ -163,7 +162,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testUpdateManifest() {
     final String manifestText1 = "Manifest-Version: 1.0\r\nMain-Class: A\r\n\r\n";
     final String manifest = createFile("d/MANIFEST.MF", manifestText1);
-    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("META-INF").parentDirCopy(manifest).fileCopy(createFile("a.txt")));
+    final JpsArtifact a = addArtifact("a", root().archive("a.jar").dir("META-INF").parentDirCopy(manifest).fileCopy(createFile("a.txt")));
     buildAll();
     assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText1).file("a.txt"));
 

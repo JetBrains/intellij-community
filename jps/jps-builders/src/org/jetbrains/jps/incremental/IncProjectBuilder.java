@@ -576,10 +576,10 @@ public class IncProjectBuilder {
 
         try {
           // restore deleted paths that were not procesesd by 'integrate'
-          final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+          final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
           if (map != null) {
-            for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : map.entrySet()) {
-              final ModuleBuildTarget target = entry.getKey();
+            for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
+              final BuildTarget<?> target = entry.getKey();
               final Collection<String> paths = entry.getValue();
               if (paths != null) {
                 for (String path : paths) {
@@ -648,16 +648,14 @@ public class IncProjectBuilder {
     boolean doneSomething = false;
     try {
       // cleanup outputs
-      final Map<ModuleBuildTarget, Collection<String>> moduleTargetRemovedSources = new HashMap<ModuleBuildTarget, Collection<String>>();
+      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<BuildTarget<?>, Collection<String>>();
 
       for (BuildTarget<?> target : targets) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
         }
-        if (target instanceof ModuleBuildTarget) {
-          moduleTargetRemovedSources.put((ModuleBuildTarget)target, deletedPaths);
-        }
+        targetToRemovedSources.put(target, deletedPaths);
 
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -694,28 +692,22 @@ public class IncProjectBuilder {
               sourceToFormMap.remove(deletedSource);
             }
           }
-          else {
-            if (outputs != null) {
-              // for all other targets can clean the mapping right now
-              sourceToOutputStorage.remove(deletedSource);
-            }
-          }
         }
       }
-      if (!moduleTargetRemovedSources.isEmpty()) {
-        final Map<ModuleBuildTarget, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+      if (!targetToRemovedSources.isEmpty()) {
+        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
-          for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : existing.entrySet()) {
-            final Collection<String> paths = moduleTargetRemovedSources.get(entry.getKey());
+          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
+            final Collection<String> paths = targetToRemovedSources.get(entry.getKey());
             if (paths != null) {
               paths.addAll(entry.getValue());
             }
             else {
-              moduleTargetRemovedSources.put(entry.getKey(), entry.getValue());
+              targetToRemovedSources.put(entry.getKey(), entry.getValue());
             }
           }
         }
-        Utils.REMOVED_SOURCES_KEY.set(context, moduleTargetRemovedSources);
+        Utils.REMOVED_SOURCES_KEY.set(context, targetToRemovedSources);
       }
     }
     catch (IOException e) {
