@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +27,8 @@ import java.awt.*;
 public class JBPanel extends JPanel {
   @Nullable
   private Icon myBackgroundImage;
+  @Nullable
+  private Icon myCenterImage;
 
   public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
@@ -52,6 +55,15 @@ public class JBPanel extends JPanel {
     myBackgroundImage = backgroundImage;
   }
 
+  @Nullable
+  public Icon getCenterImage() {
+    return myCenterImage;
+  }
+
+  public void setCenterImage(@Nullable Icon centerImage) {
+    myCenterImage = centerImage;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
@@ -69,6 +81,10 @@ public class JBPanel extends JPanel {
         y=0;
         x+=w;
       }
+    }
+
+    if (myCenterImage != null) {
+      IconUtil.paintInCenterOf(this, g, myCenterImage);
     }
   }
 }
