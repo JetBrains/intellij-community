@@ -16,8 +16,6 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.extensions.Extensions;
@@ -35,7 +33,6 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.actions.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.MergedDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.patch.PatchMergeRequestFactory;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -191,27 +188,5 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent e) {
     ActionManager.getInstance().getAction("ChangesView.Diff").update(e);
-  }
-
-  private static class ShelvedChangeDiffRequestFactory implements PatchMergeRequestFactory {
-    public static final ShelvedChangeDiffRequestFactory INSTANCE = new ShelvedChangeDiffRequestFactory();
-
-    public MergeRequest createMergeRequest(final String leftText,
-                                           final String rightText,
-                                           final String originalContent,
-                                           @NotNull final VirtualFile file,
-                                           final Project project) {
-      MergeRequest request = DiffRequestFactory.getInstance().create3WayDiffRequest(leftText, rightText, originalContent,
-                                                                                    project,
-                                                                                    null,
-                                                                                    null);
-      request.setVersionTitles(new String[]{
-        "Current Version",
-        "Base Version",
-        "Shelved Version"
-      });
-      request.setWindowTitle("Shelved Change Conflict for" + file.getPresentableUrl());
-      return request;
-    }
   }
 }

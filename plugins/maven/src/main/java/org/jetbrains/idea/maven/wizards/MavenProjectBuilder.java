@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
@@ -60,6 +61,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   private Parameters myParameters;
 
+  @NotNull
   public String getName() {
     return ProjectBundle.message("maven.name");
   }
@@ -181,7 +183,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     });
   }
 
-  private boolean runConfigurationProcess(String message, MavenTask p) {
+  private static boolean runConfigurationProcess(String message, MavenTask p) {
     try {
       MavenUtil.run(null, message, p);
     }

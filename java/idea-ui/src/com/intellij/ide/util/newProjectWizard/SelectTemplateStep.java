@@ -46,6 +46,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -181,7 +182,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myFilter = new ElementFilter.Active.Impl<SimpleNode>() {
       @Override
       public boolean shouldBeShowing(SimpleNode template) {
-        return matches(template);
+        return template instanceof TemplateNode && matches((TemplateNode)template);
       }
     };
     myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
@@ -333,7 +334,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
 //    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
@@ -393,13 +394,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     buildMatcher();
     SimpleNode selectedNode = myTemplatesTree.getSelectedNode();
     final Ref<SimpleNode> node = new Ref<SimpleNode>();
-    if (!(selectedNode instanceof TemplateNode) || !matches(selectedNode)) {
+    if (!(selectedNode instanceof TemplateNode) || !matches((TemplateNode)selectedNode)) {
       myTemplatesTree.accept(myTreeBuilder, new SimpleNodeVisitor() {
         @Override
         public boolean accept(SimpleNode simpleNode) {
           FilteringTreeStructure.FilteringNode wrapper = (FilteringTreeStructure.FilteringNode)simpleNode;
           Object delegate = wrapper.getDelegate();
-          if (delegate instanceof TemplateNode && matches((SimpleNode)delegate)) {
+          if (delegate instanceof TemplateNode && matches((TemplateNode)delegate)) {
             node.set((SimpleNode)delegate);
             return true;
           }
@@ -411,13 +412,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myFilter.fireUpdate(node.get(), true, false);
   }
 
-  private boolean matches(SimpleNode template) {
-    String name = template.getName();
-    if (name == null) return false;
+  private boolean matches(TemplateNode template) {
+    String name = template.getName() + " " + template.getGroupName();
     String[] words = NameUtil.nameToWords(name);
+    Set<Matcher> matched = new HashSet<Matcher>();
     for (String word : words) {
       for (Matcher matcher : myMatchers) {
-        if (matcher.matches(word)) return true;
+        if (matcher.matches(word)) {
+          matched.add(matcher);
+          if (matched.size() == myMatchers.length) return true;
+        }
       }
     }
     return false;
@@ -586,7 +590,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     @NotNull
     @Override
     public Object[] getEqualityObjects() {
-      return new Object[] { myGroupNode.getName(), getName() };
+      return new Object[] {getGroupName(), getName() };
+    }
+
+    String getGroupName() {
+      return myGroupNode.getName();
     }
   }
 

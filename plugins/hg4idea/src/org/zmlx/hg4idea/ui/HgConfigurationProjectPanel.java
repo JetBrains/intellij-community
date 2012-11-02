@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -26,7 +27,7 @@ import java.awt.event.ActionListener;
 
 public class HgConfigurationProjectPanel {
 
-  private final HgProjectSettings myProjectSettings;
+  @NotNull private final HgProjectSettings myProjectSettings;
 
   private JPanel myMainPanel;
   private JCheckBox myCheckIncomingCbx;
@@ -36,7 +37,7 @@ public class HgConfigurationProjectPanel {
   private TextFieldWithBrowseButton myPathSelector;
   private JCheckBox myRunHgAsBashCheckBox;
 
-  public HgConfigurationProjectPanel(HgProjectSettings projectSettings) {
+  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings) {
     myProjectSettings = projectSettings;
     loadSettings();
 
@@ -65,7 +66,8 @@ public class HgConfigurationProjectPanel {
 
     if (myAutoRadioButton.isSelected()) {
       myProjectSettings.enableAutodetectHg();
-    } else {
+    }
+    else {
       myProjectSettings.setHgExecutable(getCurrentPath());
     }
   }
@@ -85,7 +87,8 @@ public class HgConfigurationProjectPanel {
     myPathSelector.setEnabled(!isAutodetectHg);
     if (isAutodetectHg) {
       myPathSelector.setText("");
-    } else {
+    }
+    else {
       myPathSelector.setText(myProjectSettings.getHgExecutable());
     }
   }
@@ -98,7 +101,8 @@ public class HgConfigurationProjectPanel {
     String hgExecutable;
     if (myAutoRadioButton.isSelected()) {
       hgExecutable = HgGlobalSettings.getDefaultExecutable();
-    } else {
+    }
+    else {
       hgExecutable = getCurrentPath();
     }
     HgVersionCommand command = new HgVersionCommand();
@@ -115,4 +119,7 @@ public class HgConfigurationProjectPanel {
     myRunHgAsBashCheckBox.setVisible(!SystemInfo.isWindows);
   }
 
+  public HgProjectSettings getProjectSettings() {
+    return myProjectSettings;
+  }
 }

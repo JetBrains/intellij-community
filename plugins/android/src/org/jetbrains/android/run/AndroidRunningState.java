@@ -63,7 +63,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.logcat.AndroidLogcatToolWindowView;
+import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -84,7 +84,7 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
 /**
  * @author coyote
  */
-public abstract class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
+public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
 
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
@@ -105,6 +105,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final String myCommandLine;
   private final AndroidApplicationLauncher myApplicationLauncher;
   private final Map<AndroidFacet, String> myAdditionalFacet2PackageName;
+  private final AndroidRunConfigurationBase myConfiguration;
 
   private final Object myDebugLock = new Object();
 
@@ -173,7 +174,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
     }
     else {
-      console = attachConsole();
+      console = myConfiguration.attachConsole(this, executor);
     }
     myConsole = console;
 
@@ -211,7 +212,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @NotNull
-  protected abstract ConsoleView attachConsole() throws ExecutionException;
+  public AndroidRunConfigurationBase getConfiguration() {
+    return myConfiguration;
+  }
 
   @Nullable
   public RunnerSettings getRunnerSettings() {
@@ -287,10 +290,12 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              AndroidApplicationLauncher applicationLauncher,
                              Map<AndroidFacet, String> additionalFacet2PackageName,
                              boolean supportMultipleDevices,
-                             boolean clearLogcatBeforeStart) throws ExecutionException {
+                             boolean clearLogcatBeforeStart,
+                             @NotNull AndroidRunConfigurationBase configuration) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
-    
+    myConfiguration = configuration;
+
     myTargetChooser = targetChooser;
     mySupportMultipleDevices = supportMultipleDevices;
 
@@ -690,7 +695,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         }
 
         for (Content content : toolWindow.getContentManager().getContents()) {
-          final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+          final AndroidLogcatView view = content.getUserData(AndroidLogcatView.ANDROID_LOGCAT_VIEW_KEY);
 
           if (view != null && device == view.getSelectedDevice()) {
             view.getLogConsole().clear();

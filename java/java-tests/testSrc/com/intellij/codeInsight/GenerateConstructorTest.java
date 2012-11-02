@@ -48,6 +48,7 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
   }
 
   public void testFinalFieldPreselection() throws Exception { doTest(true); }
+  public void testSubstitution() throws Exception { doTest(true); }
 
   private void doTest() throws Exception {
     doTest(false);

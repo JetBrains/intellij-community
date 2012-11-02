@@ -13,9 +13,12 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public interface HgUpdater {
 
   void update(Project project);
 
+  void update(Project project, @Nullable VirtualFile root);
 }

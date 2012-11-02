@@ -84,6 +84,11 @@ public class HgRepositoryWatcher extends AbstractProjectComponent implements Bul
       if (root != null) {
         myDirtyScopeManager.dirDirtyRecursively(root);
       }
+      root = getRootForChangeBranch(file);
+      if (root != null) {
+        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+        myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, root);
+      }
     }
   }
 
@@ -108,6 +113,27 @@ public class HgRepositoryWatcher extends AbstractProjectComponent implements Bul
     return FileUtil.pathsEqual(root.getPath() + "/.hg/undo.dirstate", file.getPath());
   }
 
+  @Nullable
+  private VirtualFile getRootForChangeBranch(@Nullable VirtualFile file) {
+    if (file == null) {
+      return null;
+    }
+    for (VirtualFile root : myRoots) {
+      if (isChangeBranchFile(file, root) || isUndoChangeBranchFile(file, root)) {
+        return root;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isChangeBranchFile(VirtualFile file, VirtualFile root) {
+    return FileUtil.pathsEqual(root.getPath() + "/.hg/branch", file.getPath());
+  }
+
+  private static boolean isUndoChangeBranchFile(VirtualFile file, VirtualFile root) {
+    return FileUtil.pathsEqual(root.getPath() + "/.hg/undo.branch", file.getPath());
+  }
+
   private void registerRoot(@NotNull VirtualFile root) {
     myWatchRequests.add(LocalFileSystem.getInstance().addRootToWatch(root.getPath(), true));
     myRoots.add(root);
@@ -119,5 +145,4 @@ public class HgRepositoryWatcher extends AbstractProjectComponent implements Bul
       registerRoot(root);
     }
   }
-
 }

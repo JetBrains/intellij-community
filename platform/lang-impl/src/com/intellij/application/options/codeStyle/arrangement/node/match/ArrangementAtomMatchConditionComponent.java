@@ -224,9 +224,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     }
   }
 
+  @Nullable
   @Override
-  public void onMouseExited() {
+  public Rectangle onMouseExited() {
+    Rectangle result = myCloseButtonHovered ? getCloseButtonScreenLocation() : null;
     myCloseButtonHovered = false;
+    return result;
   }
 
   @Nullable

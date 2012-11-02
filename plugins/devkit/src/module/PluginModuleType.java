@@ -26,13 +26,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,21 +99,13 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   @Nullable
   public static XmlFile getPluginXml(Module module) {
-    return getPluginXml(module, true);
-  }
-
-  @Nullable
-  public static XmlFile getPluginXml(Module module, boolean initialize) {
     if (module == null) return null;
     if (!(get(module) instanceof PluginModuleType)) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
-    final VirtualFilePointer pluginXMLPointer = initialize ? buildConfiguration.getPluginXmlPointer() : buildConfiguration.getStoredPluginXmlPointer();
-    final VirtualFile vFile = pluginXMLPointer != null ? pluginXMLPointer.getFile() : null;
-    if (vFile == null) return null;
-    final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(vFile);
-    return file instanceof XmlFile ? (XmlFile)file : null;
+    final ConfigFile configFile = buildConfiguration.getPluginXmlConfigFile();
+    return configFile != null ? configFile.getXmlFile() : null;
 }
 
   public static boolean isPluginModuleOrDependency(@NotNull Module module) {

@@ -23,6 +23,7 @@ package com.intellij.projectImport;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,14 @@ public abstract class ProjectImportProvider {
   @Nullable
   public Icon getIcon() {
     return getBuilder().getIcon();
+  }
+
+  public boolean isMyFile(VirtualFile file) {
+    return false;
+  }
+
+  public boolean canCreateNewProject() {
+    return true;
   }
 
   public abstract ModuleWizardStep[] createSteps(WizardContext context);

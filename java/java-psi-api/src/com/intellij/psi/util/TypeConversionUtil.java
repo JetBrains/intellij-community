@@ -665,7 +665,7 @@ public class TypeConversionUtil {
     if (right instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
       if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
+        return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
       } else if (left instanceof PsiLambdaExpressionType) {
         final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();

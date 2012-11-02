@@ -78,4 +78,9 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
         }
       }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
   }
+
+  @Override
+  public boolean isMyFile(VirtualFile file) {
+    return "pom.xml".equals(file.getName());
+  }
 }

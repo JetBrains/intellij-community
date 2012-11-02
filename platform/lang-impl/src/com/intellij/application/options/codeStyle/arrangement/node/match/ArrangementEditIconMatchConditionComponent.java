@@ -184,7 +184,9 @@ public class ArrangementEditIconMatchConditionComponent extends JPanel implement
     return "'edit' decorator for " + myDelegate.toString();
   }
 
+  @Nullable
   @Override
-  public void onMouseExited() {
+  public Rectangle onMouseExited() {
+    return null;
   }
 }

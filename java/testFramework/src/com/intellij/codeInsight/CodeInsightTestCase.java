@@ -54,6 +54,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -308,7 +309,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         toFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         assertNotNull(file.getCanonicalPath(), toFile);
       }
-
+      toFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, FileUtil.toSystemDependentName(fromFile.getPath()));
       editorInfos.put(toFile, copyContent(fromFile, toFile, streamsToClose));
     }
 

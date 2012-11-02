@@ -115,7 +115,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         context.processMessage(message);
       }
 
-      if (!myForStubs && updateDependencies(context, chunk, toCompile, generationOutputs, compiled)) {
+      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, generationOutputs, compiled)) {
         return ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
       return ExitCode.OK;
@@ -315,6 +315,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static boolean updateDependencies(CompileContext context,
                                             ModuleChunk chunk,
+                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                             List<File> toCompile,
                                             Map<ModuleBuildTarget, String> generationOutputs,
                                             List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
@@ -343,7 +344,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     }
 
 
-    return JavaBuilderUtil.updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+    return JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, toCompile, successfullyCompiledFiles);
   }
 
   private static Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {

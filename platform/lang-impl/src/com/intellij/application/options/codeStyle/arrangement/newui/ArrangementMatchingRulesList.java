@@ -28,9 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,16 +57,19 @@ public class ArrangementMatchingRulesList extends JBList {
                                       @NotNull ArrangementColorsProvider colorsProvider,
                                       @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, myModel);
+    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
     setModel(myModel);
     setCellRenderer(new MyListCellRenderer());
     addMouseMotionListener(new MouseAdapter() {
       @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
     });
     addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
+      @Override public void mouseExited(MouseEvent e) { onMouseExited(e); }
       @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
       @Override public void mouseClicked(MouseEvent e) { onMouseClicked(e); }
+    });
+    addListSelectionListener(new ListSelectionListener() {
+      @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
     });
   }
 
@@ -90,11 +96,15 @@ public class ArrangementMatchingRulesList extends JBList {
   private void onMouseMoved(@NotNull MouseEvent e) {
     int i = locationToIndex(e.getPoint());
     if (i != myRowUnderMouse) {
-      onMouseExited();
+      onMouseExited(e);
     }
     
     if (i < 0) {
       return;
+    }
+
+    if (i != myRowUnderMouse) {
+      onMouseEntered(e);
     }
 
     ArrangementListRowDecorator decorator = myComponents.get(i);
@@ -118,10 +128,17 @@ public class ArrangementMatchingRulesList extends JBList {
   
   
   private void onMouseClicked(@NotNull MouseEvent e) {
-    // TODO den implement
+    int i = locationToIndex(e.getPoint());
+    if (i < 0) {
+      return;
+    }
+    ArrangementListRowDecorator decorator = myComponents.get(i);
+    if (decorator != null) {
+      decorator.onMouseClick(e);
+    }
   }
   
-  private void onMouseExited() {
+  private void onMouseExited(@NotNull MouseEvent e) {
     if (myRowUnderMouse < 0) {
       return;
     }
@@ -129,17 +146,55 @@ public class ArrangementMatchingRulesList extends JBList {
     ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
     if (decorator != null) {
       decorator.onMouseExited();
+      repaintRows(myRowUnderMouse, myRowUnderMouse, false);
     }
+    myRowUnderMouse = -1;
   }
 
   private void onMouseEntered(@NotNull MouseEvent e) {
-    // TODO den implement
+    myRowUnderMouse = locationToIndex(e.getPoint());
+    ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
+    if (decorator != null) {
+      decorator.onMouseEntered();
+      repaintRows(myRowUnderMouse, myRowUnderMouse, false);
+    }
+  }
+
+  private void onSelectionChange(@NotNull ListSelectionEvent e) {
+    ListSelectionModel model = getSelectionModel();
+    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+      ArrangementListRowDecorator decorator = myComponents.get(i);
+      if (decorator != null) {
+        decorator.setSelected(model.isSelectedIndex(i));
+      }
+    }
   }
 
   @NotNull
   public List<StdArrangementMatchRule> getRules() {
-    // TODO den implement
-    return Collections.emptyList();
+    if (myModel.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
+    for (int i = 0; i < myModel.size(); i++) {
+      Object element = myModel.get(i);
+      if (element instanceof StdArrangementMatchRule) {
+        result.add((StdArrangementMatchRule)element);
+      }
+    }
+    return result;
+  }
+  
+  public void repaintRows(int first, int last, boolean rowStructureChanged) {
+    Rectangle bounds = getCellBounds(first, last);
+    if (rowStructureChanged) {
+      for (int i = first; i <= last; i++) {
+        myComponents.remove(i);
+      }
+    }
+    if (bounds != null) {
+      repaint(bounds);
+    }
   }
 
   private class MyListCellRenderer implements ListCellRenderer {

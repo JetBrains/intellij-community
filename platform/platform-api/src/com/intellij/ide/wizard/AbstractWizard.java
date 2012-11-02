@@ -292,6 +292,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myCurrentStep;
   }
 
+  public int getStepCount() {
+    return mySteps.size();
+  }
+
   public T getCurrentStepObject() {
     return mySteps.get(myCurrentStep);
   }
@@ -413,7 +417,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected void updateStep() {
-    if (mySteps.size() == 0) {
+    if (mySteps.isEmpty()) {
       return;
     }
 

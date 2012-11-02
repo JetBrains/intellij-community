@@ -172,11 +172,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
-  private static boolean hasRemovedSources(CompileContext context) {
-    final Map<ModuleBuildTarget, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
-    return removed != null && !removed.isEmpty();
-  }
-
   @NotNull
   public String getPresentableName() {
     return BUILDER_NAME;
@@ -259,7 +254,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, filesToCompile, formsToCompile);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -301,13 +296,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms)
+  private ExitCode compile(final CompileContext context,
+                           ModuleChunk chunk,
+                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                           Collection<File> files,
+                           Collection<File> forms)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && !hasRemovedSources(context)) {
+    if (!hasSourcesToCompile && !dirtyFilesHolder.hasRemovedFiles()) {
       return exitCode;
     }
 
@@ -426,7 +425,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
       DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (JavaBuilderUtil.updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }

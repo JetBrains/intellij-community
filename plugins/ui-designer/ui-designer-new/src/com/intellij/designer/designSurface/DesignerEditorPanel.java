@@ -407,8 +407,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
 
     if (info.myShowStack) {
-      info.myMessages.add(0, new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null));
-
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
       info.myThrowable.printStackTrace(new PrintStream(stream));
       myErrorStack.setText(stream.toString());
@@ -419,6 +417,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       myErrorStackLayout.show(myErrorStackPanel, ERROR_NO_STACK_CARD);
     }
 
+    addErrorMessage(new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null), Messages.getErrorIcon());
     for (FixableMessageInfo message : info.myMessages) {
       addErrorMessage(message, message.myErrorIcon ? Messages.getErrorIcon() : Messages.getWarningIcon());
     }
@@ -479,6 +478,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
       myErrorMessages.add(fixesPanel);
     }
+  }
+
+  protected final void showWarnMessages(@Nullable List<FixableMessageInfo> messages) {
+    // XXX
   }
 
   private void createProgressPanel() {

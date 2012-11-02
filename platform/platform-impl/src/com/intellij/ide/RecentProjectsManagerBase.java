@@ -21,17 +21,16 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.welcomeScreen.DefaultWelcomeScreen;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -208,14 +207,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
             synchronized (myState) {
               myState.recentPaths.clear();
             }
-            IdeFrame frame = e.getData(IdeFrame.KEY);
-            if (frame != null) {
-              IdeRootPane rootPane = (IdeRootPane) frame.getComponent();
-              final WelcomeScreen welcomeScreen = rootPane.getWelcomeScreen();
-              if (welcomeScreen instanceof DefaultWelcomeScreen) {
-                ((DefaultWelcomeScreen)welcomeScreen).hideRecentProjectsPanel();
-              }
-            }
+            WelcomeFrame.clearRecents();
           }
         }
       };

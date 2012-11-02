@@ -36,8 +36,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IconUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -62,22 +64,23 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLogcatToolWindowView implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatToolWindowView");
+public abstract class AndroidLogcatView implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatView");
   static final String EMPTY_CONFIGURED_FILTER = "All messages";
-  public static final Key<AndroidLogcatToolWindowView> ANDROID_LOGCAT_VIEW_KEY = Key.create("ANDROID_LOGCAT_VIEW_KEY");
+  public static final Key<AndroidLogcatView> ANDROID_LOGCAT_VIEW_KEY = Key.create("ANDROID_LOGCAT_VIEW_KEY");
 
   private final Project myProject;
   private JComboBox myDeviceCombo;
   private JPanel myConsoleWrapper;
   private final Splitter mySplitter;
-  private JButton myClearLogButton;
   private JPanel mySearchComponentWrapper;
   private JPanel myFiltersToolbarPanel;
 
   private JBList myFiltersList;
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
+  private JPanel myTopPanel;
+  private JBScrollPane myFiltersListScrollPane;
 
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
@@ -85,6 +88,8 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   private volatile Reader myCurrentReader;
   private volatile Writer myCurrentWriter;
+
+  private final IDevice myPreselectedDevice;
 
   private final AndroidDebugBridge.IDeviceChangeListener myDeviceChangeListener = new AndroidDebugBridge.IDeviceChangeListener() {
     public void deviceConnected(IDevice device) {
@@ -139,8 +144,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public AndroidLogcatToolWindowView(final Project project) {
+  public AndroidLogcatView(final Project project, @Nullable IDevice preselectedDevice, boolean addBorderToScrollPane) {
     myProject = project;
+    myPreselectedDevice = preselectedDevice;
     Disposer.register(myProject, this);
 
     mySplitter = new Splitter();
@@ -148,26 +154,36 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     mySplitter.setSecondComponent(myRightPanel);
     mySplitter.setProportion(0.2f);
 
-    myFiltersList.setBorder(BorderFactory.createEmptyBorder());
+    if (addBorderToScrollPane) {
+      myFiltersListScrollPane.setViewportBorder(IdeBorderFactory.createBorder());
+    }
+    else {
+      myFiltersList.setBorder(BorderFactory.createEmptyBorder());
+    }
 
-    myDeviceCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateLogConsole();
-      }
-    });
-    myDeviceCombo.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("<html><font color='red'>[none]</font></html>");
+    if (preselectedDevice == null) {
+      myDeviceCombo.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          updateLogConsole();
         }
-        else if (value instanceof IDevice) {
-          setText(((IDevice)value).getSerialNumber());
+      });
+      myDeviceCombo.setRenderer(new ListCellRendererWrapper() {
+        @Override
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value == null) {
+            setText("<html><font color='red'>[none]</font></html>");
+          }
+          else if (value instanceof IDevice) {
+            setText(((IDevice)value).getSerialNumber());
+          }
         }
-      }
-    });
+      });
+    }
+    else {
+      myTopPanel.setVisible(false);
+    }
     final AndroidLogFilterModel logFilterModel =
-      new AndroidLogFilterModel(AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL) {
+      new AndroidLogFilterModel() {
         private ConfiguredFilter myConfiguredFilter;
         
         @Override
@@ -176,8 +192,13 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
 
         @Override
-        protected void saveLogLevel(Log.LogLevel logLevel) {
-          AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL = logLevel.name();
+        protected void saveLogLevel(String logLevelName) {
+          AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL = logLevelName;
+        }
+
+        @Override
+        public String getSelectedLogLevelName() {
+          return AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_LOG_LEVEL;
         }
 
         @Override
@@ -215,7 +236,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
       }
     });
-    mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
+    if (preselectedDevice == null) {
+      mySearchComponentWrapper.add(createSearchComponent(project));
+    }
     JComponent consoleComponent = myLogConsole.getComponent();
 
     final DefaultActionGroup group1 = new DefaultActionGroup();
@@ -233,7 +256,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group2, true).getComponent();
     myFiltersToolbarPanel.add(tbComp2, BorderLayout.CENTER);
 
-    final String savedConfiguredFilterName = AndroidLogcatFiltersPreferences.getInstance(project).TOOL_WINDOW_CONFIGURED_FILTER;
     myFiltersList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -242,7 +264,10 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
         
         final String filterName = (String)myFiltersList.getSelectedValue();
-        final ConfiguredFilter filter = filterName != null ? compileConfiguredFilter(filterName) : null;
+        if (filterName == null) {
+          return;
+        }
+        final ConfiguredFilter filter = compileConfiguredFilter(filterName);
 
         ProgressManager.getInstance().run(new Task.Backgroundable(myProject, LogConsoleBase.APPLYING_FILTER_TITLE) {
           @Override
@@ -255,7 +280,22 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     myConsoleWrapper.add(consoleComponent, BorderLayout.CENTER);
     Disposer.register(this, myLogConsole);
-    myClearLogButton.addActionListener(new ActionListener() {
+
+    AndroidDebugBridge.addDeviceChangeListener(myDeviceChangeListener);
+
+    updateDevices();
+    updateLogConsole();
+    updateConfiguredFilters(AndroidLogcatFiltersPreferences.getInstance(myProject).TOOL_WINDOW_CONFIGURED_FILTER);
+    if (myFiltersList.getSelectedValue() == null && myFiltersList.getItemsCount() > 0) {
+      myFiltersList.setSelectedIndex(0);
+    }
+  }
+
+  @NotNull
+  public JPanel createSearchComponent(final Project project) {
+    final JPanel searchComponent = new JPanel(new BorderLayout());
+    final JButton clearLogButton = new JButton(AndroidBundle.message("android.logcat.clear.log.button.title"));
+    clearLogButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         IDevice device = getSelectedDevice();
         if (device != null) {
@@ -264,17 +304,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         }
       }
     });
-
-    AndroidDebugBridge.addDeviceChangeListener(myDeviceChangeListener);
-
-    updateDevices();
-    updateLogConsole();
-    updateConfiguredFilters();
-
-    myFiltersList.setSelectedValue(savedConfiguredFilterName, true);
-    if (myFiltersList.getSelectedValue() == null && myFiltersList.getItemsCount() > 0) {
-      myFiltersList.setSelectedIndex(0);
-    }
+    searchComponent.add(myLogConsole.getSearchComponent(), BorderLayout.CENTER);
+    searchComponent.add(clearLogButton, BorderLayout.EAST);
+    return searchComponent;
   }
 
   protected abstract boolean isActive();
@@ -325,8 +357,14 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   }
 
   public void activate() {
-    updateDevices();
-    updateLogConsole();
+    if (isActive()) {
+      updateDevices();
+      updateLogConsole();
+      updateConfiguredFilters(AndroidLogcatFiltersPreferences.getInstance(myProject).TOOL_WINDOW_CONFIGURED_FILTER);
+      if (myFiltersList.getSelectedValue() == null && myFiltersList.getItemsCount() > 0) {
+        myFiltersList.setSelectedIndex(0);
+      }
+    }
     if (myLogConsole != null) {
       myLogConsole.activate();
     }
@@ -371,7 +409,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   @Nullable
   public IDevice getSelectedDevice() {
-    return (IDevice)myDeviceCombo.getSelectedItem();
+    return myPreselectedDevice != null ? myPreselectedDevice : (IDevice)myDeviceCombo.getSelectedItem();
   }
 
   @Nullable
@@ -386,8 +424,10 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     return null;
   }
 
-  private void updateConfiguredFilters() {
-    final String selectedFilterName = (String)myFiltersList.getSelectedValue();
+  private void updateConfiguredFilters(String defaultSelection) {
+    final String selectedFilterName = defaultSelection != null
+                                      ? defaultSelection
+                                      : (String)myFiltersList.getSelectedValue();
 
     final AndroidConfiguredLogFilters filters = AndroidConfiguredLogFilters.getInstance(myProject);
     final List<AndroidConfiguredLogFilters.MyFilterEntry> entries = filters.getFilterEntries();
@@ -425,7 +465,9 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         if (devices.length > 0 && temp == null) {
           temp = devices[0];
         }
-        myDeviceCombo.setSelectedItem(temp);
+        if (temp != null) {
+          myDeviceCombo.setSelectedItem(temp);
+        }
       }
     }
     else {
@@ -479,7 +521,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     @Override
     public boolean isActive() {
-      return AndroidLogcatToolWindowView.this.isActive();
+      return AndroidLogcatView.this.isActive();
     }
   }
 
@@ -490,7 +532,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, null);
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatView.this, null);
       dialog.setTitle(AndroidBundle.message("android.logcat.new.filter.dialog.title"));
       dialog.show();
 
@@ -502,7 +544,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         entries.add(newEntry);
         configuredLogFilters.setFilterEntries(entries);
 
-        updateConfiguredFilters();
+        updateConfiguredFilters(null);
         myFiltersList.setSelectedValue(newEntry.getName(), true);
       }
     }
@@ -534,7 +576,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       entries.remove(filterEntry);
       configuredLogFilters.setFilterEntries(entries);
 
-      updateConfiguredFilters();
+      updateConfiguredFilters(null);
       final int index = selectedIndex < myFiltersList.getItemsCount()
                         ? selectedIndex
                         : myFiltersList.getItemsCount() - 1;
@@ -561,13 +603,13 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
         return;
       }
 
-      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatToolWindowView.this, filterEntry);
+      final EditLogFilterDialog dialog = new EditLogFilterDialog(AndroidLogcatView.this, filterEntry);
       dialog.setTitle(AndroidBundle.message("android.logcat.edit.filter.dialog.title"));
       dialog.show();
 
       if (dialog.isOK()) {
         final String newName = filterEntry.getName();
-        updateConfiguredFilters();
+        updateConfiguredFilters(null);
         myFiltersList.setSelectedValue(newName, true);
       }
     }

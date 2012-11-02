@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -110,11 +112,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{
+    ModuleWizardStep[] steps = {
       new MavenModuleWizardStep(wizardContext.getProject(), this, wizardContext),
-      new SelectPropertiesStep(wizardContext.getProject(), this),
-      ProjectWizardStepFactory.getInstance().createProjectJdkStep(wizardContext)
+      new SelectPropertiesStep(wizardContext.getProject(), this)
     };
+    return wizardContext.isTemplateMode() ? steps : ArrayUtil.append(steps, ProjectWizardStepFactory.getInstance().createProjectJdkStep(wizardContext));
   }
 
   public MavenProject findPotentialParentProject(Project project) {
@@ -203,5 +205,10 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   public void setPropertiesToCreateByArtifact(Map<String, String> propertiesToCreateByArtifact) {
     myPropertiesToCreateByArtifact = propertiesToCreateByArtifact;
+  }
+
+  @Override
+  public String getGroupName() {
+    return JavaModuleType.JAVA_GROUP;
   }
 }

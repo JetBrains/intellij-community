@@ -182,37 +182,42 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       fromFile = new File(sourceFilePath);
     }
 
+    VirtualFile result;
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
       assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + testDataPath + ")";
-      return myTempDirFixture.copyFile(fromVFile, targetPath);
+      result = myTempDirFixture.copyFile(fromVFile, targetPath);
     }
+    else {
 
-    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
-    if (!targetFile.exists()) {
-      if (fromFile.isDirectory()) {
-        assert targetFile.mkdirs() : targetFile;
+      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+      if (!targetFile.exists()) {
+        if (fromFile.isDirectory()) {
+          assert targetFile.mkdirs() : targetFile;
+        }
+        else {
+          if (!fromFile.exists()) {
+            fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
+                 "getHomePath()='" + getHomePath() + "'.");
+          }
+          try {
+            FileUtil.copy(fromFile, targetFile);
+          }
+          catch (IOException e) {
+            throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
+          }
+        }
       }
-      else {
-        if (!fromFile.exists()) {
-          fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
-               "getHomePath()='" + getHomePath() + "'.");
-        }
-        try {
-          FileUtil.copy(fromFile, targetFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
-        }
-      }
+
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+      assert file != null : targetFile;
+      result = file;
     }
-
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
-    assert file != null : targetFile;
-    return file;
+    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, fromFile.getPath());
+    return result;
   }
 
   @Override
