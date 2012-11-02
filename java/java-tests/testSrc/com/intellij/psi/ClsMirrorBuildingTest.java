@@ -37,6 +37,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testExtMethods() { doTest(); }
   public void testMethodReceiver() { doTest(); }
   public void testPackageInfo() { doTest("package-info"); }
+  public void testEA40568() { doTest(); }
 
   private void doTest() {
     doTest(getTestName(false));

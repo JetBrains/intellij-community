@@ -18,7 +18,9 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -159,5 +161,9 @@ public class ClsParsingUtil {
 
     LOG.error("Unable to compute expression value: " + expr);
     return null;
+  }
+
+  public static boolean isJavaIdentifier(@NotNull String identifier, @NotNull LanguageLevel level) {
+    return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
   }
 }
