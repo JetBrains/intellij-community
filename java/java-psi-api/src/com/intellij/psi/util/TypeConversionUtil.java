@@ -927,7 +927,10 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) return false;
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
+        if (allowUncheckedConversion && !(typeLeft instanceof PsiWildcardType) && typeRight instanceof PsiClassType && ((PsiClassType)typeRight).isRaw()) continue;
+        return false;
+      }
     }
     return true;
   }
