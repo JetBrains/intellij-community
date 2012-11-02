@@ -155,7 +155,7 @@ public class ArrangementMatchingRulesList extends JBList {
     myRowUnderMouse = locationToIndex(e.getPoint());
     ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
     if (decorator != null) {
-      decorator.onMouseEntered();
+      decorator.onMouseEntered(e);
       repaintRows(myRowUnderMouse, myRowUnderMouse, false);
     }
   }

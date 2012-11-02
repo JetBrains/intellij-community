@@ -121,6 +121,11 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
     }
   }
 
+  @Override
+  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
+    return null;
+  }
+
   @Nullable
   @Override
   public Rectangle onMouseExited() {

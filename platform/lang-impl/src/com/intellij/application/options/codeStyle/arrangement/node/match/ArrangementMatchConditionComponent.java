@@ -83,4 +83,7 @@ public interface ArrangementMatchConditionComponent {
 
   @Nullable
   Rectangle onMouseExited();
+
+  @Nullable
+  Rectangle onMouseEntered(@NotNull MouseEvent e);
 }
