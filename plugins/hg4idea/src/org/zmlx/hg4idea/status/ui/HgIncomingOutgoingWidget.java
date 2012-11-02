@@ -70,7 +70,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
 
   @Override
   public StatusBarWidget copy() {
-    return new HgIncomingOutgoingWidget(myVcs, getProject(), myProjectSettings, myIsIncoming);
+    return new HgIncomingOutgoingWidget(myVcs, myProject, myProjectSettings, myIsIncoming);
   }
 
   @NotNull
@@ -142,7 +142,6 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
         if (myChangesStatus.getNumChanges() > 0) {
           myTooltip = "\n" + myChangesStatus.getToolTip();
         }
-
         myStatusBar.updateWidget(ID());
       }
     });
@@ -150,17 +149,13 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
 
 
   public void activate() {
-    Project project = getProject();
-    if (null == project) {
-      return;
-    }
-    myBusConnection = project.getMessageBus().connect();
+    myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
     myBusConnection.subscribe(myIsIncoming ? HgVcs.INCOMING_CHECK_TOPIC : HgVcs.OUTGOING_CHECK_TOPIC, this);
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {
-      statusBar.addWidget(this, project);
+      statusBar.addWidget(this, myProject);
       isAlreadyShown = true;
     }
   }
@@ -182,6 +177,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     if (null != statusBar && isVisible()) {
       statusBar.addWidget(this, myProject);
       isAlreadyShown = true;
+      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
     }
   }
 
@@ -190,7 +186,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   private void update() {
-    update(getProject());
+    update(myProject);
   }
 
   private void emptyTooltip() {
