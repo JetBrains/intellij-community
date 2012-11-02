@@ -69,15 +69,19 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public void setNotNulls(String... annotations) {
-    myNotNulls.clear();
-    addAllIfNotPresent(myNotNulls, DEFAULT_NOT_NULLS);
-    addAllIfNotPresent(myNotNulls, annotations);
+    synchronized (LOCK) {
+      myNotNulls.clear();
+      addAllIfNotPresent(myNotNulls, DEFAULT_NOT_NULLS);
+      addAllIfNotPresent(myNotNulls, annotations);
+    }
   }
 
   public void setNullables(String... annotations) {
-    myNullables.clear();
-    addAllIfNotPresent(myNullables, DEFAULT_NULLABLES);
-    addAllIfNotPresent(myNullables, annotations);
+    synchronized (LOCK) {
+      myNullables.clear();
+      addAllIfNotPresent(myNullables, DEFAULT_NULLABLES);
+      addAllIfNotPresent(myNullables, annotations);
+    }
   }
 
   public String getDefaultNullable() {
@@ -123,25 +127,21 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public List<String> getNullables() {
-    if (myNullables.isEmpty()) {
-      synchronized (LOCK) {
-        if (myNullables.isEmpty()) {
-          Collections.addAll(myNullables, DEFAULT_NULLABLES);
-        }
+    synchronized (LOCK) {
+      if (myNullables.isEmpty()) {
+        Collections.addAll(myNullables, DEFAULT_NULLABLES);
       }
+      return myNullables;
     }
-    return myNullables;
   }
 
   public List<String> getNotNulls() {
-    if (myNotNulls.isEmpty()) {
-      synchronized (LOCK) {
-        if (myNotNulls.isEmpty()) {
-          Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
-        }
+    synchronized (LOCK) {
+      if (myNotNulls.isEmpty()) {
+        Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
       }
+      return myNotNulls;
     }
-    return myNotNulls;
   }
 
   public boolean hasDefaultValues() {
