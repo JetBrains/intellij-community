@@ -124,8 +124,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myDelegate.setSelected(selected); 
   }
 
-  public void onMouseEntered() {
+  @Override
+  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
     setBackground(UIUtil.getDecoratedRowColor());
+    return myDelegate.onMouseEntered(e);
   }
 
   @Nullable

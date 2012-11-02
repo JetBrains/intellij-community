@@ -784,8 +784,11 @@ public class HighlightClassUtil {
           if (manager.areElementsEquivalent(place, aClass)) return true;
         }
       }
-      if (place instanceof PsiModifierListOwner && ((PsiModifierListOwner)place).hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
+      if (place instanceof PsiModifierListOwner) {
+        final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
+        if (modifierList != null && modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
+          return false;
+        }
       }
       place = place.getParent();
     }

@@ -129,7 +129,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     update();
   }
 
-  @Override
   public void update(final Project project) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override

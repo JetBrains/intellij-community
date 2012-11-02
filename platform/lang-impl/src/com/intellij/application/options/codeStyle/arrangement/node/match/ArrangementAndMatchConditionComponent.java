@@ -49,6 +49,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
 
   @NotNull private final ArrangementCompositeMatchCondition mySetting;
   @Nullable private      Rectangle                          myScreenBounds;
+  @Nullable private      ArrangementMatchConditionComponent myComponentUnderMouse;
 
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
@@ -165,11 +166,43 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     Point location = event.getLocationOnScreen();
     for (ArrangementMatchConditionComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
-      if (bounds != null && bounds.contains(location)) {
-        return component.onMouseMove(event);
+      if (bounds == null || !bounds.contains(location)) {
+        continue;
+      }
+      if (myComponentUnderMouse == null) {
+        myComponentUnderMouse = component;
+        Rectangle rectangleOnEnter = myComponentUnderMouse.onMouseEntered(event);
+        Rectangle rectangleOnMove = myComponentUnderMouse.onMouseMove(event);
+        if (rectangleOnEnter != null && rectangleOnMove != null) {
+          return myScreenBounds; // Repaint row
+        }
+        else if (rectangleOnEnter != null) {
+          return rectangleOnEnter;
+        }
+        else {
+          return rectangleOnMove;
+        }
+      }
+      else {
+        if (myComponentUnderMouse != component) {
+          myComponentUnderMouse.onMouseExited();
+          myComponentUnderMouse = component;
+          component.onMouseEntered(event);
+          return myScreenBounds; // Repaint row.
+        }
+        else {
+          return component.onMouseMove(event);
+        }
       }
     }
-    return null;
+    if (myComponentUnderMouse == null) {
+      return null;
+    }
+    else {
+      Rectangle result = myComponentUnderMouse.onMouseExited();
+      myComponentUnderMouse = null;
+      return result;
+    }
   }
 
   @Override
@@ -184,14 +217,26 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     }
   }
 
+  @Override
+  public Rectangle onMouseEntered(@NotNull MouseEvent event) {
+    Point location = event.getLocationOnScreen();
+    for (ArrangementMatchConditionComponent component : myComponents) {
+      Rectangle bounds = component.getScreenBounds();
+      if (bounds != null && bounds.contains(location)) {
+        myComponentUnderMouse = component;
+        return component.onMouseEntered(event);
+      }
+    }
+    return null;
+  }
+
   @Nullable
   @Override
   public Rectangle onMouseExited() {
-    for (ArrangementMatchConditionComponent component : myComponents) {
-      Rectangle bounds = component.onMouseExited();
-      if (bounds != null) {
-        return bounds;
-      }
+    if (myComponentUnderMouse != null) {
+      Rectangle result = myComponentUnderMouse.onMouseExited();
+      myComponentUnderMouse = null;
+      return result;
     }
     return null;
   }

@@ -78,15 +78,12 @@ public class HgRemoteStatusUpdater implements HgUpdater {
             if (project.isDisposed()) return;
             final VirtualFile[] roots =
               root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-            ;
-            if (myProjectSettings.isCheckIncoming()) {
+            if (myProjectSettings.isCheckIncomingOutgoing()) {
               updateChangesetStatus(project, roots, myIncomingStatus, true);
-            }
-            if (myProjectSettings.isCheckOutgoing()) {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
 
-            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project);
+            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -131,23 +128,15 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   private String getProgressTitle() {
-    String type;
-    if (myProjectSettings.isCheckIncoming()) {
-      if (myProjectSettings.isCheckOutgoing()) {
+    String type="";
+    if (myProjectSettings.isCheckIncomingOutgoing()) {
         type = "incoming and outgoing";
-      }
-      else {
-        type = "incoming";
-      }
-    }
-    else {
-      type = "outgoing";
     }
     return "Checking " + type + " changes";
   }
 
   protected boolean isCheckingEnabled() {
-    return myProjectSettings.isCheckIncoming() || myProjectSettings.isCheckOutgoing();
+    return myProjectSettings.isCheckIncomingOutgoing();
   }
 
   private final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {

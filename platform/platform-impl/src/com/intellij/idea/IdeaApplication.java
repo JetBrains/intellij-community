@@ -37,7 +37,9 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
@@ -286,18 +288,36 @@ public class IdeaApplication {
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       // app.setupIdeQueue(IdeEventQueue.getInstance());
+      final WindowManagerEx windowManager = (WindowManagerEx)WindowManager.getInstance();
+      WindowManagerListener splashDisposer = new WindowManagerListener() {
+        @Override
+        public void frameCreated(IdeFrame frame) {
+          if (mySplash != null) {
+            mySplash.dispose();
+            mySplash = null; // Allow GC collect the splash window
+          }
+          windowManager.removeListener(this);
+        }
+
+        @Override
+        public void beforeFrameReleased(IdeFrame frame) {}
+      };
+
+      windowManager.addListener(splashDisposer);
+
       try {
-        IdeEventQueue.getInstance().setWindowManager((WindowManagerEx)WindowManager.getInstance());
+        IdeEventQueue.getInstance().setWindowManager(windowManager);
 
         final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
         final AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
         lifecyclePublisher.appFrameCreated(args, willOpenProject);
         LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
         PluginManager.dumpPluginClassStatistics();
-        //if (!willOpenProject.get()) {
+        if (!willOpenProject.get()) {
           WelcomeFrame.showNow();
           lifecyclePublisher.welcomeScreenDisplayed();
-        //}
+          splashDisposer.frameCreated(null);
+        }
       }
       catch (PluginException e) {
         Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
@@ -305,17 +325,6 @@ public class IdeaApplication {
                                  e.getMessage(), "Plugin Error");
         System.exit(-1);
       }
-
-      app.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (mySplash != null) {
-            mySplash.dispose();
-            mySplash = null; // Allow GC collect the splash window
-          }
-        }
-      }, ModalityState.NON_MODAL);
-
 
       app.invokeLater(new Runnable() {
         @Override

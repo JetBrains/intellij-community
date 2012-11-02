@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WelcomeScreenProvider;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 
 import javax.swing.*;
@@ -37,6 +38,7 @@ public class WelcomeFrame extends JFrame {
 
     setContentPane(screen.getWelcomePanel());
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
+    AppUIUtil.updateFrameIcon(this);
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override

@@ -290,7 +290,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       return SystemInfo.isMac;
     }
     else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || "Default for KDE".equals(name)) {
-      return SystemInfo.isUnix && !SystemInfo.isMac;
+      return SystemInfo.isXWindow;
     }
     return true;
   }
