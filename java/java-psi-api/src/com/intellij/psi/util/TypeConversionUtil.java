@@ -928,7 +928,6 @@ public class TypeConversionUtil {
         return allowUncheckedConversion;
       }
       if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
-        if (allowUncheckedConversion && !(typeLeft instanceof PsiWildcardType) && typeRight instanceof PsiClassType && ((PsiClassType)typeRight).isRaw()) continue;
         return false;
       }
     }
