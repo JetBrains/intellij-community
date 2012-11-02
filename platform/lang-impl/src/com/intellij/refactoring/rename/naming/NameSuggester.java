@@ -88,6 +88,7 @@ public class NameSuggester {
   }
 
   public String suggestName(final String propertyName) {
+    if (myOldClassNameAsGiven.equals(propertyName)) return myNewClassNameAsGiven;
     final String[] propertyWords = NameUtil.splitNameIntoWords(propertyName);
     TIntIntHashMap matches = calculateMatches(propertyWords);
     if (matches.isEmpty()) return propertyName;
