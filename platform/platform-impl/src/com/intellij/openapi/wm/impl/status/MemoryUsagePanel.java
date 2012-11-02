@@ -45,8 +45,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
   private static final int HEIGHT = 16;
-  private static final Color USED_COLOR_1 = new Color(175, 185, 202);
-  private static final Color USED_COLOR_2 = new Color(126, 138, 168);
+  private static final Color USED_COLOR_1 = Gray._185;
+  private static final Color USED_COLOR_2 = Gray._145;
   private static final Color UNUSED_COLOR_1 = Gray._200.withAlpha(100);
   private static final Color UNUSED_COLOR_2 = Gray._150.withAlpha(130);
   private static final Color UNUSED_COLOR_3 = Gray._175;
