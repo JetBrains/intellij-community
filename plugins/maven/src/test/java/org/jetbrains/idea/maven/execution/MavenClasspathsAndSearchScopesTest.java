@@ -781,6 +781,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     iof2.mkdirs();
     VirtualFile f1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof1);
     VirtualFile f2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(iof2);
+    VirtualFile f3 = createProjectSubDir("m1/foo/bar3");
 
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -804,6 +805,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                                            "        <additionalClasspathElements>" +
                                            "          <additionalClasspathElement>" + f1.getPath() + "</additionalClasspathElement>" +
                                            "          <additionalClasspathElement>" + f2.getPath() + "</additionalClasspathElement>" +
+                                           "          <additionalClasspathElement>${project.basedir}/foo/bar3</additionalClasspathElement>" +
                                            "        </additionalClasspathElements>" +
                                            "      </configuration>" +
                                            "    </plugin>" +
@@ -832,7 +834,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                               getProjectPath() + "/m1/src/test/java",
                               getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
                               f1.getPath(),
-                              f2.getPath());
+                              f2.getPath(),
+                              f3.getPath());
 
     assertAllProductionClasspath("m1",
                                  getProjectPath() + "/m1/target/classes",
@@ -842,7 +845,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m1/target/classes",
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
                             f1.getPath(),
-                            f2.getPath());
+                            f2.getPath(),
+                            f3.getPath());
   }
 
   public void testDoNotChangeClasspathForRegularModules() throws Exception {
