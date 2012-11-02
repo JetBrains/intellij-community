@@ -101,6 +101,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
     setTitle("Branch Is Not Fully Merged");
     setOKButtonText("Delete");
+    setOKButtonMnemonic('D');
     setCancelButtonText("Cancel");
   }
 
