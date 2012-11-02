@@ -33,6 +33,7 @@ public class ScreenUtil {
     final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
     ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
+  private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
 
@@ -105,7 +106,7 @@ public class ScreenUtil {
     synchronized (ourInsetsCache) {
       Pair<Insets, Long> data = ourInsetsCache.get(gc);
       final long now = System.currentTimeMillis();
-      if (data == null || now > data.second + /*17 * */1000) {  // keep for 17s
+      if (data == null || now > data.second + ourInsetsTimeout) {
         data = Pair.create(calcInsets(gc), now);
         ourInsetsCache.put(gc, data);
       }
