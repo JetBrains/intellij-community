@@ -60,6 +60,7 @@ public class ClassRenderer extends NodeRendererImpl{
 
   public boolean SORT_ASCENDING = false;
   public boolean SHOW_SYNTHETICS = true;
+  public boolean SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES = true;
   public boolean SHOW_STATIC = false;
   public boolean SHOW_STATIC_FINAL = false;
 
@@ -184,7 +185,7 @@ public class ClassRenderer extends NodeRendererImpl{
     if (!SHOW_SYNTHETICS && isSynthetic) {
       return false;
     }
-    if (isSynthetic) {
+    if (SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES && isSynthetic) {
       try {
         final StackFrameProxy frameProxy = context.getFrameProxy();
         if (frameProxy != null) {
