@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -61,9 +63,12 @@ public class ArrangementMatchingRulesList extends JBList {
       @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
     });
     addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
+      @Override public void mouseExited(MouseEvent e) { onMouseExited(e); }
       @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
       @Override public void mouseClicked(MouseEvent e) { onMouseClicked(e); }
+    });
+    addListSelectionListener(new ListSelectionListener() {
+      @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
     });
   }
 
@@ -90,11 +95,15 @@ public class ArrangementMatchingRulesList extends JBList {
   private void onMouseMoved(@NotNull MouseEvent e) {
     int i = locationToIndex(e.getPoint());
     if (i != myRowUnderMouse) {
-      onMouseExited();
+      onMouseExited(e);
     }
     
     if (i < 0) {
       return;
+    }
+
+    if (i != myRowUnderMouse) {
+      onMouseEntered(e);
     }
 
     ArrangementListRowDecorator decorator = myComponents.get(i);
@@ -128,19 +137,34 @@ public class ArrangementMatchingRulesList extends JBList {
     }
   }
   
-  private void onMouseExited() {
+  private void onMouseExited(@NotNull MouseEvent e) {
     if (myRowUnderMouse < 0) {
       return;
     }
 
     ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
-    if (decorator != null) {
-      decorator.onMouseExited();
+    if (decorator == null) {
+      return;
+    }
+
+    Rectangle rectangle = decorator.onMouseExited();
+    if (rectangle != null) {
+      repaintScreenBounds(rectangle);
     }
   }
 
   private void onMouseEntered(@NotNull MouseEvent e) {
-    // TODO den implement
+    myRowUnderMouse = locationToIndex(e.getPoint());
+  }
+
+  private void onSelectionChange(@NotNull ListSelectionEvent e) {
+    ListSelectionModel model = getSelectionModel();
+    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+      ArrangementListRowDecorator decorator = myComponents.get(i);
+      if (decorator != null) {
+        decorator.setSelected(model.isSelectedIndex(i));
+      }
+    }
   }
 
   @NotNull

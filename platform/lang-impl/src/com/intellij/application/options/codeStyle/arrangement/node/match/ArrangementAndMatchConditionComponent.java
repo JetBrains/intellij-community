@@ -184,11 +184,16 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     }
   }
 
+  @Nullable
   @Override
-  public void onMouseExited() {
+  public Rectangle onMouseExited() {
     for (ArrangementMatchConditionComponent component : myComponents) {
-      component.onMouseExited();
+      Rectangle bounds = component.onMouseExited();
+      if (bounds != null) {
+        return bounds;
+      }
     }
+    return null;
   }
 
   @Override

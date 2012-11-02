@@ -119,7 +119,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @Override
   public void setSelected(boolean selected) {
-    // TODO den implement 
+    myDelegate.setSelected(selected); 
   }
 
   @Nullable
@@ -133,9 +133,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myDelegate.onMouseClick(event); 
   }
 
+  @Nullable
   @Override
-  public void onMouseExited() {
-    myDelegate.onMouseExited(); 
+  public Rectangle onMouseExited() {
+    return myDelegate.onMouseExited(); 
   }
 
   @Override
