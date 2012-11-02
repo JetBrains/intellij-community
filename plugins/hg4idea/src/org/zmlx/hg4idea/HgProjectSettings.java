@@ -24,8 +24,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
   private final HgGlobalSettings myAppSettings;
-  private boolean myCheckIncoming = true;
-  private boolean myCheckOutgoing = true;
+  private Boolean myCheckIncomingOutgoing = null;
 
   public HgProjectSettings(HgGlobalSettings appSettings) {
     myAppSettings = appSettings;
@@ -34,34 +33,30 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   public static class State {
     public boolean myCheckIncoming = true;
     public boolean myCheckOutgoing = true;
+    public Boolean myCheckIncomingOutgoing = null;
   }
 
   public State getState() {
     final State s = new State();
-    s.myCheckIncoming = myCheckIncoming;
-    s.myCheckOutgoing = myCheckOutgoing;
+    s.myCheckIncomingOutgoing = myCheckIncomingOutgoing;
     return s;
   }
 
   public void loadState(State state) {
-    myCheckIncoming = state.myCheckIncoming;
-    myCheckOutgoing = state.myCheckOutgoing;
+    myCheckIncomingOutgoing = state.myCheckIncomingOutgoing;
+    if(myCheckIncomingOutgoing == null){
+      myCheckIncomingOutgoing =  state.myCheckIncoming || state.myCheckOutgoing;
+    }
+
+
   }
 
-  public boolean isCheckIncoming() {
-    return myCheckIncoming;
+  public boolean isCheckIncomingOutgoing() {
+    return myCheckIncomingOutgoing;
   }
 
-  public void setCheckIncoming(boolean checkIncoming) {
-    this.myCheckIncoming = checkIncoming;
-  }
-
-  public boolean isCheckOutgoing() {
-    return myCheckOutgoing;
-  }
-
-  public void setCheckOutgoing(boolean checkOutgoing) {
-    this.myCheckOutgoing = checkOutgoing;
+  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
+    this.myCheckIncomingOutgoing = checkIncomingOutgoing;
   }
 
   public String getHgExecutable() {

@@ -30,8 +30,7 @@ public class HgConfigurationProjectPanel {
   @NotNull private final HgProjectSettings myProjectSettings;
 
   private JPanel myMainPanel;
-  private JCheckBox myCheckIncomingCbx;
-  private JCheckBox myCheckOutgoingCbx;
+  private JCheckBox myCheckIncomingOutgoingCbx;
   private JRadioButton myAutoRadioButton;
   private JRadioButton mySelectRadioButton;
   private TextFieldWithBrowseButton myPathSelector;
@@ -54,14 +53,12 @@ public class HgConfigurationProjectPanel {
     boolean executableModified = mySelectRadioButton.isSelected()
                                  ? !getCurrentPath().equals(myProjectSettings.getHgExecutable())
                                  : myAutoRadioButton.isSelected() != myProjectSettings.isAutodetectHg();
-    return executableModified || myCheckIncomingCbx.isSelected() != myProjectSettings.isCheckIncoming()
-           || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing()
+    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing()
            || myRunHgAsBashCheckBox.isSelected() != myProjectSettings.isRunViaBash();
   }
 
   public void saveSettings() {
-    myProjectSettings.setCheckIncoming(myCheckIncomingCbx.isSelected());
-    myProjectSettings.setCheckOutgoing(myCheckOutgoingCbx.isSelected());
+    myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
     myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
 
     if (myAutoRadioButton.isSelected()) {
@@ -77,8 +74,7 @@ public class HgConfigurationProjectPanel {
   }
 
   public void loadSettings() {
-    myCheckIncomingCbx.setSelected(myProjectSettings.isCheckIncoming());
-    myCheckOutgoingCbx.setSelected(myProjectSettings.isCheckOutgoing());
+    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing() );
     myRunHgAsBashCheckBox.setSelected(myProjectSettings.isRunViaBash());
 
     boolean isAutodetectHg = myProjectSettings.isAutodetectHg();

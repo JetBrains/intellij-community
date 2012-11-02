@@ -116,17 +116,12 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
 
+  public boolean isVisible() {
+    return myProjectSettings.isCheckIncomingOutgoing();
+  }
+
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
-    update();
-  }
-
-  public boolean isVisible() {
-    return (myIsIncoming && myProjectSettings.isCheckIncoming()) || (!myIsIncoming && myProjectSettings.isCheckOutgoing());
-  }
-
-  @Override
-  public void update(final Project project) {
     if (!isVisible()) {
       return;
     }
@@ -151,7 +146,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void activate() {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    myBusConnection.subscribe(myIsIncoming ? HgVcs.INCOMING_CHECK_TOPIC : HgVcs.OUTGOING_CHECK_TOPIC, this);
+    myBusConnection.subscribe(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {
@@ -177,7 +172,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     if (null != statusBar && isVisible()) {
       statusBar.addWidget(this, myProject);
       isAlreadyShown = true;
-      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     }
   }
 
@@ -186,7 +181,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   private void update() {
-    update(myProject);
+    update(myProject, null);
   }
 
   private void emptyTooltip() {
