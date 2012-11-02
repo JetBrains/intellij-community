@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.ModuleProvider;
+import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
@@ -29,9 +30,8 @@ import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -118,6 +118,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private int[][] myExpandedState;
   private int[][] mySelectionState;
   private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
+
+  private FixableMessageAction myWarnAction;
 
   private JPanel myErrorPanel;
   private JPanel myErrorMessages;
@@ -313,6 +315,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
+    myWarnAction = new FixableMessageAction();
 
     add(myActionPanel.getToolbarComponent());
     add(myPanel);
@@ -403,6 +406,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     storeState();
     hideProgress();
     myRootComponent = null;
+    myWarnAction.hide();
 
     myErrorMessages.removeAll();
 
@@ -481,7 +485,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected final void showWarnMessages(@Nullable List<FixableMessageInfo> messages) {
-    // XXX
+    if (messages == null) {
+      myWarnAction.hide();
+    }
+    else {
+      myWarnAction.show(messages);
+    }
   }
 
   private void createProgressPanel() {
@@ -897,6 +906,116 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     public boolean getScrollableTracksViewportHeight() {
+      return false;
+    }
+  }
+
+  private class FixableMessageAction extends AbstractComboBoxAction<FixableMessageInfo> {
+    private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+    private String myTitle;
+    private boolean myIsAdded;
+
+    public FixableMessageAction() {
+      myActionPanel.getActionGroup().add(myActionGroup);
+
+      Presentation presentation = getTemplatePresentation();
+      presentation.setDescription("Warnings");
+      presentation.setIcon(AllIcons.Ide.Warning_notifications);
+    }
+
+    public void show(List<FixableMessageInfo> messages) {
+      if (!myIsAdded) {
+        myTitle = Integer.toString(messages.size());
+        setItems(messages, null);
+        myActionGroup.add(this);
+        myActionPanel.update();
+        myIsAdded = true;
+      }
+    }
+
+    public void hide() {
+      if (myIsAdded) {
+        myActionGroup.remove(this);
+        myActionPanel.update();
+        myIsAdded = false;
+      }
+    }
+
+    @NotNull
+    @Override
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
+      for (final FixableMessageInfo message : myItems) {
+        AnAction action;
+        if ((message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) ||
+            (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0)) {
+          final AnAction[] defaultAction = new AnAction[1];
+          DefaultActionGroup popupGroup = new DefaultActionGroup() {
+            @Override
+            public boolean canBePerformed(DataContext context) {
+              return true;
+            }
+
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              defaultAction[0].actionPerformed(e);
+            }
+          };
+          popupGroup.setPopup(true);
+          action = popupGroup;
+
+          if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
+            AnAction popupAction = new AnAction() {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                message.myQuickFix.run();
+              }
+            };
+            popupAction.getTemplatePresentation().setText(message.myLinkText + message.myAfterLinkText);
+            popupGroup.add(popupAction);
+            defaultAction[0] = popupAction;
+          }
+          if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+            for (final Pair<String, Runnable> pair : message.myAdditionalFixes) {
+              AnAction popupAction = new AnAction() {
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  pair.second.run();
+                }
+              };
+              popupAction.getTemplatePresentation().setText(pair.first);
+              popupGroup.add(popupAction);
+              if (defaultAction[0] == null) {
+                defaultAction[0] = popupAction;
+              }
+            }
+          }
+        }
+        else {
+          action = new AnAction() {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+            }
+          };
+        }
+        actionGroup.add(action);
+        update(message, action.getTemplatePresentation(), true);
+      }
+      return actionGroup;
+    }
+
+    @Override
+    protected void update(FixableMessageInfo item, Presentation presentation, boolean popup) {
+      if (popup) {
+        presentation.setText(item.myBeforeLinkText);
+      }
+      else {
+        presentation.setText(myTitle);
+      }
+    }
+
+    @Override
+    protected boolean selectionChanged(FixableMessageInfo item) {
       return false;
     }
   }
