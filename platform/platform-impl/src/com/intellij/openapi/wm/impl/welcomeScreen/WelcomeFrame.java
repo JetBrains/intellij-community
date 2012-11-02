@@ -5,6 +5,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -35,6 +36,7 @@ public class WelcomeFrame extends JFrame {
     final WelcomeScreen screen = createScreen(rootPane);
 
     setContentPane(screen.getWelcomePanel());
+    setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
