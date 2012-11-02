@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
@@ -173,24 +174,36 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       final ConfigurationType[] types = runManager.getConfigurationFactories();
       for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
-        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
-        ArrayList<RunnerAndConfigurationSettings> configurationSettingsList = new ArrayList<RunnerAndConfigurationSettings>();
-        int i = 0;
-        for (RunnerAndConfigurationSettings configuration : configurations) {
-          if (configuration.isTemporary()) {
-            configurationSettingsList.add(configuration);
+        Map<String,List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
+        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
+          DefaultActionGroup group = entry.getKey() != null ? new DefaultActionGroup(entry.getKey(), true) : actionGroup;
+          group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
+          for (RunnerAndConfigurationSettings settings : entry.getValue()) {
+            group.add(new SelectConfigAction(settings, project));
           }
-          else {
-            configurationSettingsList.add(i++, configuration);
+          if (group != actionGroup) {
+            actionGroup.add(group);
           }
         }
-        for (final RunnerAndConfigurationSettings configuration : configurationSettingsList) {
-          //if (runManager.canRunConfiguration(configuration)) {
-          final SelectConfigAction action = new SelectConfigAction(configuration, project);
 
-          actionGroup.add(action);
-          //}
-        }
+        //final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        //ArrayList<RunnerAndConfigurationSettings> configurationSettingsList = new ArrayList<RunnerAndConfigurationSettings>();
+        //int i = 0;
+        //for (RunnerAndConfigurationSettings configuration : configurations) {
+        //  if (configuration.isTemporary()) {
+        //    configurationSettingsList.add(configuration);
+        //  }
+        //  else {
+        //    configurationSettingsList.add(i++, configuration);
+        //  }
+        //}
+        //for (final RunnerAndConfigurationSettings configuration : configurationSettingsList) {
+        //  //if (runManager.canRunConfiguration(configuration)) {
+        //  final SelectConfigAction action = new SelectConfigAction(configuration, project);
+        //
+        //  actionGroup.add(action);
+        //  //}
+        //}
 
         allActionsGroup.add(actionGroup);
         allActionsGroup.addSeparator();
