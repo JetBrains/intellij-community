@@ -17,6 +17,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
@@ -559,7 +560,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void createElementLink(@NonNls final StringBuilder sb, final PsiElement element, final String str) {
-    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
+    sb.append("&nbsp;&nbsp;<a href=\"" + DocumentationManager.PSI_ELEMENT_PROTOCOL);
     sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
     sb.append("\">");
     sb.append(str);
