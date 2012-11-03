@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -43,8 +42,14 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
 
   @NotNull
   public Icon getIcon() {
-    final Editor editor = getEditor();
-    return editor == null || editor.getDocument().isWritable() ? AllIcons.Ide.Readwrite : AllIcons.Ide.Readonly;
+    Project project = getProject();
+    VirtualFile virtualFile = null;
+    if (project != null) {
+      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
+      virtualFile = selectedFiles.length > 0 ? selectedFiles[0] : null;
+    }
+    return virtualFile == null || virtualFile.isWritable() ? AllIcons.Ide.Readwrite : AllIcons.Ide.Readonly;
   }
 
   @NotNull
@@ -114,17 +119,6 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
 
   private static boolean isReadOnlyApplicableForFiles(final VirtualFile[] files) {
     return files.length > 0 && !files[0].getFileSystem().isReadOnly();
-  }
-
-  @Nullable
-  private Editor getEditor() {
-    final Project project = getProject();
-    if (project != null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      return manager.getSelectedTextEditor();
-    }
-
-    return null;
   }
 
   @Nullable
