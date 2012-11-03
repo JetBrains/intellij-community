@@ -12,11 +12,8 @@ import java.io.PrintStream;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 14.02.11
- * Time: 5:11
- * To change this template use File | Settings | File Templates.
  */
 class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;

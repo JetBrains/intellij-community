@@ -10,11 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.02.11
- * Time: 4:54
- * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
   private final DependencyContext myContext;

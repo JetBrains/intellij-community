@@ -29,11 +29,8 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 05.11.11
- * Time: 0:05
- * To change this template use File | Settings | File Templates.
  */
 public class IntIntPersistentMaplet extends IntIntMaplet {
   private static final Object NULL_OBJ = new Object();

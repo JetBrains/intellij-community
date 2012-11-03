@@ -22,11 +22,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 28.01.11
- * Time: 16:20
- * To change this template use File | Settings | File Templates.
  */
 public class Mappings {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");

@@ -1,11 +1,8 @@
 package org.jetbrains.ether;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 26.09.11
- * Time: 17:40
- * To change this template use File | Settings | File Templates.
  */
 public class GenericTest extends IncrementalTestCase {
   public GenericTest() throws Exception {

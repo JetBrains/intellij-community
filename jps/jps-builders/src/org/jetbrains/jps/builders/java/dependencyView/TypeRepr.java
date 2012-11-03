@@ -12,11 +12,8 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 14.02.11
- * Time: 3:54
- * To change this template use File | Settings | File Templates.
  */
 class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;

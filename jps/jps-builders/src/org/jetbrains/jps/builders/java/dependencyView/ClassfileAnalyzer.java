@@ -10,11 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 31.01.11
- * Time: 2:00
- * To change this template use File | Settings | File Templates.
  */
 
 class ClassfileAnalyzer {

@@ -7,11 +7,8 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 28.01.11
- * Time: 15:55
- * To change this template use File | Settings | File Templates.
  */
 public class Callbacks {
 
