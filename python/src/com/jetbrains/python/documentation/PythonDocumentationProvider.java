@@ -1,9 +1,11 @@
 package com.jetbrains.python.documentation;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -308,12 +310,29 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   // provides ctrl+Q doc
-  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
+
+    originalElement = findRealOriginalElement(originalElement); //original element can be whitespace or bracket,
+    // but we need identifier that resolves to element
+
     return new PyDocumentationBuilder(element, originalElement).build();
+  }
+
+  private static PsiElement findRealOriginalElement(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return element;
+    }
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+    if (document == null) {
+      return element;
+    }
+    int newOffset = TargetElementUtilBase.adjustOffset(file, document, element.getTextOffset());
+    return file.findElementAt(newOffset);
   }
 
   @Override
