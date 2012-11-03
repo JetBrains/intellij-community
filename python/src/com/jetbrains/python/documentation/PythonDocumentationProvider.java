@@ -335,7 +335,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       return element;
     }
     int newOffset = TargetElementUtilBase.adjustOffset(file, document, element.getTextOffset());
-    return file.findElementAt(newOffset);
+    PsiElement newElement = file.findElementAt(newOffset);
+    return newElement != null ? newElement : element;
   }
 
   @Override
