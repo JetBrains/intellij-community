@@ -28,17 +28,19 @@ class TypeRepr {
   }
 
   interface AbstractType extends RW.Savable {
+    AbstractType[] EMPTY_TYPE_ARRAY = new AbstractType[0];
+
     void updateClassUsages(DependencyContext context, int owner, Set<UsageRepr.Usage> s);
     String getDescr(DependencyContext context);
     void save(DataOutput out);
   }
 
   public static class PrimitiveType implements AbstractType {
-    public final int myType;
+    public final int type;
 
     @Override
     public String getDescr(final DependencyContext context) {
-      return context.getValue(myType);
+      return context.getValue(type);
     }
 
     @Override
@@ -50,7 +52,7 @@ class TypeRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(PRIMITIVE_TYPE);
-        out.writeInt(myType);
+        out.writeInt(type);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -58,12 +60,12 @@ class TypeRepr {
     }
 
     PrimitiveType(final int type) {
-      this.myType = type;
+      this.type = type;
     }
 
     PrimitiveType(final DataInput in) {
       try {
-        myType = in.readInt();
+        type = in.readInt();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -77,23 +79,23 @@ class TypeRepr {
 
       final PrimitiveType that = (PrimitiveType)o;
 
-      return myType == that.myType;
+      return type == that.type;
     }
 
     @Override
     public int hashCode() {
-      return myType;
+      return type;
     }
   }
 
   public static class ArrayType implements AbstractType {
-    public final AbstractType myElementType;
+    public final AbstractType elementType;
 
     public AbstractType getDeepElementType() {
       AbstractType current = this;
 
       while (current instanceof ArrayType) {
-        current = ((ArrayType)current).myElementType;
+        current = ((ArrayType)current).elementType;
       }
 
       return current;
@@ -101,16 +103,16 @@ class TypeRepr {
 
     @Override
     public String getDescr(final DependencyContext context) {
-      return "[" + myElementType.getDescr(context);
+      return "[" + elementType.getDescr(context);
     }
 
     @Override
     public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
-      myElementType.updateClassUsages(context, owner, s);
+      elementType.updateClassUsages(context, owner, s);
     }
 
     ArrayType(final AbstractType elementType) {
-      this.myElementType = elementType;
+      this.elementType = elementType;
     }
 
     @Override
@@ -120,19 +122,19 @@ class TypeRepr {
 
       final ArrayType arrayType = (ArrayType)o;
 
-      return myElementType.equals(arrayType.myElementType);
+      return elementType.equals(arrayType.elementType);
     }
 
     @Override
     public int hashCode() {
-      return myElementType.hashCode();
+      return elementType.hashCode();
     }
 
     @Override
     public void save(final DataOutput out) {
       try {
         out.writeByte(ARRAY_TYPE);
-        myElementType.save(out);
+        elementType.save(out);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -141,34 +143,37 @@ class TypeRepr {
   }
 
   public static class ClassType implements AbstractType {
-    public final int myClassName;
-    public final AbstractType[] myTypeArgs;
+    public final int className;
+    public final AbstractType[] typeArgs;
 
     @Override
     public String getDescr(final DependencyContext context) {
-      return "L" + context.getValue(myClassName) + ";";
+      return "L" + context.getValue(className) + ";";
     }
 
     @Override
     public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
-      s.add(UsageRepr.createClassUsage(context, myClassName));
+      s.add(UsageRepr.createClassUsage(context, className));
     }
 
     ClassType(final int className) {
-      this.myClassName = className;
-      myTypeArgs = new AbstractType[0];
+      this.className = className;
+      typeArgs = EMPTY_TYPE_ARRAY;
     }
 
     ClassType(final DependencyContext context, final DataInput in) {
       try {
-        myClassName = in.readInt();
+        className = in.readInt();
         final int size = in.readInt();
-        myTypeArgs = new AbstractType[size];
-
-        final DataExternalizer<AbstractType> externalizer = externalizer(context);
-
-        for (int i = 0; i < size; i++) {
-          myTypeArgs[i] = externalizer.read(in);
+        if (size == 0) {
+          typeArgs = EMPTY_TYPE_ARRAY;
+        }
+        else {
+          typeArgs = new AbstractType[size];
+          final DataExternalizer<AbstractType> externalizer = externalizer(context);
+          for (int i = 0; i < size; i++) {
+            typeArgs[i] = externalizer.read(in);
+          }
         }
       }
       catch (IOException e) {
@@ -183,16 +188,16 @@ class TypeRepr {
 
       final ClassType classType = (ClassType)o;
 
-      if (myClassName != classType.myClassName) return false;
-      if (!Arrays.equals(myTypeArgs, classType.myTypeArgs)) return false;
+      if (className != classType.className) return false;
+      if (!Arrays.equals(typeArgs, classType.typeArgs)) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myClassName;
-      result = 31 * result + (myTypeArgs != null ? Arrays.hashCode(myTypeArgs) : 0);
+      int result = className;
+      result = 31 * result + (typeArgs != null ? Arrays.hashCode(typeArgs) : 0);
       return result;
     }
 
@@ -200,9 +205,9 @@ class TypeRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_TYPE);
-        out.writeInt(myClassName);
-        out.writeInt(myTypeArgs.length);
-        for (AbstractType t : myTypeArgs) {
+        out.writeInt(className);
+        out.writeInt(typeArgs.length);
+        for (AbstractType t : typeArgs) {
           t.save(out);
         }
       }

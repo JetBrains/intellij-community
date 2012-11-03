@@ -5,7 +5,10 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.asm4.Type;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -24,6 +27,7 @@ class UsageRepr {
   private static final byte CLASS_NEW_USAGE = 0x5;
   private static final byte ANNOTATION_USAGE = 0x6;
   private static final byte METAMETHOD_USAGE = 0x7;
+  private static final byte CLASS_AS_GENERIC_BOUND_USAGE = 0x8;
 
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
@@ -371,6 +375,32 @@ class UsageRepr {
     }
   }
 
+  public static class ClassAsGenericBoundUsage extends ClassUsage {
+    public ClassAsGenericBoundUsage(int className) {
+      super(className);
+    }
+
+    public ClassAsGenericBoundUsage(DataInput in) {
+      super(in);
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode() + 3;
+    }
+
+    @Override
+    public void save(final DataOutput out) {
+      try {
+        out.writeByte(CLASS_AS_GENERIC_BOUND_USAGE);
+        out.writeInt(myClassName);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
   public static class ClassExtendsUsage extends Usage {
     protected final int myClassName;
 
@@ -548,7 +578,7 @@ class UsageRepr {
 
     @Override
     public int getOwner() {
-      return myType.myClassName;
+      return myType.className;
     }
 
     @Override
@@ -636,6 +666,10 @@ class UsageRepr {
     return context.getUsage(new ClassUsage(name));
   }
 
+  public static Usage createClassAsGenericBoundUsage(final DependencyContext context, final int name) {
+    return context.getUsage(new ClassAsGenericBoundUsage(name));
+  }
+
 
   public static Usage createClassExtendsUsage(final DependencyContext context, final int name) {
     return context.getUsage(new ClassExtendsUsage(name));
@@ -665,6 +699,9 @@ class UsageRepr {
         switch (tag) {
           case CLASS_USAGE:
             return context.getUsage(new ClassUsage(in));
+
+          case CLASS_AS_GENERIC_BOUND_USAGE:
+            return context.getUsage(new ClassAsGenericBoundUsage(in));
 
           case CLASS_EXTENDS_USAGE:
             return context.getUsage(new ClassExtendsUsage(in));
