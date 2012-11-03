@@ -469,6 +469,14 @@ public class PyTypeTest extends PyTestCase {
     assertEquals(elementType.getName(), "str");
   }
 
+  // EA-40207
+  public void testRecursion() {
+    doTest("list of list",
+           "def f():\n" +
+           "    return [f()]\n" +
+           "expr = f()\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);

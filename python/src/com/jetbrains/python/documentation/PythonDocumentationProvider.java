@@ -189,6 +189,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (evaluated != null) {
       return evaluated;
     }
+    if (visited.containsKey(type)) { //already evaluating?
+      return type != null ? type.getName(): UNKNOWN;
+    }
+    visited.put(type, null); //mark as evaluating
+
     String result = null;
     final String typeName = type != null ? type.getName() : null;
     if (type instanceof PyTypeReference) {
