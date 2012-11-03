@@ -53,6 +53,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NonNls static final String LINK_TYPE_CLASS = "#class#";
   @NonNls static final String LINK_TYPE_PARENT = "#parent#";
   @NonNls static final String LINK_TYPE_PARAM = "#param#";
+  @NonNls static final String LINK_TYPE_TYPENAME = "#typename#";
 
   @NonNls private static final String RST_PREFIX = ":";
   @NonNls private static final String EPYDOC_PREFIX = "@";
@@ -360,6 +361,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           final String parent_name = parent.getClassName();
           if (parent_name != null && parent_name.equals(desired_name)) return parent.getPyClass();
         }
+      }
+    }
+    else if (link.startsWith(LINK_TYPE_TYPENAME)) {
+      String typeName = link.substring(LINK_TYPE_TYPENAME.length());
+      PyType type = PyTypeParser.getTypeByName(context, typeName);
+      if (type instanceof PyClassType) {
+        return ((PyClassType)type).getPyClass();
       }
     }
     return null;

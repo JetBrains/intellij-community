@@ -184,22 +184,37 @@ class PyDocumentationBuilder {
       addAttributeDoc();
     }
     else if (followed instanceof PyNamedParameter) {
-      myBody.addItem(combUp("Named parameter " + PyUtil.getReadableRepr(followed, false)));
-      if (!addTypeAndDescriptionFromDocstring((PyNamedParameter)followed)) {
-        //didn't find type in docstring then infer element type
-        if (outer instanceof PyExpression) {
-          TypeEvalContext context = TypeEvalContext.slow();
-          PyType type = ((PyExpression)outer).getType(context);
-          if (type != null) {
-            String s;
-            if (type instanceof PyDynamicallyEvaluatedType) {
-              s = "\nDynamically inferred type: %s";
+      myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(followed, false)));
+      boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)followed);
+      if (outer instanceof PyExpression) {
+        TypeEvalContext context = TypeEvalContext.slow();
+        PyType type = ((PyExpression)outer).getType(context);
+        if (type != null) {
+          String s = null;
+          if (type instanceof PyDynamicallyEvaluatedType) {
+            if (!typeFromDocstringAdded) {
+              //don't add dynamic type if docstring type specified
+              s = "\nDynamically inferred type: ";
             }
-            else {
-              s = "\nReassigned value has type: %s";
+          }
+          else {
+            if (outer.getReference() != null) {
+              PsiElement target = outer.getReference().resolve();
+
+              if (target instanceof PyTargetExpression &&
+                  ((PyTargetExpression)target).getName().equals(((PyNamedParameter)followed).getName())) {
+                s = "\nReassigned value has type: ";
+              }
             }
+          }
+          if (s == null && !typeFromDocstringAdded) {
+            s = "\nInferred type: ";
+          }
+          if (s != null) {
+            String typeName = PythonDocumentationProvider.getTypeName(type, context);
             myBody
-              .addItem(combUp(String.format(s, PythonDocumentationProvider.getTypeName(type, context))));
+              .addItem(combUp(s)).addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_TYPENAME + typeName),
+                                          $(typeName));
           }
         }
       }
