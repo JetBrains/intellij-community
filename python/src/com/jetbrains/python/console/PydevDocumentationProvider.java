@@ -24,7 +24,7 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
   }
 
   @Override
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     // Process PydevConsoleElement case
     if (element instanceof PydevConsoleElement){
       return PydevConsoleElement.generateDoc((PydevConsoleElement)element);

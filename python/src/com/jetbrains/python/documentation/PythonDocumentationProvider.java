@@ -310,7 +310,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   // provides ctrl+Q doc
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
@@ -322,7 +322,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return new PyDocumentationBuilder(element, originalElement).build();
   }
 
-  private static PsiElement findRealOriginalElement(PsiElement element) {
+  private static PsiElement findRealOriginalElement(@Nullable PsiElement element) {
+    if (element == null) {
+      return null;
+    }
     PsiFile file = element.getContainingFile();
     if (file == null) {
       return element;
