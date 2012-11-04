@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1262,9 +1263,9 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) && caller == null) {
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
+      if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, context, true)) {
         builder.append(containingClass.getQualifiedName()).append('.');
       }
     }
