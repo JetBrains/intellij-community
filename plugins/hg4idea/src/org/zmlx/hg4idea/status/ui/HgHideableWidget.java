@@ -19,11 +19,12 @@ package org.zmlx.hg4idea.status.ui;
  * @author Nadya Zabrodina
  */
 
-/**Interface for addition Widgets in statusbar,
- *  need for correct MessageBus working with {@link org.zmlx.hg4idea.HgVcs#INCOMING_CHECK_TOPIC}
- *
+/**
+ * Interface for addition Widgets in statusbar,
+ * need for correct MessageBus working with {@link org.zmlx.hg4idea.HgVcs#INCOMING_OUTGOING_CHECK_TOPIC}
  */
-public interface HgAdditionalWidget {
+public interface HgHideableWidget {
+
   void show();
 
   void hide();

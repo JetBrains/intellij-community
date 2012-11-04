@@ -43,7 +43,7 @@ import java.awt.event.MouseEvent;
  * @author Nadya Zabrodina
  */
 public class HgIncomingOutgoingWidget extends EditorBasedWidget
-  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgAdditionalWidget {
+  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgHideableWidget {
 
   @NotNull private final HgVcs myVcs;
   @NotNull final Project myProject;
