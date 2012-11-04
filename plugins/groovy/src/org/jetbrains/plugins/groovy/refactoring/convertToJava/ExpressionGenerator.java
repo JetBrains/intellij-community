@@ -665,10 +665,27 @@ public class ExpressionGenerator extends Generator {
     }
   }
 
-  private static boolean shouldNotReplaceOperatorWithMethod(PsiType ltype, @Nullable GrExpression right, IElementType op) {
-    return GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
-           (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-            (op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING));
+  private static boolean shouldNotReplaceOperatorWithMethod(@Nullable PsiType ltype, @Nullable GrExpression right, IElementType op) {
+    if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers) {
+
+      //adding something to string
+      if ((op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING)) {
+        return true;
+      }
+
+      //we think it is number operation if we don't know right argument
+      if (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType()))) return true;
+    }
+
+    if (op == mLNOT && isBooleanType(ltype)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean isBooleanType(PsiType type) {
+    return type == PsiType.BOOLEAN || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN);
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -692,10 +709,8 @@ public class ExpressionGenerator extends Generator {
     IElementType opType = expression.getOperationTokenType();
 
     if (resolved instanceof PsiMethod) {
-      if (opType == mLNOT) {
-        builder.append('!');
-      }
-      else if (opType == mINC || opType == mDEC) {
+
+      if (opType == mINC || opType == mDEC) {
         if (!postfix || expression.getParent() instanceof GrStatementOwner || expression.getParent() instanceof GrControlStatement) {
           if (generatePrefixIncDec((PsiMethod)resolved, operand, expression)) return;
         }
@@ -705,6 +720,9 @@ public class ExpressionGenerator extends Generator {
         writeSimpleUnary(operand, expression, this);
       }
       else {
+        if (opType == mLNOT) {
+          builder.append('!');
+        }
         invokeMethodOn(
           ((PsiMethod)resolved),
           operand,
