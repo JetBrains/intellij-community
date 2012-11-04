@@ -1,5 +1,7 @@
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
@@ -37,10 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -179,62 +178,229 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
-    return getTypeName(type, context, new HashMap<PyType, String>(), true);
+    TypeNameBuilder builder = new TypeNameBuilder(context);
+    return builder.build(type, true).asString();
   }
 
-  private static String getTypeName(@Nullable PyType type,
-                                    @NotNull final TypeEvalContext context,
-                                    @NotNull final Map<PyType, String> visited,
-                                    boolean allowUnions) {
-    final String evaluated = visited.get(type);
-    if (evaluated != null) {
-      return evaluated;
-    }
-    if (visited.containsKey(type)) { //already evaluating?
-      return type != null ? type.getName(): UNKNOWN;
-    }
-    visited.put(type, null); //mark as evaluating
-
-    String result = null;
-    final String typeName = type != null ? type.getName() : null;
-    if (type instanceof PyTypeReference) {
-      final PyType resolved = ((PyTypeReference)type).resolve(null, context);
-      if (resolved != null) {
-        result = getTypeName(resolved, context, visited, true);
-      }
-    }
-    else if (type instanceof PyCollectionType) {
-      final String name = type.getName();
-      final PyType elementType = ((PyCollectionType)type).getElementType(context);
-      if (elementType != null) {
-        result = String.format("%s of %s", name, getTypeName(elementType, context, visited, true));
-      }
-    }
-    else if (type instanceof PyUnionType && allowUnions) {
-      if (type instanceof PyDynamicallyEvaluatedType) {
-        result = getTypeName(((PyDynamicallyEvaluatedType)type).exclude(null, context), context);
-      }
-      else {
-        result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
-                                                              new Function<PyType, String>() {
-                                                                @Override
-                                                                public String fun(PyType t) {
-                                                                  return getTypeName(t, context, visited, false);
-                                                                }
-                                                              }, ", "));
-      }
-    }
-    if (result == null) {
-      result = typeName != null ? typeName : UNKNOWN;
-    }
-    visited.put(type, result);
-    return result;
+  public static void describeExpressionTypeWithLinks(ChainIterable<String> body,
+                                                     PyReferenceExpression expression,
+                                                     @NotNull TypeEvalContext context) {
+    PyType type = expression.getType(context);
+    describeTypeWithLinks(body, expression, type, context);
   }
 
-  static ChainIterable<String> describeDecorators(
-    PyDecoratable what, FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
-    String deco_separator, FP.Lambda1<String, String> escaper
-  ) {
+  public static void describeTypeWithLinks(ChainIterable<String> body,
+                                           PsiElement anchor,
+                                           PyType type, TypeEvalContext context) {
+    TypeNameBuilder builder = new TypeNameBuilder(context);
+    builder.build(type, true).toBodyWithLinks(body, anchor);
+  }
+
+  private static class TypeNameBuilder {
+    private final Map<PyType, Type> myVisited = Maps.newHashMap();
+    private final TypeEvalContext myContext;
+
+    private TypeNameBuilder(TypeEvalContext context) {
+      this.myContext = context;
+    }
+
+    private abstract static class Type {
+      abstract void accept(TypeVisitor visitor);
+
+      public String asString() {
+        TypeToStringVisitor visitor = new TypeToStringVisitor();
+        this.accept(visitor);
+        return visitor.getString();
+      }
+
+      public void toBodyWithLinks(@NotNull ChainIterable<String> body, @NotNull PsiElement anchor) {
+        TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
+        this.accept(visitor);
+      }
+    }
+
+    private static class OneOf extends Type {
+      private Collection<Type> oneOfTypes;
+
+      private OneOf(Collection<Type> oneOfTypes) {
+        this.oneOfTypes = oneOfTypes;
+      }
+
+      @Override
+      void accept(TypeVisitor visitor) {
+        visitor.oneOf(this);
+      }
+    }
+
+    private static class CollectionOf extends Type {
+      private String collectionName;
+      private Type elementType;
+
+      private CollectionOf(String collectionName, Type elementType) {
+        this.collectionName = collectionName;
+        this.elementType = elementType;
+      }
+
+      @Override
+      void accept(TypeVisitor visitor) {
+        visitor.collectionOf(this);
+      }
+    }
+
+    private static class NamedType extends Type {
+      private String name;
+
+      private NamedType(String name) {
+        this.name = name;
+      }
+
+      @Override
+      void accept(TypeVisitor visitor) {
+        visitor.name(this.name);
+      }
+    }
+
+    private static Type _(String name) {
+      return new NamedType(name);
+    }
+
+    private Type build(@Nullable PyType type,
+                       boolean allowUnions) {
+      final Type evaluated = myVisited.get(type);
+      if (evaluated != null) {
+        return evaluated;
+      }
+      if (myVisited.containsKey(type)) { //already evaluating?
+        return type != null ? _(type.getName()) : _(UNKNOWN);
+      }
+      myVisited.put(type, null); //mark as evaluating
+
+      Type result = null;
+      if (type instanceof PyTypeReference) {
+        final PyType resolved = ((PyTypeReference)type).resolve(null, myContext);
+        if (resolved != null) {
+          result = build(resolved, true);
+        }
+      }
+      else if (type instanceof PyCollectionType) {
+        final String name = type.getName();
+        final PyType elementType = ((PyCollectionType)type).getElementType(myContext);
+        if (elementType != null) {
+          result = new CollectionOf(name, build(elementType, true));
+        }
+      }
+      else if (type instanceof PyUnionType && allowUnions) {
+        if (type instanceof PyDynamicallyEvaluatedType) {
+          result = build(((PyDynamicallyEvaluatedType)type).exclude(null, myContext), true);
+        }
+        else {
+          result = new OneOf(Collections2.transform(((PyUnionType)type).getMembers(), new com.google.common.base.Function<PyType, Type>() {
+            @Override
+            public Type apply(PyType t) {
+              return build(t, false);
+            }
+          }));
+        }
+      }
+      if (result == null) {
+        result = type != null ? _(type.getName()) : _(UNKNOWN);
+      }
+      myVisited.put(type, result);
+      return result;
+    }
+
+    private interface TypeVisitor {
+      void oneOf(OneOf oneOf);
+
+      void collectionOf(CollectionOf collectionOf);
+
+      void name(String name);
+    }
+
+    private static class TypeToStringVisitor extends TypeNameVisitor {
+      private final StringBuilder myStringBuilder = new StringBuilder();
+
+      @Override
+      protected void add(String s) {
+        myStringBuilder.append(s);
+      }
+
+      @Override
+      protected void addType(String name) {
+        add(name);
+      }
+
+      public String getString() {
+        return myStringBuilder.toString();
+      }
+    }
+
+    private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
+      private ChainIterable<String> myBody;
+      private PsiElement myAnchor;
+
+      public TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
+        myBody = body;
+        myAnchor = anchor;
+      }
+
+      @Override
+      protected void add(String s) {
+        myBody.addItem(combUp(s));
+      }
+
+      @Override
+      protected void addType(String name) {
+        PyType type = PyTypeParser.getTypeByName(myAnchor, name);
+        if (type instanceof PyClassType) {
+          myBody.addWith(new LinkWrapper(LINK_TYPE_TYPENAME + name),
+                         $(name));
+        }
+        else {
+          add(name);
+        }
+      }
+    }
+
+    private abstract static class TypeNameVisitor implements TypeVisitor {
+      @Override
+      public void oneOf(OneOf oneOf) {
+        add("one of (");
+        boolean first = true;
+        for (Type t : oneOf.oneOfTypes) {
+          if (!first) {
+            add(", ");
+          }
+          else {
+            first = false;
+          }
+
+          t.accept(this);
+        }
+        add(")");
+      }
+
+      protected abstract void add(String s);
+
+      @Override
+      public void collectionOf(CollectionOf collectionOf) {
+        addType(collectionOf.collectionName);
+        add(" of ");
+        collectionOf.elementType.accept(this);
+      }
+
+      protected abstract void addType(String name);
+
+      @Override
+      public void name(String name) {
+        addType(name);
+      }
+    }
+  }
+
+
+  static ChainIterable<String> describeDecorators(PyDecoratable what, FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
+                                                  String deco_separator, FP.Lambda1<String, String> escaper) {
     ChainIterable<String> cat = new ChainIterable<String>();
     PyDecoratorList deco_list = what.getDecoratorList();
     if (deco_list != null) {
@@ -253,11 +419,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
    * @param allow_html
    * @param link_own_name if true, add link to class's own name  @return cat for easy chaining
    */
-  static ChainIterable<String> describeClass(
-    PyClass cls,
-    FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
-    boolean allow_html, boolean link_own_name
-  ) {
+  static ChainIterable<String> describeClass(PyClass cls,
+                                             FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
+                                             boolean allow_html,
+                                             boolean link_own_name) {
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = cls.getName();
     cat.addItem("class ");
@@ -295,10 +460,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   //
-  private static Iterable<String> describeDeco(
-    PyDecorator deco,
-    final FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper, //  addWith in tags, if need be
-    final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
+  private static Iterable<String> describeDeco(PyDecorator deco,
+                                               final FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
+                                               //  addWith in tags, if need be
+                                               final FP.Lambda1<String, String> arg_wrapper
+                                               // add escaping, if need be
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
     cat.addItem("@").addWith(name_wrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));

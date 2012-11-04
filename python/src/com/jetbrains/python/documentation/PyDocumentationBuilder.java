@@ -211,18 +211,16 @@ class PyDocumentationBuilder {
             s = "\nInferred type: ";
           }
           if (s != null) {
-            String typeName = PythonDocumentationProvider.getTypeName(type, context);
             myBody
-              .addItem(combUp(s)).addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_TYPENAME + typeName),
-                                          $(typeName));
+              .addItem(combUp(s));
+            PythonDocumentationProvider.describeTypeWithLinks(myBody, followed, type, TypeEvalContext.slow());
           }
         }
       }
     }
     else if (followed != null && outer instanceof PyReferenceExpression) {
-      myBody
-        .addItem(BR)
-        .addItem(combUp(PythonDocumentationProvider.describeExpressionType((PyReferenceExpression)outer)));
+      myBody.addItem("\nInferred type: ");
+      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outer, TypeEvalContext.slow());
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!
