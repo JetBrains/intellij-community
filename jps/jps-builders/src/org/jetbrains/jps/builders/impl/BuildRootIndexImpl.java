@@ -190,7 +190,8 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public <R extends BuildRootDescriptor> List<R> getTempTargetRoots(@NotNull BuildTarget<R> target, @NotNull CompileContext context) {
     final Map<BuildTarget<?>, List<? extends BuildRootDescriptor>> contextMap = TEMP_TARGET_ROOTS_MAP.get(context);
     //noinspection unchecked
-    return contextMap != null ? (List<R>)contextMap.get(target) : Collections.<R>emptyList();
+    final List<R> rootList = contextMap != null? (List<R>)contextMap.get(target) : null;
+    return rootList != null ? rootList : Collections.<R>emptyList();
   }
 
   @Override
