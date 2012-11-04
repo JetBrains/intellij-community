@@ -49,40 +49,7 @@ public class DiffStatusBar extends JPanel {
   }
 
   private void addComponent(final LegendTypeDescriptor diffType) {
-    JComponent component = new JPanel() {
-      public void paint(Graphics g) {
-        setBackground(UIUtil.getPanelBackground());
-        super.paint(g);
-        GraphicsUtil.setupAntialiasing(g);
-        FontMetrics metrics = getFontMetrics(getFont());
-
-        EditorColorsScheme colorScheme = myColorScheme != null
-                                         ? myColorScheme
-                                         : EditorColorsManager.getInstance().getGlobalScheme();
-        g.setColor(diffType.getLegendColor(colorScheme));
-        g.fill3DRect(10, (getHeight() - 10) / 2, 35, 10, true);
-
-        Font font = g.getFont();
-        if (font.getStyle() != Font.PLAIN) {
-          font = font.deriveFont(Font.PLAIN);
-        }
-        g.setFont(font);
-        g.setColor(UIUtil.getLabelForeground());
-        int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
-        g.drawString(diffType.getDisplayName(), 67, textBaseline);
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        FontMetrics metrics = getFontMetrics(getFont());
-        return new Dimension((int)(70 + metrics.getStringBounds(diffType.getDisplayName(), getGraphics()).getWidth()), COMP_HEIGHT);
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        return getPreferredSize();
-      }
-    };
+    JComponent component = new SingleDiffLegendComponent(diffType);
     myLabels.add(component);
   }
 
@@ -137,5 +104,48 @@ public class DiffStatusBar extends JPanel {
     String getDisplayName();
     @Nullable
     Color getLegendColor(EditorColorsScheme colorScheme);
+  }
+
+  private class SingleDiffLegendComponent extends JPanel {
+    private static final int HORIZONTAL_PADDING = 70;
+    private final LegendTypeDescriptor myDiffType;
+
+    public SingleDiffLegendComponent(LegendTypeDescriptor diffType) {
+      myDiffType = diffType;
+    }
+
+    public void paint(Graphics g) {
+      setBackground(UIUtil.getPanelBackground());
+      super.paint(g);
+      GraphicsUtil.setupAntialiasing(g);
+      FontMetrics metrics = getFontMetrics(getFont());
+
+      EditorColorsScheme colorScheme = myColorScheme != null
+                                       ? myColorScheme
+                                       : EditorColorsManager.getInstance().getGlobalScheme();
+      g.setColor(myDiffType.getLegendColor(colorScheme));
+      g.fill3DRect(10, (getHeight() - 10) / 2, 35, 10, true);
+
+      Font font = g.getFont();
+      if (font.getStyle() != Font.PLAIN) {
+        font = font.deriveFont(Font.PLAIN);
+      }
+      g.setFont(font);
+      g.setColor(UIUtil.getLabelForeground());
+      int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
+      g.drawString(myDiffType.getDisplayName(), 67, textBaseline);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      FontMetrics metrics = getFontMetrics(getFont());
+      int stringWidth = (int)metrics.getStringBounds(myDiffType.getDisplayName(), getGraphics()).getWidth();
+      return new Dimension(HORIZONTAL_PADDING + stringWidth, COMP_HEIGHT);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
   }
 }
