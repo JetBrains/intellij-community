@@ -148,7 +148,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void activate() {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    myBusConnection.subscribe(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC, this);
+    myBusConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {
