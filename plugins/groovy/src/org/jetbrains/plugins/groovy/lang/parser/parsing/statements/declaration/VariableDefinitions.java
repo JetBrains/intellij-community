@@ -203,16 +203,11 @@ public class VariableDefinitions implements GroovyElementTypes {
   }
 
   private static IElementType parseDeclarator(PsiBuilder builder, boolean isTuple) {
-    if (!isTuple) {
-      if (builder.getTokenType() == mIDENT) {
-        ParserUtils.getToken(builder, mIDENT);
-        return mIDENT;
-      }
+    if (isTuple && builder.getTokenType() == mLPAREN && TupleParse.parseTupleForVariableDeclaration(builder)) {
+      return TUPLE_DECLARATION;
     }
-    else if (builder.getTokenType() == mLPAREN && isTuple) {
-      if (TupleParse.parseTuple(builder, null, VARIABLE)) {
-        return TUPLE_DECLARATION;
-      }
+    if (!isTuple && ParserUtils.getToken(builder, mIDENT)) {
+      return mIDENT;
     }
     return WRONGWAY;
   }

@@ -186,10 +186,11 @@ public class GroovyCompletionUtil {
       return ((GrParameter)parent).getTypeElementGroovy() == null;
     }
 
-    final PsiElement parent1 = parent.getParent();
-    if (!(parent1 instanceof GrVariableDeclaration)) return false;
+    final PsiElement pparent = parent.getParent();
+    if (!(pparent instanceof GrVariableDeclaration)) return false;
+    if (((GrVariableDeclaration)pparent).isTuple()) return false;
 
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)parent1;
+    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)pparent;
     if (variableDeclaration.getTypeElementGroovy() != null) return false;
 
     return variableDeclaration.getVariables()[0] == parent;
@@ -232,7 +233,6 @@ public class GroovyCompletionUtil {
            context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody &&
            context.getTextRange().getStartOffset() ==
            context.getParent().getParent().getParent().getParent().getTextRange().getStartOffset();
-
   }
 
 
@@ -307,8 +307,8 @@ public class GroovyCompletionUtil {
 
   private static boolean getterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
     return isSimplePropertyGetter(element) &&
-    (matcher.prefixMatches(getGetterNameNonBoolean(importedName)) ||
-     element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(getGetterNameBoolean(importedName)));
+           (matcher.prefixMatches(getGetterNameNonBoolean(importedName)) ||
+            element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(getGetterNameBoolean(importedName)));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -316,7 +316,9 @@ public class GroovyCompletionUtil {
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
-  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName, boolean alias) {
+  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult,
+                                                                                String importedName,
+                                                                                boolean alias) {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -380,7 +382,10 @@ public class GroovyCompletionUtil {
   }
 
 
-  private static LookupElementBuilder setTypeText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor, @Nullable PsiElement position) {
+  private static LookupElementBuilder setTypeText(PsiElement element,
+                                                  LookupElementBuilder builder,
+                                                  PsiSubstitutor substitutor,
+                                                  @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
       if (position != null && GroovyRefactoringUtil.isLocalVariable(element)) {
@@ -598,5 +603,15 @@ public class GroovyCompletionUtil {
 
   static boolean isTypelessParameter(PsiElement context) {
     return (context.getParent() instanceof GrParameter && ((GrParameter)context.getParent()).getTypeElementGroovy() == null);
+  }
+
+  public static boolean isTupleVarNameWithoutTypeDeclared(PsiElement position) {
+    PsiElement parent = position.getParent();
+    PsiElement pparent = parent.getParent();
+    return parent instanceof GrVariable &&
+           ((GrVariable)parent).getNameIdentifierGroovy() == position &&
+           ((GrVariable)parent).getTypeElementGroovy() == null &&
+           pparent instanceof GrVariableDeclaration &&
+           ((GrVariableDeclaration)pparent).isTuple();
   }
 }

@@ -59,7 +59,7 @@ public class AssignmentExpression implements GroovyElementTypes {
 
   private static boolean parseSide(PsiBuilder builder, GroovyParser parser, boolean tuple, boolean comExprAllowed) {
     if (tuple) {
-      return TupleParse.parseTuple(builder, TUPLE_EXPRESSION, REFERENCE_EXPRESSION);
+      return TupleParse.parseTupleForAssignment(builder);
     }
 
     if (comExprAllowed) {
