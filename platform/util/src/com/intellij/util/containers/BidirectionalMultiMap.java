@@ -16,8 +16,9 @@
 
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,16 +30,24 @@ public class BidirectionalMultiMap<K, V> {
   private final Map<V, Set<K>> myValue2Keys;
 
   public BidirectionalMultiMap() {
-    myKey2Values = new HashMap<K, Set<V>>();
-    myValue2Keys = new HashMap<V, Set<K>>();
+    this(new HashMap<K, Set<V>>(), new HashMap<V, Set<K>>());
   }
 
-  public @Nullable Set<V> getValues(K key) {
-    return myKey2Values.get(key);
+  public BidirectionalMultiMap(final Map<K, Set<V>> key2Values, final Map<V, Set<K>> value2Keys) {
+    myKey2Values = key2Values;
+    myValue2Keys = value2Keys;
   }
 
-  public @Nullable Set<K> getKeys(V value) {
-    return myValue2Keys.get(value);
+  @NotNull
+  public Set<V> getValues(K key) {
+    Set<V> set = myKey2Values.get(key);
+    return set != null ? set : Collections.<V>emptySet();
+  }
+
+  @NotNull
+  public Set<K> getKeys(V value) {
+    Set<K> set = myValue2Keys.get(value);
+    return set != null ? set : Collections.<K>emptySet();
   }
 
   public boolean containsKey(K key) {

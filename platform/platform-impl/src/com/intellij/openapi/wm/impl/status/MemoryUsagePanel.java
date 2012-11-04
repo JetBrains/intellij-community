@@ -45,12 +45,11 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
   private static final int HEIGHT = 16;
-  private static final Color USED_COLOR_1 = new Color(175, 185, 202);
-  private static final Color USED_COLOR_2 = new Color(126, 138, 168);
+  private static final Color USED_COLOR_1 = Gray._185;
+  private static final Color USED_COLOR_2 = Gray._145;
   private static final Color UNUSED_COLOR_1 = Gray._200.withAlpha(100);
   private static final Color UNUSED_COLOR_2 = Gray._150.withAlpha(130);
   private static final Color UNUSED_COLOR_3 = Gray._175;
-  private static final Color FRAME_COLOR = Gray._110;
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
@@ -166,8 +165,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       // frame
       if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
-        g2.setColor(FRAME_COLOR);
-        g2.drawRect(xOffset, yOffset, totalBarLength, barHeight);
+        g2.setColor(USED_COLOR_2);
+        g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
       }
 
       // label
@@ -177,10 +176,10 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final String info = UIBundle.message("memory.usage.panel.message.text", used, total);
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
-      final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
+      final int infoHeight = fontMetrics.getAscent();
       UIUtil.applyRenderingHints(g2);
       g2.setColor(UIUtil.getLabelForeground());
-      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2);
+      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 
       g2.dispose();
     }

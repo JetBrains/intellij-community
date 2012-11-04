@@ -3,9 +3,11 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
 import java.io.File;
@@ -45,7 +47,10 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     }
 
     if (outSrcMapping.getState(targetPath) == null) {
-      context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
+      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+      if (logger.isEnabled()) {
+        logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_NAME, "Copying file:");
+      }
       final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
       FileUtil.copyContent(file, targetFile);
       outputConsumer.registerOutputFile(targetPath, Collections.singletonList(filePath));

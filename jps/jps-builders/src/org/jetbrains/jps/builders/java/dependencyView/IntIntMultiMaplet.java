@@ -25,11 +25,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 03.11.11
- * Time: 21:01
- * To change this template use File | Settings | File Templates.
  */
 abstract class IntIntMultiMaplet implements Streamable {
   abstract boolean containsKey(final int key);

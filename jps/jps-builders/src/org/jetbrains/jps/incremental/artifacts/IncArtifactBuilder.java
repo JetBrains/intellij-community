@@ -11,6 +11,7 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
@@ -192,7 +193,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       if (deleted) {
-        context.getLoggingManager().getArtifactBuilderLogger().fileDeleted(filePath);
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {
@@ -208,10 +208,15 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file '" + filePath + "'"));
       }
     }
+    ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+    if (logger.isEnabled()) {
+      logger.logDeletedFiles(deletedPaths);
+    }
   }
 
   @Override
   public void buildStarted(final CompileContext context) {
+    //todo[nik] move to common place
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
@@ -219,8 +224,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (Pair<String, String> pair : paths) {
           File file = new File(pair.getFirst(), pair.getSecond());
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             try {
               fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage(), false);
             }
@@ -236,8 +241,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (String path : paths) {
           File file = new File(FileUtil.toSystemDependentName(path));
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             state.registerDeleted(descriptor.getTarget(), file);
           }
         }

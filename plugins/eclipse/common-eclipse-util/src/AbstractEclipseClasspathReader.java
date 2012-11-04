@@ -109,7 +109,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
         }
         final String linked = expandLinkedResourcesPath(macroMap, usedVariables, path);
         if (linked != null) {
-          srcUrl = pathToUrl(linked);
+          srcUrl = prepareValidUrlInsideJar(pathToUrl(linked));
           eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, path);
           addSourceFolder(rootModel, srcUrl, isTestFolder);
         }
@@ -138,7 +138,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       final String linked = expandLinkedResourcesPath(macroMap, usedVariables, path);
       final String url;
       if (linked != null) {
-        url = pathToUrl(linked);
+        url = prepareValidUrlInsideJar(pathToUrl(linked));
         eclipseModuleManager.registerEclipseLinkedVarPath(url, path);
       }
       else {
@@ -152,7 +152,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       if (sourcePath != null) {
         final String linkedSrc = expandLinkedResourcesPath(macroMap, usedVariables, sourcePath);
         if (linkedSrc != null) {
-          srcUrl = pathToUrl(linkedSrc);
+          srcUrl = prepareValidUrlInsideJar(pathToUrl(linkedSrc));
           eclipseModuleManager.registerEclipseLinkedSrcVarPath(srcUrl, sourcePath);
         }
         else {

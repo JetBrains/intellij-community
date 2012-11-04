@@ -13,11 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.02.11
- * Time: 5:03
- * To change this template use File | Settings | File Templates.
  */
 class MethodRepr extends ProtoMember {
   interface Predicate {

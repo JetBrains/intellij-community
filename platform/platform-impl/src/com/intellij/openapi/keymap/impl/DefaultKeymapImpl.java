@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,8 @@ import org.jdom.Element;
 import java.awt.event.MouseEvent;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 21, 2003
- * Time: 9:00:35 PM
- * To change this template use Options | File Templates.
+ * @author max
+ * @since Nov 21, 2003
  */
 class DefaultKeymapImpl extends KeymapImpl {
   public boolean canModify() {
@@ -44,7 +41,7 @@ class DefaultKeymapImpl extends KeymapImpl {
   public void readExternal(Element keymapElement, Keymap[] existingKeymaps) throws InvalidDataException {
     super.readExternal(keymapElement, existingKeymaps);
 
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(getName()) && !SystemInfo.X11PasteEnabledSystem) {
+    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(getName()) && !SystemInfo.isXWindow) {
       addShortcut(IdeActions.ACTION_GOTO_DECLARATION, new MouseShortcut(MouseEvent.BUTTON2, 0, 1));
     }
   }

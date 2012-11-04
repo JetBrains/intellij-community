@@ -71,20 +71,6 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
     return myScreenBounds;
   }
 
-  @Override
-  public void setScreenBounds(@Nullable Rectangle bounds) {
-    myScreenBounds = bounds;
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    if (width > 0 && myPreferredSize.width != width) {
-      myPreferredSize = new Dimension(width - UIUtil.getTreeLeftChildIndent(), myPreferredSize.height);
-      return true;
-    }
-    return false;
-  }
-
   @NotNull
   @Override
   public Dimension getPreferredSize() {
@@ -122,6 +108,13 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
   }
 
   @Override
-  public void onMouseExited() {
+  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Rectangle onMouseExited() {
+    return null;
   }
 }

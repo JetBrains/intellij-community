@@ -189,6 +189,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticOverride() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }
+  public void _testIDEA94011() throws Exception { doTest(false); }
+  public void testDifferentTypeParamsInOverloadedMethods() throws Exception { doTest(true); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

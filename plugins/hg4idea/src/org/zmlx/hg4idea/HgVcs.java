@@ -69,10 +69,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
-  public static final Topic<HgAdditionalWidget> INCOMING_CHECK_TOPIC =
+  public static final Topic<HgAdditionalWidget> INCOMINGOUTGOING_CHECK_TOPIC =
     new Topic<HgAdditionalWidget>("hg4idea.icomingcheck", HgAdditionalWidget.class);
-  public static final Topic<HgAdditionalWidget> OUTGOING_CHECK_TOPIC
-    = new Topic<HgAdditionalWidget>("hg4idea.outgoingcheck", HgAdditionalWidget.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -292,7 +290,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         Project project = event.getManager().getProject();
-        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project);
+        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project, null);
       }
     });
 
@@ -310,7 +308,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // Force a branch topic update
-    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject);
+    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
   }
 
   @Override

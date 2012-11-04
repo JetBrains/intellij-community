@@ -19,7 +19,6 @@ import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -205,7 +204,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(CompileScopeTestBuilder scope) {
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), myLogger));
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myLogger));
     try {
       myLogger.clear();
       return doBuild(descriptor, scope);
@@ -216,7 +215,11 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void assertCompiled(String builderName, String... paths) {
-    myLogger.assertCompiled(builderName, getOrCreateProjectDir(), paths);
+    myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
+  }
+
+  protected void assertDeleted(String... paths) {
+    myLogger.assertDeleted(new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
@@ -272,20 +275,5 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       myJdk = addJdk("1.6");
     }
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
-  }
-
-  protected String getProjectRelativePath(String path) {
-    assertNotNull(myProjectDir);
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    String dataStorageRoot = FileUtil.toSystemIndependentName(myDataStorageRoot.getAbsolutePath());
-    if (FileUtil.isAncestor(projectDir, path, true)) {
-      return FileUtil.getRelativePath(projectDir, path, '/');
-    }
-    else if (FileUtil.isAncestor(dataStorageRoot, path, true)) {
-      return FileUtil.getRelativePath(dataStorageRoot, path, '/');
-    }
-    else {
-      return path;
-    }
   }
 }

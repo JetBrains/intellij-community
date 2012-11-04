@@ -239,7 +239,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public String getPresentableUrl() {
-    if (myVirtualFile == null) {
+    if (myVirtualFile == null || !myVirtualFile.isValid()) {
       return myFile.getAbsolutePath();
     }
     else {

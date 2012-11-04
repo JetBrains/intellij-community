@@ -169,7 +169,7 @@ public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescripto
     }
 
     for (String url : enumerator.classes().getUrls()) {
-      fingerprint += 31 * fingerprint + url.hashCode();
+      fingerprint = 31 * fingerprint + url.hashCode();
     }
     return fingerprint;
   }

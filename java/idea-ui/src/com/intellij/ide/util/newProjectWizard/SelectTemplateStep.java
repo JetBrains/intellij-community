@@ -46,6 +46,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -333,7 +334,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
 //    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();

@@ -13,4 +13,6 @@ public interface ProjectBuilderLogger {
   void logDeletedFiles(Collection<String> paths);
 
   void logCompiledFiles(Collection<File> files, String builderName, String description) throws IOException;
+
+  void logCompiledPaths(Collection<String> paths, String builderName, String description) throws IOException;
 }

@@ -46,7 +46,7 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 *         Date: 10/19/12
 */
-class TemplateModuleBuilder extends ModuleBuilder {
+public class TemplateModuleBuilder extends ModuleBuilder {
   private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
     @Nullable
     @Override

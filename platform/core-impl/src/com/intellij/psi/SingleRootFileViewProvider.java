@@ -183,15 +183,15 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void beforeDocumentChanged() {
-    final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
-    if (psiFile != null && psiFile.isContentsLoaded() && getContent() instanceof DocumentContent) {
-      setContent(new PsiFileContent(psiFile, getModificationStamp()));
+    final PsiFile psiFile = getCachedPsi(getBaseLanguage());
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && getContent() instanceof DocumentContent) {
+      setContent(new PsiFileContent((PsiFileImpl)psiFile, getModificationStamp()));
     }
   }
 
   @Override
   public void rootChanged(@NotNull PsiFile psiFile) {
-    if (((PsiFileEx)psiFile).isContentsLoaded()) {
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
     }
   }

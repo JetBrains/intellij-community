@@ -11,11 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 14.02.11
- * Time: 2:03
- * To change this template use File | Settings | File Templates.
  */
 class DependencyContext {
   private final static String STRING_TABLE_NAME = "strings.tab";

@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
@@ -219,9 +220,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
-  public IdeFrameImpl[] getAllFrames() {
+  public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
+  }
+
+  @Override
+  public JFrame findVisibleFrame() {
+    IdeFrameImpl[] frames = getAllProjectFrames();
+
+    if (frames.length > 0) return frames[0];
+    return WelcomeFrame.getInstance();
   }
 
   @Override

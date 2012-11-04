@@ -141,7 +141,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
-  @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.native";
+  @NonNls public static final String TRACE_NATIVE_CALLS = "javasvn.log.native";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
@@ -186,7 +186,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   static {
-    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME), LOG);
+    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
     SVNDebugLog.setDefaultLog(logger);
 
     SVNJNAUtil.setJNAEnabled(true);

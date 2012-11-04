@@ -76,19 +76,13 @@ public class ExpectedTypeMacro extends Macro {
     final Project project = context.getProject();
     PsiType[] types = null;
 
-    final int offset = context.getTemplateStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     assert file != null;
     final PsiFile fileCopy = (PsiFile)file.copy();
+    BlockSupport.getInstance(project).reparseRange(fileCopy, context.getTemplateStartOffset(), context.getTemplateEndOffset(),
+                                                   CompletionUtil.DUMMY_IDENTIFIER);
     
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-        final BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
-        blockSupport.reparseRange(fileCopy, offset, offset, CompletionUtil.DUMMY_IDENTIFIER);
-      }
-    }.execute();
-    PsiElement element = fileCopy.findElementAt(offset);
+    PsiElement element = fileCopy.findElementAt(context.getTemplateStartOffset());
 
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiExpression) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes((PsiExpression)element.getParent(), true);
