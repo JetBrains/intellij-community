@@ -17,16 +17,24 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 import java.util.ArrayList;
@@ -94,7 +102,7 @@ public class ControlFlowBuilderUtil {
     int idx = 0;
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction) {
-        String name = ((ReadWriteVariableInstruction) instruction).getVariableName();
+        String name = ((ReadWriteVariableInstruction)instruction).getVariableName();
         if (!namesIndex.contains(name)) {
           namesIndex.put(name, idx++);
         }
@@ -116,7 +124,7 @@ public class ControlFlowBuilderUtil {
       int j = invpostorder[i];
       Instruction curr = flow[j];
       if (curr instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction) curr;
+        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)curr;
         int name = namesIndex.get(rw.getVariableName());
         TIntHashSet vars = definitelyAssigned[j];
         if (rw.isWrite()) {
@@ -198,5 +206,81 @@ public class ControlFlowBuilderUtil {
     }
 
     return false;
+  }
+
+  /**
+   * check whether statement is return (the statement which provides return value) statement of method or closure.
+   *
+   * @param st
+   * @return
+   */
+  public static boolean isCertainlyReturnStatement(GrStatement st) {
+    final PsiElement parent = st.getParent();
+    if (parent instanceof GrOpenBlock) {
+      if (st != ArrayUtil.getLastElement(((GrOpenBlock)parent).getStatements())) return false;
+
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrMethod) {
+        return true;
+      }
+
+      if (pparent instanceof GrBlockStatement || pparent instanceof GrCatchClause || pparent instanceof GrLabeledStatement) {
+        pparent = pparent.getParent();
+      }
+      if (pparent instanceof GrIfStatement || pparent instanceof GrControlStatement || pparent instanceof GrTryCatchStatement) {
+        return isCertainlyReturnStatement((GrStatement)pparent);
+      }
+    }
+
+    else if (parent instanceof GrClosableBlock) {
+      return st == ArrayUtil.getLastElement(((GrClosableBlock)parent).getStatements());
+    }
+
+    else if (parent instanceof GroovyFileBase) {
+      return st == ArrayUtil.getLastElement(((GroovyFileBase)parent).getStatements());
+    }
+
+    else if (parent instanceof GrForStatement ||
+             parent instanceof GrIfStatement && st != ((GrIfStatement)parent).getCondition() ||
+             parent instanceof GrSynchronizedStatement && st != ((GrSynchronizedStatement)parent).getMonitor() ||
+             parent instanceof GrWhileStatement && st != ((GrWhileStatement)parent).getCondition() ||
+             parent instanceof GrConditionalExpression && st != ((GrConditionalExpression)parent).getCondition() ||
+             parent instanceof GrElvisExpression) {
+      return isCertainlyReturnStatement((GrStatement)parent);
+    }
+
+    else if (parent instanceof GrCaseSection) {
+      final GrStatement[] statements = ((GrCaseSection)parent).getStatements();
+      final GrStatement last = ArrayUtil.getLastElement(statements);
+      final GrSwitchStatement switchStatement = (GrSwitchStatement)parent.getParent();
+
+      if (last instanceof GrBreakStatement && statements.length > 1 && statements[statements.length - 2] == st) {
+        return isCertainlyReturnStatement(switchStatement);
+      }
+      else if (st == last) {
+        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchStatement)) {
+          return isCertainlyReturnStatement(switchStatement);
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchStatement switchStatement) {
+    final GrCaseSection[] sections = switchStatement.getCaseSections();
+    final int i = ArrayUtilRt.find(sections, caseSection);
+    if (i == sections.length - 1) {
+      return true;
+    }
+
+    for (int j = i + 1; j < sections.length; j++) {
+      GrCaseSection section = sections[j];
+      for (GrStatement statement : section.getStatements()) {
+        if (!(statement instanceof GrBreakStatement)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
