@@ -37,7 +37,7 @@ public class SurroundAutoCloseableActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testSimple() { doTest(); }
-  //public void testUsage() { doTest(); }
+  public void testUsage() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);

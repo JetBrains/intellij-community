@@ -23,12 +23,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @Override
@@ -66,17 +70,39 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     final PsiElement codeBlock = declaration.getParent();
     if (!(codeBlock instanceof PsiCodeBlock)) return;
 
+    PsiElement firstStatement = declaration.getNextSibling(), lastUsage = null;
+    final Collection<PsiReference> references = ReferencesSearch.search(variable, new LocalSearchScope(codeBlock)).findAll();
+    for (PsiReference reference : references) {
+      final PsiElement statement = PsiTreeUtil.findPrevParent(codeBlock, reference.getElement());
+      if ((lastUsage == null || statement.getTextOffset() > lastUsage.getTextOffset())) {
+        lastUsage = statement;
+      }
+    }
+
     final String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + initializer.getText() + ") {}";
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiStatement armStatement = factory.createStatementFromText(text, codeBlock);
     final PsiElement newElement = declaration.replace(armStatement);
 
+    if (firstStatement != null && lastUsage != null) {
+      final PsiCodeBlock tryBlock = ((PsiTryStatement)newElement).getTryBlock();
+      assert tryBlock != null : newElement.getText();
+      final PsiJavaToken rBrace = tryBlock.getRBrace();
+      assert rBrace != null : newElement.getText();
+
+      tryBlock.addRangeBefore(firstStatement, lastUsage, rBrace);
+      codeBlock.deleteChildRange(firstStatement, lastUsage);
+    }
+
     final PsiElement formattedElement = CodeStyleManager.getInstance(project).reformat(newElement);
-    final PsiCodeBlock tryBlock = ((PsiTryStatement)formattedElement).getTryBlock();
-    if (tryBlock != null) {
-      final PsiJavaToken brace = tryBlock.getLBrace();
-      if (brace != null) {
-        editor.getCaretModel().moveToOffset(brace.getTextOffset() + 1);
+
+    if (lastUsage == null) {
+      final PsiCodeBlock tryBlock = ((PsiTryStatement)formattedElement).getTryBlock();
+      if (tryBlock != null) {
+        final PsiJavaToken brace = tryBlock.getLBrace();
+        if (brace != null) {
+          editor.getCaretModel().moveToOffset(brace.getTextOffset() + 1);
+        }
       }
     }
   }
