@@ -30,9 +30,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @Override
@@ -70,33 +73,36 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     final PsiElement codeBlock = declaration.getParent();
     if (!(codeBlock instanceof PsiCodeBlock)) return;
 
-    PsiElement firstStatement = declaration.getNextSibling(), lastUsage = null;
-    final Collection<PsiReference> references = ReferencesSearch.search(variable, new LocalSearchScope(codeBlock)).findAll();
-    for (PsiReference reference : references) {
-      final PsiElement statement = PsiTreeUtil.findPrevParent(codeBlock, reference.getElement());
-      if ((lastUsage == null || statement.getTextOffset() > lastUsage.getTextOffset())) {
-        lastUsage = statement;
+    final LocalSearchScope scope = new LocalSearchScope(codeBlock);
+    PsiElement last = null;
+    for (PsiReference reference : ReferencesSearch.search(variable, scope).findAll()) {
+      final PsiElement usage = PsiTreeUtil.findPrevParent(codeBlock, reference.getElement());
+      if ((last == null || usage.getTextOffset() > last.getTextOffset())) {
+        last = usage;
       }
     }
 
     final String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + initializer.getText() + ") {}";
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiStatement armStatement = factory.createStatementFromText(text, codeBlock);
-    final PsiElement newElement = declaration.replace(armStatement);
+    final PsiTryStatement armStatement = (PsiTryStatement)declaration.replace(factory.createStatementFromText(text, codeBlock));
 
-    if (firstStatement != null && lastUsage != null) {
-      final PsiCodeBlock tryBlock = ((PsiTryStatement)newElement).getTryBlock();
-      assert tryBlock != null : newElement.getText();
-      final PsiJavaToken rBrace = tryBlock.getRBrace();
-      assert rBrace != null : newElement.getText();
-
-      tryBlock.addRangeBefore(firstStatement, lastUsage, rBrace);
-      codeBlock.deleteChildRange(firstStatement, lastUsage);
+    List<PsiElement> toFormat = null;
+    if (last != null) {
+      final PsiElement first = armStatement.getNextSibling();
+      if (first != null) {
+        toFormat = moveStatements(first, last, armStatement);
+      }
     }
 
-    final PsiElement formattedElement = CodeStyleManager.getInstance(project).reformat(newElement);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    final PsiElement formattedElement = codeStyleManager.reformat(armStatement);
+    if (toFormat != null) {
+      for (PsiElement psiElement : toFormat) {
+        codeStyleManager.reformat(psiElement);
+      }
+    }
 
-    if (lastUsage == null) {
+    if (last == null) {
       final PsiCodeBlock tryBlock = ((PsiTryStatement)formattedElement).getTryBlock();
       if (tryBlock != null) {
         final PsiJavaToken brace = tryBlock.getLBrace();
@@ -105,6 +111,78 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
         }
       }
     }
+  }
+
+  @Nullable
+  private static List<PsiElement> moveStatements(@NotNull final PsiElement first, final PsiElement last, final PsiTryStatement statement) {
+    final PsiCodeBlock tryBlock = statement.getTryBlock();
+    assert tryBlock != null : statement.getText();
+    final PsiJavaToken rBrace = tryBlock.getRBrace();
+    assert rBrace != null : statement.getText();
+
+    final PsiElement parent = statement.getParent();
+    final LocalSearchScope scope = new LocalSearchScope(parent);
+    List<PsiElement> toFormat = null, toDelete = null;
+
+    final PsiElement stopAt = last.getNextSibling();
+    for (PsiElement child = first; child != null && child != stopAt; child = child.getNextSibling()) {
+      if (!(child instanceof PsiDeclarationStatement)) continue;
+
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)child).getDeclaredElements();
+      int varsProcessed = 0;
+      for (PsiElement declared : declaredElements) {
+        if (!(declared instanceof PsiLocalVariable)) continue;
+
+        final boolean contained = ReferencesSearch.search(declared, scope).forEach(new Processor<PsiReference>() {
+          @Override
+          public boolean process(PsiReference reference) {
+            return reference.getElement().getTextOffset() <= last.getTextRange().getEndOffset();
+          }
+        });
+
+        if (!contained) {
+          final PsiLocalVariable var = (PsiLocalVariable)declared;
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+          final String name = var.getName();
+          assert name != null : child.getText();
+
+          toFormat = plus(toFormat, parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
+
+          final PsiExpression varInit = var.getInitializer();
+          if (varInit != null) {
+            final String varAssignText = name + " = " + varInit.getText() + ";";
+            parent.addBefore(factory.createStatementFromText(varAssignText, parent), child.getNextSibling());
+          }
+
+          ++varsProcessed;
+          toDelete = plus(toDelete, declared);
+          declared.delete();
+        }
+      }
+
+      if (varsProcessed == declaredElements.length) {
+        toDelete = plus(toDelete, child);
+      }
+    }
+
+    if (toDelete != null) {
+      for (PsiElement element : toDelete) {
+        if (element.isValid()) {
+          element.delete();
+        }
+      }
+    }
+
+    tryBlock.addRangeBefore(first, last, rBrace);
+    parent.deleteChildRange(first, last);
+
+    return toFormat;
+  }
+
+  private static List<PsiElement> plus(@Nullable List<PsiElement> list, PsiElement element) {
+    if (list == null) list = ContainerUtil.newArrayList();
+    list.add(element);
+    return list;
   }
 
   @NotNull
