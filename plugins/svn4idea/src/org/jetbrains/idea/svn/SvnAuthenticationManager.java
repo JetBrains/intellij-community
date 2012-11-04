@@ -18,16 +18,14 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
@@ -55,6 +53,7 @@ import java.util.*;
  * @author alex
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationManager");
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
@@ -239,10 +238,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     public SVNAuthentication requestClientAuthentication(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
                                                          final SVNAuthentication previousAuth, final boolean authMayBeStored) {
-      final SVNAuthentication svnAuthentication =
-        myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-      myListener.getMulticaster().requested(ProviderType.persistent, url, realm, kind, svnAuthentication == null);
-      return svnAuthentication;
+      try {
+        return wrapNativeCall(new ThrowableComputable<SVNAuthentication, SVNException>() {
+          @Override
+          public SVNAuthentication compute() throws SVNException {
+            final SVNAuthentication svnAuthentication =
+              myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+            myListener.getMulticaster().requested(ProviderType.persistent, url, realm, kind, svnAuthentication == null);
+            return svnAuthentication;
+          }
+        });
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+        throw new RuntimeException(e);
+      }
     }
 
     public int acceptServerAuthentication(final SVNURL url, final String realm, final Object certificate, final boolean resultMayBeStored) {
@@ -271,25 +281,60 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
-      final Boolean fromInteractive = ourJustEntered.get();
-      ourJustEntered.set(null);
-      if (! myArtificialSaving && ! Boolean.TRUE.equals(fromInteractive)) {
-        // not what user entered
-        return;
+      try {
+        wrapNativeCall(new ThrowableComputable<Void, SVNException>() {
+          @Override
+          public Void compute() throws SVNException {
+            final Boolean fromInteractive = ourJustEntered.get();
+            ourJustEntered.set(null);
+            if (! myArtificialSaving && ! Boolean.TRUE.equals(fromInteractive)) {
+              // not what user entered
+              return null;
+            }
+            myListener.getMulticaster().saveAttemptStarted(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
+            ((ISVNPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+            myListener.getMulticaster().saveAttemptFinished(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
+            return null;
+          }
+        });
       }
-      myListener.getMulticaster().saveAttemptStarted(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
-      ((ISVNPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
-      myListener.getMulticaster().saveAttemptFinished(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
+      catch (SVNException e) {
+        LOG.info(e);
+        throw new RuntimeException(e);
+      }
     }
 
     @Override
-    public void saveFingerprints(String realm, byte[] fingerprints) {
-      ((ISVNPersistentAuthenticationProvider) myDelegate).saveFingerprints(realm, fingerprints);
+    public void saveFingerprints(final String realm, final byte[] fingerprints) {
+      try {
+        wrapNativeCall(new ThrowableComputable<Void, SVNException>() {
+          @Override
+          public Void compute() throws SVNException {
+            ((ISVNPersistentAuthenticationProvider) myDelegate).saveFingerprints(realm, fingerprints);
+            return null;
+          }
+        });
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+        throw new RuntimeException(e);
+      }
     }
 
     @Override
-    public byte[] loadFingerprints(String realm) {
-      return ((ISVNPersistentAuthenticationProvider) myDelegate).loadFingerprints(realm);
+    public byte[] loadFingerprints(final String realm) {
+      try {
+        return wrapNativeCall(new ThrowableComputable<byte[], SVNException>() {
+          @Override
+          public byte[] compute() throws SVNException {
+            return ((ISVNPersistentAuthenticationProvider) myDelegate).loadFingerprints(realm);
+          }
+        });
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+        throw new RuntimeException(e);
+      }
     }
 
     private final static int maxAttempts = 10;
@@ -848,6 +893,30 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     @Override
     public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
       return myDelegate.readPassphrase(realm, authParameters);
+    }
+  }
+
+  private <T> T wrapNativeCall(final ThrowableComputable<T, SVNException> runnable) throws SVNException {
+    try {
+      NativeLogReader.startTracking();
+      final T t = runnable.compute();
+      final List<NativeLogReader.CallInfo> logged = NativeLogReader.getLogged();
+      final StringBuilder sb = new StringBuilder();
+      for (NativeLogReader.CallInfo info : logged) {
+        final String message = SvnNativeCallsTranslator.getMessage(info);
+        if (message != null) {
+          if (sb.length() > 0) sb.append('\n');
+          sb.append(message);
+        }
+      }
+      if (sb.length() > 0) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, sb.toString(), MessageType.ERROR);
+        LOG.info(sb.toString());
+      }
+      return t;
+    } finally {
+      NativeLogReader.clear();
+      NativeLogReader.endTracking();
     }
   }
 

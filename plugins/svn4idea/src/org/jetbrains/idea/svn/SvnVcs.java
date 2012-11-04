@@ -141,6 +141,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
+  @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.native";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
@@ -185,8 +186,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   static {
-    //noinspection UseOfArchaicSystemPropertyAccessors
-    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
+    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME), LOG);
     SVNDebugLog.setDefaultLog(logger);
 
     SVNJNAUtil.setJNAEnabled(true);
@@ -996,31 +996,46 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
     private final boolean myLoggingEnabled;
+    private final boolean myLogNative;
     private final Logger myLog;
-    @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.trace";
 
-    public JavaSVNDebugLogger(boolean loggingEnabled, Logger log) {
+    public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
       myLoggingEnabled = loggingEnabled;
+      myLogNative = logNative;
       myLog = log;
+    }
+
+    private boolean shouldLog(final SVNLogType logType) {
+      return myLoggingEnabled || myLogNative && SVNLogType.NATIVE_CALL.equals(logType);
     }
 
     @Override
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
-      if (myLoggingEnabled) {
+      if (shouldLog(logType)) {
         myLog.info(th);
       }
     }
 
     @Override
     public void log(final SVNLogType logType, final String message, final Level logLevel) {
-      if (myLoggingEnabled) {
+      if (SVNLogType.NATIVE_CALL.equals(logType)) {
+        logNative(message);
+      }
+      if (shouldLog(logType)) {
         myLog.info(message);
       }
     }
 
+    private static void logNative(String message) {
+      if (message == null) return;
+      final NativeLogReader.CallInfo callInfo = SvnNativeLogParser.parse(message);
+      if (callInfo == null) return;
+      NativeLogReader.putInfo(callInfo);
+    }
+
     @Override
     public void log(final SVNLogType logType, final String message, final byte[] data) {
-      if (myLoggingEnabled) {
+      if (shouldLog(logType)) {
         if (data != null) {
           try {
             myLog.info(message + "\n" + new String(data, "UTF-8"));
