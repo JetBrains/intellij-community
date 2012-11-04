@@ -124,7 +124,8 @@ public class DiffStatusBar extends JPanel {
                                        ? myColorScheme
                                        : EditorColorsManager.getInstance().getGlobalScheme();
       g.setColor(myDiffType.getLegendColor(colorScheme));
-      g.fill3DRect(10, (getHeight() - 10) / 2, 35, 10, true);
+      final int RECT_WIDTH = 35;
+      g.fill3DRect(0, (getHeight() - 10) / 2, RECT_WIDTH, 10, true);
 
       Font font = g.getFont();
       if (font.getStyle() != Font.PLAIN) {
@@ -133,7 +134,7 @@ public class DiffStatusBar extends JPanel {
       g.setFont(font);
       g.setColor(UIUtil.getLabelForeground());
       int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
-      g.drawString(myDiffType.getDisplayName(), 67, textBaseline);
+      g.drawString(myDiffType.getDisplayName(), RECT_WIDTH + UIUtil.DEFAULT_HGAP, textBaseline);
     }
 
     @Override
