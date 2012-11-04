@@ -6,11 +6,8 @@ import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 08.03.11
- * Time: 15:38
- * To change this template use File | Settings | File Templates.
  */
 class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
   private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<TIntHashSet>();

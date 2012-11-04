@@ -10,16 +10,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.02.11
- * Time: 4:54
- * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
   private final DependencyContext myContext;
   private final int myFileName;
-  private final TypeRepr.AbstractType mySuperClass;
+  private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
   private final RetentionPolicy myRetentionPolicy;
@@ -47,7 +44,7 @@ public class ClassRepr extends Proto {
     return myIsLocal;
   }
 
-  public TypeRepr.AbstractType getSuperClass() {
+  public TypeRepr.ClassType getSuperClass() {
     return mySuperClass;
   }
 
@@ -103,8 +100,11 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = myContext.getValue(((TypeRepr.ClassType)((ClassRepr)past).mySuperClass).myClassName);
-        return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
+        if ((d & Difference.SUPERCLASS) <= 0) {
+          return false;
+        }
+        final String pastSuperName = myContext.getValue(((ClassRepr)past).mySuperClass.className);
+        return "java/lang/Object".equals(pastSuperName);
       }
 
       @Override
@@ -170,11 +170,11 @@ public class ClassRepr extends Proto {
   public int[] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
-    result[0] = ((TypeRepr.ClassType)mySuperClass).myClassName;
+    result[0] = mySuperClass.className;
 
     int i = 1;
     for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).myClassName;
+      result[i++] = ((TypeRepr.ClassType)t).className;
     }
 
     return result;
@@ -226,7 +226,7 @@ public class ClassRepr extends Proto {
     try {
       this.myContext = context;
       myFileName = in.readInt();
-      mySuperClass = TypeRepr.externalizer(context).read(in);
+      mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
       myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
       myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);

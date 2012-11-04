@@ -17,60 +17,80 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 /**
  * @author ilyas
  */
 public class TupleParse {
-  public static boolean parseTuple(PsiBuilder builder, @Nullable IElementType tupleType, IElementType componentType) {
-    if (builder.getTokenType() != mLPAREN) return false;
+  public static boolean parseTupleForAssignment(PsiBuilder builder) {
+    PsiBuilder.Marker marker = parseTuple(builder, REFERENCE_EXPRESSION, false);
+    if (marker == null) return false;
+    marker.done(TUPLE_EXPRESSION);
+    return true;
+  }
+
+  public static boolean parseTupleForVariableDeclaration(PsiBuilder builder) {
+    PsiBuilder.Marker marker = parseTuple(builder, VARIABLE, true);
+    if (marker == null) return false;
+    marker.drop();
+    return true;
+  }
+
+  public static PsiBuilder.Marker parseTuple(PsiBuilder builder, IElementType componentType, boolean acceptType) {
+    if (builder.getTokenType() != mLPAREN) return null;
 
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
+    int count = 0;
     do {
       //skip unnecessary commas
       while (ParserUtils.getToken(builder, mCOMMA)) {
+        count++;
         builder.error(GroovyBundle.message("identifier.expected"));
       }
 
-      //parse modifiers for definitions
-      PsiBuilder.Marker typeMarker = builder.mark();
-      TypeSpec.parse(builder);
-      if (builder.getTokenType() != mIDENT) {
-        typeMarker.rollbackTo();
+      if (acceptType) {
+        //parse modifiers for definitions
+        PsiBuilder.Marker typeMarker = builder.mark();
+        TypeSpec.parse(builder);
+        if (builder.getTokenType() != mIDENT) {
+          typeMarker.rollbackTo();
+        }
+        else {
+          typeMarker.drop();
+        }
       }
-      else {
-        typeMarker.drop();
-      }
-      PsiBuilder.Marker varMarker = builder.mark();
+
+      PsiBuilder.Marker componentMarker = builder.mark();
       if (!ParserUtils.getToken(builder, mIDENT)) {
         builder.error(GroovyBundle.message("identifier.expected"));
-        varMarker.drop();
+        componentMarker.drop();
       }
       else {
-        varMarker.done(componentType);
+        componentMarker.done(componentType);
+        count++;
       }
     }
     while (ParserUtils.getToken(builder, mCOMMA));
 
     if (ParserUtils.getToken(builder, mRPAREN)) {
-      if (tupleType != null) {
-        marker.done(tupleType);
-      }
-      else {
-        marker.drop();
-      }
-      return true;
+      return marker;
+    }
+    else if (count > 0) {    //accept tuple if there was at least one comma or parsed tuple element inside it
+      builder.error(GroovyBundle.message("comma.or.rparen.expected"));
+      return marker;
     }
     else {
       marker.rollbackTo();
-      return false;
+      return null;
     }
   }
 }

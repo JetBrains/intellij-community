@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 
 /**
  * @author ilyas
@@ -69,7 +70,9 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
         if (context != null) {
           return ref.createType(context);
         }
-        else return null;
+        else {
+          return null;
+        }
       }
     };
 
@@ -92,7 +95,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
     PsiElementFactory elementFactory = facade.getElementFactory();
 
-    if (!PsiUtil.isInStaticContext(this)) return elementFactory.createType(context);
+    if (!StaticChecker.isInStaticContext(this)) return elementFactory.createType(context);
 
     //create instance of java.lang.Class<CurrentClass>
     if (context instanceof PsiAnonymousClass) {
@@ -125,5 +128,4 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
 
     return PsiUtil.getContextClass(this);
   }
-
 }

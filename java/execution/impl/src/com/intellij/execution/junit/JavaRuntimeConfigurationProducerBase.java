@@ -22,13 +22,16 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author spleaner
@@ -61,7 +64,31 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
     }
     else if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
-      return isSource(directory, fileIndex) ? JavaDirectoryService.getInstance().getPackage(directory) : null;
+      if (isSource(directory, fileIndex)) {
+        return JavaDirectoryService.getInstance().getPackage(directory);
+      }
+      else {
+        final VirtualFile virtualFile = directory.getVirtualFile();
+        //choose default package when selection on content root
+        if (fileIndex.getContentRootForFile(virtualFile) == virtualFile) {
+          final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+          if (module != null) {
+            final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
+            for (ContentEntry entry : entries) {
+              if (virtualFile.equals(entry.getFile())) {
+                final SourceFolder[] folders = entry.getSourceFolders();
+                Set<String> packagePrefixes = new HashSet<String>();
+                for (SourceFolder folder : folders) {
+                  packagePrefixes.add(folder.getPackagePrefix());
+                }
+                if (packagePrefixes.size() != 1) return null;
+                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.iterator().next());
+              }
+            }
+          }
+        }
+        return null;
+      }
     }
     else {
       return null;
