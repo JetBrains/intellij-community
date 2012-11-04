@@ -38,7 +38,7 @@ import java.util.List;
 public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
   protected static final Icon CHECKED = PlatformIcons.CHECK_ICON;
 
-  private List<T> myItems = Collections.emptyList();
+  protected List<T> myItems = Collections.emptyList();
   private T mySelection;
   private Presentation myPresentation;
   private boolean myShowDisabledActions;

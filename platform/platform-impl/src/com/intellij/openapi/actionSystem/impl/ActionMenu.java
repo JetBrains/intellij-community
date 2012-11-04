@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -117,11 +118,6 @@ public final class ActionMenu extends JMenu {
   public void updateUI() {
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
-
-      if (myTopLevel && UIUtil.isUnderGTKLookAndFeel() && "Ambiance".equalsIgnoreCase(UIUtil.getGtkThemeName())) {
-        setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
-        setBackground(UIUtil.GTK_AMBIANCE_BACKGROUND_COLOR);
-      }
     }
     else {
       setUI(IdeaMenuUI.createUI(this));
@@ -138,6 +134,21 @@ public final class ActionMenu extends JMenu {
   public void setUI(final MenuItemUI ui) {
     final MenuItemUI newUi = !myTopLevel && UIUtil.isUnderGTKLookAndFeel() && GtkMenuUI.isUiAcceptable(ui) ? new GtkMenuUI(ui) : ui;
     super.setUI(newUi);
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    Ref<Color> foreground = null;
+    if (myTopLevel && UIUtil.isUnderGTKLookAndFeel() && "Ambiance".equalsIgnoreCase(UIUtil.getGtkThemeName())) {
+      foreground = Ref.create(getForeground());
+      setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
+    }
+
+    super.paint(g);
+
+    if (foreground != null) {
+      setForeground(foreground.get());
+    }
   }
 
   private void init() {

@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
@@ -68,7 +69,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     final JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     assert factory != null;
     PsiMethod method = factory.createMethod(myRefExpression.getReferenceName(), PsiType.VOID);
-    if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) {
+    if (StaticChecker.isInStaticContext(myRefExpression, myTargetClass)) {
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
 

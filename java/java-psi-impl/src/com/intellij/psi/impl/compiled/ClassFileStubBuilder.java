@@ -52,6 +52,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return JavaFileElementType.STUB_VERSION + 4;
+    return JavaFileElementType.STUB_VERSION + 5;
   }
 }

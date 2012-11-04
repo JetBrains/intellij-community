@@ -86,11 +86,9 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                 Collection<String> unknownJdks,
                                 EclipseModuleManager eclipseModuleManager,
                                 String jdkName) {
-    if (jdkName == null) {
-      final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
-      dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
-    }
-    else {
+    final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
+    dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+    if (jdkName != null) {
       JpsSdkTableSerializer.setSdkReference(rootModel.getSdkReferencesTable(), jdkName, JpsJavaSdkType.INSTANCE);
     }
   }
@@ -235,6 +233,8 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(rootModel);
     extension.setOutputUrl(pathToUrl(path));
     extension.setInheritOutput(false);
+
+    rootModel.getDependenciesList().addModuleSourceDependency();
   }
 
   private static void setLibraryEntryExported(final JpsDependencyElement dependency, boolean exported) {

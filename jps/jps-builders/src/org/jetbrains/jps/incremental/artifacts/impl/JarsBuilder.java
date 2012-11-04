@@ -32,9 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -187,11 +187,10 @@ public class JarsBuilder {
         }
       }
 
-      final ArtifactBuilderLogger logger = myContext.getLoggingManager().getArtifactBuilderLogger();
+      final ProjectBuilderLogger logger = myContext.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-        for (String filePath : packedFilePaths) {
-          logger.fileCopied(filePath);
-        }
+
+        logger.logCompiledPaths(packedFilePaths, IncArtifactBuilder.BUILDER_NAME, "Packing files:");
       }
       myOutputConsumer.registerOutputFile(targetJarPath, packedFilePaths);
 

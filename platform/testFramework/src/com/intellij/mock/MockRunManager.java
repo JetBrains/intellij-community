@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author gregsh
@@ -71,6 +72,12 @@ public class MockRunManager extends RunManagerEx {
   @NotNull
   public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {
     return new RunnerAndConfigurationSettings[0];
+  }
+
+  @NotNull
+  @Override
+  public Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type) {
+    return Collections.emptyMap();
   }
 
   @Override
@@ -168,26 +175,5 @@ public class MockRunManager extends RunManagerEx {
 
   @Override
   public void refreshUsagesList(RunProfile profile) {
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFolders(@NotNull ConfigurationType type) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public boolean createFolder(@NotNull ConfigurationType type, @NotNull String name) {
-    return false;
-  }
-
-  @Override
-  public boolean renameFolder(@NotNull ConfigurationType type, @NotNull String oldName, @NotNull String newName) {
-    return false;
-  }
-
-  @Override
-  public boolean removeFolder(@NotNull ConfigurationType type, @NotNull String name) {
-    return false;
   }
 }

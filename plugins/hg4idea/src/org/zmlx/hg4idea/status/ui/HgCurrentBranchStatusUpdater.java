@@ -98,7 +98,7 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
 
     currentBranchStatus.updateFor(branch, parents);
 
-    project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
   }
 
 

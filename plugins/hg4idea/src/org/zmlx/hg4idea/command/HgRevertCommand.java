@@ -54,6 +54,6 @@ public class HgRevertCommand {
       args.addAll(chunk);
       new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", args);
     }
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
   }
 }

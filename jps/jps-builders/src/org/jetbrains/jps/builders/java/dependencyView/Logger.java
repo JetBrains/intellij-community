@@ -16,11 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 20.01.12
- * Time: 15:42
- * To change this template use File | Settings | File Templates.
  */
 public interface Logger<T> {
   void debug(String comment, T t);

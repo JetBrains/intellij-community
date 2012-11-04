@@ -3,8 +3,10 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -18,6 +20,7 @@ import com.intellij.openapi.wm.WelcomeScreenProvider;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 
 import javax.swing.*;
@@ -35,6 +38,8 @@ public class WelcomeFrame extends JFrame {
     final WelcomeScreen screen = createScreen(rootPane);
 
     setContentPane(screen.getWelcomePanel());
+    setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
+    AppUIUtil.updateFrameIcon(this);
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
@@ -45,6 +50,11 @@ public class WelcomeFrame extends JFrame {
 
     myScreen = screen;
     setupCloseAction();
+    new MnemonicHelper().register(this);
+  }
+
+  public static WelcomeFrame getInstance() {
+    return ourInstance;
   }
 
   @Override
@@ -130,7 +140,7 @@ public class WelcomeFrame extends JFrame {
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
-        IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllFrames();
+        IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllProjectFrames();
         if (frames.length == 0) {
           showNow();
         }

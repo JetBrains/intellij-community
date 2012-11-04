@@ -51,7 +51,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     new LinkedHashMap<Integer, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<Integer, Boolean> mySharedConfigurations = new TreeMap<Integer, Boolean>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
-  private final Map<ConfigurationType, List<String>> myFolders = new LinkedHashMap<ConfigurationType, List<String>>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
@@ -243,6 +242,33 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return set.toArray(new RunnerAndConfigurationSettings[set.size()]);
   }
 
+  @NotNull
+  @Override
+  public Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type) {
+    LinkedHashMap<String, List<RunnerAndConfigurationSettings>> map = new LinkedHashMap<String, List<RunnerAndConfigurationSettings>>();
+    List<RunnerAndConfigurationSettings> typeList = new ArrayList<RunnerAndConfigurationSettings>();
+    RunnerAndConfigurationSettings[] settings = getConfigurationSettings(type);
+    for (RunnerAndConfigurationSettings setting : settings) {
+      String folderName = setting.getFolderName();
+      if (folderName == null) {
+        typeList.add(setting);
+      }
+      else {
+        List<RunnerAndConfigurationSettings> list = map.get(folderName);
+        if (list == null) {
+          map.put(folderName, list = new ArrayList<RunnerAndConfigurationSettings>());
+        }
+        list.add(setting);
+      }
+    }
+    LinkedHashMap<String, List<RunnerAndConfigurationSettings>> result = new LinkedHashMap<String, List<RunnerAndConfigurationSettings>>();
+    for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : map.entrySet()) {
+      result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+    }
+    result.put(null, Collections.unmodifiableList(typeList));
+    return Collections.unmodifiableMap(result);
+  }
+
   public RunnerAndConfigurationSettings getConfigurationTemplate(final ConfigurationFactory factory) {
     RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
@@ -281,7 +307,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     mySharedConfigurations.put(newId, shared);
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
-    setOrdered(false);
 
     if (existingSettings == settings) {
       myDispatcher.getMulticaster().runConfigurationChanged(settings);
@@ -320,58 +345,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
     fireRunConfigurationsRemoved(removed);
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFolders(@NotNull ConfigurationType type) {
-    List<String> names = myFolders.get(type);
-    return names != null ? Collections.unmodifiableList(names) : Collections.<String>emptyList();
-  }
-
-  @Override
-  public boolean createFolder(@NotNull ConfigurationType type, @Nullable String name) {
-    if (name == null || name.isEmpty())
-      return false;
-    List<String> names = myFolders.get(type);
-    if (names == null) {
-      myFolders.put(type, names = new ArrayList<String>(1));
-    }
-    return !names.contains(name) && names.add(name);
-  }
-
-  @Override
-  public boolean renameFolder(@NotNull ConfigurationType type, @NotNull String oldName, @NotNull String newName) {
-    List<String> names = myFolders.get(type);
-    if (names == null)
-      return false;
-    int index = names.indexOf(oldName);
-    if (index == -1) {
-      return false;
-    }
-    names.set(index, newName);
-    RunnerAndConfigurationSettings[] settings = getConfigurationSettings(type);
-    for (RunnerAndConfigurationSettings setting : settings) {
-      if (oldName.equals(setting.getFolderName())) {
-        setting.setFolderName(newName);
-      }
-    }
-    return true;
-  }
-
-  public boolean removeFolder(@NotNull ConfigurationType type, @NotNull String name) {
-    List<String> names = myFolders.get(type);
-    if (names == null || !names.remove(name)) {
-      return false;
-    }
-
-    RunnerAndConfigurationSettings[] settings = getConfigurationSettings(type);
-    for (RunnerAndConfigurationSettings setting : settings) {
-      if (name.equals(setting.getFolderName())) {
-        setting.setFolderName(null);
-      }
-    }
-    return true;
   }
 
   public void setOrdered(boolean ordered) {
@@ -475,7 +448,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
       for (Pair<String, RunnerAndConfigurationSettings> each : order) {
         RunnerAndConfigurationSettings setting = each.second;
-        createFolder(setting.getType(), setting.getFolderName());
         myConfigurations.put(setting.getConfiguration().getUniqueID(), setting);
       }
 

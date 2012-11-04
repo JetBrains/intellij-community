@@ -44,6 +44,7 @@ import java.awt.event.ItemListener;
 public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAutoscroll;
   private JCheckBox myCbShowSyntheticFields;
+  private StateRestoringCheckBox myCbShowValFieldsAsLocalVariables;
   private JCheckBox myCbSort;
   private JCheckBox myCbHideNullArrayElements;
   private JCheckBox myCbShowStatic;
@@ -88,6 +89,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
     myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
+    myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
     myCbSort = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.sort.alphabetically"));
     myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
     myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
@@ -101,6 +103,17 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
         }
         else {
           myCbShowStaticFinalFields.makeUnselectable(false);
+        }
+      }
+    });
+    myCbShowSyntheticFields.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        if(myCbShowSyntheticFields.isSelected()) {
+          myCbShowValFieldsAsLocalVariables.makeSelectable();
+        }
+        else {
+          myCbShowValFieldsAsLocalVariables.makeUnselectable(false);
         }
       }
     });
@@ -153,7 +166,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     showPanel.add(myCbShowStatic, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowValFieldsAsLocalVariables, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 10, 0, 0), 0, 0));
     showPanel.add(myCbShowFQNames, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
 
     panel.add(showPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
@@ -195,6 +209,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
     classRenderer.SHOW_STATIC_FINAL = myCbShowStaticFinalFields.isSelectedWhenSelectable();
     classRenderer.SHOW_SYNTHETICS = myCbShowSyntheticFields.isSelected();
+    classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES = myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable();
     classRenderer.SHOW_DECLARED_TYPE = myCbShowDeclaredType.isSelected();
     classRenderer.SHOW_FQ_TYPE_NAMES = myCbShowFQNames.isSelected();
     classRenderer.SHOW_OBJECT_ID = myCbShowObjectId.isSelected();
@@ -224,6 +239,10 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     ClassRenderer classRenderer = rendererSettings.getClassRenderer();
 
     myCbShowSyntheticFields.setSelected(classRenderer.SHOW_SYNTHETICS);
+    myCbShowValFieldsAsLocalVariables.setSelected(classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES);
+    if (!classRenderer.SHOW_SYNTHETICS) {
+      myCbShowValFieldsAsLocalVariables.makeUnselectable(false);
+    }
     myCbSort.setSelected(classRenderer.SORT_ASCENDING);
     myCbShowStatic.setSelected(classRenderer.SHOW_STATIC);
     myCbShowStaticFinalFields.setSelected(classRenderer.SHOW_STATIC_FINAL);
@@ -281,6 +300,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
     (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
     (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
+    (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
     (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
     (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
     (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected());

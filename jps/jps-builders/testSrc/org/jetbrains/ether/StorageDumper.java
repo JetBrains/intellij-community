@@ -5,11 +5,8 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import java.io.File;
 
 /**
- * Created with IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 14.05.12
- * Time: 13:02
- * To change this template use File | Settings | File Templates.
  */
 public class StorageDumper {
   private static class Env {

@@ -18,7 +18,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HgUpdater {
 
-  void update(Project project);
-
   void update(Project project, @Nullable VirtualFile root);
 }

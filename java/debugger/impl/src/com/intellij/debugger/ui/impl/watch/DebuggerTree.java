@@ -43,6 +43,7 @@ import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -448,14 +449,17 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
         myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
 
-        if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
-          final ReferenceType thisRefType = thisObjectReference.referenceType();
-          if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
-            final ClassType clsType = (ClassType)thisRefType;
-            for (Field field : clsType.fields()) {
-              if (field.isSynthetic() && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
-                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
-                myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
+        final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+        if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
+          if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
+            final ReferenceType thisRefType = thisObjectReference.referenceType();
+            if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
+              final ClassType clsType = (ClassType)thisRefType;
+              for (Field field : clsType.fields()) {
+                if (field.isSynthetic() && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                  final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
+                  myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
+                }
               }
             }
           }
@@ -463,7 +467,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
         try {
           buildVariables(stackDescriptor, evaluationContext);
-          if (NodeRendererSettings.getInstance().getClassRenderer().SORT_ASCENDING) {
+          if (classRenderer.SORT_ASCENDING) {
             Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
           }
         }

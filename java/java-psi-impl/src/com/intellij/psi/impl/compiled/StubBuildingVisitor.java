@@ -426,13 +426,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
     new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
 
-    final boolean isEnumConstructor = isConstructor && myResult.isEnum();
-
-    int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
-    if (isEnumConstructor) {
-      localVarIgnoreCount += 2;
-    }
-    final int paramIgnoreCount = isEnumConstructor? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
+    final int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : isConstructor && myResult.isEnum() ? 3 : 1;
+    final int paramIgnoreCount = isConstructor && myResult.isEnum() ? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
     return new AnnotationParamCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
   }
 
@@ -610,10 +605,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private AnnotationParamCollectingVisitor(final PsiMethodStub owner,
                                              final PsiModifierListStub modList,
-                                             int ignoreCount,
-                                             int paramIgnoreCount,
-                                             int paramCount,
-                                             PsiParameterStubImpl[] paramStubs) {
+                                             final int ignoreCount,
+                                             final int paramIgnoreCount,
+                                             final int paramCount,
+                                             final PsiParameterStubImpl[] paramStubs) {
       super(Opcodes.ASM4);
       myOwner = owner;
       myModList = modList;
@@ -649,10 +644,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         // long and double variables increase the index by 2, not by 1
         int paramIndex = (index - myIgnoreCount == myUsedParamSize) ? myUsedParamCount : index - myIgnoreCount;
         if (paramIndex >= myParamCount) return;
-        PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
-        if (parameterStub != null) {
-          parameterStub.setName(name);
+
+        if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
+          PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
+          if (parameterStub != null) {
+            parameterStub.setName(name);
+          }
         }
+
         myUsedParamCount = paramIndex+1;
         if ("D".equals(desc) || "J".equals(desc)) {
           myUsedParamSize += 2;

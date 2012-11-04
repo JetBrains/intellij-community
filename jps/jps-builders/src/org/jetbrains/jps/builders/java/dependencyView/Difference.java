@@ -6,11 +6,8 @@ import org.jetbrains.asm4.Opcodes;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.03.11
- * Time: 17:39
- * To change this template use File | Settings | File Templates.
  */
 abstract class Difference {
   public static boolean isPackageLocal(final int access) {

@@ -334,7 +334,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public static void updateMethodPresentation(PsiMethod method, PsiSubstitutor substitutor, ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    if (!method.isValid()) {
+    if (!method.isValid() || !substitutor.isValid()) {
       context.setUIComponentEnabled(false);
       return;
     }
@@ -345,7 +345,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (!method.isConstructor()) {
         PsiType returnType = method.getReturnType();
         if (substitutor != null) {
-          assert substitutor.isValid();
           returnType = substitutor.substitute(returnType);
         }
 

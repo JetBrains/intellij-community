@@ -51,17 +51,11 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     myPanel.validate();
     myPanel.saveSettings();
-    if (myPanel.getProjectSettings().isCheckIncoming()) {
-      myProject.getMessageBus().syncPublisher(HgVcs.INCOMING_CHECK_TOPIC).show();
+    if (myPanel.getProjectSettings().isCheckIncomingOutgoing()) {
+      myProject.getMessageBus().syncPublisher(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC).show();
     }
     else {
-      myProject.getMessageBus().syncPublisher(HgVcs.INCOMING_CHECK_TOPIC).hide();
-    }
-    if (myPanel.getProjectSettings().isCheckOutgoing()) {
-      myProject.getMessageBus().syncPublisher(HgVcs.OUTGOING_CHECK_TOPIC).show();
-    }
-    else {
-      myProject.getMessageBus().syncPublisher(HgVcs.OUTGOING_CHECK_TOPIC).hide();
+      myProject.getMessageBus().syncPublisher(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC).hide();
     }
   }
 

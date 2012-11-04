@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.*;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -25,12 +26,15 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
@@ -47,6 +51,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
+      if (myAnimationStepsLeft > 0 && myImage != null) {
+        //g.drawImage(myImage, )
+      }
+
       Point point = ArrangementConfigUtil.getLocationOnScreen(this);
       if (point != null) {
         Rectangle bounds = myRenderer.getBounds();
@@ -56,6 +64,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
       }
       super.paint(g);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // TODO den implement
+      return super.getPreferredSize();
     }
   };
 
@@ -83,6 +97,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @NotNull private final ArrangementAtomMatchCondition myCondition;
 
   @Nullable private final ActionButton                            myCloseButton;
+  @Nullable private final Rectangle                               myCloseButtonBounds;
   @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
@@ -90,6 +105,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
 
+  @Nullable private BufferedImage myImage;
+  private           int           myAnimationStepsLeft;
+  
   private boolean myEnabled = true;
   private boolean myCloseButtonHovered;
 
@@ -109,13 +127,20 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
     Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
-    myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
-      @Override
-      protected Icon getIcon() {
-        return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
-      }
-    };
-    
+    if (closeCallback == null) {
+      myCloseButton = null;
+      myCloseButtonBounds = null;
+    }
+    else {
+      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
+        @Override
+        protected Icon getIcon() {
+          return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
+        }
+      };
+      myCloseButtonBounds = new Rectangle(0, 0, buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
+    }
+
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(0, 0, 0, 0);
 
     JPanel insetsPanel = new JPanel(new GridBagLayout());
@@ -127,7 +152,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
-        Rectangle buttonBounds = getCloseButtonScreenLocation();
+        Rectangle buttonBounds = getCloseButtonScreenBounds();
         if (buttonBounds != null) {
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
@@ -140,7 +165,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       }
     };
     roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST));
-    roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.EAST));
+    if (myCloseButton != null) {
+      roundBorderPanel.add(new InsetsPanel(myCloseButton), new GridBag().anchor(GridBagConstraints.EAST));
+    }
     myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
@@ -148,6 +175,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myRenderer.add(roundBorderPanel, constraints);
     myRenderer.setOpaque(false);
     setSelected(false);
+    if (myCloseButton != null) {
+      myCloseButton.setVisible(false);
+    }
   }
 
   @NotNull
@@ -166,16 +196,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @Override
   public Rectangle getScreenBounds() {
     return myScreenBounds;
-  }
-
-  @Override
-  public void setScreenBounds(@Nullable Rectangle screenBounds) {
-    myScreenBounds = screenBounds;
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    return false;
   }
 
   /**
@@ -208,9 +228,13 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
-    Rectangle buttonBounds = getCloseButtonScreenLocation();
+    Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds == null) {
       return null;
+    }
+    if (myCloseButton != null && !myCloseButton.isVisible()) {
+      myCloseButton.setVisible(true);
+      return buttonBounds;
     }
     boolean mouseOverButton = buttonBounds.contains(event.getLocationOnScreen());
     return (mouseOverButton ^ myCloseButtonHovered) ? buttonBounds : null;
@@ -218,30 +242,60 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
 
   @Override
   public void onMouseClick(@NotNull MouseEvent event) {
-    Rectangle buttonBounds = getCloseButtonScreenLocation();
+    Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
       myCloseCallback.consume(getMatchCondition());
     }
   }
 
   @Override
-  public void onMouseExited() {
-    myCloseButtonHovered = false;
+  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
+    if (myCloseButton != null) {
+      myCloseButton.setVisible(true);
+      return getCloseButtonScreenBounds();
+    }
+    return null;
   }
 
   @Nullable
-  private Rectangle getCloseButtonScreenLocation() {
+  @Override
+  public Rectangle onMouseExited() {
+    if (myCloseButton == null) {
+      return null;
+    }
+    myCloseButton.setVisible(false);
+    return getCloseButtonScreenBounds();
+  }
+
+  @Nullable
+  private Rectangle getCloseButtonScreenBounds() {
     if (myCloseButton == null || myScreenBounds == null) {
       return null;
     }
 
-    Rectangle buttonBounds = myCloseButton.getBounds();
-    buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), buttonBounds, myRenderer);
+    Rectangle buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), myCloseButtonBounds, myRenderer);
     buttonBounds.x += myScreenBounds.x;
     buttonBounds.y += myScreenBounds.y;
     return buttonBounds;
   }
 
+  public void startAnimation() {
+    myAnimationStepsLeft = ArrangementConstants.ATOM_CONDITION_REMOVAL_STEPS;
+    Rectangle bounds = myRenderer.getBounds();
+    myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+    myCloseButton.setVisible(false);
+    final Graphics2D graphics = myImage.createGraphics();
+    UISettings.setupAntialiasing(graphics);
+    graphics.translate(-bounds.x, -bounds.y);
+    graphics.setClip(bounds.x, bounds.y, bounds.width, bounds.height);
+    myRenderer.paint(graphics);
+    graphics.dispose();
+  }
+  
+  public boolean isAnimationInProgress() {
+    return myAnimationStepsLeft > 0;
+  }
+  
   @Override
   public String toString() {
     return myText;

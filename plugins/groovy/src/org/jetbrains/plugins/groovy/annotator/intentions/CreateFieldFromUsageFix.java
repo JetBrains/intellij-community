@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 
 /**
  * @author ven
@@ -58,7 +58,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   }
 
   private String[] generateModifiers() {
-    if (myRefExpression != null && PsiUtil.isInStaticContext(myRefExpression, myFix.getTargetClass())) {
+    if (myRefExpression != null && StaticChecker.isInStaticContext(myRefExpression, myFix.getTargetClass())) {
       return new String[]{PsiModifier.STATIC};
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -69,9 +69,9 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   }
 
   @NotNull
-    public String getText() {
-      return GroovyBundle.message("create.field.from.usage", getFieldName());
-    }
+  public String getText() {
+    return GroovyBundle.message("create.field.from.usage", getFieldName());
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

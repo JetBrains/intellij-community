@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementMatchingRulesList;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -38,21 +39,19 @@ public class ArrangementMatchNodeComponentFactory {
 
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
-  @NotNull private final DefaultListModel              myListModel;
+  @NotNull private final ArrangementMatchingRulesList  myList;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
                                               @NotNull ArrangementColorsProvider provider,
-                                              @NotNull final DefaultListModel model)
+                                              @NotNull ArrangementMatchingRulesList list)
   {
     myDisplayManager = manager;
     myColorsProvider = provider;
-    myListModel = model;
+    myList = list;
   }
 
-  private static void removeCondition(@NotNull DefaultListModel model,
-                                      @NotNull StdArrangementMatchRule rule,
-                                      @NotNull ArrangementAtomMatchCondition condition)
-  {
+  private void removeCondition(@NotNull StdArrangementMatchRule rule, @NotNull ArrangementAtomMatchCondition condition) {
+    DefaultListModel model = (DefaultListModel)myList.getModel();
     int i = model.indexOf(rule);
     if (i < 0) {
       return;
@@ -60,6 +59,7 @@ public class ArrangementMatchNodeComponentFactory {
 
     ArrangementMatchCondition existingCondition = rule.getMatcher().getCondition();
     if (existingCondition.equals(condition)) {
+      myList.repaintRows(i, model.getSize() - 1, true);
       model.remove(i);
       return;
     }
@@ -69,10 +69,15 @@ public class ArrangementMatchNodeComponentFactory {
     operands.remove(condition);
 
     if (operands.isEmpty()) {
+      myList.repaintRows(i, model.getSize() - 1, true);
       model.remove(i);
     }
     else if (operands.size() == 1) {
       model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), rule.getOrderType()));
+      myList.repaintRows(i, i, true);
+    }
+    else {
+      myList.repaintRows(i, i, true);
     }
   }
 
@@ -119,7 +124,7 @@ public class ArrangementMatchNodeComponentFactory {
 
     @Override
     public void consume(ArrangementAtomMatchCondition condition) {
-      removeCondition(myListModel, myRule, condition);
+      removeCondition(myRule, condition);
     }
   }
 }

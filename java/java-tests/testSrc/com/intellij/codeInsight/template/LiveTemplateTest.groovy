@@ -237,6 +237,13 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResult();
   }
 
+  public void testAsListToar() {
+    configure();
+    startTemplate("toar", "other")
+    myFixture.type('\n\t')
+    checkResult();
+  }
+
   public void testVarargToar() {
     configure();
     startTemplate("toar", "other")

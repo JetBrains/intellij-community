@@ -215,8 +215,13 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
   }
 
-  public IdeFrameImpl[] getAllFrames() {
+  public IdeFrameImpl[] getAllProjectFrames() {
     return new IdeFrameImpl[0];
+  }
+
+  @Override
+  public JFrame findVisibleFrame() {
+    return null;
   }
 
   public final IdeFrameImpl getFrame(final Project project) {

@@ -16,6 +16,7 @@ package org.jetbrains.groovy.compiler.rt;
  */
 
 import groovy.lang.GroovyRuntimeException;
+import org.codehaus.groovy.GroovyBugError;
 import org.codehaus.groovy.ast.ASTNode;
 import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
@@ -47,6 +48,9 @@ public class GroovyCompilerWrapper {
       processCompilationException(e, collector, forStubs);
     }
     catch (IOException e) {
+      processException(e, collector, forStubs);
+    }
+    catch (GroovyBugError e) {
       processException(e, collector, forStubs);
     }
     catch (NoClassDefFoundError e) {
@@ -158,7 +162,7 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  private static void processException(Exception exception, List collector, boolean forStubs) {
+  private static void processException(Throwable exception, List collector, boolean forStubs) {
     if (exception instanceof GroovyRuntimeException) {
       addErrorMessage((GroovyRuntimeException) exception, collector);
       return;

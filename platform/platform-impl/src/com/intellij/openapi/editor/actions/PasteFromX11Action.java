@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 /**
- * Author: msk
+ * @author msk
  */
 public class PasteFromX11Action extends EditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.PasteFromX11Action");
@@ -52,7 +52,7 @@ public class PasteFromX11Action extends EditorAction {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor == null || !SystemInfo.X11PasteEnabledSystem) {
+    if (editor == null || !SystemInfo.isXWindow) {
       presentation.setEnabled(false);
     }
     else {
