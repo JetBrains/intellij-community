@@ -749,6 +749,10 @@ public class GenericsHighlightUtil {
               JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
+            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
+            if (operand instanceof PsiCapturedWildcardType) return true;
+          }
           return false;
         }
         return true;
