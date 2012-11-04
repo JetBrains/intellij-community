@@ -58,11 +58,9 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
       return "Collapse 'if' statement'";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement identifier = descriptor.getPsiElement();
-      final GrIfStatement statement =
-          (GrIfStatement) identifier.getParent();
+      final GrIfStatement statement = (GrIfStatement) identifier.getParent();
       assert statement != null;
       final GrStatement thenBranch = statement.getThenBranch();
       replaceStatement(statement, thenBranch);
