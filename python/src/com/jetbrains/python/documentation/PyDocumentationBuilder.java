@@ -219,7 +219,7 @@ class PyDocumentationBuilder {
       }
     }
     else if (followed != null && outer instanceof PyReferenceExpression) {
-      myBody.addItem("\nInferred type: ");
+      myBody.addItem(combUp("\nInferred type: "));
       PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outer, TypeEvalContext.slow());
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
