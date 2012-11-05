@@ -5,6 +5,11 @@ import java.io.IOException;
 class C {
     void m(File file) throws IOException {
         <caret>FileInputStream fileInputStream = new FileInputStream(file);
-        int read = fileInputStream.read();
+        int read;
+        do {
+            read = fileInputStream.read();
+            System.out.println(read);
+        }
+        while (read != -1);
     }
 }
