@@ -192,6 +192,13 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testUncheckedCast() throws Exception {
+    doTest(true);
+  }
+  public void testUncheckedCastNotNeeded() throws Exception {
+    doTest(true);
+  }
+
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
                  "Variable 'hello' is accessed for writing.");
