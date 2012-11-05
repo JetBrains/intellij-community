@@ -306,15 +306,24 @@ public class IncProjectBuilder {
 
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+    final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
-          new File(out).delete();
+          final File outFile = new File(out);
+          final boolean deleted = outFile.delete();
+          if (deleted) {
+            final File parent = outFile.getParentFile();
+            if (parent != null) {
+              dirsToDelete.add(parent);
+            }
+          }
         }
         context.processMessage(new FileDeletedEvent(outs));
       }
     }
+    pruneEmptyDirs(dirsToDelete);
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
@@ -651,6 +660,7 @@ public class IncProjectBuilder {
       // cleanup outputs
       final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<BuildTarget<?>, Collection<String>>();
 
+      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       for (BuildTarget<?> target : targets) {
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
@@ -671,9 +681,14 @@ public class IncProjectBuilder {
             }
 
             for (String output : outputs) {
-              final boolean deleted = new File(output).delete();
+              final File outFile = new File(output);
+              final boolean deleted = outFile.delete();
               if (deleted) {
                 doneSomething = true;
+                final File parent = outFile.getParentFile();
+                if (parent != null) {
+                  dirsToDelete.add(parent);
+                }
               }
             }
             context.processMessage(new FileDeletedEvent(outputs));
@@ -710,6 +725,8 @@ public class IncProjectBuilder {
         }
         Utils.REMOVED_SOURCES_KEY.set(context, targetToRemovedSources);
       }
+
+      pruneEmptyDirs(dirsToDelete);
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -820,9 +837,10 @@ public class IncProjectBuilder {
     try {
       ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
+      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> storageMap = new HashMap<T, SourceToOutputMapping>();
+        private final Map<T, SourceToOutputMapping> storageMap = new HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
 
         @Override
         public boolean apply(T target, File file, R sourceRoot) throws IOException {
@@ -831,7 +849,7 @@ public class IncProjectBuilder {
             srcToOut = dataManager.getSourceToOutputMap(target);
             storageMap.put(target, srcToOut);
           }
-          final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
+          final String srcPath = file.getPath();
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
 
           if (outputs != null) {
@@ -839,7 +857,12 @@ public class IncProjectBuilder {
               if (outputsToLog != null) {
                 outputsToLog.add(output);
               }
-              new File(output).delete();
+              final File outFile = new File(output);
+              outFile.delete();
+              final File parent = outFile.getParentFile();
+              if (parent != null) {
+                dirsToDelete.add(parent);
+              }
             }
             if (!outputs.isEmpty()) {
               context.processMessage(new FileDeletedEvent(outputs));
@@ -853,9 +876,33 @@ public class IncProjectBuilder {
       if (outputsToLog != null && context.isMake()) {
         logger.logDeletedFiles(outputsToLog);
       }
+      // attempting to delete potentially empty directories
+      pruneEmptyDirs(dirsToDelete);
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
+    }
+  }
+
+  private static void pruneEmptyDirs(final THashSet<File> dirsToDelete) {
+    THashSet<File> additionalDirs = null;
+    THashSet<File> toDelete = dirsToDelete;
+    while (toDelete != null) {
+      for (File file : toDelete) {
+        // important: do not force deletion if the directory is not empty!
+        final boolean deleted = file.delete();
+        if (deleted) {
+          final File parentFile = file.getParentFile();
+          if (parentFile != null) {
+            if (additionalDirs == null) {
+              additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            }
+            additionalDirs.add(parentFile);
+          }
+        }
+      }
+      toDelete = additionalDirs;
+      additionalDirs = null;
     }
   }
 
