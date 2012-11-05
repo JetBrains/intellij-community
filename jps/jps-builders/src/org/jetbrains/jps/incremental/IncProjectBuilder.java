@@ -306,14 +306,14 @@ public class IncProjectBuilder {
 
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-    final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : null;
     for (String srcPath : map.getSources()) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
           final File outFile = new File(out);
           final boolean deleted = outFile.delete();
-          if (deleted) {
+          if (deleted && dirsToDelete != null) {
             final File parent = outFile.getParentFile();
             if (parent != null) {
               dirsToDelete.add(parent);
@@ -660,7 +660,7 @@ public class IncProjectBuilder {
           continue;
         }
         targetToRemovedSources.put(target, deletedPaths);
-
+        final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         // actually delete outputs associated with removed paths
@@ -678,9 +678,11 @@ public class IncProjectBuilder {
               final boolean deleted = outFile.delete();
               if (deleted) {
                 doneSomething = true;
-                final File parent = outFile.getParentFile();
-                if (parent != null) {
-                  dirsToDelete.add(parent);
+                if (shouldPruneEmptyDirs) {
+                  final File parent = outFile.getParentFile();
+                  if (parent != null) {
+                    dirsToDelete.add(parent);
+                  }
                 }
               }
             }
@@ -846,15 +848,18 @@ public class IncProjectBuilder {
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
 
           if (outputs != null) {
+            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
             for (String output : outputs) {
               if (outputsToLog != null) {
                 outputsToLog.add(output);
               }
               final File outFile = new File(output);
-              outFile.delete();
-              final File parent = outFile.getParentFile();
-              if (parent != null) {
-                dirsToDelete.add(parent);
+              final boolean deleted = outFile.delete();
+              if (deleted && shouldPruneOutputDirs) {
+                final File parent = outFile.getParentFile();
+                if (parent != null) {
+                  dirsToDelete.add(parent);
+                }
               }
             }
             if (!outputs.isEmpty()) {
@@ -877,7 +882,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void pruneEmptyDirs(final THashSet<File> dirsToDelete) {
+  private static void pruneEmptyDirs(@Nullable final THashSet<File> dirsToDelete) {
     THashSet<File> additionalDirs = null;
     THashSet<File> toDelete = dirsToDelete;
     while (toDelete != null) {
