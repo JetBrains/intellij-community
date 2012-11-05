@@ -47,6 +47,11 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, "javax.annotation.Nullable", "edu.umd.cs.findbugs.annotations.Nullable"};
   public static final String[] DEFAULT_NOT_NULLS = {AnnotationUtil.NOT_NULL, "javax.annotation.Nonnull",  "edu.umd.cs.findbugs.annotations.NonNull"};
 
+  public NullableNotNullManager() {
+    Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
+    Collections.addAll(myNullables, DEFAULT_NULLABLES);
+  }
+
   public static NullableNotNullManager getInstance(Project project) {
     return ServiceManager.getService(project, NullableNotNullManager.class);
   }
