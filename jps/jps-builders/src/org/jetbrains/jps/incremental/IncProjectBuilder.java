@@ -565,6 +565,17 @@ public class IncProjectBuilder {
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
 
       doneSomething = runBuildersForChunk(context, chunk);
+
+      onChunkBuildComplete(context, chunk);
+
+      if (doneSomething && GENERATE_CLASSPATH_INDEX) {
+        myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            createClasspathIndex(chunk);
+          }
+        }));
+      }
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -573,47 +584,29 @@ public class IncProjectBuilder {
       throw new ProjectBuildException(e);
     }
     finally {
+      for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {
+        context.getProjectDescriptor().fsState.clearRecompile(rd);
+      }
       try {
-        onChunkBuildComplete(context, chunk);
-      }
-      catch (Exception e) {
-        throw new ProjectBuildException(e);
-      }
-      finally {
-        for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {
-          context.getProjectDescriptor().fsState.clearRecompile(rd);
-        }
-
-        try {
-          // restore deleted paths that were not procesesd by 'integrate'
-          final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
-          if (map != null) {
-            for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
-              final BuildTarget<?> target = entry.getKey();
-              final Collection<String> paths = entry.getValue();
-              if (paths != null) {
-                for (String path : paths) {
-                  myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
-                }
+        // restore deleted paths that were not procesesd by 'integrate'
+        final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+        if (map != null) {
+          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
+            final BuildTarget<?> target = entry.getKey();
+            final Collection<String> paths = entry.getValue();
+            if (paths != null) {
+              for (String path : paths) {
+                myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
               }
             }
           }
         }
-        catch (IOException e) {
-          throw new ProjectBuildException(e);
-        }
-
+      }
+      catch (IOException e) {
+        throw new ProjectBuildException(e);
+      }
+      finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
-
-        if (doneSomething && GENERATE_CLASSPATH_INDEX) {
-          final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              createClasspathIndex(chunk);
-            }
-          });
-          myAsyncTasks.add(future);
-        }
       }
     }
   }
