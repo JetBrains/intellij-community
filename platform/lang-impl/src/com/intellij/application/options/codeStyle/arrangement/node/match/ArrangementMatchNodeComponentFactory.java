@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementMatchingRulesList;
@@ -50,37 +51,6 @@ public class ArrangementMatchNodeComponentFactory {
     myList = list;
   }
 
-  private void removeCondition(@NotNull StdArrangementMatchRule rule, @NotNull ArrangementAtomMatchCondition condition) {
-    DefaultListModel model = (DefaultListModel)myList.getModel();
-    int i = model.indexOf(rule);
-    if (i < 0) {
-      return;
-    }
-
-    ArrangementMatchCondition existingCondition = rule.getMatcher().getCondition();
-    if (existingCondition.equals(condition)) {
-      myList.repaintRows(i, model.getSize() - 1, true);
-      model.remove(i);
-      return;
-    }
-
-    assert existingCondition instanceof ArrangementCompositeMatchCondition;
-    Set<ArrangementMatchCondition> operands = ((ArrangementCompositeMatchCondition)existingCondition).getOperands();
-    operands.remove(condition);
-
-    if (operands.isEmpty()) {
-      myList.repaintRows(i, model.getSize() - 1, true);
-      model.remove(i);
-    }
-    else if (operands.size() == 1) {
-      model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), rule.getOrderType()));
-      myList.repaintRows(i, i, true);
-    }
-    else {
-      myList.repaintRows(i, i, true);
-    }
-  }
-
   /**
    * Allows to build UI component for the given model.
    *
@@ -114,17 +84,61 @@ public class ArrangementMatchNodeComponentFactory {
     return ref.get();
   }
 
-  private class RemoveAtomConditionCallback implements Consumer<ArrangementAtomMatchCondition> {
+  private class RemoveAtomConditionCallback implements Consumer<ArrangementAtomMatchConditionComponent>,
+                                                       ArrangementAnimationPanel.Listener
+  {
 
     @NotNull private final StdArrangementMatchRule myRule;
+
+    private int myRow;
 
     RemoveAtomConditionCallback(@NotNull StdArrangementMatchRule rule) {
       myRule = rule;
     }
 
     @Override
-    public void consume(ArrangementAtomMatchCondition condition) {
-      removeCondition(myRule, condition);
+    public void consume(@NotNull ArrangementAtomMatchConditionComponent component) {
+      ArrangementAtomMatchCondition condition = component.getMatchCondition();
+      DefaultListModel model = (DefaultListModel)myList.getModel();
+      int i = model.indexOf(myRule);
+      if (i < 0) {
+        return;
+      }
+      myRow = i;
+
+      ArrangementMatchCondition existingCondition = myRule.getMatcher().getCondition();
+      if (existingCondition.equals(condition)) {
+        model.remove(i);
+      }
+      else {
+        assert existingCondition instanceof ArrangementCompositeMatchCondition;
+        Set<ArrangementMatchCondition> operands = ((ArrangementCompositeMatchCondition)existingCondition).getOperands();
+        operands.remove(condition);
+        if (operands.isEmpty()) {
+          model.remove(i);
+        }
+        else if (operands.size() == 1) {
+          model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), myRule.getOrderType()));
+        }
+      }
+
+      ArrangementAnimationPanel panel = component.getAnimationPanel();
+      panel.setListener(this);
+      panel.startAnimation(false, true);
+      myList.repaintRows(i, i, false);
+    }
+
+    @Override
+    public void onNewIteration() {
+      myList.repaintRows(myRow, myRow, false);
+    }
+
+    @Override
+    public void onFinished() {
+      DefaultListModel model = (DefaultListModel)myList.getModel();
+      boolean repaintToBottom = model.indexOf(myRule) < 0;
+      int endRow = repaintToBottom ? model.getSize() - 1 : myRow;
+      myList.repaintRows(myRow, endRow, true);
     }
   }
 }
