@@ -12,7 +12,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
-import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
+import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.packaging.PyPackageService;
 import com.jetbrains.python.ui.IdeaDialog;
 

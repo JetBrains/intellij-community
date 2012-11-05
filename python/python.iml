@@ -37,7 +37,6 @@
     <orderEntry type="module" module-name="ChromeConnector" />
     <orderEntry type="module" module-name="FirefoxConnector" />
     <orderEntry type="module" module-name="python-openapi" exported="" />
-    <orderEntry type="module" module-name="remote-sdk-api" />
   </component>
   <component name="copyright">
     <Base>

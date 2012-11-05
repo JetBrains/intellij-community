@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerSettings;
@@ -178,7 +177,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
           processHandler = doStartRemoteProcess(sdk, commandLine, manager);
           break;
         }
-        catch (RemoteInterpreterException e) {
+        catch (ExecutionException e) {
           if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
               Messages.NO) {
             throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
@@ -194,7 +193,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected ProcessHandler doStartRemoteProcess(Sdk sdk, GeneralCommandLine commandLine, PythonRemoteInterpreterManager manager)
-    throws RemoteInterpreterException {
+    throws ExecutionException {
 
     return manager.startRemoteProcess(myConfig.getProject(), (PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
                                       myConfig.getMappingSettings());

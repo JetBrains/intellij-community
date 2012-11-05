@@ -2,8 +2,8 @@ package com.jetbrains.python.remote;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.plugins.remotesdk.RemoteSdkAdditionalData;
-import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
+import com.intellij.remotesdk.RemoteSdkAdditionalData;
+import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.UnixPythonSdkFlavor;

@@ -42,9 +42,8 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
-import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
-import com.jetbrains.plugins.remotesdk.RemoteSdkData;
-import com.jetbrains.plugins.remotesdk.RemoteSshProcess;
+import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSshProcess;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -224,13 +223,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-        try {
           return createRemoteConsoleProcess(manager, myCommandLineArgumentsProvider.getArguments(),
                                             myCommandLineArgumentsProvider.getAdditionalEnvs());
-        }
-        catch (final RemoteInterpreterException e) {
-          throw new ExecutionException(e.getMessage(), e);
-        }
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }

@@ -36,7 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.jetbrains.plugins.remotesdk.RemoteSdkDataHolder;
+import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;

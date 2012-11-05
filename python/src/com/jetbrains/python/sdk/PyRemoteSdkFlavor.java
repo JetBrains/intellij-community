@@ -2,7 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.plugins.remotesdk.RemoteFile;
+import com.intellij.remotesdk.RemoteFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;

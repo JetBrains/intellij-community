@@ -82,7 +82,7 @@ target(name: "compile", description: "Compile module python") {
     dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
       include(name: "src")
     }
-    dirset(dir: "${pluginHome}/../plugins/remote-sdk-api") {
+    dirset(dir: "${pluginHome}/../plugins/remote-run") {
       include(name: "src")
     }
   }
