@@ -16,6 +16,7 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -35,7 +36,10 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EclipseBundle;
+import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.*;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
@@ -174,6 +178,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public static class EclipseClasspathConverter implements ClasspathConverter {
 
     private final Module module;
+    private static final Logger LOG = Logger.getInstance("#" + EclipseClasspathConverter.class.getName());
 
     public EclipseClasspathConverter(final Module module) {
       this.module = module;
@@ -188,7 +193,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final HashSet<String> usedVariables = new HashSet<String>();
         final CachedXmlDocumentSet documentSet = getFileSet();
         final String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
-
+        LOG.assertTrue(documentSet.exists(EclipseXml.PROJECT_FILE));
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
