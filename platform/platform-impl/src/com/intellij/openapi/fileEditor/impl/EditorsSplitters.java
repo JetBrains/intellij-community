@@ -79,7 +79,7 @@ public class EditorsSplitters extends JBPanel {
     super(new BorderLayout());
     if (UIUtil.isUnderDarcula()) {
       setBackgroundImage(IconLoader.getIcon("/frame_background.jpg"));
-      if (PlatformUtils.isJavaIDE()) {
+      if (PlatformUtils.isIntelliJ()) {
         setCenterImage(IconLoader.getIcon("/idea_logo_background.png"));
       }
     }

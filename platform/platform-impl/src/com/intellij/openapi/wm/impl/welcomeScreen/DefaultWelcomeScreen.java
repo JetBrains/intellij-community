@@ -133,7 +133,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     };
 
     myWelcomePanel.setBackgroundImage(IconLoader.getIcon("/frame_background.jpg"));
-    if (PlatformUtils.isJavaIDE()) {
+    if (PlatformUtils.isIntelliJ()) {
       myWelcomePanel.setCenterImage(IconLoader.getIcon("idea_logo_background.png"));
     }
 

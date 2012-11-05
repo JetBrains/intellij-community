@@ -159,7 +159,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (UIUtil.isUnderDarcula() && PlatformUtils.isJavaIDE()) {
+        if (UIUtil.isUnderDarcula() && PlatformUtils.isIntelliJ()) {
           IconUtil.paintInCenterOf(this, g, IconLoader.getIcon("/idea_logo_background.png"));
         }
       }
