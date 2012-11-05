@@ -858,7 +858,17 @@ public class Mappings {
             }
             else {
               debug("External dependency information retrieved.");
-              affectedFiles.addAll(affection.getAffectedFiles());
+              final Collection<File> files = affection.getAffectedFiles();
+              if (myFilter == null) {
+                affectedFiles.addAll(files);
+              }
+              else {
+                for (File file : files) {
+                  if (myFilter.accept(file)) {
+                    affectedFiles.add(file);
+                  }
+                }
+              }
             }
           }
 
