@@ -152,7 +152,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     for (HandleType handleType : handleTypeToFile.keySet()) {
-      handleType.processFiles(handleTypeToFile.get(handleType), changelist == null ? handleType.getDefaultChangelist() : changelist);
+      handleType.processFiles(handleTypeToFile.get(handleType), changelist);
     }
 
     for (FileInfo fileInfo : copy) {
