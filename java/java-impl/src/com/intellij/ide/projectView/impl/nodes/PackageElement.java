@@ -54,6 +54,7 @@ public final class PackageElement implements Queryable, RootsProvider {
     return myModule;
   }
 
+  @NotNull 
   public PsiPackage getPackage() {
     return myElement;
   }
