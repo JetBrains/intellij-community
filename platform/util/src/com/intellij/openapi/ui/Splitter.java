@@ -479,7 +479,7 @@ public class Splitter extends JPanel {
       myResizeEnabled = true;
       setFocusable(false);
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
-      setOpaque(false);
+      //setOpaque(false);
       setOrientation(myVerticalSplit);
     }
 

@@ -30,6 +30,7 @@ public class WelcomeScrollablePanel extends JPanel implements Scrollable{
 
   public WelcomeScrollablePanel(LayoutManager layout) {
     super(layout);
+    setOpaque(false);
   }
 
   public boolean getScrollableTracksViewportHeight() {

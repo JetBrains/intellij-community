@@ -31,12 +31,17 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.util.IconUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +72,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   private ToolWindowsPane myToolWindowsPane;
   private final MyUISettingsListenerImpl myUISettingsListener;
-  private JPanel myContentPane;
+  private JBPanel myContentPane;
   private final ActionManager myActionManager;
   private final UISettings myUISettings;
 
@@ -78,6 +83,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private MemoryUsagePanel myMemoryWidget;
   private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
   private final Disposable myDisposable= Disposer.newDisposable();
+
+  private static final Icon BG = IconLoader.getIcon("/frame_background.jpg");
 
   IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
               final Application application, IdeFrame frame){
@@ -148,7 +155,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected final Container createContentPane(){
-    myContentPane = new JPanel(new BorderLayout());
+    myContentPane = new JBPanel(new BorderLayout()){
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (UIUtil.isUnderDarcula() && PlatformUtils.isJavaIDE()) {
+          IconUtil.paintInCenterOf(this, g, IconLoader.getIcon("/idea_logo_background.png"));
+        }
+      }
+    };
+    if (UIUtil.isUnderDarcula()) {
+      myContentPane.setBackgroundImage(BG);
+    }
     myContentPane.setBackground(Color.GRAY);
 
     return myContentPane;

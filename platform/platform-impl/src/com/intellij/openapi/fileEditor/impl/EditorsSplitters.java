@@ -37,10 +37,12 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.PairFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +63,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * Author: msk
  */
-public class EditorsSplitters extends JPanel {
+public class EditorsSplitters extends JBPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
 
   private EditorWindow myCurrentWindow;
@@ -75,6 +77,12 @@ public class EditorsSplitters extends JPanel {
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
+    if (UIUtil.isUnderDarcula()) {
+      setBackgroundImage(IconLoader.getIcon("/frame_background.jpg"));
+      if (PlatformUtils.isJavaIDE()) {
+        setCenterImage(IconLoader.getIcon("/idea_logo_background.png"));
+      }
+    }
     setOpaque(false);
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
@@ -143,19 +151,19 @@ public class EditorsSplitters extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    
+
     if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
-      g.setColor(new Color(0, 0, 0, 50));
+      g.setColor(UIUtil.isUnderDarcula()? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
     }
     
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground(): Gray._100);
-      g.setFont(UIUtil.getLabelFont().deriveFont(18f));
+      g.setColor(UIUtil.isUnderDarcula() ? Gray._200 : Gray._100);
+      g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.isUnderDarcula() ? 24f : 18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
-      painter.appendLine("No files are open").underlined(UIUtil.isUnderDarcula() ? Gray._220 : Gray._150);
+      painter.appendLine("No files are open").underlined(UIUtil.isUnderDarcula()? Gray._200 : Gray._150);
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(

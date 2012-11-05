@@ -36,6 +36,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -100,7 +102,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
 
-  private final JPanel myWelcomePanel;
+  private final JBPanel myWelcomePanel;
   private final JPanel myMainPanel;
   private final JPanel myPluginsPanel;
 
@@ -123,19 +125,24 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
-    myWelcomePanel = new JPanel(new GridBagLayout()) {
+    myWelcomePanel = new JBPanel(new GridBagLayout()) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(1024, 768);
       }
     };
 
+    myWelcomePanel.setBackgroundImage(IconLoader.getIcon("/frame_background.jpg"));
+    if (PlatformUtils.isJavaIDE()) {
+      myWelcomePanel.setCenterImage(IconLoader.getIcon("idea_logo_background.png"));
+    }
+
     // Create caption pane
     JPanel topPanel = createCaptionPane();
 
     // Create Main Panel for Quick Start and Documentation
     myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
-    myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
+    //myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
     setUpMainPanel(rootPane);
     JScrollPane mainScrollPane = scrollPane(myMainPanel, null);
 
@@ -202,10 +209,12 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
     final JPanel quickStartPanel = quickStarts.getPanel();
+    quickStartPanel.setOpaque(false);
 
     AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     if (recentProjectsActions.length > 0) {
       myRecentProjectsPanel = new JPanel(new GridBagLayout());
+      myRecentProjectsPanel.setOpaque(false);
       setUpRecentProjectsPanel(rootPane, recentProjectsActions);
       quickStartPanel.add(myRecentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
                                                                       new Insets(14, 30, 5, 0), 0, 0));
@@ -213,7 +222,8 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
     // Add empty panel at the end of the QuickStarts panel
     JPanel emptyPanel_2 = new JPanel();
-    emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
+    emptyPanel_2.setOpaque(false);
+    //emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
     quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 3, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Create Documentation group of actions
@@ -221,9 +231,11 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
     final JPanel docsPanel = docsGroup.getPanel();
+    docsPanel.setOpaque(false);
     // Add empty panel at the end of the Documentation list
     JPanel emptyPanel_3 = new JPanel();
-    emptyPanel_3.setBackground(MAIN_PANEL_BACKGROUND);
+    emptyPanel_3.setOpaque(false);
+    //emptyPanel_3.setBackground(MAIN_PANEL_BACKGROUND);
     docsPanel.add(emptyPanel_3, new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Add QuickStarts and Docs to main panel
