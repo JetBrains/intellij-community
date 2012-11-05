@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,25 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-public class CodeGenerationException extends UIDesignerException {
-  private final String myComponentId;
+/**
+ * Marker interface for all UI Designer exceptions
+ * @author Eugene Zhuravlev
+ *         Date: 11/5/12
+ */
+public abstract class UIDesignerException extends Exception {
 
-  public CodeGenerationException(final String componentId, final String message) {
+  protected UIDesignerException() {
+  }
+
+  protected UIDesignerException(String message) {
     super(message);
-    myComponentId = componentId;
   }
 
-  public CodeGenerationException(final String componentId, final String message, final Throwable cause) {
+  protected UIDesignerException(String message, Throwable cause) {
     super(message, cause);
-    myComponentId = componentId;
   }
 
-  public String getComponentId() {
-    return myComponentId;
+  protected UIDesignerException(Throwable cause) {
+    super(cause);
   }
 }
