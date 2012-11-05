@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class IdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  public static boolean ourTestingIdentifierHighlighting = false;
+  
   public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, -1);
@@ -41,11 +43,10 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     if (editor.isOneLineMode()) return null;
 
-    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET ||
-        ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return null;
+    if (CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
+        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting)) {
+      return new IdentifierHighlighterPass(file.getProject(), file, editor);
     }
-
-    return new IdentifierHighlighterPass(file.getProject(), file, editor);
+    return null;
   }
 }

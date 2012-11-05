@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -183,6 +184,32 @@ class Bar {
 '''
     ctrlShiftF7()
     assertRangeText 'foo', 'foo', 'foo' //import highlighted twice: for each overloaded usage target
+  }
+
+  public void "test identifier highlighter for static imports"() {
+    myFixture.addClass("""
+class Foo { 
+  static void foo(int a) {}  
+  static void foo(int a, int b) {}  
+}""")
+    myFixture.configureByText 'Bar.java', '''
+import static Foo.fo<caret>o;
+
+class Bar {
+  {
+    foo(1);
+  }
+}
+'''
+    IdentifierHighlighterPassFactory.ourTestingIdentifierHighlighting = true
+    try {
+      def infos = myFixture.doHighlighting()
+      //import highlighted twice: for each overloaded usage target
+      assert infos.findAll { it.severity == HighlightSeverity.INFORMATION && myFixture.file.text.substring(it.startOffset, it.endOffset) == 'foo' }.size() == 3
+    }
+    finally {
+      IdentifierHighlighterPassFactory.ourTestingIdentifierHighlighting = false
+    }
   }
 
   @Override
