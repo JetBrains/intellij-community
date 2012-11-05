@@ -147,6 +147,44 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     myFixture.configureFromExistingVirtualFile(file)
   }
 
+  public void "test statically imported overloads from usage"() {
+    myFixture.addClass("""
+class Foo { 
+  static void foo(int a) {}  
+  static void foo(int a, int b) {}  
+}""")
+    myFixture.configureByText 'Bar.java', '''
+import static Foo.foo;
+
+class Bar {
+  {
+    <caret>foo(1);
+  }
+}
+'''
+    ctrlShiftF7()
+    assertRangeText 'foo', 'foo'
+  }
+
+  public void "test statically imported overloads from import"() {
+    myFixture.addClass("""
+class Foo { 
+  static void foo(int a) {}  
+  static void foo(int a, int b) {}  
+}""")
+    myFixture.configureByText 'Bar.java', '''
+import static Foo.fo<caret>o;
+
+class Bar {
+  {
+    foo(1);
+  }
+}
+'''
+    ctrlShiftF7()
+    assertRangeText 'foo', 'foo', 'foo' //import highlighted twice: for each overloaded usage target
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.relativeJavaTestDataPath

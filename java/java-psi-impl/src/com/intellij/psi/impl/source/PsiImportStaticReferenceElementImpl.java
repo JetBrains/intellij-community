@@ -252,9 +252,17 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @Override
   public boolean isReferenceTo(PsiElement element) {
     final String name = getReferenceName();
-    return name != null &&
-           element instanceof PsiNamedElement &&
-           name.equals(((PsiNamedElement)element).getName()) && element.getManager().areElementsEquivalent(resolve(), element);
+    if (name == null || !(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
+      return false;
+    }
+
+    for (JavaResolveResult result : multiResolve(false)) {
+      if (getManager().areElementsEquivalent(result.getElement(), element)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
