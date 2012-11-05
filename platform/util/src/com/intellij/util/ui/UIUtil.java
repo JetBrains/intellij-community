@@ -1276,7 +1276,7 @@ public class UIUtil {
     if (drawTopLine) g.drawLine(x, 0, width, 0);
     g.drawLine(x, height - 1, width, height - 1);
 
-    g.setColor(new Color(255, 255, 255, 100));
+    g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
     g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
 
     if (active) {
