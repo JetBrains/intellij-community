@@ -8,11 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 07.03.11
- * Time: 19:54
- * To change this template use File | Settings | File Templates.
  */
 abstract class ProtoMember extends Proto {
   private final static byte STRING = 0;

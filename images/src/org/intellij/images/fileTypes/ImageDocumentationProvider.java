@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.intellij.images.index.ImageInfoIndex;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +36,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
   private static final int MAX_IMAGE_SIZE = 300;
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final String[] result = new String[] {null};
 
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {

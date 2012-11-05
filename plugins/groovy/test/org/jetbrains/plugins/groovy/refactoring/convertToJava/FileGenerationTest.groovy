@@ -47,44 +47,68 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
     myFixture.checkResultByFile("${testName}.java")
   }
 
-  void testEnum() {doTest()}
+  void testEnum() { doTest() }
 
-  void testGrScript() {doTest()}
+  void testGrScript() { doTest() }
 
-  void testConstructor() {doTest()}
+  void testConstructor() { doTest() }
 
-  void testReturns() {doTest()}
-  void testReturn2() {doTest()}
+  void testReturns() { doTest() }
 
-  void testGenericTypes() {doTest()}
-  void testStaticProperty() {doTest()}
-  void testResolveMethodInsideClosure() {doTest()}
-  void testAnno() {doTest()}
-  void testAnno1() {doTest()}
+  void testReturn2() { doTest() }
 
-  void testUseAnno() {doTest()}
+  void testGenericTypes() { doTest() }
 
-  void testConcurency() {doTest()}
-  void testHash() {doTest()}
-  void testAnonymous() {doTest()}
-  void testAnonymous2() {doTest()}
-  void testRefInAnonymous() {doTest()}
-  void testRefInClosureInMethod() {doTest()}
-  void testRefInClosureInScript() {doTest()}
-  void testMethodParamsInClosures() {doTest()}
-  void testClosureParamInInnerClosure() {doTest()}
-  void testMethodParamInClosureImplicitReturn() {doTest()}
-  void testField() {doTest()}
+  void testStaticProperty() { doTest() }
 
-  void testIntPropAssignment() {doTest()}
-  void testPropAssignment() {doTest()}
-  void testStaticPropAssignment() {doTest()}
-  void testArrayAccess() {doTest()}
-  void testClosureInUse() {doTest()}
-  void testDynamicPropertiesAccess() {doTest()}
-  void testDynamicMethodsAccess() {doTest()}
-  void _testArg() {doTest()}
-  void testCasts() {doTest()}
+  void testResolveMethodInsideClosure() { doTest() }
+
+  void testAnno() { doTest() }
+
+  void testAnno1() { doTest() }
+
+  void testUseAnno() { doTest() }
+
+  void testConcurency() { doTest() }
+
+  void testHash() { doTest() }
+
+  void testAnonymous() { doTest() }
+
+  void testAnonymous2() { doTest() }
+
+  void testRefInAnonymous() { doTest() }
+
+  void testRefInClosureInMethod() { doTest() }
+
+  void testRefInClosureInScript() { doTest() }
+
+  void testMethodParamsInClosures() { doTest() }
+
+  void testClosureParamInInnerClosure() { doTest() }
+
+  void testMethodParamInClosureImplicitReturn() { doTest() }
+
+  void testField() { doTest() }
+
+  void testIntPropAssignment() { doTest() }
+
+  void testPropAssignment() { doTest() }
+
+  void testStaticPropAssignment() { doTest() }
+
+  void testArrayAccess() { doTest() }
+
+  void testClosureInUse() { doTest() }
+
+  void testDynamicPropertiesAccess() { doTest() }
+
+  void testDynamicMethodsAccess() { doTest() }
+
+  void _testArg() { doTest() }
+
+  void testCasts() { doTest() }
+
   void testReferenceExpressionsToClass() {
     myFixture.addClass('''\
 package foo;
@@ -92,5 +116,10 @@ package foo;
 public enum A {
   Const
 }''')
-    doTest()}
+    doTest()
+  }
+
+  void testTupleInReturn() { doTest() }
+
+  void testStaticMethods() { doTest() }
 }

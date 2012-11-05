@@ -639,7 +639,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     int startY = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset)).y;
+
+    // top edge of the last line of the highlighted area
     int endY = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset)).y;
+    // => add one line height to make height correct (bottom edge of the highlighted area)
+    DocumentEx document = myEditor.getDocument();
+    if (document.getLineStartOffset(document.getLineNumber(endOffset)) != endOffset) {
+      // but if the highlighter ends with the end of line, its line number is the next line, but that line should not be highlighted
+      endY += myEditor.getLineHeight();
+    }
 
     int height = endY - startY;
     int w = FREE_PAINTERS_AREA_WIDTH;

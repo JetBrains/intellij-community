@@ -39,8 +39,16 @@ public class DocumentUtil {
   public static int getEndLine(RangeMarker range) {
     Document document = range.getDocument();
     int endOffset = range.getEndOffset();
-    if (document.getTextLength() == endOffset) return document.getLineCount();
-    return document.getLineNumber(endOffset);
+
+    int endLine = document.getLineNumber(endOffset);
+    if (document.getTextLength() == endOffset && lastLineIsNotEmpty(document, endLine)) {
+      return document.getLineCount();
+    }
+    return endLine;
+  }
+
+  private static boolean lastLineIsNotEmpty(Document document, int line) {
+    return document.getTextLength() != document.getLineStartOffset(line);
   }
 
   public static int getLength(RangeMarker rangeMarker) {

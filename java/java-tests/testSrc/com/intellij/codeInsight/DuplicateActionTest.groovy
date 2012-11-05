@@ -35,7 +35,6 @@ xxx<caret>
   private void doTest(String before, @NonNls String ext, String after) {
     myFixture.configureByText("a." + ext, before);
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-    println "/" + myFixture.editor.document.text.substring(myFixture.editor.caretModel.offset) + "/"
     myFixture.checkResult(after);
   }
 
@@ -48,6 +47,19 @@ class C {
 class C {
   void foo() {}
   void <caret>foo() {}
+}
+'''
+  }
+
+  public void "test preserve caret position when it's already inside element's name"() {
+    doTest '''
+class C {
+  void fo<caret>o() {}
+}
+''', 'java', '''
+class C {
+  void foo() {}
+  void fo<caret>o() {}
 }
 '''
   }

@@ -42,6 +42,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -82,7 +83,10 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
 
     LOG.assertTrue(project != null);
 
-    final VirtualFile virtualFile = FileChooser.chooseFile(BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR, project, null);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    descriptor.setTitle("Select Path");
+    descriptor.setDescription("Select directory which contains exported inspections results");
+    final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
     if (virtualFile == null || !virtualFile.isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =

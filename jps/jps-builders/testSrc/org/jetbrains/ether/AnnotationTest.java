@@ -1,11 +1,8 @@
 package org.jetbrains.ether;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 26.07.11
- * Time: 0:35
- * To change this template use File | Settings | File Templates.
  */
 public class AnnotationTest extends IncrementalTestCase {
   public AnnotationTest() throws Exception {

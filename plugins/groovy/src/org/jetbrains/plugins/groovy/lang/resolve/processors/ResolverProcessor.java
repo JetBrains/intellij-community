@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD = EnumSet.of(METHOD);
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_METHOD_PROPERTY = EnumSet.of(METHOD, PROPERTY);
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_PROPERTY = EnumSet.of(PROPERTY);
-  
+
   protected String myName;
   private final EnumSet<ResolveKind> myResolveTargetKinds;
   private Set<String> myProcessedClasses;
@@ -148,7 +149,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {
-      return PsiUtil.isStaticsOK((PsiModifierListOwner)element, myPlace, resolveContext, filterStaticAfterInstanceQualifier);
+      return StaticChecker.isStaticsOK((PsiModifierListOwner)element, myPlace, resolveContext, filterStaticAfterInstanceQualifier);
     }
     return true;
   }
@@ -162,7 +163,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   @SuppressWarnings({"unchecked"})
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if ((NameHint.KEY == hintKey && myName != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
-      return (T) this;
+      return (T)this;
     }
 
     return null;
@@ -219,6 +220,11 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   @Override
   public String toString() {
-    return "NameHint: '" + myName + "', " + myResolveTargetKinds.toString() + ", Candidates: " + (myCandidates == null ? 0 : myCandidates.size());
+    return "NameHint: '" +
+           myName +
+           "', " +
+           myResolveTargetKinds.toString() +
+           ", Candidates: " +
+           (myCandidates == null ? 0 : myCandidates.size());
   }
 }

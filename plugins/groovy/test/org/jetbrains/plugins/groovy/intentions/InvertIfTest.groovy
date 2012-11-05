@@ -101,11 +101,12 @@ i<caret>f (!a) {
 i<caret>f (a) {
     succes
 }
+nosuccess
 ''', '''i<caret>f (!a) {
+    nosuccess
 } else {
     succes
-}
-'''
+}'''
   }
 
   public void testEmptyThenBlockIsRemoved() {
@@ -119,5 +120,4 @@ i<caret>f (a) {
 }
 '''
   }
-
 }

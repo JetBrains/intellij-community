@@ -124,24 +124,24 @@ public class TargetElementUtilBase {
     return adjustOffset(null, document, offset);
   }
 
-  public static int adjustOffset(@Nullable PsiFile element, Document document, final int offset) {
+  public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
     if (offset >= textLength) {
       correctedOffset = textLength - 1;
     }
-    else if (!isIdentifierPart(element, text, offset)) {
+    else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !isIdentifierPart(element, text, correctedOffset)) return offset;
+    if (correctedOffset < 0 || !isIdentifierPart(file, text, correctedOffset)) return offset;
     return correctedOffset;
   }
 
-  private static boolean isIdentifierPart(@Nullable PsiFile element, CharSequence text, int offset) {
-    if (element != null) {
-      for (TargetElementEvaluator evaluator : getInstance().targetElementEvaluator.allForLanguage(element.getLanguage())) {
-        if (evaluator instanceof TargetElementEvaluatorEx && ((TargetElementEvaluatorEx)evaluator).isIdentifierPart(element, text, offset)) {
+  private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
+    if (file != null) {
+      for (TargetElementEvaluator evaluator : getInstance().targetElementEvaluator.allForLanguage(file.getLanguage())) {
+        if (evaluator instanceof TargetElementEvaluatorEx && ((TargetElementEvaluatorEx)evaluator).isIdentifierPart(file, text, offset)) {
           return true;
         }
       }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.control;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -11,11 +12,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 /**
  * @author Niels Harremoes
@@ -61,18 +64,50 @@ public class InvertIfIntention extends Intention {
 
 
     GrStatement thenBranch = parentIf.getThenBranch();
-    GrStatement elseBranch = parentIf.getElseBranch();
-    String newIfText = "if (" + negatedCondition.getText() + ") " + (elseBranch != null ? elseBranch.getText() : "{}");
+    String newIfText = "if (" + negatedCondition.getText() + ") " + generateElseBranchTextAndRemoveTailStatements(parentIf);
 
-    boolean isThenEmpty = thenBranch == null || (thenBranch instanceof GrBlockStatement) && ((GrBlockStatement)thenBranch).getBlock().getStatements().length == 0;
+    boolean isThenEmpty = thenBranch == null ||
+                          (thenBranch instanceof GrBlockStatement) && ((GrBlockStatement)thenBranch).getBlock().getStatements().length == 0;
     if (!isThenEmpty) {
       newIfText += " else " + thenBranch.getText();
     }
 
-
     GrIfStatement newIf = (GrIfStatement)groovyPsiElementFactory.createStatementFromText(newIfText, parentIf.getContext());
+    parentIf.replace(CodeStyleManager.getInstance(project).reformat(newIf));
+  }
 
-    parentIf.replace(newIf);
+  private static String generateElseBranchTextAndRemoveTailStatements(GrIfStatement ifStatement) {
+    GrStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch != null) {
+      return elseBranch.getText();
+    }
+
+    PsiElement parent = ifStatement.getParent();
+    if (!(parent instanceof GrStatementOwner)) {
+      return "{}";
+    }
+
+    String text = parent.getText();
+    int start = ifStatement.getTextRange().getEndOffset() - parent.getTextRange().getStartOffset();
+    PsiElement rbrace = parent instanceof GrCodeBlock ? ((GrCodeBlock)parent).getRBrace() : null;
+    int end = rbrace != null ? rbrace.getStartOffsetInParent() : text.length();
+
+    String lastStatements = text.substring(start, end);
+
+    deleteLastStatements((GrStatementOwner)parent, ifStatement, rbrace);
+    return "{\n" + lastStatements.trim() + "\n}";
+  }
+
+  private static void deleteLastStatements(GrStatementOwner statementOwner, GrIfStatement ifStatement, PsiElement rbrace) {
+    PsiElement next = ifStatement.getNextSibling();
+    if (next == null) return;
+
+    if (rbrace == null) {
+      statementOwner.getNode().removeRange(next.getNode(), null);
+    }
+    else {
+      statementOwner.getNode().removeRange(next.getNode(), rbrace.getNode());
+    }
   }
 
   @NotNull
@@ -94,16 +129,10 @@ public class InvertIfIntention extends Intention {
       @Override
       public boolean satisfiedBy(PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrIfStatement)) {
-          return false;
-        }
+        if (!(parent instanceof GrIfStatement)) return false;
+        if (((GrIfStatement)parent).getCondition() == null) return false;
+        if (!"if".equals(element.getText())) return false;
 
-        if (((GrIfStatement)parent).getCondition() == null) {
-          return false;
-        }
-        if (!"if".equals(element.getText())) {
-          return false;
-        }
         return true;
       }
     };

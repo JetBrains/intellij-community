@@ -1113,12 +1113,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!StringUtil.isEmpty(line)) {
         if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+          myErrorCount++;
         }
         else {
-          final BuildMessage.Kind kind = line.toLowerCase(Locale.US).contains("error")? BuildMessage.Kind.ERROR : BuildMessage.Kind.INFO;
+          final BuildMessage.Kind kind = getKindByMessageText(line);
+          if (kind == BuildMessage.Kind.ERROR) {
+            myErrorCount++;
+          }
+          else if (kind == BuildMessage.Kind.WARNING) {
+            myWarningCount++;
+          }
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
         }
       }
+    }
+
+    private BuildMessage.Kind getKindByMessageText(String line) {
+      final String lowercasedLine = line.toLowerCase(Locale.US);
+      if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
+        return BuildMessage.Kind.ERROR;
+      }
+      return BuildMessage.Kind.INFO;
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {

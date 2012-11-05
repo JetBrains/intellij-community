@@ -166,7 +166,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       // frame
       if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
         g2.setColor(USED_COLOR_2);
-        g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
+        g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
       }
 
       // label
@@ -176,10 +176,10 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final String info = UIBundle.message("memory.usage.panel.message.text", used, total);
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
-      final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
+      final int infoHeight = fontMetrics.getAscent();
       UIUtil.applyRenderingHints(g2);
       g2.setColor(UIUtil.getLabelForeground());
-      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2 - 1);
+      g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 
       g2.dispose();
     }
