@@ -220,7 +220,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (stub != null) {
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
         stubs.next(); // Skip file stub;
-        switchFromStubToAST(treeElement, stubs);
+        synchronized (PsiLock.LOCK) {
+          switchFromStubToAST(treeElement, stubs);
+        }
 
         clearStub();
       }
