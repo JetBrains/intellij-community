@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui.branch;
+package git4idea.settings;
 
 /**
  * @author Kirill Likhodedov
  */
-public enum GitBranchSyncSetting {
+public enum GitSyncRepoSetting {
   SYNC,
   DONT,
   NOT_DECIDED

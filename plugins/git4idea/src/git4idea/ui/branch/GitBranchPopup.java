@@ -41,6 +41,7 @@ import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.settings.GitSyncRepoSetting;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,13 +128,13 @@ class GitBranchPopup  {
   }
 
   private void initBranchSyncPolicyIfNotInitialized() {
-    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == GitBranchSyncSetting.NOT_DECIDED) {
+    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == GitSyncRepoSetting.NOT_DECIDED) {
       if (!myMultiRootBranchConfig.diverged()) {
         notifyAboutSyncedBranches();
-        myVcsSettings.setSyncSetting(GitBranchSyncSetting.SYNC);
+        myVcsSettings.setSyncSetting(GitSyncRepoSetting.SYNC);
       }
       else {
-        myVcsSettings.setSyncSetting(GitBranchSyncSetting.DONT);
+        myVcsSettings.setSyncSetting(GitSyncRepoSetting.DONT);
       }
     }
   }
@@ -142,7 +143,7 @@ class GitBranchPopup  {
   private String createPopupTitle(@NotNull GitRepository currentRepository) {
     String title = "Git Branches";
     if (myRepositoryManager.moreThanOneRoot() &&
-        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT)) {
+        (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == GitSyncRepoSetting.DONT)) {
       title += " in " + GitUIUtil.getShortRepositoryName(currentRepository);
     }
     return title;
@@ -174,7 +175,7 @@ class GitBranchPopup  {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
-          if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
+          if (myVcsSettings.getSyncSetting() == GitSyncRepoSetting.DONT) {
             notification.expire();
           }
         }
@@ -204,7 +205,7 @@ class GitBranchPopup  {
   }
 
   private boolean userWantsSyncControl() {
-    return (myVcsSettings.getSyncSetting() != GitBranchSyncSetting.DONT);
+    return (myVcsSettings.getSyncSetting() != GitSyncRepoSetting.DONT);
   }
 
   private void fillWithCommonRepositoryActions(DefaultActionGroup popupGroup, GitRepositoryManager repositoryManager) {
