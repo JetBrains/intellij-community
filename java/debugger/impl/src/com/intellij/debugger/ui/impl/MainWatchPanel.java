@@ -227,7 +227,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         executeAction(DebuggerActions.REMOVE_WATCH, tree);
       }
     });
-    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR,
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
                                                    SystemInfo.isMac ? 0 : 1, 0);
     decorator.setToolbarBorder(border);

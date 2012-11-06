@@ -106,18 +106,18 @@ protected JButton createArrowButton() {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g.setColor(editor.getBackground());
-      g.fillRoundRect(x+1,y+2,width-2,height-4, 5, 5);
+      g.fillRoundRect(x+1,y+1,width-2,height-4, 5, 5);
       g.setColor(arrowButton.getBackground());
-      g.fillRoundRect(xxx, y+2, width - xxx , height-4, 5, 5);
+      g.fillRoundRect(xxx, y+1, width - xxx , height-4, 5, 5);
       g.setColor(editor.getBackground());
-      g.fillRect(xxx, y + 2, 5, height - 4);
+      g.fillRect(xxx, y + 1, 5, height - 4);
       config.restore();
     }
 
     final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
     g.setColor(borderColor);
     int off = hasFocus ? 1 : 0;
-    g.drawLine(xxx + 5, y+2 + off, xxx + 5, height - 2 - 2*off);
+    g.drawLine(xxx + 5, y+1 + off, xxx + 5, height - 3 - 2*off);
 
     if (hasFocus || (editor != null && editor.hasFocus())) {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 4);
@@ -127,7 +127,7 @@ protected JButton createArrowButton() {
       final GraphicsConfig config = new GraphicsConfig(g);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-      g.drawRoundRect(1, 2, width - 2, height - 4, 5, 5);
+      g.drawRoundRect(1, 1, width - 2, height - 4, 5, 5);
       config.restore();
     }
   }

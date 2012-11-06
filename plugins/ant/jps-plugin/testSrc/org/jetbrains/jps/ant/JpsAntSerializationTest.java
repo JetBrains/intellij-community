@@ -16,6 +16,7 @@
 package org.jetbrains.jps.ant;
 
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
@@ -29,7 +30,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsAntSerializationTest extends JpsSerializationTestCase {
-  private static final String PROJECT_PATH = "plugins/ant/jps-plugin/testData/ant-project";
+  public static final String PROJECT_PATH = "plugins/ant/jps-plugin/testData/ant-project";
 
   public void testLoadArtifactProperties() {
     loadProject(PROJECT_PATH);
@@ -62,5 +63,16 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
     assertEquals("jar", jar.getName());
     assertNull(JpsAntExtensionService.getPostprocessingExtension(jar));
     assertNull(JpsAntExtensionService.getPreprocessingExtension(jar));
+  }
+
+  public void testLoadAntConfiguration() {
+    loadProject(PROJECT_PATH);
+    JpsAntBuildFileOptions options = JpsAntExtensionService.getOptions(myProject, getUrl("build.xml"));
+    assertEquals(128, options.getMaxHeapSize());
+
+    JpsAntBuildFileOptions options2 = JpsAntExtensionService.getOptions(myProject, getUrl("empty.xml"));
+    assertEquals(256, options2.getMaxHeapSize());
+    assertEquals(10, options2.getMaxStackSize());
+    assertEquals("1.6", options2.getCustomJdkName());
   }
 }

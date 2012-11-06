@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -65,7 +66,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context,
                                            ModuleChunk chunk,
-                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                           ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     try {
       final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
       if (toCompile.isEmpty()) {
@@ -145,8 +147,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       Arrays.asList("-Xmx384m",
                     "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                     "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
-      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
-                            tempFile.getPath()), true
+      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
     );
 
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));

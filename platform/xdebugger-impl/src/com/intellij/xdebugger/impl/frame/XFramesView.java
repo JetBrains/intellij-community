@@ -89,7 +89,7 @@ public class XFramesView extends XDebugViewBase {
     myThreadComboBox.addItemListener(new MyItemListener());
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
-    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR, 0, 0, 1, 0);
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0);
     myThreadsPanel.setBorder(border);
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);

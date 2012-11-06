@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.module.Module;
@@ -36,6 +38,9 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
@@ -217,9 +222,27 @@ public class MavenModuleImporter {
   private void configSurefirePlugin() {
     List<String> urls = new ArrayList<String>();
 
-    Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
-      urls.add(VfsUtil.pathToUrl(each));
+    AccessToken accessToken = ReadAction.start();
+    try {
+      MavenDomProjectModel domModel = null;
+
+      Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
+      for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
+        String url = VfsUtil.pathToUrl(each);
+
+        if (domModel == null) {
+          domModel = MavenDomUtil.getMavenDomProjectModel(myModule.getProject(), myMavenProject.getFile());
+        }
+
+        if (domModel != null) {
+          url = MavenPropertyResolver.resolve(url, domModel);
+        }
+
+        urls.add(url);
+      }
+    }
+    finally {
+      accessToken.finish();
     }
 
     LibraryTable moduleLibraryTable = myRootModelAdapter.getRootModel().getModuleLibraryTable();

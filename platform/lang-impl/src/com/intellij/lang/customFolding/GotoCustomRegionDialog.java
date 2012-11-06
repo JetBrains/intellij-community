@@ -119,7 +119,7 @@ public class GotoCustomRegionDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myRegionsList = new JBList();
-    myRegionsList.setPreferredSize(new Dimension(200, 100));
+    myScrollPane = new JBScrollPane(myRegionsList);
   }
 
   @Nullable

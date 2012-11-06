@@ -10,6 +10,14 @@
       <maximumStackSize value="2" />
       <properties />
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/empty.xml">
+      <additionalClassPath />
+      <antReference name="Apache Ant version 1.8.2" />
+      <customJdkName value="1.6" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="10" />
+      <properties />
+    </buildFile>
   </component>
 </project>
 

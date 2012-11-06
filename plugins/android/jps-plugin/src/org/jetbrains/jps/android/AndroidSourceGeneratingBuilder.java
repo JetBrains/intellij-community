@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -71,7 +72,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context,
                                            ModuleChunk chunk,
-                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                           ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ExitCode.NOTHING_DONE;
     }
