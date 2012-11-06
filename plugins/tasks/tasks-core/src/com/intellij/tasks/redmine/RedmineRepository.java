@@ -133,6 +133,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
         return new Comment[0];
       }
 
+      @NotNull
       @Override
       public Icon getIcon() {
         return TasksIcons.Redmine;

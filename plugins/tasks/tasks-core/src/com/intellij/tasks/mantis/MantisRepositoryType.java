@@ -21,6 +21,7 @@ public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
     return "Mantis";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Mantis;

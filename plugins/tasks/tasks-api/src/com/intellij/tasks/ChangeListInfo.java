@@ -16,9 +16,11 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +42,7 @@ public class ChangeListInfo {
   public ChangeListInfo() {
   }
 
-  public ChangeListInfo(LocalChangeList changeList) {
+  public ChangeListInfo(@NotNull LocalChangeList changeList) {
     id = changeList.getId();
     name = changeList.getName();
     comment = changeList.getComment();
@@ -49,11 +51,11 @@ public class ChangeListInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof ChangeListInfo)) return false;
 
     ChangeListInfo that = (ChangeListInfo)o;
 
-    return !(id != null ? !id.equals(that.id) : that.id != null);
+    return Comparing.equal(id, that.id);
 
   }
 

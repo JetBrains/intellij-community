@@ -19,6 +19,7 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
     return "JIRA";
   }
 
+  @NotNull
   public Icon getIcon() {
     return JiraConnectorIcons.Jira_blue_16;
   }

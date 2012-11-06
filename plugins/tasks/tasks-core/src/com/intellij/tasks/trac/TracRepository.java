@@ -23,6 +23,7 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksIcons;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,10 +150,10 @@ public class TracRepository extends BaseRepositoryImpl {
         return new Comment[0];
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Icon getIcon() {
-        return null;
+        return TasksIcons.Trac;
       }
 
       @NotNull

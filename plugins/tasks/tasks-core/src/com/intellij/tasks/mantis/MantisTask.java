@@ -4,6 +4,7 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +50,10 @@ public class MantisTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon getIcon() {
-    return null;
+    return TasksIcons.Mantis;
   }
 
   @NotNull

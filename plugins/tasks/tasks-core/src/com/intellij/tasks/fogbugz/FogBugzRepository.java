@@ -26,6 +26,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksIcons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Document;
@@ -171,10 +172,10 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return comments.toArray(new Comment[comments.size()]);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Icon getIcon() {
-        return null;
+        return TasksIcons.Fogbugz;
       }
 
       @NotNull
