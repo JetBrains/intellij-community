@@ -1605,13 +1605,15 @@ public class Mappings {
 
             myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged);
 
-            if (superClassChanged) {
-              myPresent.affectUsagesInGenericBounds(changedClass.getSuperClass().className, state.myAffectedUsages, state.myDependants);
-            }
-            if (interfacesChanged) {
-              for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
-                final TypeRepr.ClassType removedIface = (TypeRepr.ClassType)typ;
-                myPresent.affectUsagesInGenericBounds(removedIface.className, state.myAffectedUsages, state.myDependants);
+            if (!changedClass.isAnonymous()) {
+              if (superClassChanged) {
+                myPresent.affectUsagesInGenericBounds(changedClass.getSuperClass().className, state.myAffectedUsages, state.myDependants);
+              }
+              if (interfacesChanged) {
+                for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
+                  final TypeRepr.ClassType removedIface = (TypeRepr.ClassType)typ;
+                  myPresent.affectUsagesInGenericBounds(removedIface.className, state.myAffectedUsages, state.myDependants);
+                }
               }
             }
           }
