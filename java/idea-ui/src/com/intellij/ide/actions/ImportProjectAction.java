@@ -26,6 +26,8 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -56,24 +58,31 @@ public class ImportProjectAction extends AnAction {
 
   public static List<Module> doImport(final Project project, @NotNull final VirtualFile file, String wizardTitle) {
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-    ProjectImportProvider provider = ContainerUtil.find(providers, new Condition<ProjectImportProvider>() {
+    List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override
       public boolean value(ProjectImportProvider provider) {
         return provider.canImport(file, project);
       }
     });
-    if (provider != null) {
-      AddModuleWizard wizard = new AddModuleWizard(wizardTitle, project, provider, file.getPath());
-      if (wizard.getStepCount() > 0) {
-        boolean b = wizard.showAndGet();
-      }
-      else {
-        ProjectImportBuilder builder = provider.getBuilder();
-        builder.setFileToImport(file.getPath());
-        return builder.commit(project);
-      }
+    if (available.isEmpty()) {
+      Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
+
+    AddModuleWizard wizard =
+      new AddModuleWizard(wizardTitle, project, file.getPath(), available.toArray(new ProjectImportProvider[available.size()]));
+    if (wizard.getStepCount() > 0) {
+      if (wizard.showAndGet()) {
+        Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
+        return Collections.singletonList(module);
+      }
+      return Collections.emptyList();
+    }
+    else {
+      ProjectImportBuilder builder = available.get(0).getBuilder();
+      builder.setFileToImport(file.getPath());
+      return builder.commit(project);
+    }
   }
 
   @Override

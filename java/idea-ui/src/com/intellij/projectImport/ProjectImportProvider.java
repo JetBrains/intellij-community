@@ -20,6 +20,7 @@
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,7 +35,7 @@ import javax.swing.*;
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
-  private final ProjectImportBuilder myBuilder;
+  protected ProjectImportBuilder myBuilder;
 
   protected ProjectImportProvider(final ProjectImportBuilder builder) {
     myBuilder = builder;
@@ -76,5 +77,18 @@ public abstract class ProjectImportProvider {
     return false;
   }
 
-  public abstract ModuleWizardStep[] createSteps(WizardContext context);
+  public void setBaseProjectPath(String path) {
+
+  }
+
+  public void addSteps(StepSequence sequence, WizardContext context, String id) {
+    ModuleWizardStep[] steps = createSteps(context);
+    for (ModuleWizardStep step : steps) {
+      sequence.addCommonStep(step);
+    }
+  }
+
+  public ModuleWizardStep[] createSteps(WizardContext context) {
+    return ModuleWizardStep.EMPTY_ARRAY;
+  }
 }

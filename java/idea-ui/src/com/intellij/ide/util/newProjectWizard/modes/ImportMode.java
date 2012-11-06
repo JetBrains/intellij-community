@@ -21,7 +21,6 @@
 package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -40,6 +39,14 @@ import java.util.Arrays;
 
 public class ImportMode extends WizardMode {
   private ProjectImportBuilder myBuilder;
+  private final ProjectImportProvider[] myProviders;
+
+  public ImportMode() {
+    this(Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER));
+  }
+  public ImportMode(ProjectImportProvider[] providers) {
+    myProviders = providers;
+  }
 
   @NotNull
   public String getDisplayName(final WizardContext context) {
@@ -61,24 +68,11 @@ public class ImportMode extends WizardMode {
   @Nullable
   protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence stepSequence = new StepSequence();
-    final ProjectImportProvider[] providers = Extensions.getExtensions(ProjectImportProvider.PROJECT_IMPORT_PROVIDER);
-    if (providers.length == 1) {
-      myBuilder = providers[0].getBuilder();
-      myBuilder.setUpdate(context.getProject() != null);
-
-      final ModuleWizardStep[] steps = providers[0].createSteps(context);
-      for (ModuleWizardStep step : steps) {
-        stepSequence.addCommonStep(step);
-      }
+    if (myProviders.length > 1) {
+      stepSequence.addCommonStep(new ImportChooserStep(myProviders, stepSequence, context));
     }
-    else {
-      stepSequence.addCommonStep(new ImportChooserStep(providers, stepSequence, context));
-      for (ProjectImportProvider provider : providers) {
-        final ModuleWizardStep[] steps = provider.createSteps(context);
-        for (ModuleWizardStep step : steps) {
-          stepSequence.addSpecificStep(provider.getId(), step);
-        }
-      }
+    for (ProjectImportProvider provider : myProviders) {
+      provider.addSteps(stepSequence, context, provider.getId());
     }
     return stepSequence;
   }
