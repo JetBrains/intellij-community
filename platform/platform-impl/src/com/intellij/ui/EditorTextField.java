@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
@@ -410,7 +411,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // set mode in editor
     editor.setOneLineMode(isOneLineMode);
 
-    final EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+    final EditorColorsManager mgr = EditorColorsManager.getInstance();
+    final EditorColorsScheme defaultScheme = UIUtil.isUnderDarcula()
+                                             ? mgr.getScheme(mgr.getGlobalScheme().getName())
+                                             : mgr.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
     final EditorColorsScheme customGlobalScheme = isOneLineMode ? defaultScheme : null;
 
     // Probably we need change scheme only for color schemas with white BG, but on the other hand
@@ -443,7 +447,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // color scheme settings:
     setupEditorFont(editor);
     updateBorder(editor);
-    editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
+    editor.setBackgroundColor(UIUtil.isUnderDarcula() ? UIUtil.getTextFieldBackground() : getBackgroundColor(!myIsViewer, colorsScheme));
   }
 
 
@@ -554,8 +558,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        editor.setBorder(new MacUIUtil.EditorTextFieldBorder(this));
+      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula()) {
+        editor.setBorder(UIUtil.isUnderDarcula() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
         editor.addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(Editor editor) {
