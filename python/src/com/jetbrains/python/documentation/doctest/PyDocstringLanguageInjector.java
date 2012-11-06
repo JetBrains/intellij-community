@@ -31,7 +31,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
         final String trimmedString = string.trim();
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end - 1),  null, null);
         }
         if (trimmedString.startsWith(">>>")) {
           if (!gotExample)
@@ -46,7 +46,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
         currentPosition = currentPosition + string.length();
       }
       if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end - 1),  null, null);
     }
   }
 
