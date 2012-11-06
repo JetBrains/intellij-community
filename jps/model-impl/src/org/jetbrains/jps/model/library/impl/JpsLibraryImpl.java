@@ -3,12 +3,12 @@ package org.jetbrains.jps.model.library.impl;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
+import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
   private final JpsLibraryType<P> myLibraryType;
-  
+
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
     myLibraryType = type;
@@ -157,7 +157,8 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
             collectArchives(child, recursively, result);
           }
         }
-        else if (extension.equals("jar") || extension.equals("zip")) {
+        // todo [nik] get list of extensions mapped to Archive file type from IDE settings
+        else if (extension.equals("jar") || extension.equals("zip") || extension.equals("swc") || extension.equals("ane")) {
           result.add(JpsPathUtil.getLibraryRootUrl(child));
         }
       }
