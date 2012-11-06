@@ -46,10 +46,10 @@ import java.util.*;
  * @author nik
  */
 public class JpsLibraryDelegate implements LibraryEx {
-  private JpsLibrary myJpsLibrary;
-  private JpsLibraryTableImpl myLibraryTable;
-  private Map<OrderRootType, VirtualFilePointerContainer> myRoots;
-  private RootProviderBaseImpl myRootProvider = new MyRootProvider();
+  private final JpsLibrary myJpsLibrary;
+  private final JpsLibraryTableImpl myLibraryTable;
+  private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private final RootProviderBaseImpl myRootProvider = new MyRootProvider();
 
   public JpsLibraryDelegate(JpsLibrary library, JpsLibraryTableImpl table) {
     myJpsLibrary = library;

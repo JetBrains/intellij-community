@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
  * @author nik
  */
 public class JpsModelManagerImpl extends JpsModelManager {
-  private JpsModel myModel;
+  private final JpsModel myModel;
   private JpsModel myModifiableModel;
   private final JpsModuleManagerImpl myModuleManager;
   private final JpsLibraryManagerImpl myLibraryManager;

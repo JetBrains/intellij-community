@@ -209,7 +209,11 @@ public def layoutCommunityPlugins(String home) {
       layoutPlugin it
     }
 
-    layoutPlugin("ant", "ant", "antIntegration")
+    layoutPlugin("ant", "ant", "antIntegration") {
+      jar("ant-jps-plugin.jar") {
+        module("ant-jps-plugin")
+      }
+    }
     layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
     layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
     layoutPlugin("ToString", "generate-tostring", "toString")

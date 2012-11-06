@@ -30,6 +30,7 @@ public class ModuleRootEventImpl extends ModuleRootEvent {
     myFiletypes = filetypes;
   }
 
+  @Override
   public boolean isCausedByFileTypesChange() {
     return myFiletypes;
   }

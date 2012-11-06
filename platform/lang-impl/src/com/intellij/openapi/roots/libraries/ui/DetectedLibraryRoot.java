@@ -27,8 +27,8 @@ import java.util.List;
  * @author nik
  */
 public class DetectedLibraryRoot {
-  private VirtualFile myFile;
-  private List<LibraryRootType> myTypes;
+  private final VirtualFile myFile;
+  private final List<LibraryRootType> myTypes;
 
   public DetectedLibraryRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType, boolean jarDirectory) {
     this(file, Collections.singletonList(new LibraryRootType(rootType, jarDirectory)));

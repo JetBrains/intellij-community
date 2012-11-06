@@ -24,6 +24,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -39,15 +40,17 @@ public class FieldSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     this(project, (PsiField)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return Collections.emptyList();
   }
 
+  @Override
   public void updateImpl(PresentationData data) {
     String name = PsiFormatUtil.formatVariable(
       (PsiField)getPsiElement(),
-      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
+      PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_INITIALIZER,
         PsiSubstitutor.EMPTY);
     int c = name.indexOf('\n');
     if (c > -1) {

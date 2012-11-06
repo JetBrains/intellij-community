@@ -19,6 +19,7 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.Comment;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 
@@ -28,14 +29,20 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
 
   public void actionPerformed(AnActionEvent e) {
-    analyzeStacktrace(getActiveTask(e), getProject(e));
+    final LocalTask activeTask = getActiveTask(e);
+    final Project project = getProject(e);
+    assert activeTask != null;
+    assert project != null;
+    analyzeStacktrace(activeTask, project);
   }
 
   @Override
   public void update(AnActionEvent event) {
-    Task activeTask = getActiveTask(event);
-    event.getPresentation().setEnabled(activeTask != null && hasTexts(activeTask));
     super.update(event);
+    if (event.getPresentation().isEnabled()) {
+      Task activeTask = getActiveTask(event);
+      event.getPresentation().setEnabled(activeTask != null && hasTexts(activeTask));
+    }
   }
 
   public static boolean hasTexts(Task activeTask) {

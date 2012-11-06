@@ -455,7 +455,9 @@ public class UIUtil {
   }
 
   public static Color getLabelDisabledForeground() {
-    return UIManager.getColor("Label.disabledForeground");
+    final Color color = UIManager.getColor("Label.disabledForeground");
+    if (color != null) return color;
+    return UIManager.getColor("Label.disabledText");
   }
 
   public static Icon getOptionPanelWarningIcon() {

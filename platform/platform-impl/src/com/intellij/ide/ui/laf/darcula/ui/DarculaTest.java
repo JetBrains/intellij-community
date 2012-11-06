@@ -46,6 +46,9 @@ public class DarculaTest {
   private JButton myCancelButton;
   private JButton myDisabledButton;
   private JButton myDefaultButton;
+  private JTextField myTextField2;
+  private JTextField myTextField3;
+  private JTextField myTextField4;
 
   public static void main(String[] args) {
     try {

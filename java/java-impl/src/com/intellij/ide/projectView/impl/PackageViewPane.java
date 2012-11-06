@@ -49,6 +49,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,20 +61,23 @@ import java.util.*;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
-  private MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
+  private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   public PackageViewPane(Project project) {
     super(project);
   }
 
+  @Override
   public String getTitle() {
     return IdeBundle.message("title.packages");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.General.PackagesTab;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
@@ -153,15 +157,18 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
             AllIcons.ObjectBrowser.ShowLibraryContents);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent event) {
       return ProjectView.getInstance(myProject).isShowLibraryContents(getId());
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
       projectView.setShowLibraryContents(flag, getId());
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -170,6 +177,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     }
   }
 
+  @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowModulesAction(myProject){
       @Override
@@ -180,28 +188,34 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 
+  @Override
   protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
     return new PackageViewTreeUpdater(treeBuilder);
   }
 
+  @Override
   public SelectInTarget createSelectInTarget() {
     return new PackagesPaneSelectInTarget(myProject);
   }
 
+  @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
+      @Override
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
     };
   }
 
+  @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
     return new ProjectViewTree(myProject, treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
       }
 
+      @Override
       public DefaultMutableTreeNode getSelectedNode() {
         return PackageViewPane.this.getSelectedNode();
       }
@@ -213,6 +227,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     return "PackagesPane";
   }
 
+  @Override
   public int getWeight() {
     return 1;
   }
@@ -222,6 +237,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       super(treeBuilder);
     }
 
+    @Override
     public boolean addSubtreeToUpdateByElement(Object element) {
       // should convert PsiDirectories into PackageElements
       if (element instanceof PsiDirectory) {
@@ -293,6 +309,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       for (PsiDirectory directory : getSelectedDirectories()) {
         if (!directory.getManager().isInProject(directory)) return false;
@@ -300,13 +317,14 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       return true;
     }
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
-      final PsiElement[] elements = PsiUtilBase.toPsiElementArray(validElements);
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {

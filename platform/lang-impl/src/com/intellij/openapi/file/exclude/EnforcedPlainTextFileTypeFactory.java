@@ -96,6 +96,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
     };
   }
 
+  @Override
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     consumer.consume(myFileType, "");
   }

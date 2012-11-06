@@ -157,35 +157,42 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public Icon getIcon() {
     return FileTypes.PLAIN_TEXT.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATT_DESCRIPTORS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLOR_DESCRIPTORS;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new PlainSyntaxHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return FontEditorPreview.getIDEDemoText() + ADDITIONAL_DEMO_TEXT;
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
   }

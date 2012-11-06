@@ -24,12 +24,14 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class LibraryPropertiesEditor implements UnnamedConfigurable {
+  @Override
   @NotNull
   public abstract JComponent createComponent();
 
   @Override
   public abstract void apply();
 
+  @Override
   public void disposeUIResources() {
   }
 }

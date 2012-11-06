@@ -46,6 +46,7 @@ public class NativeFileIconProvider implements FileIconProvider {
 
   private static final Ext CLOSED_DIR = new Ext(null, 0);
 
+  @Override
   public Icon getIcon(@NotNull VirtualFile file, final int flags, @Nullable Project project) {
     if (!isNativeFileType(file)) return null;
 
@@ -65,6 +66,7 @@ public class NativeFileIconProvider implements FileIconProvider {
       return icon;
     }
     return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER.getValue(), file, false, new Function<VirtualFile, Icon>() {
+      @Override
       public Icon fun(VirtualFile virtualFile) {
         final File f = new File(filePath);
         if (!f.exists()) {
@@ -129,6 +131,7 @@ public class NativeFileIconProvider implements FileIconProvider {
       myText = new Object[] {text, flags};
     }
 
+    @Override
     @NotNull
     public Object[] getEqualityObjects() {
       return myText;

@@ -97,6 +97,7 @@ public class RegistryUi implements Disposable {
     myContent.add(descriptionPanel, BorderLayout.SOUTH);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
 
@@ -151,6 +152,7 @@ public class RegistryUi implements Disposable {
       }
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
       rv.resetToDefault();
@@ -173,6 +175,7 @@ public class RegistryUi implements Disposable {
       e.getPresentation().setIcon(AllIcons.Actions.EditSource);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       startEditingAtSelection();
     }
@@ -181,6 +184,7 @@ public class RegistryUi implements Disposable {
   private void startEditingAtSelection() {
     myTable.editCellAt(myTable.getSelectedRow(), 2);
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myTable.isEditing()) {
           myTable.getEditorComponent().requestFocus();
@@ -196,6 +200,7 @@ public class RegistryUi implements Disposable {
     private MyTableModel() {
       myAll = Registry.getAll();
       Collections.sort(myAll, new Comparator<RegistryValue>() {
+        @Override
         public int compare(RegistryValue o1, RegistryValue o2) {
           return o1.getKey().compareTo(o2.getKey());
         }
@@ -206,14 +211,17 @@ public class RegistryUi implements Disposable {
       fireTableDataChanged();
     }
 
+    @Override
     public int getRowCount() {
       return myAll.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       RegistryValue value = getRegistryValue(rowIndex);
       switch (columnIndex) {
@@ -247,6 +255,7 @@ public class RegistryUi implements Disposable {
         revaliateActions();
       }
 
+      @Override
       protected JComponent createCenterPanel() {
         return myContent;
       }
@@ -271,6 +280,7 @@ public class RegistryUi implements Disposable {
       @Override
       protected Action[] createActions() {
         return new Action[]{myRestoreDefaultsAction, new AbstractAction("Close") {
+          @Override
           public void actionPerformed(ActionEvent e) {
             processClose();
             doOKAction();
@@ -304,6 +314,7 @@ public class RegistryUi implements Disposable {
 
       if (r == 0) {
         LaterInvocator.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (app.isRestartCapable()) {
               app.restart();
@@ -329,6 +340,7 @@ public class RegistryUi implements Disposable {
     myRestoreDefaultsAction.setEnabled(!Registry.getInstance().isInDefaultState());
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -336,17 +348,18 @@ public class RegistryUi implements Disposable {
 
     private final JLabel myLabel = new JLabel();
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final RegistryValue v = ((MyTableModel)table.getModel()).getRegistryValue(row);
       myLabel.setIcon(null);
       myLabel.setText(null);
-      myLabel.setHorizontalAlignment(JLabel.LEFT);
+      myLabel.setHorizontalAlignment(SwingConstants.LEFT);
       
       if (v != null) {
         switch (column) {
           case 0:
             myLabel.setIcon(v.isRestartRequired() ? RESTART_ICON : null);
-            myLabel.setHorizontalAlignment(JLabel.CENTER);
+            myLabel.setHorizontalAlignment(SwingConstants.CENTER);
             break;
           case 1:
             myLabel.setText(v.getKey());
@@ -381,7 +394,7 @@ public class RegistryUi implements Disposable {
     if (icon != null) return icon;
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
       .getDefaultScreenDevice().getDefaultConfiguration()
-      .createCompatibleImage(16, 16, Color.TRANSLUCENT);
+      .createCompatibleImage(16, 16, Transparency.TRANSLUCENT);
     final Graphics g = image.getGraphics();
     g.setColor(color);
     g.fillRect(0, 0, 16, 16);
@@ -397,6 +410,7 @@ public class RegistryUi implements Disposable {
     private final JCheckBox myCheckBox = new JCheckBox();
     private RegistryValue myValue;
 
+    @Override
     @Nullable
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(row);
@@ -431,6 +445,7 @@ public class RegistryUi implements Disposable {
       return super.stopCellEditing();
     }
 
+    @Override
     public Object getCellEditorValue() {
       return myValue;
     }
@@ -441,6 +456,7 @@ public class RegistryUi implements Disposable {
       super("Restore Defaults");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       restoreDefaults();
     }

@@ -51,6 +51,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
   }
 
   private static class DefaultHandler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();

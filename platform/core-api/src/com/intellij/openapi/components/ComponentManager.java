@@ -75,7 +75,8 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @return array of components
    * @deprecated use extension points instead
    */
-  @NotNull <T> T[] getComponents(Class<T> baseClass);
+  @NotNull
+  <T> T[] getComponents(Class<T> baseClass);
 
   @NotNull
   PicoContainer getPicoContainer();

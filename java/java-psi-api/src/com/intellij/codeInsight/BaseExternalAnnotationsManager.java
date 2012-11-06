@@ -267,9 +267,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (psiFile == null) continue;
       possibleAnnotationsXmls.add(psiFile);
     }
+    possibleAnnotationsXmls.trimToSize();
     if (!possibleAnnotationsXmls.isEmpty()) {
-      possibleAnnotationsXmls.trimToSize();
-
       // sorting by writability: writable go first
       Collections.sort(possibleAnnotationsXmls, new Comparator<PsiFile>() {
         @Override

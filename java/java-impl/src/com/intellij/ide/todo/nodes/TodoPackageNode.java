@@ -51,23 +51,15 @@ import java.util.*;
 public final class TodoPackageNode extends PackageElementNode implements HighlightedRegionProvider {
   private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final TodoTreeBuilder myBuilder;
-  @Nullable private String myPresentationName = null;
+  @Nullable private final String myPresentationName;
 
-  public TodoPackageNode(Project project,
+  public TodoPackageNode(@NotNull Project project,
                          PackageElement element,
                          TodoTreeBuilder builder) {
-    super(project, element, ViewSettings.DEFAULT);
-    myBuilder = builder;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
-    if (element != null){
-      final PsiPackage aPackage = element.getPackage();
-      if (aPackage != null){
-        myPresentationName = aPackage.getName();
-      }
-    }
+    this(project, element, builder,null);
   }
 
-  public TodoPackageNode(Project project,
+  public TodoPackageNode(@NotNull Project project,
                          PackageElement element,
                          TodoTreeBuilder builder,
                          @Nullable String name) {
@@ -76,19 +68,20 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
     if (element != null && name == null){
       final PsiPackage aPackage = element.getPackage();
-      if (aPackage != null){
-        myPresentationName = aPackage.getName();
-      }
-    } else {
+      myPresentationName = aPackage.getName();
+    }
+    else {
       myPresentationName = name;
     }
   }
 
 
+  @Override
   public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 
+  @Override
   protected void update(PresentationData data) {
     super.update(data);
     final PackageElement packageElement = getValue();
@@ -203,6 +196,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     return myBuilder.getTodoTreeStructure();
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();

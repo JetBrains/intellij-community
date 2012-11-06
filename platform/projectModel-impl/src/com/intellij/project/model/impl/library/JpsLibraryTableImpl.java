@@ -38,9 +38,9 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryTableImpl implements LibraryTable, Disposable {
-  private JpsLibrariesModel myModel;
+  private final JpsLibrariesModel myModel;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  private String myTableLevel;
+  private final String myTableLevel;
   private LibraryTablePresentation myPresentation;
 
   public JpsLibraryTableImpl(JpsLibraryCollection libraryCollection, String level) {
@@ -128,8 +128,8 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
   }
 
   private class JpsLibrariesModel implements LibraryTableBase.ModifiableModelEx {
-    private JpsLibraryCollection myJpsLibraries;
-    private List<JpsLibraryDelegate> myLibraries;
+    private final JpsLibraryCollection myJpsLibraries;
+    private final List<JpsLibraryDelegate> myLibraries;
 
     private JpsLibrariesModel(JpsLibraryCollection libraryCollection) {
       myLibraries = new ArrayList<JpsLibraryDelegate>();

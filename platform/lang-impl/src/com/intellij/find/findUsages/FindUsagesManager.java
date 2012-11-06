@@ -41,16 +41,14 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -72,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -112,9 +109,9 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private SearchData myLastSearchInFileData = new SearchData();
-  private final CopyOnWriteArrayList<SearchData> myFindUsagesHistory = ContainerUtil.createEmptyCOWList();
+  private final List<SearchData> myFindUsagesHistory = ContainerUtil.createEmptyCOWList();
 
-  public FindUsagesManager(final Project project, com.intellij.usages.UsageViewManager anotherManager) {
+  public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
   }
@@ -248,6 +245,14 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog) {
+    doShowDialogAndStartFind(psiElement, scopeFile, editor, showDialog, true);
+  }
+
+  private void doShowDialogAndStartFind(@NotNull PsiElement psiElement,
+                                        PsiFile scopeFile,
+                                        FileEditor editor,
+                                        boolean showDialog,
+                                        boolean useMaximalScope) {
     FindUsagesHandler handler = getNewFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
@@ -264,6 +269,9 @@ public class FindUsagesManager implements JDOMExternalizable {
     setOpenInNewTab(dialog.isShowInSeparateWindow());
 
     FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
+    if (!showDialog && useMaximalScope) {
+      findUsagesOptions.searchScope = getMaximalScope(handler);
+    }
 
     clearFindingNextUsageInFile();
     LOG.assertTrue(handler.getPsiElement().isValid());
@@ -280,6 +288,14 @@ public class FindUsagesManager implements JDOMExternalizable {
     else {
       findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
     }
+  }
+
+  public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
+    UsageTarget[] usageTargets = (UsageTarget[])targets;
+    PsiElement[] elements = getPsiElements(usageTargets);
+    if (elements.length == 0) return;
+    PsiElement psiElement = elements[0];
+    doShowDialogAndStartFind(psiElement, null, null, true, false);
   }
 
   private static void checkNotNull(@NotNull PsiElement[] primaryElements, @NotNull FindUsagesHandler handler, @NonNls @NotNull String methodName) {
@@ -661,35 +677,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
-    UsageTarget[] usageTargets = (UsageTarget[])targets;
-    PsiElement[] elements = getPsiElements(usageTargets);
-    if (elements.length == 0) return;
-    final FindUsagesHandler handler = getNewFindUsagesHandler(elements[0], false);
-
-    if (handler == null) {
-      return;
-    }
-
-    final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(false, shouldOpenInNewTab(), mustOpenInNewTab());
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-
-    setOpenInNewTab(dialog.isShowInSeparateWindow());
-
-    FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
-
-    clearFindingNextUsageInFile();
-    LOG.assertTrue(handler.getPsiElement().isValid());
-    PsiElement[] primaryElements = handler.getPrimaryElements();
-    checkNotNull(primaryElements, handler, "getPrimaryElements()");
-    PsiElement[] secondaryElements = handler.getSecondaryElements();
-    checkNotNull(secondaryElements, handler, "getSecondaryElements()");
-    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(primaryElements, secondaryElements);
-    findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
-  }
 
   @NotNull
   private static PsiElement[] getPsiElements(@NotNull UsageTarget[] targets) {
@@ -703,5 +690,16 @@ public class FindUsagesManager implements JDOMExternalizable {
       }
     }
     return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  @NotNull
+  public static GlobalSearchScope getMaximalScope(@NotNull FindUsagesHandler handler) {
+    PsiElement element = handler.getPsiElement();
+    Project project = element.getProject();
+    PsiFile file = element.getContainingFile();
+    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+      return GlobalSearchScope.projectScope(project);
+    }
+    return GlobalSearchScope.allScope(project);
   }
 }

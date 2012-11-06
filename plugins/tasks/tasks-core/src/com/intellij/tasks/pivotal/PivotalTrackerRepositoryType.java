@@ -23,6 +23,7 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
     return "PivotalTracker";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Pivotal;

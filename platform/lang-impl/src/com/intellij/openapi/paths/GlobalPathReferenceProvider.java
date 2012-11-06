@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
-  @NonNls private static final String[] PREFIXES = new String[] {
+  @NonNls private static final String[] PREFIXES = {
     "mailto:", "tel:", "sms:", "skype:", "data:"
   };
 
@@ -42,6 +42,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     return false;
   }
 
+  @Override
   public boolean createReferences(@NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(psiElement);
     if (manipulator == null) {
@@ -60,6 +61,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     return false;
   }
 
+  @Override
   @Nullable
   public PathReference getPathReference(@NotNull String path, @NotNull final PsiElement element) {
     return path.contains("://") ? new PathReference(path, PathReference.NULL_ICON) : null;

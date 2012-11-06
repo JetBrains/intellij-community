@@ -58,7 +58,7 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
                && !(parentValue instanceof Project)
                && settings.isFlattenPackages()
                && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
-               && aPackage.getQualifiedName().length() > 0;
+               && !aPackage.getQualifiedName().isEmpty();
 
   }
 
@@ -68,7 +68,7 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;
-    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
+    if (!ProjectRootsUtil.isSourceRoot(directory) && aPackage != null && !aPackage.getQualifiedName().isEmpty() &&
                               parentValue instanceof PsiDirectory) {
 
       parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));

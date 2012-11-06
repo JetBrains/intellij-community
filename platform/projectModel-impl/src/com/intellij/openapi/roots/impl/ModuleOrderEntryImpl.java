@@ -39,7 +39,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.MODULE_TYPE;
   @NonNls public static final String MODULE_NAME_ATTR = JpsModuleRootModelSerializer.MODULE_NAME_ATTRIBUTE;
   @NonNls private static final String EXPORTED_ATTR = JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE;
-  private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
+  @NonNls private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
 
   private final ModulePointer myModulePointer;
   private boolean myExported = false;
@@ -80,6 +80,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myScope = that.myScope;
   }
 
+  @Override
   @NotNull
   public Module getOwnerModule() {
     return getRootModel().getModule();
@@ -93,6 +94,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myProductionOnTestDependency = productionOnTestDependency;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     final OrderRootsEnumerator enumerator = getEnumerator(type);
@@ -107,34 +109,41 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module);
   }
 
+  @Override
   @NotNull
   public String[] getUrls(OrderRootType rootType) {
     final OrderRootsEnumerator enumerator = getEnumerator(rootType);
     return enumerator != null ? enumerator.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed() && getModule() != null;
   }
 
+  @Override
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
     return policy.visitModuleOrderEntry(this, initialValue);
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return getModuleName();
   }
 
+  @Override
   public boolean isSynthetic() {
     return false;
   }
 
+  @Override
   @Nullable
   public Module getModule() {
     return getRootModel().getConfigurationAccessor().getModule(myModulePointer.getModule(), myModulePointer.getModuleName());
   }
 
+  @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     element.setAttribute(MODULE_NAME_ATTR, getModuleName());
@@ -148,30 +157,36 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     rootElement.addContent(element);
   }
 
+  @Override
   public String getModuleName() {
     return myModulePointer.getModuleName();
   }
 
+  @Override
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new ModuleOrderEntryImpl(this, rootModel);
   }
 
+  @Override
   public boolean isExported() {
     return myExported;
   }
 
+  @Override
   public void setExported(boolean value) {
     getRootModel().assertWritable();
     myExported = value;
   }
 
+  @Override
   @NotNull
   public DependencyScope getScope() {
     return myScope;
   }
 
+  @Override
   public void setScope(@NotNull DependencyScope scope) {
     getRootModel().assertWritable();
     myScope = scope;

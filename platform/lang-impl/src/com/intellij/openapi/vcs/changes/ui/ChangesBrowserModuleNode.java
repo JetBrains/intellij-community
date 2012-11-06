@@ -50,10 +50,12 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     return getUserObject().getName();
   }
 
+  @Override
   public int getSortWeight() {
     return 3;
   }
 
+  @Override
   public int compareUserObjects(final Object o2) {
     if (o2 instanceof Module) {
       return getUserObject().getName().compareToIgnoreCase(((Module) o2).getName());
@@ -62,6 +64,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     return 0;
   }
 
+  @Override
   public FilePath[] getFilePathsUnder() {
     final VirtualFile[] files = ModuleRootManager.getInstance(getUserObject()).getContentRoots();
     final FilePath[] result = new FilePath[files.length];

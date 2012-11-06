@@ -80,13 +80,14 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     return myIsTestSource;
   }
 
+  @NotNull
   @Override
   public String getPackagePrefix() {
     return myPackagePrefix;
   }
 
   @Override
-  public void setPackagePrefix(String packagePrefix) {
+  public void setPackagePrefix(@NotNull String packagePrefix) {
     myPackagePrefix = packagePrefix;
   }
 

@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,7 @@ public class PackageViewModuleNode extends AbstractModuleNode{
     this(project, (Module)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots()), myProject, getSettings(), getValue(), false);
@@ -46,10 +48,11 @@ public class PackageViewModuleNode extends AbstractModuleNode{
 
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     Module module = getValue();
     return module != null && !module.isDisposed() &&
-           (ModuleUtil.moduleContainsFile(module, file, false) || ModuleUtil.moduleContainsFile(module, file, true));
+           (ModuleUtilCore.moduleContainsFile(module, file, false) || ModuleUtilCore.moduleContainsFile(module, file, true));
   }
 
   @Override

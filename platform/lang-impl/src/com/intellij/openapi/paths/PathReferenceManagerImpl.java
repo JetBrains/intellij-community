@@ -35,11 +35,13 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();
   private static final Comparator<PsiReference> START_OFFSET_COMPARATOR = new Comparator<PsiReference>() {
+    @Override
     public int compare(final PsiReference o1, final PsiReference o2) {
       return o1.getRangeInElement().getStartOffset() - o2.getRangeInElement().getStartOffset();
     }
   };
 
+  @Override
   @Nullable
   public PathReference getPathReference(@NotNull String path, @NotNull final Module module, @NotNull PsiElement element, PathReferenceProvider... additionalProviders) {
     PathReference pathReference;
@@ -62,6 +64,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return null;
   }
 
+  @Override
   @Nullable
   public PathReference getCustomPathReference(@NotNull String path, @NotNull Module module, @NotNull PsiElement element, PathReferenceProvider... providers) {
     for (PathReferenceProvider provider : providers) {
@@ -73,11 +76,13 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return null;
   }
 
+  @Override
   @NotNull
   public PathReferenceProvider getGlobalWebPathReferenceProvider() {
     return myGlobalPathsProvider;
   }
 
+  @Override
   @NotNull
   public PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed) {
     final StaticPathReferenceProvider provider = new StaticPathReferenceProvider(null);
@@ -85,6 +90,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return provider;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
                                          final boolean soft,
@@ -93,6 +99,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return createReferences(psiElement, soft, endingSlashNotAllowed, relativePathsAllowed, null, additionalProviders);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(@NotNull final PsiElement psiElement,
                                          final boolean soft,
@@ -119,6 +126,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return mergeReferences(psiElement, mergedReferences);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createCustomReferences(@NotNull PsiElement psiElement, boolean soft, PathReferenceProvider... providers) {
     List<PsiReference> references = new ArrayList<PsiReference>();
@@ -131,6 +139,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return mergeReferences(psiElement, references);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(@NotNull PsiElement psiElement, final boolean soft, PathReferenceProvider... additionalProviders) {
     return createReferences(psiElement, soft, false, true, null, additionalProviders);

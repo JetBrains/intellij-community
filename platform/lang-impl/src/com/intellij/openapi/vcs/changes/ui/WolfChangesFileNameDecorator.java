@@ -32,6 +32,7 @@ public class WolfChangesFileNameDecorator extends ChangesFileNameDecorator {
     myProblemSolver = problemSolver;
   }
 
+  @Override
   public void appendFileName(final ChangesBrowserNodeRenderer renderer, final VirtualFile vFile, final String fileName, final Color color, final boolean highlightProblems) {
     int style = SimpleTextAttributes.STYLE_PLAIN;
     Color underlineColor = null;

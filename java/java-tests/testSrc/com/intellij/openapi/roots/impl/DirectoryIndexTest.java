@@ -436,9 +436,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       public void fileCreated(VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());
 
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile()) != null);
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded")) == null);
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded/foo")) == null);
+        VirtualFile file = e.getFile();
+        toAssert.add(myIndex.getInfoForDirectory(file) != null);
+        toAssert.add(myIndex.getInfoForDirectory(file.findFileByRelativePath("excluded")) == null);
+        toAssert.add(myIndex.getInfoForDirectory(file.findFileByRelativePath("excluded/foo")) == null);
       }
     };
 
@@ -505,18 +506,19 @@ public class DirectoryIndexTest extends IdeaTestCase {
                          Module... modulesOfOrderEntries) {
     DirectoryInfo info = myIndex.getInfoForDirectory(dir);
     assertNotNull(info);
-    assertEquals(module, info.module);
-    assertEquals(isInModuleSource, info.isInModuleSource);
-    assertEquals(isTestSource, info.isTestSource);
-    assertEquals(isInLibrary, info.libraryClassRoot != null);
-    assertEquals(isInLibrarySource, info.isInLibrarySource);
+    info.assertConsistency();
+    assertEquals(module, info.getModule());
+    assertEquals(isInModuleSource, info.isInModuleSource());
+    assertEquals(isTestSource, info.isTestSource());
+    assertEquals(isInLibrary, info.hasLibraryClassRoot());
+    assertEquals(isInLibrarySource, info.isInLibrarySource());
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (dir.isDirectory()) {
       assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
     }
 
-    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().size());
+    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().length);
     for (Module aModule : modulesOfOrderEntries) {
       boolean found = false;
       for (OrderEntry orderEntry : info.getOrderEntries()) {

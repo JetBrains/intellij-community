@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -55,7 +54,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
       VirtualFile parent = contentRoot.getParent();
       if (parent != null) {
         DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
-        if (parentInfo != null && myModule.equals(parentInfo.module)) continue; // inner content - skip it
+        if (parentInfo != null && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
       }
 
       boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
@@ -81,7 +80,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && myModule.equals(info.module);
+      return info != null && myModule.equals(info.getModule());
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -93,7 +92,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource && myModule.equals(info.module);
+      return info != null && info.isInModuleSource() && myModule.equals(info.getModule());
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -109,24 +108,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return Collections.emptyList();
 
-    final List<OrderEntry> orderEntries = info.getOrderEntries();
-    if (orderEntries.isEmpty()) return Collections.emptyList();
-
-    final Module module = myModule;
-
-    SmartList<OrderEntry> answer = null;
-    final int size = orderEntries.size();
-    for (int i = 0; i < size; i++) {
-      OrderEntry entry = orderEntries.get(i);
-      if (entry.getOwnerModule() == module) {
-        if (answer == null) {
-          answer = new SmartList<OrderEntry>();
-        }
-        answer.add(entry);
-      }
-    }
-
-    return answer == null ? Collections.<OrderEntry>emptyList() : answer;
+    return info.findAllOrderEntriesWithOwnerModule(myModule);
   }
 
   @Override
@@ -135,20 +117,14 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return null;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return null;
-    final List<OrderEntry> orderEntries = info.getOrderEntries();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < orderEntries.size(); i++) {
-      final OrderEntry orderEntry = orderEntries.get(i);
-      if (orderEntry.getOwnerModule() == myModule) return orderEntry;
-    }
-    return null;
+    return info.findOrderEntryWithOwnerModule(myModule);
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource && info.isTestSource && myModule.equals(info.module);
+      return info != null && info.isInModuleSource() && info.isTestSource() && myModule.equals(info.getModule());
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -161,7 +137,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        return info != null && myModule.equals(info.module);
+        return info != null && myModule.equals(info.getModule());
       }
       else {
         if(myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;

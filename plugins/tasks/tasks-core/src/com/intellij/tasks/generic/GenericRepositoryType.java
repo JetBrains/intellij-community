@@ -21,6 +21,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
     return "Generic";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.General.Web;

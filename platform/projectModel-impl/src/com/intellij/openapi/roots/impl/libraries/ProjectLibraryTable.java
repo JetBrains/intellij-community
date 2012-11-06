@@ -43,14 +43,17 @@ import java.util.List;
 )
 public class ProjectLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @Override
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("project.library.display.name", plural ? 2 : 1);
     }
 
+    @Override
     public String getDescription() {
       return ProjectBundle.message("libraries.node.text.project");
     }
 
+    @Override
     public String getLibraryTableEditorTitle() {
       return ProjectBundle.message("library.configure.project.title");
     }
@@ -60,14 +63,17 @@ public class ProjectLibraryTable extends LibraryTableBase {
     return ServiceManager.getService(project, ProjectLibraryTable.class);
   }
 
+  @Override
   public String getTableLevel() {
     return LibraryTablesRegistrar.PROJECT_LEVEL;
   }
 
+  @Override
   public LibraryTablePresentation getPresentation() {
     return PROJECT_LIBRARY_TABLE_PRESENTATION;
   }
 
+  @Override
   public boolean isEditable() {
     return true;
   }
@@ -75,6 +81,7 @@ public class ProjectLibraryTable extends LibraryTableBase {
 
   public static class LibraryStateSplitter implements StateSplitter {
 
+    @Override
     public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
 
@@ -90,6 +97,7 @@ public class ProjectLibraryTable extends LibraryTableBase {
       return result;
     }
 
+    @Override
     public void mergeStatesInto(Element target, Element[] elements) {
       for (Element e : elements) {
         target.addContent(e);

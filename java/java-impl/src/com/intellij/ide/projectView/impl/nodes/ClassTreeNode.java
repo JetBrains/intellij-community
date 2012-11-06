@@ -34,6 +34,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     super(project, value, viewSettings);
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getValue();
     final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();
@@ -60,10 +61,12 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return treeNodes;
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return !getSettings().isShowMembers();
   }
 
+  @Override
   public void updateImpl(PresentationData data) {
     final PsiClass aClass = getValue();
     if (aClass != null) {
@@ -76,6 +79,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
 
+  @Override
   public boolean expandOnDoubleClick() {
     return false;
   }
@@ -84,10 +88,12 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return getValue();
   }
 
+  @Override
   public boolean isAlwaysExpand() {
     return getParentValue() instanceof PsiFile;
   }
 
+  @Override
   public int getWeight() {
     return 20;
   }
@@ -106,10 +112,12 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return true;
   }
 
+  @Override
   public int getTypeSortWeight(final boolean sortByType) {
     return sortByType ? 5 : 0;
   }
 
+  @Override
   public Comparable getTypeSortKey() {
     return new ClassNameSortKey();
   }
@@ -135,6 +143,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   private class ClassNameSortKey implements Comparable {
+    @Override
     public int compareTo(final Object o) {
       if (!(o instanceof ClassNameSortKey)) return 0;
       ClassNameSortKey rhs = (ClassNameSortKey) o;
@@ -151,6 +160,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return true;
   }
 
+  @Override
   public boolean canRepresent(final Object element) {
     if (!isValid()) return false;
 

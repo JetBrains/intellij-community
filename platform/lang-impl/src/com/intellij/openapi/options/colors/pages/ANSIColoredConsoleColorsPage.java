@@ -45,7 +45,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "\n" +
     "<stdsys>Process finished with exit code 1</stdsys>\n";
 
-  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
+  private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
@@ -83,40 +83,47 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("gray", ConsoleHighlighter.GRAY);
   }
 
-  private static final ColorDescriptor[] COLORS = new ColorDescriptor[] {
+  private static final ColorDescriptor[] COLORS = {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
   };
 
+  @Override
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("color.settings.console.name");
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return FileTypes.PLAIN_TEXT.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLORS;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
      return new PlainSyntaxHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return DEMO_TEXT;

@@ -20,9 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -52,13 +54,13 @@ public class ExcludeFromProjectAction extends AnAction {
   }
 
   private static void addExcludedFolder(Project project, VirtualFile folder) {
-    Module module = ModuleUtil.findModuleForFile(folder, project);
+    Module module = ModuleUtilCore.findModuleForFile(folder, project);
     if (module == null) return;
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (ContentEntry entry : model.getContentEntries()) {
       VirtualFile entryFile = entry.getFile();
       if (entryFile != null) {
-        if (VfsUtil.isAncestor(entryFile, folder, true)) {
+        if (VfsUtilCore.isAncestor(entryFile, folder, true)) {
           entry.addExcludeFolder(folder);
           model.commit();
           return;

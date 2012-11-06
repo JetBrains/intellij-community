@@ -22,6 +22,7 @@ public class LighthouseRepositoryType extends BaseRepositoryType<LighthouseRepos
     return "Lighthouse";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Lighthouse;

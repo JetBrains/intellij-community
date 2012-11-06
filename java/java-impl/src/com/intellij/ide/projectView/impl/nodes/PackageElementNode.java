@@ -23,14 +23,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,18 +36,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
-  public PackageElementNode(final Project project,
+  public PackageElementNode(@NotNull Project project,
                             final PackageElement value,
                             final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
-  public PackageElementNode(final Project project,
+  public PackageElementNode(@NotNull Project project,
                             final Object value,
                             final ViewSettings viewSettings) {
     this(project, (PackageElement)value, viewSettings);
   }
 
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     if (!isUnderContent(file) || getValue() == null) {
       return false;
@@ -57,7 +56,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
     final PsiDirectory[] directories = getValue().getPackage().getDirectories();
     for (PsiDirectory directory : directories) {
-      if (VfsUtil.isAncestor(directory.getVirtualFile(), file, false)) return true;
+      if (VfsUtilCore.isAncestor(directory.getVirtualFile(), file, false)) return true;
     }
     return false;
   }
@@ -66,10 +65,10 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     PackageElement element = getValue();
     final Module module = element == null ? null : element.getModule();
     if (module == null) {
-      return ModuleUtil.projectContainsFile(getProject(), file, isLibraryElement());
+      return ModuleUtilCore.projectContainsFile(getProject(), file, isLibraryElement());
     }
     else {
-      return ModuleUtil.moduleContainsFile(module, file, isLibraryElement());
+      return ModuleUtilCore.moduleContainsFile(module, file, isLibraryElement());
     }
   }
 
@@ -77,6 +76,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     return getValue() != null && getValue().isLibraryElement();
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final PackageElement value = getValue();
@@ -92,9 +92,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
         PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
       }
     }
-    // process only files in package's drectories
-    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myProject, module, isLibraryElement());
-    final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
+    // process only files in package's directories
+    final PsiDirectory[] dirs = PackageUtil.getDirectories(aPackage, myProject, module, isLibraryElement());
     for (final PsiDirectory dir : dirs) {
       children.addAll(ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(dir, getSettings(), false));
     }
@@ -102,6 +101,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
 
+  @Override
   protected void update(final PresentationData presentation) {
     if (getValue() != null && getValue().getPackage().isValid()) {
       updateValidData(presentation);
@@ -114,7 +114,6 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   private void updateValidData(final PresentationData presentation) {
     final PackageElement value = getValue();
     final PsiPackage aPackage = value.getPackage();
-    final String qName = aPackage.getQualifiedName();
 
     if (!getSettings().isFlattenPackages()
         && getSettings().isHideEmptyMiddlePackages()
@@ -124,12 +123,14 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
 
     PsiPackage parentPackage;
-    if (getParentValue() instanceof PackageElement) {
-      parentPackage = ((PackageElement)getParentValue()).getPackage();
+    Object parentValue = getParentValue();
+    if (parentValue instanceof PackageElement) {
+      parentPackage = ((PackageElement)parentValue).getPackage();
     }
     else {
       parentPackage = null;
     }
+    String qName = aPackage.getQualifiedName();
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);
 
@@ -141,25 +142,28 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   private boolean showFQName(final PsiPackage aPackage) {
-    return getSettings().isFlattenPackages() && aPackage.getQualifiedName().length() > 0;
+    return getSettings().isFlattenPackages() && !aPackage.getQualifiedName().isEmpty();
   }
 
+  @Override
   public String getTestPresentation() {
     final PresentationData presentation = new PresentationData();
     update(presentation);
     return "PsiPackage: " + presentation.getPresentableText();
   }
 
+  @Override
   public boolean valueIsCut() {
     return getValue() != null && CopyPasteManager.getInstance().isCutElement(getValue().getPackage());
   }
 
+  @NotNull
   public VirtualFile[] getVirtualFiles() {
     final PackageElement value = getValue();
     if (value == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    final PsiDirectory[] directories = value.getPackage().getDirectories(PackageUtil.getScopeToShow(getProject(), value.getModule(), isLibraryElement()));
+    final PsiDirectory[] directories = PackageUtil.getDirectories(value.getPackage(), getProject(), value.getModule(), isLibraryElement());
     final VirtualFile[] result = new VirtualFile[directories.length];
     for (int i = 0; i < directories.length; i++) {
       PsiDirectory directory = directories[i];
@@ -168,20 +172,27 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     return result;
   }
 
+  @Override
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
     if (value == null) return true;
-    if (element instanceof PackageElement &&
-        Comparing.equal(((PackageElement)element).getPackage().getQualifiedName(), value.getPackage().getQualifiedName())) {
-      return true;
+    if (element instanceof PackageElement) {
+      final PackageElement packageElement = (PackageElement)element;
+      final String otherPackage = packageElement.getPackage().getQualifiedName();
+      final String aPackage = value.getPackage().getQualifiedName();
+      if (otherPackage.equals(aPackage)) {
+        return true;
+      }
     }
     if (element instanceof PsiDirectory) {
-      return Arrays.asList(getValue().getPackage().getDirectories()).contains(element);
+      final PsiDirectory directory = (PsiDirectory)element;
+      return Arrays.asList(value.getPackage().getDirectories()).contains(directory);
     }
     return false;
   }
 
+  @Override
   public int getWeight() {
     return 0;
   }
@@ -189,14 +200,13 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   @Override
   public String getTitle() {
     final PackageElement packageElement = getValue();
-    if (packageElement != null) {
-      return packageElement.getPackage().getQualifiedName();
-    }
-    else {
+    if (packageElement == null) {
       return super.getTitle();
     }
+    return packageElement.getPackage().getQualifiedName();
   }
 
+  @Override
   @Nullable
   public String getQualifiedNameSortKey() {
     final PackageElement packageElement = getValue();
@@ -206,6 +216,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     return null;
   }
 
+  @Override
   public int getTypeSortWeight(final boolean sortByType) {
     return 4;
   }

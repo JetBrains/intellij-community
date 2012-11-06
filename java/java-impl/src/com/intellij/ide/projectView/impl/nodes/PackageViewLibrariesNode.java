@@ -40,6 +40,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     super(project, new LibrariesElement(module, project), viewSettings);
   }
 
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
@@ -47,6 +48,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     return someChildContainsFile(file, false);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
@@ -82,19 +84,23 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     }
   }
 
+  @Override
   public void update(final PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
+  @Override
   public String getTestPresentation() {
     return "Libraries";
   }
 
+  @Override
   public boolean shouldUpdateData() {
     return true;
   }
 
+  @Override
   public int getWeight() {
     return 60;
   }
