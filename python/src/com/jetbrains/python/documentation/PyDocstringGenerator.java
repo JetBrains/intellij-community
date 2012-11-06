@@ -19,8 +19,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +191,12 @@ public class PyDocstringGenerator {
 
     PsiWhiteSpace whitespace = null;
     if (myDocStringOwner instanceof PyFunction) {
-      whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)myDocStringOwner).getStatementList(), PsiWhiteSpace.class);
+      final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
+      if (document != null && statementList != null && statementList.getStatements().length != 0
+          && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
+        whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
+      }
     }
     String ws = "\n";
     if (whitespace != null) {
@@ -196,6 +204,9 @@ public class PyDocstringGenerator {
       if (spaces.length > 1) {
         ws += whitespace.getText().split("\n")[1];
       }
+    }
+    else {
+      ws += StringUtil.repeat(" ", getIndentSize(myFunction));
     }
     if (replacementText.length() > 0) {
       replacementText.deleteCharAt(replacementText.length() - 1);
@@ -320,12 +331,15 @@ public class PyDocstringGenerator {
       final PyStatementList list = myFunction.getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
 
-      if (list != null && list.getStatements().length != 0) {
-        if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset())) {
+      if (document != null && list != null) {
+        if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset()) ||
+          list.getStatements().length == 0) {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),
-                                                            PyFunction.class,
-                                                            "def " + myFunction.getName() + myFunction.getParameterList().getText()
-                                                            + ":\n\t" + replacementToOffset.getFirst() + "\n\t" + list.getText());
+                                                        PyFunction.class,
+                                                        "def " + myFunction.getName() + myFunction.getParameterList().getText()
+                                                        + ":\n" + StringUtil.repeat(" ",  getIndentSize(myFunction))
+                                                        + replacementToOffset.getFirst() + "\n" +
+                                                        StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText());
 
           myFunction = (PyFunction)myFunction.replace(func);
         }
@@ -338,6 +352,19 @@ public class PyDocstringGenerator {
       myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
       myDocStringExpression = myFunction.getDocStringExpression();
     }
+  }
+
+  private int getIndentSize(PyFunction function) {
+    CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.
+      getInstance(function.getProject()).getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
+
+    PyStatementList statementList = PsiTreeUtil.getParentOfType(function, PyStatementList.class);
+    int indent = 1;
+    while (statementList != null) {
+      statementList = PsiTreeUtil.getParentOfType(statementList, PyStatementList.class);
+      indent += 1;
+    }
+    return indent * indentOptions.TAB_SIZE;
   }
 
   private String getPrefix() {
