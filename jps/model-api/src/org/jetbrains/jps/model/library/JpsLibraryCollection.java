@@ -30,4 +30,7 @@ public interface JpsLibraryCollection {
 
   @Nullable
   JpsLibrary findLibrary(@NotNull String name);
+
+  @Nullable
+  <E extends JpsElement> JpsTypedLibrary<E> findLibrary(@NotNull String name, @NotNull JpsLibraryType<E> type);
 }

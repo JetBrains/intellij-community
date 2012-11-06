@@ -12,6 +12,7 @@ public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
+  @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
 
   @Nullable
   public static String getModuleDir(String moduleFilePath) {

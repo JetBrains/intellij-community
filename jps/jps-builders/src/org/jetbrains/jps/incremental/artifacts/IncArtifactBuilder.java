@@ -11,13 +11,11 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.BuildListener;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
 import org.jetbrains.jps.incremental.artifacts.impl.JarsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -26,6 +24,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,6 +71,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
+      runArtifactTasks(context, target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
 
@@ -151,9 +151,20 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, outputConsumer, outSrcMapping);
       builder.buildJars();
+      runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
+    }
+  }
+
+  private static void runArtifactTasks(CompileContext context, JpsArtifact artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase phase)
+    throws ProjectBuildException {
+    for (ArtifactBuildTaskProvider provider : JpsServiceManager.getInstance().getExtensions(ArtifactBuildTaskProvider.class)) {
+      List<? extends BuildTask> tasks = provider.createArtifactBuildTasks(artifact, phase);
+      for (BuildTask task : tasks) {
+        task.build(context);
+      }
     }
   }
 
