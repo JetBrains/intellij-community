@@ -38,7 +38,7 @@
             <properties>
               <focusable value="false"/>
               <selected value="true"/>
-              <text value="Create change&amp;list"/>
+              <text value="C&amp;reate changelist"/>
             </properties>
           </component>
           <component id="d4c2" class="javax.swing.JCheckBox" binding="myMarkAsInProgressBox" default-binding="true">

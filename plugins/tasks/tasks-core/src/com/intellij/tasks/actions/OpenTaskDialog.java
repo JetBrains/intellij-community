@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.impl.TaskManagerImpl;
@@ -51,7 +50,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -171,20 +169,11 @@ public class OpenTaskDialog extends DialogWrapper {
       }
     }
 
-    // refresh change lists
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    for (Iterator<ChangeListInfo> it = taskManager.getOpenChangelists(task).iterator(); it.hasNext(); ) {
-      ChangeListInfo changeListInfo = it.next();
-      if (changeListManager.getChangeList(changeListInfo.id) == null) {
-        it.remove();
-      }
-    }
-
-    if (!myVcsEnabled) {
+    if (!taskManager.isVcsEnabled()) {
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
     }
-    else if (task != null && !taskManager.getOpenChangelists(task).isEmpty()) {
+    else if (task instanceof LocalTask && !((LocalTask)task).isClosedLocally()) {
       myCreateChangelist.setSelected(true);
       myCreateChangelist.setEnabled(false);
     }
