@@ -5,10 +5,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -20,6 +20,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,7 +51,8 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
 
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
-                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                        final ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     assert patterns != null;
     try {
@@ -62,7 +64,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               doneSomething.set(true);
-              copyResource(context, sourceRoot, file);
+              copyResource(context, sourceRoot, file, outputConsumer);
             }
             catch (IOException e) {
               LOG.info(e);
@@ -99,7 +101,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static void copyResource(CompileContext context, JavaSourceRootDescriptor rd, File file) throws IOException {
+  private static void copyResource(CompileContext context, JavaSourceRootDescriptor rd, File file, ChunkBuildOutputConsumer outputConsumer) throws IOException {
     final ModuleBuildTarget target = rd.getTarget();
     final String outputRootUrl = JpsJavaExtensionService.getInstance().getOutputUrl(target.getModule(), target.isTests());
     if (outputRootUrl == null) {
@@ -119,8 +121,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     final String outputPath = targetPath.toString();
     FileUtil.copyContent(file, new File(outputPath));
     try {
-      final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      mapping.setOutput(file.getPath(), outputPath);
+      outputConsumer.registerOutputFile(target, outputPath, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));

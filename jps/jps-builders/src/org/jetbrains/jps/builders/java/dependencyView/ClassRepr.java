@@ -27,6 +27,7 @@ public class ClassRepr extends Proto {
 
   private final int myOuterClassName;
   private final boolean myIsLocal;
+  private final boolean myIsAnonymous;
 
   public Set<MethodRepr> getMethods() {
     return myMethods;
@@ -42,6 +43,10 @@ public class ClassRepr extends Proto {
 
   public boolean isLocal() {
     return myIsLocal;
+  }
+
+  public boolean isAnonymous() {
+    return myIsAnonymous;
   }
 
   public TypeRepr.ClassType getSuperClass() {
@@ -199,13 +204,13 @@ public class ClassRepr extends Proto {
   public ClassRepr(final DependencyContext context, final int a, final int fn, final int n, final int sig,
                    final int sup,
                    final String[] i,
-                   final Collection<String> ns,
                    final Set<FieldRepr> f,
                    final Set<MethodRepr> m,
                    final Set<ElemType> targets,
                    final RetentionPolicy policy,
                    final int outerClassName,
                    final boolean localClassFlag,
+                   final boolean anonymousClassFlag,
                    final Set<UsageRepr.Usage> usages) {
     super(a, sig, n);
     this.myContext = context;
@@ -218,6 +223,7 @@ public class ClassRepr extends Proto {
     this.myRetentionPolicy = policy;
     this.myOuterClassName = outerClassName;
     this.myIsLocal = localClassFlag;
+    this.myIsAnonymous = anonymousClassFlag;
     this.myUsages = usages;
   }
 
@@ -238,6 +244,7 @@ public class ClassRepr extends Proto {
 
       myOuterClassName = in.readInt();
       myIsLocal = in.readBoolean();
+      myIsAnonymous = in.readBoolean();
       myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
@@ -258,6 +265,7 @@ public class ClassRepr extends Proto {
       out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       out.writeInt(myOuterClassName);
       out.writeBoolean(myIsLocal);
+      out.writeBoolean(myIsAnonymous);
       RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
@@ -389,6 +397,8 @@ public class ClassRepr extends Proto {
 
     stream.print("      Local class: ");
     stream.println(myIsLocal);
+    stream.print("      Anonymous class: ");
+    stream.println(myIsAnonymous);
 
     stream.println("      Fields:");
     final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);

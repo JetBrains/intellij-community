@@ -11,6 +11,8 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="java-runtime" />
   </component>
 </module>
 

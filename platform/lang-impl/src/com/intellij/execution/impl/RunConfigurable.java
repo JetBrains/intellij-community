@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -70,6 +71,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
 
@@ -1380,7 +1382,10 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void doMove() {
-      TreeUtil.moveSelectedRow(myTree, myDirection);
+      Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> dropPosition = getAvailableDropPosition();
+      if (dropPosition != null) {
+        myTreeModel.drop(dropPosition.first, dropPosition.second, dropPosition.third);
+      }
     }
 
     @Override
@@ -1392,25 +1397,35 @@ class RunConfigurable extends BaseConfigurable {
       e.getPresentation().setEnabled(isEnabled(e));
     }
 
+    @Nullable
+    private Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> getAvailableDropPosition() {
+      int[] rows = myTree.getSelectionRows();
+      if (rows == null || rows.length != 1) {
+        return null;
+      }
+      int oldIndex = rows[0];
+      int newIndex = oldIndex + myDirection;
+      while (newIndex > 0 && newIndex < myTree.getRowCount()) {
+        RowsDnDSupport.RefinedDropSupport.Position position = myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
+                                                              INTO :
+                                                              myDirection > 0 ? BELOW : ABOVE;
+        if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
+          return Trinity.create(oldIndex, newIndex, position);
+        }
+        if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
+          return Trinity.create(oldIndex, newIndex + 1, ABOVE);
+        }
+        if (position == ABOVE && newIndex > 1 && myTreeModel.canDrop(oldIndex, newIndex - 1, BELOW)) {
+          return Trinity.create(oldIndex, newIndex - 1, BELOW);
+        }
+        newIndex += myDirection;
+      }
+      return null;
+    }
+
     @Override
     public boolean isEnabled(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null) {
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        if (!(treeNode.getUserObject() instanceof ConfigurationType) && !(treeNode.getUserObject() instanceof String)) {
-          RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
-          if (selectedSettings == null)
-            return false;
-          RunnerAndConfigurationSettings siblingSettings;
-          if (myDirection < 0) {
-            siblingSettings = getSettings(treeNode.getPreviousSibling());
-          } else {
-            siblingSettings = getSettings(treeNode.getNextSibling());
-          }
-            return siblingSettings != null && siblingSettings.isTemporary() == selectedSettings.isTemporary();
-          }
-        }
-      return false;
+      return getAvailableDropPosition() != null;
     }
   }
 
@@ -1635,28 +1650,35 @@ class RunConfigurable extends BaseConfigurable {
       ConfigurationType oldType = getType(oldNode);
       ConfigurationType newType = getType(newNode);
       if (oldParent == newParent) {
-        if (oldNode.getPreviousSibling() == newNode && position == Position.BELOW) {
+        if (oldNode.getPreviousSibling() == newNode && position == BELOW) {
           return false;
         }
-        if (oldNode.getNextSibling() == newNode && position == Position.ABOVE) {
+        if (oldNode.getNextSibling() == newNode && position == ABOVE) {
           return false;
         }
       }
       if (oldType != newType || newParent == oldNode || oldParent == newNode)
         return false;
       if (oldKind == FOLDER && newKind != FOLDER) {
+        if (newKind.isConfiguration() &&
+            position == ABOVE &&
+            getKind(newParent) == CONFIGURATION_TYPE &&
+            newIndex > 1 &&
+            getKind((DefaultMutableTreeNode)myTree.getPathForRow(newIndex - 1).getParentPath().getLastPathComponent()) == FOLDER) {
+          return true;
+        }
         return false;
       }
       if (!oldKind.supportsDnD() || !newKind.supportsDnD()) {
         return false;
       }
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.ABOVE)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == ABOVE)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.BELOW)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
         return false;
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
         return false;
       if (oldParent == newNode.getParent()) { //Same parent
         if (oldKind.isConfiguration() && newKind.isConfiguration()) {
@@ -1665,7 +1687,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettings oldSettings = getSettings(oldNode);
           return (oldSettings != null && ((DefaultMutableTreeNode)newNode.getParent()).getUserObject() == oldSettings.getType());
         } else if (oldKind == FOLDER) {
-          return true;
+          return !myTree.isExpanded(newIndex) || position == ABOVE;
         }
       }
       return true;
@@ -1684,7 +1706,7 @@ class RunConfigurable extends BaseConfigurable {
       DefaultMutableTreeNode newNode = (DefaultMutableTreeNode)myTree.getPathForRow(newIndex).getLastPathComponent();
       DefaultMutableTreeNode newParent = (DefaultMutableTreeNode)newNode.getParent();
       NodeKind oldKind = getKind(oldNode);
-      NodeKind newKind = getKind(newNode);
+      boolean wasExpanded = myTree.isExpanded(new TreePath(oldNode.getPath()));
       if (isDropInto(myTree, oldIndex, newIndex)) { //Drop in folder
         removeNodeFromParent(oldNode);
         int index = newNode.getChildCount();
@@ -1702,11 +1724,15 @@ class RunConfigurable extends BaseConfigurable {
       else {
         removeNodeFromParent(oldNode);
         int index = newParent.getIndex(newNode);
-        if (position == Position.BELOW)
+        if (position == BELOW)
           index++;
         insertNodeInto(oldNode, newParent, index);
       }
-      myTree.setSelectionPath(new TreePath(oldNode.getPath()));
+      TreePath treePath = new TreePath(oldNode.getPath());
+      myTree.setSelectionPath(treePath);
+      if (wasExpanded) {
+        myTree.expandPath(treePath);
+      }
     }
 
     @Override

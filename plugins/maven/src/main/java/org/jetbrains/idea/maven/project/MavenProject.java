@@ -756,7 +756,7 @@ public class MavenProject {
   public Set<String> getSupportedDependencyTypes(@NotNull SupportedRequestType type) {
     Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_JAR,
                                                             MavenConstants.TYPE_TEST_JAR,
-                                                            "ejb", "ejb-client", "jboss-har", "war", "ear", "bundle"));
+                                                            "ejb", "ejb-client", "jboss-har", "jboss-sar", "war", "ear", "bundle"));
     if (type == SupportedRequestType.FOR_COMPLETION) {
       result.add(MavenConstants.TYPE_POM);
     }

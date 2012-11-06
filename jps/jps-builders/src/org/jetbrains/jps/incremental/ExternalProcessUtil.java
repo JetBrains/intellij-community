@@ -32,6 +32,15 @@ public class ExternalProcessUtil {
   }
 
   public static List<String> buildJavaCommandLine(String javaExecutable,
+                                                String mainClass,
+                                                List<String> bootClasspath,
+                                                List<String> classpath,
+                                                List<String> vmParams,
+                                                List<String> programParams) {
+    return buildJavaCommandLine(javaExecutable, mainClass, bootClasspath, classpath, vmParams, programParams, true);
+  }
+
+  public static List<String> buildJavaCommandLine(String javaExecutable,
                                                   String mainClass,
                                                   List<String> bootClasspath,
                                                   List<String> classpath,

@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -146,6 +147,15 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
 
     buildArtifacts(artifact);
     assertOutput(artifact, fs().file("A.class"));
+  }
+
+  public void testCopyResourcesFromModuleOutput() {
+    String file = createFile("src/a.xml", "");
+    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.xml");
+    JpsModule module = addModule("a", PathUtil.getParentPath(file));
+    JpsArtifact artifact = addArtifact(root().module(module));
+    buildArtifacts(artifact);
+    assertOutput(artifact, fs().file("a.xml"));
   }
 
   public void testIgnoredFile() {

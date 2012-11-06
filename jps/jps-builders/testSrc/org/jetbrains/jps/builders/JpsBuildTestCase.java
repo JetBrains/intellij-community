@@ -1,9 +1,11 @@
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
@@ -36,6 +38,7 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -155,16 +158,18 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
-      pathVariables = addPathVariables(pathVariables);
-      JpsProjectLoader.loadProject(myProject, pathVariables, fullProjectPath);
+      Map<String, String> allPathVariables = new HashMap<String, String>(pathVariables.size() + 1);
+      allPathVariables.putAll(pathVariables);
+      allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
+      addPathVariables(allPathVariables);
+      JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected Map<String, String> addPathVariables(Map<String, String> pathVariables) {
-    return pathVariables;
+  protected void addPathVariables(Map<String, String> pathVariables) {
   }
 
   @Nullable

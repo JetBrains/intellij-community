@@ -737,6 +737,7 @@ public class IncProjectBuilder {
     final int modulesInChunk = chunk.getModules().size();
     int buildersPassed = 0;
     boolean nextPassRequired;
+    BuildOperations.ChunkBuildOutputConsumerImpl outputConsumer = new BuildOperations.ChunkBuildOutputConsumerImpl(context);
     try {
       do {
         nextPassRequired = false;
@@ -763,7 +764,7 @@ public class IncProjectBuilder {
             if (context.isMake()) {
               processDeletedPaths(context, chunk.getTargets());
             }
-            final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder);
+            final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
 
             doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
@@ -812,6 +813,7 @@ public class IncProjectBuilder {
       while (nextPassRequired);
     }
     finally {
+      outputConsumer.fireFileGeneratedEvents();
       for (BuilderCategory category : BuilderCategory.values()) {
         for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
           builder.cleanupChunkResources(context);

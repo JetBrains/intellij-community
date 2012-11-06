@@ -25,8 +25,10 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +48,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   private PsiType[] myTypeArguments;
   private LanguageLevel myLanguageLevel;
 
-  public MethodsProcessor(PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container, final PsiElement place) {
+  public MethodsProcessor(@NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container, @NotNull PsiElement place) {
     super(null, ourFilter, resolvers, container, place);
   }
 
@@ -54,9 +56,9 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myArgumentList;
   }
 
-  public void setArgumentList(PsiExpressionList argList) {
+  public void setArgumentList(@Nullable PsiExpressionList argList) {
     myArgumentList = argList;
-    myLanguageLevel = PsiUtil.getLanguageLevel(myArgumentList);
+    myLanguageLevel = PsiUtil.getLanguageLevel(argList == null ? myPlace : argList);
   }
 
   protected LanguageLevel getLanguageLevel() {
@@ -93,15 +95,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   }
 
   public void setAccessClass(PsiClass accessClass) {
-/*    if (isConstructor() && accessClass instanceof PsiAnonymousClass) {
-      myAccessClass = ((PsiAnonymousClass)accessClass).getBaseClassType().resolve();
-    }
-    else*/ {
       myAccessClass = accessClass;
-    }
-    /*if (isConstructor() && myAccessClass != null) {
-      setName(myAccessClass.getName());
-    }*/
   }
 
   public boolean isConstructor() {

@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact name="dir">
-    <output-path>$PROJECT_DIR$/out/artifacts/dir</output-path>
+    <output-path>$ARTIFACTS_OUT$/dir</output-path>
     <properties id="ant-postprocessing">
       <options enabled="true">
         <file>file://$PROJECT_DIR$/build.xml</file>
@@ -16,6 +16,8 @@
         <target>show-message</target>
       </options>
     </properties>
-    <root id="root" />
+    <root id="root">
+      <element id="dir-copy" path="$PROJECT_DIR$/data" />
+    </root>
   </artifact>
 </component>

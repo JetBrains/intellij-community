@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +61,7 @@ public final class PackageElement implements Queryable, RootsProvider {
   @Override
   public Collection<VirtualFile> getRoots() {
     Set<VirtualFile> roots= new HashSet<VirtualFile>();
-    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myElement.getProject(), myModule, isLibraryElement());
-    final PsiDirectory[] dirs = getPackage().getDirectories(scopeToShow);
+    final PsiDirectory[] dirs = PackageUtil.getDirectories(getPackage(), myElement.getProject(), myModule, isLibraryElement());
     for (PsiDirectory each : dirs) {
       roots.add(each.getVirtualFile());
     }

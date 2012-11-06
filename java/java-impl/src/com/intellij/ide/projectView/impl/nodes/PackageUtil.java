@@ -19,9 +19,10 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +42,7 @@ public class PackageUtil {
                                             @Nullable Module module,
                                             @NotNull Project project,
                                             final boolean searchInLibraries) {
-    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, searchInLibraries);
-    final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
+    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, searchInLibraries);
     final Set<PsiPackage> subpackages = new HashSet<PsiPackage>();
     for (PsiDirectory dir : dirs) {
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
@@ -83,8 +84,7 @@ public class PackageUtil {
                                        boolean strictlyEmpty,
                                        final boolean inLibrary) {
     final Project project = aPackage.getProject();
-    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
-    final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
+    final PsiDirectory[] dirs = getDirectories(aPackage, project, module, inLibrary);
     for (final PsiDirectory dir : dirs) {
       if (!TreeViewUtil.isEmptyMiddlePackage(dir, strictlyEmpty)) {
         return false;
@@ -93,7 +93,17 @@ public class PackageUtil {
     return true;
   }
 
-  public static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
+  @NotNull
+  public static PsiDirectory[] getDirectories(@NotNull PsiPackage aPackage,
+                                              @NotNull Project project,
+                                              @Nullable Module module,
+                                              boolean inLibrary) {
+    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
+    return aPackage.getDirectories(scopeToShow);
+  }
+
+  @NotNull
+  private static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
@@ -220,41 +230,25 @@ public class PackageUtil {
   }
 
   private static class ProjectLibrariesSearchScope extends GlobalSearchScope {
+    private final DirectoryIndex myDirectoryIndex;
+
     public ProjectLibrariesSearchScope(@NotNull Project project) {
       super(project);
-    }
-
-    @NotNull
-    private Module[] getModules() {
-      return ModuleManager.getInstance(getProject()).getModules();
+      myDirectoryIndex = DirectoryIndex.getInstance(project);
     }
 
     @Override
     public boolean contains(VirtualFile file) {
-      final Module[] modules = getModules();
-      for (Module module : modules) {
-        ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        final OrderEntry orderEntryForFile = moduleFileIndex.getOrderEntryForFile(file);
-        if (orderEntryForFile instanceof JdkOrderEntry || orderEntryForFile instanceof LibraryOrderEntry) return true;
-      }
-      return false;
+      VirtualFile dir = file.isDirectory() ? file : file.getParent();
+      if (dir == null) return false;
+
+      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+      return info != null && info.hasLibraryClassRoot();
     }
 
     @Override
     public int compare(VirtualFile file1, VirtualFile file2) {
-      final Module[] modules = getModules();
-      for (Module module : modules) {
-        final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        final OrderEntry orderEntry1 = fileIndex.getOrderEntryForFile(file1);
-        if (orderEntry1 != null) {
-          final OrderEntry orderEntry2 = fileIndex.getOrderEntryForFile(file2);
-          if (orderEntry2 != null) {
-            return orderEntry2.compareTo(orderEntry1);
-          }
-          return 0;
-        }
-      }
-      return 0;
+      throw new IncorrectOperationException("not implemented");
     }
 
     @Override

@@ -38,19 +38,19 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   private final ElementFilter myFilter;
   private final PsiScopeProcessor myProcessor;
 
-  public FilterScopeProcessor(ElementFilter filter, List<T> container) {
+  public FilterScopeProcessor(@NotNull ElementFilter filter, @NotNull List<T> container) {
     this(filter, null, container);
   }
 
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor) {
+  public FilterScopeProcessor(@NotNull ElementFilter filter, @NotNull PsiScopeProcessor processor) {
     this(filter, processor, new SmartList<T>());
   }
 
-  public FilterScopeProcessor(ElementFilter filter) {
+  public FilterScopeProcessor(@NotNull ElementFilter filter) {
     this(filter, null, new SmartList<T>());
   }
 
-  public FilterScopeProcessor(ElementFilter filter, @Nullable PsiScopeProcessor processor, List<T> container) {
+  public FilterScopeProcessor(@NotNull ElementFilter filter, @Nullable PsiScopeProcessor processor, @NotNull List<T> container) {
     myFilter = filter;
     myProcessor = processor;
     myResults = container;

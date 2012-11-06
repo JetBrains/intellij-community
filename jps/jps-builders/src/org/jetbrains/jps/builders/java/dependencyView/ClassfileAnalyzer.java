@@ -280,14 +280,15 @@ class ClassfileAnalyzer {
     final Holder<String> myClassNameHolder = new Holder<String>();
     final Holder<String> myOuterClassName = new Holder<String>();
     final Holder<Boolean> myLocalClassFlag = new Holder<Boolean>();
+    final Holder<Boolean> myAnonymousClassFlag = new Holder<Boolean>();
 
     {
       myLocalClassFlag.set(false);
+      myAnonymousClassFlag.set(false);
     }
 
     private final Set<MethodRepr> myMethods = new HashSet<MethodRepr>();
     private final Set<FieldRepr> myFields = new HashSet<FieldRepr>();
-    private final List<String> myNestedClasses = new ArrayList<String>();
     private final Set<UsageRepr.Usage> myUsages = new HashSet<UsageRepr.Usage>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
@@ -307,10 +308,10 @@ class ClassfileAnalyzer {
     public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
       final ClassRepr repr =
         myTakeIntoAccount ? new ClassRepr(
-          myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces, myNestedClasses,
+          myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
           myFields,
           myMethods, myTargets, myRetentionPolicy, myContext
-          .get(myOuterClassName.get()), myLocalClassFlag.get(), myUsages) : null;
+          .get(myOuterClassName.get()), myLocalClassFlag.get(), myAnonymousClassFlag.get(), myUsages) : null;
 
       if (repr != null) {
         repr.updateClassUsages(myContext, myUsages);
@@ -543,8 +544,11 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      if (outerName != null && outerName.equals(name) && notPrivate(access)) {
-        myNestedClasses.add(innerName);
+      if (outerName != null) {
+        myOuterClassName.set(outerName);
+      }
+      if (innerName == null) {
+        myAnonymousClassFlag.set(true);
       }
     }
 

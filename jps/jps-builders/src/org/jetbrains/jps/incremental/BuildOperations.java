@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
@@ -181,6 +182,31 @@ public class BuildOperations {
     public void fireFileGeneratedEvent() {
       if (!myFileGeneratedEvent.getPaths().isEmpty()) {
         myContext.processMessage(myFileGeneratedEvent);
+      }
+    }
+  }
+
+  public static class ChunkBuildOutputConsumerImpl implements ChunkBuildOutputConsumer {
+    private final CompileContext myContext;
+    private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new HashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
+
+    public ChunkBuildOutputConsumerImpl(CompileContext context) {
+      myContext = context;
+    }
+
+    @Override
+    public void registerOutputFile(BuildTarget<?> target, String outputFilePath, Collection<String> sourceFiles) throws IOException {
+      BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
+      if (consumer == null) {
+        consumer = new BuildOutputConsumerImpl(target, myContext);
+        myTarget2Consumer.put(target, consumer);
+      }
+      consumer.registerOutputFile(outputFilePath, sourceFiles);
+    }
+
+    public void fireFileGeneratedEvents() {
+      for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+        consumer.fireFileGeneratedEvent();
       }
     }
   }
