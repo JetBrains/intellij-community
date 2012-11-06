@@ -70,6 +70,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
 
@@ -1635,28 +1636,35 @@ class RunConfigurable extends BaseConfigurable {
       ConfigurationType oldType = getType(oldNode);
       ConfigurationType newType = getType(newNode);
       if (oldParent == newParent) {
-        if (oldNode.getPreviousSibling() == newNode && position == Position.BELOW) {
+        if (oldNode.getPreviousSibling() == newNode && position == BELOW) {
           return false;
         }
-        if (oldNode.getNextSibling() == newNode && position == Position.ABOVE) {
+        if (oldNode.getNextSibling() == newNode && position == ABOVE) {
           return false;
         }
       }
       if (oldType != newType || newParent == oldNode || oldParent == newNode)
         return false;
       if (oldKind == FOLDER && newKind != FOLDER) {
+        if (newKind.isConfiguration() &&
+            position == ABOVE &&
+            getKind(newParent) == CONFIGURATION_TYPE &&
+            newIndex > 1 &&
+            getKind((DefaultMutableTreeNode)myTree.getPathForRow(newIndex - 1).getParentPath().getLastPathComponent()) == FOLDER) {
+          return true;
+        }
         return false;
       }
       if (!oldKind.supportsDnD() || !newKind.supportsDnD()) {
         return false;
       }
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.ABOVE)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == ABOVE)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.BELOW)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
         return false;
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
         return false;
       if (oldParent == newNode.getParent()) { //Same parent
         if (oldKind.isConfiguration() && newKind.isConfiguration()) {
@@ -1665,7 +1673,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettings oldSettings = getSettings(oldNode);
           return (oldSettings != null && ((DefaultMutableTreeNode)newNode.getParent()).getUserObject() == oldSettings.getType());
         } else if (oldKind == FOLDER) {
-          return true;
+          return !myTree.isExpanded(newIndex) || position == ABOVE;
         }
       }
       return true;
@@ -1684,7 +1692,7 @@ class RunConfigurable extends BaseConfigurable {
       DefaultMutableTreeNode newNode = (DefaultMutableTreeNode)myTree.getPathForRow(newIndex).getLastPathComponent();
       DefaultMutableTreeNode newParent = (DefaultMutableTreeNode)newNode.getParent();
       NodeKind oldKind = getKind(oldNode);
-      NodeKind newKind = getKind(newNode);
+      boolean wasExpanded = myTree.isExpanded(new TreePath(oldNode.getPath()));
       if (isDropInto(myTree, oldIndex, newIndex)) { //Drop in folder
         removeNodeFromParent(oldNode);
         int index = newNode.getChildCount();
@@ -1702,11 +1710,15 @@ class RunConfigurable extends BaseConfigurable {
       else {
         removeNodeFromParent(oldNode);
         int index = newParent.getIndex(newNode);
-        if (position == Position.BELOW)
+        if (position == BELOW)
           index++;
         insertNodeInto(oldNode, newParent, index);
       }
-      myTree.setSelectionPath(new TreePath(oldNode.getPath()));
+      TreePath treePath = new TreePath(oldNode.getPath());
+      myTree.setSelectionPath(treePath);
+      if (wasExpanded) {
+        myTree.expandPath(treePath);
+      }
     }
 
     @Override
