@@ -335,6 +335,11 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     }
   }
 
+  @Override
+  public boolean isStepVisible() {
+    return true;
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myWizardContext.isCreatingNewProject() ? super.getPreferredFocusedComponent() : myModuleName;
   }

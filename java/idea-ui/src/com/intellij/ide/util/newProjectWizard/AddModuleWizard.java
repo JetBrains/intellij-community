@@ -252,19 +252,20 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return null;
   }
 
-  protected final int getNextStep(int step) {
-      ModuleWizardStep nextStep = null;
-      final StepSequence stepSequence = getSequence();
-      if (stepSequence != null) {
-        if (myRootStep == mySteps.get(step)) {
-          return mySteps.indexOf(stepSequence.getFirstStep());
-        }
-        nextStep = stepSequence.getNextStep(mySteps.get(step));
-        while (nextStep != null && !nextStep.isStepVisible()) {
-          nextStep = stepSequence.getNextStep(nextStep);
-        }
+  protected final int getNextStep(final int step) {
+    ModuleWizardStep nextStep = null;
+    final StepSequence stepSequence = getSequence();
+    if (stepSequence != null) {
+      ModuleWizardStep current = mySteps.get(step);
+      if (myRootStep == current) {
+        return mySteps.indexOf(stepSequence.getFirstStep());
       }
-      return nextStep == null ? step : mySteps.indexOf(nextStep);
+      nextStep = stepSequence.getNextStep(current);
+      while (nextStep != null && !nextStep.isStepVisible()) {
+        nextStep = stepSequence.getNextStep(nextStep);
+      }
+    }
+    return nextStep == null ? step : mySteps.indexOf(nextStep);
   }
 
   private StepSequence getSequence() {

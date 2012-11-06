@@ -285,4 +285,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     }
     return null;
   }
+
+  @Override
+  public void setFileToImport(String path) {
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    getParameters().myImportRoot = file == null || file.isDirectory() ? file : file.getParent();
+  }
 }
