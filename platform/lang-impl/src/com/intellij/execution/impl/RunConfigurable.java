@@ -921,9 +921,11 @@ class RunConfigurable extends BaseConfigurable {
 
   private static String createUniqueName(DefaultMutableTreeNode typeNode, @Nullable String baseName) {
     String str = (baseName == null) ? ExecutionBundle.message("run.configuration.unnamed.name.prefix") : baseName;
+    List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
+    collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
     final ArrayList<String> currentNames = new ArrayList<String>();
-    for (int i = 0; i < typeNode.getChildCount(); i++) {
-      final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
+    for (DefaultMutableTreeNode node : configurationNodes) {
+      final Object userObject = node.getUserObject();
       if (userObject instanceof SingleConfigurationConfigurable) {
         currentNames.add(((SingleConfigurationConfigurable)userObject).getNameText());
       }
@@ -959,34 +961,22 @@ class RunConfigurable extends BaseConfigurable {
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       selectedNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      if (getKind(selectedNode) != FOLDER) {
-        selectedNode = null;
-      }
     }
-    for (int i = 0; i < myRoot.getChildCount(); i++) {
-      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
-      if (treeNode.getUserObject() == factory.getType()) {
-        node = treeNode;
-        if (selectedNode != null && selectedNode.getParent() == node) {
-          node = selectedNode;
-        }
-        break;
-      }
-    }
-    if (node == null) {
-      node = new DefaultMutableTreeNode(factory.getType());
-      //final DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode)myRoot.getLastChild();
-      //if (lastChild.getUserObject() instanceof String) {
-      //  int index = myRoot.getIndex(lastChild);
-      //  myRoot.insert(node, Math.max(index - 1, 0));
-      //} else {
-        myRoot.add(node);
-      //}
-
+    DefaultMutableTreeNode typeNode = getConfigurationTypeNode(factory.getType());
+    if (typeNode == null) {
+      typeNode = new DefaultMutableTreeNode(factory.getType());
+      myRoot.add(node);
       sortTopLevelBranches();
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
-    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(node, null), factory);
+    node = typeNode;
+    if (selectedNode != null && typeNode.isNodeDescendant(selectedNode)) {
+      node = selectedNode;
+      if (getKind(node).isConfiguration()) {
+        node = (DefaultMutableTreeNode)node.getParent();
+      }
+    }
+    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(typeNode, null), factory);
     if (factory instanceof ConfigurationFactoryEx) {
       ((ConfigurationFactoryEx)factory).onNewConfigurationCreated(settings.getConfiguration());
     }
