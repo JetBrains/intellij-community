@@ -754,6 +754,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       LocalTaskImpl task = createLocalTask(changeListName);
       task.addChangelist(changeListInfo);
       addTask(task);
+      if (changeList.isDefault()) {
+        activateTask(task, false, false);
+      }
     }
   }
 
