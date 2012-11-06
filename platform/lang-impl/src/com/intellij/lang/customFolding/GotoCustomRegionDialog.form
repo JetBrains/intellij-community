@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="7557d" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane">
+      <scrollpane id="7557d" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane" custom-create="true">
         <constraints border-constraint="Center"/>
         <properties/>
         <border type="none"/>
