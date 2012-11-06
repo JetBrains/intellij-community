@@ -447,7 +447,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // color scheme settings:
     setupEditorFont(editor);
     updateBorder(editor);
-    editor.setBackgroundColor(UIUtil.isUnderDarcula() ? UIUtil.getTextFieldBackground() : getBackgroundColor(!myIsViewer, colorsScheme));
+    editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
   }
 
 
@@ -607,6 +607,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
+    if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && UIUtil.isUnderDarcula()) {
+      return getParent().getBackground();
+    }
     return enabled
            ? colorsScheme.getDefaultBackground()
            : UIUtil.getInactiveTextFieldBackgroundColor();

@@ -169,8 +169,11 @@ public class SvnBusyOnAddTest extends TestCase {
   @Test
   public void testRefusedAddVariant ()throws Exception {
     SVNWCDb db = new SVNWCDb();
-    final File ioFile = new File(myWorkingCopyRoot, filename);
+    final File ioFile = new File(myWorkingCopyRoot, filename + System.currentTimeMillis());
     ioFile.createNewFile();
+
+    System.out.println(getStatus(ioFile));
+
     SVNWCContext context = null;
     try {
       db.open(ISVNWCDb.SVNWCDbOpenMode.ReadWrite, new DefaultSVNOptions(), true, true);
@@ -196,8 +199,7 @@ public class SvnBusyOnAddTest extends TestCase {
       }
       Assert.assertTrue(failed);
 
-      SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
-      readClient.doStatus(ioFile, false);
+      System.out.println(getStatus(ioFile));
     }
     finally {
       if (context != null) {
@@ -206,5 +208,11 @@ public class SvnBusyOnAddTest extends TestCase {
       ioFile.delete();
       db.close();
     }
+  }
+
+  private String getStatus(final File ioFile) throws SVNException {
+    SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+    final SVNStatus status = readClient.doStatus(ioFile, false);
+    return status == null ? null : status.getNodeStatus().toString();
   }
 }

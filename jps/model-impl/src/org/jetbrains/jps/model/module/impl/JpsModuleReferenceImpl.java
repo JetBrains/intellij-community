@@ -32,4 +32,9 @@ public class JpsModuleReferenceImpl extends JpsNamedElementReferenceImpl<JpsModu
     model.registerExternalReference(this);
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "module ref: '" + myElementName + "' in " + getParentReference();
+  }
 }

@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
@@ -52,27 +53,10 @@ public class DarculaEditorTextFieldBorder implements Border {
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
     }
 
-    //g.setColor(new Color(100, 100, 100, 200));
-    //g.drawLine(x1, y1, x1 + width1 - 1, y1);
-    //
-    //g.setColor(new Color(212, 212, 212, 200));
-    //g.drawLine(x1, y1 + 1, x1 + width1 - 1, y1 + 1);
-    //
-    //g.setColor(Gray._225);
-    //g.drawLine(x1 + 1, y1 + height1 - 1, x1 + width1 - 2, y1 + height1 - 1);
-    //
-    //g.setColor(new Color(30, 30, 30, 70));
-    //g.drawLine(x1, y1, x1, y1 + height1 - 1);
-    //g.drawLine(x1 + width1 - 1, y1, x1 + width1 - 1, y1 + height1 - 1);
-    //
-    //g.setColor(new Color(30, 30, 30, 10));
-    //g.drawLine(x1 + 1, y1, x1 + 1, y1 + height1 - 1);
-    //g.drawLine(x1 + width1 - 2, y1, x1 + width1 - 2, y1 + height1 - 1);
-
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
       DarculaUIUtil.paintFocusRing((Graphics2D)g, x1, y1, width1, height1);
     } else {
-      g.setColor(new Color(0x979797));
+      g.setColor(Gray._100);
       g.drawRect(x1, y1, width1, height1);
     }
   }
