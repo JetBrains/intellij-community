@@ -33,6 +33,7 @@ public class RecompileOnConfigurationChangeTest extends BaseCompilerTestCase {
     BuildManager.getInstance().clearState(myProject);//todo[nik] projectOpened isn't called in tests so BuildManager don't receive rootsChanged event
     make(m);
     assertOutput(m, fs().file("A.class"));
-    assertEmpty(oldOutput.listFiles());
+    File[] files = oldOutput.listFiles();
+    assertTrue(files == null || files.length == 0);
   }
 }
