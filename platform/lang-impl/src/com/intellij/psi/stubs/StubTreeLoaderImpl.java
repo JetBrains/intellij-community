@@ -74,7 +74,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Corrupted file '" + vFile.getPath() + "': " + e.getMessage(), e);
     }
 
     return null;
