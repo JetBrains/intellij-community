@@ -2,7 +2,7 @@ PsiJavaFileStub [java.util.concurrent]
   PsiClassStub[enum name=TimeUnit fqn=java.util.concurrent.TimeUnit]
     PsiModifierListStub[mask=17]
     PsiTypeParameterListStub
-    PsiRefListStub[EXTENDS_LIST:java.lang.Enum<java.util.concurrent.TimeUnit>]
+    PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiFieldStub[enumconst NANOSECONDS:java.util.concurrent.TimeUnit]
       PsiModifierListStub[mask=25]

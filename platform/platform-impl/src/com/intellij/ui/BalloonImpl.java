@@ -541,11 +541,20 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     return size;
   }
 
+  private void disposeCloseButton(CloseButton closeButton) {
+    if (closeButton != null && closeButton.getParent() != null) {
+      Container parent = closeButton.getParent();
+      parent.remove(closeButton);
+      ((JComponent)parent).revalidate();
+      parent.repaint();
+    }
+  }
+
   private void createComponent() {
     myComp = new MyComponent(myContent, this, myShowPointer
                                ? myPosition.createBorder(this)
                                : getPointlessBorder());
-
+    myCloseRec = new CloseButton();
 
     myComp.clear();
     myComp.myAlpha = 0f;
@@ -1228,7 +1237,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
       add(myContent);
 
-      myCloseRec = new CloseButton();
+
     }
 
     public Rectangle getContentBounds() {
@@ -1323,16 +1332,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     public void removeNotify() {
       super.removeNotify();
 
-
+      final CloseButton closeButton = myCloseRec;
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myCloseRec != null && myCloseRec.getParent() != null) {
-            Container parent = myCloseRec.getParent();
-            parent.remove(myCloseRec);
-            ((JComponent)parent).revalidate();
-            parent.repaint();
-          }
+          disposeCloseButton(closeButton);
         }
       });
     }

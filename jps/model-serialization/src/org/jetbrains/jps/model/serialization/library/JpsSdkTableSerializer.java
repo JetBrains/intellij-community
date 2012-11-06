@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization.library;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +28,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsSdkTableSerializer {
+  private static final Logger LOG = Logger.getInstance(JpsSdkTableSerializer.class);
+
   private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPE_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("classPath", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("sourcePath", JpsOrderRootType.SOURCES, true)
@@ -76,6 +80,7 @@ public class JpsSdkTableSerializer {
   private static JpsLibrary loadSdk(Element sdkElement) {
     String name = getAttributeValue(sdkElement, NAME_TAG);
     String typeId = getAttributeValue(sdkElement, TYPE_TAG);
+    LOG.debug("Loading " + typeId + " SDK '" + name + "'");
     JpsSdkPropertiesSerializer<?> serializer = getSdkPropertiesSerializer(typeId);
     final JpsLibrary library = createSdk(name, serializer, sdkElement);
     final Element roots = sdkElement.getChild(ROOTS_TAG);
@@ -85,6 +90,16 @@ public class JpsSdkTableSerializer {
         for (Element rootElement : JDOMUtil.getChildren(rootTypeElement)) {
           loadRoots(rootElement, library, rootTypeSerializer.getType());
         }
+      }
+      else {
+        LOG.info("root type serializer not found for " + rootTypeElement.getName());
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      List<File> files = library.getFiles(JpsOrderRootType.COMPILED);
+      LOG.debug(name + " SDK classpath (" + files.size() + " roots):");
+      for (File file : files) {
+        LOG.debug(" " + file.getAbsolutePath());
       }
     }
     return library;

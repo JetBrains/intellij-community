@@ -18,6 +18,8 @@
 #include <pthread.h>
 #include <sys/mount.h>
 
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 static void callback(ConstFSEventStreamRef streamRef,
                      void *clientCallBackInfo,
                      size_t numEvents,
@@ -30,19 +32,24 @@ static void callback(ConstFSEventStreamRef streamRef,
         // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
-            printf("RECDIRTY\n");
-            printf("%s\n", paths[i]);
+            pthread_mutex_lock(&lock);
+            printf("RECDIRTY\n%s\n", paths[i]);
+            fflush(stdout);
+            pthread_mutex_unlock(&lock);
         }
         else if (flags != kFSEventStreamEventFlagNone) {
+            pthread_mutex_lock(&lock);
             printf("RESET\n");
+            fflush(stdout);
+            pthread_mutex_unlock(&lock);
         }
         else {
-            printf("DIRTY\n");
-            printf("%s\n", paths[i]);
+            pthread_mutex_lock(&lock);
+            printf("DIRTY\n%s\n", paths[i]);
+            fflush(stdout);
+            pthread_mutex_unlock(&lock);
         }
     }
-
-    fflush(stdout);
 }
 
 static void * EventProcessingThread(void *data) {
@@ -68,9 +75,6 @@ static void * EventProcessingThread(void *data) {
     return NULL;
 }
 
-// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
-static char command[2048];
-
 #define FS_FLAGS (MNT_LOCAL|MNT_JOURNALED)
 
 static void PrintMountedFileSystems(CFArrayRef roots) {
@@ -81,7 +85,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     fsCount = getfsstat(fs, sizeof(struct statfs) * fsCount, MNT_NOWAIT);
     if (fsCount == -1) return;
 
-    printf("UNWATCHEABLE\n");
+    CFMutableArrayRef mounts = CFArrayCreateMutable(NULL, 0, NULL);
 
     for (int i = 0; i < fsCount; i++) {
         if ((fs[i].f_flags & FS_FLAGS) != FS_FLAGS) {
@@ -95,22 +99,34 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
                 if (rootLen >= mountLen && strncmp(root, mount, mountLen) == 0) {
                     // root under mount point
                     if (rootLen == mountLen || root[mountLen] == '/' || strcmp(mount, "/") == 0) {
-                        printf("%s\n", root);
+                        CFArrayAppendValue(mounts, root);
                     }
                 }
                 else if (strncmp(root, mount, rootLen) == 0) {
                     // root over mount point
                     if (strcmp(root, "/") == 0 || mount[rootLen] == '/') {
-                        printf("%s\n", mount);
+                        CFArrayAppendValue(mounts, mount);
                     }
                 }
             }
         }
     }
 
+    pthread_mutex_lock(&lock);
+    printf("UNWATCHEABLE\n");
+    for (int i = 0; i < CFArrayGetCount(mounts); i++) {
+        char *mount = (char *)CFArrayGetValueAtIndex(mounts, i);
+        printf("%s\n", mount);
+    }
     printf("#\n");
     fflush(stdout);
+    pthread_mutex_unlock(&lock);
+
+    CFRelease(mounts);
 }
+
+// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
+static char command[2048];
 
 static void ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);

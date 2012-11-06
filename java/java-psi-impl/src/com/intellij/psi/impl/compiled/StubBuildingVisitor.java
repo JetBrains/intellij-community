@@ -132,21 +132,35 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
     }
 
-    String[] interfacesArray = ArrayUtil.toStringArray(convertedInterfaces);
     if (isInterface) {
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY,
-                                        PsiReferenceList.Role.IMPLEMENTS_LIST);
-    } else {
-      if (convertedSuper != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper)) {
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{convertedSuper},
-                                          PsiReferenceList.Role.EXTENDS_LIST);
-      } else {
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY, PsiReferenceList.Role.EXTENDS_LIST);
+      if (isAnnotationType) {
+        convertedInterfaces.remove(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
       }
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray,
-                                        PsiReferenceList.Role.IMPLEMENTS_LIST);
+      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.toStringArray(convertedInterfaces));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult);
     }
+    else {
+      if (convertedSuper == null ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper) ||
+          isEnum && (CommonClassNames.JAVA_LANG_ENUM.equals(convertedSuper) ||
+                     (CommonClassNames.JAVA_LANG_ENUM + "<" + fqn + ">").equals(convertedSuper))) {
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult);
+      }
+      else {
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, convertedSuper);
+      }
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.toStringArray(convertedInterfaces));
+    }
+  }
+
+  private static void newReferenceList(JavaClassReferenceListElementType type, StubElement parent, String... types) {
+    PsiReferenceList.Role role;
+    if (type == JavaStubElementTypes.EXTENDS_LIST) role = PsiReferenceList.Role.EXTENDS_LIST;
+    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) role = PsiReferenceList.Role.IMPLEMENTS_LIST;
+    else if (type == JavaStubElementTypes.THROWS_LIST) role = PsiReferenceList.Role.THROWS_LIST;
+    else throw new IllegalArgumentException("Unknown type: " + type);
+
+    new PsiClassReferenceListStubImpl(type, parent, types, role);
   }
 
   @Nullable
@@ -424,7 +438,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
-    new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
+    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes);
 
     final int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : isConstructor && myResult.isEnum() ? 3 : 1;
     final int paramIgnoreCount = isConstructor && myResult.isEnum() ? 2 : isNonStaticInnerClassConstructor ? 1 : 0;

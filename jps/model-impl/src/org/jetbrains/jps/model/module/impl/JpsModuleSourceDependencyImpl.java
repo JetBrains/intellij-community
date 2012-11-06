@@ -21,4 +21,9 @@ public class JpsModuleSourceDependencyImpl extends JpsDependencyElementBase<JpsM
   public JpsModuleSourceDependencyImpl createCopy() {
     return new JpsModuleSourceDependencyImpl(this);
   }
+
+  @Override
+  public String toString() {
+    return "module source dep";
+  }
 }

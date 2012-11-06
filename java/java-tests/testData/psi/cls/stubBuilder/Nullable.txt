@@ -5,7 +5,7 @@ PsiJavaFileStub [org.jetbrains.annotations]
       PsiAnnotationStub[@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)]
       PsiAnnotationStub[@java.lang.annotation.Target({java.lang.annotation.ElementType.METHOD,java.lang.annotation.ElementType.FIELD,java.lang.annotation.ElementType.PARAMETER,java.lang.annotation.ElementType.LOCAL_VARIABLE})]
     PsiTypeParameterListStub
-    PsiRefListStub[EXTENDS_LIST:java.lang.annotation.Annotation]
+    PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiMethodStub[annotation value:java.lang.String default=""]
       PsiModifierListStub[mask=1025]

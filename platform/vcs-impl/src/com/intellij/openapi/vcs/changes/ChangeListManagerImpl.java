@@ -61,6 +61,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -74,7 +75,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
+  private static ScheduledExecutorService ourUpdateAlarm = createExecutor();
+
+  private static ScheduledThreadPoolExecutor createExecutor() {
+    return ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
+  }
 
   private final Modifier myModifier;
 
@@ -1377,6 +1382,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     });
     semaphore.waitFor();
+  }
+
+  public void stopEveryThingIfInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ourUpdateAlarm.shutdownNow();
+    ourUpdateAlarm = createExecutor();
   }
 
   /**

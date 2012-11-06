@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
@@ -60,6 +61,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
@@ -282,9 +284,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (cleanup17copies()) {
-            myConfiguration.setCleanupRun(true);
-          }
+          cleanup17copies();
+          myConfiguration.setCleanupRun(true);
         }
       });
     } else {
@@ -294,33 +295,27 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myWorkingCopiesContent.activate();
   }
 
-  private boolean cleanup17copies() {
-    final boolean[] result = new boolean[1];
-    result[0] = true;
-    final Runnable runnable = new Runnable() {
-      public void run() {
+  private void cleanup17copies() {
+    new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
+      @Override
+      protected void chanceToFillRoots() {
         myCopiesRefreshManager.getCopiesRefresh().synchRequest();
         final List<WCInfo> infos = getAllWcInfos();
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final List<VirtualFile> roots = new ArrayList<VirtualFile>(infos.size());
         for (WCInfo info : infos) {
           if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-            try {
-              createWCClient().doCleanup(new File(info.getPath()));
+            final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+            if (file == null) {
+              LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+            } else {
+              roots.add(file);
             }
-            catch (SVNException e) {
-              LOG.info(e);
-              result[0] = false;          }
           }
         }
+        myRoots = roots.toArray(new VirtualFile[roots.size()]);
       }
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
-        "Cleanup working copies", true, myProject);
-    } else {
-      runnable.run();
-    }
-    return result[0];
+    }.execute();
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {

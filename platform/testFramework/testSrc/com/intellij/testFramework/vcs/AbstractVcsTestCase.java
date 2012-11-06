@@ -190,7 +190,8 @@ public abstract class AbstractVcsTestCase {
     if (myProject != null) {
       ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectClosed();
       ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectClosed();
-      ((ProjectComponent) ProjectLevelVcsManager.getInstance(myProject)).projectClosed();
+      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+      ((ProjectComponent)ProjectLevelVcsManager.getInstance(myProject)).projectClosed();
       myProject = null;
     }
     if (myProjectFixture != null) {

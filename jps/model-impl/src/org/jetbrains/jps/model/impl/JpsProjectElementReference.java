@@ -23,4 +23,9 @@ public class JpsProjectElementReference extends JpsElementReferenceBase<JpsProje
   @Override
   public void applyChanges(@NotNull JpsProjectElementReference modified) {
   }
+
+  @Override
+  public String toString() {
+    return "project ref";
+  }
 }
