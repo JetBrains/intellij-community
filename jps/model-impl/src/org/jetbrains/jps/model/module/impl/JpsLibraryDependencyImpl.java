@@ -39,4 +39,9 @@ public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibrar
   public JpsLibraryDependencyImpl createCopy() {
     return new JpsLibraryDependencyImpl(this);
   }
+
+  @Override
+  public String toString() {
+    return "lib dep [" + getLibraryReference() + "]";
+  }
 }

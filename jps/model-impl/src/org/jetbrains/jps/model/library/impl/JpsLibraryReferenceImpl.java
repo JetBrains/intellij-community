@@ -37,4 +37,9 @@ public class JpsLibraryReferenceImpl extends JpsNamedElementReferenceImpl<JpsLib
     model.registerExternalReference(this);
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "lib ref: '" + myElementName + "' in " + getParentReference();
+  }
 }
