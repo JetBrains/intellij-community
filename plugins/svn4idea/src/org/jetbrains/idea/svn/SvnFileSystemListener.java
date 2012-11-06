@@ -22,6 +22,7 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -196,6 +197,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
 
@@ -243,11 +246,12 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       final boolean is17 = SvnUtil.is17CopyPart(src);
       if (is17) {
         SVNStatus srcStatus = getFileStatus(src);
-        SVNStatus dstStatus = getFileStatus(dst);
+        final File toDir = dst.getParentFile();
+        SVNStatus dstStatus = getFileStatus(toDir);
         if ((srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
           return false;
         }
-        if (for17move(vcs, src, dst, isUndo)) return false;
+        if (for17move(vcs, src, dst, isUndo, srcStatus)) return false;
       } else {
         if (for16move(vcs, src, dst, isUndo)) return false;
       }
@@ -264,7 +268,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return true;
   }
 
-  private boolean for17move(SvnVcs vcs, final File src, final File dst, boolean undo) throws SVNException {
+  private final static Set<SVNStatusType> ourStatusesForUndoMove = new HashSet<SVNStatusType>();
+  static {
+    ourStatusesForUndoMove.add(SVNStatusType.STATUS_ADDED);
+  }
+
+  private boolean for17move(SvnVcs vcs, final File src, final File dst, boolean undo, SVNStatus srcStatus) throws SVNException {
+    if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
+      undo = false;
+    }
     if (undo) {
       myUndoingMove = true;
       final SVNWCClient wcClient = vcs.createWCClient();
@@ -275,7 +287,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         }
       }.execute();
       copyUnversionedMembersOfDirectory(src, dst);
-      final SVNStatus srcStatus = getFileStatus(src);
       if (srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) {
         FileUtil.delete(src);
       } else {
