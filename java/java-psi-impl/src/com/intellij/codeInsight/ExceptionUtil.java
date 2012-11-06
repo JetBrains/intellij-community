@@ -108,7 +108,8 @@ public class ExceptionUtil {
     }
     else if (element instanceof PsiResourceVariable) {
       final PsiResourceVariable variable = (PsiResourceVariable)element;
-      final List<PsiClassType> types = getCloserExceptions(variable);
+      final List<PsiClassType> types = ContainerUtil.newArrayList();
+      addExceptions(types, getCloserExceptions(variable));
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null) addExceptions(types, getThrownExceptions(initializer));
       return types;
@@ -122,13 +123,13 @@ public class ExceptionUtil {
     PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
       for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
-        array.addAll(getUnhandledCloserExceptions(variable, resourceList));
+        addExceptions(array, getUnhandledCloserExceptions(variable, resourceList));
       }
     }
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock != null) {
-      array.addAll(getThrownExceptions(tryBlock));
+      addExceptions(array, getThrownExceptions(tryBlock));
     }
 
     for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
@@ -155,7 +156,7 @@ public class ExceptionUtil {
         int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
         List<PsiClassType> thrownExceptions = getThrownExceptions(finallyBlock);
         if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
-          array = new ArrayList<PsiClassType>(thrownExceptions);
+          array = ContainerUtil.newArrayList(thrownExceptions);
         }
         else {
           addExceptions(array, thrownExceptions);
@@ -285,11 +286,13 @@ public class ExceptionUtil {
 
     if (element instanceof PsiResourceVariable) {
       final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceVariable)element, topElement);
-      if (unhandledExceptions == null) {
-        unhandledExceptions = unhandled;
-      }
-      else {
-        unhandledExceptions.addAll(unhandled);
+      if (!unhandled.isEmpty()) {
+        if (unhandledExceptions == null) {
+          unhandledExceptions = ContainerUtil.newArrayList(unhandled);
+        }
+        else {
+          unhandledExceptions.addAll(unhandled);
+        }
       }
     }
 
