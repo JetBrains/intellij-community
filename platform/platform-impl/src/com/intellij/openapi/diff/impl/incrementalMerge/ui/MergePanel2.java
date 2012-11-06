@@ -446,7 +446,7 @@ public class MergePanel2 implements DiffViewer {
       Document document = getDocument();
       if (document == null) return null;
       Project project = myData.getProject();
-      EditorEx editor = DiffUtil.createEditor(document, null, project, myIndex != 1);
+      EditorEx editor = DiffUtil.createEditor(document, project, myIndex != 1);
 
       if (editor == null) return editor;
       //FileType type = getFileType();
