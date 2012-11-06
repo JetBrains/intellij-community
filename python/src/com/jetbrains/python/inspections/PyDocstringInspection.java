@@ -163,12 +163,12 @@ public class PyDocstringInspection extends PyInspection {
     private static List<Substring> getUnexpectedParams(List<Substring> docstringParams,
                                                        PyParameter[] realParams,
                                                        PyStringLiteralExpression node) {
-      Map<String, Substring> unexpected = Maps.newHashMap(Maps.uniqueIndex(docstringParams, new Function<Substring, String>() {
-        @Override
-        public String apply(Substring input) {
-          return input.getValue();
-        }
-      }));
+      Map<String, Substring> unexpected = Maps.newHashMap();
+
+      for (Substring s : docstringParams) {
+        unexpected.put(s.getValue(), s);
+      }
+
       for (PyParameter p : realParams) {
         if (unexpected.containsKey(p.getName())) {
           unexpected.remove(p.getName());

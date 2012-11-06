@@ -2,6 +2,8 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -16,23 +18,27 @@ public class PySignature {
   private final List<NamedParameter> myArgs = Lists.newArrayList();
   private final Map<String, String> myTypeMap = Maps.newHashMap();
 
-  public PySignature(String file, String name) {
+  public PySignature(@NotNull String file, @NotNull String name) {
     myFile = file;
     myFunctionName = name;
   }
 
+  @Nullable
   public String getArgTypeQualifiedName(String name) {
     return myTypeMap.get(name);
   }
 
+  @NotNull
   public String getFile() {
     return myFile;
   }
 
+  @NotNull
   public String getFunctionName() {
     return myFunctionName;
   }
 
+  @NotNull
   public List<NamedParameter> getArgs() {
     return myArgs;
   }

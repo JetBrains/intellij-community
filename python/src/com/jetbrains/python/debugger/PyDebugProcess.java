@@ -26,7 +26,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.django.util.DjangoUtil;
-import com.jetbrains.plugins.remotesdk.RemoteProcessHandlerBase;
+import com.intellij.remotesdk.RemoteProcessHandlerBase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;

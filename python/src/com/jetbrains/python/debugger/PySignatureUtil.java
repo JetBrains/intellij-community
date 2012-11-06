@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
@@ -29,5 +30,15 @@ public class PySignatureUtil {
     else {
       return type;
     }
+  }
+
+  @Nullable
+  public static String getArgumentType(@NotNull PyFunction function, @NotNull String name) {
+    PySignatureCacheManager cacheManager = PySignatureCacheManager.getInstance(function.getProject());
+    PySignature signature = cacheManager.findSignature(function);
+    if (signature != null) {
+      return getShortestImportableName(function, signature.getArgTypeQualifiedName(name));
+    }
+    return null;
   }
 }

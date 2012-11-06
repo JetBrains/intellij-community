@@ -91,16 +91,20 @@ public class PyDocstringTypesInspection extends PyInspection {
 
       for (String param : docString.getParameters()) {
         Substring type = docString.getParamTypeSubstring(param);
-        String dynamicType = signature.getArgTypeQualifiedName(param);
-        String dynamicTypeShortName = PySignatureUtil.getShortestImportableName(function, dynamicType);
-        if (!match(function, dynamicType, type.getValue())) {
-          registerProblem(node, "Dynamically inferred type '" +
-                                dynamicTypeShortName +
-                                "' doesn't match specified type '" +
-                                type + "'",
-                          ProblemHighlightType.WEAK_WARNING, null, type.getTextRange(),
-                          new ChangeTypeQuickFix(param, type, dynamicTypeShortName, node)
-          );
+        if (type != null) {
+          String dynamicType = signature.getArgTypeQualifiedName(param);
+          if (dynamicType != null) {
+            String dynamicTypeShortName = PySignatureUtil.getShortestImportableName(function, dynamicType);
+            if (!match(function, dynamicType, type.getValue())) {
+              registerProblem(node, "Dynamically inferred type '" +
+                                    dynamicTypeShortName +
+                                    "' doesn't match specified type '" +
+                                    type + "'",
+                              ProblemHighlightType.WEAK_WARNING, null, type.getTextRange(),
+                              new ChangeTypeQuickFix(param, type, dynamicTypeShortName, node)
+              );
+            }
+          }
         }
       }
     }

@@ -60,8 +60,8 @@ public class PyUnionType implements PyType {
   }
 
   /**
-   * @return true if all types in the union are built-in.
    * @param context
+   * @return true if all types in the union are built-in.
    */
   @Override
   public boolean isBuiltin(TypeEvalContext context) {
@@ -125,7 +125,7 @@ public class PyUnionType implements PyType {
     else {
       final Iterator<PyType> it = members.iterator();
       PyType res = unit(it.next());
-      while(it.hasNext()) {
+      while (it.hasNext()) {
         res = union(res, it.next());
       }
       return res;
@@ -159,12 +159,27 @@ public class PyUnionType implements PyType {
     return myMembers;
   }
 
+  /**
+   * Excludes all subtypes of type from the union
+   *
+   * @param type type to exclude. If type is a union all subtypes of union members will be excluded from the union
+   *             If type is null only null will be excluded from the union.
+   * @param context
+   * @return union with excluded types
+   */
   @Nullable
-  public PyType exclude(PyType t, TypeEvalContext context) {
+  public PyType exclude(PyType type, TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
     for (PyType m : getMembers()) {
-      if (!PyTypeChecker.match(t, m, context)) {
-        members.add(m);
+      if (type == null) {
+        if (m != null) {
+          members.add(m);
+        }
+      }
+      else {
+        if (!PyTypeChecker.match(type, m, context)) {
+          members.add(m);
+        }
       }
     }
     return union(members);

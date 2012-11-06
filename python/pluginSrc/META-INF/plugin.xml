@@ -11,7 +11,7 @@
   <depends>com.intellij.modules.java</depends>
   <depends>Coverage</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
-  <depends>org.jetbrains.plugins.python-remote-interpreter</depends>
+  <depends optional="true">org.jetbrains.plugins.python-remote-interpreter</depends>
 
 
   <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>

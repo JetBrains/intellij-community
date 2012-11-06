@@ -35,9 +35,8 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
-import com.jetbrains.plugins.remotesdk.RemoteFile;
-import com.jetbrains.plugins.remotesdk.RemoteInterpreterException;
-import com.jetbrains.plugins.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteFile;
+import com.intellij.remotesdk.RemoteSdkData;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -651,7 +650,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           while (true);
           return processOutput;
         }
-        catch (RemoteInterpreterException e) {
+        catch (ExecutionException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK: " + e.getMessage(), e);
         }
       }

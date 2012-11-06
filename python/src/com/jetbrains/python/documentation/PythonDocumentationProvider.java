@@ -1,9 +1,11 @@
 package com.jetbrains.python.documentation;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -11,20 +13,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
@@ -38,10 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -54,11 +49,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NonNls static final String LINK_TYPE_CLASS = "#class#";
   @NonNls static final String LINK_TYPE_PARENT = "#parent#";
   @NonNls static final String LINK_TYPE_PARAM = "#param#";
+  @NonNls static final String LINK_TYPE_TYPENAME = "#typename#";
 
   @NonNls private static final String RST_PREFIX = ":";
   @NonNls private static final String EPYDOC_PREFIX = "@";
-
-  @NonNls private static final String UNKNOWN = "unknown";
 
   // provides ctrl+hover info
   public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
@@ -126,7 +120,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     cat.addItem(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     if (!PyNames.INIT.equals(name)) {
       cat.addItem(escaper.apply("\nInferred type: "));
-      cat.addItem(escaper.apply(getTypeDescription(fun)));
+      getTypeDescription(fun, cat);
     }
     return cat;
   }
@@ -157,74 +151,43 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
     final TypeEvalContext context = TypeEvalContext.slow();
-    final PyType returnType = fun.getReturnType(context, null);
-    return String.format("(%s) -> %s\n",
-                         StringUtil.join(fun.getParameterList().getParameters(),
-                                         new Function<PyParameter, String>() {
-                                           @Override
-                                           public String fun(PyParameter p) {
-                                             final PyNamedParameter np = p.getAsNamed();
-                                             if (np != null) {
-                                               String name = UNKNOWN;
-                                               final PyType t = np.getType(context);
-                                               if (t != null) {
-                                                 name = getTypeName(t, context);
-                                               }
-                                               return String.format("%s: %s", np.getName(), name);
-                                             }
-                                             return p.toString();
-                                           }
-                                         }, ", "),
-                         returnType != null ? getTypeName(returnType, context) : UNKNOWN);
+    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
+    return builder.build(fun).asString();
+  }
+
+  public static void getTypeDescription(@NotNull PyFunction fun, ChainIterable<String> body) {
+    final TypeEvalContext context = TypeEvalContext.slow();
+    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
+    builder.build(fun).toBodyWithLinks(body, fun);
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
-    return getTypeName(type, context, new HashMap<PyType, String>(), true);
+    PyTypeModelBuilder.TypeModel typeModel = buildTypeModel(type, context);
+    return typeModel.asString();
   }
 
-  private static String getTypeName(@Nullable PyType type,
-                                    @NotNull final TypeEvalContext context,
-                                    @NotNull final Map<PyType, String> visited,
-                                    boolean allowUnions) {
-    final String evaluated = visited.get(type);
-    if (evaluated != null) {
-      return evaluated;
-    }
-    String result = null;
-    final String typeName = type != null ? type.getName() : null;
-    if (type instanceof PyTypeReference) {
-      final PyType resolved = ((PyTypeReference)type).resolve(null, context);
-      if (resolved != null) {
-        result = getTypeName(resolved, context, visited, true);
-      }
-    }
-    else if (type instanceof PyCollectionType) {
-      final String name = type.getName();
-      final PyType elementType = ((PyCollectionType)type).getElementType(context);
-      if (elementType != null) {
-        result = String.format("%s of %s", name, getTypeName(elementType, context, visited, true));
-      }
-    }
-    else if (type instanceof PyUnionType && allowUnions) {
-      result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
-                                                            new Function<PyType, String>() {
-                                                              @Override
-                                                              public String fun(PyType t) {
-                                                                return getTypeName(t, context, visited, false);
-                                                              }
-                                                            }, ", "));
-    }
-    if (result == null) {
-      result = typeName != null ? typeName : UNKNOWN;
-    }
-    visited.put(type, result);
-    return result;
+  private static PyTypeModelBuilder.TypeModel buildTypeModel(PyType type, TypeEvalContext context) {
+    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
+    return builder.build(type, true);
   }
 
-  static ChainIterable<String> describeDecorators(
-    PyDecoratable what, FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
-    String deco_separator, FP.Lambda1<String, String> escaper
-  ) {
+  public static void describeExpressionTypeWithLinks(ChainIterable<String> body,
+                                                     PyReferenceExpression expression,
+                                                     @NotNull TypeEvalContext context) {
+    PyType type = expression.getType(context);
+    describeTypeWithLinks(body, expression, type, context);
+  }
+
+  public static void describeTypeWithLinks(ChainIterable<String> body,
+                                           PsiElement anchor,
+                                           PyType type, TypeEvalContext context) {
+    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
+    builder.build(type, true).toBodyWithLinks(body, anchor);
+  }
+
+
+  static ChainIterable<String> describeDecorators(PyDecoratable what, FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
+                                                  String deco_separator, FP.Lambda1<String, String> escaper) {
     ChainIterable<String> cat = new ChainIterable<String>();
     PyDecoratorList deco_list = what.getDecoratorList();
     if (deco_list != null) {
@@ -243,11 +206,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
    * @param allow_html
    * @param link_own_name if true, add link to class's own name  @return cat for easy chaining
    */
-  static ChainIterable<String> describeClass(
-    PyClass cls,
-    FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
-    boolean allow_html, boolean link_own_name
-  ) {
+  static ChainIterable<String> describeClass(PyClass cls,
+                                             FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
+                                             boolean allow_html,
+                                             boolean link_own_name) {
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = cls.getName();
     cat.addItem("class ");
@@ -285,10 +247,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   //
-  private static Iterable<String> describeDeco(
-    PyDecorator deco,
-    final FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper, //  addWith in tags, if need be
-    final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
+  private static Iterable<String> describeDeco(PyDecorator deco,
+                                               final FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper,
+                                               //  addWith in tags, if need be
+                                               final FP.Lambda1<String, String> arg_wrapper
+                                               // add escaping, if need be
   ) {
     ChainIterable<String> cat = new ChainIterable<String>();
     cat.addItem("@").addWith(name_wrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
@@ -306,12 +269,33 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   // provides ctrl+Q doc
-  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
         originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)) {
       return PydevDocumentationProvider.createDoc(element, originalElement);
     }
-    return new DocumentationBuilder(element, originalElement).build();
+
+    originalElement = findRealOriginalElement(originalElement); //original element can be whitespace or bracket,
+    // but we need identifier that resolves to element
+
+    return new PyDocumentationBuilder(element, originalElement).build();
+  }
+
+  private static PsiElement findRealOriginalElement(@Nullable PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return element;
+    }
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+    if (document == null) {
+      return element;
+    }
+    int newOffset = TargetElementUtilBase.adjustOffset(file, document, element.getTextOffset());
+    PsiElement newElement = file.findElementAt(newOffset);
+    return newElement != null ? newElement : element;
   }
 
   @Override
@@ -330,6 +314,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           final String parent_name = parent.getClassName();
           if (parent_name != null && parent_name.equals(desired_name)) return parent.getPyClass();
         }
+      }
+    }
+    else if (link.startsWith(LINK_TYPE_TYPENAME)) {
+      String typeName = link.substring(LINK_TYPE_TYPENAME.length());
+      PyType type = PyTypeParser.getTypeByName(context, typeName);
+      if (type instanceof PyClassType) {
+        return ((PyClassType)type).getPyClass();
       }
     }
     return null;
