@@ -41,7 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CleanupWorker {
-  private final VirtualFile[] myRoots;
+  protected VirtualFile[] myRoots;
   private final Project myProject;
   private final String myTitleKey;
 
@@ -53,6 +53,9 @@ public class CleanupWorker {
 
   public void execute() {
     ApplicationManager.getApplication().saveAll();
+
+    chanceToFillRoots();
+    if (myRoots.length == 0) return;
 
     final List<Pair<SVNException, VirtualFile>> exceptions = new LinkedList<Pair<SVNException, VirtualFile>>();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
@@ -133,5 +136,8 @@ public class CleanupWorker {
     };
 
     ProgressManager.getInstance().run(task);
+  }
+
+  protected void chanceToFillRoots() {
   }
 }
