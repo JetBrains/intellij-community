@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
@@ -179,9 +178,9 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     }
     if (pyFunction == null || name == null) return;
 
-    PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
+    PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
     if (signature != null) {
-      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), function);
+      docstringGenerator.withParamTypedByQualifiedName(kind, name, signature.getArgTypeQualifiedName(name), pyFunction);
     }
     else {
       docstringGenerator.withParam(kind, name);
