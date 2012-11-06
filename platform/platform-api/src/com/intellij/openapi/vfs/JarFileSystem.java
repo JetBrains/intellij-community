@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem {
+public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem, LocalFileProvider {
   @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
   @NonNls public static final String PROTOCOL_PREFIX = "jar://";
   @NonNls public static final String JAR_SEPARATOR = StandardFileSystems.JAR_SEPARATOR;
@@ -40,5 +40,11 @@ public abstract class JarFileSystem extends NewVirtualFileSystem implements JarC
   @Nullable
   public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
     return StandardFileSystems.getJarRootForLocalFile(virtualFile);
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile) {
+    return getVirtualFileForJar(entryVFile);
   }
 }
