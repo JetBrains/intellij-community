@@ -155,10 +155,10 @@ public class CmdlineProtoUtil {
     if (offset >= 0L) {
       builder.setProblemLocationOffset(offset);
     }
-    if (line > 0L) {
+    if (line >= 0L) {
       builder.setLine(line);
     }
-    if (column > 0L) {
+    if (column >= 0L) {
       builder.setColumn(column);
     }
     if (done >= 0.0f) {
