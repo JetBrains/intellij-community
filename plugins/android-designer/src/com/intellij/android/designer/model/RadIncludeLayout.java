@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,12 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
 
   public void configure(RadComponent rootComponent) throws Exception {
     ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
-    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), IncludeLayoutProperty.TYPES, null, null);
+    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), IncludeLayoutProperty.TYPES, null, null) {
+      @Override
+      protected Action[] createLeftSideActions() {
+        return new Action[0];
+      }
+    };
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

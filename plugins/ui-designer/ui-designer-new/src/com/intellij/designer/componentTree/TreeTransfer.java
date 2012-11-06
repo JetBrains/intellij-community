@@ -27,8 +27,14 @@ import java.io.IOException;
 /**
  * @author Alexander Lobas
  */
-public class TreeTransfer extends TransferHandler implements Transferable {
+public final class TreeTransfer extends TransferHandler implements Transferable {
   private static final DataFlavor DATA_FLAVOR = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
+
+  private Object myData;
+
+  public TreeTransfer(Object data) {
+    myData = data;
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -64,6 +70,6 @@ public class TreeTransfer extends TransferHandler implements Transferable {
 
   @Override
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-    return this;
+    return myData;
   }
 }
