@@ -47,6 +47,7 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   // Only counts modifications done in current IDEA session
+  @Override
   public abstract int getCheapFileSystemModificationCount();
 
   public abstract int getFilesystemModificationCount();
@@ -70,6 +71,7 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   @NotNull
   public abstract VirtualFile[] getLocalRoots();
 
+  @Override
   @Nullable
   public abstract VirtualFile findFileById(int id);
 
