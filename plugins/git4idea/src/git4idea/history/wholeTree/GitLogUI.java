@@ -62,6 +62,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -69,7 +70,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.branch.GitBranchUiUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2566,7 +2566,8 @@ public class GitLogUI implements Disposable {
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
-      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
+      final String name = GitBranchUtil
+        .getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkoutNewBranchStartingFrom(name, reference, Collections.singletonList(repository), myRefresh);

@@ -38,6 +38,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -154,14 +155,14 @@ class GitBranchPopup  {
     if (myRepositoryManager.moreThanOneRoot()) {
       if (myMultiRootBranchConfig.diverged()) {
         currentBranchText += " in " + GitUIUtil.getShortRepositoryName(myCurrentRepository) + ": " +
-                             GitBranchUiUtil.getDisplayableBranchText(myCurrentRepository);
+                             GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
       }
       else {
         currentBranchText += ": " + myMultiRootBranchConfig.getCurrentBranch();
       }
     }
     else {
-      currentBranchText += ": " + GitBranchUiUtil.getDisplayableBranchText(myCurrentRepository);
+      currentBranchText += ": " + GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
     }
     myPopup.setAdText(currentBranchText, SwingConstants.CENTER);
   }
@@ -277,12 +278,12 @@ class GitBranchPopup  {
     @NotNull
     public String getCaption() {
       return "Current branch in " + GitUIUtil.getShortRepositoryName(myRepository) + ": " +
-             GitBranchUiUtil.getDisplayableBranchText(myRepository);
+             GitBranchUtil.getDisplayableBranchText(myRepository);
     }
 
     @NotNull
     public String getBranch() {
-      return GitBranchUiUtil.getBranchNameOrRev(myRepository);
+      return GitBranchUtil.getBranchNameOrRev(myRepository);
     }
   }
 

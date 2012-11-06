@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
@@ -40,8 +41,8 @@ public class GitBranchesAction extends DumbAwareAction {
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     GitRepository repository = (file == null ?
-                                GitBranchUiUtil.getCurrentRepository(project):
-                                repositoryManager.getRepositoryForRoot(GitBranchUiUtil.getVcsRootFor(project,file)));
+                                GitBranchUtil.getCurrentRepository(project):
+                                repositoryManager.getRepositoryForRoot(GitBranchUtil.getVcsRootFor(project, file)));
     if (repository == null) {
       return;
     }
