@@ -128,11 +128,6 @@ public class ArrangementEditIconMatchConditionComponent extends JPanel implement
     }
     return new Rectangle(delegateScreenBounds.x + buttonBounds.x, y, buttonBounds.width, buttonBounds.height);
   }
-  
-  @Override
-  public void setScreenBounds(@Nullable Rectangle bounds) {
-    myDelegate.setScreenBounds(bounds);
-  }
 
   @Override
   public Dimension getMinimumSize() {
@@ -149,18 +144,6 @@ public class ArrangementEditIconMatchConditionComponent extends JPanel implement
     Dimension size = myDelegate.getUiComponent().getPreferredSize();
     Rectangle bounds = myEditButton.getBounds();
     return new Dimension(bounds.x + bounds.width, size.height);
-  }
-  
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    myDelegate.onCanvasWidthChange(width);
-    if (width > myDelegate.getUiComponent().getPreferredSize().width) {
-      myEditButton.setBounds(width - myActiveEditIcon.getIconWidth() - ArrangementConstants.HORIZONTAL_PADDING,
-                             myEditButton.getBounds().y,
-                             myActiveEditIcon.getIconWidth(),
-                             myActiveEditIcon.getIconHeight());
-    }
-    return true;
   }
 
   @Override

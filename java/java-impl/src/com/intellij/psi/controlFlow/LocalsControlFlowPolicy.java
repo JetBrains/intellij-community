@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,28 +30,26 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     if (refExpr.isQualified()) return null;
 
     PsiElement refElement = refExpr.resolve();
-    if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter){
-      return checkCodeFragment(refElement);
-    }
-    else{
-      return null;
-    }
+    return refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter ? checkCodeFragment(refElement) : null;
   }
 
   @Nullable
   private PsiVariable checkCodeFragment(PsiElement refElement) {
-    PsiElement codeFragement = ControlFlowUtil.findCodeFragment(refElement);
+    PsiElement codeFragment = ControlFlowUtil.findCodeFragment(refElement);
     if (refElement instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)refElement).getDeclarationScope();
-      if (declarationScope instanceof PsiMethod){
-        codeFragement = ((PsiMethod)declarationScope).getBody();
-      } else if (declarationScope instanceof PsiLambdaExpression) {
-        codeFragement = ((PsiLambdaExpression)declarationScope).getBody();
+      if (declarationScope instanceof PsiMethod) {
+        codeFragment = ((PsiMethod)declarationScope).getBody();
+      }
+      else if (declarationScope instanceof PsiLambdaExpression) {
+        codeFragment = ((PsiLambdaExpression)declarationScope).getBody();
       }
     }
-    if (codeFragement == null) return null;
-    if (myCodeFragment.getContainingFile() == codeFragement.getContainingFile() && //In order for jsp includes to work
-        !myCodeFragment.equals(codeFragement)) return null;
+    if (codeFragment == null) return null;
+    if (myCodeFragment.getContainingFile() == codeFragment.getContainingFile() &&  // in order for jsp includes to work
+        !myCodeFragment.equals(codeFragment)) {
+      return null;
+    }
     return (PsiVariable)refElement;
   }
 

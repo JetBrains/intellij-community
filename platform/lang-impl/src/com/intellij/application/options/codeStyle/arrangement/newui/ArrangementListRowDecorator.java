@@ -109,17 +109,6 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   }
 
   @Override
-  public void setScreenBounds(@Nullable Rectangle bounds) {
-    // TODO den implement 
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    // TODO den implement 
-    return false;
-  }
-
-  @Override
   public void setSelected(boolean selected) {
     myDelegate.setSelected(selected); 
   }

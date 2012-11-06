@@ -19,6 +19,7 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -26,7 +27,7 @@ import com.intellij.psi.PsiElement;
 public class FileDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
     return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateFileInfo());
   }

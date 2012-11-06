@@ -45,19 +45,6 @@ public interface ArrangementMatchConditionComponent {
    */
   @Nullable
   Rectangle getScreenBounds();
-  
-  void setScreenBounds(@Nullable Rectangle bounds);
-
-  /**
-   * Notifies current component that canvas (container where current component is painted) width has been changed.
-   * <p/>
-   * The intended usage is to allow component to draw something up to/at the right edge.
-   * 
-   * @param width  new canvas width
-   * @return       <code>true</code> if current component's representation has been changed;
-   *               <code>false</code> otherwise
-   */
-  boolean onCanvasWidthChange(int width);
 
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.

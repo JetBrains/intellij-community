@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
 import com.intellij.util.EventDispatcher;
 
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class DelayedNotificator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
   private final EventDispatcher<ChangeListListener> myDispatcher;
   // this is THE SAME service as is used for change list manager update (i.e. one thread for both processes)
   private final ScheduledExecutorService myService;
@@ -36,7 +38,12 @@ public class DelayedNotificator {
   public void callNotify(final ChangeListCommand command) {
     myService.execute(new Runnable() {
       public void run() {
-        command.doNotify(myDispatcher);
+        try {
+          command.doNotify(myDispatcher);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     });
   }

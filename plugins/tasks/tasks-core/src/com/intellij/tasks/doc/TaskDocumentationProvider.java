@@ -23,6 +23,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.petebevin.markdown.MarkdownProcessor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (!(element instanceof TaskPsiElement)) return null;
     final Task task = ((TaskPsiElement)element).getTask();
     final StringBuilder builder = new StringBuilder("<html>");

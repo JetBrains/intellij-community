@@ -216,6 +216,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
   @Override
   public void buildStarted(final CompileContext context) {
+    //todo[nik] move to common place
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
@@ -223,8 +224,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (Pair<String, String> pair : paths) {
           File file = new File(pair.getFirst(), pair.getSecond());
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             try {
               fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage(), false);
             }
@@ -240,8 +241,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (String path : paths) {
           File file = new File(FileUtil.toSystemDependentName(path));
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             state.registerDeleted(descriptor.getTarget(), file);
           }
         }

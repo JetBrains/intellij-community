@@ -130,4 +130,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
     doTest();
   }
 
+  public void testConstantDoubleComparisons() { doTest(); }
+
 }

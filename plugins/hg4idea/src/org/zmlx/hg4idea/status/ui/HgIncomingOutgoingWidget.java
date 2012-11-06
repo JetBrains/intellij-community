@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -42,7 +43,7 @@ import java.awt.event.MouseEvent;
  * @author Nadya Zabrodina
  */
 public class HgIncomingOutgoingWidget extends EditorBasedWidget
-  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgAdditionalWidget {
+  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgHideableWidget {
 
   @NotNull private final HgVcs myVcs;
   @NotNull final Project myProject;
@@ -66,6 +67,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     myProjectSettings = projectSettings;
     myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
     isAlreadyShown = false;
+    Disposer.register(project, this);
   }
 
   @Override
@@ -146,7 +148,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void activate() {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    myBusConnection.subscribe(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC, this);
+    myBusConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {

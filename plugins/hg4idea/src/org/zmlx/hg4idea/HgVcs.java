@@ -54,7 +54,7 @@ import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgAdditionalWidget;
+import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
@@ -69,8 +69,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
-  public static final Topic<HgAdditionalWidget> INCOMINGOUTGOING_CHECK_TOPIC =
-    new Topic<HgAdditionalWidget>("hg4idea.icomingcheck", HgAdditionalWidget.class);
+  public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
+    new Topic<HgHideableWidget>("hg4idea.incomingcheck", HgHideableWidget.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";

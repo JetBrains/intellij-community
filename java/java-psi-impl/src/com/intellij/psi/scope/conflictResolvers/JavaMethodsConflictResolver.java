@@ -649,9 +649,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public static void checkPrimitiveVarargs(final List<CandidateInfo> conflicts,
-                                           final int argumentsCount) {
-    PsiMethod objectVararg = null;
+  public void checkPrimitiveVarargs(final List<CandidateInfo> conflicts,
+                                    final int argumentsCount) {
+    if (JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7)) return;
+    CandidateInfo objectVararg = null;
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = (PsiMethod)conflict.getElement();
       final int parametersCount = method.getParameterList().getParametersCount();
@@ -660,21 +661,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiType componentType = ((PsiArrayType)type).getComponentType();
         final PsiClassType classType = PsiType.getJavaLangObject(method.getManager(), GlobalSearchScope.allScope(method.getProject()));
         if (Comparing.equal(componentType, classType)) {
-          objectVararg = method;
+          objectVararg = conflict;
         }
       }
     }
 
     if (objectVararg != null) {
-      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
-        CandidateInfo conflict = iterator.next();
+      for (CandidateInfo conflict : conflicts) {
         PsiMethod method = (PsiMethod)conflict.getElement();
         if (method != objectVararg && method != null && method.isVarArgs()) {
           final int paramsCount = method.getParameterList().getParametersCount();
           final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();
           if (argumentsCount == paramsCount - 1 && componentType instanceof PsiPrimitiveType) {
-            iterator.remove();
+            conflicts.remove(objectVararg);
+            break;
           }
         }
       }

@@ -163,6 +163,9 @@ public class PsiScopesUtil {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
+          if (type != null) {
+            assert type.isValid() : type.getClass() + "; " + qualifier;
+          }
           processTypeDeclarations(type, ref, processor);
         }
 

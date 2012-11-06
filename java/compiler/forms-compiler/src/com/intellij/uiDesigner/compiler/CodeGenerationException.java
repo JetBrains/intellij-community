@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-public class CodeGenerationException extends Exception{
+public class CodeGenerationException extends UIDesignerException {
   private final String myComponentId;
 
   public CodeGenerationException(final String componentId, final String message) {

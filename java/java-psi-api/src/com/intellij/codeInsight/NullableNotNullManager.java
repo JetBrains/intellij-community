@@ -47,7 +47,10 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, "javax.annotation.Nullable", "edu.umd.cs.findbugs.annotations.Nullable"};
   public static final String[] DEFAULT_NOT_NULLS = {AnnotationUtil.NOT_NULL, "javax.annotation.Nonnull",  "edu.umd.cs.findbugs.annotations.NonNull"};
 
-  private static final Object LOCK = new Object();
+  public NullableNotNullManager() {
+    Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
+    Collections.addAll(myNullables, DEFAULT_NULLABLES);
+  }
 
   public static NullableNotNullManager getInstance(Project project) {
     return ServiceManager.getService(project, NullableNotNullManager.class);
@@ -123,24 +126,10 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
 
   public List<String> getNullables() {
-    if (myNullables.isEmpty()) {
-      synchronized (LOCK) {
-        if (myNullables.isEmpty()) {
-          Collections.addAll(myNullables, DEFAULT_NULLABLES);
-        }
-      }
-    }
     return myNullables;
   }
 
   public List<String> getNotNulls() {
-    if (myNotNulls.isEmpty()) {
-      synchronized (LOCK) {
-        if (myNotNulls.isEmpty()) {
-          Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
-        }
-      }
-    }
     return myNotNulls;
   }
 
@@ -186,6 +175,12 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public void loadState(Element state) {
     try {
       DefaultJDOMExternalizer.readExternal(this, state);
+      if (myNullables.isEmpty()) {
+        Collections.addAll(myNullables, DEFAULT_NULLABLES);
+      }
+      if (myNotNulls.isEmpty()) {
+        Collections.addAll(myNotNulls, DEFAULT_NOT_NULLS);
+      }
     }
     catch (InvalidDataException e) {
       LOG.error(e);

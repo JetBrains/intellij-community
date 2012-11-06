@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-public final class AlienFormFileException extends Exception{
+public final class AlienFormFileException extends UIDesignerException{
   public AlienFormFileException(){
     super("Not IntelliJ IDEA GUI Designer form file");
   }

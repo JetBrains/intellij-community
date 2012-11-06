@@ -219,10 +219,6 @@ public class IdeaApplication {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initLAF() {
-    if (SystemInfo.isMac) {
-      UIManager.put("Panel.opaque", Boolean.TRUE);
-    }
-
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
 

@@ -44,21 +44,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
 
   public static final int VERTICAL_PADDING = 4;
 
-  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
-    @Override
-    public void paint(Graphics g) {
-      Point point = ArrangementConfigUtil.getLocationOnScreen(this);
-      if (point != null) {
-        Rectangle bounds = myRenderer.getBounds();
-        myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
-      }
-      if (!myEnabled && g instanceof Graphics2D) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-      }
-      super.paint(g);
-    }
-  };
-
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
     @Override
@@ -75,16 +60,22 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     public Dimension getPreferredSize() {
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
     }
+
+    @Override
+    public String toString() {
+      return "text component for " + myText;
+    }
   };
 
   @NotNull private final String                        myText;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
   @NotNull private final RoundedLineBorder             myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;
+  @NotNull private final ArrangementAnimationPanel     myAnimationPanel;
 
-  @Nullable private final ActionButton                            myCloseButton;
-  @Nullable private final Rectangle                               myCloseButtonBounds;
-  @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
+  @Nullable private final ActionButton                                     myCloseButton;
+  @Nullable private final Rectangle                                        myCloseButtonBounds;
+  @Nullable private final Consumer<ArrangementAtomMatchConditionComponent> myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
@@ -97,7 +88,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementNodeDisplayManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
                                                 @NotNull ArrangementAtomMatchCondition condition,
-                                                @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
+                                                @Nullable Consumer<ArrangementAtomMatchConditionComponent> closeCallback)
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
@@ -126,7 +117,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
 
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(0, 0, 0, 0);
 
-    JPanel insetsPanel = new JPanel(new GridBagLayout());
+    JPanel insetsPanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public String toString() {
+        return "insets panel for " + myText;
+      }
+    };
     insetsPanel.add(myTextControl, constraints);
     insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
     insetsPanel.setOpaque(false);
@@ -146,8 +142,13 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
         super.paint(g);
       }
+
+      @Override
+      public String toString() {
+        return "round border panel for " + myText;
+      }
     };
-    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST));
+    roundBorderPanel.add(insetsPanel, new GridBag().anchor(GridBagConstraints.WEST));
     if (myCloseButton != null) {
       roundBorderPanel.add(new InsetsPanel(myCloseButton), new GridBag().anchor(GridBagConstraints.EAST));
     }
@@ -155,8 +156,22 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myRenderer.add(roundBorderPanel, constraints);
-    myRenderer.setOpaque(false);
+    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel) {
+      @Override
+      public void paint(Graphics g) {
+        Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+        if (point != null) {
+          Rectangle bounds = myAnimationPanel.getBounds();
+          myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+        }
+        if (!myEnabled && g instanceof Graphics2D) {
+          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        }
+        super.paint(g);
+      }
+    };
+    myAnimationPanel.setOpaque(false);
+    
     setSelected(false);
     if (myCloseButton != null) {
       myCloseButton.setVisible(false);
@@ -172,23 +187,13 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @NotNull
   @Override
   public JComponent getUiComponent() {
-    return myRenderer;
+    return myAnimationPanel;
   }
 
   @Nullable
   @Override
   public Rectangle getScreenBounds() {
     return myScreenBounds;
-  }
-
-  @Override
-  public void setScreenBounds(@Nullable Rectangle screenBounds) {
-    myScreenBounds = screenBounds;
-  }
-
-  @Override
-  public boolean onCanvasWidthChange(int width) {
-    return false;
   }
 
   /**
@@ -237,7 +242,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   public void onMouseClick(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
-      myCloseCallback.consume(getMatchCondition());
+      myCloseCallback.consume(this);
     }
   }
 
@@ -266,10 +271,15 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       return null;
     }
 
-    Rectangle buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), myCloseButtonBounds, myRenderer);
+    Rectangle buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), myCloseButtonBounds, myAnimationPanel);
     buttonBounds.x += myScreenBounds.x;
     buttonBounds.y += myScreenBounds.y;
     return buttonBounds;
+  }
+
+  @NotNull
+  public ArrangementAnimationPanel getAnimationPanel() {
+    return myAnimationPanel;
   }
 
   @Override

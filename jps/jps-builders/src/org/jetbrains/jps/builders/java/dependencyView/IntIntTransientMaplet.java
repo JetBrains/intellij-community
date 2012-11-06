@@ -19,11 +19,8 @@ import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 05.11.11
- * Time: 0:00
- * To change this template use File | Settings | File Templates.
  */
 public class IntIntTransientMaplet extends IntIntMaplet {
   private final TIntIntHashMap myMap = new TIntIntHashMap();

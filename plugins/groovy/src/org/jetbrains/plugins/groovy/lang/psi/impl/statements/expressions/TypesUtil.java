@@ -384,7 +384,7 @@ public class TypesUtil {
     return Boolean.TRUE;
   }
 
-  public static boolean isNumericType(PsiType type) {
+  public static boolean isNumericType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       return TYPE_TO_RANK.contains(type.getCanonicalText());
     }

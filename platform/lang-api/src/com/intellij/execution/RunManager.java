@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -62,17 +63,8 @@ public abstract class RunManager {
   @NotNull
   public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
 
-  public abstract void refreshUsagesList(RunProfile profile);
-
   @NotNull
-  public abstract List<String> getFolders(@NotNull ConfigurationType type);
+  public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
-  public abstract boolean createFolder(@NotNull ConfigurationType type, @NotNull String name);
-
-  public abstract boolean renameFolder(@NotNull ConfigurationType type,
-                                       @NotNull String oldName,
-                                       @NotNull String newName);
-
-  public abstract boolean removeFolder(@NotNull ConfigurationType type, @NotNull String name);
-
+  public abstract void refreshUsagesList(RunProfile profile);
 }

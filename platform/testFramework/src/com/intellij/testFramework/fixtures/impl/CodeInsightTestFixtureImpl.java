@@ -1168,6 +1168,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
+      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
+        if (myAvailableTools.containsKey(id)) {
+          return myAvailableTools.get(id);
+        }
+
+        return super.getToolById(id, element);
+      }
+
+      @Override
       public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
         List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
@@ -1569,9 +1578,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker selEndMarker;
     final boolean blockSelection;
 
-    static SelectionAndCaretMarkupLoader fromFile(String path, Project project) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path))),
-                                               project);
+    static SelectionAndCaretMarkupLoader fromFile(String path, Project project, String charset) throws IOException {
+      return new SelectionAndCaretMarkupLoader(
+        StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), project);
     }
 
     static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) {
@@ -1645,8 +1654,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String newText = myFile == originalFile ? fileText.substring(0, caret) + "<caret>" + fileText.substring(caret) : fileText;
     VfsUtil.saveText(result, newText);*/
 
-    checkResult(expectedFile, stripTrailingSpaces,
-                SelectionAndCaretMarkupLoader.fromFile(path, getProject()), fileText);
+    VirtualFile virtualFile = originalFile.getVirtualFile();
+    String charset = virtualFile == null? null : virtualFile.getCharset().name();
+    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, getProject(), charset), fileText);
 
   }
 

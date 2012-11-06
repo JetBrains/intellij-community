@@ -136,9 +136,15 @@ public class ChangesUtil {
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        final VirtualFile file = afterRevision.getFile().getVirtualFile();
+        VirtualFile file = afterRevision.getFile().getVirtualFile();
         if (file != null && file.isValid()) {
           files.add(file);
+        } else {
+          afterRevision.getFile().hardRefresh();
+          file = afterRevision.getFile().getVirtualFile();
+          if (file != null && file.isValid()) {
+            files.add(file);
+          }
         }
       }
     }

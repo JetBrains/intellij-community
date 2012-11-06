@@ -172,17 +172,12 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
     if (value == null) return true;
-    if (element instanceof PackageElement) {
-      final PackageElement packageElement = (PackageElement)element;
-      final PsiPackage otherPackage = packageElement.getPackage();
-      final PsiPackage aPackage = value.getPackage();
-      if (otherPackage != null && aPackage != null && Comparing.equal(otherPackage.getQualifiedName(), aPackage.getQualifiedName())) {
-        return true;
-      }
+    if (element instanceof PackageElement &&
+        Comparing.equal(((PackageElement)element).getPackage().getQualifiedName(), value.getPackage().getQualifiedName())) {
+      return true;
     }
     if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
-      return Arrays.asList(getValue().getPackage().getDirectories()).contains(directory);
+      return Arrays.asList(getValue().getPackage().getDirectories()).contains(element);
     }
     return false;
   }

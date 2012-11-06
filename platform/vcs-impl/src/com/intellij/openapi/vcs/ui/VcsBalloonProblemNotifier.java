@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,31 +131,36 @@ public class VcsBalloonProblemNotifier implements Runnable {
   }
 
   public static void showBalloonForActiveComponent(@NotNull final String message, final MessageType type) {
-    Window[] windows = Window.getWindows();
-    Window targetWindow = null;
-    for (Window each : windows) {
-      if (each.isActive()) {
-        targetWindow = each;
-        break;
-      }
-    }
+    Runnable runnable = new Runnable() {
+      public void run() {
+        Window[] windows = Window.getWindows();
+        Window targetWindow = null;
+        for (Window each : windows) {
+          if (each.isActive()) {
+            targetWindow = each;
+            break;
+          }
+        }
 
-    if (targetWindow == null) {
-      targetWindow = JOptionPane.getRootFrame();
-    }
+        if (targetWindow == null) {
+          targetWindow = JOptionPane.getRootFrame();
+        }
 
-    if (targetWindow == null) {
-      final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-      if (frame == null) {
-        final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        showOverChangesView(projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0],
-                            message, type);
-        return;
+        if (targetWindow == null) {
+          final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+          if (frame == null) {
+            final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+            showOverChangesView(projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0],
+                                message, type);
+            return;
+          }
+          showBalloonForComponent(frame.getComponent(), message, type, true);
+        } else {
+          showBalloonForComponent(targetWindow, message, type, true);
+        }
       }
-      showBalloonForComponent(frame.getComponent(), message, type, true);
-    } else {
-      showBalloonForComponent(targetWindow, message, type, true);
-    }
+    };
+    UIUtil.invokeLaterIfNeeded(runnable);
   }
 
   public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,

@@ -11,10 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.FormErrorInfo;
-import com.intellij.uiDesigner.compiler.NestedFormLoader;
+import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -42,6 +39,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -969,11 +967,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;
       try {
-        rootContainer = com.intellij.uiDesigner.compiler.Utils
-          .getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = com.intellij.uiDesigner.compiler.Utils.getRootContainer(
+          formFile.toURI().toURL(), new CompiledClassPropertiesProvider( finder.getLoader())
+        );
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms
+        continue;
+      }
+      catch (UnexpectedFormElementException e) {
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
+        LOG.info(e);
+        continue;
+      }
+      catch (UIDesignerException e) {
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
+        LOG.info(e);
         continue;
       }
       catch (Exception e) {
@@ -987,8 +996,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       final OutputFileObject outputClassFile = findClassFile(compiledClassNames, classToBind);
       if (outputClassFile == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind,
-                                                   formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(
+          BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath())
+        );
         continue;
       }
 
@@ -1022,7 +1032,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
         for (final FormErrorInfo warning : warnings) {
           context.processMessage(
-            new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
+            new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath())
+          );
         }
 
         final FormErrorInfo[] errors = codeGenerator.getErrors();
@@ -1113,12 +1124,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!StringUtil.isEmpty(line)) {
         if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+          myErrorCount++;
         }
         else {
-          final BuildMessage.Kind kind = line.toLowerCase(Locale.US).contains("error")? BuildMessage.Kind.ERROR : BuildMessage.Kind.INFO;
+          final BuildMessage.Kind kind = getKindByMessageText(line);
+          if (kind == BuildMessage.Kind.ERROR) {
+            myErrorCount++;
+          }
+          else if (kind == BuildMessage.Kind.WARNING) {
+            myWarningCount++;
+          }
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
         }
       }
+    }
+
+    private BuildMessage.Kind getKindByMessageText(String line) {
+      final String lowercasedLine = line.toLowerCase(Locale.US);
+      if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
+        return BuildMessage.Kind.ERROR;
+      }
+      return BuildMessage.Kind.INFO;
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {

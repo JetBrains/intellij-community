@@ -13,6 +13,7 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
@@ -48,9 +49,12 @@ public class BuildFSState extends FSState {
 
   @Override
   public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget<?> target) {
-    final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
-    if (lastRoundDelta != null) {
-      return lastRoundDelta.getSourcesToRecompile();
+    if (target instanceof ModuleBuildTarget) {
+      // multiple compilation rounds are applicable to ModuleBuildTarget only
+      final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
+      if (lastRoundDelta != null) {
+        return lastRoundDelta.getSourcesToRecompile();
+      }
     }
     return super.getSourcesToRecompile(context, target);
   }

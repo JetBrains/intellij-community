@@ -233,7 +233,7 @@ public class MoveFilesOrDirectoriesUtil {
   }
 
   @Nullable
-  private static PsiDirectory getInitialTargetDirectory(PsiDirectory initialTargetElement, final PsiElement[] movedElements) {
+  public static PsiDirectory getInitialTargetDirectory(PsiDirectory initialTargetElement, final PsiElement[] movedElements) {
     PsiDirectory initialTargetDirectory = initialTargetElement;
     if (initialTargetDirectory == null) {
       if (movedElements != null) {

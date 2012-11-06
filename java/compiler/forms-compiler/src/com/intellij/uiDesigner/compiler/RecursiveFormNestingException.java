@@ -19,7 +19,7 @@ package com.intellij.uiDesigner.compiler;
 /**
  * @author yole
  */
-public class RecursiveFormNestingException extends Exception {
+public class RecursiveFormNestingException extends UIDesignerException{
   public RecursiveFormNestingException() {
     super("Recursive form nesting is not allowed");
   }

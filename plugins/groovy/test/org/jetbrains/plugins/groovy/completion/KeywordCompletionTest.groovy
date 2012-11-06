@@ -95,6 +95,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testAssertInClosure()     { doTest() }
   void testAfterLabel()          { doTest() }
   void testKeywordsInParentheses() { doTest() }
+  void testCompletionInTupleVar(){ doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 

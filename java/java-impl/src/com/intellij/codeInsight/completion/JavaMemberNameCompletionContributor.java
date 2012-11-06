@@ -379,7 +379,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
           assert field.isValid() : "invalid field: " + field;
           PsiType fieldType = field.getType();
-          assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType;
+          assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType + " of " + fieldType.getClass();
 
           final PsiModifierList modifierList = field.getModifierList();
           if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;

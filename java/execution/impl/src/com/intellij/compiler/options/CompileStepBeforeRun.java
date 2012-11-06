@@ -49,6 +49,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
   private static final Key<String> RUN_CONFIGURATION_TYPE_ID = Key.create("RUN_CONFIGURATION_TYPE_ID");
+  private static final Key<String> RUNNER_ID = Key.create("RUNNER_ID");
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -97,7 +98,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return true;
   }
 
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, ExecutionEnvironment env, MakeBeforeRunTask task) {
+  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeBeforeRunTask task) {
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
@@ -148,6 +149,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           if (!myProject.isDisposed()) {
             scope.putUserData(RUN_CONFIGURATION, configuration);
             scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
+            scope.putUserData(RUNNER_ID, env.getRunnerId());
             compilerManager.make(scope, callback);
           }
           else {

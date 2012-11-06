@@ -139,8 +139,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
-
-        if (((LocalChangeList)oldDefaultList).hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
+        if (oldDefaultList == null || ((LocalChangeList)oldDefaultList).hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             oldDefaultList.getChanges().isEmpty() &&

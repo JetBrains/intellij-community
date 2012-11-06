@@ -5149,6 +5149,10 @@ public final class CmdlineRemoteProto {
             getGeneratedFilesList();
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile getGeneratedFiles(int index);
         int getGeneratedFilesCount();
+        
+        // optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;
+        boolean hasCustomBuilderMessage();
+        org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage();
       }
       public static final class BuildEvent extends
           com.google.protobuf.GeneratedMessageLite
@@ -5172,10 +5176,12 @@ public final class CmdlineRemoteProto {
             implements com.google.protobuf.Internal.EnumLite {
           BUILD_COMPLETED(0, 1),
           FILES_GENERATED(1, 2),
+          CUSTOM_BUILDER_MESSAGE(2, 3),
           ;
           
           public static final int BUILD_COMPLETED_VALUE = 1;
           public static final int FILES_GENERATED_VALUE = 2;
+          public static final int CUSTOM_BUILDER_MESSAGE_VALUE = 3;
           
           
           public final int getNumber() { return value; }
@@ -5184,6 +5190,7 @@ public final class CmdlineRemoteProto {
             switch (value) {
               case 1: return BUILD_COMPLETED;
               case 2: return FILES_GENERATED;
+              case 3: return CUSTOM_BUILDER_MESSAGE;
               default: return null;
             }
           }
@@ -5686,6 +5693,538 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile)
         }
         
+        public interface CustomBuilderMessageOrBuilder
+            extends com.google.protobuf.MessageLiteOrBuilder {
+          
+          // required string builder_id = 1;
+          boolean hasBuilderId();
+          String getBuilderId();
+          
+          // required string message_type = 2;
+          boolean hasMessageType();
+          String getMessageType();
+          
+          // required string message_text = 3;
+          boolean hasMessageText();
+          String getMessageText();
+        }
+        public static final class CustomBuilderMessage extends
+            com.google.protobuf.GeneratedMessageLite
+            implements CustomBuilderMessageOrBuilder {
+          // Use CustomBuilderMessage.newBuilder() to construct.
+          private CustomBuilderMessage(Builder builder) {
+            super(builder);
+          }
+          private CustomBuilderMessage(boolean noInit) {}
+          
+          private static final CustomBuilderMessage defaultInstance;
+          public static CustomBuilderMessage getDefaultInstance() {
+            return defaultInstance;
+          }
+          
+          public CustomBuilderMessage getDefaultInstanceForType() {
+            return defaultInstance;
+          }
+          
+          private int bitField0_;
+          // required string builder_id = 1;
+          public static final int BUILDER_ID_FIELD_NUMBER = 1;
+          private java.lang.Object builderId_;
+          public boolean hasBuilderId() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+          }
+          public String getBuilderId() {
+            java.lang.Object ref = builderId_;
+            if (ref instanceof String) {
+              return (String) ref;
+            } else {
+              com.google.protobuf.ByteString bs = 
+                  (com.google.protobuf.ByteString) ref;
+              String s = bs.toStringUtf8();
+              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+                builderId_ = s;
+              }
+              return s;
+            }
+          }
+          private com.google.protobuf.ByteString getBuilderIdBytes() {
+            java.lang.Object ref = builderId_;
+            if (ref instanceof String) {
+              com.google.protobuf.ByteString b = 
+                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+              builderId_ = b;
+              return b;
+            } else {
+              return (com.google.protobuf.ByteString) ref;
+            }
+          }
+          
+          // required string message_type = 2;
+          public static final int MESSAGE_TYPE_FIELD_NUMBER = 2;
+          private java.lang.Object messageType_;
+          public boolean hasMessageType() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+          }
+          public String getMessageType() {
+            java.lang.Object ref = messageType_;
+            if (ref instanceof String) {
+              return (String) ref;
+            } else {
+              com.google.protobuf.ByteString bs = 
+                  (com.google.protobuf.ByteString) ref;
+              String s = bs.toStringUtf8();
+              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+                messageType_ = s;
+              }
+              return s;
+            }
+          }
+          private com.google.protobuf.ByteString getMessageTypeBytes() {
+            java.lang.Object ref = messageType_;
+            if (ref instanceof String) {
+              com.google.protobuf.ByteString b = 
+                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+              messageType_ = b;
+              return b;
+            } else {
+              return (com.google.protobuf.ByteString) ref;
+            }
+          }
+          
+          // required string message_text = 3;
+          public static final int MESSAGE_TEXT_FIELD_NUMBER = 3;
+          private java.lang.Object messageText_;
+          public boolean hasMessageText() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+          }
+          public String getMessageText() {
+            java.lang.Object ref = messageText_;
+            if (ref instanceof String) {
+              return (String) ref;
+            } else {
+              com.google.protobuf.ByteString bs = 
+                  (com.google.protobuf.ByteString) ref;
+              String s = bs.toStringUtf8();
+              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+                messageText_ = s;
+              }
+              return s;
+            }
+          }
+          private com.google.protobuf.ByteString getMessageTextBytes() {
+            java.lang.Object ref = messageText_;
+            if (ref instanceof String) {
+              com.google.protobuf.ByteString b = 
+                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+              messageText_ = b;
+              return b;
+            } else {
+              return (com.google.protobuf.ByteString) ref;
+            }
+          }
+          
+          private void initFields() {
+            builderId_ = "";
+            messageType_ = "";
+            messageText_ = "";
+          }
+          private byte memoizedIsInitialized = -1;
+          public final boolean isInitialized() {
+            byte isInitialized = memoizedIsInitialized;
+            if (isInitialized != -1) return isInitialized == 1;
+            
+            if (!hasBuilderId()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            if (!hasMessageType()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            if (!hasMessageText()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            memoizedIsInitialized = 1;
+            return true;
+          }
+          
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
+                              throws java.io.IOException {
+            getSerializedSize();
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              output.writeBytes(1, getBuilderIdBytes());
+            }
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              output.writeBytes(2, getMessageTypeBytes());
+            }
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              output.writeBytes(3, getMessageTextBytes());
+            }
+          }
+          
+          private int memoizedSerializedSize = -1;
+          public int getSerializedSize() {
+            int size = memoizedSerializedSize;
+            if (size != -1) return size;
+          
+            size = 0;
+            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBytesSize(1, getBuilderIdBytes());
+            }
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBytesSize(2, getMessageTypeBytes());
+            }
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBytesSize(3, getMessageTextBytes());
+            }
+            memoizedSerializedSize = size;
+            return size;
+          }
+          
+          private static final long serialVersionUID = 0L;
+          @java.lang.Override
+          protected java.lang.Object writeReplace()
+              throws java.io.ObjectStreamException {
+            return super.writeReplace();
+          }
+          
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          
+          public static Builder newBuilder() { return Builder.create(); }
+          public Builder newBuilderForType() { return newBuilder(); }
+          public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage prototype) {
+            return newBuilder().mergeFrom(prototype);
+          }
+          public Builder toBuilder() { return newBuilder(this); }
+          
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage, Builder>
+              implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessageOrBuilder {
+            // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.newBuilder()
+            private Builder() {
+              maybeForceBuilderInitialization();
+            }
+            
+            private void maybeForceBuilderInitialization() {
+            }
+            private static Builder create() {
+              return new Builder();
+            }
+            
+            public Builder clear() {
+              super.clear();
+              builderId_ = "";
+              bitField0_ = (bitField0_ & ~0x00000001);
+              messageType_ = "";
+              bitField0_ = (bitField0_ & ~0x00000002);
+              messageText_ = "";
+              bitField0_ = (bitField0_ & ~0x00000004);
+              return this;
+            }
+            
+            public Builder clone() {
+              return create().mergeFrom(buildPartial());
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getDefaultInstanceForType() {
+              return org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance();
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage build() {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage result = buildPartial();
+              if (!result.isInitialized()) {
+                throw newUninitializedMessageException(result);
+              }
+              return result;
+            }
+            
+            private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage buildParsed()
+                throws com.google.protobuf.InvalidProtocolBufferException {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage result = buildPartial();
+              if (!result.isInitialized()) {
+                throw newUninitializedMessageException(
+                  result).asInvalidProtocolBufferException();
+              }
+              return result;
+            }
+            
+            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage buildPartial() {
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage(this);
+              int from_bitField0_ = bitField0_;
+              int to_bitField0_ = 0;
+              if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+                to_bitField0_ |= 0x00000001;
+              }
+              result.builderId_ = builderId_;
+              if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+                to_bitField0_ |= 0x00000002;
+              }
+              result.messageType_ = messageType_;
+              if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+                to_bitField0_ |= 0x00000004;
+              }
+              result.messageText_ = messageText_;
+              result.bitField0_ = to_bitField0_;
+              return result;
+            }
+            
+            public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage other) {
+              if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance()) return this;
+              if (other.hasBuilderId()) {
+                setBuilderId(other.getBuilderId());
+              }
+              if (other.hasMessageType()) {
+                setMessageType(other.getMessageType());
+              }
+              if (other.hasMessageText()) {
+                setMessageText(other.getMessageText());
+              }
+              return this;
+            }
+            
+            public final boolean isInitialized() {
+              if (!hasBuilderId()) {
+                
+                return false;
+              }
+              if (!hasMessageType()) {
+                
+                return false;
+              }
+              if (!hasMessageText()) {
+                
+                return false;
+              }
+              return true;
+            }
+            
+            public Builder mergeFrom(
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws java.io.IOException {
+              while (true) {
+                int tag = input.readTag();
+                switch (tag) {
+                  case 0:
+                    
+                    return this;
+                  default: {
+                    if (!parseUnknownField(input, extensionRegistry, tag)) {
+                      
+                      return this;
+                    }
+                    break;
+                  }
+                  case 10: {
+                    bitField0_ |= 0x00000001;
+                    builderId_ = input.readBytes();
+                    break;
+                  }
+                  case 18: {
+                    bitField0_ |= 0x00000002;
+                    messageType_ = input.readBytes();
+                    break;
+                  }
+                  case 26: {
+                    bitField0_ |= 0x00000004;
+                    messageText_ = input.readBytes();
+                    break;
+                  }
+                }
+              }
+            }
+            
+            private int bitField0_;
+            
+            // required string builder_id = 1;
+            private java.lang.Object builderId_ = "";
+            public boolean hasBuilderId() {
+              return ((bitField0_ & 0x00000001) == 0x00000001);
+            }
+            public String getBuilderId() {
+              java.lang.Object ref = builderId_;
+              if (!(ref instanceof String)) {
+                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+                builderId_ = s;
+                return s;
+              } else {
+                return (String) ref;
+              }
+            }
+            public Builder setBuilderId(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+              builderId_ = value;
+              
+              return this;
+            }
+            public Builder clearBuilderId() {
+              bitField0_ = (bitField0_ & ~0x00000001);
+              builderId_ = getDefaultInstance().getBuilderId();
+              
+              return this;
+            }
+            void setBuilderId(com.google.protobuf.ByteString value) {
+              bitField0_ |= 0x00000001;
+              builderId_ = value;
+              
+            }
+            
+            // required string message_type = 2;
+            private java.lang.Object messageType_ = "";
+            public boolean hasMessageType() {
+              return ((bitField0_ & 0x00000002) == 0x00000002);
+            }
+            public String getMessageType() {
+              java.lang.Object ref = messageType_;
+              if (!(ref instanceof String)) {
+                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+                messageType_ = s;
+                return s;
+              } else {
+                return (String) ref;
+              }
+            }
+            public Builder setMessageType(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+              messageType_ = value;
+              
+              return this;
+            }
+            public Builder clearMessageType() {
+              bitField0_ = (bitField0_ & ~0x00000002);
+              messageType_ = getDefaultInstance().getMessageType();
+              
+              return this;
+            }
+            void setMessageType(com.google.protobuf.ByteString value) {
+              bitField0_ |= 0x00000002;
+              messageType_ = value;
+              
+            }
+            
+            // required string message_text = 3;
+            private java.lang.Object messageText_ = "";
+            public boolean hasMessageText() {
+              return ((bitField0_ & 0x00000004) == 0x00000004);
+            }
+            public String getMessageText() {
+              java.lang.Object ref = messageText_;
+              if (!(ref instanceof String)) {
+                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+                messageText_ = s;
+                return s;
+              } else {
+                return (String) ref;
+              }
+            }
+            public Builder setMessageText(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+              messageText_ = value;
+              
+              return this;
+            }
+            public Builder clearMessageText() {
+              bitField0_ = (bitField0_ & ~0x00000004);
+              messageText_ = getDefaultInstance().getMessageText();
+              
+              return this;
+            }
+            void setMessageText(com.google.protobuf.ByteString value) {
+              bitField0_ |= 0x00000004;
+              messageText_ = value;
+              
+            }
+            
+            // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
+          }
+          
+          static {
+            defaultInstance = new CustomBuilderMessage(true);
+            defaultInstance.initFields();
+          }
+          
+          // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
+        }
+        
         private int bitField0_;
         // required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;
         public static final int EVENT_TYPE_FIELD_NUMBER = 1;
@@ -5760,11 +6299,22 @@ public final class CmdlineRemoteProto {
           return generatedFiles_.get(index);
         }
         
+        // optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;
+        public static final int CUSTOM_BUILDER_MESSAGE_FIELD_NUMBER = 5;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage customBuilderMessage_;
+        public boolean hasCustomBuilderMessage() {
+          return ((bitField0_ & 0x00000008) == 0x00000008);
+        }
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage() {
+          return customBuilderMessage_;
+        }
+        
         private void initFields() {
           eventType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.BUILD_COMPLETED;
           description_ = "";
           completionStatus_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED;
           generatedFiles_ = java.util.Collections.emptyList();
+          customBuilderMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance();
         }
         private byte memoizedIsInitialized = -1;
         public final boolean isInitialized() {
@@ -5777,6 +6327,12 @@ public final class CmdlineRemoteProto {
           }
           for (int i = 0; i < getGeneratedFilesCount(); i++) {
             if (!getGeneratedFiles(i).isInitialized()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+          }
+          if (hasCustomBuilderMessage()) {
+            if (!getCustomBuilderMessage().isInitialized()) {
               memoizedIsInitialized = 0;
               return false;
             }
@@ -5799,6 +6355,9 @@ public final class CmdlineRemoteProto {
           }
           for (int i = 0; i < generatedFiles_.size(); i++) {
             output.writeMessage(4, generatedFiles_.get(i));
+          }
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            output.writeMessage(5, customBuilderMessage_);
           }
         }
         
@@ -5823,6 +6382,10 @@ public final class CmdlineRemoteProto {
           for (int i = 0; i < generatedFiles_.size(); i++) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(4, generatedFiles_.get(i));
+          }
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeMessageSize(5, customBuilderMessage_);
           }
           memoizedSerializedSize = size;
           return size;
@@ -5934,6 +6497,8 @@ public final class CmdlineRemoteProto {
             bitField0_ = (bitField0_ & ~0x00000004);
             generatedFiles_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000008);
+            customBuilderMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance();
+            bitField0_ = (bitField0_ & ~0x00000010);
             return this;
           }
           
@@ -5984,6 +6549,10 @@ public final class CmdlineRemoteProto {
               bitField0_ = (bitField0_ & ~0x00000008);
             }
             result.generatedFiles_ = generatedFiles_;
+            if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+              to_bitField0_ |= 0x00000008;
+            }
+            result.customBuilderMessage_ = customBuilderMessage_;
             result.bitField0_ = to_bitField0_;
             return result;
           }
@@ -6009,6 +6578,9 @@ public final class CmdlineRemoteProto {
               }
               
             }
+            if (other.hasCustomBuilderMessage()) {
+              mergeCustomBuilderMessage(other.getCustomBuilderMessage());
+            }
             return this;
           }
           
@@ -6019,6 +6591,12 @@ public final class CmdlineRemoteProto {
             }
             for (int i = 0; i < getGeneratedFilesCount(); i++) {
               if (!getGeneratedFiles(i).isInitialized()) {
+                
+                return false;
+              }
+            }
+            if (hasCustomBuilderMessage()) {
+              if (!getCustomBuilderMessage().isInitialized()) {
                 
                 return false;
               }
@@ -6070,6 +6648,15 @@ public final class CmdlineRemoteProto {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.newBuilder();
                   input.readMessage(subBuilder, extensionRegistry);
                   addGeneratedFiles(subBuilder.buildPartial());
+                  break;
+                }
+                case 42: {
+                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.newBuilder();
+                  if (hasCustomBuilderMessage()) {
+                    subBuilder.mergeFrom(getCustomBuilderMessage());
+                  }
+                  input.readMessage(subBuilder, extensionRegistry);
+                  setCustomBuilderMessage(subBuilder.buildPartial());
                   break;
                 }
               }
@@ -6248,6 +6835,49 @@ public final class CmdlineRemoteProto {
             ensureGeneratedFilesIsMutable();
             generatedFiles_.remove(index);
             
+            return this;
+          }
+          
+          // optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage customBuilderMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance();
+          public boolean hasCustomBuilderMessage() {
+            return ((bitField0_ & 0x00000010) == 0x00000010);
+          }
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage() {
+            return customBuilderMessage_;
+          }
+          public Builder setCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            customBuilderMessage_ = value;
+            
+            bitField0_ |= 0x00000010;
+            return this;
+          }
+          public Builder setCustomBuilderMessage(
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.Builder builderForValue) {
+            customBuilderMessage_ = builderForValue.build();
+            
+            bitField0_ |= 0x00000010;
+            return this;
+          }
+          public Builder mergeCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
+            if (((bitField0_ & 0x00000010) == 0x00000010) &&
+                customBuilderMessage_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance()) {
+              customBuilderMessage_ =
+                org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.newBuilder(customBuilderMessage_).mergeFrom(value).buildPartial();
+            } else {
+              customBuilderMessage_ = value;
+            }
+            
+            bitField0_ |= 0x00000010;
+            return this;
+          }
+          public Builder clearCustomBuilderMessage() {
+            customBuilderMessage_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance();
+            
+            bitField0_ = (bitField0_ & ~0x00000010);
             return this;
           }
           

@@ -36,8 +36,13 @@ public class SurroundAutoCloseableActionTest extends JavaCodeInsightFixtureTestC
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
-  public void testSimple() throws Exception {
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "Simple.java", "Simple_after.java");
+  public void testSimple() { doTest(); }
+  public void testUsage() { doTest(); }
+  public void testMixedUsages() { doTest(); }
+
+  private void doTest() {
+    String name = getTestName(false);
+    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, name + ".java", name + "_after.java");
   }
 
   @Override

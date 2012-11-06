@@ -17,6 +17,7 @@ package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public abstract class AbstractDocumentationProvider implements DocumentationProv
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null; 
   }
 

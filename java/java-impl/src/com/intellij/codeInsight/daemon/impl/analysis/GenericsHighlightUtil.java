@@ -628,7 +628,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement) {
+  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(final PsiTypeElement typeElement) {
     final PsiType type = typeElement.getType();
     if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
@@ -639,7 +639,19 @@ public class GenericsHighlightUtil {
       if (element == null) return null;
 
       String description = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+      PsiType toConvert = type;
+      if (type instanceof PsiWildcardType) {
+        toConvert = ((PsiWildcardType)type).getBound();
+      }
+      if (toConvert instanceof PsiPrimitiveType) {
+        final PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
+        if (boxedType != null) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, 
+                                                new ReplacePrimitiveWithBoxedTypeAction(typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
+        }
+      }
+      return highlightInfo;
     }
 
     return null;
@@ -748,6 +760,10 @@ public class GenericsHighlightUtil {
             PsiClassType otherType =
               JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
+          }
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
+            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
+            if (operand instanceof PsiCapturedWildcardType) return true;
           }
           return false;
         }

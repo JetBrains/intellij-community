@@ -16,6 +16,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -48,6 +49,7 @@ public class InlineUtil {
 
     PsiClass thisClass = RefactoringUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringUtil.getThisClass(ref);
+    boolean insertCastWhenUnchecked = ref.getParent() instanceof PsiForeachStatement;
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
 
@@ -56,6 +58,7 @@ public class InlineUtil {
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && varType instanceof PsiPrimitiveType
                              || !TypeConversionUtil.isAssignable(varType, exprType) 
+                             || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType)
                              || expr instanceof PsiConditionalExpression)) {
       boolean matchedTypes = false;
       //try explicit type arguments

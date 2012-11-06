@@ -388,6 +388,9 @@ public class TypeConversionUtil {
     return PsiType.NULL.equals(type);
   }
 
+  public static boolean isFloatOrDoubleType(PsiType type) {
+    return isFloatType(type) || isDoubleType(type);
+  }
   public static boolean isDoubleType(PsiType type) {
     return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
@@ -928,7 +931,6 @@ public class TypeConversionUtil {
         return allowUncheckedConversion;
       }
       if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
-        if (allowUncheckedConversion && !(typeLeft instanceof PsiWildcardType) && typeRight instanceof PsiClassType && ((PsiClassType)typeRight).isRaw()) continue;
         return false;
       }
     }

@@ -31,10 +31,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
 import git4idea.GitVcs;
-import git4idea.util.GitFileUtils;
+import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -147,32 +147,16 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   private void performAdding(Collection<FilePath> filesToAdd) {
-    final Map<VirtualFile, List<FilePath>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(filesToAdd, true);
-    }
-    catch (VcsException e) {
-      gitVcs().showMessages(e.getMessage());
-      return;
-    }
-    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
+    performBackgroundOperation(filesToAdd, GitBundle.getString("add.adding"), new LongOperationPerRootExecutor() {
+      @Override
+      public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
+        GitFileUtils.addPaths(myProject, root, files);
+        VcsFileUtil.markFilesDirty(myProject, files);
+      }
 
-      public void run(@NotNull ProgressIndicator indicator) {
-        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
-          try {
-            final VirtualFile root = e.getKey();
-            indicator.setText(root.getPresentableUrl());
-            GitFileUtils.addPaths(myProject, root, e.getValue());
-            VcsFileUtil.markFilesDirty(myProject, e.getValue());
-          }
-          catch (final VcsException ex) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                gitVcs().showMessages(ex.getMessage());
-              }
-            });
-          }
-        }
+      @Override
+      public Collection<File> getFilesToRefresh() {
+        return Collections.emptyList();
       }
     });
   }
@@ -190,41 +174,24 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   protected void performDeletion(final List<FilePath> filesToDelete) {
-    final Map<VirtualFile, List<FilePath>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(filesToDelete, true);
-    }
-    catch (VcsException e) {
-      gitVcs().showMessages(e.getMessage());
-      return;
-    }
-    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        HashSet<File> filesToRefresh = new HashSet<File>();
-        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
-          try {
-            final VirtualFile root = e.getKey();
-            final File rootFile = new File(root.getPath());
-            indicator.setText(root.getPresentableUrl());
-            GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
-            if (myProject != null && !myProject.isDisposed()) {
-              VcsFileUtil.markFilesDirty(myProject, e.getValue());
-            }
-            for (FilePath p : e.getValue()) {
-              for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {
-                filesToRefresh.add(f);
-              }
-            }
-          }
-          catch (final VcsException ex) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                gitVcs().showMessages(ex.getMessage());
-              }
-            });
+    performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
+      HashSet<File> filesToRefresh = new HashSet<File>();
+
+      public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
+        final File rootFile = new File(root.getPath());
+        GitFileUtils.delete(myProject, root, files, "--ignore-unmatch");
+        if (myProject != null && !myProject.isDisposed()) {
+          VcsFileUtil.markFilesDirty(myProject, files);
+        }
+        for (FilePath p : files) {
+          for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {
+            filesToRefresh.add(f);
           }
         }
-        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+      }
+
+      public Collection<File> getFilesToRefresh() {
+        return filesToRefresh;
       }
     });
   }
@@ -252,4 +219,40 @@ public class GitVFSListener extends VcsVFSListener {
     // For git asking about vcs delete does not make much sense. The result is practically identical.
     return deletedFiles;
   }
+
+  private void performBackgroundOperation(@NotNull Collection<FilePath> files, @NotNull String operationTitle,
+                                          @NotNull final LongOperationPerRootExecutor executor) {
+    final Map<VirtualFile, List<FilePath>> sortedFiles;
+    try {
+      sortedFiles = GitUtil.sortFilePathsByGitRoot(files, true);
+    }
+    catch (VcsException e) {
+      gitVcs().showMessages(e.getMessage());
+      return;
+    }
+
+    GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+          try {
+            executor.execute(e.getKey(), e.getValue());
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                gitVcs().showMessages(ex.getMessage());
+              }
+            });
+          }
+        }
+        LocalFileSystem.getInstance().refreshIoFiles(executor.getFilesToRefresh());
+      }
+    });
+  }
+
+  private interface LongOperationPerRootExecutor {
+    void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException;
+    Collection<File> getFilesToRefresh();
+  }
+
 }
