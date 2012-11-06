@@ -196,7 +196,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void removeTask(LocalTask task) {
     if (task.isDefault()) return;
     if (myActiveTask.equals(task)) {
-      myActiveTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
+      activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true, false);
     }
     myTasks.remove(task.getId());
     myContextManager.removeContext(task);
@@ -744,12 +744,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void associateWithTask(LocalChangeList changeList) {
+  public void associateWithTask(LocalChangeList changeList, final boolean withCurrent) {
     ChangeListInfo changeListInfo = new ChangeListInfo(changeList);
-    String changeListName = changeList.getName();
-    LocalTaskImpl task = createLocalTask(changeListName);
-    task.addChangelist(changeListInfo);
-    addTask(task);
+    if (withCurrent) {
+      getActiveTask().addChangelist(changeListInfo);
+    }
+    else {
+      String changeListName = changeList.getName();
+      LocalTaskImpl task = createLocalTask(changeListName);
+      task.addChangelist(changeListInfo);
+      addTask(task);
+    }
   }
 
   @Override
@@ -816,7 +821,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean clearContext = true;
     public boolean createChangelist = true;
     public boolean saveContextOnCommit = true;
-    public boolean trackContextForNewChangelist = true;
+    public boolean associateWithTaskForNewChangelist = true;
+    public boolean associateWithCurrentTaskForNewChangelist = true;
     public boolean markAsInProgress = false;
     public String changelistNameFormat = "{id} {summary}";
 

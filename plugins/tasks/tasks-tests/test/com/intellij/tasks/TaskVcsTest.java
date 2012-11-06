@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
+import com.intellij.util.containers.ContainerUtil;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -210,34 +212,34 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertEquals(anotherChangeList.getName(), "TEST-001 Summary");
   }
 
-  //public void testAddOneMoreChangeListViaVcsActionToNewTask() throws InterruptedException {
-  //  myManager.getState().associateWithCurrentTaskForNewChangelist = false;
-  //
-  //  addChangeList("New Changelist", "");
-  //  assertEquals(2, myManager.getLocalTasks().length);
-  //  assertEquals(2, myChangeListManager.getChangeLists().size());
-  //  LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
-  //  assertNotNull(newChangeList);
-  //  LocalTask newTask = myManager.getAssociatedTask(newChangeList);
-  //  assertNotNull(newTask);
-  //  assertEquals(newTask.getSummary(), "New Changelist");
-  //
-  //  myManager.getState().associateWithCurrentTaskForNewChangelist = true;
-  //}
-  //
-  //public void testNotAssociateChangeListWithTask() {
-  //  myManager.getState().associateWithTaskForNewChangelist = false;
-  //
-  //  addChangeList("New Changelist", "");
-  //  assertEquals(1, myManager.getLocalTasks().length);
-  //  assertEquals(2, myChangeListManager.getChangeLists().size());
-  //  LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
-  //  assertNotNull(newChangeList);
-  //  assertNull(myManager.getAssociatedTask(newChangeList));
-  //
-  //  myManager.getState().associateWithTaskForNewChangelist = true;
-  //}
-  //
+  public void testAddOneMoreChangeListViaVcsActionToNewTask() throws InterruptedException {
+    myManager.getState().associateWithCurrentTaskForNewChangelist = false;
+
+    addChangeList("New Changelist", "");
+    assertEquals(2, myManager.getLocalTasks().length);
+    assertEquals(2, myChangeListManager.getChangeLists().size());
+    LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
+    assertNotNull(newChangeList);
+    LocalTask newTask = myManager.getAssociatedTask(newChangeList);
+    assertNotNull(newTask);
+    assertEquals(newTask.getSummary(), "New Changelist");
+
+    myManager.getState().associateWithCurrentTaskForNewChangelist = true;
+  }
+
+  public void testNotAssociateChangeListWithTask() {
+    myManager.getState().associateWithTaskForNewChangelist = false;
+
+    addChangeList("New Changelist", "");
+    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(2, myChangeListManager.getChangeLists().size());
+    LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
+    assertNotNull(newChangeList);
+    assertNull(myManager.getAssociatedTask(newChangeList));
+
+    myManager.getState().associateWithTaskForNewChangelist = true;
+  }
+
   public void testCreateComment() throws Exception {
     myRepository.setShouldFormatCommitMessage(true);
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
@@ -274,31 +276,31 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertEquals(localTask, myManager.getAssociatedTask(changeList)); // association should survive
   }
 
-  //public void testSaveContextOnCommit() throws Exception {
-  //  myManager.getState().saveContextOnCommit = true;
-  //
-  //  assertEquals(1, myManager.getLocalTasks().length);
-  //  assertEquals(1, myChangeListManager.getChangeLists().size());
-  //
-  //  myManager.getState().associateWithTaskForNewChangelist = false;
-  //  LocalChangeList changeList = addChangeList("New Changelist", "");
-  //  myManager.getState().associateWithTaskForNewChangelist = true;
-  //
-  //  assertEquals(1, myManager.getLocalTasks().length);
-  //  assertEquals(2, myChangeListManager.getChangeLists().size());
-  //
-  //  CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
-  //
-  //  assertEquals(2, myManager.getLocalTasks().length); // extra task created
-  //  assertEquals(2, myChangeListManager.getChangeLists().size());
-  //
-  //  assertTrue(ContainerUtil.exists(myManager.getLocalTasks(), new Condition<LocalTaskImpl>() {
-  //    @Override
-  //    public boolean value(final LocalTaskImpl task) {
-  //      return task.getSummary().equals("New Changelist");
-  //    }
-  //  }));
-  //}
+  public void testSaveContextOnCommit() throws Exception {
+    myManager.getState().saveContextOnCommit = true;
+
+    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(1, myChangeListManager.getChangeLists().size());
+
+    myManager.getState().associateWithTaskForNewChangelist = false;
+    LocalChangeList changeList = addChangeList("New Changelist", "");
+    myManager.getState().associateWithTaskForNewChangelist = true;
+
+    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(2, myChangeListManager.getChangeLists().size());
+
+    CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
+
+    assertEquals(2, myManager.getLocalTasks().length); // extra task created
+    assertEquals(2, myChangeListManager.getChangeLists().size());
+
+    assertTrue(ContainerUtil.exists(myManager.getLocalTasks(), new Condition<LocalTaskImpl>() {
+      @Override
+      public boolean value(final LocalTaskImpl task) {
+        return task.getSummary().equals("New Changelist");
+      }
+    }));
+  }
 
   public LocalChangeList addChangeList(String title, String comment) {
     final LocalChangeList list = myChangeListManager.addChangeList(title, comment);
