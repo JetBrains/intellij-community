@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,7 @@ public class SystemProperties {
    * @param defaultValue default value
    * @return the property value as integer, or default value.
    */
-  public static int getIntProperty(@NotNull final String key, final int defaultValue) {
+  public static int getIntProperty(@NonNls @NotNull final String key, final int defaultValue) {
     final String value = System.getProperty(key);
     if (value != null) {
       try {
