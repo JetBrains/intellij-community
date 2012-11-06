@@ -1228,6 +1228,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
       add(myContent);
 
+      disposeCloseButton();
       myCloseRec = new CloseButton();
     }
 
@@ -1327,14 +1328,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myCloseRec != null && myCloseRec.getParent() != null) {
-            Container parent = myCloseRec.getParent();
-            parent.remove(myCloseRec);
-            ((JComponent)parent).revalidate();
-            parent.repaint();
-          }
+          disposeCloseButton();
         }
       });
+    }
+
+    private void disposeCloseButton() {
+      if (myCloseRec != null && myCloseRec.getParent() != null) {
+        Container parent = myCloseRec.getParent();
+        parent.remove(myCloseRec);
+        ((JComponent)parent).revalidate();
+        parent.repaint();
+      }
     }
 
     public void setAlpha(float alpha) {
