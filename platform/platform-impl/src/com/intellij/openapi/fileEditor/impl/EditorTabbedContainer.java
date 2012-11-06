@@ -157,6 +157,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   public ActionCallback setSelectedIndex(final int indexToSelect, boolean focusEditor) {
+    if (indexToSelect >= myTabs.getTabCount()) return new ActionCallback.Rejected();
     return myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
   }
 
