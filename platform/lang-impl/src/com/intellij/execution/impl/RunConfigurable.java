@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -1381,7 +1382,10 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void doMove() {
-      TreeUtil.moveSelectedRow(myTree, myDirection);
+      Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> dropPosition = getAvailableDropPosition();
+      if (dropPosition != null) {
+        myTreeModel.drop(dropPosition.first, dropPosition.second, dropPosition.third);
+      }
     }
 
     @Override
@@ -1393,25 +1397,35 @@ class RunConfigurable extends BaseConfigurable {
       e.getPresentation().setEnabled(isEnabled(e));
     }
 
+    @Nullable
+    private Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> getAvailableDropPosition() {
+      int[] rows = myTree.getSelectionRows();
+      if (rows == null || rows.length != 1) {
+        return null;
+      }
+      int oldIndex = rows[0];
+      int newIndex = oldIndex + myDirection;
+      while (newIndex > 0 && newIndex < myTree.getRowCount()) {
+        RowsDnDSupport.RefinedDropSupport.Position position = myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
+                                                              INTO :
+                                                              myDirection > 0 ? BELOW : ABOVE;
+        if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
+          return Trinity.create(oldIndex, newIndex, position);
+        }
+        if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
+          return Trinity.create(oldIndex, newIndex + 1, ABOVE);
+        }
+        if (position == ABOVE && newIndex > 1 && myTreeModel.canDrop(oldIndex, newIndex - 1, BELOW)) {
+          return Trinity.create(oldIndex, newIndex - 1, BELOW);
+        }
+        newIndex += myDirection;
+      }
+      return null;
+    }
+
     @Override
     public boolean isEnabled(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null) {
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        if (!(treeNode.getUserObject() instanceof ConfigurationType) && !(treeNode.getUserObject() instanceof String)) {
-          RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
-          if (selectedSettings == null)
-            return false;
-          RunnerAndConfigurationSettings siblingSettings;
-          if (myDirection < 0) {
-            siblingSettings = getSettings(treeNode.getPreviousSibling());
-          } else {
-            siblingSettings = getSettings(treeNode.getNextSibling());
-          }
-            return siblingSettings != null && siblingSettings.isTemporary() == selectedSettings.isTemporary();
-          }
-        }
-      return false;
+      return getAvailableDropPosition() != null;
     }
   }
 
