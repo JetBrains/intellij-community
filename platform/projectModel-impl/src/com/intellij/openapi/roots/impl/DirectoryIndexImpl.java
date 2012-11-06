@@ -324,7 +324,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     void fillMapWithModuleContent(@NotNull VirtualFile root,
-                                  @NotNull final Module module,
+                                  final Module module,
                                   @NotNull final VirtualFile contentRoot,
                                   @Nullable final ProgressIndicator progress) {
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {

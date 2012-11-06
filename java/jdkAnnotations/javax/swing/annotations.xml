@@ -461,4 +461,7 @@
       <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}"/>
     </annotation>
   </item>
+  <item name='javax.swing.JViewport java.awt.Rectangle getViewRect()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

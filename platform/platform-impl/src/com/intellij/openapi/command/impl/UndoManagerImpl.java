@@ -256,7 +256,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       if (recordOriginalReference && myProject != null) {
         Editor editor = null;
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final Application application = ApplicationManager.getApplication();
+        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
           editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
         }
         else {

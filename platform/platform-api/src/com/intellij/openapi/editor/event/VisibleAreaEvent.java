@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.EventObject;
@@ -24,12 +25,13 @@ public class VisibleAreaEvent extends EventObject {
   private final Rectangle myOldRectangle;
   private final Rectangle myNewRectangle;
 
-  public VisibleAreaEvent(Editor editor, Rectangle oldViewRectangle, Rectangle newViewRectangle) {
+  public VisibleAreaEvent(@NotNull Editor editor, Rectangle oldViewRectangle, @NotNull Rectangle newViewRectangle) {
     super(editor);
     myNewRectangle = newViewRectangle;
     myOldRectangle = oldViewRectangle;
   }
 
+  @NotNull
   public Editor getEditor() {
     return (Editor) getSource();
   }
@@ -38,6 +40,7 @@ public class VisibleAreaEvent extends EventObject {
     return myOldRectangle;
   }
 
+  @NotNull
   public Rectangle getNewRectangle() {
     return myNewRectangle;
   }
