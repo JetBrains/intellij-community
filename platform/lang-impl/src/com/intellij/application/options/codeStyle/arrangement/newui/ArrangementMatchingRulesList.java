@@ -66,7 +66,7 @@ public class ArrangementMatchingRulesList extends JBList {
     addMouseListener(new MouseAdapter() {
       @Override public void mouseExited(MouseEvent e) { onMouseExited(e); }
       @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
-      @Override public void mouseClicked(MouseEvent e) { onMouseClicked(e); }
+      @Override public void mouseClicked(MouseEvent e) { onMousePressed(e); }
     });
     addListSelectionListener(new ListSelectionListener() {
       @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
@@ -92,7 +92,18 @@ public class ArrangementMatchingRulesList extends JBList {
       }
     }
   }
-  
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    int id = e.getID();
+    if (id == MouseEvent.MOUSE_PRESSED) {
+      onMousePressed(e);
+    }
+    if (!e.isConsumed()) {
+      super.processMouseEvent(e);
+    }
+  }
+
   private void onMouseMoved(@NotNull MouseEvent e) {
     int i = locationToIndex(e.getPoint());
     if (i != myRowUnderMouse) {
@@ -127,14 +138,14 @@ public class ArrangementMatchingRulesList extends JBList {
   }
   
   
-  private void onMouseClicked(@NotNull MouseEvent e) {
+  private void onMousePressed(@NotNull MouseEvent e) {
     int i = locationToIndex(e.getPoint());
     if (i < 0) {
       return;
     }
     ArrangementListRowDecorator decorator = myComponents.get(i);
     if (decorator != null) {
-      decorator.onMouseClick(e);
+      decorator.onMousePress(e);
     }
   }
   

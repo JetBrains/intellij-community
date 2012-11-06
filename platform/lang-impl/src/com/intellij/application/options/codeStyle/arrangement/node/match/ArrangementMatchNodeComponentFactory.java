@@ -129,12 +129,13 @@ public class ArrangementMatchNodeComponentFactory {
     }
 
     @Override
-    public void onNewIteration() {
+    public void onPaint() {
+      // TODO den implement
       myList.repaintRows(myRow, myRow, false);
     }
-
-    @Override
+    
     public void onFinished() {
+      // TODO den implement
       DefaultListModel model = (DefaultListModel)myList.getModel();
       boolean repaintToBottom = model.indexOf(myRule) < 0;
       int endRow = repaintToBottom ? model.getSize() - 1 : myRow;
