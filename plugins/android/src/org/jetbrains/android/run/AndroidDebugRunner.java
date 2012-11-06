@@ -196,6 +196,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
         devices.get(0) != oldDevices[0]) {
       return null;
     }
+    oldProcessHandler.detachIsDefault();
     state.setTargetDevices(devices.toArray(new IDevice[devices.size()]));
     state.setConsole(oldConsole);
     final DefaultDebugProcessHandler newProcessHandler = new DefaultDebugProcessHandler();
@@ -272,8 +273,8 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
       RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
       myState.setProcessHandler(process);
       myConsoleView = myState.getConfiguration().attachConsole(myState, executor);
-      final boolean resetSelectedTab = myState.getConfiguration() instanceof AndroidRunConfiguration;
-      final MyLogcatExecutionConsole console = new MyLogcatExecutionConsole(myProject, myDevice, process, myConsoleView, resetSelectedTab);
+      //final boolean resetSelectedTab = myState.getConfiguration() instanceof AndroidRunConfiguration;
+      final MyLogcatExecutionConsole console = new MyLogcatExecutionConsole(myProject, myDevice, process, myConsoleView, true);
       return new DefaultExecutionResult(console, process);
     }
 
