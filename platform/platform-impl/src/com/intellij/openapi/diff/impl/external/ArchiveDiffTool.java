@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -67,7 +68,7 @@ public class ArchiveDiffTool implements DiffTool {
   }
 
   @Override
-  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     return null;
   }
 }

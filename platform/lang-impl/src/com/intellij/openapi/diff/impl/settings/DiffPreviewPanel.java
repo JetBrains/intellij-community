@@ -49,7 +49,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel(Disposable parent) {
+  public DiffPreviewPanel(@NotNull Disposable parent) {
     myMergePanelComponent = new MergePanel2.AsComponent(parent);
     myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
     myMergePanelComponent.setToolbarEnabled(false);

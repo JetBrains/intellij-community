@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -51,7 +52,7 @@ abstract class BaseExternalTool implements DiffTool {
   }
 
   @Override
-  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     return null;
   }
 
