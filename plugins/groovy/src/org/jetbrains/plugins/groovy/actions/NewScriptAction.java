@@ -34,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
-  private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
-  public static final String GROOVY_SCRIPT_TMPL = "GroovyScript.groovy";
 
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),
@@ -46,8 +44,8 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
-      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, GROOVY_SCRIPT_TMPL)
-      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.Groovy_16x16, GROOVY_DSL_SCRIPT_TMPL);
+      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, GroovyTemplates.GROOVY_SCRIPT)
+      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.Groovy_16x16, GroovyTemplates.GROOVY_DSL_SCRIPT);
   }
 
   @Override
@@ -75,7 +73,7 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   }
 
   private static String extractExtension(String templateName) {
-    if (GROOVY_DSL_SCRIPT_TMPL.equals(templateName)) {
+    if (GroovyTemplates.GROOVY_DSL_SCRIPT.equals(templateName)) {
       return "gdsl";
     }
     return GroovyFileType.DEFAULT_EXTENSION;

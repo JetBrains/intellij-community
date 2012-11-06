@@ -34,7 +34,7 @@ import java.util.Properties;
 
 public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactory {
   @NonNls
-  public static final String[] TEMPLATES = {"GroovyClass.groovy", "GroovyScript.groovy"};
+  public static final String[] TEMPLATES = {GroovyTemplates.GROOVY_CLASS, GroovyTemplates.GROOVY_SCRIPT};
 
   public void registerCustromTemplates(String... templates) {
     Collections.addAll(myCustomTemplates, templates);
@@ -50,20 +50,19 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
   private final ArrayList<String> myCustomTemplates = new ArrayList<String>();
 
-  public static final String GSP_TEMPLATE = "GroovyServerPage.gsp";
   @NonNls
   static final String NAME_TEMPLATE_PROPERTY = "NAME";
   static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    final FileTemplateGroupDescriptor group =
-      new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"), JetgroovyIcons.Groovy.Groovy_16x16);
+    final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"), JetgroovyIcons.Groovy.Groovy_16x16);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));
     }
     //add GSP Template
-    group.addTemplate(new FileTemplateDescriptor(GSP_TEMPLATE, fileTypeManager.getFileTypeByFileName(GSP_TEMPLATE).getIcon()));
+    group.addTemplate(new FileTemplateDescriptor(
+      GroovyTemplates.GROOVY_SERVER_PAGE, fileTypeManager.getFileTypeByFileName(GroovyTemplates.GROOVY_SERVER_PAGE).getIcon()));
 
     // register custom templates
     for (String template : getInstance().getCustomTemplates()) {

@@ -25,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -62,7 +63,7 @@ public class NewGantScriptAction extends NewGroovyActionBase {
 
   @NotNull
   protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
-    PsiFile file = createGantScriptFromTemplate(directory, newName, "GantScript.gant");
+    PsiFile file = createGantScriptFromTemplate(directory, newName, GroovyTemplates.GANT_SCRIPT);
     PsiElement lastChild = file.getLastChild();
     PsiElement child = null;
     if (lastChild instanceof GrMethodCallExpression) {

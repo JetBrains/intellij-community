@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -119,7 +120,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
         correctSelfReferences(aClass, newPackage);
 
         final PsiFile fromTemplate =
-          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, "GroovyClass.groovy");
+          GroovyTemplatesFactory.createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION, GroovyTemplates.GROOVY_CLASS);
         final PsiClass created = ((GroovyFile)fromTemplate).getClasses()[0];
         PsiDocComment docComment = aClass.getDocComment();
         if (docComment != null) {
