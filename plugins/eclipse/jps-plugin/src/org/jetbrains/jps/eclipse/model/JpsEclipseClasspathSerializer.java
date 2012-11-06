@@ -35,7 +35,9 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
     final JpsDependenciesList dependenciesList = module.getDependenciesList();
     dependenciesList.clear();
     try {
-      final Document document = JDOMUtil.loadDocument(new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT));
+      final File classpathFile = new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT);
+      if (!classpathFile.exists()) return; //no classpath file - no compilation
+      final Document document = JDOMUtil.loadDocument(classpathFile);
       final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>());
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
     }
