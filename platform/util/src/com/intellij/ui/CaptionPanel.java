@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ public class CaptionPanel extends JPanel {
   private static final Color CNT_COLOR = Gray._240;
   private static final Color BND_COLOR = Gray._240;
 
-  public static final Color CNT_ACTIVE_COLOR = Gray._202;
+  public static final Color CNT_ACTIVE_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : Gray._202;
   public static final Color BND_ACTIVE_COLOR = Gray._239;
 
   private boolean myActive = false;
