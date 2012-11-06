@@ -7,6 +7,7 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
@@ -100,6 +101,10 @@ public abstract class JpsModelSerializerExtension {
   }
 
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
+    return Collections.emptyList();
+  }
+
+  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Collections.emptyList();
   }
 
