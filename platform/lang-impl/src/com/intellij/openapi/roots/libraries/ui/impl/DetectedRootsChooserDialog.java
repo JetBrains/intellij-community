@@ -130,6 +130,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   private static CheckboxTreeTable createTreeTable(List<SuggestedChildRootInfo> suggestedRoots) {
     final CheckedTreeNode root = createRoot(suggestedRoots);
     CheckboxTreeTable treeTable = new CheckboxTreeTable(root, new CheckboxTree.CheckboxTreeCellRenderer(true) {
+      @Override
       public void customizeRenderer(JTree tree,
                                         Object value,
                                         boolean selected,

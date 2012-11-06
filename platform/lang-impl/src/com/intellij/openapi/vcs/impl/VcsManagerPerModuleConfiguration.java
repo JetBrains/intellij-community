@@ -22,6 +22,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -44,33 +45,41 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
     myModule = module;
   }
 
+  @Override
   public void moduleAdded() {
 
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "VcsManagerConfiguration";
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManagerImpl.getInstanceEx(myModule.getProject());
+    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManagerEx.getInstanceEx(myModule.getProject());
     if (!USE_PROJECT_VCS) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getContentRoots();
 
       StartupManager.getInstance(myModule.getProject()).runWhenProjectIsInitialized(new Runnable() {
+        @Override
         public void run() {
           for(VirtualFile file: roots) {
             vcsManager.setDirectoryMapping(file.getPath(), ACTIVE_VCS_NAME);
@@ -81,6 +90,7 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }

@@ -20,7 +20,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -48,14 +47,14 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   protected final boolean myCanMarkTestSources;
 
   public interface ContentEntryEditorListener extends EventListener{
-    void editingStarted(ContentEntryEditor editor);
-    void beforeEntryDeleted(ContentEntryEditor editor);
-    void sourceFolderAdded(ContentEntryEditor editor, SourceFolder folder);
-    void sourceFolderRemoved(ContentEntryEditor editor, VirtualFile file, boolean isTestSource);
-    void folderExcluded(ContentEntryEditor editor, VirtualFile file);
-    void folderIncluded(ContentEntryEditor editor, VirtualFile file);
-    void navigationRequested(ContentEntryEditor editor, VirtualFile file);
-    void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder);
+    void editingStarted(@NotNull ContentEntryEditor editor);
+    void beforeEntryDeleted(@NotNull ContentEntryEditor editor);
+    void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder);
+    void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource);
+    void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file);
+    void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file);
+    void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file);
+    void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder);
   }
 
   public ContentEntryEditor(final String contentEntryUrl, boolean canMarkSources, boolean canMarkTestSources) {
@@ -111,7 +110,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   @Override
   public void deleteContentEntry() {
-    final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(myContentEntryUrl));
+    final String path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(myContentEntryUrl));
     final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt", path),
                                                 ProjectBundle.message("module.paths.remove.content.title"), Messages.getQuestionIcon());
     if (answer != 0) { // no
@@ -146,7 +145,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Override
-  public void setPackagePrefix(SourceFolder folder, String prefix) {
+  public void setPackagePrefix(@NotNull SourceFolder folder, @NotNull String prefix) {
     folder.setPackagePrefix(prefix);
     update();
     myEventDispatcher.getMulticaster().packagePrefixSet(this, folder);

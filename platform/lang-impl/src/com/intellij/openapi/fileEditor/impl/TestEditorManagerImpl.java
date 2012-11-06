@@ -36,6 +36,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -365,7 +366,7 @@ import java.util.Map;
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    return VfsUtil.toVirtualFileArray(myVirtualFile2Editor.keySet());
+    return VfsUtilCore.toVirtualFileArray(myVirtualFile2Editor.keySet());
   }
 
   public Editor getEditor(VirtualFile file) {

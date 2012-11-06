@@ -34,13 +34,14 @@ import javax.swing.*;
 public class IncrementalFindAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
 
-    private boolean myReplace;
+    private final boolean myReplace;
 
     public Handler(boolean isReplace) {
 
       myReplace = isReplace;
     }
 
+    @Override
     public void execute(final Editor editor, DataContext dataContext) {
       final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
@@ -66,6 +67,7 @@ public class IncrementalFindAction extends EditorAction {
       }
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor)) {
         return false;

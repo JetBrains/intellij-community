@@ -36,6 +36,7 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
     myExecutors = executors;
   }
 
+  @Override
   protected boolean processResults(@NotNull final Processor<Result> consumer) {
     for (QueryExecutor<Result, Parameter> executor : myExecutors) {
       try {

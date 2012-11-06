@@ -63,6 +63,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
     return getRootUrls(type);
   }
 
+  @Override
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider != null ? rootProvider.getFiles(type) : VirtualFile.EMPTY_ARRAY;
@@ -83,6 +84,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   @Nullable
   protected abstract RootProvider getRootProvider();
 
+  @Override
   @NotNull
   public String[] getRootUrls(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();

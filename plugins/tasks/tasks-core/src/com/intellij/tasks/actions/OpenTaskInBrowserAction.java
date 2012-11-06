@@ -38,16 +38,18 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
 
   @Override
   public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    String url = getIssueUrl(event);
-    presentation.setEnabled(url != null);
-    Project project = getProject(event);
-    if (project == null || !TaskManager.getManager(project).getActiveTask().isIssue()) {
-      presentation.setText(getTemplatePresentation().getText());
-    } else {
-      presentation.setText("Open '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' In _Browser");
-    }
     super.update(event);
+    if (event.getPresentation().isEnabled()) {
+      Presentation presentation = event.getPresentation();
+      String url = getIssueUrl(event);
+      presentation.setEnabled(url != null);
+      Project project = getProject(event);
+      if (project == null || !TaskManager.getManager(project).getActiveTask().isIssue()) {
+        presentation.setText(getTemplatePresentation().getText());
+      } else {
+        presentation.setText("Open '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' In _Browser");
+      }
+    }
   }
 
   @Nullable

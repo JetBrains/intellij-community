@@ -27,6 +27,7 @@ import java.util.Comparator;
 public class ModulesAlphaComparator implements Comparator<Module>{
   public static ModulesAlphaComparator INSTANCE = new ModulesAlphaComparator();
 
+  @Override
   public int compare(Module module1, Module module2) {
     final String name1 = module1.getName();
     final String name2 = module2.getName();

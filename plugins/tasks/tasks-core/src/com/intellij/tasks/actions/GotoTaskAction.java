@@ -15,6 +15,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -60,7 +61,7 @@ public class GotoTaskAction extends GotoActionBase {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
-        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern);
+        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
         List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
@@ -84,7 +85,7 @@ public class GotoTaskAction extends GotoActionBase {
         }
 
         List<Task> tasks =
-          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true);
+          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere);
         tasks.removeAll(cachedTasks);
         taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
           @Override
@@ -140,22 +141,32 @@ public class GotoTaskAction extends GotoActionBase {
           Task task = ((TaskPsiElement)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
-            final boolean createChangelist =
-              taskManager.isVcsEnabled() && !taskManager.getOpenChangelists(localTask).isEmpty();
-            taskManager.activateTask(localTask, !shiftPressed.get(), createChangelist);
+            if (taskManager.isVcsEnabled() && localTask.isClosedLocally()) {
+              showOpenTaskDialog(project, localTask);
+            }
+            else {
+              taskManager.activateTask(localTask, !shiftPressed.get(), true);
+            }
           }
           else {
-            popup.close(false);
-            (new SimpleOpenTaskDialog(project, task)).show();
+            showOpenTaskDialog(project, task);
           }
         }
         else if (element == CREATE_NEW_TASK_ACTION) {
-          popup.close(false);
-          Task task = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
-          new SimpleOpenTaskDialog(project, task).show();
+          LocalTask localTask = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
+          showOpenTaskDialog(project, localTask);
         }
       }
     }, null, popup);
+  }
+
+  public static void showOpenTaskDialog(final Project project, final Task task) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        new SimpleOpenTaskDialog(project, task).show();
+      }
+    });
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel {
@@ -191,6 +202,21 @@ public class GotoTaskAction extends GotoActionBase {
         return CREATE_NEW_TASK_ACTION.getActionText();
       }
       return null;
+    }
+
+    @Override
+    public String getCheckBoxName() {
+      return "Include closed tasks";
+    }
+
+    @Override
+    public void saveInitialCheckBoxState(final boolean state) {
+      ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks = state;
+    }
+
+    @Override
+    public boolean loadInitialCheckBoxState() {
+      return ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks;
     }
   }
 

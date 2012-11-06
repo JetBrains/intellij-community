@@ -146,6 +146,7 @@ public class PsiChangeTracker {
 
     if (FileDocumentManager.getInstance().isFileModified(file)) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           return LoadTextUtil.loadText(file).toString();
         }

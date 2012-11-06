@@ -71,6 +71,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
     }
     else if (first) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        @Override
         public void run() {
           fireNotifications();
         }
@@ -95,10 +96,12 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
 
       Notifications.Bus.notify(new Notification("Project Loading Error", "Error Loading Project", errorText, NotificationType.ERROR,
                                                 new NotificationListener() {
+                                                  @Override
                                                   public void hyperlinkUpdate(@NotNull Notification notification,
                                                                               @NotNull HyperlinkEvent event) {
                                                     final List<ConfigurationErrorDescription> validDescriptions =
                                                       ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
+                                                        @Override
                                                         public boolean value(ConfigurationErrorDescription errorDescription) {
                                                           return errorDescription.isValid();
                                                         }

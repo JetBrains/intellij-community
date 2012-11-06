@@ -29,6 +29,7 @@ import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
@@ -512,7 +513,7 @@ public class CompileDriver {
             ExitStatus status = ExitStatus.SUCCESS;
             if (event.hasCompletionStatus()) {
               final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
-              switch(completionStatus) {
+              switch (completionStatus) {
                 case CANCELED:
                   status = ExitStatus.CANCELLED;
                   break;
@@ -528,6 +529,13 @@ public class CompileDriver {
               }
             }
             compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
+            break;
+          case CUSTOM_BUILDER_MESSAGE:
+            if (event.hasCustomBuilderMessage()) {
+              CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+              messageBus.syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(message.getBuilderId(), message.getMessageType(),
+                                                                                          message.getMessageText());
+            }
             break;
         }
       }

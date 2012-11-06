@@ -29,7 +29,7 @@ import java.util.Collection;
  * @author nik
  */
 public class ModulesOrderEnumerator extends OrderEnumeratorBase {
-  private Collection<? extends Module> myModules;
+  private final Collection<? extends Module> myModules;
 
   public ModulesOrderEnumerator(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(null, project, null);

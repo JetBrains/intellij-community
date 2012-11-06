@@ -44,19 +44,23 @@ import org.jetbrains.annotations.Nullable;
 public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
+  @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     Library library = LangDataKeys.LIBRARY.getData(dataContext);
     return library != null;
   }
 
+  @Override
   public boolean isRenaming(DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.assertTrue(false);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
     final Library library = LangDataKeys.LIBRARY.getData(dataContext);
     LOG.assertTrue(library != null);
@@ -68,6 +72,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
                              new MyInputValidator(project, library));
   }
 
+  @Override
   public String getActionTitle() {
     return IdeBundle.message("title.rename.library");
   }
@@ -80,18 +85,22 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
       myLibrary = library;
     }
 
+    @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0 && myLibrary.getTable().getLibraryByName(inputString) == null;
+      return inputString != null && !inputString.isEmpty() && myLibrary.getTable().getLibraryByName(inputString) == null;
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       final String oldName = myLibrary.getName();
       final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
       if (modifiableModel == null) return false;
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           UndoableAction action = new BasicUndoableAction() {
+            @Override
             public void undo() throws UnexpectedUndoException {
               final Library.ModifiableModel modifiableModel = renameLibrary(oldName);
               if (modifiableModel != null) {
@@ -109,6 +118,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
           };
           UndoManager.getInstance(myProject).undoableActionPerformed(action);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               modifiableModel.commit();
             }

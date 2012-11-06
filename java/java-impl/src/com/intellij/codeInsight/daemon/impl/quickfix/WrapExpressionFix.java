@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * @author ven
  */
@@ -72,15 +75,21 @@ public class WrapExpressionFix implements IntentionAction {
       }
       if (expectedReturnType == null) return null;
       PsiMethod[] methods = aClass.getMethods();
+      final Set<PsiMethod> wrapperMethods = new LinkedHashSet<PsiMethod>();
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)
             && method.getParameterList().getParametersCount() == 1
             && method.getParameterList().getParameters()[0].getType().isAssignableFrom(type)
             && method.getReturnType() != null
             && expectedReturnType.equals(method.getReturnType())) {
-          return method;
+          final String methodName = method.getName();
+          if (methodName.startsWith("parse") || methodName.equals("valueOf")) {
+            return method;
+          }
+          wrapperMethods.add(method);
         }
       }
+      if (!wrapperMethods.isEmpty()) return wrapperMethods.iterator().next();
     }
 
     return null;

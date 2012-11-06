@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.*;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -26,15 +25,12 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 
 /**
  * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
@@ -47,31 +43,6 @@ import java.awt.image.BufferedImage;
 public class ArrangementAtomMatchConditionComponent implements ArrangementMatchConditionComponent {
 
   public static final int VERTICAL_PADDING = 4;
-
-  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
-    @Override
-    public void paint(Graphics g) {
-      if (myAnimationStepsLeft > 0 && myImage != null) {
-        //g.drawImage(myImage, )
-      }
-
-      Point point = ArrangementConfigUtil.getLocationOnScreen(this);
-      if (point != null) {
-        Rectangle bounds = myRenderer.getBounds();
-        myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
-      }
-      if (!myEnabled && g instanceof Graphics2D) {
-        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-      }
-      super.paint(g);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      // TODO den implement
-      return super.getPreferredSize();
-    }
-  };
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
@@ -89,32 +60,35 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     public Dimension getPreferredSize() {
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
     }
+
+    @Override
+    public String toString() {
+      return "text component for " + myText;
+    }
   };
 
   @NotNull private final String                        myText;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
   @NotNull private final RoundedLineBorder             myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;
+  @NotNull private final ArrangementAnimationPanel     myAnimationPanel;
 
-  @Nullable private final ActionButton                            myCloseButton;
-  @Nullable private final Rectangle                               myCloseButtonBounds;
-  @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
+  @Nullable private final ActionButton                                     myCloseButton;
+  @Nullable private final Rectangle                                        myCloseButtonBounds;
+  @Nullable private final Consumer<ArrangementAtomMatchConditionComponent> myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
   @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
 
-  @Nullable private BufferedImage myImage;
-  private           int           myAnimationStepsLeft;
-  
   private boolean myEnabled = true;
   private boolean myCloseButtonHovered;
 
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementNodeDisplayManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
                                                 @NotNull ArrangementAtomMatchCondition condition,
-                                                @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
+                                                @Nullable Consumer<ArrangementAtomMatchConditionComponent> closeCallback)
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
@@ -143,7 +117,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
 
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(0, 0, 0, 0);
 
-    JPanel insetsPanel = new JPanel(new GridBagLayout());
+    JPanel insetsPanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public String toString() {
+        return "insets panel for " + myText;
+      }
+    };
     insetsPanel.add(myTextControl, constraints);
     insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
     insetsPanel.setOpaque(false);
@@ -163,8 +142,13 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
         super.paint(g);
       }
+
+      @Override
+      public String toString() {
+        return "round border panel for " + myText;
+      }
     };
-    roundBorderPanel.add(insetsPanel, new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST));
+    roundBorderPanel.add(insetsPanel, new GridBag().anchor(GridBagConstraints.WEST));
     if (myCloseButton != null) {
       roundBorderPanel.add(new InsetsPanel(myCloseButton), new GridBag().anchor(GridBagConstraints.EAST));
     }
@@ -172,8 +156,22 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myRenderer.add(roundBorderPanel, constraints);
-    myRenderer.setOpaque(false);
+    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel) {
+      @Override
+      public void paint(Graphics g) {
+        Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+        if (point != null) {
+          Rectangle bounds = myAnimationPanel.getBounds();
+          myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+        }
+        if (!myEnabled && g instanceof Graphics2D) {
+          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        }
+        super.paint(g);
+      }
+    };
+    myAnimationPanel.setOpaque(false);
+    
     setSelected(false);
     if (myCloseButton != null) {
       myCloseButton.setVisible(false);
@@ -189,7 +187,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @NotNull
   @Override
   public JComponent getUiComponent() {
-    return myRenderer;
+    return myAnimationPanel;
   }
 
   @Nullable
@@ -244,7 +242,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   public void onMouseClick(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
-      myCloseCallback.consume(getMatchCondition());
+      myCloseCallback.consume(this);
     }
   }
 
@@ -273,29 +271,17 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       return null;
     }
 
-    Rectangle buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), myCloseButtonBounds, myRenderer);
+    Rectangle buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), myCloseButtonBounds, myAnimationPanel);
     buttonBounds.x += myScreenBounds.x;
     buttonBounds.y += myScreenBounds.y;
     return buttonBounds;
   }
 
-  public void startAnimation() {
-    myAnimationStepsLeft = ArrangementConstants.ATOM_CONDITION_REMOVAL_STEPS;
-    Rectangle bounds = myRenderer.getBounds();
-    myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
-    myCloseButton.setVisible(false);
-    final Graphics2D graphics = myImage.createGraphics();
-    UISettings.setupAntialiasing(graphics);
-    graphics.translate(-bounds.x, -bounds.y);
-    graphics.setClip(bounds.x, bounds.y, bounds.width, bounds.height);
-    myRenderer.paint(graphics);
-    graphics.dispose();
+  @NotNull
+  public ArrangementAnimationPanel getAnimationPanel() {
+    return myAnimationPanel;
   }
-  
-  public boolean isAnimationInProgress() {
-    return myAnimationStepsLeft > 0;
-  }
-  
+
   @Override
   public String toString() {
     return myText;

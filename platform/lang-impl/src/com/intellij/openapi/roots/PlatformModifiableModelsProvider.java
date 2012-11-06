@@ -11,14 +11,17 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
  * @author Dennis.Ushakov
  */
 public class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
+  @Override
   public ModifiableRootModel getModuleModifiableModel(final Module module) {
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
+  @Override
   public void commitModuleModifiableModel(final ModifiableRootModel model) {
     model.commit();
   }
 
+  @Override
   public void disposeModuleModifiableModel(final ModifiableRootModel model) {
     model.dispose();
   }
@@ -33,6 +36,7 @@ public class PlatformModifiableModelsProvider implements ModifiableModelsProvide
     model.commit();
   }
 
+  @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
   }

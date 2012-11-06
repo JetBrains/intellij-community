@@ -40,6 +40,7 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
     mySuitableFileTypes = suitableFileTypes;
   }
 
+  @Override
   public boolean createReferences(@NotNull final PsiElement psiElement,
                                   final int offset,
                                   final String text,
@@ -47,10 +48,12 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
                                   final boolean soft) {
 
     FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, null, true, myEndingSlashNotAllowed, mySuitableFileTypes) {
+      @Override
       protected boolean isUrlEncoded() {
         return true;
       }
 
+      @Override
       protected boolean isSoft() {
         return soft;
       }
@@ -62,6 +65,7 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
     return true;
   }
 
+  @Override
   @Nullable
   public PathReference getPathReference(@NotNull final String path, @NotNull final PsiElement element) {
     final List<PsiReference> list = new SmartList<PsiReference>();
@@ -72,6 +76,7 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
     if (target == null) return null;
 
     return new PathReference(path, PathReference.ResolveFunction.NULL_RESOLVE_FUNCTION) {
+      @Override
       public PsiElement resolve() {
         return target;
       }

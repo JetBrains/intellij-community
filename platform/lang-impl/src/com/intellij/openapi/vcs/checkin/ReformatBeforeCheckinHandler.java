@@ -43,24 +43,29 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     myPanel = panel;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox reformatBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.reformat.code"));
 
     return new RefreshableOnComponent() {
+      @Override
       public JComponent getComponent() {
         final JPanel panel = new JPanel(new GridLayout(1, 0));
         panel.add(reformatBox);
         return panel;
       }
 
+      @Override
       public void refresh() {
       }
 
+      @Override
       public void saveState() {
         getSettings().REFORMAT_BEFORE_PROJECT_COMMIT = reformatBox.isSelected();
       }
 
+      @Override
       public void restoreState() {
         reformatBox.setSelected(getSettings().REFORMAT_BEFORE_PROJECT_COMMIT);
       }
@@ -72,11 +77,13 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     return VcsConfiguration.getInstance(myProject);
   }
 
+  @Override
   public void runCheckinHandlers(final Runnable finishAction) {
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 
     final Runnable performCheckoutAction = new Runnable() {
+      @Override
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
         finishAction.run();

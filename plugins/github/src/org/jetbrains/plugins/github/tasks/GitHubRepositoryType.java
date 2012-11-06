@@ -23,6 +23,7 @@ public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
     return "GitHub";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Github;

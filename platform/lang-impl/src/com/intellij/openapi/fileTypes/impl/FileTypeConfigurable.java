@@ -64,16 +64,19 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myManager = (FileTypeManagerImpl)fileTypeManager;
   }
 
+  @Override
   public String getDisplayName() {
     return FileTypesBundle.message("filetype.settings.title");
   }
 
+  @Override
   public JComponent createComponent() {
     myFileTypePanel = new FileTypePanel();
     myRecognizedFileType = myFileTypePanel.myRecognizedFileType;
     myPatterns = myFileTypePanel.myPatterns;
     myRecognizedFileType.attachActions(this);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateExtensionList();
       }
@@ -86,6 +89,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private void updateFileTypeList() {
     FileType[] types = myTempFileTypes.toArray(new FileType[myTempFileTypes.size()]);
     Arrays.sort(types, new Comparator() {
+      @Override
       public int compare(Object o1, Object o2) {
         FileType fileType1 = (FileType)o1;
         FileType fileType2 = (FileType)o2;
@@ -104,6 +108,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     return result.toArray(new FileType[result.size()]);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
     for (UserFileType oldType : modifiedUserTypes) {
@@ -113,6 +118,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myOriginalToEditedMap.clear();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
           myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
@@ -124,6 +130,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     });
   }
 
+  @Override
   public void reset() {
     myTempPatternsTable = myManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
@@ -137,6 +144,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myFileTypePanel.myIgnoreFilesField.setText(myManager.getIgnoredFilesList());
   }
 
+  @Override
   public boolean isModified() {
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
     HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
@@ -145,6 +153,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
   }
 
+  @Override
   public void disposeUIResources() {
     if (myFileTypePanel != null) myFileTypePanel.dispose();
     myFileTypePanel = null;
@@ -153,12 +162,14 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static class ExtensionRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       setText(" " + getText());
       return this;
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return new Dimension(0, 20);
     }
@@ -337,12 +348,13 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myPatterns.myPatternsList.requestFocus();
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.fileTypes";
   }
 
   public static class RecognizedFileTypes extends JPanel {
-    private JList myFileTypesList;
+    private final JList myFileTypesList;
     private FileTypeConfigurable myController;
 
     public RecognizedFileTypes() {
@@ -351,6 +363,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myFileTypesList = new JBList(new DefaultListModel());
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getCellRenderer(), new FileTypeRenderer.FileTypeListProvider() {
+        @Override
         public Iterable<FileType> getCurrentFileTypeList() {
           ArrayList<FileType> result = new ArrayList<FileType>();
           for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
@@ -410,6 +423,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           @Override
           public void actionPerformed(AnActionEvent e) {
             new SchemesToImportPopup<FileType, AbstractFileType>(myFileTypesList) {
+              @Override
               protected void onSchemeSelected(final AbstractFileType scheme) {
                 myController.importFileType(scheme);
               }
@@ -517,7 +531,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   public static class PatternsPanel extends JPanel {
-    private JBList myPatternsList;
+    private final JBList myPatternsList;
     private FileTypeConfigurable myController;
 
     public PatternsPanel() {
@@ -579,7 +593,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
 
     public boolean isListEmpty() {
-      return getListModel().size() == 0;
+      return getListModel().isEmpty();
     }
 
     public String removeSelected() {
@@ -627,15 +641,18 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       Disposer.register(myDisposable, myEditor);
     }
 
+    @Override
     protected void init() {
       super.init();
       myEditor.resetFrom(myFileType);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return myEditor.getComponent();
     }
 
+    @Override
     protected void doOKAction() {
       try {
         myEditor.applyTo(myFileType);
@@ -653,11 +670,13 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

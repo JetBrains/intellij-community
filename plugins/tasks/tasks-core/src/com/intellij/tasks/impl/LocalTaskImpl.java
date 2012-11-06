@@ -43,22 +43,22 @@ public class LocalTaskImpl extends LocalTask {
 
   private String myId = "";
   private String mySummary = "";
-  private boolean myActive;
-  private boolean myClosed;
+  private String myDescription = null;
+  private Comment[] myComments = new Comment[0];
+  private boolean myClosed = false;
   private Date myCreated;
-  protected Date myUpdated;
+  private Date myUpdated;
+  private TaskType myType = TaskType.OTHER;
+  private String myPresentableName;
+  private String myCustomIcon = null;
+
+  private boolean myIssue = false;
+  private TaskRepository myRepository = null;
+  private String myIssueUrl = null;
+
+  private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
 
-  private boolean myIssue;
-  private TaskRepository myRepository;
-  private String myIssueUrl;
-
-  private TaskType myType = TaskType.OTHER;
-  private String myDescription;
-  private Comment[] myComments = new Comment[0];
-  private String myAssociatedChangelistId;
-  private String myPresentableName;
-  private String myCustomIcon;
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -80,7 +80,6 @@ public class LocalTaskImpl extends LocalTask {
     if (origin instanceof LocalTaskImpl) {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
       myActive = ((LocalTaskImpl)origin).isActive();
-      myAssociatedChangelistId = ((LocalTaskImpl)origin).getAssociatedChangelistId();
     }
   }
 
@@ -123,11 +122,6 @@ public class LocalTaskImpl extends LocalTask {
   @Attribute("active")
   public boolean isActive() {
     return myActive;
-  }
-
-  @Override
-  public String getAssociatedChangelistId() {
-    return myAssociatedChangelistId;
   }
 
   @Override
@@ -190,19 +184,27 @@ public class LocalTaskImpl extends LocalTask {
     myUpdated = updated;
   }
 
+  @NotNull
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag="changelist")
   public List<ChangeListInfo> getChangeLists() {
     return myChangeLists;
   }
 
-  public void setChangeLists(List<ChangeListInfo> changeLists) {
-    myChangeLists = changeLists;
+  @Override
+  public void addChangelist(final ChangeListInfo info) {
+    if (!myChangeLists.contains(info)) {
+      myChangeLists.add(info);
+    }
   }
 
   @Override
-  public void setAssociatedChangelistId(String associatedChangelistId) {
-    myAssociatedChangelistId = associatedChangelistId;
+  public void removeChangelist(final ChangeListInfo info) {
+    myChangeLists.remove(info);
+  }
+
+  public void setChangeLists(List<ChangeListInfo> changeLists) {
+    myChangeLists = changeLists;
   }
 
   public boolean isClosed() {
@@ -213,6 +215,7 @@ public class LocalTaskImpl extends LocalTask {
     myClosed = closed;
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     final String customIcon = getCustomIcon();
@@ -245,10 +248,6 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public boolean isDefault() {
     return myId.equals(DEFAULT_TASK_ID);
-  }
-
-  public boolean equalsTo(LocalTask task) {
-    return task != null && task.getId().equals(myId);
   }
 
   @Override

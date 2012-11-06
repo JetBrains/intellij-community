@@ -24,6 +24,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
  */
 public class GenericDynamicContextProvider implements DynamicContextProvider {
 
+  @Override
   public int getOffset(PsiElement element, int offset, String elementText) {
     final PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {

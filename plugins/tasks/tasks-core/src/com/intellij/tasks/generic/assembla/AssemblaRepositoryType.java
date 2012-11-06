@@ -21,6 +21,7 @@ public class AssemblaRepositoryType extends TaskRepositoryType<AssemblaRepositor
     return "Assembla";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Assembla;

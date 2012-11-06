@@ -27,10 +27,12 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
 
+  @Override
   public void registerPage(ColorSettingsPage page) {
     myPages.add(page);
   }
 
+  @Override
   public ColorSettingsPage[] getRegisteredPages() {
     if (!myExtensionsLoaded) {
       myExtensionsLoaded = true;

@@ -33,14 +33,17 @@ public class PlatformContentEntriesConfigurable implements Configurable {
     myCanMarkTestSources = canMarkTestSources;
   }
 
+  @Override
   public String getDisplayName() {
     return "Project Structure";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     createEditor();
     return myTopPanel;
@@ -48,6 +51,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
 
   private void createEditor() {
     myModifiableModel = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
+      @Override
       public ModifiableRootModel compute() {
         return ModuleRootManager.getInstance(myModule).getModifiableModel();
       }
@@ -74,6 +78,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
       }
     };
     JComponent component = ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
+      @Override
       public JComponent compute() {
         return myEditor.createComponent();
       }
@@ -81,14 +86,17 @@ public class PlatformContentEntriesConfigurable implements Configurable {
     myTopPanel.add(component, BorderLayout.CENTER);
   }
 
+  @Override
   public boolean isModified() {
     return myEditor != null && myEditor.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myEditor.apply();
     if (myModifiableModel.isChanged()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           myModifiableModel.commit();
         }
@@ -99,11 +107,13 @@ public class PlatformContentEntriesConfigurable implements Configurable {
     }
   }
 
+  @Override
   public void reset() {
     myEditor.reset();
     // TODO?
   }
 
+  @Override
   public void disposeUIResources() {
     if (myEditor != null) {
       myEditor.disposeUIResources();

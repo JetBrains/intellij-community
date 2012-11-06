@@ -214,6 +214,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
         return Comment.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
       public Icon getIcon() {
         return TasksIcons.Github;

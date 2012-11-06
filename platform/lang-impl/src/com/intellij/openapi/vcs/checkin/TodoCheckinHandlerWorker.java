@@ -72,7 +72,7 @@ public class TodoCheckinHandlerWorker {
   private final List<Pair<FilePath, String>> mySkipped;
   private PsiFile myPsiFile;
   private List<TodoItem> myNewTodoItems;
-  private MyEditedFileProcessor myEditedFileProcessor;
+  private final MyEditedFileProcessor myEditedFileProcessor;
 
 
   public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter,

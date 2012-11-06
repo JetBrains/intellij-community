@@ -23,10 +23,10 @@ import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksIcons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Document;
@@ -36,6 +36,7 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.Date;
@@ -106,10 +107,22 @@ public class FogBugzRepository extends BaseRepositoryImpl {
 
   @NotNull
   private Task createCase(final Element element, final XPath commentPath) {
-    String id = element.getAttributeValue("ixBug");
-    String title = element.getChildTextTrim("sTitle");
-    TaskType type = getType(element);
-    LocalTaskImpl task = new LocalTaskImpl(id, title) {
+    final String id = element.getAttributeValue("ixBug");
+    final String title = element.getChildTextTrim("sTitle");
+    final TaskType type = getType(element);
+    return new Task() {
+
+      @NotNull
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      @NotNull
+      @Override
+      public String getSummary() {
+        return title;
+      }
 
       @Nullable
       @Override
@@ -159,6 +172,18 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return comments.toArray(new Comment[comments.size()]);
       }
 
+      @NotNull
+      @Override
+      public Icon getIcon() {
+        return TasksIcons.Fogbugz;
+      }
+
+      @NotNull
+      @Override
+      public TaskType getType() {
+        return type;
+      }
+
       @Nullable
       @Override
       public Date getUpdated() {
@@ -187,8 +212,6 @@ public class FogBugzRepository extends BaseRepositoryImpl {
         return getUrl() + "/default.asp?" + getId();
       }
     };
-    task.setType(type);
-    return task;
   }
 
   @Nullable

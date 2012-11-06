@@ -36,10 +36,10 @@ public class TaskSearchSupport {
   private TaskSearchSupport() {
   }
 
-  public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern) {
+  public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern, final boolean withClosed) {
     List<Task> tasks = new ArrayList<Task>();
-    ContainerUtil.addAll(tasks, myManager.getLocalTasks());
-    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
+    ContainerUtil.addAll(tasks, myManager.getLocalTasks(withClosed));
+    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed), new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
         return myManager.findTask(task.getId()) == null;
@@ -59,8 +59,8 @@ public class TaskSearchSupport {
     });
   }
 
-  public static List<Task> getRepositoriesTasks(final TaskManager myManager, String pattern, int max, long since, boolean forceRequest) {
-    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest);
+  public static List<Task> getRepositoriesTasks(final TaskManager myManager, String pattern, int max, long since, boolean forceRequest, final boolean withClosed) {
+    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }

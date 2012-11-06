@@ -130,7 +130,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    MantisTask task = new MantisTask(id, summary, myProject, this) {
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime()) {
       @Override
       public String getDescription() {
         return data.getDescription();
@@ -164,11 +164,13 @@ public class MantisRepository extends BaseRepositoryImpl {
         });
         return comments.toArray(new Comment[comments.size()]);
       }
-    };
 
-    task.setUpdated(data.getLast_updated().getTime());
-    task.setCreated(data.getDate_submitted().getTime());
-    return task;
+      @Nullable
+      @Override
+      public Date getCreated() {
+        return data.getDate_submitted().getTime();
+      }
+    };
   }
 
   @Nullable
@@ -177,11 +179,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    MantisTask task = new MantisTask(id, summary, myProject, this);
-
-    task.setIssue(true);
-    task.setUpdated(data.getLast_updated().getTime());
-    return task;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime());
   }
 
   public List<MantisProject> getProjects() throws Exception {

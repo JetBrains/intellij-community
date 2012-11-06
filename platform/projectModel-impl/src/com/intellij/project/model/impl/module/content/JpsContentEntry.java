@@ -47,8 +47,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   private final VirtualFilePointer myRoot;
   private final JpsModule myModule;
   private final JpsRootModel myRootModel;
-  private List<JpsSourceFolder> mySourceFolders;
-  private List<JpsExcludeFolder> myExcludeFolders;
+  private final List<JpsSourceFolder> mySourceFolders;
+  private final List<JpsExcludeFolder> myExcludeFolders;
 
   public JpsContentEntry(JpsModule module, JpsRootModel rootModel, String rootUrl) {
     myModule = module;

@@ -43,26 +43,27 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
-  public abstract List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest);
+  public abstract List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest, final boolean withClosed);
   /**
    * Returns already cached issues.
    * @return cached issues.
    */
   public abstract List<Task> getCachedIssues();
 
+  public abstract List<Task> getCachedIssues(final boolean withClosed);
+
   @Nullable
   public abstract Task updateIssue(@NotNull String id);
 
   public abstract LocalTask[] getLocalTasks();
+
+  public abstract LocalTask[] getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 
   public abstract LocalTask createLocalTask(String summary);
 
   public abstract void activateTask(@NotNull Task task, boolean clearContext, boolean createChangelist);
-
-  @NotNull
-  public abstract List<ChangeListInfo> getOpenChangelists(Task task);
 
   @NotNull
   public abstract LocalTask getActiveTask();
@@ -82,6 +83,8 @@ public abstract class TaskManager {
   public abstract LocalTask getAssociatedTask(LocalChangeList list);
 
   public abstract void associateWithTask(LocalChangeList changeList);
+
+  public abstract void disassociateFromTask(LocalChangeList changeList);
 
   public abstract void removeTask(LocalTask task);
 

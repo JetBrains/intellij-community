@@ -33,11 +33,13 @@ import java.io.File;
     }
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable implements ExportableComponent {
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(getExternalFileName())};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("library.global.settings");

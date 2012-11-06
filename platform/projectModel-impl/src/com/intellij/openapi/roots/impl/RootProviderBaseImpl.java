@@ -26,14 +26,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class RootProviderBaseImpl implements RootProvider {
   private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
+  @Override
   public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }

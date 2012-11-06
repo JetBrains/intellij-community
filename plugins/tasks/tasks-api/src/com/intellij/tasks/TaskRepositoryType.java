@@ -41,6 +41,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
   @NotNull
   public abstract String getName();
 
+  @NotNull
   public abstract Icon getIcon();
 
   @NotNull

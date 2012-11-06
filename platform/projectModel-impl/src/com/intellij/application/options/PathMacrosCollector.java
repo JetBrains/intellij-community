@@ -69,7 +69,7 @@ public class PathMacrosCollector extends PathMacroMap {
 
   @Override
   public String substituteRecursively(String text, boolean caseSensitive) {
-    if (text == null || text.length() == 0) return text;
+    if (text == null || text.isEmpty()) return text;
 
     myMatcher.reset(text);
     while (myMatcher.find()) {
@@ -80,8 +80,9 @@ public class PathMacrosCollector extends PathMacroMap {
     return text;
   }
 
+  @Override
   public String substitute(String text, boolean caseSensitive) {
-    if (text == null || text.length() == 0) return text;
+    if (text == null || text.isEmpty()) return text;
 
     String protocol = null;
     if (text.length() > 7 && text.charAt(0) == 'f') {

@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class MavenDefaultModelsProvider implements MavenModelsProvider {
   private final Project myProject;
@@ -28,10 +29,13 @@ public class MavenDefaultModelsProvider implements MavenModelsProvider {
     myProject = project;
   }
 
+  @Override
+  @NotNull
   public Module[] getModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
 
+  @Override
   public VirtualFile[] getContentRoots(Module module) {
     return ModuleRootManager.getInstance(module).getContentRoots();
   }

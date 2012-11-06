@@ -15,18 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.lang
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
-import org.jetbrains.plugins.groovy.completion.GrCompletionWithLibraryTest
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Sergey Evdokimov
  */
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GrCompletionWithLibraryTest.GROOVY_17_PROJECT_DESCRIPTOR
+  final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+      modifiableModel.commit();
+    }
   }
 
   private void doTestCompletion(String fileText, boolean exists) {

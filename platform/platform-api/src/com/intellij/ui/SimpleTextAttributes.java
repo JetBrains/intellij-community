@@ -82,11 +82,11 @@ public final class SimpleTextAttributes {
     this(style, fgColor, null);
   }
 
-  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor, Color waveColor) {
+  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor, @Nullable Color waveColor) {
     this(null, fgColor, waveColor, style);
   }
 
-  public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, @StyleAttributeConstant int style) {
+  public SimpleTextAttributes(@Nullable final Color bgColor, final Color fgColor, @Nullable final Color waveColor, @StyleAttributeConstant int style) {
     if ((~(STYLE_PLAIN |
            STYLE_BOLD |
            STYLE_ITALIC |
@@ -116,6 +116,7 @@ public final class SimpleTextAttributes {
   /**
    * @return background color
    */
+  @Nullable
   public Color getBgColor() {
     return myBgColor;
   }
@@ -124,6 +125,7 @@ public final class SimpleTextAttributes {
    * @return wave color. The method can return <code>null</code>. <code>null</code>
    *         means that color of wave is the same as foreground color.
    */
+  @Nullable
   public Color getWaveColor() {
     return myWaveColor;
   }

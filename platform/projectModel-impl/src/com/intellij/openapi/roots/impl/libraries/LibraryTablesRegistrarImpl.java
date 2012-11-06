@@ -30,22 +30,26 @@ import java.util.Map;
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
 
+  @Override
   @NotNull
   public LibraryTable getLibraryTable() {
     return ApplicationLibraryTable.getApplicationTable();
   }
 
+  @Override
   @NotNull
   public LibraryTable getLibraryTable(@NotNull Project project) {
     return ProjectLibraryTable.getInstance(project);
   }
 
+  @Override
   public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
     if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) return getLibraryTable(project);
     if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) return getLibraryTable();
     return myLibraryTables.get(level);
   }
 
+  @Override
   public void registerLibraryTable(@NotNull LibraryTable libraryTable) {
     String tableLevel = libraryTable.getTableLevel();
     final LibraryTable oldTable = myLibraryTables.put(tableLevel, libraryTable);
@@ -54,29 +58,36 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     }
   }
 
+  @Override
   @NotNull
   public LibraryTable registerLibraryTable(final String customLevel) {
     LibraryTable table = new LibraryTableBase() {
+      @Override
       public String getTableLevel() {
         return customLevel;
       }
 
+      @Override
       public LibraryTablePresentation getPresentation() {
         return new LibraryTablePresentation() {
+          @Override
           public String getDisplayName(boolean plural) {
             return customLevel;
           }
 
+          @Override
           public String getDescription() {
             throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
           }
 
+          @Override
           public String getLibraryTableEditorTitle() {
             throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
           }
         };
       }
 
+      @Override
       public boolean isEditable() {
         return false;
       }
@@ -86,10 +97,12 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     return table;
   }
 
+  @Override
   public List<LibraryTable> getCustomLibraryTables() {
     return new SmartList<LibraryTable>(myLibraryTables.values());
   }
 
+  @Override
   public void dispose() {
     myLibraryTables.clear();
   }

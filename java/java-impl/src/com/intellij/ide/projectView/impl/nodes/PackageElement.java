@@ -54,6 +54,7 @@ public final class PackageElement implements Queryable, RootsProvider {
     return myModule;
   }
 
+  @NotNull
   public PsiPackage getPackage() {
     return myElement;
   }
@@ -96,6 +97,7 @@ public final class PackageElement implements Queryable, RootsProvider {
 
 
 
+  @Override
   public void putInfo(@NotNull Map<String, String> info) {
     PsiPackage pkg = getPackage();
     if (pkg instanceof Queryable) {

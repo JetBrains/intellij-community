@@ -29,7 +29,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
+  @Override
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) return null;
@@ -75,6 +76,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return super.createNode(project, element, viewSettings);
   }
 
+  @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PsiClass) {
       final PsiFile file = ((PsiClass)element).getContainingFile();
@@ -83,6 +85,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   public int getElementWeight(final Object value, final boolean isSortByType) {
      if (value instanceof PsiClass){
       return isSortByType ? ClassTreeNode.getClassPosition((PsiClass)value) : 3;
@@ -91,6 +94,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return -1;
   }
 
+  @Override
   public String getElementLocation(final Object element) {
     if (element instanceof PsiClass) {
       return ClassPresentationUtil.getNameForClass((PsiClass)element, true);
@@ -98,15 +102,18 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean isInvalidElement(final Object element) {
     return element instanceof PsiClass && !((PsiClass)element).isValid();
   }
 
+  @Override
   @NotNull
   public String getFavoriteTypeId() {
     return "class";
   }
 
+  @Override
   public String getElementUrl(final Object element) {
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
@@ -115,15 +122,17 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public String getElementModuleName(final Object element) {
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      Module module = ModuleUtil.findModuleForPsiElement(aClass);
+      Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       return module != null ? module.getName() : null;
     }
     return null;
   }
 
+  @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     GlobalSearchScope scope = null;
     if (moduleName != null) {

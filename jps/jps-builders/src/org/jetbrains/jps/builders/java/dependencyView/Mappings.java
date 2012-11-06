@@ -55,6 +55,7 @@ public class Mappings {
   private DependencyContext myContext;
   private final int myInitName;
   private final int myEmptyName;
+  private final int myObjectClassName;
   private org.jetbrains.jps.builders.java.dependencyView.Logger<Integer> myDebugS;
 
   private IntIntMultiMaplet myClassToSubclasses;
@@ -84,6 +85,7 @@ public class Mappings {
     myContext = base.myContext;
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
+    myObjectClassName = myContext.get("java/lang/Object");
     myDebugS = base.myDebugS;
     createImplementation();
   }
@@ -99,6 +101,7 @@ public class Mappings {
     createImplementation();
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
+    myObjectClassName = myContext.get("java/lang/Object");
   }
 
   private void createImplementation() throws IOException {
@@ -504,6 +507,9 @@ public class Mappings {
     }
 
     private void affectUsagesInGenericBounds(final int className, final Collection<UsageRepr.Usage> affectedUsages, TIntHashSet dependants) {
+      if (className == myObjectClassName) {
+        return;
+      }
       debug("Affecting usages in generic type parameter bounds of class: ", className);
       affectedUsages.add(UsageRepr.createClassAsGenericBoundUsage(myContext, className));
 
@@ -858,7 +864,17 @@ public class Mappings {
             }
             else {
               debug("External dependency information retrieved.");
-              affectedFiles.addAll(affection.getAffectedFiles());
+              final Collection<File> files = affection.getAffectedFiles();
+              if (myFilter == null) {
+                affectedFiles.addAll(files);
+              }
+              else {
+                for (File file : files) {
+                  if (myFilter.accept(file)) {
+                    affectedFiles.add(file);
+                  }
+                }
+              }
             }
           }
 

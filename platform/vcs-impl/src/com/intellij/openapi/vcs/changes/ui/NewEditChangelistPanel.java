@@ -87,9 +87,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
     myMakeActiveCheckBox = new JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"));
     myAdditionalControlsPanel.add(myMakeActiveCheckBox);
     add(myAdditionalControlsPanel, gb);
-
-    setPreferredSize(new Dimension(300, 150));
-    setMinimumSize(new Dimension(300, 150));
   }
 
   public JCheckBox getMakeActiveCheckBox() {
