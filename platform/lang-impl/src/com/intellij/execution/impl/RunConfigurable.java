@@ -1392,6 +1392,12 @@ class RunConfigurable extends BaseConfigurable {
         if (position == ABOVE && newIndex > 1 && myTreeModel.canDrop(oldIndex, newIndex - 1, BELOW)) {
           return Trinity.create(oldIndex, newIndex - 1, BELOW);
         }
+        if (position == BELOW && myTreeModel.canDrop(oldIndex, newIndex, ABOVE)) {
+          return Trinity.create(oldIndex, newIndex, ABOVE);
+        }
+        if (position == ABOVE && myTreeModel.canDrop(oldIndex, newIndex, BELOW)) {
+          return Trinity.create(oldIndex, newIndex, BELOW);
+        }
         newIndex += myDirection;
       }
       return null;
@@ -1637,7 +1643,17 @@ class RunConfigurable extends BaseConfigurable {
           return false;
         }
       }
-      if (oldType != newType || newParent == oldNode || oldParent == newNode)
+      if (oldType != newType) {
+        DefaultMutableTreeNode typeNode = getConfigurationTypeNode(oldType);
+        if (getKind(oldParent) == FOLDER && typeNode != null && typeNode.getNextSibling() == newNode && position == ABOVE) {
+          return true;
+        }
+        if (getKind(oldParent) == CONFIGURATION_TYPE && oldKind == FOLDER && typeNode != null && typeNode.getNextSibling() == newNode && position == ABOVE) {
+          return true;
+        }
+        return false;
+      }
+      if (newParent == oldNode || oldParent == newNode)
         return false;
       if (oldKind == FOLDER && newKind != FOLDER) {
         if (newKind.isConfiguration() &&
@@ -1656,7 +1672,7 @@ class RunConfigurable extends BaseConfigurable {
         return false;
       if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) == TEMPORARY_CONFIGURATION)
         return false;
       if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
         return false;
@@ -1702,10 +1718,20 @@ class RunConfigurable extends BaseConfigurable {
         myTree.expandPath(new TreePath(newNode.getPath()));
       }
       else {
+        ConfigurationType type = getType(oldNode);
+        assert type != null;
         removeNodeFromParent(oldNode);
-        int index = newParent.getIndex(newNode);
-        if (position == BELOW)
+        int index;
+        if (type != getType(newNode)) {
+          DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
+          assert typeNode != null;
+          newParent = typeNode;
+          index = newParent.getChildCount();
+        } else {
+          index = newParent.getIndex(newNode);
+          if (position == BELOW)
           index++;
+        }
         insertNodeInto(oldNode, newParent, index);
       }
       TreePath treePath = new TreePath(oldNode.getPath());
@@ -1743,7 +1769,9 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     @Nullable
-    private ConfigurationType getType(DefaultMutableTreeNode treeNode) {
+    private ConfigurationType getType(@Nullable DefaultMutableTreeNode treeNode) {
+      if (treeNode == null)
+        return null;
       Object userObject = treeNode.getUserObject();
       if (userObject instanceof SingleConfigurationConfigurable) {
         SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
