@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.codeInsight.intention.impl.BaseMoveInitializerToMethodAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ import java.util.List;
  */
 public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiClass> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeClassStaticProcessor");
+  private List<PsiField> myFieldsToSplit = new ArrayList<PsiField>();
 
   public MakeClassStaticProcessor(final Project project, final PsiClass aClass, final Settings settings) {
     super(project, aClass, settings);
@@ -122,6 +124,9 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
             }
           }
         }
+      }
+      for (PsiField field : myFieldsToSplit) {
+        MoveInstanceMembersUtil.moveInitializerToConstructor(factory, constructor, field);
       }
     }
 
@@ -221,7 +226,12 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       }
     }
     else if (mySettings.isMakeClassParameter() && (element instanceof PsiThisExpression || element instanceof PsiSuperExpression)) {
-      element.replace(factory.createExpressionFromText(convertToFieldName(mySettings.getClassParameterName()), null));
+      final PsiElement replace =
+        element.replace(factory.createExpressionFromText(convertToFieldName(mySettings.getClassParameterName()), null));
+      final PsiField field = PsiTreeUtil.getParentOfType(replace, PsiField.class);
+      if (field != null) {
+        myFieldsToSplit.add(field);
+      }
     }
     else if (element instanceof PsiNewExpression && mySettings.isMakeClassParameter()) {
       final PsiNewExpression newExpression = ((PsiNewExpression)element);
