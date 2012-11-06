@@ -90,6 +90,9 @@
 
     <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
 
+    <projectService serviceInterface="com.jetbrains.python.ReSTService"
+                    serviceImplementation="com.jetbrains.python.ReSTService"/>
+
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
