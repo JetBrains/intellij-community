@@ -61,6 +61,18 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       assertOutput(a, fs().file("A.class"));
     }
 
+    public void testCopyResourcesFromModuleOutput() {
+      VirtualFile file = createFile("src/a.xml", "1");
+      Module module = addModule("a", file.getParent());
+      Artifact artifact = addArtifact(root().module(module));
+      make(artifact);
+      assertOutput(artifact, fs().file("a.xml", "1"));
+
+      changeFile(file, "2");
+      make(artifact);
+      assertOutput(artifact, fs().file("a.xml", "2"));
+    }
+
     public void testRebuildArtifactAfterClean() {
       Artifact a = addArtifact(root().file(createFile("file.txt", "123")));
       make(a);
