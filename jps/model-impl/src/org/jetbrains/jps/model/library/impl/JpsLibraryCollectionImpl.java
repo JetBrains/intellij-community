@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
@@ -61,4 +62,17 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
     }
     return null;
   }
+
+  @Override
+  @Nullable
+  public <E extends JpsElement> JpsTypedLibrary<E> findLibrary(@NotNull String name, @NotNull JpsLibraryType<E> type) {
+    for (JpsTypedLibrary<E> library : getLibraries(type)) {
+      if (name.equals(library.getName())) {
+        return library;
+      }
+    }
+    return null;
+  }
+
+
 }

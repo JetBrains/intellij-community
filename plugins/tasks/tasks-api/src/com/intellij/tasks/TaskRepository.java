@@ -75,8 +75,6 @@ public abstract class TaskRepository  {
   /**
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
    *
-   *
-   *
    * @param query repository specific.
    * @param max maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.

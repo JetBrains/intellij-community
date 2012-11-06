@@ -50,10 +50,8 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
   }
 
   @Override
-  protected Map<String, String> addPathVariables(Map<String, String> pathVariables) {
-    def map = new HashMap<String, String>(pathVariables)
-    map.put("ARTIFACTS_OUT", FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().absolutePath) + "/artifacts")
-    return map
+  protected void addPathVariables(Map<String, String> pathVariables) {
+    pathVariables.put("ARTIFACTS_OUT", FileUtil.toSystemIndependentName(getOrCreateOutputDirectory().absolutePath) + "/artifacts")
   }
 
   @Override

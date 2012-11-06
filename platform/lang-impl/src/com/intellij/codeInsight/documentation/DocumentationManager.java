@@ -964,7 +964,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
     buffer.append("<a href=\"");
-    buffer.append("psi_element://"); // :-)
+    buffer.append(PSI_ELEMENT_PROTOCOL); // :-)
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {

@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CoreModule extends MockComponentManager implements ModuleEx {
-  private String myPath;
+  private final String myPath;
   private final Project myProject;
   private final ModuleScopeProvider myModuleScopeProvider;
 

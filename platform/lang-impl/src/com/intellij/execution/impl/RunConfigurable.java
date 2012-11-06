@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -70,6 +71,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
 
@@ -552,8 +554,6 @@ class RunConfigurable extends BaseConfigurable {
 
   @Nullable
   private ConfigurationType getSelectedConfigurationType() {
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath == null) return null;
     final DefaultMutableTreeNode configurationTypeNode = getSelectedConfigurationTypeNode();
     return configurationTypeNode != null ? (ConfigurationType)configurationTypeNode.getUserObject() : null;
   }
@@ -606,8 +606,9 @@ class RunConfigurable extends BaseConfigurable {
     List<ConfigurationType> configurationTypes = new ArrayList<ConfigurationType>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
-      if (node.getUserObject() instanceof ConfigurationType) {
-        configurationTypes.add((ConfigurationType)node.getUserObject());
+      Object userObject = node.getUserObject();
+      if (userObject instanceof ConfigurationType) {
+        configurationTypes.add((ConfigurationType)userObject);
       }
     }
     for (ConfigurationType type : types) {
@@ -656,7 +657,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private void applyByType(ConfigurationType type) throws ConfigurationException {
+  private void applyByType(@NotNull ConfigurationType type) throws ConfigurationException {
     RunnerAndConfigurationSettings selectedSettings = getSelectedSettings();
     int indexToMove = -1;
 
@@ -743,7 +744,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   @Nullable
-  private DefaultMutableTreeNode getConfigurationTypeNode(final ConfigurationType type) {
+  private DefaultMutableTreeNode getConfigurationTypeNode(@NotNull final ConfigurationType type) {
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       if (node.getUserObject() == type) return node;
@@ -903,25 +904,25 @@ class RunConfigurable extends BaseConfigurable {
 
   @Nullable
   private DefaultMutableTreeNode getSelectedConfigurationTypeNode() {
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent();
-    final Object userObject = node.getUserObject();
-    if (userObject instanceof ConfigurationType) {
-      return node;
-    }
-    else {
-      final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
-      if (parent != null && parent.getUserObject() instanceof ConfigurationType) {
-        return parent;
+    TreePath selectionPath = myTree.getSelectionPath();
+    DefaultMutableTreeNode node = selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null;
+    while(node != null) {
+      Object userObject = node.getUserObject();
+      if (userObject instanceof ConfigurationType) {
+        return node;
       }
-      return null;
+      node = (DefaultMutableTreeNode)node.getParent();
     }
+    return null;
   }
 
   private static String createUniqueName(DefaultMutableTreeNode typeNode, @Nullable String baseName) {
     String str = (baseName == null) ? ExecutionBundle.message("run.configuration.unnamed.name.prefix") : baseName;
+    List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
+    collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
     final ArrayList<String> currentNames = new ArrayList<String>();
-    for (int i = 0; i < typeNode.getChildCount(); i++) {
-      final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
+    for (DefaultMutableTreeNode node : configurationNodes) {
+      final Object userObject = node.getUserObject();
       if (userObject instanceof SingleConfigurationConfigurable) {
         currentNames.add(((SingleConfigurationConfigurable)userObject).getNameText());
       }
@@ -957,34 +958,22 @@ class RunConfigurable extends BaseConfigurable {
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       selectedNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      if (getKind(selectedNode) != FOLDER) {
-        selectedNode = null;
-      }
     }
-    for (int i = 0; i < myRoot.getChildCount(); i++) {
-      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
-      if (treeNode.getUserObject() == factory.getType()) {
-        node = treeNode;
-        if (selectedNode != null && selectedNode.getParent() == node) {
-          node = selectedNode;
-        }
-        break;
-      }
-    }
-    if (node == null) {
-      node = new DefaultMutableTreeNode(factory.getType());
-      //final DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode)myRoot.getLastChild();
-      //if (lastChild.getUserObject() instanceof String) {
-      //  int index = myRoot.getIndex(lastChild);
-      //  myRoot.insert(node, Math.max(index - 1, 0));
-      //} else {
-        myRoot.add(node);
-      //}
-
+    DefaultMutableTreeNode typeNode = getConfigurationTypeNode(factory.getType());
+    if (typeNode == null) {
+      typeNode = new DefaultMutableTreeNode(factory.getType());
+      myRoot.add(node);
       sortTopLevelBranches();
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
-    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(node, null), factory);
+    node = typeNode;
+    if (selectedNode != null && typeNode.isNodeDescendant(selectedNode)) {
+      node = selectedNode;
+      if (getKind(node).isConfiguration()) {
+        node = (DefaultMutableTreeNode)node.getParent();
+      }
+    }
+    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(typeNode, null), factory);
     if (factory instanceof ConfigurationFactoryEx) {
       ((ConfigurationFactoryEx)factory).onNewConfigurationCreated(settings.getConfiguration());
     }
@@ -992,7 +981,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   @Nullable
-  private String editFolderName(final String initialName, final ConfigurationType type) {
+  private String editFolderName(final String initialName, @NotNull final ConfigurationType type) {
     return Messages.showInputDialog(myProject, "Enter new folder name", "New Folder", null, initialName, new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
@@ -1075,21 +1064,8 @@ class RunConfigurable extends BaseConfigurable {
             }
 
             public int getDefaultOptionIndex() {
-              final TreePath selectionPath = myTree.getSelectionPath();
-              if (selectionPath != null) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-                final Object userObject = node.getUserObject();
-                ConfigurationType type = null;
-                if (userObject instanceof SingleConfigurationConfigurable) {
-                  final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-                  type = configurable.getConfiguration().getType();
-                }
-                else if (userObject instanceof ConfigurationType) {
-                  type = (ConfigurationType)userObject;
-                }
-                return ArrayUtil.find(configurationTypes, type);
-              }
-              return super.getDefaultOptionIndex();
+              ConfigurationType type = getSelectedConfigurationType();
+              return type != null ? ArrayUtilRt.find(configurationTypes, type) : super.getDefaultOptionIndex();
             }
 
             private ListPopupStep getSupStep(final ConfigurationType type) {
@@ -1380,7 +1356,10 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void doMove() {
-      TreeUtil.moveSelectedRow(myTree, myDirection);
+      Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> dropPosition = getAvailableDropPosition();
+      if (dropPosition != null) {
+        myTreeModel.drop(dropPosition.first, dropPosition.second, dropPosition.third);
+      }
     }
 
     @Override
@@ -1392,25 +1371,35 @@ class RunConfigurable extends BaseConfigurable {
       e.getPresentation().setEnabled(isEnabled(e));
     }
 
+    @Nullable
+    private Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> getAvailableDropPosition() {
+      int[] rows = myTree.getSelectionRows();
+      if (rows == null || rows.length != 1) {
+        return null;
+      }
+      int oldIndex = rows[0];
+      int newIndex = oldIndex + myDirection;
+      while (newIndex > 0 && newIndex < myTree.getRowCount()) {
+        RowsDnDSupport.RefinedDropSupport.Position position = myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
+                                                              INTO :
+                                                              myDirection > 0 ? BELOW : ABOVE;
+        if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
+          return Trinity.create(oldIndex, newIndex, position);
+        }
+        if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
+          return Trinity.create(oldIndex, newIndex + 1, ABOVE);
+        }
+        if (position == ABOVE && newIndex > 1 && myTreeModel.canDrop(oldIndex, newIndex - 1, BELOW)) {
+          return Trinity.create(oldIndex, newIndex - 1, BELOW);
+        }
+        newIndex += myDirection;
+      }
+      return null;
+    }
+
     @Override
     public boolean isEnabled(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null) {
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        if (!(treeNode.getUserObject() instanceof ConfigurationType) && !(treeNode.getUserObject() instanceof String)) {
-          RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
-          if (selectedSettings == null)
-            return false;
-          RunnerAndConfigurationSettings siblingSettings;
-          if (myDirection < 0) {
-            siblingSettings = getSettings(treeNode.getPreviousSibling());
-          } else {
-            siblingSettings = getSettings(treeNode.getNextSibling());
-          }
-            return siblingSettings != null && siblingSettings.isTemporary() == selectedSettings.isTemporary();
-          }
-        }
-      return false;
+      return getAvailableDropPosition() != null;
     }
   }
 
@@ -1428,6 +1417,9 @@ class RunConfigurable extends BaseConfigurable {
           defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
         }
         final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
+        if (defaultsNode == null) {
+          return;
+        }
         final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
         myTree.expandPath(path);
         TreeUtil.selectInTree(defaultsNode, true, myTree);
@@ -1462,14 +1454,17 @@ class RunConfigurable extends BaseConfigurable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final ConfigurationType type = getSelectedConfigurationType();
+      if (type == null) {
+        return;
+      }
       String folderName = editFolderName(null, type);
       if (folderName != null) {
         List<DefaultMutableTreeNode> folders = new ArrayList<DefaultMutableTreeNode>();
         collectNodesRecursively(getConfigurationTypeNode(type), folders, FOLDER);
         int index = folders.size();
-        DefaultMutableTreeNode node = getSelectedConfigurationTypeNode();
+        DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         DefaultMutableTreeNode folderNode = new DefaultMutableTreeNode(folderName);
-        myTreeModel.insertNodeInto(folderNode, node, index);
+        myTreeModel.insertNodeInto(folderNode, typeNode, index);
         TreeUtil.selectNode(myTree, folderNode);
       }
     }
@@ -1635,28 +1630,35 @@ class RunConfigurable extends BaseConfigurable {
       ConfigurationType oldType = getType(oldNode);
       ConfigurationType newType = getType(newNode);
       if (oldParent == newParent) {
-        if (oldNode.getPreviousSibling() == newNode && position == Position.BELOW) {
+        if (oldNode.getPreviousSibling() == newNode && position == BELOW) {
           return false;
         }
-        if (oldNode.getNextSibling() == newNode && position == Position.ABOVE) {
+        if (oldNode.getNextSibling() == newNode && position == ABOVE) {
           return false;
         }
       }
       if (oldType != newType || newParent == oldNode || oldParent == newNode)
         return false;
       if (oldKind == FOLDER && newKind != FOLDER) {
+        if (newKind.isConfiguration() &&
+            position == ABOVE &&
+            getKind(newParent) == CONFIGURATION_TYPE &&
+            newIndex > 1 &&
+            getKind((DefaultMutableTreeNode)myTree.getPathForRow(newIndex - 1).getParentPath().getLastPathComponent()) == FOLDER) {
+          return true;
+        }
         return false;
       }
       if (!oldKind.supportsDnD() || !newKind.supportsDnD()) {
         return false;
       }
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.ABOVE)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == ABOVE)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.BELOW)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == Position.ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE && newNode.getPreviousSibling() != null && getKind(newNode.getPreviousSibling()) != CONFIGURATION)
         return false;
-      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == Position.BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
+      if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == BELOW && newNode.getNextSibling() != null && getKind(newNode.getNextSibling()) != TEMPORARY_CONFIGURATION)
         return false;
       if (oldParent == newNode.getParent()) { //Same parent
         if (oldKind.isConfiguration() && newKind.isConfiguration()) {
@@ -1665,7 +1667,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettings oldSettings = getSettings(oldNode);
           return (oldSettings != null && ((DefaultMutableTreeNode)newNode.getParent()).getUserObject() == oldSettings.getType());
         } else if (oldKind == FOLDER) {
-          return true;
+          return !myTree.isExpanded(newIndex) || position == ABOVE;
         }
       }
       return true;
@@ -1684,7 +1686,7 @@ class RunConfigurable extends BaseConfigurable {
       DefaultMutableTreeNode newNode = (DefaultMutableTreeNode)myTree.getPathForRow(newIndex).getLastPathComponent();
       DefaultMutableTreeNode newParent = (DefaultMutableTreeNode)newNode.getParent();
       NodeKind oldKind = getKind(oldNode);
-      NodeKind newKind = getKind(newNode);
+      boolean wasExpanded = myTree.isExpanded(new TreePath(oldNode.getPath()));
       if (isDropInto(myTree, oldIndex, newIndex)) { //Drop in folder
         removeNodeFromParent(oldNode);
         int index = newNode.getChildCount();
@@ -1702,11 +1704,15 @@ class RunConfigurable extends BaseConfigurable {
       else {
         removeNodeFromParent(oldNode);
         int index = newParent.getIndex(newNode);
-        if (position == Position.BELOW)
+        if (position == BELOW)
           index++;
         insertNodeInto(oldNode, newParent, index);
       }
-      myTree.setSelectionPath(new TreePath(oldNode.getPath()));
+      TreePath treePath = new TreePath(oldNode.getPath());
+      myTree.setSelectionPath(treePath);
+      if (wasExpanded) {
+        myTree.expandPath(treePath);
+      }
     }
 
     @Override

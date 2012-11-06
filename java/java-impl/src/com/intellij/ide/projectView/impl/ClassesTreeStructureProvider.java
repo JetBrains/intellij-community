@@ -40,6 +40,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     myProject = project;
   }
 
+  @Override
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
@@ -86,10 +87,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
   }
 
+  @Override
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
     return null;
   }
 
+  @Override
   public PsiElement getTopLevelElement(final PsiElement element) {
     PsiFile baseRootFile = getBaseRootFile(element);
     if (baseRootFile == null) return null;

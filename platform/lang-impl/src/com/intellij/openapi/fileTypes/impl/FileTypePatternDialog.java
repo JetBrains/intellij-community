@@ -44,6 +44,7 @@ public class FileTypePatternDialog {
       model.addElement(null);
       final List<Language> languages = TemplateDataLanguageMappings.getTemplateableLanguages();
       Collections.sort(languages, new Comparator<Language>() {
+        @Override
         public int compare(final Language o1, final Language o2) {
           return o1.getID().compareTo(o2.getID());
         }

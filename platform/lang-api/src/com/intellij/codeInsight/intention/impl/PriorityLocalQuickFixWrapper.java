@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Danila Ponomarenko
  */
 public abstract class PriorityLocalQuickFixWrapper implements LocalQuickFix {
-  private LocalQuickFix fix;
+  private final LocalQuickFix fix;
 
   private PriorityLocalQuickFixWrapper(@NotNull LocalQuickFix fix) {
     this.fix = fix;

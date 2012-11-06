@@ -131,8 +131,8 @@ public class CreateClassUtil {
     PsiManager manager = directory.getManager();
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(manager.getProject());
     DirectoryInfo info = directoryIndex.getInfoForDirectory(directory.getVirtualFile());
-    if (info == null || info.sourceRoot == null) return null;
-    return manager.findDirectory(info.sourceRoot);
+    if (info == null || !info.hasSourceRoot()) return null;
+    return manager.findDirectory(info.getSourceRoot());
   }
 
   @Nullable

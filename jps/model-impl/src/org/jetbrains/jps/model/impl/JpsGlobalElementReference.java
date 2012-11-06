@@ -23,4 +23,9 @@ public class JpsGlobalElementReference extends JpsElementReferenceBase<JpsGlobal
   @Override
   public void applyChanges(@NotNull JpsGlobalElementReference modified) {
   }
+
+  @Override
+  public String toString() {
+    return "global ref";
+  }
 }

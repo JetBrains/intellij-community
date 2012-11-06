@@ -24,12 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class ConfigureFileDefaultEncodingAction extends AnAction {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     final FileEncodingConfigurable configurable = new FileEncodingConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable(){
+      @Override
       public void run() {
         if (virtualFile != null) {
           configurable.selectFile(virtualFile);
@@ -38,6 +40,7 @@ public class ConfigureFileDefaultEncodingAction extends AnAction {
     });
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }

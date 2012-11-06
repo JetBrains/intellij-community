@@ -39,10 +39,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -110,31 +107,49 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
     
     if (myTarget != null) {
-      final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
-      final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myTarget.getProject())).getFindUsagesManager();
-      final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(myTarget, true);
-      final LocalSearchScope scope = new LocalSearchScope(myFile);
-      Collection<PsiReference> refs = findUsagesHandler != null
-                                ? findUsagesHandler.findReferencesToHighlight(myTarget, scope)
-                                : ReferencesSearch.search(myTarget, scope).findAll();
-      for (PsiReference psiReference : refs) {
-        final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
-        if (detector == null || detector.getReferenceAccess(myTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
-          myReadAccessRanges.addAll(textRanges);
-        }
-        else {
-          myWriteAccessRanges.addAll(textRanges);
+      highlightTargetUsages(myTarget);
+    } else {
+      PsiReference ref = TargetElementUtilBase.findReference(myEditor);
+      if (ref instanceof PsiPolyVariantReference) {
+        ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
+        if (results.length > 0) {
+          for (ResolveResult result : results) {
+            PsiElement target = result.getElement();
+            if (target != null) {
+              highlightTargetUsages(target);
+            }
+          }
         }
       }
 
-      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(myFile, myTarget);
-      if (declRange != null) {
-        if (detector != null && detector.isDeclarationWriteAccess(myTarget)) {
-          myWriteAccessRanges.add(declRange);
-        }
-        else {
-          myReadAccessRanges.add(declRange);
-        }
+    }
+  }
+
+  private void highlightTargetUsages(@NotNull PsiElement target) {
+    final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
+    final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
+    final LocalSearchScope scope = new LocalSearchScope(myFile);
+    Collection<PsiReference> refs = findUsagesHandler != null
+                              ? findUsagesHandler.findReferencesToHighlight(target, scope)
+                              : ReferencesSearch.search(target, scope).findAll();
+    for (PsiReference psiReference : refs) {
+      final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
+      if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
+        myReadAccessRanges.addAll(textRanges);
+      }
+      else {
+        myWriteAccessRanges.addAll(textRanges);
+      }
+    }
+
+    final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(myFile, target);
+    if (declRange != null) {
+      if (detector != null && detector.isDeclarationWriteAccess(target)) {
+        myWriteAccessRanges.add(declRange);
+      }
+      else {
+        myReadAccessRanges.add(declRange);
       }
     }
   }

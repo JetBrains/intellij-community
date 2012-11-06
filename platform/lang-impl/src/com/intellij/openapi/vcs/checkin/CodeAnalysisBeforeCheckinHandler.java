@@ -57,10 +57,12 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     myCheckinPanel = panel;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.standard.options.check.smells"));
     return new RefreshableOnComponent() {
+      @Override
       public JComponent getComponent() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(checkBox);
@@ -68,13 +70,16 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
         return panel;
       }
 
+      @Override
       public void refresh() {
       }
 
+      @Override
       public void saveState() {
         getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = checkBox.isSelected();
       }
 
+      @Override
       public void restoreState() {
         checkBox.setSelected(getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT);
       }
@@ -127,6 +132,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     return result;
   }
 
+  @Override
   public ReturnResult beforeCheckin(CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       if (DumbService.getInstance(myProject).isDumb()) {

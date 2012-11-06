@@ -4,10 +4,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
-import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -25,7 +25,7 @@ import java.awt.*;
  * @author Evgeny Zakrevsky
  */
 public class TaskCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
-  private static final Color REMOTE_TASK_BG_COLOR = new Color(240, 240, 255);
+  private static final Color ISSUE_BG_COLOR = new Color(240, 240, 255);
   private Matcher myMatcher;
   private final Project myProject;
 
@@ -44,14 +44,14 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       final Task task = ((TaskPsiElement)value).getTask();
       final SimpleColoredComponent c = new SimpleColoredComponent();
       final boolean isLocalTask = TaskManager.getManager(myProject).findTask(task.getId()) != null;
-      final boolean isOld = TaskManager.getManager(myProject).getOpenChangelists(task).isEmpty();
+      final boolean isClosed = task.isClosed() || (task instanceof LocalTask && ((LocalTask)task).isClosedLocally());
 
-      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : REMOTE_TASK_BG_COLOR;
+      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : ISSUE_BG_COLOR;
       panel.setBackground(bg);
-      SimpleTextAttributes attr = getAttributes(sel, task.isClosed());
+      SimpleTextAttributes attr = getAttributes(sel, isClosed);
 
-      c.setIcon(isLocalTask && isOld && task.getIcon() != null ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
-      SpeedSearchUtil.appendColoredFragmentForMatcher(TaskUtil.getTrimmedSummary(task), c, attr, myMatcher, bg, sel);
+      c.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
+      SpeedSearchUtil.appendColoredFragmentForMatcher(task.getPresentableName(), c, attr, myMatcher, bg, sel);
       panel.add(c, BorderLayout.CENTER);
     }
     else if ("...".equals(value)){
@@ -72,7 +72,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
   }
 
   private static SimpleTextAttributes getAttributes(final boolean selected, final boolean taskClosed) {
-    return new SimpleTextAttributes(taskClosed ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
+    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
                                     taskClosed ? UIUtil.getLabelDisabledForeground() : UIUtil.getListForeground(selected));
   }
 

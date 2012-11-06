@@ -82,6 +82,7 @@ public class CheckboxTreeTable extends TreeTableView {
     }.installOn(this);
 
     addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (isToggleEvent(e)) {
           TreePath treePath = tree.getLeadSelectionPath();

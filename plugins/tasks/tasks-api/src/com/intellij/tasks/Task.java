@@ -50,7 +50,7 @@ public abstract class Task {
   @NotNull
   public abstract Comment[] getComments();
 
-  @Nullable
+  @NotNull
   public abstract Icon getIcon();
 
   @NotNull

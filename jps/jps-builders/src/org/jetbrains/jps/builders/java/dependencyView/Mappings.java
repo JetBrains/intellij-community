@@ -55,6 +55,7 @@ public class Mappings {
   private DependencyContext myContext;
   private final int myInitName;
   private final int myEmptyName;
+  private final int myObjectClassName;
   private org.jetbrains.jps.builders.java.dependencyView.Logger<Integer> myDebugS;
 
   private IntIntMultiMaplet myClassToSubclasses;
@@ -84,6 +85,7 @@ public class Mappings {
     myContext = base.myContext;
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
+    myObjectClassName = myContext.get("java/lang/Object");
     myDebugS = base.myDebugS;
     createImplementation();
   }
@@ -99,6 +101,7 @@ public class Mappings {
     createImplementation();
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
+    myObjectClassName = myContext.get("java/lang/Object");
   }
 
   private void createImplementation() throws IOException {
@@ -388,7 +391,7 @@ public class Mappings {
       }
     }
 
-    private void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
+    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
       for (int supername : fromClass.getSupers()) {
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
@@ -403,7 +406,7 @@ public class Mappings {
       }
     }
 
-    private boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
+    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
       for (int supername : fromClass.getSupers()) {
         final ClassRepr superClass = reprByName(supername);
         if (superClass != null) {
@@ -454,7 +457,7 @@ public class Mappings {
     }
 
     @Nullable
-    private Boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
+    Boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
       if (who.equals(whom)) {
         return Boolean.TRUE;
       }
@@ -484,7 +487,7 @@ public class Mappings {
       return Boolean.FALSE;
     }
 
-    private boolean isMethodVisible(final int className, final MethodRepr m) {
+    boolean isMethodVisible(final int className, final MethodRepr m) {
       final ClassRepr r = reprByName(className);
       if (r != null) {
         if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
@@ -495,7 +498,7 @@ public class Mappings {
       return false;
     }
 
-    private boolean isFieldVisible(final int className, final FieldRepr field) {
+    boolean isFieldVisible(final int className, final FieldRepr field) {
       final ClassRepr r = reprByName(className);
       if (r == null || r.getFields().contains(field)) {
         return true;
@@ -503,24 +506,18 @@ public class Mappings {
       return hasOverriddenFields(field, r);
     }
 
-    private void affectUsagesInGenericBounds(final int className, final Collection<UsageRepr.Usage> affectedUsages, TIntHashSet dependants) {
-      debug("Affecting usages in generic type parameter bounds of class: ", className);
-      affectedUsages.add(UsageRepr.createClassAsGenericBoundUsage(myContext, className));
-
-      final TIntHashSet depClasses = myClassToClassDependency.get(className);
-      if (depClasses != null) {
-        addAll(dependants, depClasses);
-      }
-
+    void collectSupersRecursively(@NotNull final int className, @NotNull final TIntHashSet container) {
       final ClassRepr classRepr = reprByName(className);
       if (classRepr != null) {
-        for (int clsName : classRepr.getSupers()) {
-          affectUsagesInGenericBounds(clsName, affectedUsages, dependants);
+        final int[] supers = classRepr.getSupers();
+        container.addAll(supers);
+        for (int aSuper : supers) {
+          collectSupersRecursively(aSuper, container);
         }
       }
     }
 
-    private void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages) {
+    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages) {
       debug("Affecting subclasses of class: ", className);
 
       final File fileName = myClassToSourceFile.get(className);
@@ -560,7 +557,7 @@ public class Mappings {
       }
     }
 
-    private void affectFieldUsages(final FieldRepr field, final TIntHashSet classes, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectFieldUsages(final FieldRepr field, final TIntHashSet classes, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
       classes.forEach(new TIntProcedure() {
@@ -577,7 +574,7 @@ public class Mappings {
       });
     }
 
-    private void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
       if (subclasses != null) {
         subclasses.forEach(new TIntProcedure() {
@@ -660,7 +657,7 @@ public class Mappings {
     }
   }
 
-  private void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+  void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
     final File sourceFile = myClassToSourceFile.get(className);
     if (sourceFile != null) {
       final TIntHashSet dependants = myClassToClassDependency.get(className);
@@ -858,7 +855,17 @@ public class Mappings {
             }
             else {
               debug("External dependency information retrieved.");
-              affectedFiles.addAll(affection.getAffectedFiles());
+              final Collection<File> files = affection.getAffectedFiles();
+              if (myFilter == null) {
+                affectedFiles.addAll(files);
+              }
+              else {
+                for (File file : files) {
+                  if (myFilter.accept(file)) {
+                    affectedFiles.add(file);
+                  }
+                }
+              }
             }
           }
 
@@ -1589,13 +1596,27 @@ public class Mappings {
 
             myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged);
 
-            if (superClassChanged) {
-              myPresent.affectUsagesInGenericBounds(changedClass.getSuperClass().className, state.myAffectedUsages, state.myDependants);
-            }
-            if (interfacesChanged) {
-              for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
-                final TypeRepr.ClassType removedIface = (TypeRepr.ClassType)typ;
-                myPresent.affectUsagesInGenericBounds(removedIface.className, state.myAffectedUsages, state.myDependants);
+            if (!changedClass.isAnonymous()) {
+              final TIntHashSet parents = new TIntHashSet();
+              myPresent.collectSupersRecursively(changedClass.name, parents);
+              final TIntHashSet futureParents = new TIntHashSet();
+              myFuture.collectSupersRecursively(changedClass.name, futureParents);
+              parents.removeAll(futureParents.toArray());
+              parents.remove(myObjectClassName);
+              if (!parents.isEmpty()) {
+                parents.forEach(new TIntProcedure() {
+                  @Override
+                  public boolean execute(int className) {
+                    debug("Affecting usages in generic type parameter bounds of class: ", className);
+                    state.myAffectedUsages.add(UsageRepr.createClassAsGenericBoundUsage(myContext, className));
+
+                    final TIntHashSet depClasses = myClassToClassDependency.get(className);
+                    if (depClasses != null) {
+                      addAll(state.myDependants, depClasses);
+                    }
+                    return true;
+                  }
+                });
               }
             }
           }

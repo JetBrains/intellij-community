@@ -136,14 +136,18 @@ public class SwitchTaskAction extends BaseTaskAction {
   }
 
   private static ActionGroup createActionsStep(final List<TaskListItem> tasks, final Project project, final Ref<Boolean> shiftPressed) {
-
     SimpleActionGroup group = new SimpleActionGroup();
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
       group.add(new AnAction("&Switch to") {
         public void actionPerformed(AnActionEvent e) {
-          manager.activateTask(task, !shiftPressed.get(), !tasks.get(0).isTemp());
+          if (!tasks.get(0).isTemp()) {
+            manager.activateTask(task, !shiftPressed.get(), true);
+          }
+          else {
+            GotoTaskAction.showOpenTaskDialog(project, task);
+          }
         }
       });
     }
@@ -186,7 +190,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       if (task == activeTask) {
         continue;
       }
-      if (vcsEnabled && manager.getOpenChangelists(task).isEmpty()) {
+      if (vcsEnabled && task.isClosedLocally()) {
         temp.add(task);
         continue;
       }
@@ -194,7 +198,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       group.add(new TaskListItem(task, group.size() == 1 ? "" : null, false) {
         @Override
         void select() {
-          manager.activateTask(task, !shiftPressed.get(), false);
+          manager.activateTask(task, !shiftPressed.get(), true);
         }
       });
     }
@@ -205,7 +209,7 @@ public class SwitchTaskAction extends BaseTaskAction {
         group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
           @Override
           void select() {
-            manager.activateTask(task, !shiftPressed.get(), true);
+            GotoTaskAction.showOpenTaskDialog(project, task);
           }
         });
       }
@@ -219,7 +223,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     }
     else {
 
-      List<ChangeListInfo> infos = TaskManager.getManager(project).getOpenChangelists(task);
+      List<ChangeListInfo> infos = task.getChangeLists();
       List<LocalChangeList> lists = ContainerUtil.mapNotNull(infos, new NullableFunction<ChangeListInfo, LocalChangeList>() {
         public LocalChangeList fun(ChangeListInfo changeListInfo) {
           LocalChangeList changeList = ChangeListManager.getInstance(project).getChangeList(changeListInfo.id);

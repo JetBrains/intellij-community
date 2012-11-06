@@ -242,7 +242,8 @@ public class GitUtil {
    * @return the map from root to the files under the root
    * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
    */
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(Collection<FilePath> files, boolean ignoreNonGit)
+  @NotNull
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Collection<FilePath> files, boolean ignoreNonGit)
     throws VcsException {
     Map<VirtualFile, List<FilePath>> rc = new HashMap<VirtualFile, List<FilePath>>();
     for (FilePath p : files) {

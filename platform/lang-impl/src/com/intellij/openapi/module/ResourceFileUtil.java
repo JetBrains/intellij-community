@@ -38,7 +38,7 @@ public class ResourceFileUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(inModule.getProject()).getFileIndex();
     for (final VirtualFile sourceRoot : sourceRoots) {
       final String packagePrefix = fileIndex.getPackageNameByDirectory(sourceRoot);
-      final String prefix = packagePrefix == null || packagePrefix.length() == 0 ? null : packagePrefix.replace('.', '/') + "/";
+      final String prefix = packagePrefix == null || packagePrefix.isEmpty() ? null : packagePrefix.replace('.', '/') + "/";
       final String relPath = prefix != null && name.startsWith(prefix) && name.length() > prefix.length() ? name.substring(prefix.length()) : name;
       final String fullPath = sourceRoot.getPath() + "/" + relPath;
       final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
@@ -69,6 +69,7 @@ public class ResourceFileUtil {
 
     final VirtualFile dir = new FilteredQuery<VirtualFile>(
       DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, false), new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile file) {
         final VirtualFile child = file.findChild(fileName);
         return child != null && scope.contains(child);

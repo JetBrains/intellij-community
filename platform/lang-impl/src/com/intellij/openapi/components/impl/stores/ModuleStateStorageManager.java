@@ -32,14 +32,17 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
     myModule = module;
   }
 
+  @Override
   protected StorageData createStorageData(String storageSpec) {
     return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
   }
 
+  @Override
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
     return ModuleStoreImpl.DEFAULT_STATE_STORAGE;
   }
 
+  @Override
   protected String getVersionsFilePath() {
     return PathManager.getConfigPath() + "/componentVersions/" + "module" + getLocationHash() + ".xml";
   }

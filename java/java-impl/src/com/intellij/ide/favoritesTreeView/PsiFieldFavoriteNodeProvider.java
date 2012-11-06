@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
+  @Override
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) return null;
@@ -73,10 +75,12 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     return super.createNode(project, element, viewSettings);
   }
 
+  @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     return false;
   }
 
+  @Override
   public int getElementWeight(final Object value, final boolean isSortByType) {
      if (value instanceof PsiField){
       return 4;
@@ -84,6 +88,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     return -1;
   }
 
+  @Override
   public String getElementLocation(final Object element) {
     if (element instanceof PsiField) {
       final PsiClass psiClass = ((PsiField)element).getContainingClass();
@@ -94,15 +99,18 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean isInvalidElement(final Object element) {
     return element instanceof PsiField && !((PsiField)element).isValid();
   }
 
+  @Override
   @NotNull
   public String getFavoriteTypeId() {
     return "field";
   }
 
+  @Override
   public String getElementUrl(final Object element) {
     if (element instanceof PsiField) {
       final PsiField aField = (PsiField)element;
@@ -111,14 +119,16 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public String getElementModuleName(final Object element) {
      if (element instanceof PsiField) {
-      final Module module = ModuleUtil.findModuleForPsiElement((PsiField)element);
+      final Module module = ModuleUtilCore.findModuleForPsiElement((PsiField)element);
       return module != null ? module.getName() : null;
     }
     return null;
   }
 
+  @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.allScope(project);

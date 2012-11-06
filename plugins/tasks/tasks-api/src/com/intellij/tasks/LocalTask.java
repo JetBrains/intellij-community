@@ -17,9 +17,10 @@
 package com.intellij.tasks;
 
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -36,14 +37,20 @@ public abstract class LocalTask extends Task {
   @Attribute("active")
   public abstract boolean isActive();
 
-  @Nullable
-  public abstract String getAssociatedChangelistId();
-
   public abstract void updateFromIssue(Task issue);
 
   public boolean isDefault() {
     return false;
   }
 
-  public abstract void setAssociatedChangelistId(String associatedChangelistId);
+  @NotNull
+  public abstract List<ChangeListInfo> getChangeLists();
+
+  public abstract void addChangelist(ChangeListInfo info);
+
+  public abstract void removeChangelist(final ChangeListInfo info);
+
+  public boolean isClosedLocally() {
+    return getChangeLists().isEmpty();
+  }
 }

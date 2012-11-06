@@ -19,7 +19,6 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManager;
 
 import javax.swing.*;
 
@@ -34,12 +33,9 @@ public class CloseTaskDialog extends DialogWrapper {
   private JLabel myTaskLabel;
 
   public CloseTaskDialog(Project project, LocalTask task) {
-
     super(project, false);
 
-    boolean hasChanges = !TaskManager.getManager(project).getOpenChangelists(task).isEmpty();
-
-    myCommitChanges.setEnabled(hasChanges);
+    myCommitChanges.setEnabled(!task.isClosedLocally());
     myCloseIssue.setEnabled(task.isIssue());
 
     myTaskLabel.setIcon(task.getIcon());

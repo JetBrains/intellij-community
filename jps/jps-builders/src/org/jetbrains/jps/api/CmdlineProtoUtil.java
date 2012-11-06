@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
@@ -115,29 +116,29 @@ public class CmdlineProtoUtil {
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createCompileProgressMessageResponse(String text, float done) {
+  public static BuilderMessage createCompileProgressMessageResponse(String text, float done) {
     return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
+  public static BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
                                                                                String text,
                                                                                String path,
                                                                                long beginOffset, long endOffset, long offset, long line,
                                                                                long column, float done) {
 
-    final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder();
+    final BuilderMessage.CompileMessage.Builder builder = BuilderMessage.CompileMessage.newBuilder();
     switch (kind) {
       case ERROR:
-        builder.setKind(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR);
+        builder.setKind(BuilderMessage.CompileMessage.Kind.ERROR);
         break;
       case WARNING:
-        builder.setKind(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING);
+        builder.setKind(BuilderMessage.CompileMessage.Kind.WARNING);
         break;
       case INFO:
-        builder.setKind(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INFO);
+        builder.setKind(BuilderMessage.CompileMessage.Kind.INFO);
         break;
       default:
-        builder.setKind(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS);
+        builder.setKind(BuilderMessage.CompileMessage.Kind.PROGRESS);
     }
     if (text != null) {
       builder.setText(text);
@@ -154,28 +155,42 @@ public class CmdlineProtoUtil {
     if (offset >= 0L) {
       builder.setProblemLocationOffset(offset);
     }
-    if (line > 0L) {
+    if (line >= 0L) {
       builder.setLine(line);
     }
-    if (column > 0L) {
+    if (column >= 0L) {
       builder.setColumn(column);
     }
     if (done >= 0.0f) {
       builder.setDone(done);
     }
-    return CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();
+    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createBuildCompletedEvent(@Nullable String description, final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
-    return createBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.BUILD_COMPLETED, description, status, null);
+  public static BuilderMessage createCustomBuilderMessage(String builderId, String messageType, String messageText) {
+    BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage =
+      BuilderMessage.BuildEvent.CustomBuilderMessage.newBuilder()
+        .setBuilderId(builderId)
+        .setMessageType(messageType)
+        .setMessageText(messageText)
+        .build();
+    return createBuildEvent(BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE, null, null, null, builderMessage);
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createFileGeneratedEvent(final Collection<Pair<String, String>> paths) {
-    return createBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.FILES_GENERATED, null, null, paths);
+  public static BuilderMessage createBuildCompletedEvent(@Nullable String description, final BuilderMessage.BuildEvent.Status status) {
+    return createBuildEvent(BuilderMessage.BuildEvent.Type.BUILD_COMPLETED, description, status, null, null);
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createBuildEvent(final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type type, @Nullable String description, final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status, Collection<Pair<String, String>> generatedPaths) {
-    final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.newBuilder().setEventType(type);
+  public static BuilderMessage createFileGeneratedEvent(final Collection<Pair<String, String>> paths) {
+    return createBuildEvent(BuilderMessage.BuildEvent.Type.FILES_GENERATED, null, null, paths, null);
+  }
+
+  private static BuilderMessage createBuildEvent(final BuilderMessage.BuildEvent.Type type,
+                                                 @Nullable String description,
+                                                 final BuilderMessage.BuildEvent.Status status,
+                                                 Collection<Pair<String, String>> generatedPaths,
+                                                 final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
+    final BuilderMessage.BuildEvent.Builder builder = BuilderMessage.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);
     }
@@ -184,19 +199,22 @@ public class CmdlineProtoUtil {
     }
     if (generatedPaths != null) {
       for (Pair<String, String> pair : generatedPaths) {
-        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.Builder fileBuilder = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.newBuilder();
-        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile = fileBuilder.setOutputRoot(pair.first).setRelativePath(pair.second).build();
+        final BuilderMessage.BuildEvent.GeneratedFile.Builder fileBuilder = BuilderMessage.BuildEvent.GeneratedFile.newBuilder();
+        final BuilderMessage.BuildEvent.GeneratedFile generatedFile = fileBuilder.setOutputRoot(pair.first).setRelativePath(pair.second).build();
         builder.addGeneratedFiles(generatedFile);
       }
     }
-    return CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.BUILD_EVENT).setBuildEvent(builder.build()).build();
+    if (builderMessage != null) {
+      builder.setCustomBuilderMessage(builderMessage);
+    }
+    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.BUILD_EVENT).setBuildEvent(builder.build()).build();
   }
 
-  public static CmdlineRemoteProto.Message.BuilderMessage createParamRequest() {
-    return CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST).build();
+  public static BuilderMessage createParamRequest() {
+    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.PARAM_REQUEST).build();
   }
 
-  public static CmdlineRemoteProto.Message toMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage builderMessage) {
+  public static CmdlineRemoteProto.Message toMessage(UUID sessionId, BuilderMessage builderMessage) {
     return CmdlineRemoteProto.Message.newBuilder().setSessionId(toProtoUUID(sessionId)).setType(CmdlineRemoteProto.Message.Type.BUILDER_MESSAGE).setBuilderMessage(builderMessage).build();
   }
 

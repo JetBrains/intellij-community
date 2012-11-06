@@ -116,7 +116,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     final ActionToolbar toolbar = createToolbar();
     Wrapper threads = new Wrapper();
-    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR, 0, 0, 1, 0);
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0);
     threads.setBorder(border);
     threads.add(toolbar.getComponent(), BorderLayout.EAST);
     threads.add(myThreadsCombo, BorderLayout.CENTER);

@@ -22,8 +22,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 
 /**
  * @author Max Medvedev
@@ -44,7 +46,9 @@ public class RemoveUnnecessaryReturnIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        return element instanceof GrReturnStatement && ((GrReturnStatement)element).getReturnValue() != null;
+        return element instanceof GrReturnStatement &&
+               ((GrReturnStatement)element).getReturnValue() != null &&
+               ControlFlowBuilderUtil.isCertainlyReturnStatement((GrStatement)element);
       }
     };
   }

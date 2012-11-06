@@ -122,6 +122,7 @@ interface GitHttpRemoteCommand {
     private final File myTargetDirectory;
     private final GitHttpCredentialsProvider myCredentialsProvider;
     private String myUrl;
+    @Nullable private Git myGit;
 
     Clone(@NotNull File targetDirectory, @NotNull GitHttpCredentialsProvider credentialsProvider, String url) {
       myTargetDirectory = targetDirectory;
@@ -135,7 +136,7 @@ interface GitHttpRemoteCommand {
       cloneCommand.setDirectory(myTargetDirectory);
       cloneCommand.setURI(myUrl);
       cloneCommand.setCredentialsProvider(myCredentialsProvider);
-      cloneCommand.call();
+      myGit = cloneCommand.call();
     }
 
     @Override
@@ -168,6 +169,11 @@ interface GitHttpRemoteCommand {
       if (myTargetDirectory.exists()) {
         FileUtil.delete(myTargetDirectory);
       }
+    }
+
+    @Nullable
+    public Git getGit() {
+      return myGit;
     }
   }
 

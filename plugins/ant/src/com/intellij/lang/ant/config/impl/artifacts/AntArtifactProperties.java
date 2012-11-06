@@ -31,13 +31,10 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ant.model.impl.artifacts.AntArtifactExtensionProperties;
+import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,16 +42,9 @@ import java.util.List;
 /**
 * @author nik
 */
-public class AntArtifactProperties extends ArtifactProperties<AntArtifactProperties> {
-  @NonNls static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";
-  private String myFileUrl;
-  private String myTargetName;
-  private boolean myEnabled;
+public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensionProperties> {
+  private AntArtifactExtensionProperties myExtensionProperties = new AntArtifactExtensionProperties();
   private boolean myPostProcessing;
-  private List<BuildFileProperty> myUserProperties = new ArrayList<BuildFileProperty>();
-
-  public AntArtifactProperties() {
-  }
 
   public AntArtifactProperties(boolean postProcessing) {
     myPostProcessing = postProcessing;
@@ -64,8 +54,8 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
     return new AntArtifactPropertiesEditor(this, context, myPostProcessing);
   }
 
-  public AntArtifactProperties getState() {
-    return this;
+  public AntArtifactExtensionProperties getState() {
+    return myExtensionProperties;
   }
 
   @Override
@@ -83,7 +73,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
   }
 
   private void runAntTarget(CompileContext compileContext, final Artifact artifact) {
-    if (myEnabled) {
+    if (myExtensionProperties.myEnabled) {
       final Project project = compileContext.getProject();
       final AntBuildTarget target = findTarget(AntConfiguration.getInstance(project));
       if (target != null) {
@@ -97,57 +87,54 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
     }
   }
 
-  public void loadState(AntArtifactProperties state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public void loadState(AntArtifactExtensionProperties state) {
+    myExtensionProperties = state;
   }
 
-  @Tag("file")
   public String getFileUrl() {
-    return myFileUrl;
+    return myExtensionProperties.myFileUrl;
   }
 
-  @Tag("target")
   public String getTargetName() {
-    return myTargetName;
+    return myExtensionProperties.myTargetName;
   }
 
-  @Attribute("enabled")
   public boolean isEnabled() {
-    return myEnabled;
+    return myExtensionProperties.myEnabled;
   }
 
-  @Tag("build-properties")
-  @AbstractCollection(surroundWithTag = false)
   public List<BuildFileProperty> getUserProperties() {
-    return myUserProperties;
+    return myExtensionProperties.myUserProperties;
   }
 
   public void setUserProperties(List<BuildFileProperty> userProperties) {
-    myUserProperties = userProperties;
+    myExtensionProperties.myUserProperties = userProperties;
   }
 
   public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
+    myExtensionProperties.myEnabled = enabled;
   }
 
   public void setFileUrl(String fileUrl) {
-    myFileUrl = fileUrl;
+    myExtensionProperties.myFileUrl = fileUrl;
   }
 
   public void setTargetName(String targetName) {
-    myTargetName = targetName;
+    myExtensionProperties.myTargetName = targetName;
   }
 
   @Nullable
   public AntBuildTarget findTarget(final AntConfiguration antConfiguration) {
-    if (myFileUrl == null || myTargetName == null) return null;
+    String fileUrl = getFileUrl();
+    String targetName = getTargetName();
+    if (fileUrl == null || targetName == null) return null;
 
     final AntBuildFile[] buildFiles = antConfiguration.getBuildFiles();
     for (AntBuildFile buildFile : buildFiles) {
       final VirtualFile file = buildFile.getVirtualFile();
-      if (file != null && file.getUrl().equals(myFileUrl)) {
+      if (file != null && file.getUrl().equals(fileUrl)) {
         final AntBuildModel buildModel = buildFile.getModel();
-        return buildModel != null ? buildModel.findTarget(myTargetName) : null;
+        return buildModel != null ? buildModel.findTarget(targetName) : null;
       }
     }
     return null;
@@ -155,12 +142,12 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
 
   public List<BuildFileProperty> getAllProperties(@NotNull Artifact artifact) {
     final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
-    properties.add(new BuildFileProperty(ARTIFACT_OUTPUT_PATH_PROPERTY, artifact.getOutputPath()));
-    properties.addAll(myUserProperties);
+    properties.add(new BuildFileProperty(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY, artifact.getOutputPath()));
+    properties.addAll(myExtensionProperties.myUserProperties);
     return properties;
   }
 
   public static boolean isPredefinedProperty(String propertyName) {
-    return ARTIFACT_OUTPUT_PATH_PROPERTY.equals(propertyName);
+    return JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY.equals(propertyName);
   }
 }

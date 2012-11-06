@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +39,17 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     super(project, file, provider);
   }
 
+  @Override
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new PsiAwareTextEditorComponent(project, file, this);
   }
 
+  @Override
   public void initFolding() {
     CodeFoldingManager.getInstance(myProject).buildInitialFoldings(getEditor());
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myBackgroundHighlighter == null) {
       myBackgroundHighlighter = new TextEditorBackgroundHighlighter(myProject, getEditor());
@@ -71,6 +75,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       super.dispose();
     }
 
+    @Override
     public Object getData(final String dataId) {
       if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
@@ -79,7 +84,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         }
       }
       if (LangDataKeys.MODULE.is(dataId)) {
-        return ModuleUtil.findModuleForFile(myFile, myProject);
+        return ModuleUtilCore.findModuleForFile(myFile, myProject);
       }
       return super.getData(dataId);
     }

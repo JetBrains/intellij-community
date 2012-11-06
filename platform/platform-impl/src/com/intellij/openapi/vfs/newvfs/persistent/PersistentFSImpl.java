@@ -510,7 +510,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       // perforce offline mode as well
       if ((!delegate.isReadOnly() ||
            // do not cache archive content unless asked
-           (cacheContent && !application.isInternal() && !application.isUnitTestMode())) &&
+           cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (myInputLock) {
           writeContent(file, new ByteSequence(content), delegate.isReadOnly());
@@ -1140,6 +1140,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.setParent(fileId, newParentId);
   }
 
+  @Override
   public String getName(final int id) {
     assert id > 0;
     return FSRecords.getName(id);

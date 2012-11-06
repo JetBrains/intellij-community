@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a source or test source root under the content root of a module.
  *
@@ -34,6 +36,7 @@ public interface SourceFolder extends ContentFolder {
    *
    * @return the package prefix, or an empty string if the root has no package prefix.
    */
+  @NotNull
   String getPackagePrefix();
 
   /**
@@ -41,5 +44,5 @@ public interface SourceFolder extends ContentFolder {
    *
    * @param packagePrefix the package prefix, or an empty string if the root has no package prefix.
    */
-  void setPackagePrefix(String packagePrefix);
+  void setPackagePrefix(@NotNull String packagePrefix);
 }

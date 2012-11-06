@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,9 +43,11 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     myProject = project;
   }
 
+  @Override
   public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject)
           .getFileIndex();
@@ -57,7 +60,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         result.append("] ");
         result.append(contentRoot.getName());
         String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
-        if (relativePath.length() > 0) {
+        if (!relativePath.isEmpty()) {
           result.append(File.separatorChar);
           result.append(relativePath);
         }
@@ -66,6 +69,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     });
   }
 
+  @Override
   public String getPresentableRelativePath(@NotNull final ContentRevision fromRevision, @NotNull final ContentRevision toRevision) {
     // need to use parent path because the old file is already not there
     FilePath fromPath = fromRevision.getFile();
@@ -78,8 +82,8 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     final VirtualFile oldFile = fromPath.getParentPath().getVirtualFile();
     final VirtualFile newFile = toPath.getParentPath().getVirtualFile();
     if (oldFile != null && newFile != null) {
-      Module oldModule = ModuleUtil.findModuleForFile(oldFile, myProject);
-      Module newModule = ModuleUtil.findModuleForFile(newFile, myProject);
+      Module oldModule = ModuleUtilCore.findModuleForFile(oldFile, myProject);
+      Module newModule = ModuleUtilCore.findModuleForFile(newFile, myProject);
       if (oldModule != newModule) {
         return getPresentableRelativePathFor(oldFile);
       }

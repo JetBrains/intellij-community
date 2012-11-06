@@ -34,11 +34,11 @@ import java.util.List;
  * @author nik
  */
 public class JpsRootModel extends RootModelBase implements ModuleRootModel {
-  private Module myModule;
-  private JpsModule myJpsModule;
+  private final Module myModule;
+  private final JpsModule myJpsModule;
   public VirtualFilePointer myExplodedDirectoryPointer;
-  private List<ContentEntry> myContentEntries;
-  private List<OrderEntry> myOrderEntries;
+  private final List<ContentEntry> myContentEntries;
+  private final List<OrderEntry> myOrderEntries;
 
   public JpsRootModel(Module module, JpsModule jpsModule) {
     myModule = module;

@@ -43,6 +43,7 @@ public class ModifiableModelCommitter {
     modelsToDispose.removeAll(modelsToCommit);
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (RootModelImpl rootModel : modelsToCommit) {
           commitModelWithoutEvents(rootModel);
@@ -99,13 +100,16 @@ public class ModifiableModelCommitter {
     }
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
     return new DFSTBuilder<RootModelImpl>(new GraphGenerator<RootModelImpl>(new CachingSemiGraph<RootModelImpl>(new GraphGenerator.SemiGraph<RootModelImpl>() {
+          @Override
           public Collection<RootModelImpl> getNodes() {
             return allRootModels;
           }
 
+          @Override
           public Iterator<RootModelImpl> getIn(RootModelImpl rootModel) {
             final List<String> namesList = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
               .process(new RootPolicy<ArrayList<String>>() {
+              @Override
               public ArrayList<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, ArrayList<String> strings) {
                 final Module module = moduleOrderEntry.getModule();
                 if (module != null && !module.isDisposed()) {

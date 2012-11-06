@@ -17,8 +17,6 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -30,21 +28,6 @@ public final class BuildFileProperty implements JDOMExternalizable {
   @NonNls private static final String VALUE = "value";
   private String myPropertyName;
   private String myPropertyValue;
-  public static final Convertor<BuildFileProperty, String> TO_COMMAND_LINE = new Convertor<BuildFileProperty, String>() {
-    @NonNls public String convert(BuildFileProperty buildFileProperty) {
-      @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append("-D");
-        builder.append(buildFileProperty.getPropertyName());
-        builder.append('=');
-        builder.append(buildFileProperty.getPropertyValue());
-        return builder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
-    }
-  };
 
   public BuildFileProperty() {
     this("", "");

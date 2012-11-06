@@ -130,7 +130,12 @@ public class GenericTest extends IncrementalTestCase {
   public void testArgumentContainment() throws Exception {
     doTest();
   }
+
   public void testArgumentContainment2() throws Exception {
+    doTest();
+  }
+
+  public void testArgumentContainment3() throws Exception {
     doTest();
   }
 }

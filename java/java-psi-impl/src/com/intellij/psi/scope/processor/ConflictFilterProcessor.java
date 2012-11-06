@@ -39,7 +39,11 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   protected final PsiElement myPlace;
   protected final PsiFile myPlaceFile;
 
-  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container, PsiElement place) {
+  public ConflictFilterProcessor(String name,
+                                 @NotNull ElementFilter filter,
+                                 @NotNull PsiConflictResolver[] resolvers,
+                                 @NotNull List<CandidateInfo> container,
+                                 @NotNull PsiElement place) {
     super(filter, container);
     myResolvers = resolvers;
     myName = name;

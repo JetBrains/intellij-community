@@ -6,10 +6,10 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import icons.TasksIcons;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -20,8 +20,10 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Date;
@@ -89,7 +91,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     @SuppressWarnings({"unchecked"})
     List<Object> children = element.getChildren("issue");
 
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, new Function<Object, Task>() {
+    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
       public Task fun(Object o) {
         return createIssue((Element)o);
       }
@@ -166,17 +168,30 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     doREST("/rest/issue/execute/" + task.getId() + "?command=state+" + s, true);
   }
 
+  @Nullable
   private Task createIssue(Element element) {
-    String id = element.getAttributeValue("id");
-    if (id == null) {
-      return null;
-    }
-    String summary = element.getAttributeValue("summary");
-    if (summary == null) {
-      return null;
-    }
+    final String id = element.getAttributeValue("id");
+    if (id == null) return null;
+    final String summary = element.getAttributeValue("summary");
+    if (summary == null) return null;
     final String description = element.getAttributeValue("description");
-    LocalTaskImpl task = new LocalTaskImpl(id, summary) {
+
+    String type = element.getAttributeValue("type");
+    TaskType taskType = TaskType.OTHER;
+    if (type != null) {
+      try {
+        taskType = TaskType.valueOf(type.toUpperCase());
+      }
+      catch (IllegalArgumentException e) {
+        // do nothing
+      }
+    }
+    final TaskType finalTaskType = taskType;
+
+    final Date updated = new Date(Long.parseLong(element.getAttributeValue("updated")));
+    final Date created = new Date(Long.parseLong(element.getAttributeValue("created")));
+
+    return new Task() {
       @Override
       public boolean isIssue() {
         return true;
@@ -187,8 +202,55 @@ public class YouTrackRepository extends BaseRepositoryImpl {
         return getUrl() + "/issue/" + getId();
       }
 
+      @NotNull
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      @NotNull
+      @Override
+      public String getSummary() {
+        return summary;
+      }
+
       public String getDescription() {
         return description;
+      }
+
+      @NotNull
+      @Override
+      public Comment[] getComments() {
+        return Comment.EMPTY_ARRAY;
+      }
+
+      @NotNull
+      @Override
+      public Icon getIcon() {
+        return TasksIcons.Youtrack;
+      }
+
+      @NotNull
+      @Override
+      public TaskType getType() {
+        return finalTaskType;
+      }
+
+      @Nullable
+      @Override
+      public Date getUpdated() {
+        return updated;
+      }
+
+      @Nullable
+      @Override
+      public Date getCreated() {
+        return created;
+      }
+
+      @Override
+      public boolean isClosed() {
+        return false;
       }
 
       @Override
@@ -196,20 +258,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
         return YouTrackRepository.this;
       }
     };
-    String type = element.getAttributeValue("type");
-
-    if (type != null) {
-      try {
-        task.setType(TaskType.valueOf(type.toUpperCase()));
-      }
-      catch (IllegalArgumentException e) {
-        // do nothing
-      }
-    }
-
-    task.setUpdated(new Date(Long.parseLong(element.getAttributeValue("updated"))));
-    task.setCreated(new Date(Long.parseLong(element.getAttributeValue("created"))));
-    return task;
   }
 
   public String getDefaultSearch() {

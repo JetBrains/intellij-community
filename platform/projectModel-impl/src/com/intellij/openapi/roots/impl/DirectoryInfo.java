@@ -19,8 +19,15 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -29,18 +36,22 @@ import java.util.*;
 
 
 public class DirectoryInfo {
-  public Module module; // module to which content it belongs or null
-  public boolean isInModuleSource; // true if files in this directory belongs to sources of the module (if field 'module' is not null)
-  public boolean isTestSource; // (makes sense only if isInModuleSource is true)
-  public boolean isInLibrarySource; // true if it's a directory with sources of some library
-  public VirtualFile libraryClassRoot; // class root in library
-  public VirtualFile contentRoot;
-  public VirtualFile sourceRoot;
+  private Module module; // module to which content it belongs or null
+  private VirtualFile libraryClassRoot; // class root in library
+  private VirtualFile contentRoot;
+  private VirtualFile sourceRoot;
+
+  private static final byte TEST_SOURCE_FLAG = 1; // (makes sense only if MODULE_SOURCE_FLAG is set)
+  private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
+  private static final byte MODULE_SOURCE_FLAG = 4; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
+
+  @MagicConstant(flags = {TEST_SOURCE_FLAG, LIBRARY_SOURCE_FLAG, MODULE_SOURCE_FLAG})
+  private byte sourceFlag;
 
   /**
    * orderEntry to (classes of) which a directory belongs
    */
-  private List<OrderEntry> orderEntries = null;
+  private OrderEntry[] orderEntries;
 
   @TestOnly
   @SuppressWarnings({"unchecked"})
@@ -52,14 +63,12 @@ public class DirectoryInfo {
 
     final DirectoryInfo info = (DirectoryInfo)o;
 
-    if (isInLibrarySource != info.isInLibrarySource) return false;
-    if (isInModuleSource != info.isInModuleSource) return false;
-    if (isTestSource != info.isTestSource) return false;
-    if (module != null ? !module.equals(info.module) : info.module != null) return false;
-    if (orderEntries != null ? !new HashSet(orderEntries).equals(new HashSet(info.orderEntries)) : info.orderEntries != null) return false;
-    if (!Comparing.equal(libraryClassRoot, info.libraryClassRoot)) return false;
-    if (!Comparing.equal(contentRoot, info.contentRoot)) return false;
-    if (!Comparing.equal(sourceRoot, info.sourceRoot)) return false;
+    if (sourceFlag != info.sourceFlag) return false;
+    if (getModule() != null ? !getModule().equals(info.getModule()) : info.getModule() != null) return false;
+    if (orderEntries != null ? !new HashSet(Arrays.asList(orderEntries)).equals(new HashSet(Arrays.asList(info.orderEntries))) : info.orderEntries != null) return false;
+    if (!Comparing.equal(getLibraryClassRoot(), info.getLibraryClassRoot())) return false;
+    if (!Comparing.equal(getContentRoot(), info.getContentRoot())) return false;
+    if (!Comparing.equal(getSourceRoot(), info.getSourceRoot())) return false;
 
     return true;
   }
@@ -71,46 +80,243 @@ public class DirectoryInfo {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "DirectoryInfo{" +
-           "module=" + module +
-           ", isInModuleSource=" + isInModuleSource +
-           ", isTestSource=" + isTestSource +
-           ", isInLibrarySource=" + isInLibrarySource +
-           ", libraryClassRoot=" + libraryClassRoot +
-           ", contentRoot=" + contentRoot +
-           ", sourceRoot=" + sourceRoot +
+           "module=" + getModule() +
+           ", isInModuleSource=" + isInModuleSource() +
+           ", isTestSource=" + isTestSource() +
+           ", isInLibrarySource=" + isInLibrarySource() +
+           ", libraryClassRoot=" + getLibraryClassRoot() +
+           ", contentRoot=" + getContentRoot() +
+           ", sourceRoot=" + getSourceRoot() +
            "}";
   }
 
   @NotNull
-  public List<OrderEntry> getOrderEntries() {
-    return orderEntries == null ? Collections.<OrderEntry>emptyList() : orderEntries;
+  public OrderEntry[] getOrderEntries() {
+    return orderEntries == null ? OrderEntry.EMPTY_ARRAY : orderEntries;
   }
 
-  @SuppressWarnings({"unchecked"})
-  public void addOrderEntries(@NotNull Collection<OrderEntry> orderEntries,
-                              @Nullable final DirectoryInfo parentInfo,
-                              @Nullable final List<OrderEntry> oldParentEntries) {
-    if (orderEntries.isEmpty()) {
+  @Nullable
+  OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {
+    OrderEntry[] entries = orderEntries;
+    if (entries == null) {
+      return null;
+    }
+    if (entries.length < 10) {
+      for (OrderEntry entry : entries) {
+        if (entry.getOwnerModule() == ownerModule) return entry;
+      }
+      return null;
+    }
+    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), BY_OWNER_MODULE);
+    return index < 0 ? null : entries[index];
+  }
+
+  @NotNull
+  List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule) {
+    OrderEntry[] entries = orderEntries;
+    if (entries == null) {
+      return Collections.emptyList();
+    }
+    if (entries.length == 1) {
+      OrderEntry entry = entries[0];
+      return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
+    }
+    int index = Arrays.binarySearch(entries, createFakeOrderEntry(ownerModule), BY_OWNER_MODULE);
+    if (index < 0) {
+      return Collections.emptyList();
+    }
+    int firstIndex = index;
+    while (firstIndex-1 >= 0 && entries[firstIndex-1].getOwnerModule() == ownerModule) {
+      firstIndex--;
+    }
+    int lastIndex = index+1;
+    while (lastIndex < entries.length && entries[lastIndex].getOwnerModule() == ownerModule) {
+      lastIndex++;
+    }
+
+    OrderEntry[] subArray = new OrderEntry[lastIndex - firstIndex];
+    System.arraycopy(entries, firstIndex, subArray, 0, lastIndex - firstIndex);
+
+    return Arrays.asList(subArray);
+  }
+
+  @NotNull
+  private static OrderEntry createFakeOrderEntry(@NotNull final Module ownerModule) {
+    return new OrderEntry() {
+      @NotNull
+      @Override
+      public VirtualFile[] getFiles(OrderRootType type) {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public String[] getUrls(OrderRootType rootType) {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public String getPresentableName() {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public boolean isValid() {
+        throw new IncorrectOperationException();
+      }
+
+      @NotNull
+      @Override
+      public Module getOwnerModule() {
+        return ownerModule;
+      }
+
+      @Override
+      public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public int compareTo(OrderEntry o) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public boolean isSynthetic() {
+        throw new IncorrectOperationException();
+      }
+    };
+  }
+
+  // orderEntries must be sorted BY_OWNER_MODULE
+  void addOrderEntries(@NotNull OrderEntry[] orderEntries,
+                       @Nullable final DirectoryInfo parentInfo,
+                       @Nullable final OrderEntry[] oldParentEntries) {
+    if (orderEntries.length == 0) {
       this.orderEntries = null;
     }
     else if (this.orderEntries == null) {
-      if (orderEntries instanceof ArrayList) {
-        ((ArrayList)orderEntries).trimToSize();
-      }
-      this.orderEntries = (List<OrderEntry>)orderEntries;
+      this.orderEntries = orderEntries;
     }
     else if (parentInfo != null && oldParentEntries == this.orderEntries) {
       this.orderEntries = parentInfo.orderEntries;
     }
     else {
-      LinkedHashSet tmp = new LinkedHashSet(this.orderEntries.size() + orderEntries.size());
-      tmp.addAll(this.orderEntries);
-      tmp.addAll(orderEntries);
-      this.orderEntries = new ArrayList<OrderEntry>(tmp);
+      this.orderEntries = mergeWith(orderEntries);
     }
   }
 
-  public void setInternedOrderEntries(List<OrderEntry> internedOrderEntries) {
+  // entries must be sorted BY_OWNER_MODULE
+  @NotNull
+  private OrderEntry[] mergeWith(@NotNull OrderEntry[] entries) {
+    OrderEntry[] orderEntries = this.orderEntries;
+    OrderEntry[] result = new OrderEntry[orderEntries.length + entries.length];
+    int i=0;
+    int j=0;
+    // remove equals entries in the process
+    int o = 0;
+    while (i != orderEntries.length || j != entries.length) {
+      OrderEntry m = i != orderEntries.length && (j == entries.length || BY_OWNER_MODULE.compare(orderEntries[i], entries[j]) < 0)
+                     ? orderEntries[i++]
+                     : entries[j++];
+      if (o==0 || !m.equals(result[o - 1])) {
+        result[o++] = m;
+      }
+    }
+    if (o != result.length) {
+      result = ArrayUtil.realloc(result, o, ORDER_ENTRY_ARRAY_FACTORY);
+    }
+    return result;
+  }
+
+  private static final ArrayFactory<OrderEntry> ORDER_ENTRY_ARRAY_FACTORY = new ArrayFactory<OrderEntry>() {
+    @Override
+    public OrderEntry[] create(int count) {
+      return count == 0 ? OrderEntry.EMPTY_ARRAY : new OrderEntry[count];
+    }
+  };
+
+  static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
+    @Override
+    public int compare(OrderEntry o1, OrderEntry o2) {
+      String name1 = o1.getOwnerModule().getName();
+      String name2 = o2.getOwnerModule().getName();
+      return name1.compareTo(name2);
+    }
+  };
+
+  void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
     orderEntries = internedOrderEntries;
+  }
+
+  public VirtualFile getSourceRoot() {
+    return sourceRoot;
+  }
+  public boolean hasSourceRoot() {
+    return getSourceRoot() != null;
+  }
+
+  public VirtualFile getLibraryClassRoot() {
+    return libraryClassRoot;
+  }
+  public boolean hasLibraryClassRoot() {
+    return getLibraryClassRoot() != null;
+  }
+
+  public VirtualFile getContentRoot() {
+    return contentRoot;
+  }
+
+  public boolean isInModuleSource() {
+    return BitUtil.isSet(sourceFlag, MODULE_SOURCE_FLAG);
+  }
+
+  public void setInModuleSource(boolean inModuleSource) {
+    sourceFlag = (byte)BitUtil.set(sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
+  }
+
+  public boolean isTestSource() {
+    return BitUtil.isSet(sourceFlag, TEST_SOURCE_FLAG);
+  }
+
+  public void setTestSource(boolean testSource) {
+    sourceFlag = (byte)BitUtil.set(sourceFlag, TEST_SOURCE_FLAG, testSource);
+  }
+
+  public boolean isInLibrarySource() {
+    return BitUtil.isSet(sourceFlag, LIBRARY_SOURCE_FLAG);
+  }
+
+  public void setInLibrarySource(boolean inLibrarySource) {
+    sourceFlag = (byte)BitUtil.set(sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
+  }
+
+  public Module getModule() {
+    return module;
+  }
+
+  public void setModule(Module module) {
+    this.module = module;
+  }
+
+  public void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
+    this.libraryClassRoot = libraryClassRoot;
+  }
+
+  public void setContentRoot(@NotNull VirtualFile contentRoot) {
+    this.contentRoot = contentRoot;
+  }
+
+  public void setSourceRoot(@NotNull VirtualFile sourceRoot) {
+    this.sourceRoot = sourceRoot;
+  }
+
+  @TestOnly
+  public void assertConsistency() {
+    OrderEntry[] entries = getOrderEntries();
+    for (int i=1; i<entries.length; i++) {
+      assert BY_OWNER_MODULE.compare(entries[i-1], entries[i]) <= 0;
+    }
   }
 }

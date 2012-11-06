@@ -76,7 +76,7 @@ public class ExcludedFilesPanel {
   }
 
   private static class FileTableModel extends AbstractTableModel {
-    private List<VirtualFile> myExcludedFiles = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> myExcludedFiles = new ArrayList<VirtualFile>();
 
     public FileTableModel(@Nullable Collection<VirtualFile> files) {
       if (files != null) {

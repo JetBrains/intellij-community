@@ -39,6 +39,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
     super(project, project, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (getSettings().isShowModules()) {
@@ -100,12 +101,14 @@ public class PackageViewProjectNode extends AbstractProjectNode {
 
   }
 
+  @Override
   protected AbstractTreeNode createModuleGroup(final Module module) throws
                                                                     InvocationTargetException,
                                                                     NoSuchMethodException, InstantiationException, IllegalAccessException {
     return createTreeNode(PackageViewModuleNode.class, getProject(), module, getSettings());
   }
 
+  @Override
   protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     return createTreeNode(PackageViewModuleGroupNode.class, getProject(),  moduleGroup, getSettings());

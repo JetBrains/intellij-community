@@ -379,6 +379,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void setModuleProcessorProfiles(Collection<ProcessorConfigProfile> moduleProfiles) {
     myModuleProcessorProfiles.clear();
     myModuleProcessorProfiles.addAll(moduleProfiles);
+    myProcessorsProfilesMap = null;
   }
 
   @Nullable

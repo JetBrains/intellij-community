@@ -43,7 +43,7 @@ import java.awt.event.MouseEvent;
  * @author Nadya Zabrodina
  */
 public class HgIncomingOutgoingWidget extends EditorBasedWidget
-  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgAdditionalWidget {
+  implements StatusBarWidget.IconPresentation, StatusBarWidget.Multiframe, HgUpdater, HgHideableWidget {
 
   @NotNull private final HgVcs myVcs;
   @NotNull final Project myProject;
@@ -148,7 +148,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public void activate() {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    myBusConnection.subscribe(HgVcs.INCOMINGOUTGOING_CHECK_TOPIC, this);
+    myBusConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, this);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (null != statusBar && isVisible()) {

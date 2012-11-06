@@ -101,7 +101,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    if (myQualifiedName.length() == 0) return null;
+    if (myQualifiedName.isEmpty()) return null;
     int index = myQualifiedName.lastIndexOf('.');
     if (index < 0) {
       return myQualifiedName;
@@ -131,7 +131,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   public PsiPackageBase getParentPackage() {
-    if (myQualifiedName.length() == 0) return null;
+    if (myQualifiedName.isEmpty()) return null;
     int lastDot = myQualifiedName.lastIndexOf('.');
     if (lastDot < 0) {
       return createInstance(myManager, "");

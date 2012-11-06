@@ -36,8 +36,8 @@ public class ArrangementConstants {
   public static final int HORIZONTAL_PADDING = 8;
   public static final int HORIZONTAL_GAP     = 5;
   public static final int VERTICAL_GAP       = 3;
-  
-  public static final int ATOM_CONDITION_REMOVAL_STEPS = 10;
+
+  public static final int ANIMATION_STEPS = 100;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 

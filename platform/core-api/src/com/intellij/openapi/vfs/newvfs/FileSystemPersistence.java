@@ -16,7 +16,9 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -24,4 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FileSystemPersistence {
   void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState);
   int getCheapFileSystemModificationCount();
+
+  @Nullable
+  VirtualFile findFileById(int id);
 }

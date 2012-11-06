@@ -27,6 +27,7 @@ import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
 
 /**
  * @author nik
@@ -52,7 +53,7 @@ public class AntArtifactBuildExtension extends ChunkBuildExtension {
       final Tag ant = new Tag("ant", Pair.create("antfile", fileName), Pair.create("target", properties.getTargetName()),
                                      Pair.create("dir", relativePath));
       final String outputPath = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
-      ant.add(new Property(AntArtifactProperties.ARTIFACT_OUTPUT_PATH_PROPERTY, outputPath));
+      ant.add(new Property(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY, outputPath));
       for (BuildFileProperty property : properties.getUserProperties()) {
         ant.add(new Property(property.getPropertyName(), property.getPropertyValue()));
       }

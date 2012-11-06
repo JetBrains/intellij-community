@@ -56,12 +56,11 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     if (element == null) {
       throw new IllegalArgumentException("element cannot be null");
     }
-    if(!"form".equals(element.getName())){
-      throw new UnexpectedFormElementException("unexpected element: "+element);
-    }
-
     if (!Utils.FORM_NAMESPACE.equals(element.getNamespace().getURI())) {
       throw new AlienFormFileException();
+    }
+    if(!"form".equals(element.getName())){
+      throw new UnexpectedFormElementException("unexpected element: "+element);
     }
 
     setId("root");

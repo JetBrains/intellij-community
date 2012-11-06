@@ -1,5 +1,6 @@
 package org.jetbrains.jps.eclipse.model;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Document;
@@ -20,6 +21,7 @@ import java.util.List;
  */
 public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer {
   @NonNls public static final String CLASSPATH_STORAGE_ID = "eclipse";
+  private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathSerializer.class);
 
   public JpsEclipseClasspathSerializer() {
     super(CLASSPATH_STORAGE_ID);
@@ -38,6 +40,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
     }
     catch (Exception e) {
+      LOG.info(e);
       throw new RuntimeException(e);
     }
   }

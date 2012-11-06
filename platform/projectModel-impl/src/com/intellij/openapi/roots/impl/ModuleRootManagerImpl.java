@@ -69,24 +69,29 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myOrderRootsCache = new OrderRootsCache(module);
   }
 
+  @Override
   @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @Override
   @NotNull
   public ModuleFileIndex getFileIndex() {
     return myFileIndex;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "NewModuleRootManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     myRootModel.dispose();
     myIsDisposed = true;
@@ -106,14 +111,17 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
 
 
+  @Override
   public VirtualFile getExplodedDirectory() {
     return null;
   }
 
+  @Override
   public String getExplodedDirectoryUrl() {
     return null;
   }
 
+  @Override
   @NotNull
   public ModifiableRootModel getModifiableModel() {
     return getModifiableModel(new RootConfigurationAccessor());
@@ -151,19 +159,23 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel;
   }
 
+  @Override
   public ContentEntry[] getContentEntries() {
     return myRootModel.getContentEntries();
   }
 
+  @Override
   @NotNull
   public OrderEntry[] getOrderEntries() {
     return myRootModel.getOrderEntries();
   }
 
+  @Override
   public Sdk getSdk() {
     return myRootModel.getSdk();
   }
 
+  @Override
   public boolean isSdkInherited() {
     return myRootModel.isSdkInherited();
   }
@@ -183,6 +195,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
 
+  @Override
   @NotNull
   public Module[] getDependencies() {
     return myRootModel.getModuleDependencies();
@@ -206,29 +219,35 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getModuleDependencies(includeTests);
   }
 
+  @Override
   public boolean isDependsOn(Module module) {
     return myRootModel.isDependsOn(module);
   }
 
+  @Override
   @NotNull
   public String[] getDependencyModuleNames() {
     return myRootModel.getDependencyModuleNames();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getRootPaths(final OrderRootType rootType) {
     return myRootModel.getRootPaths(rootType);
   }
 
+  @Override
   @NotNull
   public String[] getRootUrls(final OrderRootType rootType) {
     return myRootModel.getRootUrls(rootType);
   }
 
+  @Override
   public <T> T getModuleExtension(final Class<T> klass) {
     return myRootModel.getModuleExtension(klass);
   }
 
+  @Override
   public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);
@@ -256,30 +275,35 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return base.roots(type);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRoots();
   }
 
+  @Override
   @NotNull
   public String[] getContentRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRootUrls();
   }
 
+  @Override
   @NotNull
   public String[] getExcludeRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRootUrls();
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getExcludeRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRoots();
   }
 
+  @Override
   @NotNull
   public String[] getSourceRootUrls() {
     return getSourceRootUrls(true);
@@ -292,23 +316,28 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getSourceRootUrls(includingTests);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSourceRoots() {
     return getSourceRoots(true);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSourceRoots(final boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRoots(includingTests);
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void moduleAdded() {
     isModuleAdded = true;
   }
@@ -330,6 +359,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
       if (throwEvent) {
         makeRootsChange(new Runnable() {
+          @Override
           public void run() {
             doCommit(newModel);
           }
@@ -357,10 +387,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       myRootModel = rootModel;
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       myRootModelElement = element;
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       myRootModel.writeExternal(element);
     }

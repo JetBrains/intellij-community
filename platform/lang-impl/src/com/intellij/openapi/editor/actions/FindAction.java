@@ -27,11 +27,13 @@ import com.intellij.openapi.project.Project;
 
 public class FindAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
+    @Override
     public void execute(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       FindUtil.find(project, editor);
     }
 
+    @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       return project != null;

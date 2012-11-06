@@ -58,11 +58,13 @@ public class ModuleVcsDetector implements ProjectComponent {
     myVcsManager = (ProjectLevelVcsManagerImpl) vcsManager;
   }
 
+  @Override
   public void projectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     
     final StartupManager manager = StartupManager.getInstance(myProject);
     manager.registerStartupActivity(new Runnable() {
+      @Override
       public void run() {
         if (myVcsManager.needAutodetectMappings()) {
           autoDetectVcsMappings(true);
@@ -71,6 +73,7 @@ public class ModuleVcsDetector implements ProjectComponent {
       }
     });
     manager.registerPostStartupActivity(new Runnable() {
+      @Override
       public void run() {
         if (myMessageBus != null) {
           myConnection = myMessageBus.connect();
@@ -85,10 +88,12 @@ public class ModuleVcsDetector implements ProjectComponent {
   private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
     private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<Pair<String, VcsDirectoryMapping>>();
 
+    @Override
     public void beforeRootsChange(ModuleRootEvent event) {
       myMappingsForRemovedModules.clear();
     }
 
+    @Override
     public void rootsChanged(ModuleRootEvent event) {
       for (Pair<String, VcsDirectoryMapping> mapping : myMappingsForRemovedModules) {
         promptRemoveMapping(mapping.first, mapping.second);
@@ -100,28 +105,34 @@ public class ModuleVcsDetector implements ProjectComponent {
       }
     }
 
+    @Override
     public void moduleAdded(final Project project, final Module module) {
       myMappingsForRemovedModules.removeAll(getMappings(module));
       autoDetectModuleVcsMapping(module);
     }
 
+    @Override
     public void beforeModuleRemoved(final Project project, final Module module) {
       myMappingsForRemovedModules.addAll(getMappings(module));
     }
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ModuleVcsDetector";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     if (myConnection != null) {
       myConnection.disconnect();
@@ -209,6 +220,7 @@ public class ModuleVcsDetector implements ProjectComponent {
 
   private void promptRemoveMapping(final String moduleName, final VcsDirectoryMapping mapping) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         final String msg = VcsBundle.message("vcs.root.remove.prompt", FileUtil.toSystemDependentName(mapping.getDirectory()), moduleName);

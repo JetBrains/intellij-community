@@ -33,6 +33,7 @@ public class FogBugzRepositoryType extends BaseRepositoryType<FogBugzRepository>
     return "FogBugz";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Fogbugz;

@@ -21,6 +21,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
     return "YouTrack";
   }
 
+  @NotNull
   public Icon getIcon() {
     return TasksIcons.Youtrack;
   }

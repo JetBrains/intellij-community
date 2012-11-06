@@ -164,6 +164,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.geb.GebContentDeclarationSearcher"/>
 
+    <itemPresentationProvider forClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl"
+                              implementationClass="org.jetbrains.plugins.groovy.findUsages.GrFileItemPresentationProvider"/>
+
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework"/>
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>

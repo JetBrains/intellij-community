@@ -25,6 +25,7 @@ import com.intellij.tasks.TaskState;
 import com.intellij.tasks.TaskType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import icons.JiraConnectorIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,9 +72,10 @@ class JiraTask extends Task {
     });
   }
 
+  @NotNull
   public Icon getIcon() {
     String iconUrl = myJiraIssue.getTypeIconUrl();
-    return iconUrl == null ? null : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader
+    return iconUrl == null ? JiraConnectorIcons.Jira_blue_16 : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader
       .getIcon(iconUrl);
   }
 

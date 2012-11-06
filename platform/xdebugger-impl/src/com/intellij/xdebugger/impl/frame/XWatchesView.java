@@ -95,7 +95,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
         executeAction(XDebuggerActions.XREMOVE_WATCH);
       }
     });
-    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR,
+    CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
                                                    SystemInfo.isMac ? 0 : 1, 0);
     decorator.setToolbarBorder(border);

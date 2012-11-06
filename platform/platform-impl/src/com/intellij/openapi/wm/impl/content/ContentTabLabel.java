@@ -21,6 +21,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -79,7 +80,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getPassiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return selected ? Gray._255 : super.getPassiveFg(selected);
+      return selected && !UIUtil.isUnderDarcula() ? Gray._255 : super.getPassiveFg(selected);
     }
     return super.getPassiveFg(selected);
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.JTextComponent;
 import javax.swing.text.BadLocationException;
@@ -34,6 +35,7 @@ public class TextComponentScrollingModel implements ScrollingModel {
     myTextComponent = textComponent;
   }
 
+  @NotNull
   @Override
   public Rectangle getVisibleArea() {
     throw new UnsupportedOperationException("Not implemented");

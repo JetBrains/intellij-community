@@ -39,22 +39,27 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
     super(id);
   }
 
+  @Override
   public EmptyModuleBuilder createModuleBuilder() {
     return new EmptyModuleBuilder();
   }
 
+  @Override
   public String getName() {
     return ProjectBundle.message("module.type.empty.name");
   }
 
+  @Override
   public String getDescription() {
     return ProjectBundle.message("module.type.empty.description");
   }
 
+  @Override
   public Icon getBigIcon() {
     return AllIcons.Modules.Types.EmptyProjectType;
   }
 
+  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Module;
   }

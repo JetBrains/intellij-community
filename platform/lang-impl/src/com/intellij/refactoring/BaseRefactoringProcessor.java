@@ -244,12 +244,22 @@ public abstract class BaseRefactoringProcessor {
               }
             });
             final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
+            final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
-                refUsages.set(findUsages());
+                try {
+                  refUsages.set(findUsages());
+                }
+                catch (IndexNotReadyException e) {
+                  dumbModeOccurred.set(true);
+                }
               }
             });
+            if (!dumbModeOccurred.isNull()) {
+              DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
+              return;
+            }
             final Usage[] usages = ApplicationManager.getApplication().runReadAction(new Computable<Usage[]>() {
               @Override
               public Usage[] compute() {

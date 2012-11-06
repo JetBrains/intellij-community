@@ -167,7 +167,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (myActions != null) return myActions;
     DefaultActionGroup group = new DefaultActionGroup();
 
-    final AnAction[] actions = myConsole.createConsoleActions();
+    final AnAction[] actions = getConsole().createConsoleActions();
     for (AnAction action : actions) {
       group.add(action);
     }
@@ -203,7 +203,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
-      add(myConsole.getComponent(), BorderLayout.CENTER);
+      add(getConsole().getComponent(), BorderLayout.CENTER);
       add(createToolbar(), BorderLayout.NORTH);
     }
     return this;
@@ -238,9 +238,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public void dispose() {
     myModel.removeFilterListener(this);
     stopRunning(false);
-    if (myConsole != null) {
-      Disposer.dispose(myConsole);
-      myConsole = null;
+    synchronized (this) {
+      if (myConsole != null) {
+        Disposer.dispose(myConsole);
+        myConsole = null;
+      }
     }
     if (myFilter != null) {
       myFilter.dispose();
@@ -342,7 +344,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Nullable
   private Editor getEditor() {
-    return myConsole != null ? PlatformDataKeys.EDITOR.getData((DataProvider) myConsole) : null;
+    final ConsoleView console = getConsole();
+    return console != null ? PlatformDataKeys.EDITOR.getData((DataProvider) console) : null;
   }
 
   private void filterConsoleOutput() {
@@ -386,7 +389,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private synchronized void doFilter() {
-    myConsole.clear();
+    final ConsoleView console = getConsole();
+    console.clear();
     myModel.processingStarted();
 
     final String[] lines = myOriginalDocument.toString().split("\n");
@@ -410,20 +414,21 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
     // we need this, because, document can change before actual scrolling, so offset may be already not at the end
     if (caretPositioned) {
-      myConsole.scrollTo(offset);
+      console.scrollTo(offset);
     }
     else {
-      ((ConsoleViewImpl)myConsole).requestScrollingToEnd();
+      ((ConsoleViewImpl)console).requestScrollingToEnd();
     }
   }
 
   private int printMessageToConsole(String line) {
+    final ConsoleView console = getConsole();
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
         ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(fragment.getOutputType());
         if (consoleViewType != null) {
-          myConsole.print(fragment.getText(), consoleViewType);
+          console.print(fragment.getText(), consoleViewType);
         }
       }
       return line.length() + 1;
@@ -437,9 +442,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
           if (type != null) {
             final String messagePrefix = processingResult.getMessagePrefix();
             if (messagePrefix != null) {
-              myConsole.print(messagePrefix, type);
+              console.print(messagePrefix, type);
             }
-            myConsole.print(line + "\n", type);
+            console.print(line + "\n", type);
             return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
           }
         }
@@ -449,7 +454,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @NotNull
-  public ConsoleView getConsole() {
+  public synchronized ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -462,11 +467,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   public JComponent getToolbarContextComponent() {
-    return myConsole.getComponent();
+    return getConsole().getComponent();
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myConsole.getPreferredFocusableComponent();
+    return getConsole().getPreferredFocusableComponent();
   }
 
   public String getTitle() {
@@ -474,7 +479,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   public synchronized void clear() {
-    myConsole.clear();
+    getConsole().clear();
     myOriginalDocument = null;
   }
 

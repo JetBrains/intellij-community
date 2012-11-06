@@ -38,10 +38,12 @@ public class ModulePointerImpl implements ModulePointer {
     myModuleName = name;
   }
 
+  @Override
   public Module getModule() {
     return myModule;
   }
 
+  @Override
   @NotNull
   public String getModuleName() {
     if (myModule != null) {

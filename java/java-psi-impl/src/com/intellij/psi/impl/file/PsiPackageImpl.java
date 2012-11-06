@@ -44,7 +44,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile Set<String> myPublicClassNamesCache;
-  private final Object myPublicClassNamesCacheLock = new String("package class names cache lock");
+  @NonNls private final Object myPublicClassNamesCacheLock = new String("package class names cache lock");
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
@@ -174,7 +174,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @NotNull
   private PsiClass[] findClassesByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
-    final String classQName = qName.length() > 0 ? qName + "." + name : name;
+    final String classQName = !qName.isEmpty() ? qName + "." + name : name;
     return getFacade().findClasses(classQName, scope);
   }
 
@@ -192,11 +192,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Nullable
   private PsiPackage findSubPackageByName(String name) {
     final String qName = getQualifiedName();
-    final String subpackageQName = qName.length() > 0 ? qName + "." + name : name;
-    PsiPackage aPackage = getFacade().findPackage(subpackageQName);
-    if (aPackage == null) return null;
-    //if (aPackage.getDirectories(scope).length == 0) return null;
-    return aPackage;
+    final String subpackageQName = qName.isEmpty() ? name : qName + "." + name;
+    return getFacade().findPackage(subpackageQName);
   }
 
   @Override
@@ -216,12 +213,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
-        if (containsClassNamed(shortName) && processClassesByName(processor, state, place, scope, shortName)) return false;
+        if (containsClassNamed(shortName) && processClassesByName(processor, state, scope, shortName)) return false;
       }
       else if (prefixMatcher != null) {
         for (String className : getClassNamesCache()) {
           if (prefixMatcher.value(className)) {
-            if (processClassesByName(processor, state, place, scope, className)) return false;
+            if (processClassesByName(processor, state, scope, className)) return false;
           }
         }
       }
@@ -255,7 +252,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return true;
   }
 
-  private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope, String className) {
+  private boolean processClassesByName(PsiScopeProcessor processor,
+                                       ResolveState state,
+                                       GlobalSearchScope scope,
+                                       String className) {
     final PsiClass[] classes = findClassesByName(className, scope);
     return !processClasses(processor, state, classes);
   }

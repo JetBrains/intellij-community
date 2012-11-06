@@ -111,7 +111,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         result.add(element2);
       }
     }
-    return new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
+    return result.isEmpty() ? EMPTY_SCOPE : new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
   }
 
   @Override
@@ -358,10 +358,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       IntersectionScope that = (IntersectionScope)o;
 
-      if (!myScope1.equals(that.myScope1)) return false;
-      if (!myScope2.equals(that.myScope2)) return false;
-
-      return true;
+      return myScope1.equals(that.myScope1) && myScope2.equals(that.myScope2);
     }
 
     @Override
@@ -443,10 +440,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      if (!myScope1.equals(that.myScope1)) return false;
-      if (!myScope2.equals(that.myScope2)) return false;
-
-      return true;
+      return myScope1.equals(that.myScope1) && myScope2.equals(that.myScope2);
     }
 
     @Override
@@ -630,9 +624,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof FilesScope)) return false;
-
-      return myFiles.equals(((FilesScope)o).myFiles);
+      return o instanceof FilesScope && myFiles.equals(((FilesScope)o).myFiles);
     }
 
     @Override

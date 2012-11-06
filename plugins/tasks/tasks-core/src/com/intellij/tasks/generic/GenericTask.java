@@ -4,7 +4,6 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
-import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +45,10 @@ public class GenericTask extends Task {
     return new Comment[0];
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Other;
+    return myRepository.getRepositoryType().getIcon();
   }
 
   @NotNull

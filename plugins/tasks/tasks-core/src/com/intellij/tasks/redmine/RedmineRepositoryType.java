@@ -21,6 +21,7 @@ public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository>
     return "Redmine";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Redmine;

@@ -401,7 +401,9 @@ public class ResolveUtil {
 
   public static boolean processCategoryMembers(GroovyPsiElement place, PsiScopeProcessor processor, ResolveState state) {
     boolean gpp = GppTypeConverter.hasTypedContext(place);
-    if (gpp && !processUseAnnotation(place, processor, state)) return false;
+    if (gpp) {
+      if (!processUseAnnotation(place, processor, state)) return false;
+    }
 
     boolean inCodeBlock = true;
     PsiElement run = place;
@@ -499,11 +501,6 @@ public class ResolveUtil {
                                   PsiSubstitutor substitutor2) {  //method1 has more general parameter types then method2
     if (!method1.getName().equals(method2.getName())) return false;
 
-    if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
-      method1 = ((GrGdkMethod)method1).getStaticMethod();
-      method2 = ((GrGdkMethod)method2).getStaticMethod();
-    }
-
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
@@ -513,6 +510,22 @@ public class ResolveUtil {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
       if (!type1.equals(type2)) return false;
+    }
+
+    if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
+      PsiMethod static1 = ((GrGdkMethod)method1).getStaticMethod();
+      PsiMethod static2 = ((GrGdkMethod)method2).getStaticMethod();
+
+      PsiParameter p1 = static1.getParameterList().getParameters()[0];
+      PsiParameter p2 = static2.getParameterList().getParameters()[0];
+
+      PsiType t1 = substitutor1.substitute(p1.getType());
+      PsiType t2 = substitutor2.substitute(p2.getType());
+
+      if (!t1.equals(t2)) {
+        //method1 is more general than method2
+        return t1.isAssignableFrom(t2);
+      }
     }
 
     return true;

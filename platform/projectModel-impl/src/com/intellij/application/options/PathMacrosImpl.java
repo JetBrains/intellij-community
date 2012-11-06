@@ -61,7 +61,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   // predefined macros
   @NonNls
-  public static final String APPLICATION_HOME_MACRO_NAME = "APPLICATION_HOME_DIR";
+  public static final String APPLICATION_HOME_MACRO_NAME = PathMacroUtil.APPLICATION_HOME_DIR;
   @NonNls
   public static final String PROJECT_DIR_MACRO_NAME = PathMacroUtil.PROJECT_DIR_MACRO_NAME;
   @NonNls

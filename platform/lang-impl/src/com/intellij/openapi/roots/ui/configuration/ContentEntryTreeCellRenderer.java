@@ -39,6 +39,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     myTreeEditor = treeEditor;
   }
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
@@ -53,7 +54,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
             final ContentEntry contentEntry = editor.getContentEntry();
             if (contentEntry != null) {
               final String prefix = getPrefix(contentEntry, file);
-              if (prefix.length() > 0) {
+              if (!prefix.isEmpty()) {
                 append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
               }
               setIcon(updateIcon(contentEntry, file, getIcon()));
