@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,9 +92,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
         PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
       }
     }
-    // process only files in package's drectories
-    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myProject, module, isLibraryElement());
-    final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
+    // process only files in package's directories
+    final PsiDirectory[] dirs = PackageUtil.getDirectories(aPackage, myProject, module, isLibraryElement());
     for (final PsiDirectory dir : dirs) {
       children.addAll(ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(dir, getSettings(), false));
     }
@@ -165,7 +163,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (value == null) {
       return VirtualFile.EMPTY_ARRAY;
     }
-    final PsiDirectory[] directories = value.getPackage().getDirectories(PackageUtil.getScopeToShow(getProject(), value.getModule(), isLibraryElement()));
+    final PsiDirectory[] directories = PackageUtil.getDirectories(value.getPackage(), getProject(), value.getModule(), isLibraryElement());
     final VirtualFile[] result = new VirtualFile[directories.length];
     for (int i = 0; i < directories.length; i++) {
       PsiDirectory directory = directories[i];
