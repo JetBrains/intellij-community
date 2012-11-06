@@ -13,14 +13,18 @@
 package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.util.Date;
@@ -44,12 +48,13 @@ public class HgAnnotation implements FileAnnotation {
   private final HgLineAnnotationAspect revisionAnnotationAspect =
     new HgLineAnnotationAspect(FIELD.REVISION);
 
+  @NotNull private final Project myProject;
   private final List<HgAnnotationLine> lines;
   private final List<HgFileRevision> vcsFileRevisions;
   private final HgFile hgFile;
 
-  public HgAnnotation(HgFile hgFile,
-    List<HgAnnotationLine> lines, List<HgFileRevision> vcsFileRevisions) {
+  public HgAnnotation(@NotNull Project project, HgFile hgFile, List<HgAnnotationLine> lines, List<HgFileRevision> vcsFileRevisions) {
+    myProject = project;
     this.lines = lines;
     this.vcsFileRevisions = vcsFileRevisions;
     this.hgFile = hgFile;
@@ -172,7 +177,13 @@ public class HgAnnotation implements FileAnnotation {
 
     @Override
     protected void showAffectedPaths(int lineNum) {
-      // todo 
+      if (lineNum >= 0 && lineNum < lines.size()) {
+        HgAnnotationLine line = lines.get(lineNum);
+        VirtualFile file = hgFile.toFilePath().getVirtualFile();
+        if (line != null && file != null) {
+          ShowAllAffectedGenericAction.showSubmittedFiles(myProject, line.getVcsRevisionNumber(), file, HgVcs.getKey());
+        }
+      }
     }
   }
 
