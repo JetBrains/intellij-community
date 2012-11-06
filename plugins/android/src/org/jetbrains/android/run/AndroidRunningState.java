@@ -84,7 +84,7 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
 /**
  * @author coyote
  */
-public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
+public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener, AndroidExecutionState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
 
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
@@ -164,6 +164,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
 
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     myProcessHandler = new DefaultDebugProcessHandler();
+    AndroidProcessText.attach(myProcessHandler);
     ConsoleView console;
     if (isDebugMode()) {
       Project project = myFacet.getModule().getProject();
@@ -205,7 +206,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        start();
+        chooseTargetDeviceAndStart();
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
@@ -244,6 +245,17 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   @NotNull
   public AndroidFacet getFacet() {
     return myFacet;
+  }
+
+  @Override
+  public IDevice[] getDevices() {
+    return myTargetDevices;
+  }
+
+  @Nullable
+  @Override
+  public ConsoleView getConsoleView() {
+    return myConsole;
   }
 
   public class MyReceiver extends AndroidOutputReceiver {
@@ -323,27 +335,15 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
 
   @Nullable
   private IDevice[] chooseDevicesAutomaticaly() {
-    final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
-    if (bridge == null) {
+    final List<IDevice> compatibleDevices = getAllCompatibleDevices();
+
+    if (compatibleDevices.size() == 0) {
       return EMPTY_DEVICE_ARRAY;
     }
-    IDevice[] devices = bridge.getDevices();
-
-    boolean showChooserDialog = false;
-    IDevice targetDevice = null;
-    for (IDevice device : devices) {
-      if (isCompatibleDevice(device) != Boolean.FALSE) {
-        if (targetDevice == null) {
-          targetDevice = device;
-        }
-        else {
-          showChooserDialog = true;
-          break;
-        }
-      }
+    else if (compatibleDevices.size() == 1) {
+      return new IDevice[] {compatibleDevices.get(0)};
     }
-
-    if (showChooserDialog) {
+    else {
       final IDevice[][] devicesWrapper = {null};
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
@@ -358,8 +358,23 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
       }, ModalityState.defaultModalityState());
       return devicesWrapper[0].length > 0 ? devicesWrapper[0] : null;
     }
+  }
 
-    return targetDevice != null ? new IDevice[] {targetDevice} : EMPTY_DEVICE_ARRAY;
+  @NotNull
+  List<IDevice> getAllCompatibleDevices() {
+    final List<IDevice> compatibleDevices = new ArrayList<IDevice>();
+    final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
+
+    if (bridge != null) {
+      IDevice[] devices = bridge.getDevices();
+
+      for (IDevice device : devices) {
+        if (isCompatibleDevice(device) != Boolean.FALSE) {
+          compatibleDevices.add(device);
+        }
+      }
+    }
+    return compatibleDevices;
   }
 
   private void chooseAvd() {
@@ -404,13 +419,17 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     }
   }
 
-  private void start() {
+  private void chooseTargetDeviceAndStart() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
       if (!chooseOrLaunchDevice()) {
         return;
       }
     }
+    start();
+  }
+
+  void start() {
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
     }
@@ -539,7 +558,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   }
 
   @Nullable
-  private Boolean isCompatibleDevice(@NotNull IDevice device) {
+  Boolean isCompatibleDevice(@NotNull IDevice device) {
     if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (device.isEmulator()) {
         String avdName = device.isEmulator() ? device.getAvdName() : null;
@@ -561,6 +580,14 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     }
     Boolean compatible = isCompatibleDevice(device);
     return compatible == null || compatible.booleanValue();
+  }
+
+  public void setTargetDevices(@NotNull IDevice[] targetDevices) {
+    myTargetDevices = targetDevices;
+  }
+
+  public void setConsole(@NotNull ConsoleView console) {
+    myConsole = console;
   }
 
   @Nullable
