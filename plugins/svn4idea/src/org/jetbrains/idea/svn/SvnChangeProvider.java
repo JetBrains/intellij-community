@@ -92,7 +92,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
       partner.setFileProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        walker.go(item.getDir(), SVNDepth.FILES);
+        walker.go(item.getDir(), SVNDepth.IMMEDIATES);
       }
 
       // they are taken under non recursive: ENTRIES file is read anyway, so we get to know parent status also for free
