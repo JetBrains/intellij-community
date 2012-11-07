@@ -197,7 +197,27 @@ class GitRepositoryReader {
       return null;
     }
 
-    return tryOrThrow(new Callable<String>() {
+    final AtomicReference<String> hashRef = new AtomicReference<String>();
+    readPackedRefsFile(new PackedRefsLineResultHandler() {
+      @Override
+      public void handleResult(String hash, String branchName) {
+        if (hash == null || branchName == null) {
+          return;
+        }
+        if (branchName.endsWith(ref)) {
+          hashRef.set(shortBuffer(hash));
+        }
+      }
+    });
+    if (hashRef.get() != null) {
+      return hashRef.get();
+    }
+
+    return null;
+  }
+
+  private void readPackedRefsFile(@NotNull final PackedRefsLineResultHandler handler) {
+    tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
         BufferedReader reader = null;
@@ -205,30 +225,15 @@ class GitRepositoryReader {
           reader = new BufferedReader(new FileReader(myPackedRefsFile));
           String line;
           while ((line = reader.readLine()) != null) {
-            final AtomicReference<String> hashRef = new AtomicReference<String>();
-            parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
-              @Override
-              public void handleResult(String hash, String branchName) {
-                if (hash == null || branchName == null) {
-                  return;
-                }
-                if (branchName.endsWith(ref)) {
-                  hashRef.set(shortBuffer(hash));
-                }
-              }
-            });
-            
-            if (hashRef.get() != null) {
-              return hashRef.get();
-            }
+            parsePackedRefsLine(line, handler);
           }
-          return null;
         }
         finally {
           if (reader != null) {
             reader.close();
           }
         }
+        return null;
       }
     }, myPackedRefsFile);
   }
@@ -336,27 +341,24 @@ class GitRepositoryReader {
     if (!myPackedRefsFile.exists()) {
       return GitBranchesCollection.EMPTY;
     }
-    final String content = tryLoadFile(myPackedRefsFile);
-    
-    for (String line : content.split("\n")) {
-      parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
-        @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
-          if (hash == null || branchName == null) {
-            return;
-          }
-          hash = shortBuffer(hash);
-          if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-            localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
-          }
-          else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.create(hash), remotes);
-            if (remoteBranch != null) {
-              remoteBranches.add(remoteBranch);
-            }
+
+    readPackedRefsFile(new PackedRefsLineResultHandler() {
+      @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
+        if (hash == null || branchName == null) {
+          return;
+        }
+        hash = shortBuffer(hash);
+        if (branchName.startsWith(REFS_HEADS_PREFIX)) {
+          localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
+        }
+        else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
+          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.create(hash), remotes);
+          if (remoteBranch != null) {
+            remoteBranches.add(remoteBranch);
           }
         }
-      });
-    }
+      }
+    });
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
