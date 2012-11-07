@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
@@ -139,12 +140,12 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   @NotNull
   @Override
   public String getName() {
-    return "Create from Sources";
+    return "Existing Sources";
   }
 
   @Override
   public Icon getIcon() {
-    return null;
+    return AllIcons.Nodes.Folder;
   }
 
   @Override
