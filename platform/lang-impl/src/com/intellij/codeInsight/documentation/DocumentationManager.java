@@ -29,10 +29,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExternalDocumentationHandler;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -489,6 +486,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     int offset = editor.getCaretModel().getOffset();
     TargetElementUtilBase util = TargetElementUtilBase.getInstance();
     PsiElement element = assertSameProject(getElementFromLookup(editor, file));
+    if (element == null && file != null) {
+      final DocumentationProvider documentationProvider = getProviderFromElement(file);
+      if (documentationProvider instanceof DocumentationProviderEx) {
+        element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
+      }
+    }
+    
     if (element == null) {
       element = assertSameProject(util.findTargetElement(editor, ourFlagsForTargetElements, offset));
       
