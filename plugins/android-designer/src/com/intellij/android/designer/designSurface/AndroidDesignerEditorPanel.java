@@ -340,19 +340,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                   if (updatePalette) {
                     updatePalette(myLastTarget);
                   }
-                  if (warnMessages.isEmpty()) {
-                    showWarnMessages(null);
-                  }
-                  else {
-                    List<FixableMessageInfo> messages = new ArrayList<FixableMessageInfo>();
-                    for (FixableIssueMessage message : warnMessages) {
-                      messages.add(
-                        new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText,
-                                               message.myQuickFix,
-                                               message.myAdditionalFixes));
-                    }
-                    showWarnMessages(messages);
-                  }
+                  showWarnings(warnMessages);
                 }
               }
               catch (Throwable e) {
@@ -378,6 +366,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
     });
+  }
+
+  private void showWarnings(@Nullable List<FixableIssueMessage> warnMessages) {
+    if (warnMessages == null || warnMessages.isEmpty()) {
+      showWarnMessages(null);
+    }
+    else {
+      List<FixableMessageInfo> messages = new ArrayList<FixableMessageInfo>();
+      for (FixableIssueMessage message : warnMessages) {
+        messages.add(
+          new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText,
+                                 message.myQuickFix,
+                                 message.myAdditionalFixes));
+      }
+      showWarnMessages(messages);
+    }
   }
 
   private void disposeRenderer() {
@@ -428,6 +432,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected void configureError(@NotNull ErrorInfo info) {
+    List<FixableIssueMessage> warnMessages = null;
+
     Throwable renderCreator = null;
     if (info.myThrowable instanceof MyThrowable) {
       renderCreator = info.myThrowable;
@@ -470,7 +476,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       info.myShowLog = false;
     }
     else {
-      List<FixableIssueMessage> warnMessages = null;
       boolean renderError = info.myThrowable instanceof RenderingException;
 
       if (renderError) {
@@ -499,14 +504,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       else {
         info.myShowLog = false;
         info.myShowStack = true;
-
-        for (FixableIssueMessage message : warnMessages) {
-          info.myMessages.add(
-            new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText, message.myQuickFix,
-                                   message.myAdditionalFixes));
-        }
       }
     }
+
+    showWarnings(warnMessages);
 
     StringBuilder builder = new StringBuilder();
 

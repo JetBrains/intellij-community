@@ -4,7 +4,6 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,7 +18,6 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +40,6 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
     Project[] projects = myProjectManager.getOpenProjects();
     assertEquals(2, projects.length);
-    System.out.println(myCreatedProject.getBasePath());
     return myCreatedProject;
   }
 
@@ -61,7 +58,6 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     assertTrue(step.setSelectedTemplate(group, name));
     ProjectTemplate template = step.getSelectedTemplate();
     assertNotNull(template);
-    System.out.println(template.getName());
 
     if (adjuster != null) {
       adjuster.consume(step);
@@ -87,16 +83,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     myFilesToDelete.add(directory);
 
     myWizard = createWizard(directory.getPath());
-
-    if (myWizard != null) {
-      myWizard.navigateToStep(new Function<Step, Boolean>() {
-        @Override
-        public Boolean fun(Step step) {
-          return step instanceof SelectTemplateStep;
-        }
-      });
-      UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
-    }
+    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
   @Nullable
@@ -122,18 +109,18 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   }
 
   protected Module importModuleFrom(ProjectImportProvider provider, String path) {
-    return importFrom(provider, path, getProject());
+    return importFrom(path, getProject(), provider);
   }
 
-  protected Module importProjectFrom(ProjectImportProvider provider, String path) {
-    return importFrom(provider, path, null);
+  protected Module importProjectFrom(String path, ProjectImportProvider... providers) {
+    return importFrom(path, null, providers);
   }
 
-  private Module importFrom(ProjectImportProvider provider, String path, @Nullable Project project) {
+  private Module importFrom(String path, @Nullable Project project, ProjectImportProvider... providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
-    assertTrue(provider.canImport(file, project));
-    myWizard = new TestWizard(project, path, provider);
+    assertTrue(providers[0].canImport(file, project));
+    myWizard = new TestWizard(project, path, providers);
     runWizard(null);
     if (project == null) {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);

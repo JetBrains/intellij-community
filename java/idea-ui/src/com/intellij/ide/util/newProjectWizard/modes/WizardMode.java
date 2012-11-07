@@ -53,10 +53,6 @@ public abstract class WizardMode implements Disposable {
     return myStepSequence;
   }
 
-  public void addSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider, StepSequence sequence) {
-
-  }
-
   @Nullable
   protected abstract StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider);
 

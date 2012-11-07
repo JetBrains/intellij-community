@@ -23,6 +23,7 @@ import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -482,7 +483,33 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+
+    try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
+      Artifact project = getComponent(ArtifactFactory.class).createBuildArtifact("temp", "temp", "666", "pom");
+
+      Set<Artifact> res = getComponent(ArtifactResolver.class)
+        .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
+                             getComponent(ArtifactMetadataSource.class))
+        .getArtifacts();
+
+      return MavenModelConverter.convertArtifacts(res, new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+    }
+    catch (ArtifactResolutionException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (ArtifactNotFoundException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+
+    return Collections.emptyList();
   }
 
   @Override

@@ -124,7 +124,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
       for (JpsModule module : model.getProject().getModules()) {
         final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-        if (extension != null && !extension.isLibrary()) {
+        if (extension != null) {
           targets.add(new AndroidBuildTarget(this, module));
         }
       }

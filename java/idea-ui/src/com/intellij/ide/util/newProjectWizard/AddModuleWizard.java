@@ -23,6 +23,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -62,8 +63,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardContext myWizardContext;
-  protected ProjectCreateModeStep myRootStep;
-  private ImportMode myImportMode;
+  private WizardMode myWizardMode;
 
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
@@ -120,11 +120,13 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     });
 
     if (myImportProviders == null) {
-      initSteps(defaultPath);
+      myWizardMode = new CreateFromTemplateMode();
+      appendSteps(myWizardMode.getSteps(myWizardContext, myModulesProvider));
     }
     else {
-      myImportMode = new ImportMode(myImportProviders);
-      appendSteps(myImportMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project)));
+      myWizardMode = new ImportMode(myImportProviders);
+      StepSequence sequence = myWizardMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
+      appendSteps(sequence);
       for (ProjectImportProvider provider : myImportProviders) {
         provider.getBuilder().setFileToImport(defaultPath);
       }
@@ -133,18 +135,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     }
     init();
-  }
-
-  protected void initSteps(final String defaultPath) {
-    myRootStep = new ProjectCreateModeStep(defaultPath, myWizardContext){
-      protected void update() {
-        updateButtons();
-      }
-    };
-    addStep(myRootStep);
-    for (WizardMode mode : myRootStep.getModes()) {
-      appendSteps(mode.getSteps(myWizardContext, myModulesProvider));
-    }
   }
 
   private void appendSteps(@Nullable final StepSequence sequence) {
@@ -266,9 +256,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     final StepSequence stepSequence = getSequence();
     if (stepSequence != null) {
       ModuleWizardStep current = mySteps.get(step);
-      if (myRootStep == current) {
-        return mySteps.indexOf(stepSequence.getFirstStep());
-      }
       nextStep = stepSequence.getNextStep(current);
       while (nextStep != null && !nextStep.isStepVisible()) {
         nextStep = stepSequence.getNextStep(nextStep);
@@ -277,7 +264,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return nextStep == null ? step : mySteps.indexOf(nextStep);
   }
 
-  private StepSequence getSequence() {
+  public StepSequence getSequence() {
     return getMode().getSteps(myWizardContext, myModulesProvider);
   }
 
@@ -294,7 +281,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   private WizardMode getMode() {
-    return myImportMode == null ? myRootStep.getMode() : myImportMode;
+    return myWizardMode;
   }
 
   @NotNull
@@ -390,18 +377,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
         continue;
       }
 
-      // Switch to the target mode if necessary.
-      for (WizardMode mode : myRootStep.getModes()) {
-        StepSequence steps = mode.getSteps(myWizardContext, myModulesProvider);
-        if (steps == null || !steps.getAllSteps().contains(step)) {
-          continue;
-        }
-        if (getMode() != mode) {
-          myRootStep.setMode(mode);
-        }
-        break;
-      }
-      
       // Update current step.
       myCurrentStep = i;
       updateStep();

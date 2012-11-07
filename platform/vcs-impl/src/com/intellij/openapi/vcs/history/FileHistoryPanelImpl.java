@@ -68,6 +68,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -375,7 +376,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myProject);
+    myUpdateAlarm = new Alarm(VcsUtil.VCS_SHARED, myProject);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 

@@ -128,11 +128,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   private String getProgressTitle() {
-    String type="";
-    if (myProjectSettings.isCheckIncomingOutgoing()) {
-        type = "incoming and outgoing";
-    }
-    return "Checking " + type + " changes";
+    return "Checking incoming and outgoing changes";
   }
 
   protected boolean isCheckingEnabled() {

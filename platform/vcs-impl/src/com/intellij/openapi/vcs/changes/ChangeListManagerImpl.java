@@ -50,6 +50,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.Rethrow;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,10 +76,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static ScheduledExecutorService ourUpdateAlarm = createExecutor();
+  private static ScheduledExecutorService ourUpdateAlarm = createChangeListExecutor();
 
-  private static ScheduledThreadPoolExecutor createExecutor() {
-    return ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
+  private static ScheduledThreadPoolExecutor createChangeListExecutor() {
+    return VcsUtil.createExecutor("Change List Updater");
   }
 
   private final Modifier myModifier;
@@ -1387,7 +1388,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void stopEveryThingIfInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ourUpdateAlarm.shutdownNow();
-    ourUpdateAlarm = createExecutor();
+    ourUpdateAlarm = createChangeListExecutor();
   }
 
   /**

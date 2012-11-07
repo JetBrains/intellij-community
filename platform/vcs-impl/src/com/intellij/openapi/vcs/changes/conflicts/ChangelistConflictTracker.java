@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -81,7 +80,7 @@ public class ChangelistConflictTracker {
     myCheckSet = new HashSet<VirtualFile>();
 
     final Application application = ApplicationManager.getApplication();
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, myProject);
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, myProject);
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {

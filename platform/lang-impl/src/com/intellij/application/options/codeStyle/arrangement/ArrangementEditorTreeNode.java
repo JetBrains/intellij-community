@@ -32,7 +32,7 @@ public class ArrangementEditorTreeNode /*extends ArrangementTreeNode implements 
 
   private static final int STEPS_NUMBER = 10;
 
-  @NotNull private final JPanel           myRenderer;
+  //@NotNull private final JPanel           myRenderer;
   @NotNull private final DefaultTreeModel myTreeModel;
   
   private final int myAvailableWidth;
@@ -40,17 +40,18 @@ public class ArrangementEditorTreeNode /*extends ArrangementTreeNode implements 
   private boolean myExpanding = true;
   private int     myStep      = 1;
 
-  public ArrangementEditorTreeNode(@NotNull ArrangementRuleEditor editor, @NotNull DefaultTreeModel treeModel, int availableWidth) {
+  public ArrangementEditorTreeNode(/*@NotNull ArrangementRuleEditor editor, */@NotNull DefaultTreeModel treeModel, int availableWidth) {
     //super(null);
     myTreeModel = treeModel;
     myAvailableWidth = availableWidth;
-    editor.applyAvailableWidth(availableWidth - ArrangementConstants.HORIZONTAL_PADDING);
-    myRenderer = createRenderer(editor);
+    //editor.applyAvailableWidth(availableWidth - ArrangementConstants.HORIZONTAL_PADDING);
+    //myRenderer = createRenderer(editor);
   }
 
   @NotNull
-  private JPanel createRenderer(@NotNull ArrangementRuleEditor editor) {
-    final Dimension size = editor.getPreferredSize();
+  private JPanel createRenderer(/*@NotNull ArrangementRuleEditor editor*/) {
+    final Dimension size = null;
+    //final Dimension size = editor.getPreferredSize();
     JPanel result = new JPanel() {
 
       @Override
@@ -83,7 +84,7 @@ public class ArrangementEditorTreeNode /*extends ArrangementTreeNode implements 
     };
     
     result.setLayout(new GridBagLayout());
-    result.add(editor, new GridBag().fillCell().weightx(1).weighty(1).anchor(GridBagConstraints.NORTHWEST));
+    //result.add(editor, new GridBag().fillCell().weightx(1).weighty(1).anchor(GridBagConstraints.NORTHWEST));
     result.setBorder(IdeBorderFactory.createBorder());
     return result;
   }
@@ -105,6 +106,7 @@ public class ArrangementEditorTreeNode /*extends ArrangementTreeNode implements 
   @NotNull
   //@Override
   public JComponent getRenderer() {
-    return myRenderer;
+    return null;
+    //return myRenderer;
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.Alarm;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,7 +59,7 @@ public class ControlledCycle {
         }
       }
     };
-    mySimpleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+    mySimpleAlarm = new Alarm(VcsUtil.VCS_SHARED, project);
   }
 
   public boolean startIfNotStarted(final int refreshInterval) {

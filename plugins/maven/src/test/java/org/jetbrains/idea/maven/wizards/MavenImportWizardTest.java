@@ -36,7 +36,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase {
 
   public void testImportProject() throws Exception {
     File pom = createPom();
-    Module module = importProjectFrom(new MavenProjectImportProvider(new MavenProjectBuilder()), pom.getParent());
+    Module module = importProjectFrom(pom.getParent(), new MavenProjectImportProvider(new MavenProjectBuilder()));
     assertEquals("project", module.getName());
   }
 
