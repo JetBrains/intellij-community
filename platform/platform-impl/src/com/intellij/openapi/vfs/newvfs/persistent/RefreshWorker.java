@@ -59,6 +59,7 @@ public class RefreshWorker {
     final boolean rootDirty = root.isDirty();
     debug(LOG, "root=%s dirty=%b", root, rootDirty);
     if (!rootDirty) return;
+    final long t = System.currentTimeMillis();
 
     NewVirtualFileSystem fs = root.getFileSystem();
     final FileAttributes rootAttributes = fs.getAttributes(root);
@@ -66,6 +67,7 @@ public class RefreshWorker {
     if (rootAttributes == null) {
       scheduleDeletion(root);
       root.markClean();
+      debug(LOG, "root=%s time=%d", root, System.currentTimeMillis() - t);
       return;
     }
 
@@ -182,6 +184,8 @@ public class RefreshWorker {
 
       file.markClean();
     }
+
+    debug(LOG, "root=%s time=%d", root, System.currentTimeMillis() - t);
   }
 
   private void checkAndScheduleChildRefresh(@NotNull VirtualFileSystemEntry parent,
