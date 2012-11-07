@@ -545,7 +545,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @NotNull
   private AnAction showSettings() {
-    return new AnAction("Options...", "show find usages settings dialog", AllIcons.General.ProjectSettings) {
+    return new AnAction("Settings...", "Show find usages settings dialog", AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut();
         if (shortcut != null) {

@@ -112,7 +112,30 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
                                            final ExecutionEnvironment environment) throws ExecutionException {
     assert state instanceof AndroidRunningState;
     final AndroidRunningState runningState = (AndroidRunningState)state;
+    final RunContentDescriptor[] descriptor = {null};
 
+    runningState.addListener(new AndroidRunningStateListener() {
+      @Override
+      public void executionFailed() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (descriptor[0] != null) {
+              showNotification(project, executor, descriptor[0], "error", false, NotificationType.ERROR);
+            }
+          }
+        });
+      }
+    });
+    descriptor[0] = doExec(project, executor, runningState, contentToReuse, environment);
+    return descriptor[0];
+  }
+
+  private RunContentDescriptor doExec(Project project,
+                                      Executor executor,
+                                      AndroidRunningState state,
+                                      RunContentDescriptor contentToReuse,
+                                      ExecutionEnvironment environment) throws ExecutionException {
     if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
       final RunContentDescriptor descriptor = super.doExecute(project, executor, state, contentToReuse, environment);
 
@@ -124,19 +147,19 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
 
     final RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof AndroidTestRunConfiguration) {
-      String targetPackage = getTargetPackage((AndroidTestRunConfiguration)runProfile, runningState);
+      String targetPackage = getTargetPackage((AndroidTestRunConfiguration)runProfile, state);
       if (targetPackage == null) {
         throw new ExecutionException(AndroidBundle.message("target.package.not.specified.error"));
       }
-      runningState.setTargetPackageName(targetPackage);
+      state.setTargetPackageName(targetPackage);
     }
-    runningState.setDebugMode(true);
+    state.setDebugMode(true);
     RunContentDescriptor runDescriptor;
     synchronized (myDebugLock) {
-      MyDebugLauncher launcher = new MyDebugLauncher(project, executor, runningState, environment);
-      runningState.setDebugLauncher(launcher);
+      MyDebugLauncher launcher = new MyDebugLauncher(project, executor, state, environment);
+      state.setDebugLauncher(launcher);
 
-      final RunContentDescriptor descriptor = embedToExistingSession(project, executor, runningState);
+      final RunContentDescriptor descriptor = embedToExistingSession(project, executor, state);
       runDescriptor = descriptor != null ? descriptor : super.doExecute(project, executor, state, contentToReuse, environment);
       launcher.setRunDescriptor(runDescriptor);
       if (descriptor != null) {
@@ -147,10 +170,10 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
       return null;
     }
     tryToCloseOldSessions(executor, project);
-    final ProcessHandler handler = runningState.getProcessHandler();
+    final ProcessHandler handler = state.getProcessHandler();
     handler.putUserData(ANDROID_SESSION_INFO, new AndroidSessionInfo(
-      runDescriptor, runningState, executor.getId()));
-    runningState.setRestarter(runDescriptor.getRestarter());
+      runDescriptor, state, executor.getId()));
+    state.setRestarter(runDescriptor.getRestarter());
     setActivateToolWindowWhenAddedProperty(project, executor, runDescriptor, "running");
     return runDescriptor;
   }
@@ -163,7 +186,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
     descriptor.setActivateToolWindowWhenAdded(activateToolWindow);
 
     if (!activateToolWindow) {
-      showNotification(project, executor, descriptor, status);
+      showNotification(project, executor, descriptor, status, false, NotificationType.INFORMATION);
     }
   }
 
@@ -239,7 +262,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
     AndroidProcessText.attach(newProcessHandler);
     newProcessHandler.notifyTextAvailable("The session was restarted\n", STDOUT);
 
-    showNotification(project, executor, oldDescriptor, "running");
+    showNotification(project, executor, oldDescriptor, "running", false, NotificationType.INFORMATION);
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
@@ -253,20 +276,29 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
   private static void showNotification(final Project project,
                                        final Executor executor,
                                        final RunContentDescriptor descriptor,
-                                       final String status) {
+                                       final String status,
+                                       final boolean notifySelectedContent,
+                                       final NotificationType type) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         final String sessionName = descriptor.getDisplayName();
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(executor.getToolWindowId());
         final Content content = descriptor.getAttachedContent();
-        final String notificationMessage = content != null && content.isSelected() && toolWindow.isVisible()
-                                           ? "Session '" + sessionName + "': " + status
-                                           : "Session <a href=''>'" + sessionName + "'</a>: " + status;
+        final String notificationMessage;
+        if (content != null && content.isSelected() && toolWindow.isVisible()) {
+          if (!notifySelectedContent) {
+            return;
+          }
+          notificationMessage = "Session '" + sessionName + "': " + status;
+        }
+        else {
+          notificationMessage = "Session <a href=''>'" + sessionName + "'</a>: " + status;
+        }
 
         NotificationGroup.toolWindowGroup("Android Session Restarted", executor.getToolWindowId(), true)
           .createNotification("", notificationMessage,
-                              NotificationType.INFORMATION, new NotificationListener() {
+                              type, new NotificationListener() {
             @Override
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
               if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {

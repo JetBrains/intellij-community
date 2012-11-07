@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -90,6 +75,7 @@ public class AllIcons {
     public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); // 11x12
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); // 11x10
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.png"); // 14x14
+    public static final Icon MoveToAnotherChangelist = IconLoader.getIcon("/actions/moveToAnotherChangelist.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); // 14x14
     public static final Icon New = IconLoader.getIcon("/actions/new.png"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.png"); // 16x16
@@ -99,6 +85,7 @@ public class AllIcons {
     public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.png"); // 16x16
     public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
+    public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.png"); // 16x16
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 14x14
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.png"); // 16x16
@@ -200,52 +187,52 @@ public class AllIcons {
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.png"); // 16x16
     public static final Icon Db_array = IconLoader.getIcon("/debugger/db_array.png"); // 16x16
-    public static final Icon Db_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_dep_field_breakpoint = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png"); // 12x12
-    public static final Icon Db_dep_line_breakpoint = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png"); // 12x12
-    public static final Icon Db_dep_method_breakpoint = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png"); // 12x12
-    public static final Icon Db_disabled_breakpoint = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png"); // 12x12
+    public static final Icon Db_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_dep_field_breakpoint = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png"); // 16x16
+    public static final Icon Db_dep_line_breakpoint = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png"); // 16x16
+    public static final Icon Db_dep_method_breakpoint = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png"); // 16x16
+    public static final Icon Db_disabled_breakpoint = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png"); // 16x16
     public static final Icon Db_disabled_breakpoint_process = IconLoader.getIcon("/debugger/db_disabled_breakpoint_process.png"); // 16x16
-    public static final Icon Db_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_disabled_field_breakpoint = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png"); // 12x12
-    public static final Icon Db_disabled_method_breakpoint = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png"); // 12x12
+    public static final Icon Db_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_disabled_field_breakpoint = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png"); // 16x16
+    public static final Icon Db_disabled_method_breakpoint = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png"); // 16x16
     public static final Icon Db_error = IconLoader.getIcon("/debugger/db_error.png"); // 16x16
-    public static final Icon Db_exception_breakpoint = IconLoader.getIcon("/debugger/db_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_field_breakpoint = IconLoader.getIcon("/debugger/db_field_breakpoint.png"); // 12x12
+    public static final Icon Db_exception_breakpoint = IconLoader.getIcon("/debugger/db_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_field_breakpoint = IconLoader.getIcon("/debugger/db_field_breakpoint.png"); // 16x16
     public static final Icon Db_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_invalid_breakpoint = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png"); // 12x12
-    public static final Icon Db_invalid_field_breakpoint = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png"); // 12x12
-    public static final Icon Db_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png"); // 12x12
-    public static final Icon Db_method_breakpoint = IconLoader.getIcon("/debugger/db_method_breakpoint.png"); // 12x12
+    public static final Icon Db_invalid_breakpoint = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png"); // 16x16
+    public static final Icon Db_invalid_field_breakpoint = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png"); // 16x16
+    public static final Icon Db_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png"); // 16x16
+    public static final Icon Db_method_breakpoint = IconLoader.getIcon("/debugger/db_method_breakpoint.png"); // 16x16
     public static final Icon Db_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_muted_breakpoint = IconLoader.getIcon("/debugger/db_muted_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_dep_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_field_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_dep_line_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_line_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_dep_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_method_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_disabled_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint.png"); // 12x12
+    public static final Icon Db_muted_breakpoint = IconLoader.getIcon("/debugger/db_muted_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_dep_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_dep_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_field_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_dep_line_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_line_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_dep_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_dep_method_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_disabled_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint.png"); // 16x16
     public static final Icon Db_muted_disabled_breakpoint_process = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint_process.png"); // 16x16
-    public static final Icon Db_muted_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_disabled_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_field_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_disabled_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_method_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_exception_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_field_breakpoint.png"); // 12x12
+    public static final Icon Db_muted_disabled_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_disabled_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_field_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_disabled_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_disabled_method_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_exception_breakpoint = IconLoader.getIcon("/debugger/db_muted_exception_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_field_breakpoint.png"); // 16x16
     public static final Icon Db_muted_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_field_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_muted_invalid_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_invalid_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_field_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png"); // 12x12
+    public static final Icon Db_muted_invalid_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_invalid_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_field_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png"); // 16x16
     public static final Icon Db_muted_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_muted_verified_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png"); // 12x12
-    public static final Icon Db_muted_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_method_breakpoint.png"); // 12x12
+    public static final Icon Db_muted_verified_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_method_breakpoint.png"); // 16x16
     public static final Icon Db_muted_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.png"); // 12x12
+    public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.png"); // 16x16
     public static final Icon Db_primitive = IconLoader.getIcon("/debugger/db_primitive.png"); // 16x16
-    public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.png"); // 12x12
-    public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.png"); // 12x12
-    public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png"); // 12x12
-    public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png"); // 12x12
+    public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.png"); // 16x16
+    public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.png"); // 16x16
+    public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png"); // 16x16
+    public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png"); // 16x16
     public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
     public static final Icon Disable_value_calculation = IconLoader.getIcon("/debugger/disable_value_calculation.png"); // 16x16
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.png"); // 16x16
@@ -313,6 +300,7 @@ public class AllIcons {
     public static final Icon Aspectj = IconLoader.getIcon("/fileTypes/aspectj.png"); // 16x16
     public static final Icon Css = IconLoader.getIcon("/fileTypes/css.png"); // 16x16
     public static final Icon Custom = IconLoader.getIcon("/fileTypes/custom.png"); // 16x16
+    public static final Icon Diagram = IconLoader.getIcon("/fileTypes/diagram.png"); // 16x16
     public static final Icon Dtd = IconLoader.getIcon("/fileTypes/dtd.png"); // 16x16
     public static final Icon Facelets = IconLoader.getIcon("/fileTypes/facelets.png"); // 16x16
     public static final Icon FacesConfig = IconLoader.getIcon("/fileTypes/facesConfig.png"); // 16x16
@@ -414,6 +402,7 @@ public class AllIcons {
     public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png"); // 14x16
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png"); // 16x16
     public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
+    public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
     public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
     public static final Icon Modified = IconLoader.getIcon("/general/modified.png"); // 24x16
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.png"); // 16x16
@@ -613,6 +602,7 @@ public class AllIcons {
     public static final Icon Warning_notifications = IconLoader.getIcon("/ide/warning_notifications.png"); // 16x16
 
   }
+  public static final Icon Idea_logo_background = IconLoader.getIcon("/idea_logo_background.png"); // 500x500
   
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16

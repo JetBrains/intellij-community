@@ -19,4 +19,8 @@ class ObjectToString<E>
     void foo(N n) {
         n.toString();
     }
+
+    String bar(N n) {
+        return "n: " + n  + "a";
+    }
 }

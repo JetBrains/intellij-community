@@ -325,15 +325,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     void fillMapWithModuleContent(@NotNull VirtualFile root,
                                   final Module module,
-                                  @NotNull final VirtualFile contentRoot,
+                                  final VirtualFile contentRoot,
                                   @Nullable final ProgressIndicator progress) {
+      final int contentRootId = contentRoot == null ? 0 : getId(contentRoot);
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
           if (progress != null) {
             progress.checkCanceled();
           }
-          if (isExcluded(getId(contentRoot), file)) return null;
+          if (isExcluded(contentRootId, file)) return null;
           if (isIgnored(file)) return null;
 
           DirectoryInfo info = getOrCreateDirInfo(getId(file));
@@ -453,13 +454,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           info.setTestSource(isTestSource);
           info.setSourceRoot(sourceRoot);
 
-          String currentPackage;
-          if (myPackages.isEmpty()) {
-            currentPackage = packageName;
-          }
-          else {
-            currentPackage = getPackageNameForSubdir(myPackages.peek(), file.getName());
-          }
+          String currentPackage = myPackages.isEmpty() ? packageName : getPackageNameForSubdir(myPackages.peek(), file.getName());
           myPackages.push(currentPackage);
           setPackageName(id, currentPackage);
           return info;

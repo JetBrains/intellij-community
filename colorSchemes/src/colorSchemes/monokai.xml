@@ -1123,6 +1123,84 @@
         <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
+    <option name="PUPPET_BAD_CHARACTER">
+      <value>
+        <option name="FOREGROUND" value="F8F8F0" />
+        <option name="BACKGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="PUPPET_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="75715E" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACES">
+      <value />
+    </option>
+    <option name="PUPPET_BRACKETS">
+      <value />
+    </option>
+    <option name="PUPPET_CLASS">
+      <value />
+    </option>
+    <option name="PUPPET_COMMA">
+      <value />
+    </option>
+    <option name="PUPPET_DOT">
+      <value />
+    </option>
+    <option name="PUPPET_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="AE81FF" />
+      </value>
+    </option>
+    <option name="PUPPET_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="PUPPET_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="AE81FF" />
+      </value>
+    </option>
+    <option name="PUPPET_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="F92672" />
+      </value>
+    </option>
+    <option name="PUPPET_PARENTH">
+      <value />
+    </option>
+    <option name="PUPPET_REGEX">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="PUPPET_RESOURCE_REFERENCE">
+      <value />
+    </option>
+    <option name="PUPPET_SEMICOLON">
+      <value />
+    </option>
+    <option name="PUPPET_SQ_STRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="PUPPET_STRING">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE">
+      <value />
+    </option>
+    <option name="PUPPET_VARIABLE_INTERPOLATION">
+      <value>
+        <option name="FOREGROUND" value="E6DB74" />
+      </value>
+    </option>
     <option name="PY.BRACES">
       <value />
     </option>

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
@@ -69,6 +70,7 @@ import java.util.*;
  */
 public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
+  private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<ProjectStructureDetector, ProjectDescriptor>();
@@ -139,12 +141,12 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   @NotNull
   @Override
   public String getName() {
-    return "Create from Sources";
+    return NAME;
   }
 
   @Override
   public Icon getIcon() {
-    return null;
+    return AllIcons.Nodes.Folder;
   }
 
   @Override

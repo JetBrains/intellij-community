@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
@@ -47,11 +48,13 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
           String prefix = commenter.getLineCommentPrefix();
           assert prefix != null: "Line Comment type is set but Line Comment Prefix is null!";
-          if (text.charAt(caretOffset) != ' ') {
-            prefix += " ";
+          if (!StringUtil.startsWith(text, offset, prefix)) {
+            if (text.charAt(caretOffset) != ' ') {
+              prefix += " ";
+            }
+            document.insertString(caretOffset, prefix);
+            return Result.Default;
           }
-          document.insertString(caretOffset, prefix);
-          return Result.Default;
         }
       }
     }

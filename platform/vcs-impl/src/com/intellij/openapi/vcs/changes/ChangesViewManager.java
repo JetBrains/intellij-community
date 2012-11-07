@@ -581,7 +581,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private class ToggleDetailsAction extends ToggleAction implements DumbAware {
     private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.Preview);
+      super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
     }
 
     @Override

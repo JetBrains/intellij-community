@@ -19,7 +19,6 @@ import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -48,6 +47,39 @@ public class ImportModuleAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
+    descriptor.setTitle("Select File Or Directory To Import");
+    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+    List<ProjectImportProvider> list = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
+      @Override
+      public boolean value(ProjectImportProvider provider) {
+        return project == null || provider.canCreateNewProject();
+      }
+    });
+    StringBuilder builder = new StringBuilder("<html>Select");
+    boolean first = true;
+    if (list.size() > 1) {
+      for (ProjectImportProvider provider : list) {
+        String sample = provider.getFileSample();
+        if (sample != null) {
+          if (!first) {
+            builder.append(',');
+          }
+          else {
+            first = false;
+          }
+          builder.append(" <b>").append(sample).append("</b>");
+          if (sample.contains("*")) {
+            builder.append(" file");
+          }
+        }
+      }
+    }
+    if (!first) {
+      builder.append(" or");
+    }
+    builder.append(" directory with <b>existing sources</b> to be imported.</html>");
+    descriptor.setDescription(builder.toString());
+
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
     VirtualFile[] files = chooser.choose(null, project);
     if (files.length > 0) {
@@ -93,6 +125,6 @@ public class ImportModuleAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setVisible(ApplicationManager.getApplication().isInternal());
+    presentation.setVisible(getEventProject(e) != null);
   }
 }

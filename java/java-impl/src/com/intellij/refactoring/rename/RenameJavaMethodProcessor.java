@@ -90,6 +90,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         else {
           ref = element.getReference();
         }
+        if (ref instanceof PsiImportStaticReferenceElement && ((PsiImportStaticReferenceElement)ref).multiResolve(false).length > 1) {
+          continue;
+        }
         if (ref != null) {
           PsiElement e = processRef(ref, newName);
           if (e != null) {

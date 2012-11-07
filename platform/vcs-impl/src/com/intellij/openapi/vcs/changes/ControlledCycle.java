@@ -58,7 +58,7 @@ public class ControlledCycle {
         }
       }
     };
-    mySimpleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+    mySimpleAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
   }
 
   public boolean startIfNotStarted(final int refreshInterval) {

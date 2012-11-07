@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -159,7 +160,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     });
 
-    myLoadQueue = new ZipperUpdater(500, getDisposable());
+    myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.OWN_THREAD, getDisposable());
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? new Runnable() {
       public void run() {

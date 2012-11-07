@@ -454,7 +454,7 @@ public class CompileDriver {
         if (compileContext.shouldUpdateProblemsView()) {
           final ProblemsView view = ProblemsViewImpl.SERVICE.getInstance(myProject);
           view.clearProgress();
-          view.clearOldMessages(compileContext.getCompileScope(), sessionId);
+          view.clearOldMessages(compileContext.getCompileScope(), compileContext.getSessionId());
         }
       }
 

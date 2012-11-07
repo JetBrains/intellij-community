@@ -475,4 +475,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  public UUID getSessionId() {
+    return mySessionId;
+  }
 }

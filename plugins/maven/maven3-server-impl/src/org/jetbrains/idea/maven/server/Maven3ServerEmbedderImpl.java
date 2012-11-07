@@ -23,6 +23,7 @@ import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -482,7 +483,33 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+
+    try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
+      Artifact project = getComponent(ArtifactFactory.class).createBuildArtifact("temp", "temp", "666", "pom");
+
+      Set<Artifact> res = getComponent(ArtifactResolver.class)
+        .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
+                             getComponent(ArtifactMetadataSource.class))
+        .getArtifacts();
+
+      return MavenModelConverter.convertArtifacts(res, new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+    }
+    catch (ArtifactResolutionException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (ArtifactNotFoundException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+
+    return Collections.emptyList();
   }
 
   @Override
@@ -602,7 +629,49 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                             @NotNull List<String> selectedProjects,
                                             boolean alsoMake,
                                             boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+    MavenExecutionResult result = doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals,
+                                             selectedProjects, alsoMake, alsoMakeDependents);
+
+    return createExecutionResult(file, result, null);
+  }
+
+  private MavenExecutionResult doExecute(@NotNull final File file,
+                                         @NotNull final List<String> activeProfiles,
+                                         @NotNull final List<String> inactiveProfiles,
+                                         @NotNull final List<String> goals,
+                                         @NotNull final List<String> selectedProjects,
+                                         boolean alsoMake,
+                                         boolean alsoMakeDependents) throws RemoteException {
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
+
+    if (!selectedProjects.isEmpty()) {
+      request.setRecursive(true);
+      request.setSelectedProjects(selectedProjects);
+      if (alsoMake && alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_BOTH_MODE);
+      }
+      else if (alsoMake) {
+        request.setMakeBehavior(ReactorManager.MAKE_MODE);
+      }
+      else if (alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_DEPENDENTS_MODE);
+      }
+    }
+
+    Maven maven = getComponent(Maven.class);
+    org.apache.maven.execution.MavenExecutionResult executionResult = maven.execute(request);
+
+    return new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+  }
+
+  private static List<Exception> filterExceptions(List<Throwable> list) {
+    for (Throwable throwable : list) {
+      if (!(throwable instanceof Exception)) {
+        throw new RuntimeException(throwable);
+      }
+    }
+
+    return (List<Exception>)((List)list);
   }
 
   @Override

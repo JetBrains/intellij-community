@@ -55,16 +55,22 @@ public abstract class CreateFromSourcesMode extends WizardMode {
                                  ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
-  @Override
-  public void addSteps(WizardContext context, @NotNull ModulesProvider modulesProvider, StepSequence sequence) {
+  @Nullable
+  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+    final StepSequence sequence = new StepSequence();
+    addSteps(context, modulesProvider, sequence, null);
+    return sequence;
+  }
+
+  public void addSteps(WizardContext context, ModulesProvider modulesProvider, StepSequence sequence, String specific) {
     final ProjectFromSourcesBuilderImpl projectBuilder = new ProjectFromSourcesBuilderImpl(context, modulesProvider);
     myProjectBuilder = projectBuilder;
 
     final Icon icon = context.getStepIcon();
     if (context.isCreatingNewProject()) {
-      sequence.addCommonStep(new ProjectNameStep(context, this));
+      addStep(sequence, new ProjectNameStep(context, this), specific);
     }
-    sequence.addCommonStep(new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"));
+    addStep(sequence, new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"), specific);
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), icon)) {
         sequence.addSpecificStep(detector.getDetectorId(), step);
@@ -86,11 +92,13 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     }
   }
 
-  @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    final StepSequence sequence = new StepSequence();
-    addSteps(context, modulesProvider, sequence);
-    return sequence;
+  private static void addStep(StepSequence sequence, ModuleWizardStep step, String specific) {
+    if (specific == null) {
+      sequence.addCommonStep(step);
+    }
+    else {
+      sequence.addSpecificStep(specific, step);
+    }
   }
 
   public ProjectBuilder getModuleBuilder() {

@@ -74,6 +74,9 @@ public class ImportMode extends WizardMode {
     for (ProjectImportProvider provider : myProviders) {
       provider.addSteps(stepSequence, context, provider.getId());
     }
+    if (myProviders.length == 1) {
+      stepSequence.setType(myProviders[0].getId());
+    }
     return stepSequence;
   }
 

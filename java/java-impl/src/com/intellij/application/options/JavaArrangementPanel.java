@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementSettingsPanel2;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementSettingsPanel;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/8/12 8:57 AM
  */
-public class JavaArrangementPanel extends ArrangementSettingsPanel2 {
+public class JavaArrangementPanel extends ArrangementSettingsPanel {
 
   public JavaArrangementPanel(@NotNull CodeStyleSettings settings) {
     super(settings, JavaLanguage.INSTANCE);

@@ -147,7 +147,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String generateClassInfo(PsiClass aClass) {
+  public static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
 
     if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");

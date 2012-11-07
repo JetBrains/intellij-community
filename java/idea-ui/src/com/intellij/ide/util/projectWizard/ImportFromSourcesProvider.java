@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode;
+import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -28,7 +29,7 @@ import com.intellij.projectImport.ProjectImportProvider;
 public class ImportFromSourcesProvider extends ProjectImportProvider {
 
   public ImportFromSourcesProvider() {
-    super(new ModuleImportBuilder()); // fake
+    super(new ProjectFromSourcesBuilderImpl(null, null)); // fake
   }
 
   @Override
@@ -39,7 +40,7 @@ public class ImportFromSourcesProvider extends ProjectImportProvider {
         return myProjectBuilder;
       }
     };
-    mode.addSteps(context, DefaultModulesProvider.createForProject(context.getProject()), sequence);
+    mode.addSteps(context, DefaultModulesProvider.createForProject(context.getProject()), sequence, getName());
     myBuilder = (ProjectImportBuilder)mode.getModuleBuilder();
   }
 }

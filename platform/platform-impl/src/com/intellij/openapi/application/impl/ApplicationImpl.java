@@ -161,7 +161,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           }
         };
         if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
-          LOG.info("Not enough pooled threads; creating one at:", new Throwable());
+          LOG.info("Not enough pooled threads; dumping threads into a file");
+          PerformanceWatcher.getInstance().dumpThreads(true);
         }
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         return thread;

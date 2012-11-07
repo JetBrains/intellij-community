@@ -495,7 +495,22 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     }
 
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null ? aClass.getNavigationElement() : this;
+
+    if (aClass != null) {
+      return aClass.getNavigationElement();
+    }
+
+    if ("package-info".equals(getName())) {
+      PsiElement parent = getParent();
+      if (parent instanceof ClsFileImpl) {
+        PsiElement sourceFile = parent.getNavigationElement();
+        if (sourceFile instanceof PsiJavaFile) {
+          return sourceFile;
+        }
+      }
+    }
+
+    return this;
   }
 
   @Override

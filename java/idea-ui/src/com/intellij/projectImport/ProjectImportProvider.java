@@ -73,18 +73,23 @@ public abstract class ProjectImportProvider {
     return false;
   }
 
-  public void setBaseProjectPath(String path) {
-
+  public boolean canCreateNewProject() {
+    return true;
   }
 
   public void addSteps(StepSequence sequence, WizardContext context, String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
-      sequence.addCommonStep(step);
+      sequence.addSpecificStep(id, step);
     }
   }
 
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public String getFileSample() {
+    return null;
   }
 }

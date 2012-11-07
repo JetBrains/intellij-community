@@ -418,6 +418,22 @@ public class SvnRenameTest extends Svn17TestCase {
     verifySorted(runSvn("status"), "? child", "? unversioned");
   }
 
+  // IDEA-92941
+  @Test
+  public void testUndoNewMove() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile sink = createDirInCommand(myWorkingCopyDir, "sink");
+    final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
+    verifySorted(runSvn("status"), "A child", "A sink");
+    checkin();
+    final VirtualFile file = createFileInCommand(child, "a.txt", "A");
+    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+    moveFileInCommand(file, sink);
+    verifySorted(runSvn("status"), "A sink" + File.separatorChar + "a.txt");
+    undo();
+    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+  }
+
   // todo undo, undo committed?
   @Test
   public void testMoveToNewPackage() throws Throwable {
