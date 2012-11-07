@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.node.match;
+package com.intellij.application.options.codeStyle.arrangement.component;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementAnimationPanel;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementMatchingRulesListModel;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementMatchingRulesList;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementMatchingRulesList;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -40,8 +41,13 @@ import java.util.Set;
  * @since 8/10/12 2:53 PM
  */
 public class ArrangementMatchNodeComponentFactory {
-  
-  @NotNull private static final Object DUMMY_ELEMENT = new Object();
+
+  @NotNull private static final Object DUMMY_ELEMENT = new Object() {
+    @Override
+    public String toString() {
+      return "dummy";
+    }
+  };
 
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
@@ -156,7 +162,7 @@ public class ArrangementMatchNodeComponentFactory {
       if (continueAnimation) {
         return;
       }
-      DefaultListModel model = (DefaultListModel)myList.getModel();
+      ArrangementMatchingRulesListModel model = myList.getModel();
       boolean repaintToBottom = model.indexOf(myRule) < 0;
       if (repaintToBottom) {
         Object removeCandidate = model.getElementAt(myRow);

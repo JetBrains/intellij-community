@@ -118,7 +118,10 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
                                     @NotNull AndroidFileSetStorage dexStateStorage,
                                     @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-    assert extension != null && !extension.isLibrary();
+    assert extension != null;
+    if (extension.isLibrary()) {
+      return true;
+    }
 
     final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, BUILDER_NAME);
     if (platform == null) {

@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.newui;
+package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchNodeComponentFactory;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchNodeComponentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -49,8 +47,6 @@ public class ArrangementMatchingRulesList extends JBList {
 
   @NotNull private final TIntObjectHashMap<ArrangementListRowDecorator> myComponents = new TIntObjectHashMap<ArrangementListRowDecorator>();
 
-  @NotNull private final DefaultListModel myModel = new DefaultListModel();
-
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
 
   private int myRowUnderMouse = -1;
@@ -60,8 +56,8 @@ public class ArrangementMatchingRulesList extends JBList {
                                       @NotNull ArrangementColorsProvider colorsProvider,
                                       @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
+    super(new ArrangementMatchingRulesListModel());
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
-    setModel(myModel);
     setCellRenderer(new MyListCellRenderer());
     addMouseMotionListener(new MouseAdapter() {
       @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
@@ -79,16 +75,22 @@ public class ArrangementMatchingRulesList extends JBList {
     });
   }
 
+  @NotNull
+  @Override
+  public ArrangementMatchingRulesListModel getModel() {
+    return (ArrangementMatchingRulesListModel)super.getModel();
+  }
+
   public void setRules(@Nullable List<StdArrangementMatchRule> rules) {
     myComponents.clear();
-    myModel.clear();
+    getModel().clear();
 
     if (rules == null) {
       return;
     }
-
+    
     for (StdArrangementMatchRule rule : rules) {
-      myModel.addElement(rule);
+      getModel().addElement(rule);
     }
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
@@ -198,12 +200,12 @@ public class ArrangementMatchingRulesList extends JBList {
 
   @NotNull
   public List<StdArrangementMatchRule> getRules() {
-    if (myModel.isEmpty()) {
+    if (getModel().isEmpty()) {
       return Collections.emptyList();
     }
     List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
-    for (int i = 0; i < myModel.size(); i++) {
-      Object element = myModel.get(i);
+    for (int i = 0; i < getModel().size(); i++) {
+      Object element = getModel().get(i);
       if (element instanceof StdArrangementMatchRule) {
         result.add((StdArrangementMatchRule)element);
       }

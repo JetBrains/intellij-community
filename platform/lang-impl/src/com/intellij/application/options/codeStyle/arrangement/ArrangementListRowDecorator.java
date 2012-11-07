@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.newui;
+package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.node.match.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
