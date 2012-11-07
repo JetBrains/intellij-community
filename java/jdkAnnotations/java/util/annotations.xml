@@ -875,4 +875,7 @@
   <item name='java.util.Arrays java.lang.String deepToString(java.lang.Object[]) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>
