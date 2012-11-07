@@ -124,7 +124,8 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     }
     else {
       myImportMode = new ImportMode(myImportProviders);
-      appendSteps(myImportMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project)));
+      StepSequence sequence = myImportMode.getSteps(myWizardContext, DefaultModulesProvider.createForProject(project));
+      appendSteps(sequence);
       for (ProjectImportProvider provider : myImportProviders) {
         provider.getBuilder().setFileToImport(defaultPath);
       }
@@ -277,7 +278,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     return nextStep == null ? step : mySteps.indexOf(nextStep);
   }
 
-  private StepSequence getSequence() {
+  public StepSequence getSequence() {
     return getMode().getSteps(myWizardContext, myModulesProvider);
   }
 

@@ -40,7 +40,8 @@ public class ImportFromSourcesProvider extends ProjectImportProvider {
         return myProjectBuilder;
       }
     };
-    mode.addSteps(context, DefaultModulesProvider.createForProject(context.getProject()), sequence);
+    StepSequence steps = mode.getSteps(context, DefaultModulesProvider.createForProject(context.getProject()));
+    sequence.addFrom(steps, id);
     myBuilder = (ProjectImportBuilder)mode.getModuleBuilder();
   }
 }

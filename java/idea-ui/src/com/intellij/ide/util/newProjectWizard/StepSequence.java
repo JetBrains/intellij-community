@@ -57,7 +57,7 @@ public class StepSequence {
     list.add(step);
   }
 
-  private List<ModuleWizardStep> getSelectedSteps() {
+  public List<ModuleWizardStep> getSelectedSteps() {
     if (mySelectedSteps == null) {
       mySelectedSteps = new ArrayList<ModuleWizardStep>();
       mySelectedSteps.addAll(myCommonSteps);
@@ -115,5 +115,13 @@ public class StepSequence {
 
   public ModuleWizardStep getFirstStep() {
     return myCommonSteps.get(0);
+  }
+
+  public void addFrom(StepSequence from, String common) {
+    for (ModuleWizardStep step : from.myCommonSteps) {
+      addSpecificStep(common, step);
+    }
+    myCommonFinishingSteps.addAll(from.myCommonFinishingSteps);
+    mySpecificSteps.putAll(from.mySpecificSteps);
   }
 }

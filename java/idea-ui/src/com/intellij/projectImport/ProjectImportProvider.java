@@ -80,7 +80,7 @@ public abstract class ProjectImportProvider {
   public void addSteps(StepSequence sequence, WizardContext context, String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
-      sequence.addCommonStep(step);
+      sequence.addSpecificStep(id, step);
     }
   }
 
