@@ -133,7 +133,7 @@ public class DefaultHighlighter {
                                                                                             .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey STATIC_FIELD = TextAttributesKey.createTextAttributesKey(STATIC_FIELD_ID,
-                                                                                           HighlightInfoType.STATIC_FIELD
+                                                                                           HighlightInfoType.STATIC_FINAL_FIELD
                                                                                              .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey STATIC_METHOD_ACCESS = TextAttributesKey.createTextAttributesKey(STATIC_METHOD_ACCESS_ID,
@@ -155,12 +155,10 @@ public class DefaultHighlighter {
                                                                                                 .getDefaultAttributes());
 
   public static TextAttributesKey CLASS_REFERENCE =
-    TextAttributesKey
-      .createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
+    TextAttributesKey.createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
 
   public static TextAttributesKey TYPE_PARAMETER =
-    TextAttributesKey.createTextAttributesKey(TYPE_PARAMETER_ID, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES.getDefaultAttributes()
-      .clone());
+    TextAttributesKey.createTextAttributesKey(TYPE_PARAMETER_ID, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES.getDefaultAttributes() .clone());
 
   public static final TextAttributes INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES = INSTANCE_FIELD.getDefaultAttributes().clone();
   public static final TextAttributes STATIC_PROPERTY_REFERENCE_ATTRIBUTES = STATIC_FIELD.getDefaultAttributes().clone();

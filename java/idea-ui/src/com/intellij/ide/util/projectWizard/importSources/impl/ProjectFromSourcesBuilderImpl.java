@@ -23,7 +23,6 @@ import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
@@ -51,12 +50,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -65,7 +67,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Jul 17, 2007
  */
-public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements ProjectFromSourcesBuilder {
+public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
@@ -132,6 +134,39 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
   @Override
   public Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector) {
     return myRoots.get(detector);
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Create from Sources";
+  }
+
+  @Override
+  public Icon getIcon() {
+    return null;
+  }
+
+  @Override
+  public List getList() {
+    return null;
+  }
+
+  @Override
+  public boolean isMarked(Object element) {
+    return false;
+  }
+
+  @Override
+  public void setList(List list) throws ConfigurationException {
+  }
+
+  @Override
+  public void setOpenProjectSettingsAfter(boolean on) {
+  }
+
+  public void setFileToImport(String path) {
+    setBaseProjectPath(path);
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
@@ -253,6 +288,15 @@ public class ProjectFromSourcesBuilderImpl extends ProjectBuilder implements Pro
 
 
     return result;
+  }
+
+  @Nullable
+  @Override
+  public List<Module> commit(Project project,
+                             ModifiableModuleModel model,
+                             ModulesProvider modulesProvider,
+                             ModifiableArtifactModel artifactModel) {
+    return commit(project, model, modulesProvider);
   }
 
   public Collection<ProjectDescriptor> getSelectedDescriptors() {

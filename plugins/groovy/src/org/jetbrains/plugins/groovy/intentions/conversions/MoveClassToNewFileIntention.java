@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
@@ -58,7 +59,7 @@ public class MoveClassToNewFileIntention extends Intention {
       }
     }
 
-    final GroovyFile newFile = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, name, newFileName, "GroovyClass.groovy");
+    final GroovyFile newFile = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, name, newFileName, GroovyTemplates.GROOVY_CLASS);
     final GrTypeDefinition template = newFile.getTypeDefinitions()[0];
     final PsiElement newClass = template.replace(psiClass);
     final GrDocComment docComment = psiClass.getDocComment();

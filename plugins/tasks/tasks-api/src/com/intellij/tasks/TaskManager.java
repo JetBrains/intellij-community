@@ -82,7 +82,7 @@ public abstract class TaskManager {
   @Nullable
   public abstract LocalTask getAssociatedTask(LocalChangeList list);
 
-  public abstract void associateWithTask(LocalChangeList changeList);
+  public abstract void associateWithTask(LocalChangeList changeList, boolean withCurrent);
 
   public abstract void disassociateFromTask(LocalChangeList changeList);
 

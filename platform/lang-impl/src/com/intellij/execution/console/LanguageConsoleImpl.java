@@ -21,6 +21,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -138,6 +139,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
     reparsePsiFile();
+    assert myEditorDocument != null;
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
@@ -379,30 +381,33 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void printToHistory(@NotNull final List<Pair<String, TextAttributes>> attributedText) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (LOG.isDebugEnabled()) {
       LOG.debug("printToHistory(): " + attributedText.size());
     }
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
-    final Document history = myHistoryViewer.getDocument();
-    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     final int[] offsets = new int[attributedText.size() + 1];
     int i = 0;
-    offsets[i] = history.getTextLength();
+    offsets[i] = 0;
     final StringBuilder sb = new StringBuilder();
     for (final Pair<String, TextAttributes> pair : attributedText) {
       final String str = StringUtil.convertLineSeparators(pair.getFirst());
-      int lastOffset = offsets[i];
+      final int lastOffset = offsets[i];
       offsets[++i] = lastOffset + str.length();
       sb.append(str);
     }
     LOG.debug("printToHistory(): text processed");
+    final Document history = myHistoryViewer.getDocument();
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
+    final int oldHistoryLength = history.getTextLength();
     appendToHistoryDocument(history, sb.toString());
-    assert offsets[i] == history.getTextLength();
+    assert (oldHistoryLength + offsets[i]) == history.getTextLength()
+      : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength();
     LOG.debug("printToHistory(): text added");
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
-      markupModel.addRangeHighlighter(offsets[i],
-                                      offsets[i+1],
+      markupModel.addRangeHighlighter(oldHistoryLength + offsets[i],
+                                      oldHistoryLength + offsets[i+1],
                                       HighlighterLayer.SYNTAX,
                                       pair.getSecond(),
                                       HighlighterTargetArea.EXACT_RANGE);
@@ -417,6 +422,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void printToHistory(String text, final TextAttributes attributes) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
@@ -492,11 +498,13 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final int localStartOffset = textRange.getStartOffset();
     String text;
     EditorHighlighter highlighter;
-    if (consoleEditor instanceof com.intellij.injected.editor.EditorWindow) {
-      com.intellij.injected.editor.EditorWindow editorWindow = (com.intellij.injected.editor.EditorWindow)consoleEditor;
+    if (consoleEditor instanceof EditorWindow) {
+      EditorWindow editorWindow = (EditorWindow)consoleEditor;
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       PsiFile file = editorWindow.getInjectedFile();
-      highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), scheme, getProject());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      assert virtualFile != null;
+      highlighter = HighlighterFactory.createHighlighter(virtualFile, scheme, getProject());
       String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
       highlighter.setText(fullText);
       text = textRange.substring(fullText);

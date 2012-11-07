@@ -73,4 +73,22 @@ public class SimpleTransferable implements Transferable {
       return null;
     }
   }
+
+  @Nullable
+  public static <T> T getData(Transferable transferable, Class<T> dataClass) {
+    try {
+      for (DataFlavor dataFlavor : transferable.getTransferDataFlavors()) {
+        Object transferData = transferable.getTransferData(dataFlavor);
+        if (dataClass.isInstance(transferData)) {
+          return (T)transferData;
+        }
+      }
+    }
+    catch (IOException e) {
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return null;
+  }
 }

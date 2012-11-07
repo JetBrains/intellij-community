@@ -38,7 +38,7 @@ public class ModuleImportBuilder extends ProjectImportBuilder {
   @NotNull
   @Override
   public String getName() {
-    return "";
+    return "Add IDEA module";
   }
 
   @Override

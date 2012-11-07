@@ -742,6 +742,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true), refresh);
   }
 
+  protected File createTempFile(String name, String text) throws IOException {
+    File directory = createTempDirectory();
+    File file = new File(directory, name);
+    if (!file.createNewFile()) {
+      throw new IOException("Can't create " + file);
+    }
+    FileUtil.writeToFile(file, text);
+    return file;
+  }
+
   public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {

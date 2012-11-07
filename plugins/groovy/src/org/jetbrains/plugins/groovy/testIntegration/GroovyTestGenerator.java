@@ -37,7 +37,7 @@ import com.intellij.testIntegration.createTest.TestGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
@@ -69,7 +69,7 @@ public class GroovyTestGenerator implements TestGenerator {
                 d.getClassName(),
                 PsiManager.getInstance(project),
                 null,
-                NewGroovyClassAction.GROOVY_CLASS);
+                GroovyTemplates.GROOVY_CLASS);
               if (targetClass == null) return null;
 
               addSuperClass(targetClass, project, d.getSuperClassName());

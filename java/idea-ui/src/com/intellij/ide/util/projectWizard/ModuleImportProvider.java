@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 
@@ -29,13 +30,8 @@ public class ModuleImportProvider extends ProjectImportProvider {
   }
 
   @Override
-  public boolean isMyFile(VirtualFile file) {
-    return "iml".equals(file.getExtension());
-  }
-
-  @Override
-  public boolean canCreateNewProject() {
-    return false;
+  public boolean canImport(VirtualFile fileOrDirectory, Project project) {
+    return project != null && !fileOrDirectory.isDirectory() && "iml".equals(fileOrDirectory.getExtension());
   }
 
   @Override

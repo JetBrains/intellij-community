@@ -67,7 +67,7 @@ public class ProjectNameStep extends ModuleWizardStep {
       myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
 
-    myNamePathComponent.setVisible(myWizardContext.getProject() == null);
+    myNamePathComponent.setVisible(isStepVisible());
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
     myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }
@@ -76,13 +76,17 @@ public class ProjectNameStep extends ModuleWizardStep {
     return myPanel;
   }
 
+  @Override
+  public boolean isStepVisible() {
+    return myWizardContext.getProject() == null;
+  }
+
   public void updateDataModel() {
     myWizardContext.setProjectName(getProjectName());
     final String projectFileDirectory = getProjectFileDirectory();
     myWizardContext.setProjectFileDirectory(projectFileDirectory);
-    final ProjectBuilder moduleBuilder;
-    if (myMode != null) {
-      moduleBuilder = myMode.getModuleBuilder();
+    ProjectBuilder moduleBuilder = myWizardContext.getProjectBuilder();
+    if (moduleBuilder != null) {
       myWizardContext.setProjectBuilder(moduleBuilder);
       if (moduleBuilder instanceof ModuleBuilder) { // no SourcePathsBuilder here !
         ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);

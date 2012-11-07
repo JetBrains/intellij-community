@@ -55,12 +55,11 @@ public abstract class CreateFromSourcesMode extends WizardMode {
                                  ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
-  @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+  @Override
+  public void addSteps(WizardContext context, @NotNull ModulesProvider modulesProvider, StepSequence sequence) {
     final ProjectFromSourcesBuilderImpl projectBuilder = new ProjectFromSourcesBuilderImpl(context, modulesProvider);
     myProjectBuilder = projectBuilder;
-    
-    final StepSequence sequence = new StepSequence();
+
     final Icon icon = context.getStepIcon();
     if (context.isCreatingNewProject()) {
       sequence.addCommonStep(new ProjectNameStep(context, this));
@@ -85,7 +84,12 @@ public abstract class CreateFromSourcesMode extends WizardMode {
       projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
       sequence.addCommonFinishingStep(frameworkDetectionStep);
     }
+  }
 
+  @Nullable
+  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+    final StepSequence sequence = new StepSequence();
+    addSteps(context, modulesProvider, sequence);
     return sequence;
   }
 

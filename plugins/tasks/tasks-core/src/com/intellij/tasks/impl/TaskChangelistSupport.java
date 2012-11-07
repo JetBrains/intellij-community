@@ -24,8 +24,11 @@ import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
@@ -48,19 +51,66 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
   }
 
-  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, LocalChangeList initial) {
-    final JCheckBox checkBox = new JCheckBox("Track context");
-    checkBox.setMnemonic('t');
-    checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
-    checkBox.setSelected(initial == null ?
-                         myTaskManager.getState().trackContextForNewChangelist :
-                         myTaskManager.getAssociatedTask(initial) != null);
+  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, @Nullable final LocalChangeList initial) {
+    if (initial == null || myTaskManager.getAssociatedTask(initial) == null) {
+      return addControlsForNotAssociatedChangelist(bottomPanel, initial);
+    }
+    else {
+      return addControlsForAssociatedChangelist(bottomPanel, initial);
+    }
+  }
+
+  private Consumer<LocalChangeList> addControlsForAssociatedChangelist(final JPanel bottomPanel, final LocalChangeList initial) {
+    final JCheckBox checkBox = new JCheckBox("Disassociate from task");
+    checkBox.setMnemonic('A');
+    checkBox.setSelected(false);
+    bottomPanel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
     bottomPanel.add(checkBox);
     return new Consumer<LocalChangeList>() {
       public void consume(LocalChangeList changeList) {
-        myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
         if (checkBox.isSelected()) {
-          myTaskManager.associateWithTask(changeList);
+          myTaskManager.disassociateFromTask(changeList);
+        }
+      }
+    };
+  }
+
+  private Consumer<LocalChangeList> addControlsForNotAssociatedChangelist(final JPanel bottomPanel, @Nullable final LocalChangeList initial) {
+    final JCheckBox checkBox = new JCheckBox("Associate with:");
+    checkBox.setMnemonic('A');
+    checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
+
+    ButtonGroup group = new ButtonGroup();
+    final JRadioButton withCurrent = new JRadioButton("current task");
+    withCurrent.setMnemonic('c');
+    group.add(withCurrent);
+    JRadioButton withNew = new JRadioButton("new task");
+    withNew.setMnemonic('n');
+    group.add(withNew);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(withCurrent, BorderLayout.NORTH);
+    panel.add(withNew, BorderLayout.SOUTH);
+
+    bottomPanel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
+    bottomPanel.add(checkBox);
+    bottomPanel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
+    bottomPanel.add(panel);
+
+    checkBox.setSelected(myTaskManager.getState().associateWithTaskForNewChangelist);
+    if (myTaskManager.getState().associateWithCurrentTaskForNewChangelist) {
+      withCurrent.setSelected(true);
+    }
+    else {
+      withNew.setSelected(true);
+    }
+
+    return new Consumer<LocalChangeList>() {
+      public void consume(LocalChangeList changeList) {
+        myTaskManager.getState().associateWithTaskForNewChangelist = checkBox.isSelected();
+        myTaskManager.getState().associateWithCurrentTaskForNewChangelist = withCurrent.isSelected();
+        if (checkBox.isSelected()) {
+          myTaskManager.associateWithTask(changeList, withCurrent.isSelected());
         }
       }
     };

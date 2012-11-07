@@ -66,7 +66,7 @@ public interface ArrangementMatchConditionComponent {
   @Nullable
   Rectangle onMouseMove(@NotNull MouseEvent event);
 
-  void onMouseClick(@NotNull MouseEvent event);
+  void onMousePress(@NotNull MouseEvent event);
 
   @Nullable
   Rectangle onMouseExited();
