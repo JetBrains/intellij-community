@@ -239,7 +239,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest);
     if (tasks == null) return getCachedIssues(withClosed);
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
-    return ContainerUtil.filter(myIssueCache.values(), new Condition<Task>() {
+    return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
         return withClosed || !task.isClosed();
