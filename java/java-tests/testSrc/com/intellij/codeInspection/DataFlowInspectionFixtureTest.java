@@ -131,5 +131,8 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testConstantDoubleComparisons() { doTest(); }
+  
+  public void _testMutableNullableFieldsTreatment() { doTest(); }
+  public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
 
 }
