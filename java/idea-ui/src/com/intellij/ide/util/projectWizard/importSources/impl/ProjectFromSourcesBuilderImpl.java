@@ -70,6 +70,7 @@ import java.util.*;
  */
 public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
+  private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<ProjectStructureDetector, ProjectDescriptor>();
@@ -140,7 +141,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   @NotNull
   @Override
   public String getName() {
-    return "Existing Sources";
+    return NAME;
   }
 
   @Override

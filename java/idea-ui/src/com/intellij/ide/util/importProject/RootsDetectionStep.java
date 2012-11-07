@@ -143,6 +143,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
         selectedTypes.add(detector.getDetectorId());
       }
     }
+    selectedTypes.add("Existing Sources");
     mySequence.setTypes(selectedTypes);
     myContext.requestWizardButtonsUpdate();
   }
