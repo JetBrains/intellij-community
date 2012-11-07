@@ -33,10 +33,7 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -1104,40 +1101,45 @@ public class CompileDriver {
     }
   }
 
-  private void clearAffectedOutputPathsIfPossible(CompileContextEx context) {
-    final MultiMap<File, Module> outputToModulesMap = new MultiMap<File, Module>();
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension == null) {
-        continue;
-      }
-      final String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
-      if (outputPathUrl != null) {
-        final String path = VirtualFileManager.extractPath(outputPathUrl);
-        outputToModulesMap.putValue(new File(path), module);
-      }
+  private void clearAffectedOutputPathsIfPossible(final CompileContextEx context) {
+    final List<File> scopeOutputs = new ReadAction<List<File>>() {
+      protected void run(final Result<List<File>> result) {
+        final MultiMap<File, Module> outputToModulesMap = new MultiMap<File, Module>();
+        for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+          final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+          if (compilerModuleExtension == null) {
+            continue;
+          }
+          final String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
+          if (outputPathUrl != null) {
+            final String path = VirtualFileManager.extractPath(outputPathUrl);
+            outputToModulesMap.putValue(new File(path), module);
+          }
 
-      final String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
-      if (outputPathForTestsUrl != null) {
-        final String path = VirtualFileManager.extractPath(outputPathForTestsUrl);
-        outputToModulesMap.putValue(new File(path), module);
-      }
-    }
-    final Set<Module> affectedModules = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
-    final List<File> scopeOutputs = new ArrayList<File>(affectedModules.size() * 2);
-    for (File output : outputToModulesMap.keySet()) {
-      if (affectedModules.containsAll(outputToModulesMap.get(output))) {
-        scopeOutputs.add(output);
-      }
-    }
+          final String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
+          if (outputPathForTestsUrl != null) {
+            final String path = VirtualFileManager.extractPath(outputPathForTestsUrl);
+            outputToModulesMap.putValue(new File(path), module);
+          }
+        }
+        final Set<Module> affectedModules = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
+        List<File> scopeOutputs = new ArrayList<File>(affectedModules.size() * 2);
+        for (File output : outputToModulesMap.keySet()) {
+          if (affectedModules.containsAll(outputToModulesMap.get(output))) {
+            scopeOutputs.add(output);
+          }
+        }
 
-    final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(myProject, context.getCompileScope(), true);
-    for (Artifact artifact : artifactsToBuild) {
-      final String outputFilePath = ((ArtifactImpl)artifact).getOutputDirectoryPathToCleanOnRebuild();
-      if (outputFilePath != null) {
-        scopeOutputs.add(new File(FileUtil.toSystemDependentName(outputFilePath)));
+        final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(myProject, context.getCompileScope(), true);
+        for (Artifact artifact : artifactsToBuild) {
+          final String outputFilePath = ((ArtifactImpl)artifact).getOutputDirectoryPathToCleanOnRebuild();
+          if (outputFilePath != null) {
+            scopeOutputs.add(new File(FileUtil.toSystemDependentName(outputFilePath)));
+          }
+        }
+        result.setResult(scopeOutputs);
       }
-    }
+    }.execute().getResultObject();
     if (scopeOutputs.size() > 0) {
       CompilerUtil.runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
         public void run() {
