@@ -63,7 +63,6 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
     setOpaque(true);
-    setBackground(UIUtil.getListBackground());
     init();
   }
 

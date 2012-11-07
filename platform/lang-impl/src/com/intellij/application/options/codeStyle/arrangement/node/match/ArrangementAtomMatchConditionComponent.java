@@ -170,8 +170,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         super.paint(g);
       }
     };
-    myAnimationPanel.setOpaque(false);
-    
+
     setSelected(false);
     if (myCloseButton != null) {
       myCloseButton.setVisible(false);

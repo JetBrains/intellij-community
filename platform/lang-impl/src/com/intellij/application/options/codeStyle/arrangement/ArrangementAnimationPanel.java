@@ -45,6 +45,8 @@ public class ArrangementAnimationPanel extends JPanel {
     super(new GridBagLayout());
     myContent = content;
     add(content, new GridBag().fillCell().weightx(1).weighty(1));
+    setOpaque(true);
+    setBackground(UIUtil.getListBackground());
   }
 
   public void startAnimation(boolean expand, boolean horizontal) {
