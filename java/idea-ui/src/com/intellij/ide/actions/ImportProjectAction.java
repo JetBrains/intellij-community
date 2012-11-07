@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -42,5 +43,10 @@ public class ImportProjectAction extends ImportModuleAction {
   protected List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
     Project newProject = NewProjectUtil.createFromWizard(wizard, project);
     return  newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+
   }
 }
