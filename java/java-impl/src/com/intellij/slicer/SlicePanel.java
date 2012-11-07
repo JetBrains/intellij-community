@@ -345,7 +345,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       actionGroup.add(new CloseAction());
     }
     if (isToShowPreviewButton()) {
-      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.Preview) {
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.PreviewDetails) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return isPreview();
