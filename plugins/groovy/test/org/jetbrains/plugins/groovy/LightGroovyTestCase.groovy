@@ -15,38 +15,15 @@
  */
 
 package org.jetbrains.plugins.groovy
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
+
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
 /**
  * @author peter
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
-  static class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
-    public static final GroovyLightProjectDescriptor INSTANCE = new GroovyLightProjectDescriptor()
-
-    protected GroovyLightProjectDescriptor() {}
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$mockGroovy1_8LibraryName!/");
-      assert groovyJar != null;
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
-    }
-  }
 
   @Override
   @NotNull
