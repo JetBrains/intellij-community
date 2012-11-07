@@ -447,7 +447,7 @@ public class PythonSdkType extends SdkType {
 
   public static boolean setupSdkPaths(@Nullable final Project project, @NotNull final Sdk sdk,
                                       @NotNull final SdkModificator sdkModificator) {
-    final ProgressManager progman = ProgressManager.getInstance();
+    final ProgressManager progressManager = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
     final Task.Modal setupTask = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
@@ -465,13 +465,13 @@ public class PythonSdkType extends SdkType {
         catch (InvalidSdkException e) {
           if (!isInvalid(sdk)) {
             LOG.warn(e);
-            final Notification notification = PythonSdkType.createInvalidSdkNotification(project);
+            final Notification notification = createInvalidSdkNotification(project);
             notification.notify(project);
           }
         }
       }
     };
-    progman.run(setupTask);
+    progressManager.run(setupTask);
     return success.get();
   }
 
