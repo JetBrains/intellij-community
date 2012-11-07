@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return LightGroovyTestCase.GROOVY_DESCRIPTOR
+    return LightGroovyTestCase.GroovyLightProjectDescriptor.INSTANCE
   }
 
   public void testGenerallyFocusLookup() {

@@ -14,9 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy;
-
-
+package org.jetbrains.plugins.groovy
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -31,12 +29,15 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 
 import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
-
 /**
  * @author peter
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
-  public static final LightProjectDescriptor GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  static class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
+    public static final GroovyLightProjectDescriptor INSTANCE = new GroovyLightProjectDescriptor()
+
+    protected GroovyLightProjectDescriptor() {}
+
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
@@ -45,12 +46,12 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }
-  };
+  }
 
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_DESCRIPTOR;
+    return GroovyLightProjectDescriptor.INSTANCE;
   }
 
   /**
