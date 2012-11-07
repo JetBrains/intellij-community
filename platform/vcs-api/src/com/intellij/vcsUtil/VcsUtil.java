@@ -51,14 +51,12 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
-  public static final ScheduledExecutorService VCS_SHARED = createExecutor("VCS shared executor");
 
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(project).fileDirty(file);
