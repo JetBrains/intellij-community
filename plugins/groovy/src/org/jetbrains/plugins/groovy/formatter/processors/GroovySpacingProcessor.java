@@ -369,7 +369,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitModifierList(GrModifierList modifierList) {
-    int annotationWrap = getAnnotationWrap();
+    int annotationWrap = getAnnotationWrap(myParent.getParent());
     if (myChild1.getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
@@ -721,7 +721,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   private void processModifierList(ASTNode modifierList) {
-    int annotationWrap = getAnnotationWrap();
+    int annotationWrap = getAnnotationWrap(myParent);
     if (modifierList.getLastChildNode().getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS ||
         mySettings.MODIFIER_LIST_WRAP) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -731,13 +731,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  private int getAnnotationWrap() {
-    return myParent instanceof PsiMethod ? mySettings.METHOD_ANNOTATION_WRAP :
-           myParent instanceof PsiClass ? mySettings.CLASS_ANNOTATION_WRAP :
-           myParent instanceof GrVariableDeclaration &&
-           ((GrVariableDeclaration)myParent).getVariables()[0] instanceof PsiField ? mySettings.FIELD_ANNOTATION_WRAP :
-           myParent instanceof GrVariableDeclaration ? mySettings.VARIABLE_ANNOTATION_WRAP :
-           myParent instanceof PsiParameter ? mySettings.PARAMETER_ANNOTATION_WRAP :
+  private int getAnnotationWrap(final PsiElement parent) {
+    return parent instanceof PsiMethod ? mySettings.METHOD_ANNOTATION_WRAP :
+           parent instanceof PsiClass ? mySettings.CLASS_ANNOTATION_WRAP :
+           parent instanceof GrVariableDeclaration &&
+           ((GrVariableDeclaration)parent).getVariables()[0] instanceof PsiField ? mySettings.FIELD_ANNOTATION_WRAP :
+           parent instanceof GrVariableDeclaration ? mySettings.VARIABLE_ANNOTATION_WRAP :
+           parent instanceof PsiParameter ? mySettings.PARAMETER_ANNOTATION_WRAP :
            CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
