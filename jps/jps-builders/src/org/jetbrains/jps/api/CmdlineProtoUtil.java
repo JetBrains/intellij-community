@@ -24,9 +24,19 @@ public class CmdlineProtoUtil {
                                                                                final Map<String, String> userData,
                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, scopes,
-                                userData, Collections.<String>emptyList(),
-                                globals, event);
+    return createBuildParametersMessage(
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, scopes, userData, Collections.<String>emptyList(), globals, event
+    );
+  }
+
+  public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
+                                                                               List<TargetTypeBuildScope> scopes,
+                                                                               final Map<String, String> userData,
+                                                                               final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
+                                                                               final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+    return createBuildParametersMessage(
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, Collections.<String>emptyList(), globals, event
+    );
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createForceCompileRequest(String project,
@@ -87,8 +97,7 @@ public class CmdlineProtoUtil {
     if (!paths.isEmpty()) {
       builder.addAllFilePath(paths);
     }
-    final CmdlineRemoteProto.Message.ControllerMessage.Builder controlMessageBuilder =
-      CmdlineRemoteProto.Message.ControllerMessage.newBuilder();
+    final CmdlineRemoteProto.Message.ControllerMessage.Builder controlMessageBuilder = CmdlineRemoteProto.Message.ControllerMessage.newBuilder();
     if (initialEvent != null) {
       controlMessageBuilder.setFsEvent(initialEvent);
     }
@@ -105,7 +114,13 @@ public class CmdlineProtoUtil {
     builder.setDescription(description);
     if (cause != null) {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      cause.printStackTrace(new PrintStream(baos));
+      final PrintStream stream = new PrintStream(baos);
+      try {
+        cause.printStackTrace(stream);
+      }
+      finally {
+        stream.close();
+      }
       builder.setStacktrace(new String(baos.toByteArray()));
     }
     return builder.build();
@@ -187,9 +202,9 @@ public class CmdlineProtoUtil {
 
   private static BuilderMessage createBuildEvent(final BuilderMessage.BuildEvent.Type type,
                                                  @Nullable String description,
-                                                 final BuilderMessage.BuildEvent.Status status,
-                                                 Collection<Pair<String, String>> generatedPaths,
-                                                 final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
+                                                 @Nullable final BuilderMessage.BuildEvent.Status status,
+                                                 @Nullable Collection<Pair<String, String>> generatedPaths,
+                                                 @Nullable final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
     final BuilderMessage.BuildEvent.Builder builder = BuilderMessage.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);

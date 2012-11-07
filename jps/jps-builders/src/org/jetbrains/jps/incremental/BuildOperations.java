@@ -10,8 +10,8 @@ import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
@@ -119,7 +119,7 @@ public class BuildOperations {
       }
 
       if (marked) {
-        context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        context.processMessage(DoneSomethingNotification.INSTANCE);
       }
     }
   }

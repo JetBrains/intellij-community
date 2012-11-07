@@ -69,7 +69,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -212,48 +211,97 @@ public class CompileDriver {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
-    scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
+    if (!useOutOfProcessBuild()) {
+      scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
+    }
 
     final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false);
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
+    final DependencyCache cache = useOutOfProcessBuild()? null : createDependencyCache();
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, cache, true, false);
 
-    checkCachesVersion(compileContext, ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp());
-    if (compileContext.isRebuildRequested()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Rebuild requested, up-to-date=false");
+    if (!useOutOfProcessBuild()) {
+      checkCachesVersion(compileContext, ManagingFS.getInstance().getCreationTimestamp());
+      if (compileContext.isRebuildRequested()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Rebuild requested, up-to-date=false");
+        }
+        return false;
       }
-      return false;
+
+      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+        final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
+        final Module module = key.getSecond();
+        compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
+        compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
+      }
     }
 
-    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
-      final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
-      final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
-      final Module module = key.getSecond();
-      compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
-      compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
+    final Ref<ExitStatus> result = new Ref<ExitStatus>();
+
+    final Runnable compileWork;
+    if (useOutOfProcessBuild()) {
+      compileWork = new Runnable() {
+        public void run() {
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          if (indicator.isCanceled() || myProject.isDisposed()) {
+            return;
+          }
+          try {
+            final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+            List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+            if (paths.isEmpty()) {
+              if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+                CompileScopeUtil.addScopesForModules(Arrays.asList(compileContext.getCompileScope().getAffectedModules()), scopes);
+              }
+              else {
+                scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
+              }
+              for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+                scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(compileContext.getCompileScope(), myCompilerFilter, myProject));
+              }
+            }
+            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, true);
+            if (future != null) {
+              while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
+                if (indicator.isCanceled()) {
+                  future.cancel(false);
+                }
+              }
+            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+          finally {
+            result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+            CompilerCacheManager.getInstance(myProject).flushCaches();
+          }
+        }
+      };
     }
-
-    final Ref<ExitStatus> status = new Ref<ExitStatus>();
-
-    task.start(new Runnable() {
-      public void run() {
-        try {
-          myAllOutputDirectories = getAllOutputDirectories(compileContext);
-          // need this for updating zip archives experiment, uncomment if the feature is turned on
-          //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
-          status.set(doCompile(compileContext, false, false, true));
+    else {
+      compileWork = new Runnable() {
+        public void run() {
+          try {
+            myAllOutputDirectories = getAllOutputDirectories(compileContext);
+            // need this for updating zip archives experiment, uncomment if the feature is turned on
+            //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
+            result.set(doCompile(compileContext, false, false, true));
+          }
+          finally {
+            CompilerCacheManager.getInstance(myProject).flushCaches();
+          }
         }
-        finally {
-          CompilerCacheManager.getInstance(myProject).flushCaches();
-        }
-      }
-    }, null);
+      };
+    }
+    task.start(compileWork, null);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation finished");
     }
 
-    return ExitStatus.UP_TO_DATE.equals(status.get());
+    return ExitStatus.UP_TO_DATE.equals(result.get());
   }
 
   private DependencyCache createDependencyCache() {
@@ -420,30 +468,37 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, @NotNull List<TargetTypeBuildScope> scopes,
-                                                 final @NotNull Collection<String> paths, @Nullable final CompileStatusNotification callback)
+  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext,
+                                                 @NotNull List<TargetTypeBuildScope> scopes,
+                                                 final @NotNull Collection<String> paths,
+                                                 final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     // need to pass scope's user data to server
-    final Map<Key, Object> exported = scope.exportUserData();
     final Map<String, String> builderParams;
-    if (!exported.isEmpty()) {
-      builderParams = new HashMap<String, String>();
-      for (Map.Entry<Key, Object> entry : exported.entrySet()) {
-        final String _key = entry.getKey().toString();
-        final String _value = entry.getValue().toString();
-        builderParams.put(_key, _value);
-      }
+    if (onlyCheckUpToDate) {
+      builderParams = Collections.emptyMap();
     }
     else {
-      builderParams = Collections.emptyMap();
+      final Map<Key, Object> exported = scope.exportUserData();
+      if (!exported.isEmpty()) {
+        builderParams = new HashMap<String, String>();
+        for (Map.Entry<Key, Object> entry : exported.entrySet()) {
+          final String _key = entry.getKey().toString();
+          final String _value = entry.getValue().toString();
+          builderParams.put(_key, _value);
+        }
+      }
+      else {
+        builderParams = Collections.emptyMap();
+      }
     }
 
     final MessageBus messageBus = myProject.getMessageBus();
 
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
-    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
 
       @Override
       public void buildStarted(UUID sessionId) {
@@ -616,8 +671,7 @@ public class CompileDriver {
                 scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject));
               }
             }
-
-            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, callback);
+            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, false);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
