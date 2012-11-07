@@ -96,6 +96,7 @@ public class FrameworkSupportOptionsComponent {
     if (myLibraryOptionsPanel != null) {
       myLibraryOptionsPanel.changeBaseDirectoryPath(myModel.getBaseDirectoryForLibrariesPath());
       myLibraryOptionsPanel.setVersionFilter(myConfigurable.getLibraryVersionFilter());
+      myLibraryOptionsPanel.getMainPanel().setVisible(myConfigurable.isVisible());
     }
   }
 
