@@ -4,6 +4,7 @@
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
