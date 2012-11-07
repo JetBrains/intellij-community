@@ -35,7 +35,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +42,9 @@ import java.util.List;
 import java.util.Map;
 
 public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub> implements PsiModifierList {
-  private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
-
-  static{
+  private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP;
+  static {
+    NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PUBLIC, JavaTokenType.PUBLIC_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PROTECTED, JavaTokenType.PROTECTED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PRIVATE, JavaTokenType.PRIVATE_KEYWORD);
@@ -57,23 +56,6 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.STRICTFP, JavaTokenType.STRICTFP_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.TRANSIENT, JavaTokenType.TRANSIENT_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.VOLATILE, JavaTokenType.VOLATILE_KEYWORD);
-  }
-
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
-
-  static{
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PROTECTED, ModifierFlags.PROTECTED_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PRIVATE, ModifierFlags.PRIVATE_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, ModifierFlags.PACKAGE_LOCAL_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STATIC, ModifierFlags.STATIC_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.ABSTRACT, ModifierFlags.ABSTRACT_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.FINAL, ModifierFlags.FINAL_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NATIVE, ModifierFlags.NATIVE_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.SYNCHRONIZED, ModifierFlags.SYNCHRONIZED_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STRICTFP, ModifierFlags.STRICTFP_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.TRANSIENT, ModifierFlags.TRANSIENT_MASK);
-    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.VOLATILE, ModifierFlags.VOLATILE_MASK);
   }
 
   public PsiModifierListImpl(final PsiModifierListStub stub) {
@@ -88,9 +70,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   public boolean hasModifierProperty(@NotNull String name) {
     final PsiModifierListStub stub = getStub();
     if (stub != null) {
-      int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
-      assert flag != 0;
-      return (stub.getModifiersMask() & flag) != 0;
+      return ModifierFlags.hasModifierProperty(name, stub.getModifiersMask());
     }
 
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);

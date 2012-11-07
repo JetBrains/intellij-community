@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +24,9 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 
 import javax.swing.*;
 
+/**
+ * @author max
+ */
 public class RefreshProgress extends ProgressIndicatorBase {
   private final String myMessage;
 
@@ -39,6 +38,7 @@ public class RefreshProgress extends ProgressIndicatorBase {
   public void start() {
     super.start();
 
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -66,6 +66,7 @@ public class RefreshProgress extends ProgressIndicatorBase {
   public void stop() {
     super.stop();
 
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {

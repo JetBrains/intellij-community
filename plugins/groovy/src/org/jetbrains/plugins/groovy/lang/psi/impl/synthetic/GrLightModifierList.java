@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +156,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
         mod = ((GrLightModifierList)modifierList).getModifiersAsInt();
       }
       else {
-        for (Object o : PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+        for (Object o : ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
           String modifier = (String)o;
           if (modifierList.hasExplicitModifier(modifier)) {
             mod |= GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
