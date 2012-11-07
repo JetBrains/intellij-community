@@ -406,7 +406,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     storeState();
     hideProgress();
     myRootComponent = null;
-    myWarnAction.hide();
 
     myErrorMessages.removeAll();
 
