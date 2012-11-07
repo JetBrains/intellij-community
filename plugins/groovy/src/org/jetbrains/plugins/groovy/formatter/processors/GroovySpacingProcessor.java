@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -709,8 +708,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   private void processModifierList(ASTNode modifierList) {
-    if (modifierList.getLastChildNode().getElementType() == ANNOTATION &&
-        mySettings.METHOD_ANNOTATION_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS || mySettings.MODIFIER_LIST_WRAP) {
+    if (modifierList.getLastChildNode().getElementType() == ANNOTATION && mySettings.METHOD_ANNOTATION_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS ||
+        mySettings.MODIFIER_LIST_WRAP) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
@@ -767,7 +766,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   static boolean isWhiteSpace(final ASTNode node) {
-    return node != null && (node.getPsi() instanceof PsiWhiteSpace || node.getTextLength() == 0);
+    return node != null && (TokenSets.WHITE_SPACES_SET.contains(node.getElementType()) || node.getTextLength() == 0);
   }
 
   @Nullable
