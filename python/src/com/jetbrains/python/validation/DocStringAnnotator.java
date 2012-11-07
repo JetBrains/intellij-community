@@ -33,6 +33,8 @@ public class DocStringAnnotator extends PyAnnotator {
     if (left != null && "__doc__".equals(left.getText())) {
       PyExpression right = node.getAssignedValue();
       if (right instanceof PyStringLiteralExpression) {
+        Annotation ann = getHolder().createInfoAnnotation(right, null);
+        ann.setTextAttributes(PyHighlighter.PY_DOC_COMMENT);
         annotateDocStringStmt((PyStringLiteralExpression)right);
       }
     }
