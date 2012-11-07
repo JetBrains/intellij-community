@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 10/23/12 11:46 PM
+ * @since 8/23/12 11:41 AM
  */
-public interface ArrangementColorsProvider {
-  
-  @NotNull
-  Color getBorderColor(boolean selected);
+public class ArrangementRemoveConditionAction extends AnAction {
 
-  @NotNull
-  TextAttributes getTextAttributes(@NotNull ArrangementSettingType type, boolean selected);
+  public ArrangementRemoveConditionAction() {
+    getTemplatePresentation().setIcon(AllIcons.Actions.CloseNew);
+    getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+  }
 }

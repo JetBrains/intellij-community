@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
@@ -45,9 +46,9 @@ import java.util.Map;
 public class ArrangementNodeDisplayManager {
 
   @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
-  @NotNull private final ArrangementStandardSettingsAware myFilter;
-  @NotNull private final ArrangementColorsProvider        myColorsProvider;
-  @NotNull private ArrangementStandardSettingsRepresentationAware myRepresentationManager;
+  @NotNull private final ArrangementStandardSettingsAware               myFilter;
+  @NotNull private final ArrangementColorsProvider                      myColorsProvider;
+  @NotNull private       ArrangementStandardSettingsRepresentationAware myRepresentationManager;
 
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter,
                                        @NotNull ArrangementColorsProvider colorsProvider,
@@ -81,7 +82,7 @@ public class ArrangementNodeDisplayManager {
     }
     return result;
   }
-  
+
   @NotNull
   public String getDisplayValue(@NotNull ArrangementAtomMatchCondition setting) {
     return getDisplayValue(setting.getValue());

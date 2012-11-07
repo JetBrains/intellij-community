@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
