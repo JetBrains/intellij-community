@@ -84,7 +84,6 @@ import java.util.List;
  */
 public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep {
 
-  private JPanel myPanel;
   private SimpleTree myTemplatesTree;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
@@ -102,6 +101,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
   private JPanel myModulePanel;
+
+  private JPanel myLeftPanel;
+  private JPanel myRightPanel;
+  private final JBSplitter mySplitter;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -255,6 +258,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
     }
 
+    mySplitter = new JBSplitter(false, 0.3f);
+    mySplitter.setSplitterProportionKey("select.template.proportion");
+    mySplitter.setFirstComponent(myLeftPanel);
+    mySplitter.setSecondComponent(myRightPanel);
 //    mySettingsPanel.setVisible(false);
 //    myExpertPanel.setVisible(false);
 
@@ -466,7 +473,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public JComponent getComponent() {
-    return myPanel;
+    return mySplitter;
   }
 
   @Override
