@@ -129,7 +129,7 @@ public class PalettePanel extends JPanel implements DataProvider {
 
     for (PaletteGroup group : myGroups) {
       PaletteGroupComponent groupComponent = new PaletteGroupComponent(group);
-      PaletteItemsComponent itemsComponent = new PaletteItemsComponent(group);
+      PaletteItemsComponent itemsComponent = new PaletteItemsComponent(group, designer);
 
       groupComponent.setItemsComponent(itemsComponent);
       groupComponent.addFocusListener(myFocusListener);

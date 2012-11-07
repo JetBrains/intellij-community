@@ -23,6 +23,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -88,7 +89,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
   public boolean validate() throws ConfigurationException {
     final Sdk jdk = myProjectJdksConfigurable.getSelectedJdk();
-    if (jdk == null) {
+    if (jdk == null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
                                                IdeBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());
       if (result != 0) {

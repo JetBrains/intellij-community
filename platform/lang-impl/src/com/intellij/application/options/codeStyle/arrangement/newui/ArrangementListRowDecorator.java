@@ -63,7 +63,6 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
     setOpaque(true);
-    setBackground(UIUtil.getListBackground());
     init();
   }
 
@@ -72,7 +71,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     GridBag constraints = new GridBag().anchor(GridBagConstraints.CENTER)
       .insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, ArrangementConstants.HORIZONTAL_GAP * 2);
     add(myRowIndexControl, constraints);
-    add(myDelegate.getUiComponent(), new GridBag().fillCellHorizontally().weightx(1).anchor(GridBagConstraints.WEST));
+    add(myDelegate.getUiComponent(), new GridBag().weightx(1).anchor(GridBagConstraints.WEST));
     add(myEditButton, new GridBag().anchor(GridBagConstraints.EAST));
     setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
   }
@@ -126,8 +125,8 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   }
 
   @Override
-  public void onMouseClick(@NotNull MouseEvent event) {
-    myDelegate.onMouseClick(event); 
+  public void onMousePress(@NotNull MouseEvent event) {
+    myDelegate.onMousePress(event); 
   }
 
   @Nullable

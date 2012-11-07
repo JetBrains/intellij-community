@@ -58,10 +58,13 @@
 
 
     <group>
-      <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format..."/>
-      <action class="com.intellij.ide.actions.ImportProjectAction"/>
-      <add-to-group group-id="ExportImportGroup" anchor="first"/>
+      <action class="com.intellij.ide.actions.ImportModuleAction" text="Module..."/>
+      <action class="com.intellij.ide.actions.ImportProjectAction" text="Project..."/>
+      <add-to-group group-id="File.ImportGroup" anchor="first"/>
     </group>
+    <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
+      <add-to-group group-id="ExportImportGroup" anchor="last"/>
+    </action>
 
     <!-- Edit -->
     <reference ref="EditorCompleteStatement">

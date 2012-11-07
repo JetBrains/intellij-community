@@ -43,10 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
-  public static final String GROOVY_CLASS = "GroovyClass.groovy";
-  public static final String GROOVY_INTERFACE = "GroovyInterface.groovy";
-  public static final String GROOVY_ENUM = "GroovyEnum.groovy";
-  public static final String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
@@ -57,10 +53,10 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newclass.dlg.title"))
-      .addKind("Class", JetgroovyIcons.Groovy.Class, GROOVY_CLASS)
-      .addKind("Interface", JetgroovyIcons.Groovy.Interface, GROOVY_INTERFACE)
-      .addKind("Enum", JetgroovyIcons.Groovy.Enum, GROOVY_ENUM)
-      .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GROOVY_ANNOTATION);
+      .addKind("Class", JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_CLASS)
+      .addKind("Interface", JetgroovyIcons.Groovy.Interface, GroovyTemplates.GROOVY_INTERFACE)
+      .addKind("Enum", JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
+      .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
 
     for (FileTemplate template : FileTemplateManager.getInstance().getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());

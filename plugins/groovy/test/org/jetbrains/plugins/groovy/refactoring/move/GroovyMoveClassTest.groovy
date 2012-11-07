@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.move;
-
+package org.jetbrains.plugins.groovy.refactoring.move
 
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -24,13 +23,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-
 /**
  * @author Maxim.Medvedev
  */
@@ -53,10 +52,10 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
 class ${NAME} {
 }''';
 
-    temp = templateManager.getTemplate("GroovyClass.groovy");
+    temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS);
     if (temp != null) templateManager.removeTemplate(temp);
 
-    temp = templateManager.addTemplate("GroovyClass.groovy", "groovy");
+    temp = templateManager.addTemplate(GroovyTemplates.GROOVY_CLASS, "groovy");
     temp.text = '''\
 #if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
 #end
@@ -67,7 +66,7 @@ class ${NAME} {
   @Override
   protected void tearDown() throws Exception {
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
-    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovy");
+    FileTemplate temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS);
     templateManager.removeTemplate(temp);
 
     temp = templateManager.getTemplate("GroovyClass.groovyForTest");

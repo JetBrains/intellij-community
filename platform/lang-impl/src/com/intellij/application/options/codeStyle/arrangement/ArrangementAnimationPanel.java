@@ -45,6 +45,8 @@ public class ArrangementAnimationPanel extends JPanel {
     super(new GridBagLayout());
     myContent = content;
     add(content, new GridBag().fillCell().weightx(1).weighty(1));
+    setOpaque(true);
+    setBackground(UIUtil.getListBackground());
   }
 
   public void startAnimation(boolean expand, boolean horizontal) {
@@ -59,11 +61,32 @@ public class ArrangementAnimationPanel extends JPanel {
     assert myImage != null;
     final Graphics2D graphics = myImage.createGraphics();
     UISettings.setupAntialiasing(graphics);
-    graphics.translate(-bounds.x, -bounds.y);
-    graphics.setClip(bounds.x, bounds.y, bounds.width, bounds.height);
+    graphics.setClip(0, 0, bounds.width, bounds.height);
     super.paint(graphics);
     graphics.dispose();
     invalidate();
+  }
+
+  /**
+   * Asks current panel to switch to the next drawing iteration
+   * 
+   * @return    <code>true</code> if there are more iterations
+   */
+  public boolean nextIteration() {
+    int widthToUse = getImageWidthToUse();
+    int heightToUse = getImageHeightToUse();
+    if (widthToUse <= 1 || heightToUse <= 1) {
+      return false;
+    }
+    myImage = myImage.getSubimage(0, 0, widthToUse, heightToUse);
+    invalidate();
+
+    myAnimationSteps--;
+    if (myAnimationSteps <= 0) {
+      myImage = null;
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -72,16 +95,9 @@ public class ArrangementAnimationPanel extends JPanel {
       super.paint(g);
       return;
     }
-    g.drawImage(myImage, 0, 0, getImageWidthToUse(), getImageHeightToUse(), null);
-    myAnimationSteps--;
-    if (myAnimationSteps <= 0) {
-      myImage = null;
-      if (myListener != null) {
-        myListener.onFinished();
-      }
-    }
-    else if (myListener != null) {
-      myListener.onNewIteration();
+    g.drawImage(myImage, 0, 0, myImage.getWidth(), myImage.getHeight(), null);
+    if (myListener != null) {
+      myListener.onPaint();
     }
   }
 
@@ -112,7 +128,7 @@ public class ArrangementAnimationPanel extends JPanel {
   private int getImageWidthToUse() {
     assert myImage != null;
     if (myHorizontal) {
-      return myImage.getWidth() * getUnits() / ArrangementConstants.ANIMATION_STEPS;
+      return Math.max(1, myImage.getWidth() * getUnits() / ArrangementConstants.ANIMATION_STEPS);
     }
     else {
       return myImage.getWidth();
@@ -125,7 +141,7 @@ public class ArrangementAnimationPanel extends JPanel {
       return myImage.getHeight();
     }
     else {
-      return myImage.getHeight() * getUnits() / ArrangementConstants.ANIMATION_STEPS;
+      return Math.max(1, myImage.getHeight() * getUnits() / ArrangementConstants.ANIMATION_STEPS);
     }
   }
   
@@ -150,7 +166,6 @@ public class ArrangementAnimationPanel extends JPanel {
   }
 
   public interface Listener {
-    void onNewIteration();
-    void onFinished();
+    void onPaint();
   }
 }

@@ -70,6 +70,10 @@ public class Executor {
     content
   }
 
+  public void cp(String fileName, File destinationDir) {
+    FileUtil.copy(child(fileName), new File(destinationDir, fileName))
+  }
+
   protected String run(List<String> params) {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());

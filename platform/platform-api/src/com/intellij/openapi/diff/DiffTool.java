@@ -18,9 +18,9 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 
@@ -62,5 +62,5 @@ public interface DiffTool {
   boolean canShow(DiffRequest request);
 
   @Nullable
-  DiffViewer createComponent(final String title, final DiffRequest request, Window window, Disposable parentDisposable);
+  DiffViewer createComponent(final String title, final DiffRequest request, Window window, @NotNull Disposable parentDisposable);
 }

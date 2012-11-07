@@ -30,6 +30,10 @@ public class CreationTool extends AbstractCreationTool {
     myFactory = factory;
   }
 
+  public ComponentCreationFactory getFactory() {
+    return myFactory;
+  }
+
   @Override
   public void activate() {
     super.activate();

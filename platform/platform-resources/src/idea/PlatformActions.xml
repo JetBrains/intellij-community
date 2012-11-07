@@ -154,7 +154,9 @@
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
         <group id="ExportImportGroup">
-          <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
+          <group id="File.ImportGroup" popup="true" text="Import">
+            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="Settings..."/>
+          </group>
           <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
         </group>
         <separator/>

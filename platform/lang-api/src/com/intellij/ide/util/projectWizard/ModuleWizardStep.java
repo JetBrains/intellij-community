@@ -70,4 +70,9 @@ public abstract class ModuleWizardStep extends StepAdapter {
     fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     return fieldPanel;
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

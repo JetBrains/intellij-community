@@ -49,7 +49,7 @@ class CompositeDiffTool implements DiffTool {
   }
 
   @Override
-  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     // should not be called for it
     throw new IllegalStateException();
   }

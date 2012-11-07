@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
@@ -233,8 +234,9 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     
     AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
     if (applicationLauncher != null) {
+      final boolean supportMultipleDevices = supportMultipleDevices() && executor.getId().equals(DefaultRunExecutor.EXECUTOR_ID);
       return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
-                                     depModule2PackageName, supportMultipleDevices(), CLEAR_LOGCAT, this);
+                                     depModule2PackageName, supportMultipleDevices, CLEAR_LOGCAT, this);
     }
     return null;
   }

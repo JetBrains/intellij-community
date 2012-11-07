@@ -602,7 +602,49 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                             @NotNull List<String> selectedProjects,
                                             boolean alsoMake,
                                             boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+    MavenExecutionResult result = doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals,
+                                             selectedProjects, alsoMake, alsoMakeDependents);
+
+    return createExecutionResult(file, result, null);
+  }
+
+  private MavenExecutionResult doExecute(@NotNull final File file,
+                                         @NotNull final List<String> activeProfiles,
+                                         @NotNull final List<String> inactiveProfiles,
+                                         @NotNull final List<String> goals,
+                                         @NotNull final List<String> selectedProjects,
+                                         boolean alsoMake,
+                                         boolean alsoMakeDependents) throws RemoteException {
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
+
+    if (!selectedProjects.isEmpty()) {
+      request.setRecursive(true);
+      request.setSelectedProjects(selectedProjects);
+      if (alsoMake && alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_BOTH_MODE);
+      }
+      else if (alsoMake) {
+        request.setMakeBehavior(ReactorManager.MAKE_MODE);
+      }
+      else if (alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_DEPENDENTS_MODE);
+      }
+    }
+
+    Maven maven = getComponent(Maven.class);
+    org.apache.maven.execution.MavenExecutionResult executionResult = maven.execute(request);
+
+    return new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+  }
+
+  private static List<Exception> filterExceptions(List<Throwable> list) {
+    for (Throwable throwable : list) {
+      if (!(throwable instanceof Exception)) {
+        throw new RuntimeException(throwable);
+      }
+    }
+
+    return (List<Exception>)((List)list);
   }
 
   @Override

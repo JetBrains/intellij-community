@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.resolve
-
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -25,26 +24,21 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.util.TestUtils.getAbsoluteTestDataPath
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
 /**
  * @author Max Medvedev
  */
 public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'resolve/clsMethod'
 
-  final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
+  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$mockGroovy1_8LibraryName!/");
-      assert groovyJar != null;
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+      super.configureModule(module, model, contentEntry)
 
       final Library.ModifiableModel gebModel = model.moduleLibraryTable.createLibrary("Geb").modifiableModel;
       final VirtualFile gebJar = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + 'mockGeb/geb-core-0.7.1.jar!/');

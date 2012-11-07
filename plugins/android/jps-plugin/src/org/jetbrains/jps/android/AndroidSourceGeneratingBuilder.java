@@ -419,7 +419,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
         }
-        else {
+        else if (outputFile.exists()) {
           final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(buildTarget);
           sourceToOutputMap.setOutput(filePath, outputFilePath);
           FSOperations.markDirty(context, outputFile);

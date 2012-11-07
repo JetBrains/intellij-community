@@ -170,8 +170,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         super.paint(g);
       }
     };
-    myAnimationPanel.setOpaque(false);
-    
+
     setSelected(false);
     if (myCloseButton != null) {
       myCloseButton.setVisible(false);
@@ -239,10 +238,11 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   }
 
   @Override
-  public void onMouseClick(@NotNull MouseEvent event) {
+  public void onMousePress(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
       myCloseCallback.consume(this);
+      event.consume();
     }
   }
 

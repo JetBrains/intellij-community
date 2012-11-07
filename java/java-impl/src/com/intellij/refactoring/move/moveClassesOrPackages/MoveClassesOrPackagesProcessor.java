@@ -481,7 +481,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
           final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
-          LOG.assertTrue(newElement != null);
+          LOG.assertTrue(newElement != null, element);
           oldToNewElementsMapping.put(element, newElement);
           int i = 0;
           final PsiDirectory[] newDirectories = newElement.getDirectories();

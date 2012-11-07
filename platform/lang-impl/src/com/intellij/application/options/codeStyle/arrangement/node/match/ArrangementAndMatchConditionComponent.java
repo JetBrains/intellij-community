@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +59,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   {
     mySetting = setting;
     setOpaque(false);
-    setLayout(null);
-    int x = 0;
+    setLayout(new GridBagLayout());
     final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
@@ -77,16 +77,14 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     }
 
     List<Object> ordered = manager.sort(operands.keySet());
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.EAST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP);
     for (Object key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
       ArrangementMatchConditionComponent component = factory.getComponent(operand, rule, true);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
-      Dimension size = uiComponent.getPreferredSize();
-      add(uiComponent);
-      uiComponent.setBounds(x, 0, size.width, size.height);
-      x += size.width + ArrangementConstants.HORIZONTAL_GAP;
+      add(uiComponent, constraints);
     }
   }
 
@@ -123,22 +121,6 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    int myWidth = 0;
-    int myHeight = 0;
-    Component[] components = getComponents();
-    for (Component component : components) {
-      Dimension size = component.getPreferredSize();
-      myWidth += size.width;
-      myHeight = Math.max(size.height, myHeight);
-    }
-    if (components.length > 1) {
-      myWidth += (components.length - 1) * ArrangementConstants.HORIZONTAL_GAP;
-    }
-    return new Dimension(myWidth, myHeight);
   }
 
   @Override
@@ -196,12 +178,12 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   }
 
   @Override
-  public void onMouseClick(@NotNull MouseEvent event) {
+  public void onMousePress(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
     for (ArrangementMatchConditionComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
-        component.onMouseClick(event);
+        component.onMousePress(event);
         return;
       }
     }

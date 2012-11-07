@@ -37,11 +37,12 @@ public class ArrangementConstants {
   public static final int HORIZONTAL_GAP     = 5;
   public static final int VERTICAL_GAP       = 3;
 
-  public static final int ANIMATION_STEPS = 100;
+  public static final int ANIMATION_STEPS                 = 250;
+  public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 20;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 
-  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY    = DataKey.create("Arrangement.Rule.Function.New");
+  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
   public static final DataKey<Runnable> REMOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Remove");
 
   public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY

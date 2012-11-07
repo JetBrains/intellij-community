@@ -84,7 +84,7 @@ public class MergePanel2 implements DiffViewer {
   private final DialogBuilder myBuilder;
   private final MyDataProvider myProvider;
 
-  public MergePanel2(DialogBuilder builder, Disposable parent) {
+  public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
       public void onEditorCreated(EditorPlace place) {
@@ -627,7 +627,7 @@ public class MergePanel2 implements DiffViewer {
   public static class AsComponent extends JPanel{
     private final MergePanel2 myMergePanel;
 
-    public AsComponent(Disposable parent) {
+    public AsComponent(@NotNull Disposable parent) {
       super(new BorderLayout());
       myMergePanel = new MergePanel2(null, parent);
       add(myMergePanel.getComponent(), BorderLayout.CENTER);

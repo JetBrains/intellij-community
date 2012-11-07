@@ -45,7 +45,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.java.LanguageLevel;
@@ -78,8 +78,12 @@ public class NewProjectUtil {
       return;
     }
 
+    createFromWizard(dialog, projectToClose);
+  }
+
+  public static Project createFromWizard(AddModuleWizard dialog, Project projectToClose) {
     try {
-      doCreate(dialog, projectToClose);
+      return doCreate(dialog, projectToClose);
     }
     catch (final IOException e) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -88,10 +92,11 @@ public class NewProjectUtil {
           Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
         }
       });
+      return null;
     }
   }
 
-  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
+  private static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
@@ -143,14 +148,15 @@ public class NewProjectUtil {
                 //file doesn't exist
               }
               canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
             }
           });
         }
       }, null, null);
 
-      newProject.save();
-
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        newProject.save();
+      }
 
       if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
         return projectToClose;
@@ -204,7 +210,9 @@ public class NewProjectUtil {
 
         projectManager.openProject(newProject);
       }
-      newProject.save();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        newProject.save();
+      }
       return newProject;
     }
     finally {

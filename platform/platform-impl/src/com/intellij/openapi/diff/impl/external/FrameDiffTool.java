@@ -211,7 +211,7 @@ class FrameDiffTool implements DiffTool {
   }
 
   @Override
-  public DiffViewer createComponent(String title, DiffRequest request, Window window, Disposable parentDisposable) {
+  public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     return createDiffPanelIfShouldShow(request, window, parentDisposable, false);
   }
 }
