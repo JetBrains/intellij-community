@@ -63,7 +63,7 @@
       <add-to-group group-id="File.ImportGroup" anchor="first"/>
     </group>
     <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
-      <add-to-group group-id="ImportExportGroup" anchor="last"/>
+      <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
     <!-- Edit -->
