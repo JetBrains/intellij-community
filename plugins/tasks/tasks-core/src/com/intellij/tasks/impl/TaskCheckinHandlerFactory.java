@@ -48,7 +48,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
           final Project project = panel.getProject();
           final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
           if (manager.getState().saveContextOnCommit) {
-            Task task = findTask(message, manager);
+            Task task = findTaskInRepositories(message, manager);
             if (task == null) {
               task = manager.createLocalTask(message);
             }
@@ -71,7 +71,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
   }
 
   @Nullable
-  private static LocalTask findTask(String message, TaskManager manager) {
+  private static Task findTaskInRepositories(String message, TaskManager manager) {
     TaskRepository[] repositories = manager.getAllRepositories();
     for (TaskRepository repository : repositories) {
       String id = repository.extractId(message);
@@ -81,7 +81,7 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
       try {
         Task task = repository.findTask(id);
         if (task != null) {
-          return manager.addTask(task);
+          return task;
         }
       }
       catch (Exception ignore) {
