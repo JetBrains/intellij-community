@@ -16,9 +16,11 @@
 
 package com.intellij.lang.documentation;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
+public class CompositeDocumentationProvider extends DocumentationProviderEx implements ExternalDocumentationProvider, ExternalDocumentationHandler {
 
   private final List<DocumentationProvider> myProviders;
 
@@ -220,5 +222,21 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) return true;
     return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                  @NotNull PsiFile file,
+                                                  @Nullable PsiElement contextElement) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof DocumentationProviderEx) {
+        PsiElement element = ((DocumentationProviderEx)provider).getCustomDocumentationElement(editor, file, contextElement);
+        if (element != null) {
+          return element;
+        }
+      }
+    }
+    return null;
   }
 }
