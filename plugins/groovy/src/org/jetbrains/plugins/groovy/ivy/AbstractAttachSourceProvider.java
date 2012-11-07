@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -66,9 +67,11 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
   protected void addSourceFile(@Nullable VirtualFile jarRoot, @NotNull Library library) {
     if (jarRoot != null) {
-      Library.ModifiableModel model = library.getModifiableModel();
-      model.addRoot(jarRoot, OrderRootType.SOURCES);
-      model.commit();
+      if (!Arrays.asList(library.getFiles(OrderRootType.SOURCES)).contains(jarRoot)) {
+        Library.ModifiableModel model = library.getModifiableModel();
+        model.addRoot(jarRoot, OrderRootType.SOURCES);
+        model.commit();
+      }
     }
   }
 
