@@ -34,8 +34,8 @@ import java.util.List;
 public class ImportProjectAction extends ImportModuleAction {
 
   @Override
-  public List<Module> doImport(Project project, @NotNull VirtualFile file, String wizardTitle) {
-    return super.doImport(null, file, wizardTitle);
+  public List<Module> doImport(Project project, @NotNull VirtualFile file) {
+    return super.doImport(null, file);
   }
 
   @Override

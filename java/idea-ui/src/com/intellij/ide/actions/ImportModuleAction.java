@@ -52,11 +52,11 @@ public class ImportModuleAction extends AnAction {
     VirtualFile[] files = chooser.choose(null, project);
     if (files.length > 0) {
       final VirtualFile file = files[0];
-      doImport(project, file, e.getPresentation().getText());
+      doImport(project, file);
     }
   }
 
-  public List<Module> doImport(final Project project, @NotNull final VirtualFile file, String wizardTitle) {
+  public List<Module> doImport(final Project project, @NotNull final VirtualFile file) {
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override
@@ -70,7 +70,7 @@ public class ImportModuleAction extends AnAction {
     }
 
     String path = file.isDirectory() ? file.getPath() : file.getParent().getPath();
-    AddModuleWizard wizard = new AddModuleWizard(wizardTitle, project, path, available.toArray(new ProjectImportProvider[available.size()]));
+    AddModuleWizard wizard = new AddModuleWizard(project, path, available.toArray(new ProjectImportProvider[available.size()]));
     if (wizard.getStepCount() > 0) {
       if (wizard.showAndGet()) {
         return createFromWizard(project, wizard);
@@ -83,6 +83,7 @@ public class ImportModuleAction extends AnAction {
       return builder.commit(project);
     }
   }
+
 
   protected List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
     Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);

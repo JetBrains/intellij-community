@@ -86,12 +86,21 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   /** Import mode */
-  public AddModuleWizard(String title, Project project, String filePath, ProjectImportProvider... importProviders) {
-    super(title, project);
+  public AddModuleWizard(Project project, String filePath, ProjectImportProvider... importProviders) {
+    super(getImportWizardTitle(project, importProviders), project);
     myCurrentProject = project;
     myImportProviders = importProviders;
     myModulesProvider = DefaultModulesProvider.createForProject(project);
     initModuleWizard(project, filePath);
+  }
+
+  private static String getImportWizardTitle(Project project, ProjectImportProvider... providers) {
+    StringBuilder builder = new StringBuilder("Import ");
+    builder.append(project == null ? "Project" : "Module");
+    if (providers.length == 1) {
+      builder.append(" From ").append(providers[0].getName());
+    }
+    return builder.toString();
   }
 
   private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
