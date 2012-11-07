@@ -206,6 +206,7 @@ class GitRepositoryReader {
         }
         if (branchName.endsWith(ref)) {
           hashRef.set(shortBuffer(hash));
+          stop();
         }
       }
     });
@@ -226,6 +227,9 @@ class GitRepositoryReader {
           String line;
           while ((line = reader.readLine()) != null) {
             parsePackedRefsLine(line, handler);
+            if (handler.stopped()) {
+              return null;
+            }
           }
         }
         finally {
@@ -486,8 +490,21 @@ class GitRepositoryReader {
     return new String(raw);
   }
 
-  private interface PackedRefsLineResultHandler {
-    void handleResult(@Nullable String hash, @Nullable String branchName);
+  private abstract static class PackedRefsLineResultHandler {
+    private boolean myStopped;
+
+    abstract void handleResult(@Nullable String hash, @Nullable String branchName);
+
+    /**
+     * Call this to stop further lines reading.
+     */
+    final void stop() {
+      myStopped = true;
+    }
+
+    final boolean stopped() {
+      return myStopped;
+    }
   }
 
   /**
