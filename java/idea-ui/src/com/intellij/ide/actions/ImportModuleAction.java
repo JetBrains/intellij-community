@@ -47,6 +47,39 @@ public class ImportModuleAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
+    descriptor.setTitle("Select File Or Directory To Import");
+    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+    List<ProjectImportProvider> list = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
+      @Override
+      public boolean value(ProjectImportProvider provider) {
+        return project == null || provider.canCreateNewProject();
+      }
+    });
+    StringBuilder builder = new StringBuilder("<html>Select");
+    boolean first = true;
+    if (list.size() > 1) {
+      for (ProjectImportProvider provider : list) {
+        String sample = provider.getFileSample();
+        if (sample != null) {
+          if (!first) {
+            builder.append(',');
+          }
+          else {
+            first = false;
+          }
+          builder.append(" <b>").append(sample).append("</b>");
+          if (sample.contains("*")) {
+            builder.append(" file");
+          }
+        }
+      }
+    }
+    if (!first) {
+      builder.append(" or");
+    }
+    builder.append(" directory with <b>existing sources</b> to be imported.</html>");
+    descriptor.setDescription(builder.toString());
+
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
     VirtualFile[] files = chooser.choose(null, project);
     if (files.length > 0) {

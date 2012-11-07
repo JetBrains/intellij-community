@@ -25,6 +25,7 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
@@ -67,6 +68,12 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         return rendererComponent;
       }
     });
+
+    JLabel label = new JLabel("Please select importing \u001btarget:");
+    label.setLabelFor(myList);
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 0));
+    myPanel.add(label, BorderLayout.NORTH);
+
     myPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
