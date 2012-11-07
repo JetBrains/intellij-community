@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
@@ -23,7 +24,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
@@ -37,12 +37,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
   protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) {
     runWizard(group, name, adjuster);
-    try {
-      myCreatedProject = NewProjectUtil.doCreate(myWizard, null);
-    }
-    catch (IOException e) {
-      fail(e.getMessage());
-    }
+    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     assertNotNull(myCreatedProject);
 
     Project[] projects = myProjectManager.getOpenProjects();
@@ -126,13 +121,27 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     super.tearDown();
   }
 
-  protected Module importFrom(ProjectImportProvider provider, String path) {
+  protected Module importModuleFrom(ProjectImportProvider provider, String path) {
+    return importFrom(provider, path, getProject());
+  }
+
+  protected Module importProjectFrom(ProjectImportProvider provider, String path) {
+    return importFrom(provider, path, null);
+  }
+
+  private Module importFrom(ProjectImportProvider provider, String path, @Nullable Project project) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
-    assertTrue(provider.canImport(file, getProject()));
-    myWizard = new TestWizard(getProject(), path, provider);
+    assertTrue(provider.canImport(file, project));
+    myWizard = new TestWizard(project, path, provider);
     runWizard(null);
-    return createModuleFromWizard();
+    if (project == null) {
+      myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+      return myCreatedProject == null ? null : ModuleManager.getInstance(myCreatedProject).getModules()[0];
+    }
+    else {
+      return createModuleFromWizard();
+    }
   }
 
   protected static class TestWizard extends AddModuleWizard {

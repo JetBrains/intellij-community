@@ -85,9 +85,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     myWizardContext.setProjectName(getProjectName());
     final String projectFileDirectory = getProjectFileDirectory();
     myWizardContext.setProjectFileDirectory(projectFileDirectory);
-    final ProjectBuilder moduleBuilder;
-    if (myMode != null) {
-      moduleBuilder = myMode.getModuleBuilder();
+    ProjectBuilder moduleBuilder = myWizardContext.getProjectBuilder();
+    if (moduleBuilder != null) {
       myWizardContext.setProjectBuilder(moduleBuilder);
       if (moduleBuilder instanceof ModuleBuilder) { // no SourcePathsBuilder here !
         ((ModuleBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);

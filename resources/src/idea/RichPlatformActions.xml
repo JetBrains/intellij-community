@@ -59,7 +59,8 @@
 
     <group>
       <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format..."/>
-      <action class="com.intellij.ide.actions.ImportProjectAction"/>
+      <action class="com.intellij.ide.actions.ImportModuleAction" text="Import Module..."/>
+      <action class="com.intellij.ide.actions.ImportProjectAction" text="Import Project..."/>
       <add-to-group group-id="ExportImportGroup" anchor="first"/>
     </group>
 

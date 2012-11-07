@@ -16,10 +16,11 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.idea.maven.MavenTestCase;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
@@ -27,14 +28,21 @@ import java.io.File;
  */
 public class MavenImportWizardTest extends ProjectWizardTestCase {
 
-  public void testImport() throws Exception {
-    File directory = createTempDirectory();
-    File pom = new File(directory, "pom.xml");
-    pom.createNewFile();
-    FileUtil.writeToFile(pom, MavenTestCase.createPomXml("<groupId>test</groupId>" +
-                      "<artifactId>project</artifactId>" +
-                      "<version>1</version>"));
-    importFrom(new MavenProjectImportProvider(new MavenProjectBuilder()), pom.getPath());
+  public void testImportModule() throws Exception {
+    File pom = createPom();
+    Module module = importModuleFrom(new MavenProjectImportProvider(new MavenProjectBuilder()), pom.getParent());
+    assertEquals("project", module.getName());
+  }
 
+  public void testImportProject() throws Exception {
+    File pom = createPom();
+    Module module = importProjectFrom(new MavenProjectImportProvider(new MavenProjectBuilder()), pom.getParent());
+    assertEquals("project", module.getName());
+  }
+
+  private File createPom() throws IOException {
+    return createTempFile("pom.xml", MavenTestCase.createPomXml("<groupId>test</groupId>" +
+                                                                "<artifactId>project</artifactId>" +
+                                                                "<version>1</version>"));
   }
 }
