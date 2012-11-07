@@ -26,10 +26,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.Collection;
 import java.util.List;
@@ -335,7 +333,7 @@ public class PyDocstringGenerator {
     }
     else {
       if (myFunction == null) {
-        throw new InvalidStateException("Should be a function");
+        throw new IllegalStateException("Should be a function");
       }
       final PyStatementList list = myFunction.getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
