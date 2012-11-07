@@ -1,4 +1,4 @@
-public class X extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class X {
 public X plus(X x) {
 return new X();
 }

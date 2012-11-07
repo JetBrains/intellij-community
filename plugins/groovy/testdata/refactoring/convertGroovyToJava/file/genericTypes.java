@@ -1,4 +1,4 @@
-public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class A {
 public java.util.List<? extends java.util.Set> foo() {
 return null;
 }

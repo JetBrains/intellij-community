@@ -142,7 +142,7 @@ public class CollectClassMembersUtil {
   }
 
   public static PsiMethod[] getMethods(PsiClass aClass, boolean includeSynthetic) {
-    return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getGroovyMethods();
+    return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
   }
 
   private static boolean hasExplicitVisibilityModifiers(PsiField field) {

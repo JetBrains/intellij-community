@@ -23,6 +23,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -41,10 +42,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.*;
 
@@ -84,7 +88,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final GrEnumConstantInitializer anonymousBlock = constant.getInitializingClass();
     if (anonymousBlock != null) {
       builder.append("{\n");
-      new ClassGenerator(classNameProvider, this).writeMembers(builder, anonymousBlock, true);
+      new ClassGenerator(classNameProvider, this).writeMembers(builder, anonymousBlock);
       builder.append("\n}");
     }
   }
@@ -330,7 +334,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   }
 
   @Override
-  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
+  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
     List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(typeDefinition.getMethods()));
 
     if (typeDefinition instanceof GroovyScriptClass) {
@@ -485,4 +489,88 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
   }
 
+  public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
+
+    if (implementsTypes.isEmpty()) return;
+    if (implementsTypes.size() == 1 && shouldSkipInImplements(typeDefinition, implementsTypes.iterator().next())) return;
+
+    text.append(typeDefinition.isInterface() ? "extends " : "implements ");
+    for (PsiClassType implementsType : implementsTypes) {
+      if (shouldSkipInImplements(typeDefinition, implementsType)) {
+        continue;
+      }
+      writeType(text, implementsType, typeDefinition, classNameProvider);
+      text.append(", ");
+    }
+    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    text.append(' ');
+  }
+
+  private static boolean shouldSkipInImplements(PsiClass typeDefinition, PsiClassType implementsType) {
+    return implementsType.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT) &&
+        typeDefinition instanceof GrTypeDefinition &&
+        !typeDefinition.isInterface() &&
+        !GenerationSettings.implementGroovyObjectAlways &&
+        !isInList(implementsType, ((GrTypeDefinition)typeDefinition).getImplementsClause()) &&
+        !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT);
+  }
+
+  public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
+    final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
+
+    if (extendsClassesTypes.length > 0) {
+      PsiClassType type = extendsClassesTypes[0];
+
+      if (type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT) &&
+          typeDefinition instanceof GrTypeDefinition &&
+          !GenerationSettings.implementGroovyObjectAlways &&
+          !isInList(type, ((GrTypeDefinition)typeDefinition).getExtendsClause()) &&
+          !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT)) {
+        return;
+      }
+
+      text.append("extends ");
+      writeType(text, type, typeDefinition, classNameProvider);
+      text.append(' ');
+    }
+  }
+
+  private static boolean isInList(@NotNull PsiClassType type, @Nullable GrReferenceList list) {
+    if (list == null) return false;
+
+    PsiClass resolved = type.resolve();
+    if (resolved == null) return true;
+
+    PsiManager manager = list.getManager();
+    GrCodeReferenceElement[] elements = list.getReferenceElements();
+    for (GrCodeReferenceElement element : elements) {
+      if (manager.areElementsEquivalent(resolved, element.resolve())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean containsMethodsOf(@NotNull GrTypeDefinition aClass, @NotNull final String fqn) {
+    PsiClass classToSearch = JavaPsiFacade.getInstance(aClass.getProject()).findClass(fqn, aClass.getResolveScope());
+    if (classToSearch == null) return true;
+
+    Set<String> methodsToFind = new HashSet<String>();
+    for (PsiMethod method : classToSearch.getMethods()) {
+      methodsToFind.add(method.getName());
+    }
+
+    for (GrMethod method : aClass.getCodeMethods()) {
+      if (!methodsToFind.contains(method.getName())) continue;
+
+      for (HierarchicalMethodSignature superSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+        PsiClass superClass = superSignature.getMethod().getContainingClass();
+        if (superClass != null && fqn.equals(superClass.getQualifiedName())) return true;
+      }
+    }
+
+    return false;
+  }
 }

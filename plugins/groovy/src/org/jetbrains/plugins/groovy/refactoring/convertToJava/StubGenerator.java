@@ -285,7 +285,7 @@ public class StubGenerator implements ClassItemGenerator {
   }
 
   @Override
-  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
+  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiMethod method : typeDefinition.getMethods()) {
       if (method instanceof DelegatedMethod) {
@@ -297,7 +297,8 @@ public class StubGenerator implements ClassItemGenerator {
       }
       methods.add(method);
     }
-    if (classDef) {
+    boolean isClass = !typeDefinition.isInterface() && !typeDefinition.isAnnotationType() && !typeDefinition.isEnum();
+    if (isClass) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
         if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
@@ -410,5 +411,31 @@ public class StubGenerator implements ClassItemGenerator {
       }
     }
     return GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
+  }
+
+  public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
+
+    if (implementsTypes.isEmpty()) return;
+
+    text.append(typeDefinition.isInterface() ? "extends " : "implements ");
+    for (PsiClassType implementsType : implementsTypes) {
+      writeType(text, implementsType, typeDefinition, classNameProvider);
+      text.append(", ");
+    }
+    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    text.append(' ');
+  }
+
+  public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
+    final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
+
+    if (extendsClassesTypes.length > 0) {
+
+      text.append("extends ");
+      writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
+      text.append(' ');
+    }
   }
 }

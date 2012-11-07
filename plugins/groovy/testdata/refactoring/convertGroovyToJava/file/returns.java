@@ -1,4 +1,4 @@
-public class returns extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class returns {
 public void foo1() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, "foo");
 }

@@ -170,7 +170,7 @@ public class DynamicMemberUtils {
       MultiMap<String, PsiMethod> staticMultiMap = new MultiMap<String, PsiMethod>();
       MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<String, PsiMethod>();
 
-      for (GrMethod method : myClass.getGroovyMethods()) {
+      for (GrMethod method : myClass.getCodeMethods()) {
         GrDynamicMethodWithCache dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
 
         Map<String, String> commentMap = parseComment(method.getDocComment());

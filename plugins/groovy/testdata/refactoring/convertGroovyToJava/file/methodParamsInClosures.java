@@ -1,4 +1,4 @@
-public class X extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class X {
 public java.lang.Integer foo(int x) {
 final groovy.lang.Reference<java.lang.Integer> i1 = new groovy.lang.Reference<java.lang.Integer>(x);
 return org.codehaus.groovy.runtime.DefaultGroovyMethods.each(1, new groovy.lang.Closure<java.lang.Void>(this, this) {
