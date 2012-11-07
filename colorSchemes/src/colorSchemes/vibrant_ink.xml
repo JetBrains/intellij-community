@@ -3,14 +3,31 @@
   <option name="EDITOR_FONT_SIZE" value="12" />
   <option name="EDITOR_FONT_NAME" value="Monaco" />
   <colors>
+    <option name="INDENT_GUIDE" value="404040" />
     <option name="SELECTION_BACKGROUND" value="2e3f34" />
     <option name="CARET_ROW_COLOR" value="333300" />
     <option name="WHITESPACES" value="404040" />
     <option name="CARET_COLOR" value="FFFFFF" />
-    <option name="INDENT_GUIDE" value="404040" />
+    <option name="LINE_NUMBERS_COLOR" value="FFFFFF" />
     <option name="CONSOLE_BACKGROUND_KEY" value="000000" />
+    <option name="GUTTER_BACKGROUND" value="000000" />
   </colors>
   <attributes>
+    <option name="APACHE_CONFIG.ARG_LEXEM">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="APACHE_CONFIG.COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="APACHE_CONFIG.IDENTIFIER">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
     <option name="BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6e3b3b" />
@@ -397,6 +414,40 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="Clojure Atom">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="Clojure Character">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="Clojure Keyword">
+      <value />
+    </option>
+    <option name="Clojure Line comment">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="Clojure Literal">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="Clojure Numbers">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="Clojure Strings">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
     <option name="DEPRECATED_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="3" />
@@ -499,6 +550,11 @@
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
         <option name="EFFECT_COLOR" value="c7c7ff" />
+      </value>
+    </option>
+    <option name="First symbol in list">
+      <value>
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="GENERIC_SERVER_ERROR_OR_WARNING">
@@ -990,6 +1046,11 @@
     <option name="LOCAL_VARIABLE_ATTRIBUTES">
       <value />
     </option>
+    <option name="MATCHED_BRACE_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="3a6da0" />
+      </value>
+    </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="80807f" />
@@ -997,6 +1058,183 @@
     </option>
     <option name="PARAMETER_ATTRIBUTES">
       <value />
+    </option>
+    <option name="PHP_BAD_CHARACTER">
+      <value>
+        <option name="BACKGROUND" value="6e3b3b" />
+      </value>
+    </option>
+    <option name="PHP_BRACKETS">
+      <value />
+    </option>
+    <option name="PHP_COMMA">
+      <value />
+    </option>
+    <option name="PHP_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="PHP_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="PHP_DOC_COMMENT_ID">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="PHP_DOC_TAG">
+      <value>
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="PHP_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="PHP_EXEC_COMMAND_ID">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="PHP_HEREDOC_CONTENT">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="PHP_HEREDOC_ID">
+      <value>
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="PHP_IDENTIFIER">
+      <value />
+    </option>
+    <option name="PHP_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PHP_MARKUP_ID">
+      <value>
+        <option name="BACKGROUND" value="223f22" />
+      </value>
+    </option>
+    <option name="PHP_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="PHP_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PHP_PREDEFINED SYMBOL">
+      <value />
+    </option>
+    <option name="PHP_SCRIPTING_BACKGROUND">
+      <value>
+        <option name="BACKGROUND" value="2a2d32" />
+      </value>
+    </option>
+    <option name="PHP_SEMICOLON">
+      <value />
+    </option>
+    <option name="PHP_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="PHP_TAG">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PHP_VAR">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PUPPET_BAD_CHARACTER">
+      <value>
+        <option name="BACKGROUND" value="6e3b3b" />
+      </value>
+    </option>
+    <option name="PUPPET_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACES">
+      <value />
+    </option>
+    <option name="PUPPET_BRACKETS">
+      <value />
+    </option>
+    <option name="PUPPET_CLASS">
+      <value />
+    </option>
+    <option name="PUPPET_COMMA">
+      <value />
+    </option>
+    <option name="PUPPET_DOT">
+      <value />
+    </option>
+    <option name="PUPPET_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="PUPPET_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PUPPET_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="PUPPET_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="PUPPET_PARENTH">
+      <value />
+    </option>
+    <option name="PUPPET_REGEX">
+      <value>
+        <option name="FOREGROUND" value="44B4CC" />
+      </value>
+    </option>
+    <option name="PUPPET_RESOURCE_REFERENCE">
+      <value />
+    </option>
+    <option name="PUPPET_SEMICOLON">
+      <value />
+    </option>
+    <option name="PUPPET_SQ_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="PUPPET_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE">
+      <value />
+    </option>
+    <option name="PUPPET_VARIABLE_INTERPOLATION">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
     </option>
     <option name="PY.BRACES">
       <value />
@@ -1354,29 +1592,40 @@
         <option name="FOREGROUND" value="66FF00" />
       </value>
     </option>
-    <option name="SASS_ATTRIBUTE">
-      <value>
-        <option name="FOREGROUND" value="FF6600" />
-      </value>
-    </option>
     <option name="SASS_COMMENT">
       <value>
         <option name="FOREGROUND" value="9933CC" />
       </value>
     </option>
-    <option name="SASS_CONSTANT">
-      <value>
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="SASS_DIRECTIVE">
+    <option name="SASS_DEFAULT">
       <value>
         <option name="FOREGROUND" value="FF6600" />
       </value>
     </option>
+    <option name="SASS_EXTEND">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SASS_FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="e3e3ff" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
     <option name="SASS_IDENTIFIER">
       <value>
-        <option name="FOREGROUND" value="339999" />
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SASS_IMPORTANT">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SASS_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
       </value>
     </option>
     <option name="SASS_MIXIN">
@@ -1387,18 +1636,33 @@
     </option>
     <option name="SASS_NUMBER">
       <value>
-        <option name="FOREGROUND" value="339999" />
+        <option name="FOREGROUND" value="FFFFFF" />
       </value>
     </option>
-    <option name="SASS_RULE">
+    <option name="SASS_PROPERTY_NAME">
       <value>
-        <option name="FOREGROUND" value="99CC99" />
-        <option name="FONT_TYPE" value="2" />
+        <option name="FOREGROUND" value="999966" />
+      </value>
+    </option>
+    <option name="SASS_PROPERTY_VALUE">
+      <value>
+        <option name="FOREGROUND" value="68e868" />
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="SASS_STRING">
       <value>
         <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="SASS_TAG_NAME">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SASS_URL">
+      <value>
+        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="SASS_VARIABLE">
@@ -1481,6 +1745,47 @@
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
         <option name="BACKGROUND" value="0F0F0F" />
+      </value>
+    </option>
+    <option name="SMARTY_BACKGROUND">
+      <value>
+        <option name="BACKGROUND" value="2a2d32" />
+      </value>
+    </option>
+    <option name="SMARTY_BAD_CHARACTER">
+      <value>
+        <option name="BACKGROUND" value="6e3b3b" />
+      </value>
+    </option>
+    <option name="SMARTY_BRACKETS">
+      <value />
+    </option>
+    <option name="SMARTY_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="SMARTY_IDENTIFIER">
+      <value />
+    </option>
+    <option name="SMARTY_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SMARTY_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="SMARTY_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="SMARTY_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
       </value>
     </option>
     <option name="SQL_BAD_CHARACTER">
@@ -1597,6 +1902,52 @@
         <option name="FOREGROUND" value="c7c7ff" />
         <option name="FONT_TYPE" value="3" />
         <option name="ERROR_STRIPE_COLOR" value="ff" />
+      </value>
+    </option>
+    <option name="TWIG_BACKGROUND">
+      <value>
+        <option name="BACKGROUND" value="2a2d32" />
+      </value>
+    </option>
+    <option name="TWIG_BAD_CHARACTER">
+      <value>
+        <option name="BACKGROUND" value="6e3b3b" />
+      </value>
+    </option>
+    <option name="TWIG_BRACKETS">
+      <value />
+    </option>
+    <option name="TWIG_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="TWIG_IDENTIFIER">
+      <value />
+    </option>
+    <option name="TWIG_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="TWIG_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="339999" />
+      </value>
+    </option>
+    <option name="TWIG_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="FF6600" />
+      </value>
+    </option>
+    <option name="TWIG_STRING">
+      <value>
+        <option name="FOREGROUND" value="66FF00" />
+      </value>
+    </option>
+    <option name="UNMATCHED_BRACE_ATTRIBUTES">
+      <value>
+        <option name="BACKGROUND" value="583535" />
       </value>
     </option>
     <option name="WARNING_ATTRIBUTES">
