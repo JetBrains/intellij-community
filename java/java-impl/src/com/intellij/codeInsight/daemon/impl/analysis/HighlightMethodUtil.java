@@ -848,13 +848,18 @@ public class HighlightMethodUtil {
 
   @Nullable
   static HighlightInfo checkMethodCanHaveBody(PsiMethod method) {
-    if (method.getBody() == null) return null;
     PsiClass aClass = method.getContainingClass();
+    boolean hasBody = method.getBody() == null;
     boolean isInterface = aClass != null && aClass.isInterface();
-    boolean isExtension = method.isExtensionMethod();
+    boolean isExtension = method.hasModifierProperty(PsiModifier.DEFAULT);
 
     String message = null;
-    if (isInterface) {
+    if (hasBody) {
+      if (isExtension) {
+        message = JavaErrorMessages.message("extension.method.should.have.a.body");
+      }
+    }
+    else if (isInterface) {
       if (!isExtension) {
         message = JavaErrorMessages.message("interface.methods.cannot.have.body");
       }
@@ -875,10 +880,11 @@ public class HighlightMethodUtil {
 
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-    QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
+    if (hasBody) {
+      QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
+    }
     if (method.hasModifierProperty(PsiModifier.ABSTRACT) && isInterface) {
-      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
-      QuickFixAction.registerQuickFixAction(info, fix);
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false));
     }
     return info;
   }

@@ -30,7 +30,10 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -51,7 +54,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +64,7 @@ import java.util.*;
 
 import static com.intellij.codeInsight.daemon.JavaHighlightingFilter.Kind;
 import static com.intellij.codeInsight.daemon.JavaHighlightingFilter.suppressed;
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * @author cdr
@@ -69,6 +72,7 @@ import static com.intellij.codeInsight.daemon.JavaHighlightingFilter.suppressed;
  */
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
+
   @NotNull private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
   @NotNull private static final Map<String, Set<String>> ourMethodIncompatibleModifiers;
   @NotNull private static final Map<String, Set<String>> ourFieldIncompatibleModifiers;
@@ -84,134 +88,54 @@ public class HighlightUtil {
 
   static {
     ourClassIncompatibleModifiers = new THashMap<String, Set<String>>(8);
-    Set<String> modifiers = new THashSet<String>(1);
-    modifiers.add(PsiModifier.FINAL);
-    ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, modifiers);
-    modifiers = new THashSet<String>(1);
-    modifiers.add(PsiModifier.ABSTRACT);
-    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourClassIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourClassIncompatibleModifiers.put(PsiModifier.PRIVATE, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourClassIncompatibleModifiers.put(PsiModifier.PUBLIC, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PRIVATE);
-    ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
+    ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, newTroveSet(PsiModifier.FINAL));
+    ourClassIncompatibleModifiers.put(PsiModifier.FINAL, newTroveSet(PsiModifier.ABSTRACT));
+    ourClassIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PRIVATE, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PUBLIC, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.<String>emptySet());
     ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
+
     ourInterfaceIncompatibleModifiers = new THashMap<String, Set<String>>(7);
     ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Collections.<String>emptySet());
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PRIVATE, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PUBLIC, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PRIVATE, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PUBLIC, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.<String>emptySet());
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
-    ourMethodIncompatibleModifiers = new THashMap<String, Set<String>>(10);
-    modifiers = new THashSet<String>(6);
-    modifiers.addAll(Arrays.asList(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP,
-                                   PsiModifier.SYNCHRONIZED));
-    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, modifiers);
-    modifiers = new THashSet<String>(2);
-    modifiers.add(PsiModifier.ABSTRACT);
-    modifiers.add(PsiModifier.STRICTFP);
-    ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, modifiers);
-    modifiers = new THashSet<String>(4);
-    modifiers.add(PsiModifier.ABSTRACT);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourMethodIncompatibleModifiers.put(PsiModifier.PUBLIC, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PRIVATE);
-    ourMethodIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
-    modifiers = new THashSet<String>(1);
-    modifiers.add(PsiModifier.ABSTRACT);
-    ourMethodIncompatibleModifiers.put(PsiModifier.STATIC, modifiers);
-    ourMethodIncompatibleModifiers.put(PsiModifier.SYNCHRONIZED, modifiers);
-    ourMethodIncompatibleModifiers.put(PsiModifier.STRICTFP, modifiers);
-    ourMethodIncompatibleModifiers.put(PsiModifier.FINAL, modifiers);
+
+    ourMethodIncompatibleModifiers = new THashMap<String, Set<String>>(11);
+    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, newTroveSet(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL,
+                                                                         PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED,
+                                                                         PsiModifier.DEFAULT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STRICTFP));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PUBLIC, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourMethodIncompatibleModifiers.put(PsiModifier.PROTECTED, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
+    ourMethodIncompatibleModifiers.put(PsiModifier.STATIC, newTroveSet(PsiModifier.ABSTRACT, PsiModifier.DEFAULT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.DEFAULT, newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC));
+    ourMethodIncompatibleModifiers.put(PsiModifier.SYNCHRONIZED, newTroveSet(PsiModifier.ABSTRACT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.STRICTFP, newTroveSet(PsiModifier.ABSTRACT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.FINAL, newTroveSet(PsiModifier.ABSTRACT));
+
     ourFieldIncompatibleModifiers = new THashMap<String, Set<String>>(8);
-    modifiers = new THashSet<String>(1);
-    modifiers.add(PsiModifier.VOLATILE);
-    ourFieldIncompatibleModifiers.put(PsiModifier.FINAL, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourFieldIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PUBLIC);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourFieldIncompatibleModifiers.put(PsiModifier.PRIVATE, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PROTECTED);
-    ourFieldIncompatibleModifiers.put(PsiModifier.PUBLIC, modifiers);
-    modifiers = new THashSet<String>(3);
-    modifiers.add(PsiModifier.PACKAGE_LOCAL);
-    modifiers.add(PsiModifier.PRIVATE);
-    modifiers.add(PsiModifier.PUBLIC);
-    ourFieldIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
+    ourFieldIncompatibleModifiers.put(PsiModifier.FINAL, newTroveSet(PsiModifier.VOLATILE));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PRIVATE, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PUBLIC, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
+    ourFieldIncompatibleModifiers.put(PsiModifier.PROTECTED, newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourFieldIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
     ourFieldIncompatibleModifiers.put(PsiModifier.TRANSIENT, Collections.<String>emptySet());
-    modifiers = new THashSet<String>(1);
-    modifiers.add(PsiModifier.FINAL);
-    ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, modifiers);
+    ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, newTroveSet(PsiModifier.FINAL));
 
     ourClassInitializerIncompatibleModifiers = new THashMap<String, Set<String>>(1);
     ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
 
-    ourConstructorNotAllowedModifiers = new THashSet<String>(6);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.ABSTRACT);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.STATIC);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.NATIVE);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.FINAL);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.STRICTFP);
-    ourConstructorNotAllowedModifiers.add(PsiModifier.SYNCHRONIZED);
+    ourConstructorNotAllowedModifiers = newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE,
+                                                    PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
   }
 
   @Nullable
@@ -219,6 +143,7 @@ public class HighlightUtil {
                                                @Nullable PsiModifierList modifierList,
                                                @NotNull Map<String, Set<String>> incompatibleModifiersHash) {
     if (modifierList == null) return null;
+
     // modifier is always incompatible with itself
     PsiElement[] modifiers = modifierList.getChildren();
     int modifierCount = 0;
@@ -235,13 +160,11 @@ public class HighlightUtil {
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
-      else if (PsiModifier.ABSTRACT.equals(incompatible)) {
-        final PsiElement owner = modifierList.getParent();
-        if (owner instanceof PsiMethod && ((PsiMethod)owner).isExtensionMethod()) {
-          return incompatible;
-        }
+      else if (PsiModifier.ABSTRACT.equals(incompatible) && modifierList.hasExplicitModifier(incompatible)) {
+        return incompatible;
       }
     }
+
     return null;
   }
 
@@ -795,21 +718,18 @@ public class HighlightUtil {
     return null;
   }
 
-
   @Nullable
   static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
-
-    HighlightInfo highlightInfo = null;
     if (incompatible != null) {
       String message = JavaErrorMessages.message("incompatible.modifiers", modifier, incompatible);
-
-      highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
-
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
+      return highlightInfo;
     }
-    return highlightInfo;
+
+    return null;
   }
 
   @Nullable
@@ -840,9 +760,11 @@ public class HighlightUtil {
     PsiElement modifierOwner = modifierList.getParent();
     if (modifierOwner == null) return null;
     if (PsiUtilCore.hasErrorElementChild(modifierOwner)) return null;
+
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
+
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
     PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
@@ -1363,7 +1285,7 @@ public class HighlightUtil {
 
       if (PsiUtil.isLanguageLevel8OrHigher(expr)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-        if (method != null && method.isExtensionMethod() && qualifier == null) {
+        if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && qualifier == null) {
           //todo[r.sh] "Add qualifier" quick fix
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, JavaErrorMessages.message("unqualified.super.disallowed"));
         }

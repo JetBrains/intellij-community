@@ -20,6 +20,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.*;
+import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -109,7 +110,10 @@ public class RecordUtil {
       else if (parent instanceof PsiMethodStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
           packed |= ModifierFlags.PUBLIC_MASK;
-          if (!((PsiMethodStub)parent).isExtensionMethod()) {
+          if (parent instanceof PsiMethodStubImpl && ((PsiMethodStubImpl)parent).hasExtensionMethodMark()) {
+            packed |= ModifierFlags.DEFENDER_MASK;
+          }
+          else {
             packed |= ModifierFlags.ABSTRACT_MASK;
           }
         }
@@ -129,6 +133,10 @@ public class RecordUtil {
       if (flag != 0) {
         packed |= flag;
       }
+    }
+
+    if ((packed & ModifierFlags.DEFENDER_MASK) != 0) {
+      packed &= ~ModifierFlags.ABSTRACT_MASK;
     }
 
     if ((packed & (ModifierFlags.PRIVATE_MASK | ModifierFlags.PROTECTED_MASK | ModifierFlags.PUBLIC_MASK)) == 0) {

@@ -281,11 +281,6 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
   }
 
   @Override
-  public boolean isExtensionMethod() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);

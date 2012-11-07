@@ -37,14 +37,14 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final byte myFlags;
   private final StringRef myName;
   private StringRef myDefaultValueText;
+  // todo[r.sh] drop this after transition period finished
+  private boolean myHasExtMethodMark = false;
 
   private static final int CONSTRUCTOR = 0x01;
   private static final int VARARGS = 0x02;
   private static final int ANNOTATION = 0x04;
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
-  private static final int EXTENSION = 0x20;
-
 
   public PsiMethodStubImpl(final StubElement parent,
                            final StringRef name,
@@ -74,6 +74,14 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myReturnType = returnType;
   }
 
+  public void setExtensionMethodMark(boolean hasExtMethodMark) {
+    myHasExtMethodMark = hasExtMethodMark;
+  }
+
+  public boolean hasExtensionMethodMark() {
+    return myHasExtMethodMark;
+  }
+
   @Override
   public boolean isConstructor() {
     return (myFlags & CONSTRUCTOR) != 0;
@@ -87,11 +95,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public boolean isAnnotationMethod() {
     return isAnnotationMethod(myFlags);
-  }
-
-  @Override
-  public boolean isExtensionMethod() {
-    return (myFlags & EXTENSION) != 0;
   }
 
   public static boolean isAnnotationMethod(final byte flags) {
@@ -155,15 +158,13 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                                boolean isAnnotationMethod,
                                boolean isVarargs,
                                boolean isDeprecated,
-                               boolean hasDeprecatedAnnotation,
-                               boolean isExtensionMethod) {
+                               boolean hasDeprecatedAnnotation) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
     if (isDeprecated) flags |= DEPRECATED;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
-    if (isExtensionMethod) flags |= EXTENSION;
     return flags;
   }
 
@@ -189,10 +190,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     final String defaultValue = getDefaultValueText();
     if (defaultValue != null) {
       builder.append(" default=").append(defaultValue);
-    }
-
-    if (isExtensionMethod()) {
-      builder.append(" default {}");
     }
 
     builder.append("]");

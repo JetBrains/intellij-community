@@ -33,6 +33,7 @@ public final class ModifierFlags {
   public static final int VOLATILE_MASK = 0x0040;
   public static final int TRANSIENT_MASK = 0x0080;
   public static final int NATIVE_MASK = 0x0100;
+  public static final int DEFENDER_MASK = 0x0200;
   public static final int ABSTRACT_MASK = 0x0400;
   public static final int STRICTFP_MASK = 0x0800;
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
@@ -50,6 +51,7 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.VOLATILE, VOLATILE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.TRANSIENT, TRANSIENT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NATIVE, NATIVE_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.DEFAULT, DEFENDER_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.ABSTRACT, ABSTRACT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STRICTFP, STRICTFP_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
@@ -64,6 +66,7 @@ public final class ModifierFlags {
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.VOLATILE_KEYWORD, VOLATILE_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.TRANSIENT_KEYWORD, TRANSIENT_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.NATIVE_KEYWORD, NATIVE_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.DEFAULT_KEYWORD, DEFENDER_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.ABSTRACT_KEYWORD, ABSTRACT_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.STRICTFP_KEYWORD, STRICTFP_MASK);
   }
