@@ -66,6 +66,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       public void elementChosen(final ChooseByNamePopup popup, final Object element) {
         if (element == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             Navigatable n = (Navigatable)element;
 
@@ -89,6 +90,8 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       super(popup, model, GotoFileConfiguration.getInstance(project), project);
     }
 
+    @Override
+    @NotNull
     protected List<FileType> getAllFilterValues() {
       List<FileType> elements = new ArrayList<FileType>();
       ContainerUtil.addAll(elements, FileTypeManager.getInstance().getRegisteredFileTypes());
@@ -96,11 +99,13 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       return elements;
     }
 
-    protected String textForFilterValue(FileType value) {
+    @Override
+    protected String textForFilterValue(@NotNull FileType value) {
       return value.getName();
     }
 
-    protected Icon iconForFilterValue(FileType value) {
+    @Override
+    protected Icon iconForFilterValue(@NotNull FileType value) {
       return value.getIcon();
     }
   }
@@ -122,6 +127,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     /**
      * {@inheritDoc}
      */
+    @Override
     public int compare(final FileType o1, final FileType o2) {
       if (o1 == o2) {
         return 0;

@@ -61,7 +61,7 @@ public class ArtifactChooser extends ElementsChooser<ArtifactPointer> {
   }
 
   @Override
-  protected Icon getItemIcon(ArtifactPointer value) {
+  protected Icon getItemIcon(@NotNull ArtifactPointer value) {
     final Artifact artifact = value.getArtifact();
     return artifact != null ? artifact.getArtifactType().getIcon() : null;
   }

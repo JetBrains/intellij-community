@@ -33,6 +33,7 @@ import java.util.ArrayList;
 
 public class ProjectBaseDirNavigationContributor implements ChooseByNameContributor, DumbAware {
 
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     final VirtualFile baseDir = project.getBaseDir();
@@ -47,6 +48,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
     return ArrayUtil.toStringArray(list);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final PsiManager psiManager = PsiManager.getInstance(project);

@@ -46,6 +46,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     myMaxWidth = maxSize;
   }
 
+  @Override
   public String getElementText(PsiFile element) {
     return element.getName();
   }
@@ -65,6 +66,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     }
   }
 
+  @Override
   protected String getContainerText(PsiFile element, String name) {
     final PsiDirectory psiDirectory = element.getContainingDirectory();
     if (psiDirectory == null) return null;
@@ -93,7 +95,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
       final String projectHomeUrl = baseDir.getPresentableUrl();
       if (url.startsWith(projectHomeUrl)) {
         final String cont = url.substring(projectHomeUrl.length());
-        if (cont.length() == 0) return null;
+        if (cont.isEmpty()) return null;
         url = "..." + cont;
       }
     }
@@ -137,6 +139,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     return rightRenderer;
   }
 
+  @Override
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_READ_STATUS;
   }
