@@ -304,7 +304,7 @@ public class DirectoryInfo {
     this.libraryClassRoot = libraryClassRoot;
   }
 
-  public void setContentRoot(@NotNull VirtualFile contentRoot) {
+  public void setContentRoot(VirtualFile contentRoot) {
     this.contentRoot = contentRoot;
   }
 
