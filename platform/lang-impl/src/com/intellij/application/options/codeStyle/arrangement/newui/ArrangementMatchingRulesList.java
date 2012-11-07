@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,15 +44,17 @@ import java.util.List;
  */
 public class ArrangementMatchingRulesList extends JBList {
 
-  private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchingRulesList.class.getName());
+  @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesList.class.getName());
+  @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
 
   @NotNull private final TIntObjectHashMap<ArrangementListRowDecorator> myComponents = new TIntObjectHashMap<ArrangementListRowDecorator>();
 
   @NotNull private final DefaultListModel myModel = new DefaultListModel();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
-  
+
   private int myRowUnderMouse = -1;
+  private boolean mySkipMouseClick;
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementColorsProvider colorsProvider,
@@ -64,12 +67,15 @@ public class ArrangementMatchingRulesList extends JBList {
       @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
     });
     addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) { onMouseExited(e); }
+      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
       @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
       @Override public void mouseClicked(MouseEvent e) { onMousePressed(e); }
     });
     addListSelectionListener(new ListSelectionListener() {
-      @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        onSelectionChange(e);
+      }
     });
   }
 
@@ -96,18 +102,27 @@ public class ArrangementMatchingRulesList extends JBList {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     int id = e.getID();
-    if (id == MouseEvent.MOUSE_PRESSED) {
-      onMousePressed(e);
+    switch (id) {
+      case MouseEvent.MOUSE_PRESSED:
+        onMousePressed(e);
+        if (e.isConsumed()) {
+          mySkipMouseClick = true;
+          return;
+        }
+        break;
+      case MouseEvent.MOUSE_CLICKED:
+        if (mySkipMouseClick) {
+          mySkipMouseClick = false;
+          return;
+        }
     }
-    if (!e.isConsumed()) {
-      super.processMouseEvent(e);
-    }
+    super.processMouseEvent(e);
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
     int i = locationToIndex(e.getPoint());
     if (i != myRowUnderMouse) {
-      onMouseExited(e);
+      onMouseExited();
     }
     
     if (i < 0) {
@@ -149,7 +164,7 @@ public class ArrangementMatchingRulesList extends JBList {
     }
   }
   
-  private void onMouseExited(@NotNull MouseEvent e) {
+  private void onMouseExited() {
     if (myRowUnderMouse < 0) {
       return;
     }
@@ -213,9 +228,18 @@ public class ArrangementMatchingRulesList extends JBList {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       ArrangementListRowDecorator component = myComponents.get(index);
       if (component == null) {
+        if (!(value instanceof StdArrangementMatchRule)) {
+          return EMPTY_RENDERER;
+        }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         component = new ArrangementListRowDecorator(myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
         myComponents.put(index, component);
+        if (myRowUnderMouse == index) {
+          component.setBackground(UIUtil.getDecoratedRowColor());
+        }
+        else {
+          component.setBackground(UIUtil.getListBackground());
+        }
       }
       component.setRowIndex(index + 1);
       return component.getUiComponent();

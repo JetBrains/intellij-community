@@ -31,12 +31,7 @@ public class ModuleImportProvider extends ProjectImportProvider {
 
   @Override
   public boolean canImport(VirtualFile fileOrDirectory, Project project) {
-    return project != null && super.canImport(fileOrDirectory, project);
-  }
-
-  @Override
-  protected boolean canImportFromFile(VirtualFile file) {
-    return "iml".equals(file.getExtension());
+    return project != null && !fileOrDirectory.isDirectory() && "iml".equals(fileOrDirectory.getExtension());
   }
 
   @Override

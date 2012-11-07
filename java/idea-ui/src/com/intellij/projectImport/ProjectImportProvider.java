@@ -62,11 +62,7 @@ public abstract class ProjectImportProvider {
 
   public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
     if (fileOrDirectory.isDirectory()) {
-      VirtualFile[] children = fileOrDirectory.getChildren();
-      for (VirtualFile child : children) {
-        if (canImportFromFile(child)) return true;
-      }
-      return false;
+      return true;
     }
     else {
       return canImportFromFile(fileOrDirectory);

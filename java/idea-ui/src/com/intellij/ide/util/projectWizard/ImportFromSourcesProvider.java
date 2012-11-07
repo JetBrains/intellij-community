@@ -17,12 +17,9 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -44,10 +41,5 @@ public class ImportFromSourcesProvider extends ProjectImportProvider {
     };
     mode.addSteps(context, DefaultModulesProvider.createForProject(context.getProject()), sequence);
     myBuilder = (ProjectImportBuilder)mode.getModuleBuilder();
-  }
-
-  @Override
-  public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
-    return fileOrDirectory.isDirectory();
   }
 }

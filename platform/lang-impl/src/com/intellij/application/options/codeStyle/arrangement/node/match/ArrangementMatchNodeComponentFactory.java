@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.node.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.newui.ArrangementMatchingRulesList;
 import com.intellij.openapi.util.Ref;
@@ -30,6 +31,8 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Set;
 
 /**
@@ -37,6 +40,8 @@ import java.util.Set;
  * @since 8/10/12 2:53 PM
  */
 public class ArrangementMatchNodeComponentFactory {
+  
+  @NotNull private static final Object DUMMY_ELEMENT = new Object();
 
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
@@ -58,7 +63,7 @@ public class ArrangementMatchNodeComponentFactory {
    * @param rule                rule which contains given 'renderer target' condition and serves as
    *                            a data entry for the target list model
    * @param allowModification   flag which indicates whether given model can be changed at future
-   * @return                    renderer for the given model
+   * @return renderer for the given model
    */
   @NotNull
   public ArrangementMatchConditionComponent getComponent(@NotNull final ArrangementMatchCondition rendererTarget,
@@ -85,10 +90,14 @@ public class ArrangementMatchNodeComponentFactory {
   }
 
   private class RemoveAtomConditionCallback implements Consumer<ArrangementAtomMatchConditionComponent>,
-                                                       ArrangementAnimationPanel.Listener
+                                                       ArrangementAnimationPanel.Listener,
+                                                       ActionListener
   {
 
-    @NotNull private final StdArrangementMatchRule myRule;
+    @NotNull private final Timer myTimer = new Timer(ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS, this);
+
+    @NotNull private final StdArrangementMatchRule   myRule;
+    @NotNull private       ArrangementAnimationPanel myAnimationPanel;
 
     private int myRow;
 
@@ -108,38 +117,57 @@ public class ArrangementMatchNodeComponentFactory {
 
       ArrangementMatchCondition existingCondition = myRule.getMatcher().getCondition();
       if (existingCondition.equals(condition)) {
-        model.remove(i);
+        // We can't just remove an element at this time because that breaks last row rendering. 
+        model.set(i, DUMMY_ELEMENT);
       }
       else {
         assert existingCondition instanceof ArrangementCompositeMatchCondition;
         Set<ArrangementMatchCondition> operands = ((ArrangementCompositeMatchCondition)existingCondition).getOperands();
         operands.remove(condition);
         if (operands.isEmpty()) {
-          model.remove(i);
+          // We can't just remove an element at this time because that breaks last row rendering.
+          model.set(i, DUMMY_ELEMENT);
         }
         else if (operands.size() == 1) {
           model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), myRule.getOrderType()));
         }
       }
 
-      ArrangementAnimationPanel panel = component.getAnimationPanel();
-      panel.setListener(this);
-      panel.startAnimation(false, true);
+      myAnimationPanel = component.getAnimationPanel();
+      myAnimationPanel.setListener(this);
+      myAnimationPanel.startAnimation(false, true);
+      myTimer.stop();
       myList.repaintRows(i, i, false);
     }
 
     @Override
     public void onPaint() {
-      // TODO den implement
-      myList.repaintRows(myRow, myRow, false);
+      if (myTimer.isRunning()) {
+        return;
+      }
+      myTimer.restart();
     }
-    
-    public void onFinished() {
-      // TODO den implement
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      boolean continueAnimation = myAnimationPanel.nextIteration();
+      myList.repaintRows(myRow, myRow, !continueAnimation);
+      myTimer.stop();
+      if (continueAnimation) {
+        return;
+      }
       DefaultListModel model = (DefaultListModel)myList.getModel();
       boolean repaintToBottom = model.indexOf(myRule) < 0;
-      int endRow = repaintToBottom ? model.getSize() - 1 : myRow;
-      myList.repaintRows(myRow, endRow, true);
+      if (repaintToBottom) {
+        Object removeCandidate = model.getElementAt(myRow);
+        if (removeCandidate == DUMMY_ELEMENT) {
+          model.remove(myRow);
+        }
+      }
+
+      if (repaintToBottom && myRow < model.getSize()) {
+        myList.repaintRows(myRow, model.getSize() - 1, true);
+      }
     }
   }
 }

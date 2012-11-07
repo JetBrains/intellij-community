@@ -151,7 +151,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     }
 
     public TestWizard(Project project, String filePath, ProjectImportProvider... importProvider) {
-      super(null, project, filePath, importProvider);
+      super(project, filePath, importProvider);
     }
 
     void doOk() {
