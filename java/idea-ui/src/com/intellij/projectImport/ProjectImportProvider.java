@@ -73,8 +73,8 @@ public abstract class ProjectImportProvider {
     return false;
   }
 
-  public void setBaseProjectPath(String path) {
-
+  public boolean canCreateNewProject() {
+    return true;
   }
 
   public void addSteps(StepSequence sequence, WizardContext context, String id) {
@@ -86,5 +86,10 @@ public abstract class ProjectImportProvider {
 
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public String getFileSample() {
+    return null;
   }
 }

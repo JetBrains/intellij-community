@@ -18,6 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -35,7 +36,18 @@ public class ModuleImportProvider extends ProjectImportProvider {
   }
 
   @Override
+  public boolean canCreateNewProject() {
+    return false;
+  }
+
+  @Override
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public String getFileSample() {
+    return "*.iml file";
   }
 }
