@@ -2221,9 +2221,7 @@ def buildOutputName(subdir, name):
         elif not os.path.isfile(init_py):
             init = fopen(init_py, "w")
             init.close()
-    target_dir = dirname + os.path.sep.join(quals[0: len(quals) - 1])
-    #note("target dir is %r", target_dir)
-    target_name = target_dir + os.path.sep + quals[-1]
+    target_name = dirname + os.path.sep.join(quals)
     if os.path.isdir(target_name):
         fname = os.path.join(target_name, "__init__.py")
     else:
