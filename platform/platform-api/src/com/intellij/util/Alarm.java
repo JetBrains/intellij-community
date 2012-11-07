@@ -68,7 +68,8 @@ public class Alarm implements Disposable {
   public enum ThreadToUse {
     SWING_THREAD,
     SHARED_THREAD,
-    OWN_THREAD
+    OWN_THREAD,
+    EXTERNAL
   }
 
   /**
@@ -85,6 +86,15 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
     LOG.assertTrue(threadToUse != ThreadToUse.OWN_THREAD, "You must provide parent Disposable for ThreadToUse.OWN_THREAD Alarm");
+  }
+
+  public Alarm(final ExecutorService executorService, Disposable parentDisposable) {
+    myThreadToUse = ThreadToUse.EXTERNAL;
+    myExecutorService = executorService;
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {

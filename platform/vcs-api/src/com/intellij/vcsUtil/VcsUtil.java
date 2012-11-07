@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,12 +51,14 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
-
+  public static final ScheduledExecutorService VCS_SHARED = createExecutor("VCS shared executor");
 
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(project).fileDirty(file);
@@ -597,5 +600,9 @@ public class VcsUtil {
 
   public static String getPathForProgressPresentation(@NotNull final File file) {
     return file.getName() + " (" + file.getParent() + ")";
+  }
+
+  public static ScheduledThreadPoolExecutor createExecutor(final String name) {
+    return ConcurrencyUtil.newSingleScheduledThreadExecutor(name, Thread.MIN_PRIORITY + 1);
   }
 }

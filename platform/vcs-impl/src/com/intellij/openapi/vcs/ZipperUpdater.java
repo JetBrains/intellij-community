@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
+import com.intellij.vcsUtil.VcsUtil;
 
 @SomeQueue
 public class ZipperUpdater {
@@ -28,7 +29,9 @@ public class ZipperUpdater {
   private boolean myIsEmpty;
 
   public ZipperUpdater(final int delay, Disposable parentDisposable) {
-    this(delay, Alarm.ThreadToUse.SHARED_THREAD, parentDisposable);
+    myDelay = delay;
+    myIsEmpty = true;
+    myAlarm = new Alarm(VcsUtil.VCS_SHARED, parentDisposable);
   }
 
   public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {

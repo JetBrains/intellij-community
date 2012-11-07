@@ -92,7 +92,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         new FileAndDirsCollector().markDirty(map);
       }
     };
-    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, ApplicationManager.getApplication(),
+    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.OWN_THREAD, ApplicationManager.getApplication(),
                                                 myDirtReporter);
   }
 
