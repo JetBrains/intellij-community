@@ -163,7 +163,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
           continue;
         }
       }
-      sorted.put(entry.getKey(), templates);
+      sorted.putValues(entry.getKey(), templates);
     }
 
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
