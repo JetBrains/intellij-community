@@ -330,6 +330,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
     myCurrentUsageContextProvider = provider;
+    saveSplitterProportions();
     setupCentralPanel();
     updateOnSelectionChanged();
   }
@@ -606,6 +607,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
     excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
     if (myCentralPanel != null) {
+      saveSplitterProportions();
       setupCentralPanel();
     }
     SwingUtilities.invokeLater(new Runnable() {
@@ -935,11 +937,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
+    saveSplitterProportions();
+
+    UsageViewManager.getInstance(myProject).closeContent(myContent);
+  }
+
+  private void saveSplitterProportions() {
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = myTreeSplitter.getProportion();
     }
-
-    UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
   @Override
