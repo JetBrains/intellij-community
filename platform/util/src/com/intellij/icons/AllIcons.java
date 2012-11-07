@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -99,6 +84,7 @@ public class AllIcons {
     public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.png"); // 16x16
     public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
+    public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.png"); // 16x16
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 14x14
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.png"); // 16x16
@@ -613,6 +599,7 @@ public class AllIcons {
     public static final Icon Warning_notifications = IconLoader.getIcon("/ide/warning_notifications.png"); // 16x16
 
   }
+  public static final Icon Idea_logo_background = IconLoader.getIcon("/idea_logo_background.png"); // 500x500
   
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16
