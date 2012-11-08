@@ -150,9 +150,6 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    if (instruction.isFieldReference()) {
-      memState.fieldReferenced();
-    }
     memState.push(instruction.getValue());
     return nextInstruction(instruction, runner, memState);
   }

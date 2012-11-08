@@ -62,8 +62,4 @@ public class PushInstruction extends Instruction {
   public String toString() {
     return "PUSH " + myValue;
   }
-
-  public boolean isFieldReference() {
-    return myPlace instanceof PsiReferenceExpression && ((PsiReferenceExpression)myPlace).resolve() instanceof PsiField;
-  }
 }
