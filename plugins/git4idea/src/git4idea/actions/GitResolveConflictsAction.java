@@ -70,11 +70,8 @@ public class GitResolveConflictsAction extends GitAction {
     }
 
     AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(conflictedFiles), GitVcs.getInstance(project).getMergeProvider());
-    for (VirtualFile conflictedFile : conflictedFiles) {
-      final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForFile(conflictedFile);
-      if (repo != null) {
-        repo.update();
-      }
+    for (GitRepository repository : GitUtil.getRepositoriesForFiles(project, conflictedFiles)) {
+      repository.update();
     }
   }
 
