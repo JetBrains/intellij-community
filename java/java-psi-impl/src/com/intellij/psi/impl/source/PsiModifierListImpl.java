@@ -180,7 +180,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   @Nullable
-  private static PsiJavaToken findExtensionMethodMarker(@Nullable PsiMethod method) {
+  public static PsiJavaToken findExtensionMethodMarker(@Nullable PsiMethod method) {
     // todo[r.sh] drop this after transition period finished
     if (method == null) return null;
     final PsiCodeBlock body = method.getBody();
