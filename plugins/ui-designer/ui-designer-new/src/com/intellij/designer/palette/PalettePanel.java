@@ -25,6 +25,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceAdapter;
+import java.awt.dnd.DragSourceDropEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -71,6 +74,17 @@ public class PalettePanel extends JPanel implements DataProvider {
         clearActiveItem();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), scrollPane);
+
+    DragSource.getDefaultDragSource().addDragSourceListener(new DragSourceAdapter() {
+      @Override
+      public void dragDropEnd(DragSourceDropEvent event) {
+        if (!event.getDropSuccess() &&
+            event.getDragSourceContext().getComponent() instanceof PaletteItemsComponent &&
+            myDesigner != null) {
+          myDesigner.getToolProvider().loadDefaultTool();
+        }
+      }
+    });
   }
 
   @Nullable

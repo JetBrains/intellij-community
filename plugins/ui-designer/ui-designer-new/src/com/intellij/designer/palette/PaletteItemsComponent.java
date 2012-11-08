@@ -136,20 +136,17 @@ public class PaletteItemsComponent extends JBList {
     DnDManager.getInstance().registerSource(new DnDSource() {
       @Override
       public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-        return locationToIndex(dragOrigin) >= 0;
+        int index = locationToIndex(dragOrigin);
+        if (index != -1 && myDesigner != null) {
+          PaletteItem paletteItem = myGroup.getItems().get(index);
+          myDesigner.activatePaletteItem(paletteItem);
+        }
+        return false;
       }
 
       @Override
       public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-        int index = locationToIndex(dragOrigin);
-        if (index < 0) {
-          return null;
-        }
-        PaletteItem paletteItem = myGroup.getItems().get(index);
-        if (myDesigner != null) {
-          myDesigner.activatePaletteItem(paletteItem);
-        }
-        return new DnDDragStartBean(paletteItem);
+        return null;
       }
 
       @Nullable
