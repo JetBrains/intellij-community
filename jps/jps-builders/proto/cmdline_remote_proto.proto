@@ -58,6 +58,7 @@ message Message {
         MAKE = 2;
         CLEAN = 3;
         FORCED_COMPILATION = 4;
+        UP_TO_DATE_CHECK = 5;
       }
 
       required Type build_type = 1;

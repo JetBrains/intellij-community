@@ -396,7 +396,7 @@ public class BuildManager implements ApplicationComponent{
 
         final List<String> emptyList = Collections.emptyList();
         final RequestFuture future = scheduleBuild(
-          project, false, true, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
+          project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
         );
         if (future != null) {
           futures.add(future);
@@ -434,9 +434,8 @@ public class BuildManager implements ApplicationComponent{
 
   @Nullable
   public RequestFuture scheduleBuild(
-    final Project project, final boolean isRebuild,
-    final boolean isMake,
-    final List<TargetTypeBuildScope> scopes,
+    final Project project, final boolean isRebuild, final boolean isMake,
+    final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
     final Map<String, String> userData, final DefaultMessageHandler handler) {
 
@@ -508,6 +507,9 @@ public class BuildManager implements ApplicationComponent{
           final CmdlineRemoteProto.Message.ControllerMessage params;
           if (isRebuild) {
             params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
+          }
+          else if (onlyCheckUpToDate) {
+            params = CmdlineProtoUtil.createUpToDateCheckRequest(projectPath, scopes, userData, globals, currentFSChanges);
           }
           else {
             params = isMake ?

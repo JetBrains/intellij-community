@@ -18,10 +18,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -32,11 +30,6 @@ import java.io.File;
 public class DevelopPluginsAction extends AnAction implements DumbAware {
   @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
   @NonNls private static final String PLUGIN_WEBSITE = "http://www.jetbrains.com/idea/plugins/plugin_developers.html";
-
-  public DevelopPluginsAction() {
-    getTemplatePresentation().setDescription(UIBundle.message("welcome.screen.plugin.development.action.description", 
-                                             ApplicationNamesInfo.getInstance().getFullProductName()));
-  }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {

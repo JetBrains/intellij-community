@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -109,7 +110,7 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     RunnerAndConfigurationSettings settings = myEnvironment.getRunnerAndConfigurationSettings();
     if (project == null)
       return;
-    if (settings != null) {
+    if (settings != null && !Boolean.getBoolean(IdeaApplication.IDEA_IS_INTERNAL_PROPERTY)) {
       ExecutionManager.getInstance(project).restartRunProfile(project,
                                                               myExecutor,
                                                               myEnvironment.getExecutionTarget(),

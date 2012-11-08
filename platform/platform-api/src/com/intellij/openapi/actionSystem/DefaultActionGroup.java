@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,6 +234,8 @@ public class DefaultActionGroup extends ActionGroup {
    */
   @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e){
+    boolean hasNulls = false;
+    
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
@@ -246,6 +249,7 @@ public class DefaultActionGroup extends ActionGroup {
         mySortedChildren.set(i, action);
       }
 
+      hasNulls |= action == null;
       children[i] = action;
     }
     for(int i = 0; i < myPairs.size(); i++){
@@ -259,19 +263,33 @@ public class DefaultActionGroup extends ActionGroup {
         myPairs.set(i, Pair.create(action, pair.second));
       }
 
+      hasNulls |= action == null;
       children[i + sortedSize] = action;
+    }
+    
+    if (hasNulls) {
+      //noinspection unchecked
+      return (AnAction[])ContainerUtil.mapNotNull(children, Function.ID, AnAction.EMPTY_ARRAY);
     }
     return children;
   }
 
+  @Nullable 
   private AnAction unstub(@Nullable AnActionEvent e, final ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
-    AnAction action = actionManager.getAction(stub.getId());
-    if (action == null) {
-      LOG.error("Null child action in group " + this + "of class" + getClass() + ", id=" + stub.getId());
+    try {
+      AnAction action = actionManager.getAction(stub.getId());
+      if (action == null) {
+        LOG.error("Null child action in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        return null;
+      }
+      replace(stub, action);
+      return action;
     }
-    replace(stub, action);
-    return action;
+    catch (Throwable e1) {
+      LOG.error(e1);
+      return null;
+    }
   }
 
   /**

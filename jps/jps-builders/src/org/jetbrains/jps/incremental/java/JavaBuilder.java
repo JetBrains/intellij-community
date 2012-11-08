@@ -315,10 +315,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
       pd.getProject()).isAddNotNullAssertions();
 
-    final Collection<File> classpath =
-      paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp =
-      paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);

@@ -5,7 +5,7 @@ import com.intellij.util.Function;
 import junit.framework.Assert;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
+import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class BuildResult implements MessageHandler {
     else {
       myInfoMessages.add(msg);
     }
-    if (msg instanceof UptoDateFilesSavedEvent) {
+    if (msg instanceof DoneSomethingNotification) {
       myUpToDate = false;
     }
   }

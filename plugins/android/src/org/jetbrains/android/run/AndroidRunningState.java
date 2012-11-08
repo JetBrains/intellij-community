@@ -132,6 +132,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   private TargetChooser myTargetChooser;
   private final boolean mySupportMultipleDevices;
   private final boolean myClearLogcatBeforeStart;
+  private final List<AndroidRunningStateListener> myListeners = new ArrayList<AndroidRunningStateListener>();
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -423,6 +424,8 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
       if (!chooseOrLaunchDevice()) {
+        getProcessHandler().destroyProcess();
+        fireExecutionFailed();
         return;
       }
     }
@@ -457,7 +460,6 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     IDevice[] targetDevices = chooseDevicesAutomaticaly();
     if (targetDevices == null) {
       message("Canceled", STDERR);
-      getProcessHandler().destroyProcess();
       return false;
     }
 
@@ -473,13 +475,11 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
       }
       else if (getProcessHandler().isStartNotified()) {
         message("Canceled", STDERR);
-        getProcessHandler().destroyProcess();
         return false;
       }
     }
     else {
       message("USB device not found", STDERR);
-      getProcessHandler().destroyProcess();
       return false;
     }
     return true;
@@ -622,6 +622,20 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   }
 
   private boolean prepareAndStartApp(IDevice device) {
+    if (!doPrepareAndStart(device)) {
+      fireExecutionFailed();
+      return false;
+    }
+    return true;
+  }
+
+  private void fireExecutionFailed() {
+    for (AndroidRunningStateListener listener : myListeners) {
+      listener.executionFailed();
+    }
+  }
+
+  private boolean doPrepareAndStart(IDevice device) {
     if (myClearLogcatBeforeStart) {
       clearLogcatAndConsole(getModule().getProject(), device);
     }
@@ -669,7 +683,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
       return false;
     }
   }
-  
+
   private boolean checkPackageNames() {
     final Map<String, List<String>> packageName2ModuleNames = new HashMap<String, List<String>>();
     packageName2ModuleNames.put(myPackageName, new ArrayList<String>(Arrays.asList(myFacet.getModule().getName())));
@@ -901,6 +915,10 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     boolean success = isSuccess(receiver);
     message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;
+  }
+
+  public void addListener(@NotNull AndroidRunningStateListener listener) {
+    myListeners.add(listener);
   }
 
   private class MyDeviceChangeListener implements AndroidDebugBridge.IDeviceChangeListener, Disposable {
