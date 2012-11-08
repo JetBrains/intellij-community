@@ -15,8 +15,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,8 +55,9 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         return false;
       }
       final boolean isStringLiteral = expression instanceof PyStringLiteralExpression;
+      final PyType type = expression.getType(TypeEvalContext.slow());
       final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
-                                                            expression.getType(TypeEvalContext.fast()), TypeEvalContext.fast());
+                                                            type, TypeEvalContext.slow()) && type != null;
       if (!(isStringLiteral  || ((expression instanceof PyReferenceExpression || expression instanceof PyCallExpression) &&
                                                            isStringReference))) {
         return false;
