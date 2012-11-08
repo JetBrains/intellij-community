@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 28-Nov-2005
+ * @since 28-Nov-2005
  */
 public abstract class InspectionProfileEntry {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
@@ -52,6 +52,14 @@ public abstract class InspectionProfileEntry {
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer = null;
 
+  interface DefaultNameProvider {
+    @Nullable String getShortName();
+    @Nullable String getDisplayName();
+    @Nullable String getGroupDisplayName();
+  }
+
+  protected volatile DefaultNameProvider myNameProvider = null;
+
   /**
    * @see InspectionEP#groupDisplayName
    * @see InspectionEP#groupKey
@@ -59,6 +67,12 @@ public abstract class InspectionProfileEntry {
    */
   @Nls @NotNull
   public String getGroupDisplayName() {
+    if (myNameProvider != null) {
+      final String name = myNameProvider.getGroupDisplayName();
+      if (name != null) {
+        return name;
+      }
+    }
     LOG.error(getClass() + ": group display name should be overridden or configured via XML " + getClass());
     return "";
   }
@@ -82,6 +96,12 @@ public abstract class InspectionProfileEntry {
    */
   @Nls @NotNull
   public String getDisplayName() {
+    if (myNameProvider != null) {
+      final String name = myNameProvider.getDisplayName();
+      if (name != null) {
+        return name;
+      }
+    }
     LOG.error(getClass() + ": display name should be overridden or configured via XML " + getClass());
     return "";
   }
@@ -93,6 +113,12 @@ public abstract class InspectionProfileEntry {
    */
   @NonNls @NotNull
   public String getShortName() {
+    if (myNameProvider != null) {
+      final String name = myNameProvider.getShortName();
+      if (name != null) {
+        return name;
+      }
+    }
     return getShortName(getClass().getSimpleName());
   }
 

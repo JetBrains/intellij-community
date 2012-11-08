@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/11
+ * @since 28.09.2011
  */
-public class LocalInspectionEP extends InspectionEP {
+public class LocalInspectionEP extends InspectionEP implements LocalInspectionTool.LocalDefaultNameProvider {
 
   public final static ExtensionPointName<LocalInspectionEP> LOCAL_INSPECTION = ExtensionPointName.create("com.intellij.localInspection");
 
@@ -37,4 +38,16 @@ public class LocalInspectionEP extends InspectionEP {
 
   @Attribute("unfair")
   public boolean unfair;
+
+  @Nullable
+  @Override
+  public String getID() {
+    return id;
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return alternativeId;
+  }
 }
