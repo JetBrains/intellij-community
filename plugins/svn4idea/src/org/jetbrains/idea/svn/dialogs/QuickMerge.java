@@ -271,7 +271,13 @@ public class QuickMerge {
     public void run(ContinuationContext context) {
       SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> invertor;
       try {
-        invertor = myData.get().get();
+        final TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>
+          transparentlyFailedValueI = myData.get();
+        if (transparentlyFailedValueI == null) {
+          finishWithError(context, "Merge start wasn't found", true);
+          return;
+        }
+        invertor = transparentlyFailedValueI.get();
       }
       catch (SVNException e) {
         finishWithError(context, "Merge start wasn't found", Collections.singletonList(new VcsException(e)));
