@@ -27,6 +27,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
@@ -104,6 +106,14 @@ public class IdeaSpecificSettings {
     final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
     if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
       model.inheritSdk();
+    } else {
+      final String jdkName = root.getAttributeValue("jdk");
+      if (jdkName != null) {
+        final Sdk jdkByName = ProjectJdkTable.getInstance().findJdk(jdkName);
+        if (jdkByName != null) {
+          model.setSdk(jdkByName);
+        }
+      }
     }
     for (Object o : root.getChildren("lib")) {
       Element libElement = (Element)o;
@@ -278,8 +288,12 @@ public class IdeaSpecificSettings {
           isModified = true;
         }
       }
-      if (entry instanceof InheritedJdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
-        root.setAttribute(INHERIT_JDK, "true");
+      if (entry instanceof JdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
+        if (entry instanceof InheritedJdkOrderEntry) {
+          root.setAttribute(INHERIT_JDK, "true");
+        } else {
+          root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+        }
         isModified = true;
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;
