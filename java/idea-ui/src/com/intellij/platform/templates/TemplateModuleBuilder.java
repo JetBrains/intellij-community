@@ -69,7 +69,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public Module commitModule(@NotNull Project project, ModifiableModuleModel model) {
+  public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
@@ -77,10 +77,17 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           @Override
           public void run() {
             try {
-              setupModule(modules[0]);
+              Module module = modules[0];
+              setupModule(module);
+              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+              modifiableModuleModel.renameModule(module, module.getProject().getName());
+              modifiableModuleModel.commit();
             }
             catch (ConfigurationException e) {
               LOG.error(e);
+            }
+            catch (ModuleWithNameAlreadyExists exists) {
+              // do nothing
             }
           }
         });
@@ -103,7 +110,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     unzip(path, true);
-    return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+    Module module = ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+    if (myProjectMode) {
+      moduleModel.renameModule(module, module.getProject().getName());
+    }
+    return module;
   }
 
   private void unzip(String path, boolean moduleMode) {
