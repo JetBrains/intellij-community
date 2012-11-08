@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.io.File;
+import java.io.IOException;
 
 /**
  *  @author dsl
@@ -35,7 +36,6 @@ public class PathMacroEditor extends DialogWrapper {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myValueField;
   private final Validator myValidator;
-  private final DocumentListener myDocumentListener;
 
   public interface Validator {
     boolean checkName(String name);
@@ -47,12 +47,12 @@ public class PathMacroEditor extends DialogWrapper {
     setTitle(title);
     myValidator = validator;
     myNameField.setText(macroName);
-    myDocumentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentAdapter() {
       public void textChanged(DocumentEvent event) {
         updateControls();
       }
     };
-    myNameField.getDocument().addDocumentListener(myDocumentListener);
+    myNameField.getDocument().addDocumentListener(documentListener);
     myValueField.setText(value);
     myValueField.addBrowseFolderListener(null, null, null, new FileChooserDescriptor(false, true, true, false, true, false), new TextComponentAccessor<JTextField>() {
       public String getText(JTextField component) {
@@ -67,7 +67,7 @@ public class PathMacroEditor extends DialogWrapper {
         component.setText(text);
       }
     });
-    myValueField.getTextField().getDocument().addDocumentListener(myDocumentListener);
+    myValueField.getTextField().getDocument().addDocumentListener(documentListener);
 
     init();
     updateControls();
@@ -108,7 +108,16 @@ public class PathMacroEditor extends DialogWrapper {
   }
 
   public String getValue() {
-    return myValueField.getText().trim();
+    String path = myValueField.getText().trim();
+    File file = new File(path);
+    if (file.isAbsolute()) {
+      try {
+        return file.getCanonicalPath();
+      }
+      catch (IOException ignored) {
+      }
+    }
+    return path;
   }
 
   protected JComponent createNorthPanel() {
