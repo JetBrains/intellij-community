@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -368,7 +369,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return icon;
     }
     else {
-      return UIDesignerIcons.Error_small;
+      return AllIcons.General.Error;
     }
   }
 

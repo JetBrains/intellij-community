@@ -70,10 +70,10 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public Icon getIcon(boolean expanded) {
     if (myDescriptor instanceof ProblemDescriptorImpl) {
       ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
-      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.Compiler.Error;
-      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.Compiler.Warning;
+      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.General.Error;
+      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.General.Warning;
     }
-    return AllIcons.Compiler.Information;
+    return AllIcons.General.Information;
   }
 
   public int getProblemCount() {

@@ -527,7 +527,7 @@ public class DirectoryChooser extends DialogWrapper {
     public FilterExistentAction() {
       super(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
             UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
-            AllIcons.Ant.Filter);
+            AllIcons.General.Filter);
     }
 
     @Override

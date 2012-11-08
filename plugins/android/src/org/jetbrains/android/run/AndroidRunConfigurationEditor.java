@@ -99,8 +99,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myAvdCombo = myAvdComboComponent.getComponent();
 
     myMinSdkInfoMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myMinSdkInfoMessageLabel.setIcon(AllIcons.Compiler.Warning);
-    myMinSdkInfoMessageLabel.setDisabledIcon(AllIcons.Compiler.Warning);
+    myMinSdkInfoMessageLabel.setIcon(AllIcons.General.Warning);
+    myMinSdkInfoMessageLabel.setDisabledIcon(AllIcons.General.Warning);
 
     Disposer.register(this, myAvdCombo);
 

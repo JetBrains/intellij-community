@@ -64,6 +64,15 @@ public final class IconLoader {
 
     ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
+
+    ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
+    ourDeprecatedIconsReplacements.put("/compiler/hideWarnings.png", "AllIcons.General.HideWarnings");
+    ourDeprecatedIconsReplacements.put("/compiler/information.png", "AllIcons.General.Information");
+    ourDeprecatedIconsReplacements.put("/compiler/warning.png", "AllIcons.General.Warning");
+    ourDeprecatedIconsReplacements.put("/ide/errorSign.png", "AllIcons.General.Error");
+
+    ourDeprecatedIconsReplacements.put("/ant/filter.png", "AllIcons.General.Filter");
+    ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
   }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {

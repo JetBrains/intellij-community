@@ -50,7 +50,7 @@ import java.util.List;
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
-  private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
+  private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
   private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 

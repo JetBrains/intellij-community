@@ -461,7 +461,7 @@ public class ModuleDependenciesAnalyzer {
     @Nullable
     public Icon getIcon() {
       VirtualFile file = getLocalFile();
-      return file == null ? AllIcons.Compiler.Error : VirtualFilePresentation.getIcon(file);
+      return file == null ? AllIcons.General.Error : VirtualFilePresentation.getIcon(file);
     }
 
     /**

@@ -40,7 +40,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
   private final Consumer<TodoFilter> myTodoFilterConsumer;
 
   public SetTodoFilterAction(final Project project, final TodoPanelSettings toDoSettings, final Consumer<TodoFilter> todoFilterConsumer) {
-    super(IdeBundle.message("action.filter.todo.items"), null, AllIcons.Ant.Filter);
+    super(IdeBundle.message("action.filter.todo.items"), null, AllIcons.General.Filter);
     myProject = project;
     myToDoSettings = toDoSettings;
     myTodoFilterConsumer = todoFilterConsumer;

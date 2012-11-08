@@ -79,7 +79,7 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.Icons.Inspector.UseFilter) {
+    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.General.Filter) {
       public boolean isSelected(final AnActionEvent e) {
         return myPopup != null;
       }

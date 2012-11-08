@@ -148,7 +148,7 @@
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
-              icon="AllIcons.Ant.Filter"/>
+              icon="AllIcons.General.Filter"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
               icon="AllIcons.Actions.ShowChangesOnly"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
