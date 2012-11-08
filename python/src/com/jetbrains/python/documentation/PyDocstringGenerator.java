@@ -41,6 +41,7 @@ public class PyDocstringGenerator {
   @NotNull
   private PyDocStringOwner myDocStringOwner;
 
+  @Nullable
   private PyFunction myFunction;
 
   private List<DocstringParam> myParams = Lists.newArrayList();
@@ -54,7 +55,7 @@ public class PyDocstringGenerator {
     if (docStringOwner instanceof PyFunction) {
       myFunction = (PyFunction)docStringOwner;
     }
-    myProject = myFunction.getProject();
+    myProject = myDocStringOwner.getProject();
   }
 
   public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
@@ -72,7 +73,7 @@ public class PyDocstringGenerator {
   }
 
   private PsiFile getFile() {
-    return myFunction.getContainingFile();
+    return myDocStringOwner.getContainingFile();
   }
 
   public void startTemplate() {
@@ -90,8 +91,8 @@ public class PyDocstringGenerator {
 
     OpenFileDescriptor descriptor = new OpenFileDescriptor(
       myProject,
-      myFunction.getContainingFile().getVirtualFile(),
-      myFunction.getTextOffset() + myFunction.getTextLength()
+      myDocStringOwner.getContainingFile().getVirtualFile(),
+      myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
     );
     Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
     if (targetEditor != null) {
@@ -206,7 +207,7 @@ public class PyDocstringGenerator {
       }
     }
     else {
-      ws += StringUtil.repeat(" ", getIndentSize(myFunction));
+      ws += StringUtil.repeat(" ", getIndentSize(myDocStringOwner));
     }
     if (replacementText.length() > 0) {
       replacementText.deleteCharAt(replacementText.length() - 1);
@@ -316,7 +317,7 @@ public class PyDocstringGenerator {
   }
 
   public void build() {
-    myDocStringExpression = myFunction.getDocStringExpression();
+    myDocStringExpression = myDocStringOwner.getDocStringExpression();
     final Pair<String, Integer> replacementToOffset =
       addParamToDocstring();
 
@@ -324,22 +325,28 @@ public class PyDocstringGenerator {
     if (myDocStringExpression != null) {
       PyExpression str = elementGenerator.createDocstring(replacementToOffset.getFirst()).getExpression();
       myDocStringExpression.replace(str);
-      myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
-      myDocStringExpression = myFunction.getDocStringExpression();
+      if (myFunction != null) {
+        myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
+      }
+      myDocStringOwner = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+      myDocStringExpression = myDocStringOwner.getDocStringExpression();
     }
     else {
+      if (myFunction == null) {
+        throw new IllegalStateException("Should be a function");
+      }
       final PyStatementList list = myFunction.getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
 
       if (document != null && list != null) {
         if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset()) ||
-          list.getStatements().length == 0) {
+            list.getStatements().length == 0) {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),
-                                                        PyFunction.class,
-                                                        "def " + myFunction.getName() + myFunction.getParameterList().getText()
-                                                        + ":\n" + StringUtil.repeat(" ",  getIndentSize(myFunction))
-                                                        + replacementToOffset.getFirst() + "\n" +
-                                                        StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText());
+                                                            PyFunction.class,
+                                                            "def " + myFunction.getName() + myFunction.getParameterList().getText()
+                                                            + ":\n" + StringUtil.repeat(" ", getIndentSize(myFunction))
+                                                            + replacementToOffset.getFirst() + "\n" +
+                                                            StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText());
 
           myFunction = (PyFunction)myFunction.replace(func);
         }
@@ -354,7 +361,7 @@ public class PyDocstringGenerator {
     }
   }
 
-  private int getIndentSize(PyFunction function) {
+  private static int getIndentSize(PyDocStringOwner function) {
     CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.
       getInstance(function.getProject()).getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
 
