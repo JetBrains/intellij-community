@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import git4idea.GitPlatformFacade;
@@ -244,7 +245,9 @@ abstract class GitBranchOperation {
    * Asynchronously refreshes the VFS root directory of the given repository.
    */
   protected static void refreshRoot(@NotNull GitRepository repository) {
-    repository.getRoot().refresh(true, true);
+    // marking all files dirty, because sometimes FileWatcher is unable to process such a large set of changes that can happen during
+    // checkout on a large repository: IDEA-89944
+    VfsUtil.markDirtyAndRefresh(true, true, false, repository.getRoot());
   }
 
   protected void fatalLocalChangesError(@NotNull String reference) {
