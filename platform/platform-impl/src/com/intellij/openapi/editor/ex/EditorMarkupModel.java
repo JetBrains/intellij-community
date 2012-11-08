@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -22,15 +23,15 @@ import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 
 public interface EditorMarkupModel extends MarkupModel {
-  @NotNull Editor getEditor();
+  @NotNull
+  Editor getEditor();
 
   void setErrorStripeVisible(boolean val);
 
   void setErrorStripeRenderer(ErrorStripeRenderer renderer);
   ErrorStripeRenderer getErrorStripeRenderer();
 
-  void addErrorMarkerListener(@NotNull ErrorStripeListener listener);
-  void removeErrorMarkerListener(@NotNull ErrorStripeListener listener);
+  void addErrorMarkerListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parent);
 
   void setErrorPanelPopupHandler(@NotNull PopupHandler handler);
 
