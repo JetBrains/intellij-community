@@ -84,8 +84,8 @@ public class GotoTaskAction extends GotoActionBase {
           if (!consumer.process(element)) return false;
         }
 
-        List<Task> tasks =
-          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere);
+        List<Task> tasks = TaskSearchSupport
+          .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
         tasks.removeAll(cachedAndLocalTasks);
         taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
           @Override
