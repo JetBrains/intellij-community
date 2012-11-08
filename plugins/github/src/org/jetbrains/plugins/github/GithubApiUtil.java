@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -155,7 +156,7 @@ public class GithubApiUtil {
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    if (proxySettings.USE_HTTP_PROXY){
+    if (proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)){
       client.getHostConfiguration().setProxy(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
       if (proxySettings.PROXY_AUTHENTICATION) {
         client.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,

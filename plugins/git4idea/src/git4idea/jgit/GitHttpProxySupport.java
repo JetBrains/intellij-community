@@ -15,6 +15,7 @@
  */
 package git4idea.jgit;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +42,8 @@ final class GitHttpProxySupport {
   }
 
   static boolean shouldUseProxy() {
-    return HttpConfigurable.getInstance().USE_HTTP_PROXY;
+    HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    return proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST);
   }
   
   private static class IdeaProxySelector extends ProxySelector {
