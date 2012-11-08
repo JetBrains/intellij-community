@@ -539,6 +539,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
+    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
+    final boolean isInplaceAvailableOnDataContext =
+      supportProvider != null &&
+      editor.getSettings().isVariableInplaceRenameEnabled() &&
+      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
+      !ApplicationManager.getApplication().isUnitTestMode() &&
+      !isInJspHolderMethod(expr);
+
+    if (isInplaceAvailableOnDataContext) {
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+      checkInLoopCondition(expr, conflicts);
+      if (!conflicts.isEmpty()) {
+        showErrorMessage(project, editor, StringUtil.join(conflicts.values(), "<br>"));
+        return false;
+      }
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
@@ -550,14 +567,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final boolean hasWriteAccess = fillChoices(expr, occurrences, occurrencesMap);
 
-    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
-    final boolean isInplaceAvailableOnDataContext =
-      supportProvider != null &&
-      editor.getSettings().isVariableInplaceRenameEnabled() &&
-      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !ApplicationManager.getApplication().isUnitTestMode() &&
-      !isInJspHolderMethod(expr);
     final boolean inFinalContext = occurrenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurrenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, occurrences);
