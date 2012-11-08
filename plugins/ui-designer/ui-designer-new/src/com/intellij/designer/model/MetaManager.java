@@ -164,10 +164,7 @@ public abstract class MetaManager {
   }
 
   protected DefaultPaletteItem createPaletteItem(Element palette) {
-    return new DefaultPaletteItem(palette.getAttributeValue("title"),
-                                  palette.getAttributeValue("icon"),
-                                  palette.getAttributeValue("tooltip"),
-                                  palette.getAttributeValue("version"));
+    return new DefaultPaletteItem(palette);
   }
 
   protected void loadProperties(MetaModel meta, Element properties) throws Exception {

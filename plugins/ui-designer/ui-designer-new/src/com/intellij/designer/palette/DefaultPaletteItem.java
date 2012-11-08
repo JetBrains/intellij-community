@@ -17,6 +17,7 @@ package com.intellij.designer.palette;
 
 import com.intellij.designer.model.MetaModel;
 import com.intellij.openapi.util.IconLoader;
+import org.jdom.Element;
 
 import javax.swing.*;
 
@@ -32,6 +33,13 @@ public class DefaultPaletteItem implements PaletteItem {
   private boolean myEnabled = true;
 
   protected MetaModel myMetaModel;
+
+  public DefaultPaletteItem(Element palette) {
+    this(palette.getAttributeValue("title"),
+         palette.getAttributeValue("icon"),
+         palette.getAttributeValue("tooltip"),
+         palette.getAttributeValue("version"));
+  }
 
   public DefaultPaletteItem(String title, String iconPath, String tooltip, String version) {
     myTitle = title;
