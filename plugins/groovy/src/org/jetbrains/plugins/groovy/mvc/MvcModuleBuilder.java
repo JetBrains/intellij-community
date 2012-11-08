@@ -35,7 +35,6 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    final ModuleWizardStep sdkStep = new GroovySdkForNewModuleWizardStep(this, wizardContext, myFramework);
-    return new ModuleWizardStep[]{ProjectWizardStepFactory.getInstance().createProjectJdkStep(wizardContext), sdkStep};
+    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, myFramework)};
   }
 }
