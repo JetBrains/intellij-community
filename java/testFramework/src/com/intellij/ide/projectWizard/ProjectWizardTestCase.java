@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -30,6 +34,7 @@ import java.io.IOException;
  */
 public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
+  protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected TestWizard myWizard;
   @Nullable
   private Project myCreatedProject;
@@ -89,11 +94,6 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     myWizard.doOk();
   }
 
-  @Nullable
-  protected TestWizard createWizard(String directory, Project project) {
-    return new TestWizard(project, directory);
-  }
-
   @Override
   public void tearDown() throws Exception {
     if (myWizard != null) {
@@ -108,6 +108,13 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
         }
       });
     }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (Sdk sdk : mySdks) {
+          ProjectJdkTable.getInstance().removeJdk(sdk);
+        }
+      }
+    });
     super.tearDown();
   }
 

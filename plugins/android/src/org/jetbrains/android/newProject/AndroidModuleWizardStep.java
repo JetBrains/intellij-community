@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -57,7 +56,6 @@ import java.util.Arrays;
  * User: Eugene.Kudelevsky
  * Date: Jun 26, 2009
  * Time: 7:43:13 PM
- * To change this template use File | Settings | File Templates.
  */
 public class AndroidModuleWizardStep extends ModuleWizardStep {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.newProject.AndroidModuleWizardStep");
@@ -68,6 +66,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   private final AndroidTestPropertiesEditor myTestPropertiesEditor;
 
   private final AndroidModuleBuilder myModuleBuilder;
+  private final WizardContext myContext;
 
   private JPanel myPanel;
   private JRadioButton myApplicationProjectButton;
@@ -75,7 +74,6 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   private JRadioButton myTestProjectButton;
   private JPanel myPropertiesPanel;
 
-  private AndroidSdkComboBoxWithBrowseButton mySdkComboBoxWithBrowseButton;
   private JCheckBox myCreateDefaultStructure;
   private JPanel myApplicationPanel;
   private JRadioButton myDoNotCreateConfigurationRadioButton;
@@ -93,8 +91,9 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE";
   @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE";
 
-  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context, ModulesProvider modulesProvider) {
+  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, final WizardContext context, ModulesProvider modulesProvider) {
     super();
+    myContext = context;
     myApplicationProjectButton.setSelected(true);
 
     myAppPropertiesEditor = new AndroidAppPropertiesEditor(moduleBuilder.getName(), modulesProvider);
@@ -152,7 +151,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
     myAvdCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+        final Sdk selectedSdk = context.getProjectJdk();
         if (selectedSdk == null || !(selectedSdk.getSdkType() instanceof AndroidSdkType)) {
           Messages.showErrorDialog(myPanel, AndroidBundle.message("specify.platform.error"));
           return;
@@ -244,19 +243,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       myAppPropertiesEditor.getApplicationNameField().setText(moduleName);
       myAppPropertiesEditor.getPackageNameField().setText(AndroidAppPropertiesEditor.getDefaultPackageNameByModuleName(moduleName));
     }
-    Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
     final PropertiesComponent properties = PropertiesComponent.getInstance();
-    
-    if (selectedSdk == null) {
-      String defaultPlatformName = properties.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY);
-      if (defaultPlatformName != null) {
-        Sdk sdk = ProjectJdkTable.getInstance().findJdk(defaultPlatformName);
-        if (sdk != null && sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
-          selectedSdk = sdk;
-        }
-      }
-    }
-    mySdkComboBoxWithBrowseButton.rebuildSdksListAndSelectSdk(selectedSdk);
 
     boolean shouldReset = myAvdCombo.getComboBox().getSelectedItem() == null;
     startUpdatingAvds();
@@ -273,10 +260,6 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (mySdkComboBoxWithBrowseButton.getSelectedSdk() == null) {
-      throw new ConfigurationException(AndroidBundle.message("select.platform.error"));
-    }
-
     if (!myCreateDefaultStructure.isSelected()) {
       return true;
     }
@@ -293,13 +276,8 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   }
 
   public void updateDataModel() {
-    Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
-    assert selectedSdk != null;
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
-
-    properties.setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
-    myModuleBuilder.setSdk(selectedSdk);
 
     if (!myCreateDefaultStructure.isSelected()) {
       return;
@@ -366,7 +344,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   }
 
   private void doUpdateAvds() {
-    final Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
+    final Sdk selectedSdk = myContext.getProjectJdk();
 
     String[] newAvds = ArrayUtil.EMPTY_STRING_ARRAY;
 

@@ -28,7 +28,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,8 +41,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.*;
@@ -73,7 +73,6 @@ import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +81,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 
 import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
@@ -101,14 +98,11 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private String myActivityName;
   private ProjectType myProjectType;
   private Module myTestedModule;
-  private Sdk mySdk;
   private TargetSelectionMode myTargetSelectionMode;
   private String myPreferredAvd;
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
-
-    rootModel.setSdk(mySdk);
 
     final LanguageLevelModuleExtension moduleExt = rootModel.getModuleExtension(LanguageLevelModuleExtension.class);
 
@@ -213,7 +207,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                                              final VirtualFile sourceRoot,
                                              final AndroidFacet facet) {
     final Module module = facet.getModule();
-    AndroidPlatform platform = AndroidPlatform.parse(mySdk);
+
+    Sdk sdk = getModuleJdk();
+    if (sdk == null) {
+      return true;
+    }
+    AndroidPlatform platform = AndroidPlatform.parse(sdk);
 
     if (platform == null) {
       Messages.showErrorDialog(module.getProject(), "Cannot parse Android SDK", CommonBundle.getErrorTitle());
@@ -502,7 +501,9 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       AndroidFileTemplateProvider
         .createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.ANDROID_MANIFEST_TEMPLATE, FN_ANDROID_MANIFEST_XML);
 
-      AndroidPlatform platform = AndroidPlatform.parse(mySdk);
+      Sdk sdk = getModuleJdk();
+      if (sdk == null) return;
+      AndroidPlatform platform = AndroidPlatform.parse(sdk);
 
       if (platform == null) {
         Messages.showErrorDialog(project, "Cannot parse Android SDK: '" + SdkConstants.FN_PROJECT_PROPERTIES + "' won't be generated",
@@ -605,9 +606,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
                 assignApplicationName(facet);
 
-                final AndroidPlatform platform = AndroidPlatform.parse(mySdk);
-                if (platform != null) {
-                  configureManifest(facet, platform.getTarget());
+                Sdk sdk = getModuleJdk();
+                if (sdk != null) {
+                  final AndroidPlatform platform = AndroidPlatform.parse(sdk);
+                  if (platform != null) {
+                    configureManifest(facet, platform.getTarget());
+                  }
                 }
               }
             }
@@ -673,10 +677,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     myPackageName = packageName;
   }
 
-  public void setSdk(Sdk sdk) {
-    mySdk = sdk;
-  }
-
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -695,35 +695,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    List<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    ProjectWizardStepFactory factory = ProjectWizardStepFactory.getInstance();
-    steps.add(factory.createSourcePathsStep(wizardContext, this, null, "reference.dialogs.new.project.fromScratch.source"));
-
-    if (!hasAppropriateJdk()) {
-      steps.add(new ProjectJdkForModuleStep(wizardContext, JavaSdk.getInstance()) {
-        @Override
-        public void updateDataModel() {
-          // do nothing
-        }
-
-        @Override
-        public boolean validate() {
-          for (Object o : getAllJdks()) {
-            if (o instanceof Sdk) {
-              Sdk sdk = (Sdk)o;
-              if (AndroidSdkUtils.isApplicableJdk(sdk)) {
-                return true;
-              }
-            }
-          }
-          Messages.showErrorDialog(AndroidBundle.message("no.jdk.error"), CommonBundle.getErrorTitle());
-          return false;
-        }
-      });
-    }
-
-    steps.add(new AndroidModuleWizardStep(this, wizardContext, modulesProvider));
-    return steps.toArray(new ModuleWizardStep[steps.size()]);
+    return new ModuleWizardStep[] { new AndroidModuleWizardStep(this, wizardContext, modulesProvider) };
   }
 
   public Icon getBigIcon() {
@@ -741,15 +713,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   @Override
   public String getBuilderId() {
     return getClass().getName();
-  }
-
-  private static boolean hasAppropriateJdk() {
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (AndroidSdkUtils.isApplicableJdk(sdk)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static Pair<String, Boolean> runAndroidTool(@NotNull GeneralCommandLine commandLine, @Nullable final Project project) {
