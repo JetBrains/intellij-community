@@ -37,7 +37,7 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 
 public class HintUtil {
-  public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
+  public static final Color INFORMATION_COLOR = UIUtil.isUnderDarcula() ?  new Color(0x575C5D) : new Color(253, 254, 226);
   public static final Color QUESTION_COLOR = new Color(181, 208, 251);
   public static final Color ERROR_COLOR = new Color(255, 220, 220);
 
