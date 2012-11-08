@@ -125,6 +125,14 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
+  public void testStringConcatToFormat4() {   //PY-7969
+    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
+  public void testStringConcatToFormat5() {   //PY-7968
+    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
   public void testConvertFormatOperatorToMethod() {
     doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
@@ -249,6 +257,10 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
+  public void testTypeInDocstring6() {         //PY-7973
+    doNegativeTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
   private void doDocReferenceTest() {
     doTest(PyBundle.message("INTN.specify.type"));
   }
@@ -293,6 +305,10 @@ public class PyIntentionTest extends PyTestCase {
     finally {
       setLanguageLevel(null);
     }
+  }
+
+  public void testTypeAssertion4() {  //PY-7971
+    doTestTypeAssertion();
   }
 
   public void testTypeAnnotation3() {  //PY-7087

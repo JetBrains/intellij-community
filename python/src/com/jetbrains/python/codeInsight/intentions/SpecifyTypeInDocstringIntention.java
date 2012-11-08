@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -100,10 +101,15 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         if (type == null || type instanceof PyReturnTypeReference) {
           final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(assignedValue, PyCallExpression.class, false);
           if (callExpression != null) {
-            final PyFunction function = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-            if (function != null) {
-              myText = PyBundle.message("INTN.specify.return.type");
-              return true;
+            final PyExpression callee = callExpression.getCallee();
+            if (callee != null) {
+              final PsiReference reference = callee.getReference();
+              final PyFunction pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+              if (reference instanceof PsiPolyVariantReference && pyFunction != null &&
+                  ((PsiPolyVariantReference)reference).multiResolve(false).length == 1) {
+                myText = PyBundle.message("INTN.specify.return.type");
+                return true;
+              }
             }
           }
         }
@@ -140,9 +146,14 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         PyType pyType = assignedValue.getType(TypeEvalContext.slow());
           if (pyType == null || pyType instanceof PyReturnTypeReference) {
             pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-            if (pyFunction != null) {
-              problemElement = null;
-              kind = "rtype";
+            final PyExpression callee = callExpression.getCallee();
+            if (callee != null) {
+              final PsiReference reference = callee.getReference();
+              if (reference instanceof PsiPolyVariantReference && pyFunction != null &&
+                                       ((PsiPolyVariantReference)reference).multiResolve(false).length == 1) {
+                problemElement = null;
+                kind = "rtype";
+              }
             }
           }
         }
@@ -155,24 +166,19 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       }
     }
 
-    generateDocstring(elementAt, kind, callExpression, pyFunction, problemElement);
+    generateDocstring(kind, pyFunction, problemElement);
   }
 
-  private void generateDocstring(PsiElement elementAt, String kind,
-                                 @Nullable PyCallExpression callExpression,
+  private void generateDocstring(String kind,
                                  PyFunction pyFunction,
                                  PyExpression problemElement) {
-    PsiReference reference = null;
-
     String name = "";
     if (problemElement != null) {
       name = problemElement.getName();
 
-      reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null) {
-          reference = qualifier.getReference();
           name = qualifier.getText();
         }
       }
@@ -190,11 +196,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       docstringGenerator.withParam(kind, name);
     }
 
-    final ASTNode nameNode = pyFunction.getNameNode();
-    if ((problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter) ||
-        (nameNode != null && elementAt == nameNode.getPsi()) || callExpression != null) {
-      docstringGenerator.build();
-    }
+    docstringGenerator.build();
 
     docstringGenerator.startTemplate();
   }

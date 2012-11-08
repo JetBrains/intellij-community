@@ -41,7 +41,8 @@ public class TypeAssertionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyQualifiedExpression.class);
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyQualifiedExpression.class);
     if (problemElement == null) return false;
     if (problemElement.getParent() instanceof PyWithItem) return false;
     if (problemElement instanceof PyQualifiedExpression) {
@@ -63,7 +64,8 @@ public class TypeAssertionIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyQualifiedExpression.class);
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyQualifiedExpression.class);
     if (problemElement != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
