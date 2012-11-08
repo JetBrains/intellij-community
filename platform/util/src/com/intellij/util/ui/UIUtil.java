@@ -654,12 +654,20 @@ public class UIUtil {
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
   }
 
+  public static Color getTableBackground(final boolean isSelected) {
+    return isSelected ? getTableSelectionBackground() : getTableBackground();
+  }
+
   public static Color getTableSelectionForeground() {
     return UIManager.getColor("Table.selectionForeground");
   }
 
   public static Color getTableForeground() {
     return UIManager.getColor("Table.foreground");
+  }
+
+  public static Color getTableForeground(final boolean isSelected) {
+    return isSelected ? getTableSelectionForeground() : getTableForeground();
   }
 
   public static Color getTableGridColor() {

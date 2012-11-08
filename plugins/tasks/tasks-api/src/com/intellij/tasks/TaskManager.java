@@ -61,9 +61,9 @@ public abstract class TaskManager {
   @Nullable
   public abstract Task updateIssue(@NotNull String id);
 
-  public abstract LocalTask[] getLocalTasks();
+  public abstract List<LocalTask> getLocalTasks();
 
-  public abstract LocalTask[] getLocalTasks(final boolean withClosed);
+  public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 

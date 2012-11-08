@@ -24,7 +24,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testAddRemoveListener() throws Exception {
 
-    TaskListener listener = new TaskListener() {
+    TaskListener listener = new TaskListenerAdapter() {
       @Override
       public void taskActivated(LocalTask task) {
 
@@ -37,7 +37,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testTaskSwitch() throws Exception {
 
     final Ref<Integer> count = Ref.create(0);
-    TaskListener listener = new TaskListener() {
+    TaskListener listener = new TaskListenerAdapter() {
       @Override
       public void taskActivated(LocalTask task) {
         count.set(count.get() + 1);
