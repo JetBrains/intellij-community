@@ -101,8 +101,10 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     if (values == null || values.isEmpty()) {
       return;
     }
-
-    MultiRowFlowPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
+    
+    MultiRowFlowPanel valuesPanel = new MultiRowFlowPanel(
+      FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
+    );
     for (Object value : manager.sort(values)) {
       ArrangementAtomMatchConditionComponent component =
         new ArrangementAtomMatchConditionComponent(manager, myColorsProvider, new ArrangementAtomMatchCondition(key, value), null);
