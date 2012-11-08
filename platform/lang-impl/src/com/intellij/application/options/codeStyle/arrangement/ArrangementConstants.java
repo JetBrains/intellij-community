@@ -33,10 +33,12 @@ public class ArrangementConstants {
   @NonNls public static final String RULE_EDITOR_TOOL_WINDOW_PLACE = "Arrangement.RuleEditor.ToolWindow.Place";
   @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
 
-  public static final int HORIZONTAL_PADDING = 8;
-  public static final int VERTICAL_PADDING   = 4;
-  public static final int HORIZONTAL_GAP     = 5;
-  public static final int VERTICAL_GAP       = 3;
+  public static final int HORIZONTAL_PADDING    = 8;
+  public static final int VERTICAL_PADDING      = 4;
+  public static final int HORIZONTAL_GAP        = 5;
+  public static final int VERTICAL_GAP          = 3;
+  public static final int CALLOUT_BORDER_HEIGHT = 10;
+  public static final int BORDER_ARC_SIZE       = 12;
 
   public static final int ANIMATION_STEPS                 = 250;
   public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 20;

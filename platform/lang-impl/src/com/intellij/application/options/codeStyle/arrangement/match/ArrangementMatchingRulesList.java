@@ -226,7 +226,7 @@ public class ArrangementMatchingRulesList extends JBList {
         if (parent instanceof JViewport) {
           width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
         }
-        myEditor.applyAvailableWidth(width);
+        editor.applyAvailableWidth(width);
         getModel().insertElementAt(editor, myEditorRow);
         editor.expand();
       }

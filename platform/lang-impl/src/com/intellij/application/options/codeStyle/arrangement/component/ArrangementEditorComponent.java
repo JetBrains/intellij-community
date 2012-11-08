@@ -16,12 +16,15 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
+import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRuleEditor;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesList;
-import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.util.CalloutBorder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Denis Zhdanov
@@ -29,15 +32,24 @@ import javax.swing.*;
  */
 public class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback {
 
-  @NotNull private final ArrangementMatchingRulesList myList;
-  @NotNull private final ArrangementAnimationPanel    myRenderer;
+  @NotNull private final ArrangementMatchingRulesList  myList;
+  @NotNull private final ArrangementAnimationPanel     myRenderer;
+  @NotNull private final Insets                        myBorderInsets;
+  @NotNull private final ArrangementMatchingRuleEditor myEditor;
 
   private final int myRow;
 
   public ArrangementEditorComponent(@NotNull ArrangementMatchingRulesList list, int row, @NotNull ArrangementMatchingRuleEditor editor) {
     myList = list;
     myRow = row;
-    myRenderer = new ArrangementAnimationPanel(editor);
+    myEditor = editor;
+    JPanel borderPanel = new JPanel(new BorderLayout());
+    borderPanel.setBackground(UIUtil.getListBackground());
+    borderPanel.add(editor);
+    CalloutBorder border = new CalloutBorder();
+    borderPanel.setBorder(border);
+    myBorderInsets = border.getBorderInsets(borderPanel);
+    myRenderer = new ArrangementAnimationPanel(borderPanel);
     new ArrangementAnimationManager(myRenderer, this);
   }
 
@@ -54,6 +66,10 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
 
   @Override
   public void onAnimationIteration(boolean finished) {
-    myList.repaintRows(myRow, myRow, false); 
+    myList.repaintRows(myRow, myRow, false);
+  }
+
+  public void applyAvailableWidth(int width) {
+    myEditor.applyAvailableWidth(width - myBorderInsets.left - myBorderInsets.right);
   }
 }

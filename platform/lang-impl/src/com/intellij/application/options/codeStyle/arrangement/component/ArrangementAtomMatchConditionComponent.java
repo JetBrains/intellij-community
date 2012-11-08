@@ -127,9 +127,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       }
     };
 
-    final int arcSize = insetsPanel.getFont().getSize();
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1)
-      .insets(0, 0, 0, myCloseButton == null ? arcSize : 0);
+      .insets(0, 0, 0, myCloseButton == null ? ArrangementConstants.BORDER_ARC_SIZE : 0);
     insetsPanel.add(myTextControl, constraints);
     insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
     insetsPanel.setOpaque(false);
@@ -145,7 +144,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         
         Rectangle bounds = getBounds();
         g.setColor(myBackgroundColor);
-        g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
+        g.fillRoundRect(0, 0, bounds.width, bounds.height, ArrangementConstants.BORDER_ARC_SIZE, ArrangementConstants.BORDER_ARC_SIZE);
         super.paint(g);
       }
 
@@ -158,7 +157,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     if (myCloseButton != null) {
       roundBorderPanel.add(new InsetsPanel(myCloseButton), new GridBag().anchor(GridBagConstraints.EAST));
     }
-    myBorder = IdeBorderFactory.createRoundedBorder(arcSize);
+    myBorder = IdeBorderFactory.createRoundedBorder(ArrangementConstants.BORDER_ARC_SIZE);
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
