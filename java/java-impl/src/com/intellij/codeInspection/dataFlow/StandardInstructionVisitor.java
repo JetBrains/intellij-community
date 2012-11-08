@@ -315,8 +315,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     DfaValue dfaRight, DfaValue dfaLeft) {
     DfaValueFactory factory = runner.getFactory();
     final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
-    boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
-    DfaRelationValue dfaRelation = factory.getRelationFactory().createRelation(dfaLeft, dfaRight, instruction.getOperationSign(), negated);
+    DfaRelationValue dfaRelation = factory.getRelationFactory().createRelation(dfaLeft, dfaRight, instruction.getOperationSign(), false);
     if (dfaRelation == null) {
       return null;
     }
@@ -393,7 +392,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return null;
     }
 
-    boolean negated = (JavaTokenType.NE == opSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
+    boolean negated = (JavaTokenType.NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
     if (dfaLeft == dfaRight ^ negated) {
       memState.push(runner.getFactory().getConstFactory().getTrue());
       instruction.setTrueReachable();
