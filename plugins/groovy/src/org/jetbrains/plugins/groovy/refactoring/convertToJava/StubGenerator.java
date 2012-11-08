@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
 
@@ -297,7 +298,10 @@ public class StubGenerator implements ClassItemGenerator {
       }
       methods.add(method);
     }
-    boolean isClass = !typeDefinition.isInterface() && !typeDefinition.isAnnotationType() && !typeDefinition.isEnum();
+    boolean isClass = !typeDefinition.isInterface() &&
+                      !typeDefinition.isAnnotationType() &&
+                      !typeDefinition.isEnum() &&
+                      !(typeDefinition instanceof GroovyScriptClass);
     if (isClass) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
@@ -324,19 +328,7 @@ public class StubGenerator implements ClassItemGenerator {
 
         methods.add(mirrorMethod(typeDefinition, resolved, baseClass, signature.getSubstitutor()));
       }
-      /*final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
-      methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
-      methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
-      methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
-      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));*/
     }
-
-    /*if (typeDefinition instanceof GrTypeDefinition) {
-      for (PsiMethod delegatedMethod : GrClassImplUtil.getDelegatedMethods((GrTypeDefinition)typeDefinition)) {
-        methods.add(delegatedMethod);
-      }
-    }*/
 
     return methods;
   }

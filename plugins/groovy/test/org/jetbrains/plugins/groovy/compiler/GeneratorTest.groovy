@@ -1,23 +1,16 @@
-package org.jetbrains.plugins.groovy.compiler;
-
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
-
+package org.jetbrains.plugins.groovy.compiler
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * User: Dmitry.Krasilschikov
  * Date: 06.06.2007
  */
 public class GeneratorTest extends LightGroovyTestCase {
 
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/stubGenerator";
-  }
+  final String basePath = TestUtils.testDataPath + "groovy/stubGenerator"
 
   public void testArrayType1() throws Throwable { doTest(); }
   public void testAtInterface() throws Throwable { doTest(); }
@@ -128,10 +121,10 @@ public class GeneratorTest extends LightGroovyTestCase {
 
   public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
-    final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
+    final List<String> data = TestUtils.readInput("$testDataPath/$relTestPath");
 
     final String testName = StringUtil.trimEnd(relTestPath, ".test");
-    PsiFile psiFile = TestUtils.createPseudoPhysicalFile(getProject(), testName + ".groovy", data.get(0));
+    PsiFile psiFile = TestUtils.createPseudoPhysicalFile(project, testName + ".groovy", data.get(0));
     final StringBuilder builder = GroovyToJavaGenerator.generateStubs(psiFile);
 
     assertEquals(data.get(1).trim(), builder.toString().trim());
