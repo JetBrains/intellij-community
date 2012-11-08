@@ -161,7 +161,7 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
               request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
                                                                       index.getRepositoryUrl(),
                                                                       embedder.getComponent(WagonManager.class),
-                                                                      new TransferListenerAdapter(indicator) {
+                                                                      new WagonTransferListenerAdapter(indicator) {
                                                                         @Override
                                                                         protected void downloadProgress(long downloaded, long total) {
                                                                           super.downloadProgress(downloaded, total);

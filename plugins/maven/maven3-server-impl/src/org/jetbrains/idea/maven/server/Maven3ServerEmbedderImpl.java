@@ -73,6 +73,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -250,7 +251,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
-      setConsoleAndIndicator(console, indicator);
+      setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -334,6 +335,11 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
           resolutionRequest.setResolveRoot(false);
           resolutionRequest.setResolveTransitively(true);
+
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+          }
 
           ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
