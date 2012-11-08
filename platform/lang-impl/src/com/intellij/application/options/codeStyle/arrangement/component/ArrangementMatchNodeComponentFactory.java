@@ -132,9 +132,7 @@ public class ArrangementMatchNodeComponentFactory {
       }
 
       ArrangementAnimationPanel panel = component.getAnimationPanel();
-      new ArrangementAnimationManager(panel, this);
-      panel.startAnimation(false, true);
-      myList.repaintRows(i, i, false);
+      new ArrangementAnimationManager(panel, this, false, true).startAnimation();
     }
 
     @Override
