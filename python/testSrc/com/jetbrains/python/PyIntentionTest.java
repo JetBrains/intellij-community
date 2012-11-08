@@ -245,6 +245,10 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
+  public void testTypeInDocstring5() {
+    doDocReferenceTest();
+  }
+
   private void doDocReferenceTest() {
     doTest(PyBundle.message("INTN.specify.type"));
   }

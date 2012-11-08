@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 public class SpecifyTypeInDocstringIntention implements IntentionAction {
   private String myText = PyBundle.message("INTN.specify.type");
 
-  public SpecifyTypeInDocstringIntention() {
-  }
-
   @NotNull
   public String getText() {
     return myText;
@@ -49,10 +46,10 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     myText = PyBundle.message("INTN.specify.type");
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
-    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
-    if (checkAvailableForReturn(elementAt, callExpression)) return true;
-
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
+    if (checkAvailableForReturn(elementAt)) return true;
+
+
     if (problemElement == null) return false;
     if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
@@ -60,8 +57,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         problemElement = qualifier;
       }
     }
-    if (problemElement.getParent() instanceof PyCallExpression
-        || PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
+    if (PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
       return false;
     }
     final PyType type = problemElement.getType(TypeEvalContext.slow());
@@ -95,16 +91,20 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     return false;
   }
 
-  private boolean checkAvailableForReturn(PsiElement elementAt, @Nullable PyCallExpression callExpression) {
-    if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
-      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-      if (assignmentStatement != null) {
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-        if (assignedValue != null) {
-          PyType type = assignedValue.getType(TypeEvalContext.slow());
-          if (type == null || type instanceof PyReturnTypeReference) {
-            myText = PyBundle.message("INTN.specify.return.type");
-            return true;
+  private boolean checkAvailableForReturn(PsiElement elementAt) {
+    PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+    if (assignmentStatement != null) {
+      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+      if (assignedValue != null) {
+        PyType type = assignedValue.getType(TypeEvalContext.slow());
+        if (type == null || type instanceof PyReturnTypeReference) {
+          final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(assignedValue, PyCallExpression.class, false);
+          if (callExpression != null) {
+            final PyFunction function = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+            if (function != null) {
+              myText = PyBundle.message("INTN.specify.return.type");
+              return true;
+            }
           }
         }
       }
@@ -126,20 +126,24 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
 
     String kind = "type";
-    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
 
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
-    if (callExpression != null) {
-      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-      if (assignmentStatement != null) {
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-        if (assignedValue != null) {
-          PyType pyType = assignedValue.getType(TypeEvalContext.slow());
+    PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+    PyCallExpression callExpression = null;
+    if (assignmentStatement != null) {
+      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+
+      if (assignedValue != null) {
+        callExpression = PsiTreeUtil.getParentOfType(assignedValue, PyCallExpression.class, false);
+        if (callExpression != null) {
+        PyType pyType = assignedValue.getType(TypeEvalContext.slow());
           if (pyType == null || pyType instanceof PyReturnTypeReference) {
             pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-            problemElement = null;
-            kind = "rtype";
+            if (pyFunction != null) {
+              problemElement = null;
+              kind = "rtype";
+            }
           }
         }
       }
@@ -160,8 +164,6 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
                                  PyExpression problemElement) {
     PsiReference reference = null;
 
-    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
-
     String name = "";
     if (problemElement != null) {
       name = problemElement.getName();
@@ -177,6 +179,8 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
     }
     if (pyFunction == null || name == null) return;
+
+    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
 
     PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
     if (signature != null) {
