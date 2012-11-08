@@ -261,7 +261,12 @@ public class JavaCoverageEngine extends CoverageEngine {
       return null;
     }
 
-    SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled());
+    try {
+      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled());
+    }
+    catch (Exception e) {
+      LOG.error("Fail to process class from: " + classFile.getPath(), e);
+    }
     return uncoveredLines;
   }
 
