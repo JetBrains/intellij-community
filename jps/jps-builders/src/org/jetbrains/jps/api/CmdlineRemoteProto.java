@@ -2490,12 +2490,14 @@ public final class CmdlineRemoteProto {
           MAKE(1, 2),
           CLEAN(2, 3),
           FORCED_COMPILATION(3, 4),
+          UP_TO_DATE_CHECK(4, 5),
           ;
           
           public static final int REBUILD_VALUE = 1;
           public static final int MAKE_VALUE = 2;
           public static final int CLEAN_VALUE = 3;
           public static final int FORCED_COMPILATION_VALUE = 4;
+          public static final int UP_TO_DATE_CHECK_VALUE = 5;
           
           
           public final int getNumber() { return value; }
@@ -2506,6 +2508,7 @@ public final class CmdlineRemoteProto {
               case 2: return MAKE;
               case 3: return CLEAN;
               case 4: return FORCED_COMPILATION;
+              case 5: return UP_TO_DATE_CHECK;
               default: return null;
             }
           }

@@ -32,10 +32,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
-import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -108,6 +105,34 @@ public class IncProjectBuilder {
   public void addMessageHandler(MessageHandler handler) {
     myMessageHandlers.add(handler);
   }
+
+  public void checkUpToDate(CompileScope scope) {
+    CompileContextImpl context = null;
+    try {
+      context = createContext(scope, true, false);
+      for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        if (scope.isAffected(target)) {
+          BuildOperations.ensureFSStateInitialized(context, target);
+          if (myProjectDescriptor.fsState.hasWorkToDo(target)) {
+            // this will serve as a marker that compiler has work to do
+            myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
+            return;
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      // this will serve as a marker that compiler has work to do
+      myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
+    }
+    finally {
+      if (context != null) {
+        flushContext(context);
+      }
+    }
+  }
+
 
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches)
     throws RebuildRequestedException {

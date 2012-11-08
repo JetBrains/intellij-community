@@ -194,7 +194,7 @@ public class MyCategory {
   }
 
   private String generateDoc() {
-    def element = DocumentationManager.getInstance(project).getElementFromLookup(myFixture.editor, myFixture.file)
+    def element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
     return new GroovyDocumentationProvider().generateDoc(element, null)
   }
 

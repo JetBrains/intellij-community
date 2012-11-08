@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -119,12 +120,13 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
 
     TextAttributesKey.myDefaultsProvider = new TextAttributesKey.TextAttributeKeyDefaultsProvider() {
+      final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
       @Override
       public TextAttributes getDefaultAttributes(TextAttributesKey key) {
         // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
         // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
         // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
-        final EditorColorsScheme defaultColorScheme = getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+        final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
         return defaultColorScheme.getAttributes(key);
       }
     };

@@ -415,9 +415,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
         }
       }
-      if (UIUtil.isUnderDarcula()) {
-        g.setXORMode(new Color(208, 188, 159));
-      }
+
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();
     }

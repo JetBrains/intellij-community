@@ -25,6 +25,7 @@ import java.util.List;
 
 /**
  * @see com.intellij.lang.LanguageDocumentation
+ * @see DocumentationProviderEx
  * @see AbstractDocumentationProvider
  */
 public interface DocumentationProvider {

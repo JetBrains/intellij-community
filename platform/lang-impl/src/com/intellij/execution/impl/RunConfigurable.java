@@ -101,6 +101,7 @@ class RunConfigurable extends BaseConfigurable {
   private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<Pair<UnnamedConfigurable, JComponent>>();
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
   private ToolbarDecorator myToolbarDecorator;
+  private boolean isFolderCreating;
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -354,6 +355,10 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.add(p);
     myRightPanel.revalidate();
     myRightPanel.repaint();
+    if (isFolderCreating) {
+      textField.selectAll();
+      textField.requestFocus();
+    }
   }
 
   private Object getSafeUserObject(DefaultMutableTreeNode node) {
@@ -1447,7 +1452,13 @@ class RunConfigurable extends BaseConfigurable {
       collectNodesRecursively(getConfigurationTypeNode(type), folders, FOLDER);
       DefaultMutableTreeNode folderNode = new DefaultMutableTreeNode(folderName);
       myTreeModel.insertNodeInto(folderNode, typeNode, folders.size());
-      TreeUtil.selectNode(myTree, folderNode);
+      isFolderCreating = true;
+      try {
+        TreeUtil.selectNode(myTree, folderNode);
+      }
+      finally {
+        isFolderCreating = false;
+      }
     }
 
     @Override
@@ -1625,7 +1636,13 @@ class RunConfigurable extends BaseConfigurable {
         if (getKind(oldParent) == FOLDER && typeNode != null && typeNode.getNextSibling() == newNode && position == ABOVE) {
           return true;
         }
-        if (getKind(oldParent) == CONFIGURATION_TYPE && oldKind == FOLDER && typeNode != null && typeNode.getNextSibling() == newNode && position == ABOVE) {
+        if (getKind(oldParent) == CONFIGURATION_TYPE &&
+            oldKind == FOLDER &&
+            typeNode != null &&
+            typeNode.getNextSibling() == newNode &&
+            position == ABOVE &&
+            oldParent.getLastChild() != oldNode &&
+            getKind((DefaultMutableTreeNode)oldParent.getLastChild()) == FOLDER) {
           return true;
         }
         return false;

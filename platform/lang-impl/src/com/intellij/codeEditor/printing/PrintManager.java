@@ -30,16 +30,19 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.print.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 class PrintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
@@ -93,7 +96,7 @@ class PrintManager {
 
     if(printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
       if (psiFile == null && editor == null) return;
-      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, project) : initTextPainter((DocumentEx)editor.getDocument(), project);
+      TextPainter textPainter = psiFile != null ? initTextPainter(psiFile, editor) : initTextPainter((DocumentEx)editor.getDocument(), project);
       if (textPainter == null) return;
 
       if(printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT && editor != null && editor.getSelectionModel().hasSelection()) {
@@ -103,11 +106,11 @@ class PrintManager {
       painter = textPainter;
     }
     else {
-      ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
+      List<Pair<PsiFile, Editor>> filesList = ContainerUtil.newArrayList();
       boolean isRecursive = printSettings.isIncludeSubdirectories();
       addToPsiFileList(psiDirectory[0], filesList, isRecursive);
 
-      painter = new MultiFilePainter(filesList, project);
+      painter = new MultiFilePainter(filesList);
     }
     final Printable painter0 = painter;
     Pageable document = new Pageable(){
@@ -170,12 +173,13 @@ class PrintManager {
     });
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList<PsiFile> filesList, boolean isRecursive) {
+  private static void addToPsiFileList(PsiDirectory psiDirectory, List<Pair<PsiFile, Editor>> filesList, boolean isRecursive) {
     PsiFile[] files = psiDirectory.getFiles();
-    Collections.addAll(filesList, files);
-    if(isRecursive) {
-      PsiDirectory[] directories = psiDirectory.getSubdirectories();
-      for (PsiDirectory directory : directories) {
+    for (PsiFile file : files) {
+      filesList.add(Pair.create(file, PsiUtilBase.findEditor(file)));
+    }
+    if (isRecursive) {
+      for (PsiDirectory directory : psiDirectory.getSubdirectories()) {
         if (!Project.DIRECTORY_STORE_FOLDER.equals(directory.getName())) {
           addToPsiFileList(directory, filesList, isRecursive);
         }
@@ -213,25 +217,22 @@ class PrintManager {
     return pageFormat;
   }
 
-  public static TextPainter initTextPainter(final PsiFile psiFile, final Project project) {
-    final TextPainter[] res = new TextPainter[1];
-    ApplicationManager.getApplication().runReadAction(
-        new Runnable() {
-          public void run() {
-            res[0] = doInitTextPainter(psiFile, project);
-          }
-        }
-    );
-    return res[0];
+  public static TextPainter initTextPainter(final PsiFile psiFile, final Editor editor) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<TextPainter>() {
+      @Override
+      public TextPainter compute() {
+        return doInitTextPainter(psiFile, editor);
+      }
+    });
   }
 
-  private static TextPainter doInitTextPainter(final PsiFile psiFile, Project project) {
+  private static TextPainter doInitTextPainter(final PsiFile psiFile, final Editor editor) {
     final String fileName = psiFile.getVirtualFile().getPresentableUrl();
-    DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (doc == null) return null;
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(psiFile.getProject(), psiFile.getVirtualFile());
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, fileName, psiFile, project, psiFile.getFileType());
+    return new TextPainter(doc, highlighter, fileName, psiFile, psiFile.getFileType(), editor);
   }
 
   public static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {

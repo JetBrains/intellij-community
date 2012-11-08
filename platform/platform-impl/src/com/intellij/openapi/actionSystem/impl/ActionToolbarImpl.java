@@ -40,6 +40,7 @@ import com.intellij.openapi.util.IdRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -282,6 +283,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       else if (action instanceof CustomComponentAction) {
         Presentation presentation = myPresentationFactory.getPresentation(action);
         JComponent customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
+        if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
+          // tweak font & color for editor toolbar to match editor tabs style
+          Color foreground = customComponent.getForeground();
+          customComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+          if (foreground != null) customComponent.setForeground(ColorUtil.dimmer(foreground));
+        }
         presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
         add(customComponent);
       }

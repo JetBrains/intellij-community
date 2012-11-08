@@ -35,13 +35,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -84,7 +82,12 @@ import java.util.List;
  */
 public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep {
 
-  private JPanel myPanel;
+  private static final Condition<ProjectTemplate> TEMPLATE_CONDITION = new Condition<ProjectTemplate>() {
+    @Override
+    public boolean value(ProjectTemplate template) {
+      return !(template instanceof DirectoryProjectGenerator);
+    }
+  };
   private SimpleTree myTemplatesTree;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
@@ -102,6 +105,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
   private JPanel myModulePanel;
+
+  private JPanel myLeftPanel;
+  private JPanel myRightPanel;
+  private final JBSplitter mySplitter;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -148,7 +155,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
       for (String group : factory.getGroups()) {
-        groups.putValues(group, Arrays.asList(factory.createTemplates(group, context)));
+        ProjectTemplate[] templates = factory.createTemplates(group, context);
+        List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
+                                                                                                                        TEMPLATE_CONDITION);
+        if (!values.isEmpty()) {
+          groups.putValues(group, values);
+        }
       }
     }
     final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
@@ -255,6 +267,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
     }
 
+    mySplitter = new JBSplitter(false, 0.3f);
+    mySplitter.setSplitterProportionKey("select.template.proportion");
+    mySplitter.setFirstComponent(myLeftPanel);
+    mySplitter.setSecondComponent(myRightPanel);
 //    mySettingsPanel.setVisible(false);
 //    myExpertPanel.setVisible(false);
 
@@ -466,7 +482,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public JComponent getComponent() {
-    return myPanel;
+    return mySplitter;
   }
 
   @Override

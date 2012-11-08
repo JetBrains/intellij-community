@@ -88,7 +88,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   public void run() {
     Throwable error = null;
     final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
-    final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
+    final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
     try {
       runBuild(new MessageHandler() {
         public void processMessage(BuildMessage buildMessage) {
@@ -97,12 +97,12 @@ final class BuildSession implements Runnable, CanceledStatus {
             final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)buildMessage).getPaths();
             response = !paths.isEmpty() ? CmdlineProtoUtil.createFileGeneratedEvent(paths) : null;
           }
-          else if (buildMessage instanceof UptoDateFilesSavedEvent) {
-            markedFilesUptodate.set(true);
+          else if (buildMessage instanceof DoneSomethingNotification) {
+            doneSomething.set(true);
             response = null;
           }
           else if (buildMessage instanceof CompilerMessage) {
-            markedFilesUptodate.set(true);
+            doneSomething.set(true);
             final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
             final String text = compilerMessage.getCompilerName() + ": " + compilerMessage.getMessageText();
             final BuildMessage.Kind kind = compilerMessage.getKind();
@@ -117,8 +117,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           else if (buildMessage instanceof CustomBuilderMessage) {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
-            response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(),
-                                                                   builderMessage.getMessageText());
+            response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
           else {
             float done = -1.0f;
@@ -138,7 +137,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       error = e;
     }
     finally {
-      finishBuild(error, hasErrors.get(), markedFilesUptodate.get());
+      finishBuild(error, hasErrors.get(), doneSomething.get());
     }
   }
 
@@ -158,7 +157,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
       final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
-      if (myBuildType == BuildType.MAKE && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
+      if ((myBuildType == BuildType.MAKE || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -422,7 +421,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     return event.getChangedPathsCount() != 0 || event.getDeletedPathsCount() != 0;
   }
 
-  private void finishBuild(Throwable error, boolean hadBuildErrors, boolean markedUptodateFiles) {
+  private void finishBuild(Throwable error, boolean hadBuildErrors, boolean doneSomething) {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
       if (error != null) {
@@ -455,7 +454,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         else if (hadBuildErrors) {
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS;
         }
-        else if (!markedUptodateFiles){
+        else if (!doneSomething){
           status = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UP_TO_DATE;
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createBuildCompletedEvent("build completed", status));
@@ -489,6 +488,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       case MAKE: return BuildType.MAKE;
       case REBUILD: return BuildType.PROJECT_REBUILD;
       case FORCED_COMPILATION: return BuildType.FORCED_COMPILATION;
+      case UP_TO_DATE_CHECK: return BuildType.UP_TO_DATE_CHECK;
     }
     return BuildType.MAKE; // use make by default
   }

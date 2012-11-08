@@ -16,28 +16,27 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 
 import java.awt.*;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
-import java.util.ArrayList;
+import java.util.List;
 
 class MultiFilePainter implements Printable{
-  private final ArrayList myFilesList;
+  private final List<Pair<PsiFile, Editor>> myFilesList;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
   private Printable myTextPainter = null;
-  private final Project myProject;
   private ProgressIndicator myProgress;
 
-  public MultiFilePainter(ArrayList filesList, Project project) {
+  public MultiFilePainter(List<Pair<PsiFile, Editor>> filesList) {
     myFilesList = filesList;
-    myProject = project;
   }
 
   public void setProgress(ProgressIndicator progress) {
@@ -50,7 +49,8 @@ class MultiFilePainter implements Printable{
     }
     while(myFileIndex < myFilesList.size()) {
       if(myTextPainter == null) {
-        myTextPainter = PrintManager.initTextPainter((PsiFile)myFilesList.get(myFileIndex), myProject);
+        Pair<PsiFile, Editor> pair = myFilesList.get(myFileIndex);
+        myTextPainter = PrintManager.initTextPainter(pair.first, pair.second);
       }
       if (myTextPainter != null) {
         ((TextPainter)myTextPainter).setProgress(myProgress);
@@ -58,7 +58,7 @@ class MultiFilePainter implements Printable{
         try {
           ret = myTextPainter.print(g, pageFormat, pageIndex - myStartPageIndex);
         }
-        catch (ProcessCanceledException e) {
+        catch (ProcessCanceledException ignored) {
         }
 
         if (myProgress.isCanceled()) {

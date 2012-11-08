@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -49,6 +50,15 @@ public abstract class FrameworkSupportConfigurable implements Disposable {
   }
 
   public void onFrameworkSelectionChanged(boolean selected) {
+  }
+
+  @Nullable
+  public FrameworkLibraryVersionFilter getVersionFilter() {
+    return FrameworkLibraryVersionFilter.ALL;
+  }
+
+  public boolean isVisible() {
+    return true;
   }
 
   public void addListener(@NotNull FrameworkSupportConfigurableListener listener) {

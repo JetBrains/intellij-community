@@ -30,9 +30,9 @@ import java.util.*;
  * @author nik
  */
 public abstract class FacetModelBase implements FacetModel {
-  private Map<FacetTypeId, Collection<Facet>> myType2Facets;
-  private Map<Pair<Facet, FacetTypeId>, Collection<Facet>> myChildFacets;
-  private Facet[] mySortedFacets;
+  private volatile Map<FacetTypeId, Collection<Facet>> myType2Facets;
+  private volatile Map<Pair<Facet, FacetTypeId>, Collection<Facet>> myChildFacets;
+  private volatile Facet[] mySortedFacets;
 
   @NotNull
   public Facet[] getSortedFacets() {
@@ -71,11 +71,12 @@ public abstract class FacetModelBase implements FacetModel {
         }
       }
 
-      myChildFacets = new HashMap<Pair<Facet, FacetTypeId>, Collection<Facet>>();
+      Map<Pair<Facet, FacetTypeId>, Collection<Facet>> childFacets = new HashMap<Pair<Facet, FacetTypeId>, Collection<Facet>>();
       for (Pair<Facet, FacetTypeId> pair : children.keySet()) {
         final Collection<Facet> facets = children.get(pair);
-        myChildFacets.put(pair, Collections.unmodifiableCollection(facets));
+        childFacets.put(pair, Collections.unmodifiableCollection(facets));
       }
+      myChildFacets = childFacets;
     }
     //noinspection unchecked
     final Collection<F> facets = (Collection<F>)myChildFacets.get(new Pair(underlyingFacet, typeId));
@@ -106,22 +107,23 @@ public abstract class FacetModelBase implements FacetModel {
 
   @Nullable
   public <F extends Facet> F getFacetByType(FacetTypeId<F> typeId) {
-    final Collection<F> fasets = getFacetsByType(typeId);
-    return fasets.isEmpty() ? null : fasets.iterator().next();
+    final Collection<F> facets = getFacetsByType(typeId);
+    return facets.isEmpty() ? null : facets.iterator().next();
   }
 
   @NotNull
   public <F extends Facet> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     if (myType2Facets == null) {
-      MultiValuesMap<FacetTypeId, Facet> type2Facets = new MultiValuesMap<FacetTypeId, Facet>();
-      myType2Facets = new HashMap<FacetTypeId, Collection<Facet>>();
+      MultiValuesMap<FacetTypeId, Facet> typeToFacets = new MultiValuesMap<FacetTypeId, Facet>();
       for (Facet facet : getAllFacets()) {
-        type2Facets.put(facet.getTypeId(), facet);
+        typeToFacets.put(facet.getTypeId(), facet);
       }
-      for (FacetTypeId id : type2Facets.keySet()) {
-        final Collection<Facet> facets = type2Facets.get(id);
-        myType2Facets.put(id, Collections.unmodifiableCollection(facets));
+      Map<FacetTypeId, Collection<Facet>> typeToFacetsCollection = new HashMap<FacetTypeId, Collection<Facet>>();
+      for (FacetTypeId id : typeToFacets.keySet()) {
+        final Collection<Facet> facets = typeToFacets.get(id);
+        typeToFacetsCollection.put(id, Collections.unmodifiableCollection(facets));
       }
+      myType2Facets = typeToFacetsCollection;
     }
 
     final Collection<F> facets = (Collection<F>)myType2Facets.get(typeId);

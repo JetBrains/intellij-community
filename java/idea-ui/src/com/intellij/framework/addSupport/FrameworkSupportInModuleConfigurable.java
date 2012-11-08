@@ -50,6 +50,10 @@ public abstract class FrameworkSupportInModuleConfigurable implements Disposable
     return false;
   }
 
+  public boolean isVisible() {
+    return true;
+  }
+
   @Override
   public void dispose() {
   }

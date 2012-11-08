@@ -4,7 +4,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleInCommentsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
-  private static final String TEXT = "In Co&mments Only";
+  private static final String TEXT = "In &Comments Only";
 
   public ToggleInCommentsAction(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent, TEXT);

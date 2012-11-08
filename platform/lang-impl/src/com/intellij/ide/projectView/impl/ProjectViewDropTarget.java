@@ -223,6 +223,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     void doDropFiles(List<File> fileList, TreeNode targetNode);
   }
 
+  @Nullable
   protected PsiElement getPsiElement(@Nullable final TreeNode treeNode) {
     return myRetriever.getPsiElement(treeNode);
   }
@@ -367,6 +368,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
+      if (targetElement == null) return false;
       final PsiFile containingFile = targetElement.getContainingFile();
       final boolean isTargetAcceptable = targetElement instanceof PsiDirectoryContainer ||
                                          targetElement instanceof PsiDirectory ||

@@ -201,6 +201,8 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   public void dumpThreads(boolean millis) {
+    if (shallNotWatch()) return;
+
     final String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
     myCurHangLogDir.mkdirs();
 

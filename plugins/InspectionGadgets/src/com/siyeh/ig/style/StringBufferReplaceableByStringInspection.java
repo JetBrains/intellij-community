@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -155,14 +156,18 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           }
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
+          final String argumentText = argument.getText();
           if (result.length() != 0) {
             result.append('+');
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
-              result.append('(').append(argument.getText()).append(')');
+              result.append('(').append(argumentText).append(')');
             }
             else {
-              result.append(argument.getText());
+              if (StringUtil.startsWithChar(argumentText, '+')) {
+                result.append(' ');
+              }
+              result.append(argumentText);
             }
           }
           else {
@@ -172,19 +177,19 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
                 result.append('"').append(literalExpression.getValue()).append('"');
               }
               else {
-                result.append("String.valueOf(").append(argument.getText()).append(")");
+                result.append("String.valueOf(").append(argumentText).append(")");
               }
             }
             else {
               if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-                result.append('(').append(argument.getText()).append(')');
+                result.append('(').append(argumentText).append(')');
               }
               else {
                 if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                  result.append("String.valueOf(").append(argument.getText()).append(")");
+                  result.append("String.valueOf(").append(argumentText).append(")");
                 }
                 else {
-                  result.append(argument.getText());
+                  result.append(argumentText);
                 }
               }
             }

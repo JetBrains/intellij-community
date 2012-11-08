@@ -352,7 +352,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public boolean deleteModule(final Module module) {
-    return doRemoveModule(getModuleEditor(module));
+    ModuleEditor moduleEditor = getModuleEditor(module);
+    if (moduleEditor == null) return true;
+    return doRemoveModule(moduleEditor);
   }
 
 
@@ -450,7 +452,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private boolean doRemoveModule(ModuleEditor selectedEditor) {
+  private boolean doRemoveModule(@NotNull ModuleEditor selectedEditor) {
 
     String question;
     if (myModuleEditors.size() == 1) {

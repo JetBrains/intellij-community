@@ -219,8 +219,11 @@ public class EnterHandler extends BaseEnterHandler {
           return true;
         }
       }
+      if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
+        return false;
+      }
       if (lexer.getTokenEnd() == commentText.length()) {
-        if (lexer.getTokenType() == commenter.getLineCommentTokenType()) {
+        if (tokenType == commenter.getLineCommentTokenType()) {
           String prefix = commenter.getLineCommentPrefix();
           lexer.start(commentText, lexer.getTokenStart() + (prefix == null ? 0 : prefix.length()), commentText.length());
           lexer.advance();
@@ -229,10 +232,7 @@ public class EnterHandler extends BaseEnterHandler {
         else if (isInvalidPsi(comment)) {
           return false;
         }
-        return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
-      }
-      if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
-        return false;
+        return true;
       }
       lexer.advance();
     }

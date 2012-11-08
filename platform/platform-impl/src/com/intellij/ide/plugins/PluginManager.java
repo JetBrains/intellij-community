@@ -553,9 +553,18 @@ public class PluginManager {
     catch (Exception e) {
       prepareLoadingPluginsErrorMessage(IdeBundle.message("error.plugins.were.not.loaded", e.getMessage()));
       getLogger().info(e);
-      pluginDescriptors = IdeaPluginDescriptorImpl.EMPTY_ARRAY;
+      return findCorePlugin(pluginDescriptors);
     }
     return pluginDescriptors;
+  }
+
+  private static IdeaPluginDescriptorImpl[] findCorePlugin(IdeaPluginDescriptorImpl[] pluginDescriptors) {
+    for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
+      if (CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString())) {
+        return new IdeaPluginDescriptorImpl[] {descriptor};
+      }
+    }
+    return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
   }
 
   private static int countPlugins(String pluginsPath) {
