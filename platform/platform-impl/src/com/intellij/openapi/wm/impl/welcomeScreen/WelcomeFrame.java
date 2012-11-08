@@ -15,20 +15,20 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.openapi.wm.WelcomeScreenProvider;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 
-public class WelcomeFrame extends JFrame {
+public class WelcomeFrame extends JFrame implements IdeFrame {
   private static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static WelcomeFrame ourInstance;
   private final WelcomeScreen myScreen;
@@ -146,5 +146,41 @@ public class WelcomeFrame extends JFrame {
         }
       }
     }, ModalityState.NON_MODAL);
+  }
+
+  @Override
+  public StatusBar getStatusBar() {
+    return null;
+  }
+
+  @Override
+  public Rectangle suggestChildFrameBounds() {
+    return getBounds();
+  }
+
+  @Nullable
+  @Override
+  public Project getProject() {
+    return null;
+  }
+
+  @Override
+  public void setFrameTitle(String title) {
+    setTitle(title);
+  }
+
+  @Override
+  public void setFileTitle(String fileTitle, File ioFile) {
+    setTitle(fileTitle);
+  }
+
+  @Override
+  public IdeRootPaneNorthExtension getNorthExtension(String key) {
+    return null;
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return getRootPane();
   }
 }
