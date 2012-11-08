@@ -66,7 +66,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     myFileToImport = path;
   }
 
-  protected String getFileToImport() {
+  public String getFileToImport() {
     return myFileToImport;
   }
 
