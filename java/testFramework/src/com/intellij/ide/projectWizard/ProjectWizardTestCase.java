@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
@@ -33,8 +34,8 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   @Nullable
   private Project myCreatedProject;
 
-  protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) {
-    runWizard(group, name, adjuster);
+  protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
+    runWizard(group, name, null, adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
     assertNotNull(myCreatedProject);
 
@@ -44,8 +45,8 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   }
 
   @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) {
-    runWizard(group, name, adjuster);
+  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
+    runWizard(group, name, getProject(), adjuster);
     return createModuleFromWizard();
   }
 
@@ -53,9 +54,14 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
   }
 
-  protected void runWizard(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) {
+  protected void runWizard(String group, String name, Project project, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
+
+    createWizard(project);
     SelectTemplateStep step = (SelectTemplateStep)myWizard.getCurrentStepObject();
-    assertTrue(step.setSelectedTemplate(group, name));
+    boolean condition = step.setSelectedTemplate(group, name);
+    if (!condition) {
+      throw new IllegalArgumentException(group + "/" + name + " template not found");
+    }
     ProjectTemplate template = step.getSelectedTemplate();
     assertNotNull(template);
 
@@ -64,6 +70,13 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     }
 
     runWizard(adjuster);
+  }
+
+  protected void createWizard(Project project) throws IOException {
+    File directory = FileUtil.createTempDirectory(getName(), "new", false);
+    myFilesToDelete.add(directory);
+    myWizard = new TestWizard(project, directory.getPath());
+    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
   protected void runWizard(Consumer<ModuleWizardStep> adjuster) {
@@ -76,19 +89,9 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     myWizard.doOk();
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    File directory = FileUtil.createTempDirectory(getName(), "new", false);
-    myFilesToDelete.add(directory);
-
-    myWizard = createWizard(directory.getPath());
-    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
-  }
-
   @Nullable
-  protected TestWizard createWizard(String directory) {
-    return new TestWizard(null, directory);
+  protected TestWizard createWizard(String directory, Project project) {
+    return new TestWizard(project, directory);
   }
 
   @Override
