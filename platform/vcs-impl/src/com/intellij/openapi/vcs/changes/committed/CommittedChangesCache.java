@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.MessageBusUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
@@ -469,16 +470,25 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       settings.setDateAfter(calendar.getTime());
     }
     //noinspection unchecked
-    List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
+    final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
     writeChangesInReadAction(cacheFile, changes); // this sorts changes in chronological order
     if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
     if (changes.size() > 0) {
-      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, changes);
+      fireChangesLoaded(location, changes);
     }
     return changes;
+  }
+
+  private void fireChangesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
+    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
+      @Override
+      public void consume(CommittedChangesListener listener) {
+        listener.changesLoaded(location, changes);
+      }
+    });
   }
 
   // todo: fix - would externally loaded nesseccerily for file? i.e. just not efficient now 
@@ -529,7 +539,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
                                                         final List<CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
-      myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, savedChanges);
+      fireChangesLoaded(location, savedChanges);
     }
     return savedChanges;
   }
@@ -665,7 +675,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             if (file.isEmpty()) return;
             file.editChangelist(number, newMessage);
             loadIncomingChanges(false);
-            myBus.syncPublisher(COMMITTED_TOPIC).changesLoaded(location, Collections.<CommittedChangeList>emptyList());
+            fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
           }
           catch (IOException e) {
             VcsBalloonProblemNotifier.showOverChangesView(myProject, "Didn't update Repository changes with new message due to error: " + e.getMessage(),
@@ -696,7 +706,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         myCachesHolder.clearAllCaches();
         myCachedIncomingChangeLists = null;
         continuation.run();
-        myBus.syncPublisher(COMMITTED_TOPIC).changesCleared();
+        MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
+          @Override
+          public void consume(CommittedChangesListener listener) {
+            listener.changesCleared();
+          }
+        });
       }
     });
   }
@@ -782,6 +797,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
+  private void fireIncomingChangesUpdated(final List<CommittedChangeList> lists) {
+    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
+      @Override
+      public void consume(CommittedChangesListener listener) {
+        listener.incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+      }
+    });
+  }
+
   private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
     final Collection<CommittedChangeList> changes = receivedChanges == null ? myCachedIncomingChangeLists : receivedChanges;
     if (changes == null) {
@@ -790,12 +814,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         @Override
         public void run() {
           final List<CommittedChangeList> lists = loadIncomingChanges(false);
-          application.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
-            }
-          });
+          fireIncomingChangesUpdated(lists);
         }
       };
       if (application.isDispatchThread()) {
@@ -806,11 +825,26 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       return;
     }
     final ArrayList<CommittedChangeList> listCopy = new ArrayList<CommittedChangeList>(changes);
-    myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
+    fireIncomingChangesUpdated(listCopy);
   }
 
   private void notifyRefreshError(final VcsException e) {
-    myBus.syncPublisher(COMMITTED_TOPIC).refreshErrorStatusChanged(e);
+    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
+      @Override
+      public void consume(CommittedChangesListener listener) {
+        listener.refreshErrorStatusChanged(e);
+      }
+    });
+  }
+
+  private CommittedChangesListener getPublisher(final Consumer<CommittedChangesListener> listener) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<CommittedChangesListener>() {
+      @Override
+      public CommittedChangesListener compute() {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+        return myBus.syncPublisher(COMMITTED_TOPIC);
+      }
+    });
   }
 
   public boolean isRefreshingIncomingChanges() {
