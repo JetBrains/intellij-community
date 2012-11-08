@@ -46,17 +46,17 @@ public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, 
       final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
       if (propertyName == null) return;
 
-      queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()),
+      queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()),
                                                 UsageSearchContext.IN_CODE, true, element);
     }
     else if (element instanceof GrField) {
       for (GrAccessorMethod method : ((GrField)element).getGetters()) {
-        MethodReferencesSearch.search(method, queryParameters.getScope(), true).forEach(consumer);
+        MethodReferencesSearch.search(method, queryParameters.getEffectiveSearchScope(), true).forEach(consumer);
       }
 
       final GrAccessorMethod setter = ((GrField)element).getSetter();
       if (setter != null) {
-        MethodReferencesSearch.search(setter, queryParameters.getScope(), true).forEach(consumer);
+        MethodReferencesSearch.search(setter, queryParameters.getEffectiveSearchScope(), true).forEach(consumer);
       }
     }
   }

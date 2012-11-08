@@ -21,6 +21,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.reference.SoftReference
 
+import java.util.concurrent.CountDownLatch
+
 /**
  * @author peter
  */
@@ -65,8 +67,9 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
                          (0..<10).collect { "void foo$it(int i, boolean b, Object o) {}" }.join("\n") +
                          " }")
     }
+    CountDownLatch latch = new CountDownLatch(count)
     for (c in classList) {
-      ApplicationManager.application.executeOnPooledThread { Thread.yield(); c.text }
+      ApplicationManager.application.executeOnPooledThread { Thread.yield(); c.text; latch.countDown() }
       for (m in c.methods) {
         def parameters = m.parameterList.parameters
         for (i in 0..<parameters.size()) {
@@ -74,5 +77,6 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
         }
       }
     }
+    latch.await()
   }
 }
