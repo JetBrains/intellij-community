@@ -54,6 +54,7 @@ public class ArrangementMatchingRulesList extends JBList {
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final ArrangementMatchingRuleEditor        myEditor;
+  @NotNull private final RepresentationCallback               myRepresentationCallback;
 
   private int myRowUnderMouse = -1;
   private int myEditorRow     = -1;
@@ -61,9 +62,11 @@ public class ArrangementMatchingRulesList extends JBList {
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementColorsProvider colorsProvider,
-                                      @NotNull ArrangementStandardSettingsAware settingsFilter)
+                                      @NotNull ArrangementStandardSettingsAware settingsFilter,
+                                      @NotNull RepresentationCallback callback)
   {
     super(new ArrangementMatchingRulesListModel());
+    myRepresentationCallback = callback;
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
     setCellRenderer(new MyListCellRenderer());
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
@@ -217,19 +220,24 @@ public class ArrangementMatchingRulesList extends JBList {
     ListSelectionModel model = getSelectionModel();
     for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
       ArrangementListRowDecorator decorator = myComponents.get(i);
-      if (decorator != null) {
-        decorator.setSelected(model.isSelectedIndex(i));
-        myEditorRow = i + 1;
-        ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
-        Container parent = getParent();
-        int width = getBounds().width;
-        if (parent instanceof JViewport) {
-          width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
-        }
-        editor.applyAvailableWidth(width);
-        getModel().insertElementAt(editor, myEditorRow);
-        editor.expand();
+      if (decorator == null) {
+        continue;
       }
+      decorator.setSelected(model.isSelectedIndex(i));
+      myEditorRow = i + 1;
+      ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
+      Container parent = getParent();
+      int width = getBounds().width;
+      if (parent instanceof JViewport) {
+        width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+      }
+      editor.applyAvailableWidth(width);
+      getModel().insertElementAt(editor, myEditorRow);
+      Rectangle bounds = getCellBounds(i, i + 1);
+      if (bounds != null) {
+        myRepresentationCallback.ensureVisible(bounds);
+      }
+      editor.expand();
     }
   }
 
@@ -259,7 +267,7 @@ public class ArrangementMatchingRulesList extends JBList {
       repaint(bounds);
     }
   }
-
+  
   private class MyListCellRenderer implements ListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -284,5 +292,9 @@ public class ArrangementMatchingRulesList extends JBList {
       component.setRowIndex((myEditorRow >= 0 && index > myEditorRow) ? index : index + 1);
       return component.getUiComponent();
     }
+  }
+  
+  public interface RepresentationCallback {
+    void ensureVisible(@NotNull Rectangle r);
   }
 }

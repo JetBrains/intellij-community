@@ -42,14 +42,31 @@ public class ArrangementMatchingRulesPanel extends JPanel {
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
-    myList = new ArrangementMatchingRulesList(displayManager, colorsProvider, settingsFilter);
-    init();
-  }
-
-  private void init() {
     setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("arrangement.settings.section.match")));
     setLayout(new GridBagLayout());
-    JBScrollPane scrollPane = new JBScrollPane(myList);
+    JBScrollPane scrollPane = new JBScrollPane();
+    final JViewport viewport = scrollPane.getViewport();
+    ArrangementMatchingRulesList.RepresentationCallback callback = new ArrangementMatchingRulesList.RepresentationCallback() {
+      @Override
+      public void ensureVisible(@NotNull Rectangle r) {
+        Rectangle visibleRect = viewport.getViewRect();
+        if (r.y <= visibleRect.y) {
+          return;
+        }
+        
+        int excessiveHeight = r.y + r.height -  (visibleRect.y + visibleRect.height);
+        if (excessiveHeight <= 0) {
+          return;
+        }
+        
+        int verticalShift = Math.min(r.y - visibleRect.y, excessiveHeight);
+        if (verticalShift > 0) {
+          viewport.setViewPosition(new Point(visibleRect.x, visibleRect.y + verticalShift));
+        }
+      }
+    };
+    myList = new ArrangementMatchingRulesList(displayManager, colorsProvider, settingsFilter, callback);
+    scrollPane.setViewportView(myList);
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
   }
 
