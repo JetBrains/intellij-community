@@ -27,38 +27,40 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       boolean gotExample = false;
 
       int currentPosition = 0;
+      int maxPosition = text.length();
       for (String string : strings) {
         final String trimmedString = string.trim();
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end - 1),  null, null);
+          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
         }
         if (trimmedString.startsWith(">>>")) {
           if (!gotExample)
             start = currentPosition;
 
           gotExample = true;
-          end = getEndOffset(currentPosition, string);
+          end = getEndOffset(currentPosition, string, maxPosition);
         }
         else if (trimmedString.startsWith("...") && gotExample) {
-          end = getEndOffset(currentPosition, string);
+          end = getEndOffset(currentPosition, string, maxPosition);
         }
         currentPosition = currentPosition + string.length();
       }
       if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end - 1),  null, null);
+        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
     }
   }
 
-  private int getEndOffset(int start, String s) {
+  private int getEndOffset(int start, String s, int maxPosition) {
     int end;
     int length = s.length();
     if (s.trim().endsWith("\"\"\"") || s.trim().endsWith("'''"))
       length = length - 3;
-    else if (s.trim().endsWith("\"") || s.trim().endsWith("'"))
+    else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'")))
       length = length - 1;
 
     end = start + length;
+    if (s.endsWith("\n")) end = end - 1;
     return end;
   }
 }
