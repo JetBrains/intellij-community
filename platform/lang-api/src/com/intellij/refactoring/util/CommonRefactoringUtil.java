@@ -204,10 +204,11 @@ public class CommonRefactoringUtil {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isWritable() && !fileTypeManager.isFileIgnored(file)) {
+        final boolean ignored = fileTypeManager.isFileIgnored(file);
+        if (! file.isWritable() && ! ignored) {
           list.add(file);
         }
-        return true;
+        return ! ignored;
       }
     });
   }
