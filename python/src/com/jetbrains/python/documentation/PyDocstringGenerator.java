@@ -49,6 +49,7 @@ public class PyDocstringGenerator {
   private PyStringLiteralExpression myDocStringExpression;
 
   private final Map<String, Pair<Integer, Integer>> myParamTypesOffset = Maps.newHashMap();
+  private PsiFile myFile;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -56,6 +57,7 @@ public class PyDocstringGenerator {
       myFunction = (PyFunction)docStringOwner;
     }
     myProject = myDocStringOwner.getProject();
+    myFile = myDocStringOwner.getContainingFile();
   }
 
   public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
@@ -73,7 +75,7 @@ public class PyDocstringGenerator {
   }
 
   private PsiFile getFile() {
-    return myDocStringOwner.getContainingFile();
+    return myFile;
   }
 
   public void startTemplate() {
@@ -91,7 +93,7 @@ public class PyDocstringGenerator {
 
     OpenFileDescriptor descriptor = new OpenFileDescriptor(
       myProject,
-      myDocStringOwner.getContainingFile().getVirtualFile(),
+      myFile.getVirtualFile(),
       myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
     );
     Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
