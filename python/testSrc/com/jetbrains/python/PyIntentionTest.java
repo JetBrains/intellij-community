@@ -249,8 +249,7 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
-
-  public void testTypeInDocstring6() {
+  public void testTypeInDocstring6() {         //PY-7973
     doNegativeTest(PyBundle.message("INTN.specify.return.type"));
   }
 
@@ -298,6 +297,10 @@ public class PyIntentionTest extends PyTestCase {
     finally {
       setLanguageLevel(null);
     }
+  }
+
+  public void testTypeAssertion4() {  //PY-7971
+    doTestTypeAssertion();
   }
 
   public void testTypeAnnotation3() {  //PY-7087
