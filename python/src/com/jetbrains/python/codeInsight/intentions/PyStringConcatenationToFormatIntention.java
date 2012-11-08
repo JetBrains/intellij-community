@@ -41,8 +41,12 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     while (element.getParent() instanceof PyBinaryExpression) {
       element = element.getParent();
     }
-    if (((PyBinaryExpression)element).getOperator() != PyTokenTypes.PLUS) {
-      return false;
+
+    final Collection<PyElementType> operators = getOperators((PyBinaryExpression)element);
+    for (PyElementType operator : operators) {
+      if (operator != PyTokenTypes.PLUS) {
+        return false;
+      }
     }
 
     final Collection<PyExpression> expressions = getSimpleExpressions((PyBinaryExpression)element);
@@ -80,6 +84,18 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     } else {
       res.add(expression.getRightExpression());
     }
+    return res;
+  }
+
+  private static Collection<PyElementType> getOperators(@NotNull PyBinaryExpression expression) {
+    List<PyElementType> res = new ArrayList<PyElementType>();
+    if (expression.getLeftExpression() instanceof PyBinaryExpression) {
+      res.addAll(getOperators((PyBinaryExpression)expression.getLeftExpression()));
+    }
+    if (expression.getRightExpression() instanceof PyBinaryExpression) {
+      res.addAll(getOperators((PyBinaryExpression)expression.getRightExpression()));
+    }
+    res.add(expression.getOperator());
     return res;
   }
 
