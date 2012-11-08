@@ -22,7 +22,12 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   @Override
   public Collection<String> suggestHomePaths() {
     List<String> candidates = new ArrayList<String>();
-    VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
+    collectUnixPythons("/usr/bin", candidates);
+    return candidates;
+  }
+
+  public static void collectUnixPythons(String path, List<String> candidates) {
+    VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {
         ((NewVirtualFile)rootDir).markDirty();
@@ -31,16 +36,17 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String child_name = child.getName();
+          final String childName = child.getName();
           for (String name : NAMES) {
-            if (child_name.startsWith(name)) {
-              if (!child_name.endsWith("-config")) candidates.add(child.getPath());
+            if (childName.startsWith(name)) {
+              if (!childName.endsWith("-config") && !childName.startsWith("pythonw")) {
+                candidates.add(child.getPath());
+              }
               break;
             }
           }
         }
       }
     }
-    return candidates;
   }
 }

@@ -11,4 +11,6 @@ public interface PyFrameworkProjectGenerator<T> extends DirectoryProjectGenerato
   String getFrameworkTitle();
 
   boolean isFrameworkInstalled(Project project, Sdk sdk);
+
+  boolean acceptsRemoteSdk();
 }
