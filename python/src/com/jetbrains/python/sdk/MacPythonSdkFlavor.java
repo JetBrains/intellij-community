@@ -23,6 +23,7 @@ public class MacPythonSdkFlavor extends CPythonSdkFlavor {
     List<String> candidates = new ArrayList<String>();
     collectPythonInstallations("/Library/Frameworks/Python.framework/Versions", candidates);
     collectPythonInstallations("/System/Library/Frameworks/Python.framework/Versions", candidates);
+    UnixPythonSdkFlavor.collectUnixPythons("/usr/local/bin", candidates);
     return candidates;
   }
 
