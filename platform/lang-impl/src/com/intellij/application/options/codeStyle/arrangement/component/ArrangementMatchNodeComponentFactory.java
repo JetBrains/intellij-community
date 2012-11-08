@@ -15,12 +15,13 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.component;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementMatchingRulesListModel;
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementAnimationPanel;
-import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementMatchingRulesList;
+import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
+import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesList;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesListModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -32,9 +33,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVis
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Set;
 
 /**
@@ -92,15 +90,10 @@ public class ArrangementMatchNodeComponentFactory {
   }
 
   private class RemoveAtomConditionCallback implements Consumer<ArrangementAtomMatchConditionComponent>,
-                                                       ArrangementAnimationPanel.Listener,
-                                                       ActionListener
+                                                       ArrangementAnimationManager.Callback
   {
 
-    @NotNull private final Timer myTimer = new Timer(ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS, this);
-
     @NotNull private final StdArrangementMatchRule   myRule;
-    @NotNull private       ArrangementAnimationPanel myAnimationPanel;
-
     private int myRow;
 
     RemoveAtomConditionCallback(@NotNull StdArrangementMatchRule rule) {
@@ -138,27 +131,16 @@ public class ArrangementMatchNodeComponentFactory {
         }
       }
 
-      myAnimationPanel = component.getAnimationPanel();
-      myAnimationPanel.setListener(this);
-      myAnimationPanel.startAnimation(false, true);
-      myTimer.stop();
+      ArrangementAnimationPanel panel = component.getAnimationPanel();
+      new ArrangementAnimationManager(panel, this);
+      panel.startAnimation(false, true);
       myList.repaintRows(i, i, false);
     }
 
     @Override
-    public void onPaint() {
-      if (myTimer.isRunning()) {
-        return;
-      }
-      myTimer.restart();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      boolean continueAnimation = myAnimationPanel.nextIteration();
-      myList.repaintRows(myRow, myRow, !continueAnimation);
-      myTimer.stop();
-      if (continueAnimation) {
+    public void onAnimationIteration(boolean finished) {
+      myList.repaintRows(myRow, myRow, finished);
+      if (!finished) {
         return;
       }
       ArrangementMatchingRulesListModel model = myList.getModel();

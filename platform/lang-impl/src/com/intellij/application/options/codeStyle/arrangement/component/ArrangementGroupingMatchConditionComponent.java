@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.component;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConfigUtil;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;

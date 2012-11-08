@@ -18,7 +18,8 @@ package com.intellij.application.options.codeStyle.arrangement.component;
 import com.intellij.application.options.codeStyle.arrangement.*;
 import com.intellij.application.options.codeStyle.arrangement.action.ArrangementRemoveConditionAction;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -45,8 +46,6 @@ import java.awt.event.MouseEvent;
  * @since 8/8/12 10:06 AM
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementMatchConditionComponent {
-
-  public static final int VERTICAL_PADDING = 4;
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
@@ -119,7 +118,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       myCloseButtonBounds = new Rectangle(0, 0, buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
     }
 
-    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1).insets(0, 0, 0, 0);
+    
 
     JPanel insetsPanel = new JPanel(new GridBagLayout()) {
       @Override
@@ -127,11 +126,14 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
         return "insets panel for " + myText;
       }
     };
+
+    final int arcSize = insetsPanel.getFont().getSize();
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1)
+      .insets(0, 0, 0, myCloseButton == null ? arcSize : 0);
     insetsPanel.add(myTextControl, constraints);
     insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
     insetsPanel.setOpaque(false);
 
-    final int arcSize = myTextControl.getFont().getSize();
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {

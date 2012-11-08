@@ -34,6 +34,7 @@ public class ArrangementConstants {
   @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
 
   public static final int HORIZONTAL_PADDING = 8;
+  public static final int VERTICAL_PADDING   = 4;
   public static final int HORIZONTAL_GAP     = 5;
   public static final int VERTICAL_GAP       = 3;
 
