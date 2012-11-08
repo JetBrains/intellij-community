@@ -149,6 +149,8 @@ public class DataFlowRunner {
           }
         }
 
+        //System.out.println(instructionState);
+
         DfaInstructionState[] after = instruction.accept(this, instructionState.getMemoryState(), visitor);
         if (after != null) {
           for (DfaInstructionState state : after) {
