@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;

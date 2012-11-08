@@ -37,15 +37,9 @@ public class MultiRowFlowPanel extends JPanel {
   private int myForcedWidth;
 
   public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {
-    super(new FlowLayout(align, getGapToUse(hGap), getGapToUse(vGap)));
+    super(new FlowLayout(align, hGap, vGap));
   }
 
-  private static int getGapToUse(int gap) {
-    // There is a problem with flow layout controls paint under Alloy LAF - it looks like it doesn't take given gaps into consideration.
-    // Alloy LAF sources are closed, so we use this dirty hack here.
-    return UIUtil.isUnderAlloyLookAndFeel() ? gap - 4 : gap;
-  }
-  
   /**
    * Calculates a preferred size assuming that the maximum row width is a value returned from
    * {@link #getMaxRowWidth()}.

@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorComponent;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchNodeComponentFactory;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -48,24 +53,46 @@ public class ArrangementMatchingRulesList extends JBList {
   @NotNull private final TIntObjectHashMap<ArrangementListRowDecorator> myComponents = new TIntObjectHashMap<ArrangementListRowDecorator>();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
+  @NotNull private final ArrangementMatchingRuleEditor        myEditor;
+  @NotNull private final RepresentationCallback               myRepresentationCallback;
 
   private int myRowUnderMouse = -1;
+  private int myEditorRow     = -1;
   private boolean mySkipMouseClick;
+  private boolean mySkipSelectionChange;
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementColorsProvider colorsProvider,
-                                      @NotNull ArrangementStandardSettingsAware settingsFilter)
+                                      @NotNull ArrangementStandardSettingsAware settingsFilter,
+                                      @NotNull RepresentationCallback callback)
   {
     super(new ArrangementMatchingRulesListModel());
+    myRepresentationCallback = callback;
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
     setCellRenderer(new MyListCellRenderer());
+    setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
-      @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        onMouseMoved(e);
+      }
     });
     addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
-      @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
-      @Override public void mouseClicked(MouseEvent e) { onMousePressed(e); }
+      @Override
+      public void mouseExited(MouseEvent e) {
+        onMouseExited();
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        onMouseEntered(e);
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        onMousePressed(e);
+      }
     });
     addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -88,7 +115,7 @@ public class ArrangementMatchingRulesList extends JBList {
     if (rules == null) {
       return;
     }
-    
+
     for (StdArrangementMatchRule rule : rules) {
       getModel().addElement(rule);
     }
@@ -189,13 +216,73 @@ public class ArrangementMatchingRulesList extends JBList {
   }
 
   private void onSelectionChange(@NotNull ListSelectionEvent e) {
-    ListSelectionModel model = getSelectionModel();
-    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
-      ArrangementListRowDecorator decorator = myComponents.get(i);
-      if (decorator != null) {
-        decorator.setSelected(model.isSelectedIndex(i));
+    if (mySkipSelectionChange || e.getValueIsAdjusting()) {
+      return;
+    }
+    ListSelectionModel selectionModel = getSelectionModel();
+    if (selectionModel.isSelectionEmpty()) {
+      hideEditor();
+      return;
+    }
+
+    int selectedRow = selectionModel.getMinSelectionIndex();
+    if (selectedRow != selectionModel.getMaxSelectionIndex()) {
+      hideEditor();
+      return;
+    }
+
+    if (myEditorRow >= 0) {
+      if (myEditorRow == selectedRow + 1) {
+        return;
+      }
+      else {
+        hideEditor();
       }
     }
+    
+    // There is a possible case that there was an active editor in a row before the selected.
+    selectedRow = selectionModel.getMinSelectionIndex();
+    ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
+    if (toEdit == null) {
+      return;
+    }
+    
+    myEditorRow = selectedRow + 1;
+    ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
+    Container parent = getParent();
+    int width = getBounds().width;
+    if (parent instanceof JViewport) {
+      width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+    }
+    editor.applyAvailableWidth(width);
+    mySkipSelectionChange = true;
+    try {
+      getModel().insertElementAt(editor, myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    Rectangle bounds = getCellBounds(selectedRow, myEditorRow);
+    if (bounds != null) {
+      myRepresentationCallback.ensureVisible(bounds);
+    }
+    editor.expand();
+    repaintRows(selectedRow, getModel().size() - 1, false);
+  }
+
+  private void hideEditor() {
+    if (myEditorRow < 0) {
+      return;
+    }
+    repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
+    mySkipSelectionChange = true;
+    try {
+      getModel().removeElementAt(myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    myEditorRow = -1;
   }
 
   @NotNull
@@ -224,10 +311,13 @@ public class ArrangementMatchingRulesList extends JBList {
       repaint(bounds);
     }
   }
-
+  
   private class MyListCellRenderer implements ListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (value instanceof ArrangementRepresentationAware) {
+        return ((ArrangementRepresentationAware)value).getRenderer();
+      }
       ArrangementListRowDecorator component = myComponents.get(index);
       if (component == null) {
         if (!(value instanceof StdArrangementMatchRule)) {
@@ -243,8 +333,13 @@ public class ArrangementMatchingRulesList extends JBList {
           component.setBackground(UIUtil.getListBackground());
         }
       }
-      component.setRowIndex(index + 1);
+      component.setRowIndex((myEditorRow >= 0 && index > myEditorRow) ? index : index + 1);
+      component.setSelected(getSelectionModel().isSelectedIndex(index));
       return component.getUiComponent();
     }
+  }
+  
+  public interface RepresentationCallback {
+    void ensureVisible(@NotNull Rectangle r);
   }
 }

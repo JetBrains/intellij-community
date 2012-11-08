@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,13 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
       final Document document = JDOMUtil.loadDocument(classpathFile);
       final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>());
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
+      final String eml = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+      final File emlFile = new File(baseModulePath, eml);
+      if (emlFile.isFile()) {
+        final Document emlDocument = JDOMUtil.loadDocument(emlFile);
+        final Element root = emlDocument.getRootElement();
+        new JpsIdeaSpecificSettings(expander).readIDEASpecific(root, module);
+      }
     }
     catch (Exception e) {
       LOG.info(e);

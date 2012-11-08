@@ -103,7 +103,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   final class ShowImplementationsOnlyAction extends ToggleAction {
     public ShowImplementationsOnlyAction() {
       super(IdeBundle.message("action.hide.non.implementations"), null,
-            AllIcons.Ant.Filter); // TODO[anton] use own icon!!!
+            AllIcons.General.Filter); // TODO[anton] use own icon!!!
     }
 
     @Override

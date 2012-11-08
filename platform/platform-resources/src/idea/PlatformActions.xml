@@ -144,6 +144,13 @@
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
+        <group id="ExportImportGroup">
+          <group id="File.ImportGroup" popup="true" text="Import">
+            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="Settings..."/>
+          </group>
+          <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+        </group>
+        <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
@@ -153,13 +160,6 @@
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
-        <group id="ExportImportGroup">
-          <group id="File.ImportGroup" popup="true" text="Import">
-            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="Settings..."/>
-          </group>
-          <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
-        </group>
-        <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         

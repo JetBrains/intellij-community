@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.component;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,10 +21,10 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 10/30/12 6:57 PM
+ * @since 11/7/12 6:24 PM
  */
 public interface ArrangementRepresentationAware {
-
+  
   @NotNull
   JComponent getRenderer();
 }

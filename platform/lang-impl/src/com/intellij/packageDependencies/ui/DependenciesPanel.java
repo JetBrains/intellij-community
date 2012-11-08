@@ -605,7 +605,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final class FilterLegalsAction extends ToggleAction {
     FilterLegalsAction() {
       super(AnalysisScopeBundle.message("action.show.illegals.only"), AnalysisScopeBundle.message("action.show.illegals.only.description"),
-            AllIcons.Ant.Filter);
+            AllIcons.General.Filter);
     }
 
     public boolean isSelected(AnActionEvent event) {

@@ -32,7 +32,6 @@ public class UIDesignerIcons {
   @SuppressWarnings("unused")
   public static final Icon EditorPane = load("/com/intellij/uiDesigner/icons/editorPane.png"); // 16x16
   public static final Icon Empty = load("/com/intellij/uiDesigner/icons/empty.png"); // 16x16
-  public static final Icon Error_small = load("/com/intellij/uiDesigner/icons/error-small.png"); // 16x16
   public static final Icon ExpandNode = load("/com/intellij/uiDesigner/icons/expandNode.png"); // 9x9
   
   @SuppressWarnings("unused")

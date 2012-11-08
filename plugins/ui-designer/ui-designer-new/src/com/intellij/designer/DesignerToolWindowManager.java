@@ -163,7 +163,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   }
 
   private AnAction[] createActions() {
-    AnAction expandAll = new AnAction("Expand All", null, UIDesignerNewIcons.ExpandAll) {
+    AnAction expandAll = new AnAction("Expand All", null, AllIcons.Actions.Expandall) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {

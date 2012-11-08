@@ -183,18 +183,6 @@ public class WizardContext {
     return myProjectStorageFormat;
   }
 
-  private boolean myTemplateMode;
-
-  /** This will be removed shortly */
-  @Deprecated
-  public boolean isTemplateMode() {
-    return myTemplateMode;
-  }
-
-  public void setTemplateMode(boolean templateMode) {
-    myTemplateMode = templateMode;
-  }
-
   public ModuleBuilder[] getAllBuilders() {
     return myAllBuilders.getValue();
   }

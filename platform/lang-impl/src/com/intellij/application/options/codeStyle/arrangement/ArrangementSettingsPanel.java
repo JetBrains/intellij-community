@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProviderImpl;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -49,7 +50,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final Language                         myLanguage;
   @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
-  @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
+  @NotNull private final ArrangementMatchingRulesPanel myMatchingRulesPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);

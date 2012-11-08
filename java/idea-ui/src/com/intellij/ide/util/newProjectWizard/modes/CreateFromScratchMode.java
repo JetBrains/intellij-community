@@ -69,7 +69,6 @@ public class CreateFromScratchMode extends WizardMode {
       sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
     }
     for (ModuleBuilder builder : builders) {
-      context.setTemplateMode(mode instanceof CreateFromTemplateMode);
       addStepsForBuilder(builder, context, modulesProvider, sequence);
     }
     return sequence;

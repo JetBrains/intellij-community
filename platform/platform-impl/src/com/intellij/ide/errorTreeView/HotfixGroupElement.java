@@ -49,7 +49,7 @@ public class HotfixGroupElement extends GroupingElement {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        renderer.setIcon(AllIcons.Compiler.Error);
+        renderer.setIcon(AllIcons.General.Error);
 
         final String[] text = getText();
         final String errorText = ((text != null) && (text.length > 0)) ? text[0] : "";

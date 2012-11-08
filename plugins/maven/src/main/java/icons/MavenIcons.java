@@ -14,18 +14,12 @@ public class MavenIcons {
   }
 
   public static final Icon ChildrenProjects = load("/images/childrenProjects.png"); // 12x12
-  public static final Icon Download = load("/images/download.png"); // 16x16
-  
   @SuppressWarnings("unused")
-  public static final Icon Error = load("/images/error.png"); // 16x16
-  public static final Icon FilterPhases = load("/images/filterPhases.png"); // 16x16
   public static final Icon MavenLogo = load("/images/mavenLogo.png"); // 16x16
   public static final Icon MavenPlugin = load("/images/mavenPlugin.png"); // 16x16
   public static final Icon MavenProject = load("/images/mavenProject.png"); // 16x16
   public static final Icon ModulesClosed = load("/images/modulesClosed.png"); // 16x16
   public static final Icon OfflineMode = load("/images/offlineMode.png"); // 16x16
-  public static final Icon OverridenDependency = load("/images/overridenDependency.png"); // 10x14
-  public static final Icon OverridingDependency = load("/images/overridingDependency.png"); // 10x14
   public static final Icon ParentProject = load("/images/parentProject.png"); // 12x12
   public static final Icon Phase = load("/images/phase.png"); // 16x16
   public static final Icon PhasesClosed = load("/images/phasesClosed.png"); // 16x16

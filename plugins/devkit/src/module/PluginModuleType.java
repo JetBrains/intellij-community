@@ -16,18 +16,12 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
@@ -58,23 +52,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   public static boolean isOfType(Module module) {
     return get(module) instanceof PluginModuleType;
-  }
-
-  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
-                                              PluginModuleBuilder moduleBuilder,
-                                              ModulesProvider modulesProvider) {
-    if (wizardContext.isTemplateMode()) return ModuleWizardStep.EMPTY_ARRAY;
-    final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
-    ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    steps.add(stepFactory.createSourcePathsStep(wizardContext, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(stepFactory.createProjectJdkStep(wizardContext, IdeaJdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
-      public Boolean compute() {
-        final Sdk projectJdk = wizardContext.getProjectJdk();
-        return IdeaJdk.findIdeaJdk(projectJdk) == null ? Boolean.TRUE : Boolean.FALSE;
-      }
-    }, ADD_PLUGIN_MODULE_ICON, "reference.dialogs.new.project.fromScratch.sdk"));
-    final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
-    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
   }
 
   public PluginModuleBuilder createModuleBuilder() {

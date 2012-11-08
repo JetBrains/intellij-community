@@ -57,6 +57,7 @@ public class GitCommand {
   public static final GitCommand REMOTE = read("remote");
   public static final GitCommand RESET = write("reset");
   public static final GitCommand REV_LIST = read("rev-list");
+  public static final GitCommand REV_PARSE = read("rev-parse");
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");
