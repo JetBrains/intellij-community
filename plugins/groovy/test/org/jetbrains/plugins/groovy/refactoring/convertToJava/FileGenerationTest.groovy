@@ -122,4 +122,6 @@ public enum A {
   void testTupleInReturn() { doTest() }
 
   void testStaticMethods() { doTest() }
+
+  void testImplementGroovyObject() { doTest() }
 }

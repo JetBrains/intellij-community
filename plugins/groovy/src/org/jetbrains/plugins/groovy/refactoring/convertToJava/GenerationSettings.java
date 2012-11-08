@@ -19,5 +19,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
  * @author Maxim.Medvedev
  */
 public class GenerationSettings {
-  public static boolean dontReplaceOperatorsWithMethodsForNumbers = true;
+  public static boolean replaceOperatorsWithMethodsForNumbers = false;
+  public static boolean implementGroovyObjectAlways = false;
 }

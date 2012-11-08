@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -30,8 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
  * @date: 18.03.2007
  */
 public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
-
-  String[] MODIFIERS_PUBLIC_STATIC = {PsiModifier.PUBLIC, PsiModifier.STATIC};
 
   @NotNull
   PsiElement[] getModifiers();
@@ -49,7 +46,6 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   boolean hasExplicitModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name);
 
   @Override
-  void setModifierProperty(@GrModifier.GrModifierConstant @NotNull @NonNls String name, boolean value)
-    throws IncorrectOperationException;
+  void setModifierProperty(@GrModifier.GrModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
 }

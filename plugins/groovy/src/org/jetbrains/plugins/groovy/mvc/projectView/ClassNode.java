@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -52,7 +51,7 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   protected void buildChildren(final Module module, final GrTypeDefinition grClass, final List<AbstractTreeNode> children) {
     final String parentLocationRootMark = getValue().getLocationRootMark();
 
-    final GrMethod[] methods = grClass.getGroovyMethods();
+    final GrMethod[] methods = grClass.getCodeMethods();
     for (final GrMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
 

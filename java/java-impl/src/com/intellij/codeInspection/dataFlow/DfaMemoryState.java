@@ -60,6 +60,4 @@ public interface DfaMemoryState {
   boolean isNotNull(DfaVariableValue dfaVar);
 
   void flushVariableOutOfScope(DfaVariableValue variable);
-
-  void fieldReferenced();
 }

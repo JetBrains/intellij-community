@@ -387,7 +387,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @NotNull
-  public GrMethod[] getGroovyMethods() {
+  public GrMethod[] getCodeMethods() {
     GrMethod[] cached = myGroovyMethods;
     if (cached == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
@@ -434,7 +434,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (cached == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
       List<GrMethod> result = new ArrayList<GrMethod>();
-      for (final GrMethod method : getGroovyMethods()) {
+      for (final GrMethod method : getCodeMethods()) {
         if (method.isConstructor()) {
           result.add(method);
         }

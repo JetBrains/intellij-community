@@ -70,20 +70,20 @@ public class ClassGenerator {
 
     boolean isEnum = typeDefinition.isEnum();
     boolean isAnnotationType = typeDefinition.isAnnotationType();
-    boolean isInterface = !isAnnotationType && typeDefinition.isInterface();
-    boolean isClassDef = !isInterface && !isEnum && !isAnnotationType && !isScript;
+    boolean isInterface = typeDefinition.isInterface();
 
     ModifierListGenerator.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel,
                                               classItemGenerator.generateAnnotations());
+
+    if (isAnnotationType) {
+      text.append('@');
+    }
 
     if (isInterface) {
       text.append("interface");
     }
     else if (isEnum) {
       text.append("enum");
-    }
-    else if (isAnnotationType) {
-      text.append("@interface");
     }
     else {
       text.append("class");
@@ -99,18 +99,18 @@ public class ClassGenerator {
       text.append("extends ").append(GroovyCommonClassNames.GROOVY_LANG_SCRIPT).append(' ');
     }
     else if (!isEnum && !isAnnotationType) {
-      writeExtendsList(text, typeDefinition);
-      writeImplementsList(text, typeDefinition, isInterface);
+      classItemGenerator.writeExtendsList(text, typeDefinition);
+      classItemGenerator.writeImplementsList(text, typeDefinition);
     }
 
     text.append("{\n");
 
-    writeMembers(text, typeDefinition, isClassDef);
+    writeMembers(text, typeDefinition);
     text.append('}');
   }
 
-  public void writeMembers(StringBuilder text, PsiClass typeDefinition, boolean isClassDef) {
-    if (typeDefinition.isEnum()) {
+  public void writeMembers(StringBuilder text, PsiClass typeDefinition) {
+    if (typeDefinition instanceof GrEnumTypeDefinition) {
       final GrEnumConstant[] enumConstants = ((GrEnumTypeDefinition)typeDefinition).getEnumConstants();
       for (GrEnumConstant constant : enumConstants) {
         classItemGenerator.writeEnumConstant(text, constant);
@@ -123,7 +123,7 @@ public class ClassGenerator {
       text.append(";\n");
     }
 
-    writeAllMethods(text, classItemGenerator.collectMethods(typeDefinition, isClassDef), typeDefinition);
+    writeAllMethods(text, classItemGenerator.collectMethods(typeDefinition), typeDefinition);
 
     if (typeDefinition instanceof GrTypeDefinition) {
       for (GrMembersDeclaration declaration : ((GrTypeDefinition)typeDefinition).getMemberDeclarations()) {

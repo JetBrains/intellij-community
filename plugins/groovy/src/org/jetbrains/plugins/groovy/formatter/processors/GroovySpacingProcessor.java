@@ -20,8 +20,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -365,6 +365,18 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
              (myType2 == MODIFIERS || myType2 == REFERENCE_ELEMENT)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
+  }
+
+  @Override
+  public void visitModifierList(GrModifierList modifierList) {
+    int annotationWrap = getAnnotationWrap(myParent.getParent());
+    if (myChild1.getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS) {
+      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else {
+      createSpaceProperty(true, false, 0);
+    }
+
   }
 
   @Override
@@ -709,13 +721,24 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
 
   private void processModifierList(ASTNode modifierList) {
-    if (modifierList.getLastChildNode().getElementType() == ANNOTATION &&
-        mySettings.METHOD_ANNOTATION_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS || mySettings.MODIFIER_LIST_WRAP) {
+    int annotationWrap = getAnnotationWrap(myParent);
+    if (modifierList.getLastChildNode().getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS ||
+        mySettings.MODIFIER_LIST_WRAP) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
       createSpaceProperty(true, false, 0);
     }
+  }
+
+  private int getAnnotationWrap(final PsiElement parent) {
+    return parent instanceof PsiMethod ? mySettings.METHOD_ANNOTATION_WRAP :
+           parent instanceof PsiClass ? mySettings.CLASS_ANNOTATION_WRAP :
+           parent instanceof GrVariableDeclaration &&
+           ((GrVariableDeclaration)parent).getVariables()[0] instanceof PsiField ? mySettings.FIELD_ANNOTATION_WRAP :
+           parent instanceof GrVariableDeclaration ? mySettings.VARIABLE_ANNOTATION_WRAP :
+           parent instanceof PsiParameter ? mySettings.PARAMETER_ANNOTATION_WRAP :
+           CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
   public Spacing getSpacing() {
@@ -767,7 +790,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   static boolean isWhiteSpace(final ASTNode node) {
-    return node != null && (node.getPsi() instanceof PsiWhiteSpace || node.getTextLength() == 0);
+    return node != null && (TokenSets.WHITE_SPACES_SET.contains(node.getElementType()) || node.getTextLength() == 0);
   }
 
   @Nullable

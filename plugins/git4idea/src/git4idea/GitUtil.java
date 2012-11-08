@@ -16,6 +16,8 @@
 package git4idea;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -897,4 +899,28 @@ public class GitUtil {
     return GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
   }
 
+  @NotNull
+  public static Collection<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    final GitRepositoryManager manager = getRepositoryManager(project);
+    com.google.common.base.Function<VirtualFile,GitRepository> ROOT_TO_REPO =
+      new com.google.common.base.Function<VirtualFile, GitRepository>() {
+        @Override
+        public GitRepository apply(@Nullable VirtualFile root) {
+          return root != null ? manager.getRepositoryForRoot(root) : null;
+        }
+      };
+    return Collections2.filter(Collections2.transform(sortFilesByGitRootsIgnoringOthers(files).keySet(), ROOT_TO_REPO),
+                               Predicates.notNull());
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<VirtualFile> files) {
+    try {
+      return sortFilesByGitRoot(files, true);
+    }
+    catch (VcsException e) {
+      LOG.error("Should never happen, since we passed 'ignore non-git' parameter", e);
+      return Collections.emptyMap();
+    }
+  }
 }

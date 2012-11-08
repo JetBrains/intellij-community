@@ -349,7 +349,7 @@ public class ExpressionGenerator extends Generator {
     builder.append("{\n");
     final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
     final ClassItemGeneratorImpl classItemGenerator = new ClassItemGeneratorImpl(context.extend());
-    new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous, true);
+    new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous);
     builder.append('}');
   }
 
@@ -667,7 +667,7 @@ public class ExpressionGenerator extends Generator {
   }
 
   private static boolean shouldNotReplaceOperatorWithMethod(@Nullable PsiType ltype, @Nullable GrExpression right, IElementType op) {
-    if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers) {
+    if (!GenerationSettings.replaceOperatorsWithMethodsForNumbers) {
 
       //adding something to string
       if ((op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING)) {

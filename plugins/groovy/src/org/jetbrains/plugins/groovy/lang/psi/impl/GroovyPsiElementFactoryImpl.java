@@ -474,7 +474,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (!( definition != null && definition instanceof GrClassDefinition)) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
-    GrMethod[] methods = ((GrClassDefinition)definition).getGroovyMethods();
+    GrMethod[] methods = ((GrClassDefinition)definition).getCodeMethods();
     if (methods.length != 1) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }

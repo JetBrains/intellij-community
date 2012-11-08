@@ -1,4 +1,4 @@
-public class BigInteger extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class BigInteger {
 public BigInteger(int i, java.lang.Byte[] arr) {
 }
 public java.lang.String toString(int radix) {
@@ -6,9 +6,9 @@ return "";
 }
 
 }
-public class NoSuchAlgorithmException extends java.lang.Exception implements groovy.lang.GroovyObject {
+public class NoSuchAlgorithmException extends java.lang.Exception {
 }
-public class MessageDigest extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class MessageDigest {
 public static MessageDigest getInstance(java.lang.String algorithm) throws NoSuchAlgorithmException {
 return new MessageDigest();
 }

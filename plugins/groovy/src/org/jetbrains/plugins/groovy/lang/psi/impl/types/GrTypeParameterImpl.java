@@ -97,7 +97,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @NotNull
-  public GrMethod[] getGroovyMethods() {
+  public GrMethod[] getCodeMethods() {
     return GrMethod.EMPTY_ARRAY;
   }
 

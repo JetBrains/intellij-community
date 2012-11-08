@@ -533,7 +533,7 @@ class X {
 new X().foo()
 ''') as GroovyFile
 
-    def method = (file.classes[0] as GrTypeDefinition).groovyMethods[0]
+    def method = (file.classes[0] as GrTypeDefinition).codeMethods[0]
 
     myFixture.renameElement(method, 'f oo');
 
@@ -555,7 +555,7 @@ class X {
 new X().foo()
 ''') as GroovyFile
 
-    def method = (file.classes[0] as GrTypeDefinition).groovyMethods[0]
+    def method = (file.classes[0] as GrTypeDefinition).codeMethods[0]
 
     myFixture.configureByText('Java.java', '''\
 class Java {

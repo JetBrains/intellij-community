@@ -31,6 +31,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,11 +51,8 @@ public class GitRevert extends BasicAction {
       }
     }
     RollbackChangesDialog.rollbackChanges(project, changes);
-    for (VirtualFile conflictedFile : affectedFiles) {
-      final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForFile(conflictedFile);
-      if (repo != null) {
-        repo.update();
-      }
+    for (GitRepository repository : GitUtil.getRepositoriesForFiles(project, Arrays.asList(affectedFiles))) {
+      repository.update();
     }
     return false;
   }

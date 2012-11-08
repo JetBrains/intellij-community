@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
 
@@ -285,7 +286,7 @@ public class StubGenerator implements ClassItemGenerator {
   }
 
   @Override
-  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
+  public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiMethod method : typeDefinition.getMethods()) {
       if (method instanceof DelegatedMethod) {
@@ -297,7 +298,11 @@ public class StubGenerator implements ClassItemGenerator {
       }
       methods.add(method);
     }
-    if (classDef) {
+    boolean isClass = !typeDefinition.isInterface() &&
+                      !typeDefinition.isAnnotationType() &&
+                      !typeDefinition.isEnum() &&
+                      !(typeDefinition instanceof GroovyScriptClass);
+    if (isClass) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
         if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
@@ -323,19 +328,7 @@ public class StubGenerator implements ClassItemGenerator {
 
         methods.add(mirrorMethod(typeDefinition, resolved, baseClass, signature.getSubstitutor()));
       }
-      /*final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
-      methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
-      methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
-      methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
-      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));*/
     }
-
-    /*if (typeDefinition instanceof GrTypeDefinition) {
-      for (PsiMethod delegatedMethod : GrClassImplUtil.getDelegatedMethods((GrTypeDefinition)typeDefinition)) {
-        methods.add(delegatedMethod);
-      }
-    }*/
 
     return methods;
   }
@@ -410,5 +403,31 @@ public class StubGenerator implements ClassItemGenerator {
       }
     }
     return GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
+  }
+
+  public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
+
+    if (implementsTypes.isEmpty()) return;
+
+    text.append(typeDefinition.isInterface() ? "extends " : "implements ");
+    for (PsiClassType implementsType : implementsTypes) {
+      writeType(text, implementsType, typeDefinition, classNameProvider);
+      text.append(", ");
+    }
+    if (implementsTypes.size() > 0) text.delete(text.length() - 2, text.length());
+    text.append(' ');
+  }
+
+  public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
+    final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
+
+    if (extendsClassesTypes.length > 0) {
+
+      text.append("extends ");
+      writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
+      text.append(' ');
+    }
   }
 }

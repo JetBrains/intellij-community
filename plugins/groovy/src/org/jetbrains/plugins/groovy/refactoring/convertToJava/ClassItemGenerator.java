@@ -30,8 +30,10 @@ public interface ClassItemGenerator {
   void writeConstructor(StringBuilder text, PsiMethod constructor, boolean isEnum);
   void writeMethod(StringBuilder text, PsiMethod method);
   void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration);
+  void writeExtendsList(StringBuilder text, PsiClass definition);
+  void writeImplementsList(StringBuilder text, PsiClass definition);
 
-  Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef);
+  Collection<PsiMethod> collectMethods(PsiClass typeDefinition);
 
   boolean generateAnnotations();
 

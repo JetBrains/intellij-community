@@ -50,7 +50,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private TIntStack myOffsetStack;
   private TLongHashSet myDistinctClasses;
   private THashMap<DfaVariableValue,DfaVariableState> myVariableStates;
-  private boolean myHasDirtyFields = true;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
@@ -80,7 +79,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     newState.myStateSize = myStateSize;
     newState.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
     newState.myOffsetStack = new TIntStack(myOffsetStack);
-    newState.myHasDirtyFields = myHasDirtyFields;
 
     for (int i = 0; i < myEqClasses.size(); i++) {
       SortedIntSet aClass = myEqClasses.get(i);
@@ -111,7 +109,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myStack.equals(that.myStack)) return false;
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
     if (!myVariableStates.equals(that.myVariableStates)) return false;
-    if (myHasDirtyFields != that.myHasDirtyFields) return false;
 
     int[] permutation = getPermutationToSortedState();
     int[] thatPermutation = that.getPermutationToSortedState();
@@ -494,11 +491,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDistinctClasses.add(createPair(c1Index, c2Index));
   }
 
-  @Override
-  public void fieldReferenced() {
-    myHasDirtyFields = true;
-  }
-
   public boolean isNull(DfaValue dfaValue) {
     if (dfaValue instanceof DfaNotNullValue) return false;
 
@@ -561,20 +553,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
-      DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated);
-
-      return applyCondition(dfaEqualsTrue);
+      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(myFactory.getConstFactory().getTrue());
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated));
     }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated);
-
-      return applyCondition(dfaEqualsTrue);
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated));
     }
 
     if (dfaCond instanceof DfaConstValue) {
@@ -778,12 +765,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushFields(DataFlowRunner runner) {
-    if (!myHasDirtyFields) return;
-
-    myHasDirtyFields = false;
     for (DfaVariableValue field : runner.getFields()) {
-      flushVariable(field);
-      getVariableState(field).setNullable(false);
+      if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
+        flushVariable(field);
+        getVariableState(field).setNullable(false);
+      }
     }
   }
 

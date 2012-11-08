@@ -3,7 +3,7 @@
 public @interface I {
 public int x() ;
 }
-@p.I public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+@p.I public class A {
 @p.I public A() {
 }
 }
