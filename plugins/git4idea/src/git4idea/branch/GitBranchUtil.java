@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitConfig;
@@ -100,9 +102,29 @@ public class GitBranchUtil {
       return repository.getCurrentBranch();
     }
     else {
-      LOG.error("Repository is null for root " + root);
+      LOG.info("getCurrentBranch: Repository is null for root " + root);
+      return getCurrentBranchFromGit(project, root);
     }
-    return null;
+  }
+
+  @Nullable
+  private static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REV_PARSE);
+    handler.addParameters("--abbrev-ref", "HEAD");
+    handler.setNoSSH(true);
+    try {
+      String name = handler.run();
+      if (!name.equals("HEAD")) {
+        return new GitLocalBranch(name, GitBranch.DUMMY_HASH);
+      }
+      else {
+        return null;
+      }
+    }
+    catch (VcsException e) {
+      LOG.info("git rev-parse --abbrev-ref HEAD", e);
+      return null;
+    }
   }
 
   /**
