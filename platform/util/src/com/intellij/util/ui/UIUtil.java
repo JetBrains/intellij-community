@@ -202,9 +202,9 @@ public class UIUtil {
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
-  private UIUtil() { }
-
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
+
+  private UIUtil() { }
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   public static boolean isRetina() {
@@ -2477,7 +2477,6 @@ public class UIUtil {
   }
 
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
-
     Dimension ans = new Dimension(dimension);
     ans.width += insets.left;
     ans.width += insets.right;
@@ -2494,6 +2493,7 @@ public class UIUtil {
     final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
 
     if (!newSize.equals(size)) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (window.isShowing()) {
@@ -2539,4 +2539,3 @@ public class UIUtil {
     return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
   }
 }
-
