@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -76,7 +78,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final int MAX_TOOLTIP_WIDTH = 400;
   private static final int ACTION_BUTTON_PADDING = 5;
 
-  private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
+  private static final Dimension ACTION_BUTTON_SIZE = new Dimension(64, 48);
 
   @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
@@ -777,7 +779,9 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
         }
       };
 
-      addButton(button, text, presentation.getDescription());
+      String description = presentation.getDescription();
+      description = MessageFormat.format(description, ApplicationNamesInfo.getInstance().getFullProductName());
+      addButton(button, text, description);
     }
 
     public JPanel getPanel() {
@@ -794,11 +798,11 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     private int myRowIdx;
     private int myColumnIdx;
     private final String myDisplayName;
-    private final Icon myIcon;
+    private final LabeledIcon myIcon;
 
     private MyActionButton(Icon icon, String displayName) {
       myDisplayName = displayName;
-      myIcon = new LabeledIcon(icon != null ? icon : AllIcons.General.ConfigurableDefault, getDisplayName(), null);
+      myIcon = new LabeledIcon(icon != null ? icon : EmptyIcon.create(48), getDisplayName(), null);
     }
 
     private void setupWithinPanel(JPanel panel, int groupIdx, int rowIdx, int columnIdx) {
@@ -830,7 +834,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       super.paintComponent(g);
       ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
       paintBackground(g);
-      look.paintIcon(g, this, myIcon);
+      look.paintIconAt(g, this, myIcon, 0, 5);
       paintBorder(g);
     }
 
