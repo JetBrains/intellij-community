@@ -82,7 +82,7 @@
       <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
               icon="AllIcons.General.Add"/>
       <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
-              icon="AllIcons.Actions.Exclude"/>
+              icon="AllIcons.General.Remove"/>
       <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
               icon="AllIcons.Actions.Submit1"/>
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
