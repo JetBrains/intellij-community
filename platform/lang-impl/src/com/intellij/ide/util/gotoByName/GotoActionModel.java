@@ -47,7 +47,7 @@ import java.awt.*;
 import java.util.*;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
-  @NonNls private static final String SETTINGS_KEY = "$$$SETTINGS$$$";
+  @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 

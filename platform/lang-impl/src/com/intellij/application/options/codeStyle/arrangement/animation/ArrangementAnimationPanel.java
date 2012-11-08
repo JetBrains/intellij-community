@@ -35,10 +35,11 @@ public class ArrangementAnimationPanel extends JPanel {
   @NotNull private final JComponent myContent;
 
   @Nullable private BufferedImage myImage;
-  @Nullable private Listener myListener;
+  @Nullable private BufferedImage myCurrentImage;
+  @Nullable private Listener      myListener;
 
   private int myAnimationSteps = -1;
-  
+
   private boolean myExpand;
   private boolean myHorizontal;
 
@@ -50,10 +51,10 @@ public class ArrangementAnimationPanel extends JPanel {
     setBackground(UIUtil.getListBackground());
   }
 
-  public void startAnimation(boolean expand, boolean horizontal) {
+  public boolean tryStartAnimation(boolean expand, boolean horizontal) {
     Rectangle bounds = getBounds();
     if (bounds == null || bounds.width <= 0 || bounds.height <= 0) {
-      return;
+      return false;
     }
     myHorizontal = horizontal;
     myAnimationSteps = ArrangementConstants.ANIMATION_STEPS - 1;
@@ -65,7 +66,9 @@ public class ArrangementAnimationPanel extends JPanel {
     graphics.setClip(0, 0, bounds.width, bounds.height);
     super.paint(graphics);
     graphics.dispose();
+    myCurrentImage = myImage;
     invalidate();
+    return true;
   }
 
   /**
@@ -76,15 +79,20 @@ public class ArrangementAnimationPanel extends JPanel {
   public boolean nextIteration() {
     int widthToUse = getImageWidthToUse();
     int heightToUse = getImageHeightToUse();
-    if (widthToUse <= 1 || heightToUse <= 1) {
+    if (!myExpand && (widthToUse <= 1 || heightToUse <= 1)) {
+      myImage = null;
+      myCurrentImage = null;
       return false;
     }
-    myImage = myImage.getSubimage(0, 0, widthToUse, heightToUse);
+
+    myCurrentImage = myImage.getSubimage(0, 0, widthToUse, heightToUse);
+    
     invalidate();
 
     myAnimationSteps--;
     if (myAnimationSteps <= 0) {
       myImage = null;
+      myCurrentImage = null;
       return false;
     }
     return true;
@@ -92,11 +100,11 @@ public class ArrangementAnimationPanel extends JPanel {
 
   @Override
   public void paint(Graphics g) {
-    if (myImage == null) {
+    if (myCurrentImage == null) {
       super.paint(g);
       return;
     }
-    g.drawImage(myImage, 0, 0, myImage.getWidth(), myImage.getHeight(), null);
+    g.drawImage(myCurrentImage, 0, 0, myCurrentImage.getWidth(), myCurrentImage.getHeight(), null);
     if (myListener != null) {
       myListener.onPaint();
     }
@@ -104,26 +112,26 @@ public class ArrangementAnimationPanel extends JPanel {
 
   @Override
   public Dimension getMinimumSize() {
-    if (myImage == null) {
+    if (myCurrentImage == null) {
       return myContent.getMinimumSize();
     }
-    return new Dimension(getImageWidthToUse(), getImageHeightToUse());
+    return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
   }
 
   @Override
   public Dimension getMaximumSize() {
-    if (myImage == null) {
+    if (myCurrentImage == null) {
       return myContent.getMaximumSize();
     }
-    return new Dimension(getImageWidthToUse(), getImageHeightToUse());
+    return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
   }
 
   @Override
   public Dimension getPreferredSize() {
-    if (myImage == null) {
+    if (myCurrentImage == null) {
       return myContent.getPreferredSize();
     }
-    return new Dimension(getImageWidthToUse(), getImageHeightToUse());
+    return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
   }
 
   private int getImageWidthToUse() {

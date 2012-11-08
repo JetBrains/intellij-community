@@ -22,12 +22,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -36,8 +40,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 
@@ -70,6 +76,30 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
         return null;
+      }
+
+      @Override
+      public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
+        if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
+        final SvnVcs vcs = SvnVcs.getInstance(project);
+        final Map<String, Integer> copiesInfo = splitIntoCopies(vcs, myChanges);
+        final List<String> repoUrls = new ArrayList<String>();
+        for (Map.Entry<String, Integer> entry : copiesInfo.entrySet()) {
+          if (entry.getValue() == 3) {
+            repoUrls.add(entry.getKey());
+          }
+        }
+        if (! repoUrls.isEmpty()) {
+          final String join = StringUtil.join(repoUrls.toArray(new String[repoUrls.size()]), ",\n");
+          final int isOk = Messages.showOkCancelDialog(project,
+            SvnBundle.message("checkin.different.formats.involved", repoUrls.size() > 1 ? 1 : 0, join),
+            "Subversion: Commit Will Split", Messages.getWarningIcon());
+          if (Messages.OK == isOk) {
+            return ReturnResult.COMMIT;
+          }
+          return ReturnResult.CANCEL;
+        }
+        return ReturnResult.COMMIT;
       }
 
       @Override
@@ -173,5 +203,27 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         }
       }
     };
+  }
+
+  private static Map<String, Integer> splitIntoCopies(SvnVcs vcs, final Collection<Change> changes) {
+    final SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
+
+    final Map<String, Integer> copiesInfo = new java.util.HashMap<String, Integer>();
+    for (Change change : changes) {
+      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
+      final RootUrlInfo path = mapping.getWcRootForFilePath(ioFile);
+      if (path == null) continue;
+      final Integer integer = copiesInfo.get(path.getRepositoryUrl());
+      int result = integer == null ? 0 : integer;
+      if (result != 3) {
+        if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(path.getFormat())) {
+          result |= 2;
+        } else {
+          result |= 1;
+        }
+        copiesInfo.put(path.getRepositoryUrl(), result);
+      }
+    }
+    return copiesInfo;
   }
 }

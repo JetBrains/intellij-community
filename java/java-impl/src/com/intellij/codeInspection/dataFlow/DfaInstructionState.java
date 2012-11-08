@@ -53,6 +53,6 @@ public class DfaInstructionState {
   }
 
   public String toString() {
-    return getInstruction().getIndex() + ": " + getMemoryState().toString() + " " + getInstruction().toString();
+    return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState().toString();
   }
 }

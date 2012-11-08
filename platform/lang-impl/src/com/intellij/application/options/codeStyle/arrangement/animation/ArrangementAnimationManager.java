@@ -32,15 +32,41 @@ public class ArrangementAnimationManager implements ArrangementAnimationPanel.Li
 
   @NotNull private final ArrangementAnimationPanel myAnimationPanel;
   @NotNull private final Callback                  myCallback;
+  
+  private final boolean myExpand;
+  private final boolean myHorizontal;
+  
+  private boolean myStarted;
 
-  public ArrangementAnimationManager(@NotNull ArrangementAnimationPanel panel, @NotNull Callback callback) {
+  public ArrangementAnimationManager(@NotNull ArrangementAnimationPanel panel,
+                                     @NotNull Callback callback,
+                                     boolean expand,
+                                     boolean horizontal)
+  {
     myAnimationPanel = panel;
     myCallback = callback;
+    myExpand = expand;
+    myHorizontal = horizontal;
     myAnimationPanel.setListener(this);
+  }
+
+  public void startAnimation() {
+    myStarted = myAnimationPanel.tryStartAnimation(myExpand, myHorizontal);
+    if (myStarted) {
+      myCallback.onAnimationIteration(false);
+    }
+    else {
+      myTimer.restart();
+    }
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
+    if (!myStarted) {
+      startAnimation();
+      return;
+    }
+
     if (myTimer.isRunning()) {
       return;
     }

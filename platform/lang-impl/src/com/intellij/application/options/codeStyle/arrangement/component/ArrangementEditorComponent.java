@@ -50,7 +50,6 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
     borderPanel.setBorder(border);
     myBorderInsets = border.getBorderInsets(borderPanel);
     myRenderer = new ArrangementAnimationPanel(borderPanel);
-    new ArrangementAnimationManager(myRenderer, this);
   }
 
   @NotNull
@@ -60,8 +59,7 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
   }
 
   public void expand() {
-    myRenderer.startAnimation(true, false);
-    myList.repaintRows(myRow, myRow, false);
+    new ArrangementAnimationManager(myRenderer, this, true, false).startAnimation();
   }
 
   @Override
