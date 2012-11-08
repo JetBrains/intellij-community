@@ -204,7 +204,7 @@ public class SvnUtil {
         if (sb.length() > 0) sb.append('\n');
         sb.append(vcsException.getMessage());
       }
-      AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
+      //AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
       throw new VcsException(sb.toString());
     }
 
