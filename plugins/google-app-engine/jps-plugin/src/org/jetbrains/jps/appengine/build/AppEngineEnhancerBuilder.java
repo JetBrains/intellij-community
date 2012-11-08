@@ -13,6 +13,7 @@ import org.jetbrains.jps.appengine.model.PersistenceApi;
 import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
@@ -61,7 +62,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
   private static boolean processModule(final CompileContext context,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                       JpsAppEngineModuleExtension extension) throws IOException {
+                                       JpsAppEngineModuleExtension extension) throws IOException, ProjectBuildException {
     final Set<File> roots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
     for (String path : extension.getFilesToEnhance()) {
       roots.add(new File(FileUtil.toSystemDependentName(path)));
@@ -85,11 +86,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     }
 
     JpsModule module = extension.getModule();
-    JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
-    if (sdk == null) {
-      context.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
-      return true;
-    }
+    JpsSdk<JpsDummyElement> sdk = JavaBuilderUtil.ensureModuleHasJdk(module, context, NAME);
     context.processMessage(new ProgressMessage("Enhancing classes in module '" + module.getName() + "'..."));
 
     List<String> vmParams = Collections.singletonList("-Xmx256m");
