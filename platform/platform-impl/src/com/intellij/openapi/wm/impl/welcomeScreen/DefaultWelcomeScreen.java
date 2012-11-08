@@ -219,7 +219,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       myRecentProjectsPanel.setOpaque(false);
       setUpRecentProjectsPanel(rootPane, recentProjectsActions);
       quickStartPanel.add(myRecentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
-                                                                      new Insets(14, 30, 5, 0), 0, 0));
+                                                                      new Insets(14, 24, 5, 0), 0, 0));
     }
 
     // Add empty panel at the end of the QuickStarts panel
