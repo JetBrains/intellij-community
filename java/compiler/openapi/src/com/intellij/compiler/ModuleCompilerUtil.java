@@ -118,7 +118,10 @@ public final class ModuleCompilerUtil {
         final Module[] modules = model.getModuleDependencies();
         final List<T> dependencies = new ArrayList<T>();
         for (Module module : modules) {
-          dependencies.add(models.get(module));
+          T depModel = models.get(module);
+          if (depModel != null) {
+            dependencies.add(depModel);
+          }
         }
         return dependencies.iterator();
       }

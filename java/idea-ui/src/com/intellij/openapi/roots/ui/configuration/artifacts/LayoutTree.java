@@ -24,7 +24,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -179,11 +178,10 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   public PackagingElementNode<?> findCompositeNodeByPath(String parentPath) {
     PackagingElementNode<?> node = getRootPackagingNode();
     for (String name : StringUtil.split(parentPath, "/")) {
-      final CompositePackagingElementNode child = node.findCompositeChild(name);
-      if (child == null) {
+      if (node == null) {
         return null;
       }
-      node = child;
+      node = node.findCompositeChild(name);
     }
     return node;
   }

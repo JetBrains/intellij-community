@@ -51,7 +51,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 
-class CopyFilesOrDirectoriesDialog extends DialogWrapper {
+public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;

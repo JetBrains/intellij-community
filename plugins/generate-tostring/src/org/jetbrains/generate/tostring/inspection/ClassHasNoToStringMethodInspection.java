@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 /**
- * Intention to check if the current class overwrites the toString() method.
+ * Intention to check if the current class overrides the toString() method.
  * <p/>
  * This inspection will use filter information from the settings to exclude certain fields (eg. constants etc.).
  * <p/>
@@ -59,7 +59,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
     @NotNull
     public String getDisplayName() {
-        return "Class does not overwrite toString() method";
+        return "Class does not override toString() method";
     }
 
     @NotNull
@@ -76,7 +76,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (log.isDebugEnabled()) log.debug("checkClass: clazz=" + clazz);
 
                 // must be a class
-                if (clazz == null || clazz.getName() == null)
+                PsiIdentifier nameIdentifier = clazz.getNameIdentifier();
+                if (nameIdentifier == null || clazz.getName() == null)
                     return;
 
                 PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
@@ -88,7 +89,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // must not be deprecated
-              if (excludeDeprecated && clazz.isDeprecated()) {
+                if (excludeDeprecated && clazz.isDeprecated()) {
                     log.debug("Class is deprecated");
                     return;
                 }
@@ -114,7 +115,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // must have fields
-              PsiField[] fields = clazz.getFields();
+                PsiField[] fields = clazz.getFields();
                 if (fields.length == 0) {
                     log.debug("Class does not have any fields");
                     return;
@@ -136,15 +137,28 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     return;
 
                 // okay some fields/getter methods are supposed to dumped, does a toString method exist
-                PsiMethod toStringMethod = psi.findMethodByName(clazz, "toString");
-                if (toStringMethod == null) {
-                    // a toString() method is missing
-                    if (log.isDebugEnabled()) log.debug("Class does not overwrite toString() method: " + clazz.getQualifiedName());
-                  PsiIdentifier element = clazz.getNameIdentifier();
-                  if (element != null) {
-                    holder.registerProblem(element, "Class '" + clazz.getName() + "' does not overwrite toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
-                  }
+                final PsiMethod[] toStringMethods = clazz.findMethodsByName("toString", false);
+                for (PsiMethod method : toStringMethods) {
+                    final PsiParameterList parameterList = method.getParameterList();
+                    if (parameterList.getParametersCount() == 0) {
+                        // toString() method found
+                        return;
+                    }
                 }
+                final PsiMethod[] superMethods = clazz.findMethodsByName("toString", true);
+                for (PsiMethod method : superMethods) {
+                    final PsiParameterList parameterList = method.getParameterList();
+                    if (parameterList.getParametersCount() != 0) {
+                        continue;
+                    }
+                    if (method.hasModifierProperty(PsiModifier.FINAL)) {
+                        // final toString() in super class found
+                        return;
+                    }
+                }
+                if (log.isDebugEnabled()) log.debug("Class does not override toString() method: " + clazz.getQualifiedName());
+
+                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
             }
         };
     }
@@ -247,6 +261,4 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
         return panel;
     }
-
-
 }

@@ -18,6 +18,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -33,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -78,11 +80,10 @@ public class TextPainter implements Printable {
   public TextPainter(DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fileName,
-                     final PsiFile psiFile,
-                     final Project project,
-                     final FileType fileType) {
-    this(editorDocument, highlighter, fileName, project, fileType,
-         FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument));
+                     @NotNull final PsiFile psiFile,
+                     final FileType fileType, final Editor editor) {
+    this(editorDocument, highlighter, fileName, psiFile.getProject(), fileType,
+         FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument, editor));
   }
 
   public TextPainter(DocumentEx editorDocument,
@@ -414,7 +415,7 @@ public class TextPainter implements Printable {
   }
 
   private String convertHeaderText(String s) {
-    StringBuffer result = new StringBuffer("");
+    StringBuilder result = new StringBuilder("");
     int start = 0;
     boolean isExpression = false;
     for (int i = 0; i < s.length(); i++) {
@@ -629,7 +630,7 @@ public class TextPainter implements Printable {
     return breakOffset;
   }
 
-  private int getNextWordBreak(char[] text, int offset, int endOffset) {
+  private static int getNextWordBreak(char[] text, int offset, int endOffset) {
     boolean isId = Character.isJavaIdentifierPart(text[offset]);
     for (int i = offset + 1; i < endOffset; i++) {
       if (isId != Character.isJavaIdentifierPart(text[i])) {
@@ -661,7 +662,7 @@ public class TextPainter implements Printable {
     return x - startX;
   }
 
-  private double getStringWidth(Graphics2D g, char[] text, int start, int count) {
+  private static double getStringWidth(Graphics2D g, char[] text, int start, int count) {
     String s = new String(text, start, count);
     GlyphVector v = g.getFont().createGlyphVector(g.getFontRenderContext(), s);
 
