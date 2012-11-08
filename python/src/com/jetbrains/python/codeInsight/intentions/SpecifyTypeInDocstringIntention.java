@@ -155,24 +155,19 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       }
     }
 
-    generateDocstring(elementAt, kind, callExpression, pyFunction, problemElement);
+    generateDocstring(kind, pyFunction, problemElement);
   }
 
-  private void generateDocstring(PsiElement elementAt, String kind,
-                                 @Nullable PyCallExpression callExpression,
+  private void generateDocstring(String kind,
                                  PyFunction pyFunction,
                                  PyExpression problemElement) {
-    PsiReference reference = null;
-
     String name = "";
     if (problemElement != null) {
       name = problemElement.getName();
 
-      reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null) {
-          reference = qualifier.getReference();
           name = qualifier.getText();
         }
       }
@@ -190,11 +185,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
       docstringGenerator.withParam(kind, name);
     }
 
-    final ASTNode nameNode = pyFunction.getNameNode();
-    if ((problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter) ||
-        (nameNode != null && elementAt == nameNode.getPsi()) || callExpression != null) {
-      docstringGenerator.build();
-    }
+    docstringGenerator.build();
 
     docstringGenerator.startTemplate();
   }
