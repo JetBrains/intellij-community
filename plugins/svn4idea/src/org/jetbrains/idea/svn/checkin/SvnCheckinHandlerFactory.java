@@ -97,8 +97,9 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           if (Messages.OK == isOk) {
             return ReturnResult.COMMIT;
           }
+          return ReturnResult.CANCEL;
         }
-        return ReturnResult.CANCEL;
+        return ReturnResult.COMMIT;
       }
 
       @Override
