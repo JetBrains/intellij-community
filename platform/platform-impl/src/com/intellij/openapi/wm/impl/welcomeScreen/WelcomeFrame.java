@@ -17,6 +17,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
@@ -37,6 +38,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     JRootPane rootPane = getRootPane();
     final WelcomeScreen screen = createScreen(rootPane);
 
+    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
+    setGlassPane(glassPane);
+    glassPane.setVisible(false);
     setContentPane(screen.getWelcomePanel());
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateFrameIcon(this);
