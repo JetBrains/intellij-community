@@ -59,6 +59,7 @@ public class ArrangementMatchingRulesList extends JBList {
   private int myRowUnderMouse = -1;
   private int myEditorRow     = -1;
   private boolean mySkipMouseClick;
+  private boolean mySkipSelectionChange;
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementColorsProvider colorsProvider,
@@ -69,6 +70,7 @@ public class ArrangementMatchingRulesList extends JBList {
     myRepresentationCallback = callback;
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
     setCellRenderer(new MyListCellRenderer());
+    setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override
@@ -214,31 +216,73 @@ public class ArrangementMatchingRulesList extends JBList {
   }
 
   private void onSelectionChange(@NotNull ListSelectionEvent e) {
-    if (e.getValueIsAdjusting()) {
+    if (mySkipSelectionChange || e.getValueIsAdjusting()) {
       return;
     }
-    ListSelectionModel model = getSelectionModel();
-    for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
-      ArrangementListRowDecorator decorator = myComponents.get(i);
-      if (decorator == null) {
-        continue;
-      }
-      decorator.setSelected(model.isSelectedIndex(i));
-      myEditorRow = i + 1;
-      ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
-      Container parent = getParent();
-      int width = getBounds().width;
-      if (parent instanceof JViewport) {
-        width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
-      }
-      editor.applyAvailableWidth(width);
-      getModel().insertElementAt(editor, myEditorRow);
-      Rectangle bounds = getCellBounds(i, i + 1);
-      if (bounds != null) {
-        myRepresentationCallback.ensureVisible(bounds);
-      }
-      editor.expand();
+    ListSelectionModel selectionModel = getSelectionModel();
+    if (selectionModel.isSelectionEmpty()) {
+      hideEditor();
+      return;
     }
+
+    int selectedRow = selectionModel.getMinSelectionIndex();
+    if (selectedRow != selectionModel.getMaxSelectionIndex()) {
+      hideEditor();
+      return;
+    }
+
+    if (myEditorRow >= 0) {
+      if (myEditorRow == selectedRow + 1) {
+        return;
+      }
+      else {
+        hideEditor();
+      }
+    }
+    
+    // There is a possible case that there was an active editor in a row before the selected.
+    selectedRow = selectionModel.getMinSelectionIndex();
+    ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
+    if (toEdit == null) {
+      return;
+    }
+    
+    myEditorRow = selectedRow + 1;
+    ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
+    Container parent = getParent();
+    int width = getBounds().width;
+    if (parent instanceof JViewport) {
+      width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+    }
+    editor.applyAvailableWidth(width);
+    mySkipSelectionChange = true;
+    try {
+      getModel().insertElementAt(editor, myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    Rectangle bounds = getCellBounds(selectedRow, myEditorRow);
+    if (bounds != null) {
+      myRepresentationCallback.ensureVisible(bounds);
+    }
+    editor.expand();
+    repaintRows(selectedRow, getModel().size() - 1, false);
+  }
+
+  private void hideEditor() {
+    if (myEditorRow < 0) {
+      return;
+    }
+    repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
+    mySkipSelectionChange = true;
+    try {
+      getModel().removeElementAt(myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    myEditorRow = -1;
   }
 
   @NotNull
@@ -290,6 +334,7 @@ public class ArrangementMatchingRulesList extends JBList {
         }
       }
       component.setRowIndex((myEditorRow >= 0 && index > myEditorRow) ? index : index + 1);
+      component.setSelected(getSelectionModel().isSelectedIndex(index));
       return component.getUiComponent();
     }
   }
