@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -110,14 +111,22 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
   private boolean checkAvailableForReturn(PsiElement elementAt) {
     PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class);
     if (callExpression != null && callExpression.resolveCalleeFunction(PyResolveContext.defaultContext()) != null) {
-      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-      if (assignmentStatement != null) {
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-        if (assignedValue != null) {
-          PyType type = assignedValue.getType(TypeEvalContext.slow());
-          if (type == null || type instanceof PyReturnTypeReference) {
-            myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
-            return true;
+      final PyExpression callee = callExpression.getCallee();
+      if (callee != null) {
+        final PsiReference reference = callee.getReference();
+        final PyFunction pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (reference instanceof PsiPolyVariantReference && pyFunction != null &&
+            ((PsiPolyVariantReference)reference).multiResolve(false).length == 1) {
+          PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+          if (assignmentStatement != null) {
+            final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+            if (assignedValue != null) {
+              PyType type = assignedValue.getType(TypeEvalContext.slow());
+              if (type == null || type instanceof PyReturnTypeReference) {
+                myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
+                return true;
+              }
+            }
           }
         }
       }
