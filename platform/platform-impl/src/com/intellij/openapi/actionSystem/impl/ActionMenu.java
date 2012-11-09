@@ -265,7 +265,7 @@ public final class ActionMenu extends JMenu {
       String name = e.getPropertyName();
       if (Presentation.PROP_VISIBLE.equals(name)) {
         setVisible(myPresentation.isVisible());
-        if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+        if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
           validateTree();
         }
       }

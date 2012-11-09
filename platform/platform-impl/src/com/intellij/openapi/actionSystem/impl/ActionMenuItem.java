@@ -334,7 +334,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
       try {
         if (Presentation.PROP_VISIBLE.equals(name)) {
           final boolean visible = myPresentation.isVisible();
-          if (!visible && SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+          if (!visible && SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
             setEnabled(false);
           }
           else {

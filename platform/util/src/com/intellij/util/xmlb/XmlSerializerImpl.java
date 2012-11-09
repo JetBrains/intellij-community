@@ -154,7 +154,7 @@ class XmlSerializerImpl {
     if (child instanceof Attribute) {
       Attribute attr = (Attribute)child;
       final String namespaceURI = attr.getNamespaceURI();
-      if (namespaceURI != null && namespaceURI != "") return true;
+      if (namespaceURI != null && namespaceURI.length() > 0) return true;
     }
 
     return false;
