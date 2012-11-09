@@ -55,8 +55,6 @@ public interface DfaMemoryState {
 
   boolean checkNotNullable(DfaValue value);
 
-  boolean canBeNaN(DfaValue dfaValue);
-
   boolean isNotNull(DfaVariableValue dfaVar);
 
   void flushVariableOutOfScope(DfaVariableValue variable);

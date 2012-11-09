@@ -16,6 +16,7 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,12 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
-  public abstract List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest, final boolean withClosed);
+  public abstract List<Task> getIssues(@Nullable String query,
+                                       int max,
+                                       long since,
+                                       boolean forceRequest,
+                                       final boolean withClosed,
+                                       final ProgressIndicator cancelled);
   /**
    * Returns already cached issues.
    * @return cached issues.
@@ -55,9 +61,9 @@ public abstract class TaskManager {
   @Nullable
   public abstract Task updateIssue(@NotNull String id);
 
-  public abstract LocalTask[] getLocalTasks();
+  public abstract List<LocalTask> getLocalTasks();
 
-  public abstract LocalTask[] getLocalTasks(final boolean withClosed);
+  public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 

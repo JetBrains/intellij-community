@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tasks;
+package org.jetbrains.idea.devkit;
 
-import java.util.EventListener;
+import com.intellij.ide.projectWizard.ProjectWizardTestCase;
+import com.intellij.openapi.module.JavaModuleType;
 
 /**
  * @author Dmitry Avdeev
+ *         Date: 11/8/12
  */
-public interface TaskListener extends EventListener {
+public class PluginProjectWizardTest extends ProjectWizardTestCase {
 
-  void taskDeactivated(LocalTask task);
-
-  void taskActivated(LocalTask task);
-
-  void taskAdded(LocalTask task);
-
-  void taskRemoved(LocalTask task);
+  public void testPluginProject() throws Exception {
+    createProjectFromTemplate(JavaModuleType.JAVA_GROUP, "Intellij IDEA Plugin", null);
+  }
 }

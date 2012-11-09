@@ -90,7 +90,7 @@ public class LibraryOptionsPanel implements Disposable {
   private SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
   private boolean myDisposed;
 
-  private static enum Choice {
+  private enum Choice {
     USE_LIBRARY,
     DOWNLOAD,
     SETUP_LIBRARY_LATER

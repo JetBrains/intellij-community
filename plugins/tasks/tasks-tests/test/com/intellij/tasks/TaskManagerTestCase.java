@@ -1,11 +1,11 @@
 package com.intellij.tasks;
 
-import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -38,8 +38,8 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
   }
 
   private void removeAllTasks() {
-    LocalTaskImpl[] tasks = myManager.getLocalTasks();
-    for (LocalTaskImpl task : tasks) {
+    List<LocalTask> tasks = myManager.getLocalTasks();
+    for (LocalTask task : tasks) {
       myManager.removeTask(task);
     }
   }

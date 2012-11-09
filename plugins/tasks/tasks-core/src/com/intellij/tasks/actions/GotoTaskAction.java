@@ -61,8 +61,8 @@ public class GotoTaskAction extends GotoActionBase {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
-        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
-        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
+        List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
+        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedAndLocalTasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
             return new TaskPsiElement(PsiManager.getInstance(project), task);
@@ -84,9 +84,9 @@ public class GotoTaskAction extends GotoActionBase {
           if (!consumer.process(element)) return false;
         }
 
-        List<Task> tasks =
-          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere);
-        tasks.removeAll(cachedTasks);
+        List<Task> tasks = TaskSearchSupport
+          .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
+        tasks.removeAll(cachedAndLocalTasks);
         taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
@@ -105,7 +105,7 @@ public class GotoTaskAction extends GotoActionBase {
         }
         return true;
       }
-    }, "", false, 0);
+    }, null, false, 0);
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
@@ -132,6 +132,7 @@ public class GotoTaskAction extends GotoActionBase {
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     popup.setToolArea(actionToolbar.getComponent());
+    popup.setMaximumListSizeLimit(10);
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override

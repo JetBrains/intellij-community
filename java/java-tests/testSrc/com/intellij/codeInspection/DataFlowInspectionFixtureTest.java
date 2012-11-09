@@ -137,5 +137,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
+  public void testUnknownFloatMayBeNaN() { doTest(); }
 
 }

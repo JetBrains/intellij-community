@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -100,10 +101,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<String, Task>());
 
-  private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTaskImpl>() {
+  private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTask>() {
     @Override
-    public LocalTaskImpl put(String key, LocalTaskImpl task) {
-      LocalTaskImpl result = super.put(key, task);
+    public LocalTask put(String key, LocalTask task) {
+      LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<LocalTask> list = new ArrayList<LocalTask>(values());
         Collections.sort(list, TASK_UPDATE_COMPARATOR);
@@ -130,6 +131,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
+  private long myProjectOpenedTime;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -157,6 +159,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     };
+
+    addTaskListener(new TaskListenerAdapter() {
+      @Override
+      public void taskDeactivated(final LocalTask task) {
+        task.setTimeSpent(task.getTimeSpent() + System.currentTimeMillis() - task.getActivated());
+      }
+
+      @Override
+      public void taskActivated(final LocalTask task) {
+        task.setActivated(System.currentTimeMillis());
+      }
+    });
   }
 
   @Override
@@ -199,6 +213,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true, false);
     }
     myTasks.remove(task.getId());
+    myDispatcher.getMulticaster().taskRemoved(task);
     myContextManager.removeContext(task);
   }
 
@@ -231,15 +246,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest, true);
+    return getIssues(query, 50, 0, forceRequest, true, null);
   }
 
   @Override
-  public List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest, final boolean withClosed) {
-    List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest);
+  public List<Task> getIssues(@Nullable String query,
+                              int max,
+                              long since,
+                              boolean forceRequest,
+                              final boolean withClosed,
+                              final ProgressIndicator cancelled) {
+    List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest, cancelled);
     if (tasks == null) return getCachedIssues(withClosed);
-    myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
-    return ContainerUtil.filter(myIssueCache.values(), new Condition<Task>() {
+    return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
         return withClosed || !task.isClosed();
@@ -272,7 +291,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       try {
         Task issue = repository.findTask(id);
         if (issue != null) {
-          LocalTaskImpl localTask = myTasks.get(id);
+          LocalTask localTask = myTasks.get(id);
           if (localTask != null) {
             localTask.updateFromIssue(issue);
             return localTask;
@@ -288,20 +307,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public LocalTaskImpl[] getLocalTasks() {
+  public List<LocalTask> getLocalTasks() {
     return getLocalTasks(true);
   }
 
   @Override
-  public LocalTaskImpl[] getLocalTasks(final boolean withClosed) {
+  public List<LocalTask> getLocalTasks(final boolean withClosed) {
     synchronized (myTasks) {
-      final List<LocalTaskImpl> filteredTasks = ContainerUtil.filter(myTasks.values(), new Condition<LocalTaskImpl>() {
+      return ContainerUtil.filter(myTasks.values(), new Condition<LocalTask>() {
         @Override
-        public boolean value(final LocalTaskImpl task) {
+        public boolean value(final LocalTask task) {
           return withClosed || !task.isClosedLocally();
         }
       });
-      return filteredTasks.toArray(new LocalTaskImpl[filteredTasks.size()]);
     }
   }
 
@@ -357,7 +375,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private void saveActiveTask() {
     myContextManager.saveContext(myActiveTask);
-    myActiveTask.setActive(false);
     myActiveTask.setUpdated(new Date());
   }
 
@@ -367,6 +384,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       task.setUpdated(new Date());
     }
     task.setActive(true);
+    myActiveTask.setActive(false);
     addTask(task);
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
@@ -380,9 +398,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       });
     }
-    boolean isChanged = !task.equals(myActiveTask);
+    LocalTask oldActiveTask = myActiveTask;
+    boolean isChanged = !task.equals(oldActiveTask);
     myActiveTask = task;
     if (isChanged) {
+      myDispatcher.getMulticaster().taskDeactivated(oldActiveTask);
       myDispatcher.getMulticaster().taskActivated(task);
     }
     return task;
@@ -390,6 +410,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private void addTask(LocalTaskImpl task) {
     myTasks.put(task.getId(), task);
+    myDispatcher.getMulticaster().taskAdded(task);
   }
 
   @Override
@@ -500,6 +521,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     if (activeTask != null) {
       myActiveTask = activeTask;
+      myDispatcher.getMulticaster().taskActivated(activeTask);
     }
   }
 
@@ -552,6 +574,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myContextManager.pack(200, 50);
+
+    myProjectOpenedTime = System.currentTimeMillis();
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -559,6 +583,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void projectClosed() {
+    getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
   }
 
   @NotNull
@@ -584,7 +609,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       });
     }
 
-    LocalTaskImpl defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
+    LocalTask defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
       defaultTask = createDefaultTask();
       addTask(defaultTask);
@@ -598,7 +623,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    for (LocalTaskImpl localTask : getLocalTasks()) {
+    for (LocalTask localTask : getLocalTasks()) {
       for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
         final ChangeListInfo changeListInfo = iterator.next();
         if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
@@ -607,9 +632,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    doActivate(myActiveTask, false);
-
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    doActivate(myActiveTask, false);
   }
 
   private static LocalTaskImpl createDefaultTask() {
@@ -651,7 +676,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private void doUpdate(@Nullable Runnable onComplete) {
     try {
-      List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
+      List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false, new EmptyProgressIndicator());
       if (issues == null) return;
 
       synchronized (myIssueCache) {
@@ -662,7 +687,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       // update local tasks
       synchronized (myTasks) {
-        for (Map.Entry<String, LocalTaskImpl> entry : myTasks.entrySet()) {
+        for (Map.Entry<String, LocalTask> entry : myTasks.entrySet()) {
           Task issue = myIssueCache.get(entry.getKey());
           if (issue != null) {
             entry.getValue().updateFromIssue(issue);
@@ -679,17 +704,24 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Nullable
-  private List<Task> getIssuesFromRepositories(@Nullable String request, int max, long since, boolean forceRequest) {
+  private List<Task> getIssuesFromRepositories(@Nullable String request,
+                                               int max,
+                                               long since,
+                                               boolean forceRequest,
+                                               final ProgressIndicator cancelled) {
     List<Task> issues = null;
     for (final TaskRepository repository : getAllRepositories()) {
       if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {
         continue;
       }
       try {
-        final Task[] tasks = repository.getIssues(request, max, since);
+        final Task[] tasks = repository.getIssues(request, max, since, cancelled);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         ContainerUtil.addAll(issues, tasks);
+      }
+      catch (ProcessCanceledException ignored) {
+        // OK
       }
       catch (Exception e) {
         //noinspection InstanceofCatchParameter
@@ -733,7 +765,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Nullable
   @Override
   public LocalTask getAssociatedTask(LocalChangeList list) {
-    for (LocalTaskImpl task : getLocalTasks()) {
+    for (LocalTask task : getLocalTasks()) {
       for (ChangeListInfo changeListInfo : task.getChangeLists()) {
         if (changeListInfo.id.equals(list.getId())) {
           return task;
@@ -830,6 +862,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public String changelistNameFormat = "{id} {summary}";
 
     public boolean searchClosedTasks = false;
+
+    public long myTotallyTimeSpent = 0;
 
     @Tag("servers")
     public Element servers = new Element("servers");

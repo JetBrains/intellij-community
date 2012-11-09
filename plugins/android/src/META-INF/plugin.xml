@@ -145,7 +145,11 @@
     <facetType implementation="org.jetbrains.android.facet.AndroidFacetType"/>
     <framework.detector implementation="org.jetbrains.android.facet.AndroidFrameworkDetector"/>
     <fileTemplateGroup implementation="org.jetbrains.android.AndroidFileTemplateProvider"/>
+
     <moduleBuilder builderClass="org.jetbrains.android.newProject.AndroidModuleBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.android.newProject.AndroidModuleBuilder$Library"/>
+    <moduleBuilder builderClass="org.jetbrains.android.newProject.AndroidModuleBuilder$Test"/>
+    <projectTemplatesFactory implementation="org.jetbrains.android.newProject.AndroidProjectTemplatesFactory"/>
 
     <compiler implementation="org.jetbrains.android.compiler.AndroidIncludingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>

@@ -1093,7 +1093,7 @@ public class Mappings {
                   final File sourceFileName = myClassToSourceFile.get(subClass);
                   if (sourceFileName != null) {
                     final int outerClass = r.getOuterClassName();
-                    if (myFuture.isMethodVisible(outerClass, m)) {
+                    if (!isEmpty(outerClass) && myFuture.isMethodVisible(outerClass, m)) {
                       myAffectedFiles.add(sourceFileName);
                       debug("Affecting file due to local overriding: ", sourceFileName);
                     }

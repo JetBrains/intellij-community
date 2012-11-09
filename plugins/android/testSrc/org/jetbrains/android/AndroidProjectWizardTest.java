@@ -22,7 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.platform.ProjectTemplatesFactory;
+import org.jetbrains.android.newProject.AndroidProjectTemplatesFactory;
 import org.jetbrains.android.sdk.AndroidSdkType;
 
 import java.util.Arrays;
@@ -34,7 +34,11 @@ import java.util.Arrays;
 public class AndroidProjectWizardTest extends ProjectWizardTestCase {
 
   public void testCreateProject() throws Exception {
-    createProjectFromTemplate(ProjectTemplatesFactory.OTHER_GROUP, "Android Module", null);
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Application", null);
+  }
+
+  public void testCreateEmptyProject() throws Exception {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Empty Android Module", null);
   }
 
   @Override
