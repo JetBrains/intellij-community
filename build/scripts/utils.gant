@@ -656,7 +656,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
       }
     }
 
-    zipfileset(file: "$macPath/bin/idea.properties", prefix: zipRoot)
+    zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
 
   notifyArtifactBuilt(zipPath)
