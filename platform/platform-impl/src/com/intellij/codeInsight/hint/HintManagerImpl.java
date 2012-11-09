@@ -763,7 +763,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     hintInfo.initStyleFrom(hint.getComponent());
     if (showByBalloon) {
-      hintInfo.setBorderColor(Color.gray);
+      hintInfo.setBorderColor(UIUtil.isUnderDarcula() ? Gray._180 : Color.gray);
       hintInfo.setFont(hintInfo.getTextFont().deriveFont(Font.PLAIN));
       hintInfo.setCalloutShift((int)(editor.getLineHeight() * 0.1));
     }
