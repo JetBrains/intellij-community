@@ -769,6 +769,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myModuleNameDocListenerEnabled = true;
   }
 
+  @NotNull
+  public JTextField getModuleNameField() {
+    return myModuleName;
+  }
+
   protected String getModuleName() {
     return myModuleName.getText().trim();
   }
