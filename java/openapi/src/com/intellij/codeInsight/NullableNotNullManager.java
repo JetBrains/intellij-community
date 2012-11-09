@@ -154,7 +154,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     if (DEFAULT_NULLABLES.length != getNullables().size() || DEFAULT_NOT_NULLS.length != getNotNulls().size()) {
       return false;
     }
-    if (myDefaultNotNull != AnnotationUtil.NOT_NULL || myDefaultNullable != AnnotationUtil.NULLABLE) {
+    if (!myDefaultNotNull.equals(AnnotationUtil.NOT_NULL) || !myDefaultNullable.equals(AnnotationUtil.NULLABLE)) {
       return false;
     }
     for (int i = 0; i < DEFAULT_NULLABLES.length; i++) {
