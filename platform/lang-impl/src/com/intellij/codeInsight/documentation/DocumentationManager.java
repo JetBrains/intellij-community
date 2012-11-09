@@ -187,6 +187,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
+  public void updateToolwindowContext() {
+    if (hasActiveDockedDocWindow()) {
+      updateComponent();
+    }
+  }
+
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
     if (myToolWindow == null) {
       createToolWindow(element, original);
