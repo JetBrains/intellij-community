@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcsUtil.AuthDialog;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
@@ -117,7 +118,7 @@ class HgCommandAuthenticator {
       final HgVcs vcs = HgVcs.getInstance(myProject);
       if (vcs == null) { return; }
 
-      final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
+      @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
         rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(stripSchemaFromUrl(myURL));
@@ -182,6 +183,7 @@ class HgCommandAuthenticator {
       return ok;
     }
 
+    @Nullable
     public String getURL() {
       return myURL;
     }
