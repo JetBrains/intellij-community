@@ -215,7 +215,9 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     AndroidPlatform platform = AndroidPlatform.parse(sdk);
 
     if (platform == null) {
-      Messages.showErrorDialog(module.getProject(), "Cannot parse Android SDK", CommonBundle.getErrorTitle());
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        Messages.showErrorDialog(module.getProject(), "Cannot parse Android SDK", CommonBundle.getErrorTitle());
+      }
       return true;
     }
 
