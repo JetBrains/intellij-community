@@ -27,7 +27,8 @@ public class ZipperUpdater {
   private final int myDelay;
 
   public ZipperUpdater(final int delay, Disposable parentDisposable) {
-    this(delay, Alarm.ThreadToUse.SHARED_THREAD, parentDisposable);
+    myDelay = delay;
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parentDisposable);
   }
 
   public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {

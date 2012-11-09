@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +39,7 @@ public class ZipAndQueue {
 
   public ZipAndQueue(final Project project, final int interval, final String title, final Runnable runnable) {
     final int correctedInterval = interval <= 0 ? 300 : interval;
-    myZipperUpdater = new ZipperUpdater(correctedInterval, Alarm.ThreadToUse.SHARED_THREAD, project);
+    myZipperUpdater = new ZipperUpdater(correctedInterval, project);
     myQueue = new BackgroundTaskQueue(project, title);
     myInZipper = new Runnable() {
       @Override
