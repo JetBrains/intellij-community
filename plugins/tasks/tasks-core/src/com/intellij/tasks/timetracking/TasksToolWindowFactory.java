@@ -20,8 +20,10 @@ public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Proj
 
   @Override
   public boolean value(final Project project) {
-    final LocalTask activeTask = TaskManager.getManager(project).getActiveTask();
-    final boolean isNotUsed = activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
+    final TaskManager manager = TaskManager.getManager(project);
+    final LocalTask activeTask = manager.getActiveTask();
+    final boolean isNotUsed =
+      activeTask.isDefault() && manager.getLocalTasks().size() == 1 && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
     return !isNotUsed;
   }
 
