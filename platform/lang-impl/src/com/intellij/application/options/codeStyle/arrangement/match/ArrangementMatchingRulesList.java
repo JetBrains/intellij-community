@@ -170,6 +170,20 @@ public class ArrangementMatchingRulesList extends JBList {
     if (i < 0) {
       return;
     }
+    if (myEditorRow > 0 && myEditorRow == i + 1 && e.getID() == MouseEvent.MOUSE_PRESSED) {
+      hideEditor();
+    }
+    else {
+      ListSelectionModel selectionModel = getSelectionModel();
+      if (myEditorRow < 0
+          && selectionModel.isSelectedIndex(i)
+          && selectionModel.getMinSelectionIndex() == selectionModel.getMaxSelectionIndex()
+          && e.getID() == MouseEvent.MOUSE_PRESSED)
+      {
+        
+        showEditor(i);
+      }
+    } 
     ArrangementListRowDecorator decorator = myComponents.get(i);
     if (decorator != null) {
       decorator.onMousePress(e);
@@ -215,7 +229,7 @@ public class ArrangementMatchingRulesList extends JBList {
     }
 
     if (myEditorRow >= 0) {
-      if (myEditorRow == selectedRow + 1) {
+      if (myEditorRow == selectedRow) {
         return;
       }
       else {
@@ -226,10 +240,28 @@ public class ArrangementMatchingRulesList extends JBList {
     // There is a possible case that there was an active editor in a row before the selected.
     selectedRow = selectionModel.getMinSelectionIndex();
     ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
-    if (toEdit == null) {
+    if (toEdit != null) {
+      showEditor(selectedRow);
+    }
+  }
+
+  private void hideEditor() {
+    if (myEditorRow < 0) {
       return;
     }
-    
+    repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
+    myComponents.shiftKeys(myEditorRow, - 1);
+    mySkipSelectionChange = true;
+    try {
+      getModel().removeElementAt(myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    myEditorRow = -1;
+  }
+
+  private void showEditor(int selectedRow) {
     myEditorRow = selectedRow + 1;
     ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
     Container parent = getParent();
@@ -250,28 +282,12 @@ public class ArrangementMatchingRulesList extends JBList {
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
     }
-    
+
     // We can't just subscribe to the model modification events and update cached renderers automatically because we need to use
     // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
     // corresponding cached renderer is used for animation.
     editor.expand();
     repaintRows(selectedRow, getModel().size() - 1, false);
-  }
-  
-  private void hideEditor() {
-    if (myEditorRow < 0) {
-      return;
-    }
-    repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
-    myComponents.shiftKeys(myEditorRow, - 1);
-    mySkipSelectionChange = true;
-    try {
-      getModel().removeElementAt(myEditorRow);
-    }
-    finally {
-      mySkipSelectionChange = false;
-    }
-    myEditorRow = -1;
   }
 
   @NotNull
