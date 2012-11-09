@@ -59,7 +59,6 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
 
       @Override
       public void taskAdded(final LocalTask task) {
-        task.setTimeSpent(1);
         updateTable();
       }
 
@@ -82,7 +81,7 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
     myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(), new Condition<LocalTask>() {
       @Override
       public boolean value(final LocalTask task) {
-        return task.getTimeSpent() != 0;
+        return task.isActive() || task.getTimeSpent() != 0;
       }
     }));
   }
