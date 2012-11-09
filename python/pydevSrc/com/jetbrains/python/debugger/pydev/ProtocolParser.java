@@ -2,10 +2,8 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.debugger.*;
-import com.thoughtworks.xstream.io.naming.NameCoder;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import com.thoughtworks.xstream.io.xml.xppdom.XppFactory;
 import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
