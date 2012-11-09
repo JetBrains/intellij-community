@@ -53,6 +53,20 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
     });
   }
 
+  public void testCreateLibrary() throws Exception {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Library Module", new Consumer<ModuleWizardStep>() {
+      @Override
+      public void consume(ModuleWizardStep step) {
+        if (step instanceof AndroidModuleWizardStep) {
+          ProjectBuilder builder = myWizard.getProjectBuilder();
+          assertTrue(builder instanceof AndroidModuleBuilder);
+          String name = ((AndroidModuleBuilder)builder).getName();
+          assertTrue(name, StringUtil.isNotEmpty(name));
+        }
+      }
+    });
+  }
+
   public void testCreateEmptyProject() throws Exception {
     createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Empty Android Module", null);
   }

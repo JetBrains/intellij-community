@@ -176,7 +176,7 @@ public class NewProjectUtil {
           // ensure the dialog is shown after all startup activities are done
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              if (newProject.isDisposed()) return;
+              if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
               if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null);
               }

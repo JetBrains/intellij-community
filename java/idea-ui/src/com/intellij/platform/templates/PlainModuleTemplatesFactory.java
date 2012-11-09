@@ -18,7 +18,6 @@ package com.intellij.platform.templates;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
@@ -57,7 +56,7 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
       if (!context.isCreatingNewProject()) {
         return ProjectTemplate.EMPTY_ARRAY;
       }
-      return new ProjectTemplate[]{new PlainModuleTemplate(new EmptyModuleBuilder() {
+      return new ProjectTemplate[]{new BuilderBasedTemplate(new EmptyModuleBuilder() {
         @Override
         public String getPresentableName() {
           return "Empty Project";
@@ -74,40 +73,8 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
       @Nullable
       @Override
       public ProjectTemplate fun(ModuleBuilder builder) {
-        return builder.getGroupName().equals(group) ? new PlainModuleTemplate(builder) : null;
+        return builder.getGroupName().equals(group) ? new BuilderBasedTemplate(builder) : null;
       }
     }, ProjectTemplate.EMPTY_ARRAY);
-  }
-
-  private static class PlainModuleTemplate implements ProjectTemplate {
-    private final ModuleBuilder myBuilder;
-
-    public PlainModuleTemplate(ModuleBuilder builder) {
-      myBuilder = builder;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myBuilder.getPresentableName();
-    }
-
-    @Nullable
-    @Override
-    public String getDescription() {
-      return myBuilder.getDescription();
-    }
-
-    @NotNull
-    @Override
-    public ModuleBuilder createModuleBuilder() {
-      return myBuilder;
-    }
-
-    @Nullable
-    @Override
-    public ValidationInfo validateSettings() {
-      return null;
-    }
   }
 }
