@@ -58,7 +58,6 @@ public class ArrangementMatchingRulesList extends JBList {
 
   private int myRowUnderMouse = -1;
   private int myEditorRow     = -1;
-  private boolean mySkipMouseClick;
   private boolean mySkipSelectionChange;
 
   public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
@@ -74,11 +73,6 @@ public class ArrangementMatchingRulesList extends JBList {
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
-    });
-    addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
-      @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
-      @Override public void mouseClicked(MouseEvent e) { onMousePressed(e); }
     });
     addListSelectionListener(new ListSelectionListener() {
       @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
@@ -115,20 +109,13 @@ public class ArrangementMatchingRulesList extends JBList {
   protected void processMouseEvent(MouseEvent e) {
     int id = e.getID();
     switch (id) {
-      case MouseEvent.MOUSE_PRESSED:
-        onMousePressed(e);
-        if (e.isConsumed()) {
-          mySkipMouseClick = true;
-          return;
-        }
-        break;
-      case MouseEvent.MOUSE_CLICKED:
-        if (mySkipMouseClick) {
-          mySkipMouseClick = false;
-          return;
-        }
+      case MouseEvent.MOUSE_PRESSED: onMousePressed(e); break;
+      case MouseEvent.MOUSE_ENTERED: onMouseEntered(e); break;
+      case MouseEvent.MOUSE_EXITED: onMouseExited(); break;
     }
-    super.processMouseEvent(e);
+    if (!e.isConsumed()) {
+      super.processMouseEvent(e);
+    }
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
@@ -224,12 +211,20 @@ public class ArrangementMatchingRulesList extends JBList {
 
     int selectedRow = selectionModel.getMinSelectionIndex();
     if (selectedRow != selectionModel.getMaxSelectionIndex()) {
+      // More than one row is selected.
       hideEditor();
       return;
     }
 
     if (myEditorRow >= 0) {
       if (myEditorRow == selectedRow) {
+        mySkipSelectionChange = true;
+        try {
+          getSelectionModel().setSelectionInterval(myEditorRow - 1, myEditorRow - 1);
+        }
+        finally {
+          mySkipSelectionChange = false;
+        }
         return;
       }
       else {
@@ -340,7 +335,7 @@ public class ArrangementMatchingRulesList extends JBList {
         }
       }
       component.setRowIndex((myEditorRow >= 0 && index > myEditorRow) ? index : index + 1);
-      component.setSelected(getSelectionModel().isSelectedIndex(index));
+      component.setSelected(getSelectionModel().isSelectedIndex(index) || (myEditorRow >= 0 && index == myEditorRow - 1));
       return component.getUiComponent();
     }
   }
