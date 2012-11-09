@@ -246,7 +246,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest, true, null);
+    return getIssues(query, 50, 0, forceRequest, true, new EmptyProgressIndicator());
   }
 
   @Override
@@ -255,9 +255,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                               long since,
                               boolean forceRequest,
                               final boolean withClosed,
-                              final ProgressIndicator cancelled) {
+                              @NotNull final ProgressIndicator cancelled) {
     List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest, cancelled);
     if (tasks == null) return getCachedIssues(withClosed);
+    myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
@@ -708,7 +709,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                                                int max,
                                                long since,
                                                boolean forceRequest,
-                                               final ProgressIndicator cancelled) {
+                                               @NotNull final ProgressIndicator cancelled) {
     List<Task> issues = null;
     for (final TaskRepository repository : getAllRepositories()) {
       if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {
