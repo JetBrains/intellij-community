@@ -40,7 +40,7 @@ public class IgnoredFileBean {
   private final Matcher myMatcher;
   private final IgnoreSettingsType myType;
   private final Project myProject;
-  private VirtualFile myCachedResolved;
+  private volatile VirtualFile myCachedResolved;
 
   IgnoredFileBean(String path, IgnoreSettingsType type, Project project) {
     myPath = path;
