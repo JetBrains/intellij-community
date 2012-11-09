@@ -112,13 +112,22 @@ public class IncProjectBuilder {
     CompileContextImpl context = null;
     try {
       context = createContext(scope, true, false);
+      final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target);
-          if (myProjectDescriptor.fsState.hasWorkToDo(target)) {
-            // this will serve as a marker that compiler has work to do
-            myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
-            return;
+          final Map<BuildRootDescriptor, Set<File>> toRecompile = fsState.getSourcesToRecompile(context, target);
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
+          synchronized (toRecompile) {
+            for (Set<File> files : toRecompile.values()) {
+              for (File file : files) {
+                if (scope.isAffected(target, file)) {
+                  // this will serve as a marker that compiler has work to do
+                  myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
+                  return;
+                }
+              }
+            }
           }
         }
       }
