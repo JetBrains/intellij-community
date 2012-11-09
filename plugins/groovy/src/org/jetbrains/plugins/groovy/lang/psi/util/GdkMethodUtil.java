@@ -16,11 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -365,5 +370,46 @@ public class GdkMethodUtil {
       selfType = substitutor.substitute(selfType);
     }
     return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
+  }
+
+  @Nullable
+  public static PsiClassType getCategoryType(@NotNull final PsiClass categoryAnnotationOwner) {
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(categoryAnnotationOwner.getProject());
+    return cachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
+      @Override
+      public Result<PsiClassType> compute() {
+        return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+
+      @Nullable
+      private PsiClassType inferCategoryType(final PsiClass aClass) {
+        return RecursionManager.doPreventingRecursion(aClass, true, new NullableComputable<PsiClassType>() {
+          @Nullable
+          @Override
+          public PsiClassType compute() {
+            final PsiModifierList modifierList = aClass.getModifierList();
+            if (modifierList == null) return null;
+
+            final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
+            if (annotation == null) return null;
+
+            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+            if (!(value instanceof GrReferenceExpression)) return null;
+
+            if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
+            if (!(value instanceof GrReferenceExpression)) return null;
+
+            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+            if (!(resolved instanceof PsiClass)) return null;
+
+            String className = ((PsiClass)resolved).getQualifiedName();
+            if (className == null) className = ((PsiClass)resolved).getName();
+            if (className == null) return null;
+
+            return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
+          }
+        });
+      }
+    });
   }
 }
