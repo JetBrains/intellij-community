@@ -51,6 +51,11 @@ public class PyDocstringLexer extends PythonIndentingLexer {
       }
       advanceBase();
     }
+    if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+      advanceBase();
+      return 0;
+    }
+
     if (getBaseTokenType() == null) {
       return 0;
     }

@@ -1,6 +1,5 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,12 +16,12 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -39,9 +38,6 @@ import java.util.Map;
 public class VFSTestFrameworkListener implements ApplicationComponent, PersistentStateComponent<VFSTestFrameworkListener> {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
-  public static final String PYTESTSEARCHER = "pycharm/finders/find_pytest.py";
-  public static final String NOSETESTSEARCHER = "pycharm/finders/find_nosetest.py";
-  public static final String ATTESTSEARCHER = "pycharm/finders/find_attest.py";
 
   private static final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
 
@@ -61,14 +57,14 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
             for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
               if (path.contains(root)) {
                 if (containsNose) {
-                  updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, PyNames.NOSE_TEST);
+                  updateTestFrameworks(sdk, PyNames.NOSE_TEST);
                   break SDKLOOP;
                 }
                 else if (containsPy) {
-                  updateTestFrameworks(sdk.getHomePath(), PYTESTSEARCHER, PyNames.PY_TEST);
+                  updateTestFrameworks(sdk, PyNames.PY_TEST);
                   break SDKLOOP;
                 } else {
-                  updateTestFrameworks(sdk.getHomePath(), ATTESTSEARCHER, PyNames.AT_TEST);
+                  updateTestFrameworks(sdk, PyNames.AT_TEST);
                   break SDKLOOP;
                 }
               }
@@ -79,18 +75,18 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     });
   }
 
-  public void updateAllTestFrameworks(final String sdkHome) {
-    updateTestFrameworks(sdkHome, PYTESTSEARCHER, PyNames.PY_TEST);
-    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, PyNames.NOSE_TEST);
-    updateTestFrameworks(sdkHome, ATTESTSEARCHER, PyNames.AT_TEST);
+  public void updateAllTestFrameworks(final Sdk sdk) {
+    updateTestFrameworks(sdk, PyNames.PY_TEST);
+    updateTestFrameworks(sdk, PyNames.NOSE_TEST);
+    updateTestFrameworks(sdk, PyNames.AT_TEST);
     myQueue.flush();
   }
 
-  public void updateTestFrameworks(final String sdkHome, final String searcher, final String sdkType) {
-    myQueue.queue(new Update(Pair.create(sdkHome, searcher)) {
+  public void updateTestFrameworks(final Sdk sdk, final String testPackageName) {
+    myQueue.queue(new Update(Pair.create(sdk, testPackageName)) {
       @Override
       public void run() {
-        testInstalled(isTestFrameworkInstalled(sdkHome, searcher), sdkHome, sdkType);
+        testInstalled(isTestFrameworkInstalled(sdk, testPackageName), sdk.getHomePath(), testPackageName);
       }
     });
   }
@@ -109,24 +105,17 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     return "VFSTestFrameworkListener";
   }
 
-  public static boolean isTestFrameworkInstalled(String sdkHome, String searcher) {
-    if (StringUtil.isEmptyOrSpaces(sdkHome)) {
-      LOG.info("Searching test runner in empty sdkHome");
+  public static boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
+    if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
+      LOG.info("Searching test runner in empty sdk");
       return false;
     }
-    final String formatter = new File(PythonHelpersLocator.getHelpersRoot(), searcher).getAbsolutePath();
-    ProcessOutput
-      output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
-                                          new String[]{
-                                            sdkHome,
-                                            formatter
-                                          },
-                                          null,
-                                          2000);
-    if (output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      LOG.info("Cannot find test runner in " + sdkHome + ". Use searcher " + formatter + ".\nGot exit code: " + output.getExitCode() +
-      ".\nError output: " + output.getStderr());
-      return false;
+    final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+    try {
+      return packageManager.findPackage(testPackageName) != null;
+    }
+    catch (PyExternalProcessException e) {
+      LOG.info("Can't load package list " + e.getMessage());
     }
     return true;
   }
@@ -153,10 +142,10 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
-  public boolean isPyTestInstalled(final String sdkHome) {
-    Boolean isInstalled = SDK_TO_PYTEST.get(sdkHome);
+  public boolean isPyTestInstalled(final Sdk sdk) {
+    Boolean isInstalled = SDK_TO_PYTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, PYTESTSEARCHER, PyNames.PY_TEST);
+      updateTestFrameworks(sdk, PyNames.PY_TEST);
       return true;
     }
     return isInstalled;
@@ -166,10 +155,10 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
-  public boolean isNoseTestInstalled(final String sdkHome) {
-    Boolean isInstalled = SDK_TO_NOSETEST.get(sdkHome);
+  public boolean isNoseTestInstalled(final Sdk sdk) {
+    Boolean isInstalled = SDK_TO_NOSETEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, PyNames.NOSE_TEST);
+      updateTestFrameworks(sdk, PyNames.NOSE_TEST);
       return true;
     }
     return isInstalled;
@@ -179,10 +168,10 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     SDK_TO_ATTEST.put(sdkHome, installed);
   }
 
-  public boolean isAtTestInstalled(final String sdkHome) {
-    Boolean isInstalled = SDK_TO_ATTEST.get(sdkHome);
+  public boolean isAtTestInstalled(final Sdk sdk) {
+    Boolean isInstalled = SDK_TO_ATTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, ATTESTSEARCHER, PyNames.AT_TEST);
+      updateTestFrameworks(sdk, PyNames.AT_TEST);
       return true;
     }
     return isInstalled;

@@ -92,19 +92,19 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
           if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath())) {
+            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
                                           createQuickFix(sdk, facetErrorPanel, PyNames.PY_TEST));
             }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath())) {
+            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
                                           createQuickFix(sdk, facetErrorPanel, PyNames.NOSE_TEST));
             }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath())) {
+            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk)) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"),
                                           createQuickFix(sdk, facetErrorPanel, PyNames.AT_TEST));
             }
