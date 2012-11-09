@@ -94,6 +94,7 @@ except:
     from urllib.parse import quote #@Reimport @UnresolvedImport
 
 import pydevd_vars
+import pydev_log
 import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
@@ -297,16 +298,14 @@ class ReaderThread(PyDBDaemonThread):
 
                 buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                    sys.stdout.write('received >>%s<<\n' % (buffer,))
+                    pydev_log.debug('received >>%s<<\n' % (buffer,))
 
                 if len(buffer) == 0:
                     self.handleExcept()
                     break
                 while buffer.find('\n') != -1:
                     command, buffer = buffer.split('\n', 1)
-                    if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                        sys.stdout.write('command >>%s<<\n' % (command,))
-                    PydevdLog(1, "received command ", command)
+                    pydev_log.debug('Received command: >>%s<<\n' % (command,))
                     args = command.split('\t', 2)
                     try:
                         self.processCommand(int(args[0]), int(args[1]), args[2])

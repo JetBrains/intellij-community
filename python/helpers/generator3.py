@@ -2226,6 +2226,12 @@ def buildOutputName(subdir, name):
         fname = os.path.join(target_name, "__init__.py")
     else:
         fname = target_name + ".py"
+
+    dirname = os.path.dirname(fname)
+
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
+
     return fname
 
 def redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_names):

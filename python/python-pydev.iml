@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
   </component>
 </module>
 
