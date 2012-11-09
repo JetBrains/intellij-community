@@ -651,7 +651,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static LocalTaskImpl createDefaultTask() {
-    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default");
   }
 
   public void disposeComponent() {
@@ -790,19 +790,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void associateWithTask(LocalChangeList changeList, final boolean withCurrent) {
+  public void trackContext(LocalChangeList changeList) {
     ChangeListInfo changeListInfo = new ChangeListInfo(changeList);
-    if (withCurrent) {
-      getActiveTask().addChangelist(changeListInfo);
-    }
-    else {
-      String changeListName = changeList.getName();
-      LocalTaskImpl task = createLocalTask(changeListName);
-      task.addChangelist(changeListInfo);
-      addTask(task);
-      if (changeList.isDefault()) {
-        activateTask(task, false, false);
-      }
+    String changeListName = changeList.getName();
+    LocalTaskImpl task = createLocalTask(changeListName);
+    task.addChangelist(changeListInfo);
+    addTask(task);
+    if (changeList.isDefault()) {
+      activateTask(task, false, false);
     }
   }
 
@@ -846,11 +841,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String getChangelistName(Task task) {
-    TaskRepository repository = task.getRepository();
-    if (repository != null && myConfig.changelistNameFormat != null) {
+    if (task.isIssue() && myConfig.changelistNameFormat != null) {
       return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
     }
     return task.getSummary();
+  }
+
+  public ChangeListAdapter getChangeListListener() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myChangeListListener;
+    }
+    throw new UnsupportedOperationException();
   }
 
   public static class Config {
@@ -870,8 +871,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean clearContext = true;
     public boolean createChangelist = true;
     public boolean saveContextOnCommit = true;
-    public boolean associateWithTaskForNewChangelist = true;
-    public boolean associateWithCurrentTaskForNewChangelist = true;
+    public boolean trackContextForNewChangelist = false;
     public boolean markAsInProgress = false;
     public String changelistNameFormat = "{id} {summary}";
 
