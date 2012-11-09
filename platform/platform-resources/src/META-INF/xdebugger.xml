@@ -34,6 +34,8 @@
 
     <applicationConfigurable provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
 
+    <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
+
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run"/>

@@ -29,6 +29,8 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -66,6 +68,10 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
       .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
       .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
       .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
+  }
+
+  protected static ActionGroup getCustomizedActionGroup(final String id) {
+    return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(id);
   }
 
   public abstract RunContentDescriptor getRunContentDescriptor();
