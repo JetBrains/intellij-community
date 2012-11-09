@@ -40,8 +40,8 @@ public class ArrangementConstants {
   public static final int CALLOUT_BORDER_HEIGHT = 10;
   public static final int BORDER_ARC_SIZE       = 12;
 
-  public static final int ANIMATION_STEPS                 = 250;
-  public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 20;
+  public static final int ANIMATION_ITERATION_PIXEL_STEP  = 2;
+  public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 10;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 
