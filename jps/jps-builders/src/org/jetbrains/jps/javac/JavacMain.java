@@ -75,6 +75,10 @@ public class JavacMain {
     if (!classpath.isEmpty()) {
       try {
         fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+        if (!nowUsingJavac && !isOptionSet(options, "-processorpath")) {
+          // for non-javac file manager ensure annotation processor path defaults to classpath
+          fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
+        }
       }
       catch (IOException e) {
         fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -146,6 +150,15 @@ public class JavacMain {
       }
     }
     return true;
+  }
+
+  private static boolean isOptionSet(final Collection<String> options, String option) {
+    for (String opt : options) {
+      if (option.equals(opt)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
