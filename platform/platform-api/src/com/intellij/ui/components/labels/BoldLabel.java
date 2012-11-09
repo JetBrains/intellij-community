@@ -56,12 +56,4 @@ public class BoldLabel extends JLabel {
     if (text.startsWith("<html>")) return text;
     return "<html><b>" + text.replaceAll("\\n", "<br>") + "</b></html>";
   }
-
-  @SuppressWarnings({"MagicNumber"})
-  public static void main(String[] args) {
-    JFrame frame = new JFrame();
-    frame.getContentPane().add(new BoldLabel("bebebe\nlalala\nfufufu"));
-    frame.setSize(400, 300);
-    frame.setVisible(true);
-  }
 }
