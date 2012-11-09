@@ -51,7 +51,9 @@
           <root url="jar://$MODULE_DIR$/lib/sqljet.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
