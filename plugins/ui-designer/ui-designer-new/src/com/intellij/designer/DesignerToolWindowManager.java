@@ -172,7 +172,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
       }
     };
 
-    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.General.CollapseAll) {
+    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.Actions.Collapseall) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {
