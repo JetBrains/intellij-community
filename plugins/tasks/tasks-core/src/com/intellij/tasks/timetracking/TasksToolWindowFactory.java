@@ -1,5 +1,6 @@
 package com.intellij.tasks.timetracking;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -15,7 +16,7 @@ import com.intellij.ui.content.ContentManager;
  * User: evgeny.zakrevsky
  * Date: 11/8/12
  */
-public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Project> {
+public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
 
   @Override
   public boolean value(final Project project) {
