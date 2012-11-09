@@ -16,18 +16,18 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorComponent;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchNodeComponentFactory;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
+import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class ArrangementMatchingRulesList extends JBList {
   @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesList.class.getName());
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
 
-  @NotNull private final TIntObjectHashMap<ArrangementListRowDecorator> myComponents = new TIntObjectHashMap<ArrangementListRowDecorator>();
+  @NotNull private final IntObjectMap<ArrangementListRowDecorator> myComponents = new IntObjectMap<ArrangementListRowDecorator>();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final ArrangementMatchingRuleEditor        myEditor;
@@ -73,32 +73,15 @@ public class ArrangementMatchingRulesList extends JBList {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        onMouseMoved(e);
-      }
+      @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
     });
     addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        onMouseExited();
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        onMouseEntered(e);
-      }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        onMousePressed(e);
-      }
+      @Override public void mouseExited(MouseEvent e) { onMouseExited(); }
+      @Override public void mouseEntered(MouseEvent e) { onMouseEntered(e); }
+      @Override public void mouseClicked(MouseEvent e) { onMousePressed(e); }
     });
     addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        onSelectionChange(e);
-      }
+      @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
     });
   }
 
@@ -255,6 +238,7 @@ public class ArrangementMatchingRulesList extends JBList {
       width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
+    myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
       getModel().insertElementAt(editor, myEditorRow);
@@ -266,15 +250,20 @@ public class ArrangementMatchingRulesList extends JBList {
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
     }
+    
+    // We can't just subscribe to the model modification events and update cached renderers automatically because we need to use
+    // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
+    // corresponding cached renderer is used for animation.
     editor.expand();
     repaintRows(selectedRow, getModel().size() - 1, false);
   }
-
+  
   private void hideEditor() {
     if (myEditorRow < 0) {
       return;
     }
     repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
+    myComponents.shiftKeys(myEditorRow, - 1);
     mySkipSelectionChange = true;
     try {
       getModel().removeElementAt(myEditorRow);
@@ -325,7 +314,7 @@ public class ArrangementMatchingRulesList extends JBList {
         }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         component = new ArrangementListRowDecorator(myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
-        myComponents.put(index, component);
+        myComponents.set(index, component);
         if (myRowUnderMouse == index) {
           component.setBackground(UIUtil.getDecoratedRowColor());
         }
