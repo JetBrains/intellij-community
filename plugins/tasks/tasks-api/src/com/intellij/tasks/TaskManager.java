@@ -49,7 +49,7 @@ public abstract class TaskManager {
                                        long since,
                                        boolean forceRequest,
                                        final boolean withClosed,
-                                       final ProgressIndicator cancelled);
+                                       @NotNull final ProgressIndicator cancelled);
   /**
    * Returns already cached issues.
    * @return cached issues.

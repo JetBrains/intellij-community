@@ -25,6 +25,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -118,6 +120,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return result;
     }
   });
+  private final ProjectManagerAdapter myProjectManagerListener;
 
   @NotNull
   private LocalTask myActiveTask = createDefaultTask();
@@ -171,6 +174,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         task.setActivated(System.currentTimeMillis());
       }
     });
+
+    myProjectManagerListener = new ProjectManagerAdapter() {
+      @Override
+      public boolean canCloseProject(final Project project) {
+        getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
+        myActiveTask.setTimeSpent(myActiveTask.getTimeSpent() + System.currentTimeMillis() - myActiveTask.getActivated());
+        return true;
+      }
+    };
+    ProjectManager.getInstance().addProjectManagerListener(myProjectManagerListener);
   }
 
   @Override
@@ -246,7 +259,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest, true, null);
+    return getIssues(query, 50, 0, forceRequest, true, new EmptyProgressIndicator());
   }
 
   @Override
@@ -255,9 +268,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                               long since,
                               boolean forceRequest,
                               final boolean withClosed,
-                              final ProgressIndicator cancelled) {
+                              @NotNull final ProgressIndicator cancelled) {
     List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest, cancelled);
     if (tasks == null) return getCachedIssues(withClosed);
+    myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
@@ -383,8 +397,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (explicitly) {
       task.setUpdated(new Date());
     }
-    task.setActive(true);
     myActiveTask.setActive(false);
+    task.setActive(true);
     addTask(task);
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
@@ -505,24 +519,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     Element element = config.servers;
     List<TaskRepository> repositories = loadRepositories(element);
     myRepositories.addAll(repositories);
-
-    LocalTaskImpl activeTask = null;
-    Collections.sort(config.tasks, TASK_UPDATE_COMPARATOR);
-    for (LocalTaskImpl task : config.tasks) {
-      if (activeTask == null) {
-        if (task.isActive()) {
-          activeTask = task;
-        }
-      }
-      else {
-        task.setActive(false);
-      }
-    }
-
-    if (activeTask != null) {
-      myActiveTask = activeTask;
-      myDispatcher.getMulticaster().taskActivated(activeTask);
-    }
   }
 
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
@@ -583,7 +579,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void projectClosed() {
-    getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
   }
 
   @NotNull
@@ -632,9 +627,27 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    myChangeListManager.addChangeListListener(myChangeListListener);
+    LocalTask activeTask = null;
+    final List<LocalTask> tasks = getLocalTasks();
+    Collections.sort(tasks, TASK_UPDATE_COMPARATOR);
+    for (LocalTask task : tasks) {
+      if (activeTask == null) {
+        if (task.isActive()) {
+          activeTask = task;
+        }
+      }
+      else {
+        task.setActive(false);
+      }
+    }
 
+    if (activeTask != null) {
+      myActiveTask = activeTask;
+    }
     doActivate(myActiveTask, false);
+    myDispatcher.getMulticaster().taskActivated(myActiveTask);
+
+    myChangeListManager.addChangeListListener(myChangeListListener);
   }
 
   private static LocalTaskImpl createDefaultTask() {
@@ -646,6 +659,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myCacheRefreshTimer.stop();
     }
     myChangeListManager.removeChangeListListener(myChangeListListener);
+    ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
   }
 
   public void updateIssues(final @Nullable Runnable onComplete) {
@@ -708,7 +722,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                                                int max,
                                                long since,
                                                boolean forceRequest,
-                                               final ProgressIndicator cancelled) {
+                                               @NotNull final ProgressIndicator cancelled) {
     List<Task> issues = null;
     for (final TaskRepository repository : getAllRepositories()) {
       if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {

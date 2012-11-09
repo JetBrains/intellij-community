@@ -25,6 +25,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class TaskSearchSupport {
                                                 long since,
                                                 boolean forceRequest,
                                                 final boolean withClosed,
-                                                final ProgressIndicator cancelled) {
+                                                @NotNull final ProgressIndicator cancelled) {
     List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed, cancelled);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;

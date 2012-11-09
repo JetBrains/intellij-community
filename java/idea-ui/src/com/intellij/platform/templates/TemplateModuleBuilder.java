@@ -17,6 +17,8 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -25,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
@@ -66,6 +69,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
 
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    return myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
