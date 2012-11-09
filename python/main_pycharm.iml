@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="pycharm-numpy" />
     <orderEntry type="module" module-name="python-helpers" />
     <orderEntry type="module" module-name="sql" />
+    <orderEntry type="module" module-name="vagrant" />
   </component>
 </module>
 
