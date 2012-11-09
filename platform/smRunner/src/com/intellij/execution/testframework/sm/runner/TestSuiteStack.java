@@ -17,6 +17,8 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,17 +126,12 @@ public class TestSuiteStack {
       return EMPTY;
     }
 
-    final StringBuilder builder = new StringBuilder();
-    final String lastName = names[names.length - 1];
-    for (String name : names) {
-      builder.append('[').append(name).append(']');
-      //Here we can use != instead of !equals()
-      //noinspection StringEquality
-      if (name != lastName) {
-        builder.append("->");
+    return StringUtil.join(names, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return "[" + s + "]";
       }
-    }
-    return builder.toString();
+    }, "->");
   }
 
   public void clear() {
