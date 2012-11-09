@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
-
+import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -32,8 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-
 /**
  * @author ven
  */
@@ -731,6 +729,20 @@ print map.cla<caret>ss''')
 
       assertInstanceOf( resolved , GrField)
       assertEquals(resolved.containingClass.name, 'B')
+  }
+
+  void testResolveEnumConstantInsideItsInitializer() {
+    def ref = configureByText('''\
+enum MyEnum {
+    CONST {
+        void get() {
+            C<caret>ONST
+        }
     }
+
+}
+''')
+    assertNotNull(ref)
+  }
 
 }

@@ -61,6 +61,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testFor$for1() throws Throwable { doTest(); }
   public void testFor$for10() throws Throwable { doTest(); }
   public void testFor$for11() throws Throwable { doTest(); }
+  public void testFor$for12() throws Throwable { doTest(); }
   public void testFor$for2() throws Throwable { doTest(); }
   public void testFor$for3() throws Throwable { doTest(); }
   public void testFor$for4() throws Throwable { doTest(); }

@@ -208,6 +208,7 @@ public class RefManagerImpl extends RefManager {
       final RefElement refElement = (RefElement)refEntity;
       PsiElement psiElement = refElement.getElement();
       PsiFile psiFile = psiElement.getContainingFile();
+      if (psiFile == null) return null;
 
       Element fileElement = new Element("file");
       Element lineElement = new Element("line");

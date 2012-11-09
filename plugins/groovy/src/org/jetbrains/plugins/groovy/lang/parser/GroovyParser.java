@@ -337,7 +337,11 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
-     if (GroovyTokenTypes.kIMPORT.equals(builder.getTokenType())) {
+    if (isBlockStatementNeeded && mSEMI == builder.getTokenType()) {
+      return true;
+    }
+
+    if (GroovyTokenTypes.kIMPORT.equals(builder.getTokenType())) {
       PsiBuilder.Marker marker = builder.mark();
       ImportStatement.parse(builder, this);
       marker.error(GroovyBundle.message("import.not.allowed"));

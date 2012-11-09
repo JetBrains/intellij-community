@@ -43,6 +43,7 @@ import java.util.*;
 public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponent,
                                                                                           PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
+  private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
   private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
@@ -167,6 +168,10 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     for (String entry: myToolWindowCapable.keySet()) {
       element.addContent(new Element("toolWindow").setAttribute("group", entry));
     }
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    if (!SHOW_BALLOONS) {
+      element.setAttribute(SHOW_BALLOONS_ATTRIBUTE, "false");
+    }
 
     return element;
   }
@@ -187,5 +192,9 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       }
     }
     _remove("Log Only");
+    if ("false".equals(state.getAttributeValue(SHOW_BALLOONS_ATTRIBUTE))) {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      SHOW_BALLOONS = false;
+    }
   }
 }
