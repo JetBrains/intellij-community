@@ -227,35 +227,18 @@ public class LoadingDecorator {
     }
   }
 
-  public static void main(String[] args) {
-    IconLoader.activate();
-
-    final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
-
-    final JPanel content = new JPanel(new BorderLayout());
-
-    final LoadingDecorator loadingTree = new LoadingDecorator(new JComboBox(), Disposer.newDisposable(), -1);
-
-    content.add(loadingTree.getComponent(), BorderLayout.CENTER);
-
-    final JCheckBox loadingCheckBox = new JCheckBox("Loading");
-    loadingCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (loadingTree.isLoading()) {
-          loadingTree.stopLoading();
+  private static class MyLayeredPane extends JLayeredPane {
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      for (int i = 0; i < getComponentCount(); i++) {
+        final Component each = getComponent(i);
+        if (each instanceof Icon) {
+          each.setBounds(0, 0, each.getWidth(), each.getHeight());
         } else {
-          loadingTree.startLoading(false);
+          each.setBounds(0, 0, getWidth(), getHeight());
         }
       }
-    });
-
-    content.add(loadingCheckBox, BorderLayout.SOUTH);
-
-
-    frame.getContentPane().add(content, BorderLayout.CENTER);
-
-    frame.setBounds(300, 300, 300, 300);
-    frame.show();
+    }
   }
 }
