@@ -21,7 +21,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 /**
 * @author nik
 */
-class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
+public class GroovySdkForNewModuleWizardStep extends GroovySdkWizardStepBase {
   private final ModuleBuilder myModuleBuilder;
 
   public GroovySdkForNewModuleWizardStep(ModuleBuilder moduleBuilder, WizardContext wizardContext, final MvcFramework framework) {

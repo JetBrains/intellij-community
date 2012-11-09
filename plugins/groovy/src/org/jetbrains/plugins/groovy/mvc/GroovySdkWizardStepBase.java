@@ -49,9 +49,10 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
   private final LibrariesContainer myLibrariesContainer;
   private boolean myDownloaded;
   private LibraryCompositionSettings myLibraryCompositionSettings;
+  @Nullable
   private final MvcFramework myFramework;
 
-  public GroovySdkWizardStepBase(final MvcFramework framework, WizardContext wizardContext) {
+  public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext) {
     final Project project = wizardContext.getProject();
     myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
     myFramework = framework;
@@ -82,7 +83,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
 
-    final JLabel caption = new JLabel("Please specify " + myFramework.getDisplayName() + " SDK");
+    final JLabel caption = new JLabel("Please specify " + (myFramework == null ? "Groovy" : myFramework.getDisplayName()) + " SDK");
     caption.setBorder(new EmptyBorder(0, 0, 10, 0));
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
@@ -94,7 +95,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   @Override
   public String getHelpId() {
-    return "reference.dialogs.new.project.fromScratch." + myFramework.getFrameworkName().toLowerCase();
+    return "reference.dialogs.new.project.fromScratch." + (myFramework == null ? "groovy" : myFramework.getFrameworkName().toLowerCase());
   }
 
   @Override
@@ -113,7 +114,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   private synchronized LibraryOptionsPanel getPanel() {
     if (myPanel == null) {
-      final GroovyLibraryDescription libraryDescription = myFramework.createLibraryDescription();
+      final GroovyLibraryDescription libraryDescription = myFramework == null ? new GroovyLibraryDescription() : myFramework.createLibraryDescription();
       final String basePath = getBasePath();
       final String baseDirPath = basePath != null ? FileUtil.toSystemIndependentName(basePath) : "";
       myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, FrameworkLibraryVersionFilter.ALL, myLibrariesContainer, false);
