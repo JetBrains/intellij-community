@@ -331,7 +331,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return ContainerUtil.filter(myTasks.values(), new Condition<LocalTask>() {
         @Override
         public boolean value(final LocalTask task) {
-          return withClosed || !task.isClosedLocally();
+          return withClosed || !isLocallyClosed(task);
         }
       });
     }
@@ -651,7 +651,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static LocalTaskImpl createDefaultTask() {
-    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default");
+    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
   }
 
   public void disposeComponent() {
@@ -774,6 +774,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public boolean isVcsEnabled() {
     return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length > 0;
+  }
+
+  @Override
+  public boolean isLocallyClosed(final LocalTask localTask) {
+    return isVcsEnabled() && localTask.getChangeLists().isEmpty();
   }
 
   @Nullable
