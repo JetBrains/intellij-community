@@ -88,8 +88,8 @@ public class CodeStyleSchemesPanel{
         myModel.setUsePerProjectSettings(true);
       }
       else {
-        myModel.setUsePerProjectSettings(false);
         myModel.selectScheme(selected, this);
+        myModel.setUsePerProjectSettings(false);
       }
     }
   }
