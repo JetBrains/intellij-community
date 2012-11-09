@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,6 +21,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,18 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
   protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
-    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    try {
+      myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    }
+    catch (Throwable e) {
+      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(), new Condition<Project>() {
+        @Override
+        public boolean value(Project project) {
+          return myWizard.getProjectName().equals(project.getName());
+        }
+      });
+      throw new RuntimeException(e);
+    }
     assertNotNull(myCreatedProject);
 
     Project[] projects = myProjectManager.getOpenProjects();
