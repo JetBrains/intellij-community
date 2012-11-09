@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributor, DumbAware {
 
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return FilenameIndex.getAllFilenames(project);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     return FilenameIndex.getFilesByName(project, name,

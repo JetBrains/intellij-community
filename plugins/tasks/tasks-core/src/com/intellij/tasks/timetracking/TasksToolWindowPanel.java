@@ -3,13 +3,16 @@ package com.intellij.tasks.timetracking;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskListenerAdapter;
 import com.intellij.tasks.TaskManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -30,46 +33,57 @@ import java.util.Comparator;
 public class TasksToolWindowPanel extends JPanel implements Disposable {
 
   private Timer myTimer;
+  private final ListTableModel<LocalTask> myTableModel;
+  private final TaskManager myTaskManager;
 
   public TasksToolWindowPanel(final Project project) {
     super(new BorderLayout());
-    final TaskManager taskManager = TaskManager.getManager(project);
+    myTaskManager = TaskManager.getManager(project);
 
-    final JTable table = new JBTable(createListModel());
-    final ListTableModel<LocalTask> model = (ListTableModel<LocalTask>)table.getModel();
-    model.setItems(taskManager.getLocalTasks());
+    final TableView<LocalTask> table = new TableView<LocalTask>(createListModel());
+    myTableModel = table.getListTableModel();
+    updateTable();
 
     add(ScrollPaneFactory.createScrollPane(table, true), BorderLayout.CENTER);
 
-    taskManager.addTaskListener(new TaskListenerAdapter() {
+    myTaskManager.addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskDeactivated(final LocalTask task) {
-        model.setItems(taskManager.getLocalTasks());
+        updateTable();
       }
 
       @Override
       public void taskActivated(final LocalTask task) {
-        model.setItems(taskManager.getLocalTasks());
+        updateTable();
       }
 
       @Override
       public void taskAdded(final LocalTask task) {
-        model.setItems(taskManager.getLocalTasks());
+        updateTable();
       }
 
       @Override
       public void taskRemoved(final LocalTask task) {
-        model.setItems(taskManager.getLocalTasks());
+        updateTable();
       }
     });
 
-    myTimer = new Timer(60 * 1000, new ActionListener() {
+    myTimer = new Timer(1000, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         table.repaint();
       }
     });
     myTimer.start();
+  }
+
+  private void updateTable() {
+    myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(), new Condition<LocalTask>() {
+      @Override
+      public boolean value(final LocalTask task) {
+        return task.getTimeSpent() != 0;
+      }
+    }));
   }
 
   private static ListTableModel<LocalTask> createListModel() {
@@ -92,12 +106,17 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
                                                          final boolean hasFocus,
                                                          final int row,
                                                          final int column) {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
-            component.setBackground(UIUtil.getTableBackground(isSelected));
             final boolean isClosed = task.isClosed() || task.isClosedLocally();
-            component.setForeground(isClosed ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground(isSelected));
+            component.append((String)value, getAttributes(isClosed, task.isActive(), isSelected));
             component.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
-            return component;
+            component.setIconOpaque(false);
+            component.setOpaque(false);
+            panel.add(component, BorderLayout.CENTER);
+            panel.setOpaque(true);
+            return panel;
           }
         };
       }
@@ -112,8 +131,6 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
           }
         };
       }
-
-
     };
 
     final ColumnInfo<LocalTask, String> spentTime = new ColumnInfo<LocalTask, String>("Time Spent") {
@@ -123,8 +140,32 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
         long timeSpent = task.getTimeSpent();
         if (task.isActive()) {
           timeSpent += System.currentTimeMillis() - task.getActivated();
+          return formatDuration(timeSpent);
         }
         return DateFormatUtil.formatDuration(timeSpent);
+      }
+
+      @Nullable
+      @Override
+      public TableCellRenderer getRenderer(final LocalTask task) {
+        return new TableCellRenderer() {
+          @Override
+          public Component getTableCellRendererComponent(final JTable table,
+                                                         final Object value,
+                                                         final boolean isSelected,
+                                                         final boolean hasFocus,
+                                                         final int row,
+                                                         final int column) {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBackground(UIUtil.getTableBackground(isSelected));
+            final SimpleColoredComponent component = new SimpleColoredComponent();
+            component.append((String)value, getAttributes(task.isClosed() || task.isClosedLocally(), task.isActive(), isSelected));
+            component.setOpaque(false);
+            panel.add(component, BorderLayout.CENTER);
+            panel.setOpaque(true);
+            return panel;
+          }
+        };
       }
 
       @Nullable
@@ -140,6 +181,13 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
     };
 
     return new ListTableModel<LocalTask>((new ColumnInfo[]{task, spentTime}));
+  }
+
+  private static SimpleTextAttributes getAttributes(final boolean isClosed, final boolean isActive, final boolean isSelected) {
+    return new SimpleTextAttributes(isActive ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
+                                    isSelected
+                                    ? UIUtil.getTableSelectionForeground()
+                                    : isClosed ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
   }
 
   private static String formatDuration(final long milliseconds) {

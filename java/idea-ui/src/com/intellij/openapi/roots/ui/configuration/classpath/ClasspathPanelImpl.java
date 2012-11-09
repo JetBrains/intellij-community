@@ -231,6 +231,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
                                              myEntryTable);
     actionGroup.add(myEditButton);
+    actionGroup.add(myRemoveButton);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
     actionGroup.add(new AnalyzeDependencyAction());

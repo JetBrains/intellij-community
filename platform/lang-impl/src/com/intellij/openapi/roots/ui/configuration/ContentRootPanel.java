@@ -27,6 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.DarculaColors;
+import com.intellij.ui.Gray;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.roots.FilePathClipper;
 import com.intellij.ui.roots.IconActionComponent;
@@ -52,13 +54,13 @@ import java.util.Map;
  *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
-  protected static final Color SOURCES_COLOR = new Color(0x0A50A1);
+  protected static final Color SOURCES_COLOR = UIUtil.isUnderDarcula() ? DarculaColors.BLUE : new Color(0x0A50A1);
   protected static final Color TESTS_COLOR = new Color(0x008C2E);
-  protected static final Color EXCLUDED_COLOR = new Color(0x992E00);
-  private static final Color SELECTED_HEADER_COLOR = new Color(0xDEF2FF);
-  private static final Color HEADER_COLOR = new Color(0xF5F5F5);
+  protected static final Color EXCLUDED_COLOR = UIUtil.isUnderDarcula() ? DarculaColors.RED : new Color(0x992E00);
+  private static final Color SELECTED_HEADER_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF);
+  private static final Color HEADER_COLOR = UIUtil.isUnderDarcula() ? Gray._82 : new Color(0xF5F5F5);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = Color.WHITE;
+  private static final Color CONTENT_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Color.WHITE;
   private static final Color UNSELECTED_TEXT_COLOR = new Color(0x333333);
 
   protected final ActionCallback myCallback;
@@ -326,8 +328,8 @@ public abstract class ContentRootPanel extends JPanel {
   public void setSelected(boolean selected) {
     if (selected) {
       myHeader.setBackground(SELECTED_HEADER_COLOR);
-      setBackground(SELECTED_CONTENT_COLOR);
-      myBottom.setBackground(SELECTED_HEADER_COLOR);
+      setBackground(UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : SELECTED_CONTENT_COLOR);
+      myBottom.setBackground(UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : SELECTED_HEADER_COLOR);
       for (final JComponent component : myComponentToForegroundMap.keySet()) {
         component.setForeground(myComponentToForegroundMap.get(component));
       }
@@ -335,7 +337,7 @@ public abstract class ContentRootPanel extends JPanel {
     else {
       myHeader.setBackground(HEADER_COLOR);
       setBackground(CONTENT_COLOR);
-      myBottom.setBackground(HEADER_COLOR);
+      myBottom.setBackground(UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : HEADER_COLOR);
       for (final JComponent component : myComponentToForegroundMap.keySet()) {
         component.setForeground(UNSELECTED_TEXT_COLOR);
       }
@@ -344,7 +346,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   private static class UnderlinedPathLabel extends ResizingWrapper {
     private static final float[] DASH = {0, 2, 0, 2};
-    private static final Color DASH_LINE_COLOR = new Color(0xC9C9C9);
+    private static final Color DASH_LINE_COLOR = UIUtil.isUnderDarcula() ? Gray._100 : new Color(0xC9C9C9);
 
     public UnderlinedPathLabel(JLabel wrappedComponent) {
       super(wrappedComponent);
@@ -376,17 +378,18 @@ public abstract class ContentRootPanel extends JPanel {
         g.drawRect(i, y1, 0, 0);
       }
       */
-      if (SystemInfo.isMac) {
-        UIUtil.drawLine(g, x1, y1, x2, y2);
-      }
-      else {
-        final Stroke saved = g.getStroke();
+      final Stroke saved = g.getStroke();
+      if (!SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, DASH, y1 % 2));
-
-        UIUtil.drawLine(g, x1, y1, x2, y2);
-
-        g.setStroke(saved);
       }
+
+      if (UIUtil.isUnderDarcula()) {
+        UIUtil.drawDottedLine(g, x1, y1, x2, y2, null, g.getColor());
+      } else {
+        UIUtil.drawLine(g, x1, y1, x2, y2);
+      }
+
+      g.setStroke(saved);
     }
   }
 

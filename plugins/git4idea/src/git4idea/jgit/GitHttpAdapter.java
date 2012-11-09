@@ -35,6 +35,7 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import git4idea.util.NetrcData;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
@@ -331,7 +332,7 @@ public final class GitHttpAdapter {
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
         }
-        catch (InvalidRemoteException e) {
+        catch (GitAPIException e) {
           if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
             url = addDotGitToUrl(url);
             command.setUrl(url);

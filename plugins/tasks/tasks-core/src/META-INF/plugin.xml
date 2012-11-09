@@ -125,7 +125,7 @@
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
 
-    <toolWindow id="Tasks" anchor="right" secondary="false" icon="TasksIcons.Other"
+    <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
                 factoryClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"
                 conditionClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"/>
   </extensions>

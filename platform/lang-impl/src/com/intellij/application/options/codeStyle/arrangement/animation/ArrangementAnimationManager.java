@@ -36,7 +36,7 @@ public class ArrangementAnimationManager implements ArrangementAnimationPanel.Li
   private final boolean myExpand;
   private final boolean myHorizontal;
   
-  private boolean myStarted;
+  private boolean myFinished;
 
   public ArrangementAnimationManager(@NotNull ArrangementAnimationPanel panel,
                                      @NotNull Callback callback,
@@ -51,33 +51,22 @@ public class ArrangementAnimationManager implements ArrangementAnimationPanel.Li
   }
 
   public void startAnimation() {
-    myStarted = myAnimationPanel.tryStartAnimation(myExpand, myHorizontal);
-    if (myStarted) {
-      myCallback.onAnimationIteration(false);
-    }
-    else {
-      myTimer.restart();
-    }
+    myAnimationPanel.startAnimation(myExpand, myHorizontal);
+    myCallback.onAnimationIteration(false);
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (!myStarted) {
-      startAnimation();
-      return;
-    }
-
-    if (myTimer.isRunning()) {
-      return;
-    }
-    myTimer.restart();
+    myTimer.stop();
+    myFinished = !myAnimationPanel.nextIteration();
+    myCallback.onAnimationIteration(myFinished);
   }
 
   @Override
   public void onPaint() {
-    boolean finished = !myAnimationPanel.nextIteration();
-    myTimer.stop();
-    myCallback.onAnimationIteration(finished);
+    if (!myFinished && !myTimer.isRunning()) {
+      myTimer.start();
+    }
   }
 
   public interface Callback {

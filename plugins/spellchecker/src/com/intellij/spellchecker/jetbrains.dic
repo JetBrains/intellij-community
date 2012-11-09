@@ -103,6 +103,7 @@ dumpfile
 dylib
 elseif
 elsif
+endregion
 enqueue
 enum
 enums

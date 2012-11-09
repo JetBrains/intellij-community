@@ -15,13 +15,12 @@
  */
 package org.jetbrains.android.newProject;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.BuilderBasedTemplate;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +43,7 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
     ProjectTemplate[] templates = {
+      new BuilderBasedTemplate(new AndroidModuleBuilder()),
       new AndroidProjectTemplate("Empty Android Module",
                                  "Simple <b>Android</b> module with configured Android SDK and without any pre-defined structure",
                                  new AndroidModuleBuilder(null) {
@@ -73,16 +73,15 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
     }
   }
 
-  private static class AndroidProjectTemplate implements ProjectTemplate {
+  private static class AndroidProjectTemplate extends BuilderBasedTemplate {
 
     private final String myName;
     private final String myDescription;
-    private final AndroidModuleBuilder myBuilder;
 
     private AndroidProjectTemplate(String name, String description, AndroidModuleBuilder builder) {
+      super(builder);
       myName = name;
       myDescription = description;
-      myBuilder = builder;
     }
 
     @NotNull
@@ -95,18 +94,6 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
     @Override
     public String getDescription() {
       return myDescription;
-    }
-
-    @NotNull
-    @Override
-    public ModuleBuilder createModuleBuilder() {
-      return myBuilder;
-    }
-
-    @Nullable
-    @Override
-    public ValidationInfo validateSettings() {
-      return null;
     }
   }
 }

@@ -19,15 +19,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
@@ -71,7 +70,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
         @Override
         public boolean execute(@NotNull PsiElement element, ResolveState state) {
-          if (isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
+          if (GdkMethodUtil.isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
             PsiMethod method = (PsiMethod)element;
             String originInfo = getOriginInfo(method);
             return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
@@ -102,26 +101,6 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       }
     }
     return result;
-  }
-
-  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return false;
-
-    if (qualifierType == null) return true;
-
-    PsiType selfType = parameters[0].getType();
-    if (selfType instanceof PsiPrimitiveType) return false;
-
-    if (substitutor != null) {
-      selfType = substitutor.substitute(selfType);
-    }
-    return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
   }
 
   private static boolean isInAnnotation(GroovyPsiElement place) {

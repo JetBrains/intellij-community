@@ -24,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -43,8 +44,11 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
-    add(new JLabel(DesignerBundle.message("designer.properties.title")),
-        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 0), 0, 0));
+    JLabel titleLabel = new JLabel(DesignerBundle.message("designer.properties.title"));
+    titleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    add(titleLabel,
+        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                               new Insets(2, 5, 2, 0), 0, 0));
 
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();

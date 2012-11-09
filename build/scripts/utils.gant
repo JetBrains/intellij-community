@@ -635,7 +635,6 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/relaunch")
-        exclude(name: "bin/idea.properties")
         exclude(name: "Contents/MacOS/*")
         extraBins.each {
           exclude(name: it)

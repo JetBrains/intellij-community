@@ -55,35 +55,43 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     return items;
   }
 
+  @Override
   public String getPromptText() {
     return IdeBundle.message("prompt.gotosymbol.enter.symbol.name");
   }
 
+  @Override
   public String getCheckBoxName() {
     return IdeBundle.message("checkbox.include.non.project.symbols");
   }
 
+  @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.matches.found.in.project");
   }
 
+  @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
   }
 
+  @Override
   public char getCheckBoxMnemonic() {
     // Some combination like Alt+N, Ant+O, etc are a dead sysmbols, therefore
     // we have to change mnemonics for Mac users.
     return SystemInfo.isMac?'P':'n';
   }
 
+  @Override
   public boolean loadInitialCheckBoxState() {
     return false;
   }
 
+  @Override
   public void saveInitialCheckBoxState(boolean state) {
   }
 
+  @Override
   public String getFullName(final Object element) {
     for(ChooseByNameContributor c: getContributors()) {
       if (c instanceof GotoClassContributor) {
@@ -102,6 +110,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     return getElementName(element);
   }
 
+  @Override
   @NotNull
   public String[] getSeparators() {
     if (mySeparators == null) {

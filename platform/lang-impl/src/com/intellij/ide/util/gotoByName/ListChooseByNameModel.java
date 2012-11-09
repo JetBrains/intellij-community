@@ -66,13 +66,16 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     return myNotInMessage;
   }
 
+  @Override
   public String getNotFoundMessage() {
     return myNotInMessage;
   }
 
   // from ruby plugin
+  @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
@@ -129,6 +132,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     };
   }
 
+  @Override
   public String getElementName(final Object element) {
     if (!(element instanceof ChooseByNameItem)) return null;
     return ((ChooseByNameItem)element).getName();

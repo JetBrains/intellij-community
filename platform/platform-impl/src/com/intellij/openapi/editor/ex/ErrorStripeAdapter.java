@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
 public abstract class ErrorStripeAdapter implements ErrorStripeListener {
 
   @Override
-  public void errorMarkerClicked(ErrorStripeEvent e) {
+  public void errorMarkerClicked(@NotNull ErrorStripeEvent e) {
   }
 }

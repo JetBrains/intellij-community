@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.FIELDS, name);
-      if (JavaMethodElementType.isJavaStaticMemberStub(stub)) {
+      if (RecordUtil.isStaticNonPrivateMember(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getType(false).getShortTypeText());
       }

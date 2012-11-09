@@ -33,6 +33,7 @@ public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
     myCheckBoxVisible = isCheckboxVisible;
   }
 
+  @Override
   protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
 
@@ -49,23 +50,29 @@ public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
     return myTextField;
   }
 
+  @Override
   protected void showList(){
   }
 
+  @Override
   protected void hideList(){
   }
 
+  @Override
   protected void close(boolean isOk) {
   }
 
+  @Override
   protected boolean isShowListForEmptyPattern() {
     return true;
   }
 
+  @Override
   protected boolean isCloseByFocusLost() {
     return false;
   }
 
+  @Override
   protected boolean isCheckboxVisible(){
     return myCheckBoxVisible;
   }
@@ -74,6 +81,7 @@ public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
     return myPanel;
   }
 
+  @Override
   public void dispose() {
     setDisposed(true);
     cancelListUpdater();

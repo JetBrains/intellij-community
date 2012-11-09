@@ -28,9 +28,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -688,6 +686,26 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return StdModuleTypes.JAVA;
   }
 
+  @Nullable
+  @Override
+  public ModuleWizardStep modifySettingsStep(final SettingsStep settingsStep) {
+    if (myProjectType == null) {
+      return super.modifySettingsStep(settingsStep);
+    }
+    switch (myProjectType) {
+
+      case APPLICATION:
+        return new AndroidModifiedSettingsStep(this, settingsStep);
+      case LIBRARY:
+        return new AndroidLibraryModifiedSettingsStep(this, settingsStep);
+      case TEST:
+        return new AndroidTestModifiedSettingsStep(this, settingsStep);
+      default:
+        LOG.error("Unknown project type " + myProjectType);
+        return super.modifySettingsStep(settingsStep);
+    }
+  }
+
   public void setTestedModule(Module module) {
     myTestedModule = module;
   }
@@ -753,11 +771,22 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     public String getBuilderId() {
       return "android.library";
     }
+
+    @Override
+    public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext,
+                                                ModulesProvider modulesProvider) {
+      return ModuleWizardStep.EMPTY_ARRAY;
+    }
   }
 
   public static class Test extends AndroidModuleBuilder {
     public Test() {
       super(ProjectType.TEST);
+    }
+
+    @Override
+    public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+      return ModuleWizardStep.EMPTY_ARRAY;
     }
 
     @Override

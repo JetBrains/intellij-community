@@ -804,7 +804,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (int i = 0; i < newParamsLength; i++) {
       JavaParameterInfo newParm = newParms[i];
       if (newParm.getOldIndex() < 0 ||
-          !(newParm.getName().equals(oldParameterNames[newParm.getOldIndex()]) || newParm.getOldIndex() == i || newParm.getTypeText().equals(changeInfo.getOldParameterTypes()[newParm.getOldIndex()]))) {
+          newParm.getOldIndex() == i && !(newParm.getName().equals(oldParameterNames[newParm.getOldIndex()]) && newParm.getTypeText().equals(changeInfo.getOldParameterTypes()[newParm.getOldIndex()]))) {
         newParameters.add(parameters[i]);
       }
     }
@@ -814,7 +814,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final PsiParameter parameter = pair.first;
         final String oldParamName = pair.second;
         final int idx = Arrays.binarySearch(oldParameterNames, oldParamName);
-        return idx >= 0 && (parameter.getType().equalsToText(changeInfo.getOldParameterTypes()[idx]) || idx == method.getParameterList().getParameterIndex(parameter));
+        return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
       }
     });
   }

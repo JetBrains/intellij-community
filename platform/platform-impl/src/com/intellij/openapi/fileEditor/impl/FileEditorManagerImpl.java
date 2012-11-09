@@ -1245,7 +1245,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myListenerList.add(listener);
   }
 
-  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, final Disposable parentDisposable) {
+  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, @NotNull final Disposable parentDisposable) {
     myListenerList.add(listener, parentDisposable);
   }
 

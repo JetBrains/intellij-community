@@ -70,40 +70,49 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
     return item instanceof PsiFile ? ((PsiFile) item).getFileType() : null;
   }
 
+  @Override
   public String getPromptText() {
     return IdeBundle.message("prompt.gotofile.enter.file.name");
   }
 
+  @Override
   public String getCheckBoxName() {
     return IdeBundle.message("checkbox.include.non.project.files");
   }
 
+  @Override
   public char getCheckBoxMnemonic() {
     return SystemInfo.isMac?'P':'n';
   }
 
+  @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.non.java.files.found");
   }
 
+  @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.files.found");
   }
 
+  @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     return propertiesComponent.isTrueValue("GoToClass.includeJavaFiles");
   }
 
+  @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     propertiesComponent.setValue("GoToClass.includeJavaFiles", Boolean.toString(state));
   }
 
+  @Override
   public PsiElementListCellRenderer getListCellRenderer() {
     return new GotoFileCellRenderer(myMaxSize);
   }
 
+  @Override
   @Nullable
   public String getFullName(final Object element) {
     if (element instanceof PsiFile) {
@@ -114,6 +123,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
     return getElementName(element);
   }
 
+  @Override
   @NotNull
   public String[] getSeparators() {
     return new String[] {"/", "\\"};

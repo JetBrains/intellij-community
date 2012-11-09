@@ -43,7 +43,10 @@ public class AndroidTestPropertiesEditor {
   }
 
   public void validate() throws ConfigurationException {
-    Module module = myModulesCombo.getModule();
+    doValidate(myModulesCombo.getModule());
+  }
+
+  static void doValidate(Module module) throws ConfigurationException {
     if (module == null) {
       throw new ConfigurationException(AndroidBundle.message("android.wizard.specify.tested.module.error"));
     }

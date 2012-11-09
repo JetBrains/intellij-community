@@ -16,21 +16,28 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -73,11 +80,7 @@ public class GdkMethodUtil {
 
     final GrClosableBlock[] closures = call.getClosureArguments();
     final GrExpression[] args = call.getExpressionArguments();
-    int last = args.length - 1;
-    if (!(closures.length == 1 && place.equals(closures[0])) &&
-        !(args.length > 0 && place.equals(args[last]))) {
-      return true;
-    }
+    if (!(placeEqualsSingleClosureArg(place, closures) || placeEqualsLastArg(place, args))) return true;
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
 
@@ -93,6 +96,14 @@ public class GdkMethodUtil {
     return true;
   }
 
+  private static boolean placeEqualsLastArg(GrClosableBlock place, GrExpression[] args) {
+    return args.length > 0 && place.equals(args[args.length - 1]);
+  }
+
+  private static boolean placeEqualsSingleClosureArg(GrClosableBlock place, GrClosableBlock[] closures) {
+    return closures.length == 1 && place.equals(closures[0]);
+  }
+
   /**
    *
    * @param place - context of processing
@@ -106,18 +117,23 @@ public class GdkMethodUtil {
                                                @NotNull final PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        if (element instanceof PsiMethod) {
+      public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
+        if (isCategoryMethod(element, null, null)) {
           PsiMethod method = (PsiMethod)element;
-          if (!method.hasModifierProperty(PsiModifier.STATIC)) return true;
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (parameters.length == 0) return true;
-          return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), state);
+          return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
         }
         return true;
       }
     };
     return categoryClass.processDeclarations(delegate, state, null, place);
+  }
+
+  private static boolean acceptClass(@Nullable PsiType type, @NotNull PsiClass aClass) {
+    if (!(type instanceof PsiClassType)) return false;
+
+    PsiClass resolved = ((PsiClassType)type).resolve();
+
+    return InheritanceUtil.isInheritorOrSelf(aClass, resolved, true);
   }
 
   public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor) {
@@ -185,5 +201,169 @@ public class GdkMethodUtil {
     if (cc == null) return null;
     //'\u2191'
     return "via " + cc.getName();
+  }
+
+  public static boolean processMixinToMetaclass(GrStatementOwner run,
+                                                final PsiScopeProcessor processor,
+                                                ResolveState state,
+                                                PsiElement lastParent,
+                                                GroovyPsiElement place) {
+    GrStatement[] statements = run.getStatements();
+    for (GrStatement statement : statements) {
+      if (statement == lastParent) break;
+
+      final Pair<PsiClassType, PsiClass> result = getMixinTypes(statement);
+
+      if (result != null) {
+        final PsiClassType subjectType = result.first;
+        final PsiClass mixin = result.second;
+
+        final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
+          @Override
+          public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
+            if (isCategoryMethod(element, subjectType, null)) {
+              PsiMethod method = (PsiMethod)element;
+              return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
+            }
+            else if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.PUBLIC)) {
+              super.execute(element, delegateState);
+            }
+            return true;
+          }
+        };
+        mixin.processDeclarations(delegate, state, null, place);
+      }
+    }
+
+    return true;
+  }
+
+  @Nullable
+  private static Pair<PsiClassType, PsiClass> getMixinTypes(GrStatement statement) {
+    if (statement instanceof GrMethodCall) {
+      GrMethodCall call = (GrMethodCall)statement;
+      PsiClassType original = getTypeToMixIn(call);
+      PsiClass mix = getTypeToMix(call);
+
+      if (original != null && mix != null) {
+        return new Pair<PsiClassType, PsiClass>(original, mix);
+
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass getTypeToMix(GrMethodCall call) {
+    if (!isSingleExpressionArg(call)) return null;
+
+    GrExpression mixinRef = call.getExpressionArguments()[0];
+    if (isClassRef(mixinRef)) {
+      mixinRef = ((GrReferenceExpression)mixinRef).getQualifier();
+    }
+
+    if (mixinRef instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)mixinRef).resolve();
+      if (resolved instanceof PsiClass) {
+        return (PsiClass)resolved;
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean isSingleExpressionArg(GrMethodCall call) {
+    GrExpression[] exprs = call.getExpressionArguments();
+    GrNamedArgument[] named = call.getNamedArguments();
+    GrClosableBlock[] closures = call.getClosureArguments();
+
+    return exprs.length == 1 && named.length == 0 && closures.length == 0;
+  }
+
+  @Nullable
+  private static PsiClassType getTypeToMixIn(GrMethodCall methodCall) {
+    GrExpression invoked = methodCall.getInvokedExpression();
+    if (invoked instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
+      if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
+        GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
+        PsiClassType type = getPsiClassFromReference(qualifier);
+        if (type != null) {
+          return type;
+        }
+        if (qualifier == null) {
+          qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)invoked);
+        }
+        if (qualifier != null && isMetaClass(qualifier.getType())) {
+          if (qualifier instanceof GrMethodCall) qualifier = ((GrMethodCall)qualifier).getInvokedExpression();
+
+          if (qualifier instanceof GrReferenceExpression) {
+            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
+            if (qqualifier != null) {
+              PsiClassType type1 = getPsiClassFromReference(qqualifier);
+              if (type1 != null) {
+                return type1;
+              }
+            }
+            else {
+              PsiType qtype = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)qualifier);
+              if (qtype instanceof PsiClassType && ((PsiClassType)qtype).resolve() != null) {
+                return (PsiClassType)qtype;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isMixinMethod(PsiMethod method) {
+    if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
+    PsiClass containingClass = method.getContainingClass();
+    String name = method.getName();
+    return "mixin".equals(name) && containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
+  }
+
+  private static boolean isMetaClass(PsiType qualifierType) {
+    return qualifierType != null && qualifierType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_META_CLASS);
+  }
+
+  private static boolean isClassRef(GrExpression mixinRef) {
+    return mixinRef instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)mixinRef).getReferenceName());
+  }
+
+  private static PsiClassType getPsiClassFromReference(GrExpression ref) {
+    if (isClassRef(ref)) ref = ((GrReferenceExpression)ref).getQualifier();
+    if (ref instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)ref).resolve();
+      if (resolved instanceof PsiClass) {
+        PsiType type = ref.getType();
+        LOG.assertTrue(type instanceof PsiClassType, "reference resolved into PsiClass should have PsiClassType");
+        return ((PsiClassType)type);
+      }
+    }
+    return null;
+  }
+
+  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
+    if (!(element instanceof PsiMethod)) return false;
+    PsiMethod method = (PsiMethod)element;
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 0) return false;
+
+    if (qualifierType == null) return true;
+
+    PsiType selfType = parameters[0].getType();
+    if (selfType instanceof PsiPrimitiveType) return false;
+
+    if (substitutor != null) {
+      selfType = substitutor.substitute(selfType);
+    }
+    return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
   }
 }

@@ -87,6 +87,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
   @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE";
   @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE";
+  private boolean myInitialized;
 
   public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder,
                                  final WizardContext context,
@@ -211,7 +212,19 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     }
   }
 
+  @Override
+  public void updateStep() {
+    if (!myInitialized) {
+      myInitialized = true;
+      initialize();
+    }
+  }
+
   public JComponent getComponent() {
+    return myPanel;
+  }
+
+  private void initialize() {
     final String moduleName = myModuleBuilder.getName();
 
     if (moduleName != null) {
@@ -230,7 +243,6 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     }
 
     updateDeploymentTargetPanel();
-    return myPanel;
   }
 
   @Override

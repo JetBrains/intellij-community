@@ -20,11 +20,8 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.impl.compiled.ClsModifierListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
@@ -148,25 +145,10 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.METHODS, name);
-      if (isJavaStaticMemberStub(stub)) {
+      if (RecordUtil.isStaticNonPrivateMember(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText(false).getShortTypeText());
       }
     }
-  }
-
-  public static boolean isJavaStaticMemberStub(StubElement<?> stub) {
-    StubElement<PsiModifierList> type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (!(type instanceof PsiModifierListStub)) {
-      return false;
-    }
-
-    int mask = ((PsiModifierListStub)type).getModifiersMask();
-    if (ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.PRIVATE, mask) ||
-        !ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.STATIC, mask)) {
-      return false;
-    }
-
-    return true;
   }
 }
