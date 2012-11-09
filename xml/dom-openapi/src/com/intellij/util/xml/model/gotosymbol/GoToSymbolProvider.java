@@ -126,6 +126,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       myIcon = icon;
     }
 
+    @NotNull
     public PsiElement getNavigationElement() {
       return myPsiElement;
     }
@@ -165,7 +166,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
     @Override
     public PsiFile getContainingFile() {
-      return  myPsiElement.getContainingFile();
+      return myPsiElement.getContainingFile();
     }
 
     @Override
@@ -179,16 +180,16 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
       final BaseNavigationItem that = (BaseNavigationItem)o;
 
-      if (myPsiElement != null ? !myPsiElement.equals(that.myPsiElement) : that.myPsiElement != null) return false;
-      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
+      if (!myPsiElement.equals(that.myPsiElement)) return false;
+      if (!myText.equals(that.myText)) return false;
 
       return true;
     }
 
     public int hashCode() {
       int result;
-      result = (myPsiElement != null ? myPsiElement.hashCode() : 0);
-      result = 31 * result + (myText != null ? myText.hashCode() : 0);
+      result = myPsiElement.hashCode();
+      result = 31 * result + myText.hashCode();
       return result;
     }
   }
