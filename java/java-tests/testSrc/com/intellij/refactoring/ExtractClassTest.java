@@ -113,6 +113,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestFieldAndMethod("bar");
   }
 
+  public void testInnerClassRefs() throws Exception {
+    doTestInnerClass();
+  }
+
   private void doTestFieldAndMethod(final String methodName) throws Exception {
     doTest(new PerformAction() {
       @Override
