@@ -31,7 +31,6 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -44,7 +43,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -210,21 +212,21 @@ public class IncProjectBuilder {
     //cleanupJavacNameTable();
   }
 
-  private static boolean ourClenupFailed = false;
+  //private static boolean ourClenupFailed = false;
 
-  private static void cleanupJavacNameTable() {
-    try {
-      if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
-        final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
-        freelistField.setAccessible(true);
-        freelistField.set(null, com.sun.tools.javac.util.List.nil());
-      }
-    }
-    catch (Throwable e) {
-      ourClenupFailed = true;
-      //LOG.info(e);
-    }
-  }
+  //private static void cleanupJavacNameTable() {
+  //  try {
+  //    if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
+  //      final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+  //      freelistField.setAccessible(true);
+  //      freelistField.set(null, com.sun.tools.javac.util.List.nil());
+  //    }
+  //  }
+  //  catch (Throwable e) {
+  //    ourClenupFailed = true;
+  //    //LOG.info(e);
+  //  }
+  //}
 
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
