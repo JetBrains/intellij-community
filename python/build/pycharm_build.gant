@@ -169,7 +169,7 @@ target('default': "Build artifacts") {
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
   String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll, paths.distMac])
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 }
 
