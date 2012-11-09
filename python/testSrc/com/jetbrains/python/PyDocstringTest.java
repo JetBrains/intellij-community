@@ -1,8 +1,16 @@
 package com.jetbrains.python;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition;
 import com.jetbrains.python.fixtures.PyTestCase;
+
+import java.util.List;
 
 /**
  * User: ktisha
@@ -44,6 +52,27 @@ public class PyDocstringTest extends PyTestCase {
 
   private static String getExpectedResultFileName(String testName) {
     return testName + ".expected.docstring";
+  }
+
+  public void testNoErrors() {
+    doTestIndentation(false);
+  }
+
+  public void testHasErrors() {
+    doTestIndentation(true);
+  }
+
+  private void doTestIndentation(boolean hasErrors) {
+    String inputDataFileName = getTestName(true) + ".py";
+    myFixture.configureByFile(inputDataFileName);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myFixture.getElementAtCaret());
+    assertNotNull(host);
+    final List<Pair<PsiElement,TextRange>> files = languageManager.getInjectedPsiFiles(host);
+    assertNotNull(files);
+    for (Pair<PsiElement,TextRange> pair : files) {
+      assertEquals(hasErrors, PsiTreeUtil.hasErrorElements(pair.getFirst()));
+    }
   }
 
 

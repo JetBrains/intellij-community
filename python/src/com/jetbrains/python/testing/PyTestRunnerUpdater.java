@@ -92,11 +92,11 @@ public class PyTestRunnerUpdater implements StartupActivity {
                 final Sdk sdk = PythonSdkType.findPythonSdk(module);
                 if (sdk != null && sdk.getSdkType() instanceof PythonSdkType && testRunner.isEmpty()) {
                   String sdkHome = sdk.getHomePath();
-                  if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.NOSETESTSEARCHER))
+                  if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST))
                     testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.PYTESTSEARCHER))
+                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST))
                     testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.ATTESTSEARCHER))
+                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST))
                     testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
                 }
 
@@ -140,7 +140,7 @@ public class PyTestRunnerUpdater implements StartupActivity {
                 testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
                 break;
               }
-              if (stringValue.contains(PyNames.AT_TEST)) {
+              if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
                 testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
                 break;
               }
@@ -197,7 +197,7 @@ public class PyTestRunnerUpdater implements StartupActivity {
         if (PyNames.PY_TEST.equals(importElement.getVisibleName())) {
           return PythonTestConfigurationsModel.PY_TEST_NAME;
         }
-        if (PyNames.AT_TEST.equals(importElement.getVisibleName())) {
+        if (PyNames.AT_TEST_IMPORT.equals(importElement.getVisibleName())) {
           return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
         }
       }

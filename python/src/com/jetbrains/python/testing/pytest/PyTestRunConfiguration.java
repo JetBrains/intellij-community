@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
@@ -119,7 +120,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
-    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(getInterpreterPath()))
+    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(PythonSdkType.findSdkByPath(getInterpreterPath())))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
   }
 

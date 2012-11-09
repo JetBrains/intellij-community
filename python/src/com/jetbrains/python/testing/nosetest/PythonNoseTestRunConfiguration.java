@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
@@ -85,7 +86,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(getInterpreterPath()))
+    if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(PythonSdkType.findSdkByPath(getInterpreterPath())))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"));
   }
 
