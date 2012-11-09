@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package standardDsls
+package org.jetbrains.plugins.groovy.completion
 
-contributor(ctype:hasAnnotation("groovy.lang.Singleton")) {
-  if (psiClass?.hasAnnotation("groovy.lang.Singleton")) {
-    property name: "instance",
-             type: psiClass?.getQualifiedName() ?: "java.lang.Object",
-             isStatic: true
-  }
+/**
+ * @author Maxim.Medvedev
+ */
+enum CompletionResult {
+  contain, equal, notContain
 }

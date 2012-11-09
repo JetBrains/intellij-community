@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,15 @@ public class ResolveUtil {
 
   static boolean processScopeNonCodeMethods(GroovyPsiElement place, PsiElement lastParent, PsiScopeProcessor processor, PsiElement scope) {
     if (scope instanceof GrTypeDefinition) {
-      return processNonCodeMembers(createPsiType((GrTypeDefinition)scope), processor, place, ResolveState.initial());
+      if (!processNonCodeMembers(createPsiType((GrTypeDefinition)scope), processor, place, ResolveState.initial())) return false;
+
+      //@Category(CategoryType)
+      //class Scope {...}
+      PsiClassType categoryType = GdkMethodUtil.getCategoryType((PsiClass)scope);
+      if (categoryType != null) {
+        if (!processNonCodeMembers(categoryType, processor, place, ResolveState.initial())) return false;
+      }
+
     }
 
     if (scope instanceof GroovyFileBase && ((GroovyFileBase)scope).isScript()) {

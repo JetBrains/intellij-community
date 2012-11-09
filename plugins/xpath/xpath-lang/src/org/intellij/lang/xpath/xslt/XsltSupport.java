@@ -115,8 +115,7 @@ public class XsltSupport {
         if (isXsltAttribute(attribute)) {
             final String tagName = attribute.getParent().getLocalName();
             final String s = XPATH_ATTR_MAP.get(name);
-            //noinspection StringEquality
-            if (s != "" && !tagName.equals(s)) {
+            if (s.length() > 0 && !tagName.equals(s)) {
                 if (!isAttributeValueTemplate(attribute, true)) {
                     return false;
                 }

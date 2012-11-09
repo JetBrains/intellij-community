@@ -43,8 +43,9 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
     if (value instanceof TaskPsiElement) {
       final Task task = ((TaskPsiElement)value).getTask();
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      final boolean isLocalTask = TaskManager.getManager(myProject).findTask(task.getId()) != null;
-      final boolean isClosed = task.isClosed() || (task instanceof LocalTask && ((LocalTask)task).isClosedLocally());
+      final TaskManager taskManager = TaskManager.getManager(myProject);
+      final boolean isLocalTask = taskManager.findTask(task.getId()) != null;
+      final boolean isClosed = task.isClosed() || (task instanceof LocalTask && taskManager.isLocallyClosed((LocalTask)task));
 
       final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : ISSUE_BG_COLOR;
       panel.setBackground(bg);

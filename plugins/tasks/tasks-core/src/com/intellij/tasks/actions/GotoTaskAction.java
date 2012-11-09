@@ -142,12 +142,7 @@ public class GotoTaskAction extends GotoActionBase {
           Task task = ((TaskPsiElement)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
-            if (taskManager.isVcsEnabled() && localTask.isClosedLocally()) {
-              showOpenTaskDialog(project, localTask);
-            }
-            else {
-              taskManager.activateTask(localTask, !shiftPressed.get(), true);
-            }
+            taskManager.activateTask(localTask, !shiftPressed.get(), false);
           }
           else {
             showOpenTaskDialog(project, task);

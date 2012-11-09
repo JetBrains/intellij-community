@@ -1,5 +1,5 @@
-Map<String, Intger> map=["2":2, "3":3];
+Map<String, Integer> map=["2":2, "3":3];
 map.each{
   key, value->
-  key.codePoint<caret>
+  key.codePointAt(<caret>)
 }
