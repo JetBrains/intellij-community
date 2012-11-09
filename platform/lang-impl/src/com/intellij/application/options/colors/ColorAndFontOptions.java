@@ -1065,6 +1065,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public void setLineSpacing(float lineSpacing) {
+      assert lineSpacing >= 0 : lineSpacing;
       myLineSpacing = lineSpacing;
     }
 
@@ -1103,6 +1104,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public void setConsoleLineSpacing(float lineSpacing) {
+      assert lineSpacing >= 0 : lineSpacing;
       myConsoleLineSpacing = lineSpacing;
     }
 

@@ -1015,7 +1015,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int yPositionToVisibleLine(int y) {
-    LOG.assertTrue(y >= 0, y);
+    assert y >= 0: y;
     return y / getLineHeight();
   }
 
@@ -3269,6 +3269,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           lineHeight = 12;
         }
       }
+      assert lineHeight > 0 : lineHeight;
       myLineHeight = lineHeight;
     }
     return lineHeight;
