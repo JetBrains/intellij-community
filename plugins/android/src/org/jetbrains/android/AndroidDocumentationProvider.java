@@ -133,44 +133,48 @@ public class AndroidDocumentationProvider implements DocumentationProvider, Exte
           return;
         }
         final BufferedReader buf = new BufferedReader(input);
+        try {
+          @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
+          @NonNls String endHeader = "<!-- END HEADER -->";
 
-        @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
-        @NonNls String endHeader = "<!-- END HEADER -->";
+          data.append(HTML);
 
-        data.append(HTML);
+          String read;
 
-        String read;
-
-        do {
-          read = buf.readLine();
-        }
-        while (read != null && read.toUpperCase().indexOf(startSection) == -1);
-
-        if (read == null) {
-          data.delete(0, data.length());
-          return;
-        }
-
-        data.append(read).append("\n");
-
-        boolean skip = false;
-        while (((read = buf.readLine()) != null) && read.toLowerCase().indexOf("class overview") < 0) {
-          if (!skip && read.length() > 0) {
-            data.append(read).append("\n");
+          do {
+            read = buf.readLine();
           }
-          if (read.toUpperCase().indexOf(endHeader) != -1) {
-            skip = true;
-          }
-        }
+          while (read != null && read.toUpperCase().indexOf(startSection) == -1);
 
-        if (read != null) {
-          data.append("<br><div>\n");
-          while (((read = buf.readLine()) != null) && !read.toUpperCase().startsWith("<H2>")) {
-            data.append(read).append("\n");
+          if (read == null) {
+            data.delete(0, data.length());
+            return;
           }
-          data.append("</div>\n");
+
+          data.append(read).append("\n");
+
+          boolean skip = false;
+          while (((read = buf.readLine()) != null) && read.toLowerCase().indexOf("class overview") < 0) {
+            if (!skip && read.length() > 0) {
+              data.append(read).append("\n");
+            }
+            if (read.toUpperCase().indexOf(endHeader) != -1) {
+              skip = true;
+            }
+          }
+
+          if (read != null) {
+            data.append("<br><div>\n");
+            while (((read = buf.readLine()) != null) && !read.toUpperCase().startsWith("<H2>")) {
+              data.append(read).append("\n");
+            }
+            data.append("</div>\n");
+          }
+          data.append(HTML_CLOSE);
         }
-        data.append(HTML_CLOSE);
+        finally {
+          buf.close();
+        }
       }
       catch (Exception e) {
         LOG.error(e.getMessage(), e, "URL: " + surl);
