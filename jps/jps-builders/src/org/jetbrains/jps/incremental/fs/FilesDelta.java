@@ -29,16 +29,20 @@ final class FilesDelta {
 
   public void save(DataOutput out) throws IOException {
     out.writeInt(myDeletedPaths.size());
-    for (String path : myDeletedPaths) {
-      IOUtil.writeString(path, out);
+    synchronized (myDeletedPaths) {
+      for (String path : myDeletedPaths) {
+        IOUtil.writeString(path, out);
+      }
     }
-    out.writeInt(myFilesToRecompile.size());
-    for (Map.Entry<BuildRootDescriptor, Set<File>> entry : myFilesToRecompile.entrySet()) {
-      IOUtil.writeString(entry.getKey().getRootId(), out);
-      final Set<File> files = entry.getValue();
-      out.writeInt(files.size());
-      for (File file : files) {
-        IOUtil.writeString(FileUtil.toSystemIndependentName(file.getPath()), out);
+    synchronized (myFilesToRecompile) {
+      out.writeInt(myFilesToRecompile.size());
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : myFilesToRecompile.entrySet()) {
+        IOUtil.writeString(entry.getKey().getRootId(), out);
+        final Set<File> files = entry.getValue();
+        out.writeInt(files.size());
+        for (File file : files) {
+          IOUtil.writeString(FileUtil.toSystemIndependentName(file.getPath()), out);
+        }
       }
     }
   }

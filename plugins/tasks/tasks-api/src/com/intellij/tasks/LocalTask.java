@@ -50,10 +50,6 @@ public abstract class LocalTask extends Task {
 
   public abstract void removeChangelist(final ChangeListInfo info);
 
-  public boolean isClosedLocally() {
-    return getChangeLists().isEmpty();
-  }
-
   public abstract long getTimeSpent();
 
   public abstract void setTimeSpent(long time);

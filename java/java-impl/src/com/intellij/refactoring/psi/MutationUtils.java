@@ -71,21 +71,33 @@ public class MutationUtils {
         codeStyleManager.reformat(shortenedElement);
     }
 
-    public static void replaceReference(String className,
-                                        PsiJavaCodeReferenceElement reference)
-            throws IncorrectOperationException {
-            final PsiManager mgr = reference.getManager();
-            final Project project = mgr.getProject();
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+  public static void replaceReference(String className,
+                                      PsiJavaCodeReferenceElement reference)
+    throws IncorrectOperationException {
+    final PsiManager mgr = reference.getManager();
+    final Project project = mgr.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(mgr.getProject());
+    final PsiElementFactory factory = facade.getElementFactory();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
-            final PsiJavaCodeReferenceElement newReference =
-                    factory.createReferenceElementByFQClassName(className, scope);
-            final PsiElement insertedElement = reference.replace(newReference);
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
-            final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
-            codeStyleManager.reformat(shortenedElement);   
+
+    final PsiElement insertedElement;
+    final PsiElement parent = reference.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      final PsiClass aClass = facade.findClass(className, scope);
+      if (aClass == null) return;
+      ((PsiReferenceExpression)parent).setQualifierExpression(factory.createReferenceExpression(aClass));
+      insertedElement = ((PsiReferenceExpression)parent).getQualifierExpression();
     }
+    else {
+      final PsiJavaCodeReferenceElement newReference =
+        factory.createReferenceElementByFQClassName(className, scope);
+      insertedElement = reference.replace(newReference);
+    }
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(mgr.getProject());
+    final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
+    codeStyleManager.reformat(shortenedElement);
+  }
 
     public static void replaceStatement(String newStatement,
                                         PsiStatement statement)

@@ -32,9 +32,9 @@ public class ContextTest extends TaskManagerTestCase {
     manager.clearContext();
     manager.loadContext("first");
 
-    manager.saveContext(myManager.getActiveTask());
+    manager.saveContext(myTaskManager.getActiveTask());
     manager.clearContext();
-    manager.restoreContext(myManager.getActiveTask());
+    manager.restoreContext(myTaskManager.getActiveTask());
   }
 
   public void testPack() throws Exception {

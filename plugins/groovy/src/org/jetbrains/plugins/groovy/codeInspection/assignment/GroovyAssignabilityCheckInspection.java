@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -814,11 +815,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (method instanceof GrGdkMethod && place instanceof GrReferenceExpression) {
         final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-        final PsiType qualifier = inferQualifierTypeByPlace((GrReferenceExpression)place);
-        if (qualifier != null && !GdkMethodUtil.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
-          registerError(((GrReferenceExpression)place).getReferenceNameElement(),
-                        GroovyInspectionBundle.message("category.method.0.cannot.be.applied.to.1", method.getName(),
-                                                       qualifier.getCanonicalText()));
+        final PsiType qualifierType = inferQualifierTypeByPlace((GrReferenceExpression)place);
+        if (qualifierType != null &&
+            !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, methodResolveResult.getSubstitutor()) &&
+            !checkCategoryQualifier((GrReferenceExpression)place, staticMethod, methodResolveResult.getSubstitutor())) {
+          registerError(((GrReferenceExpression)place).getReferenceNameElement(), GroovyInspectionBundle
+            .message("category.method.0.cannot.be.applied.to.1", method.getName(), qualifierType.getCanonicalText()));
           return false;
         }
       }
@@ -857,6 +859,35 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         default:
           return true;
       }
+    }
+
+    private static boolean checkCategoryQualifier(GrReferenceExpression place, PsiMethod gdkMethod, PsiSubstitutor substitutor) {
+      PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, place.getQualifier());
+
+      if (categoryAnnotationOwner != null) {
+        PsiClassType categoryType = GdkMethodUtil.getCategoryType(categoryAnnotationOwner);
+        if (categoryType != null) {
+          return GdkMethodUtil.isCategoryMethod(gdkMethod, categoryType, substitutor);
+        }
+      }
+
+      return false;
+    }
+
+    private static PsiClass inferCategoryAnnotationOwner(GrReferenceExpression place, GrExpression qualifier) {
+      if (qualifier == null) {
+        GrMethod container = PsiTreeUtil.getParentOfType(place, GrMethod.class, true, GrMember.class);
+        if (container != null && !container.hasModifierProperty(PsiModifier.STATIC)) { //only instance classes can be qualified by category class
+          return container.getContainingClass();
+        }
+      }
+      else if (PsiUtil.isThisReference(qualifier)) {
+        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          return (PsiClass)resolved;
+        }
+      }
+      return null;
     }
 
     private void highlightUnknownArgs(GroovyPsiElement place) {

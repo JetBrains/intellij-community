@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -42,9 +43,9 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   final String basePath = TestUtils.testDataPath + "groovy/completion/"
 
   public void testCategoryMethod() {doBasicTest()}
-  public void testCategoryProperty() {doBasicTest('\n')}
-  public void testMultipleCategories() {doBasicTest()}
-  public void testCategoryForArray() {doBasicTest('\n')}
+  public void testCategoryProperty() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
+  public void testMultipleCategories() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
+  public void testCategoryForArray() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
 
   public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
   public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}

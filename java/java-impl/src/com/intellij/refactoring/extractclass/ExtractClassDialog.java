@@ -346,6 +346,9 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     table.addMemberInfoChangeListener(this);
     extractAsEnum.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        if (extractAsEnum.isSelected()) {
+          preselectOneTypeEnumConstants();
+        }
         table.repaint();
       }
     });
@@ -355,6 +358,31 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
     panel.add(myVisibilityPanel, BorderLayout.EAST);
     return panel;
+  }
+
+  private void preselectOneTypeEnumConstants() {
+    if (enumConstants.isEmpty()) {
+      MemberInfo selected = null;
+      for (MemberInfo info : memberInfo) {
+        if (info.isChecked()) {
+          selected = info;
+          break;
+        }
+      }
+      if (selected != null && isConstantField(selected.getMember())) {
+        enumConstants.add(selected);
+        selected.setToAbstract(true);
+      }
+    }
+    for (MemberInfo info : memberInfo) {
+      final PsiMember member = info.getMember();
+      if (isConstantField(member)) {
+        if (enumConstants.isEmpty() || ((PsiField)enumConstants.get(0).getMember()).getType().equals(((PsiField)member).getType())) {
+          enumConstants.add(info);
+          info.setToAbstract(true);
+        }
+      }
+    }
   }
 
   private static boolean isConstantField(PsiMember member) {

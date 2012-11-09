@@ -71,10 +71,6 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
     }
-    else if (task instanceof LocalTask && !((LocalTask)task).isClosedLocally()) {
-      myCreateChangelist.setSelected(true);
-      myCreateChangelist.setEnabled(false);
-    }
     else {
       myCreateChangelist.setSelected(taskManager.getState().createChangelist);
       myCreateChangelist.setEnabled(true);
@@ -88,7 +84,7 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
-    if (taskManager.isVcsEnabled() && !(myTask instanceof LocalTask && !((LocalTask)myTask).isClosedLocally())) {
+    if (taskManager.isVcsEnabled()) {
       taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     }
 

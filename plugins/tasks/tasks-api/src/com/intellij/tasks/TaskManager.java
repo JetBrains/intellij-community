@@ -85,10 +85,12 @@ public abstract class TaskManager {
 
   public abstract boolean isVcsEnabled();
 
+  public abstract boolean isLocallyClosed(LocalTask localTask);
+
   @Nullable
   public abstract LocalTask getAssociatedTask(LocalChangeList list);
 
-  public abstract void associateWithTask(LocalChangeList changeList, boolean withCurrent);
+  public abstract void trackContext(LocalChangeList changeList);
 
   public abstract void disassociateFromTask(LocalChangeList changeList);
 

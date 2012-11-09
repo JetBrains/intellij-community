@@ -46,6 +46,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedChannel = channel;
     myLatestBuild = channel.getLatestBuild();
     setTitle(IdeBundle.message("updates.info.dialog.title"));
+    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     init();
   }
 

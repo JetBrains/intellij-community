@@ -30,12 +30,13 @@ public class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
-                                                                               List<TargetTypeBuildScope> scopes,
-                                                                               final Map<String, String> userData,
-                                                                               final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                               final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+                                                                                        List<TargetTypeBuildScope> scopes,
+                                                                                        Collection<String> paths,
+                                                                                        final Map<String, String> userData,
+                                                                                        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
+                                                                                        final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, Collections.<String>emptyList(), globals, event
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, paths, globals, event
     );
   }
 

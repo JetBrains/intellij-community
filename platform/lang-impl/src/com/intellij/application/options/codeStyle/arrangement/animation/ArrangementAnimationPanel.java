@@ -47,13 +47,13 @@ public class ArrangementAnimationPanel extends JPanel {
     add(content, new GridBag().fillCell().weightx(1).weighty(1));
     setOpaque(true);
     setBackground(UIUtil.getListBackground());
+    doLayout();
   }
 
-  public boolean tryStartAnimation(boolean expand, boolean horizontal) {
-    Rectangle bounds = getBounds();
-    if (bounds == null || bounds.width <= 0 || bounds.height <= 0) {
-      return false;
-    }
+  public void startAnimation(boolean expand, boolean horizontal) {
+    Dimension bounds = myContent.getPreferredSize();
+    myContent.setBounds(0, 0, bounds.width, bounds.height);
+    myContent.validate();
     myHorizontal = horizontal;
     myExpand = expand;
     myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
@@ -61,7 +61,9 @@ public class ArrangementAnimationPanel extends JPanel {
     final Graphics2D graphics = myImage.createGraphics();
     UISettings.setupAntialiasing(graphics);
     graphics.setClip(0, 0, bounds.width, bounds.height);
-    super.paint(graphics);
+    graphics.setColor(UIUtil.getListBackground());
+    graphics.fillRect(0, 0, bounds.width, bounds.height);
+    myContent.paint(graphics);
     graphics.dispose();
 
     if (expand) {
@@ -85,7 +87,6 @@ public class ArrangementAnimationPanel extends JPanel {
       }
     }
     invalidate();
-    return true;
   }
 
   /**
@@ -114,6 +115,7 @@ public class ArrangementAnimationPanel extends JPanel {
       super.paint(g);
       return;
     }
+
     g.drawImage(myCurrentImage, 0, 0, myCurrentImage.getWidth(), myCurrentImage.getHeight(), null);
     if (myListener != null) {
       myListener.onPaint();

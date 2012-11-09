@@ -50,7 +50,7 @@ public class LogMessage extends AbstractMessage {
     }
 
     if (myThrowable != null && StringUtil.isNotEmpty(myThrowable.getMessage())) {
-      if (myHeader != NO_MESSAGE ) {
+      if (!myHeader.equals(NO_MESSAGE)) {
         if (!myHeader.endsWith(": ") && !myHeader.endsWith(":")) {
           myHeader += ": ";
         }

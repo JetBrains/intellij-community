@@ -678,7 +678,12 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
-      final File file = new File(myBase, path);
+      final File file;
+      if (new File(path).isAbsolute()) {
+        file = new File(path);
+      } else {
+        file = new File(myBase, path);
+      }
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {

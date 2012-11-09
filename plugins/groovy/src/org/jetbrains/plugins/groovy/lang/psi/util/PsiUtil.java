@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -480,7 +479,7 @@ public class PsiUtil {
       if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
       }
-      else if (context instanceof GroovyFileBase && context.isPhysical()) {
+      else if (context instanceof GroovyFileBase && !isInDummyFile(context)) {
         return ((GroovyFileBase)context).getScriptClass();
       }
 

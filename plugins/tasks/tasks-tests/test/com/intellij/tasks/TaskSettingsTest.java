@@ -36,17 +36,17 @@ public class TaskSettingsTest extends TaskManagerTestCase {
     TaskRepository repository = new YouTrackRepository();
     String format = "foo \n bar";
     repository.setCommitMessageFormat(format);
-    myManager.setRepositories(Collections.singletonList(repository));
-    TaskManagerImpl.Config config = myManager.getState();
+    myTaskManager.setRepositories(Collections.singletonList(repository));
+    TaskManagerImpl.Config config = myTaskManager.getState();
     Element element = XmlSerializer.serialize(config);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     JDOMUtil.writeDocument(new Document(element), stream, "\n");
 
     Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(stream.toByteArray()));
     TaskManagerImpl.Config deserialize = XmlSerializer.deserialize(document, TaskManagerImpl.Config.class);
-    myManager.loadState(deserialize);
+    myTaskManager.loadState(deserialize);
 
-    TaskRepository[] repositories = myManager.getAllRepositories();
+    TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(format, repositories[0].getCommitMessageFormat());
   }
 }

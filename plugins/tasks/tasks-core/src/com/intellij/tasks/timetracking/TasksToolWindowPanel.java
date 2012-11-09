@@ -81,12 +81,12 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
     myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(), new Condition<LocalTask>() {
       @Override
       public boolean value(final LocalTask task) {
-        return task.getTimeSpent() != 0;
+        return task.isActive() || task.getTimeSpent() != 0;
       }
     }));
   }
 
-  private static ListTableModel<LocalTask> createListModel() {
+  private ListTableModel<LocalTask> createListModel() {
     final ColumnInfo<LocalTask, String> task = new ColumnInfo<LocalTask, String>("Task") {
 
       @Nullable
@@ -109,7 +109,7 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
-            final boolean isClosed = task.isClosed() || task.isClosedLocally();
+            final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
             component.append((String)value, getAttributes(isClosed, task.isActive(), isSelected));
             component.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
             component.setIconOpaque(false);
@@ -159,7 +159,7 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
-            component.append((String)value, getAttributes(task.isClosed() || task.isClosedLocally(), task.isActive(), isSelected));
+            component.append((String)value, getAttributes(task.isClosed() || myTaskManager.isLocallyClosed(task), task.isActive(), isSelected));
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);

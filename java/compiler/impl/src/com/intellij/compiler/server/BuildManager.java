@@ -509,7 +509,7 @@ public class BuildManager implements ApplicationComponent{
             params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
           }
           else if (onlyCheckUpToDate) {
-            params = CmdlineProtoUtil.createUpToDateCheckRequest(projectPath, scopes, userData, globals, currentFSChanges);
+            params = CmdlineProtoUtil.createUpToDateCheckRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
           }
           else {
             params = isMake ?
