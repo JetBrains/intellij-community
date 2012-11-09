@@ -28,9 +28,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 
 /**
  * author ven
@@ -46,7 +46,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
     final PsiMethod method = queryParameters.getMethod();
 
     final String propertyName;
-    if (MixinMemberContributor.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
+    if (GdkMethodUtil.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
       final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false, null);
       propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
     }

@@ -49,7 +49,7 @@ import javax.swing.*;
  * @author ven
  */
 public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBase {
-  public boolean myIgnoreBooleanExpressions = false;
+  public boolean myIgnoreBooleanExpressions = true;
 
   @Nullable
   @Override

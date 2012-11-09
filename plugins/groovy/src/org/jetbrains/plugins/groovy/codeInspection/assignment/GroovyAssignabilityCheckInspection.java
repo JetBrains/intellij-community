@@ -74,12 +74,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -819,7 +815,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (method instanceof GrGdkMethod && place instanceof GrReferenceExpression) {
         final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
         final PsiType qualifier = inferQualifierTypeByPlace((GrReferenceExpression)place);
-        if (qualifier != null && !MixinMemberContributor.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
+        if (qualifier != null && !GdkMethodUtil.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
           registerError(((GrReferenceExpression)place).getReferenceNameElement(),
                         GroovyInspectionBundle.message("category.method.0.cannot.be.applied.to.1", method.getName(),
                                                        qualifier.getCanonicalText()));
