@@ -659,6 +659,9 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionForeground() {
+    if (isUnderNimbusLookAndFeel()) {
+      return UIManager.getColor("Table[Enabled+Selected].textForeground");
+    }
     return UIManager.getColor("Table.selectionForeground");
   }
 
