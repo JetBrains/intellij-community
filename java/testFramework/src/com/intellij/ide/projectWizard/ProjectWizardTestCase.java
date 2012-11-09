@@ -56,6 +56,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
+    UIUtil.dispatchAllInvocationEvents();
 
     Project[] projects = myProjectManager.getOpenProjects();
     assertEquals(2, projects.length);
