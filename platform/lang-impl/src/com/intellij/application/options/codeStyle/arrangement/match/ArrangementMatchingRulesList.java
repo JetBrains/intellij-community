@@ -270,6 +270,7 @@ public class ArrangementMatchingRulesList extends JBList {
       width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
+    myEditor.updateState(selectedRow);
     myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
