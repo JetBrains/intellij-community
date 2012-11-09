@@ -584,7 +584,7 @@ public class GitHistoryUtils {
       public void consume(GitCommit gitCommit) {
         commits.add(gitCommit);
       }
-    }, null, null, parameters);
+    }, null, null, false, parameters);
     semaphore.waitFor();
     return commits;
   }
@@ -594,7 +594,8 @@ public class GitHistoryUtils {
                                       @Nullable final SymbolicRefsI refs,
                                       @NotNull final AsynchConsumer<GitCommit> gitCommitConsumer,
                                       @Nullable final Getter<Boolean> isCanceled,
-                                      @Nullable Collection<VirtualFile> paths, final String... parameters) throws VcsException {
+                                      @Nullable Collection<VirtualFile> paths,
+                                      boolean fullHistory, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -604,12 +605,17 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", "--full-history");
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    if (fullHistory) {
+      h.addParameters("--full-history");
+    }
     if (paths != null && ! paths.isEmpty()) {
       h.endOptions();
       h.addRelativeFiles(paths);
     } else {
-      h.addParameters("--sparse");
+      if (fullHistory) {
+        h.addParameters("--sparse");
+      }
       h.endOptions();
       h.addRelativePaths(path);
     }

@@ -171,7 +171,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     GitHistoryUtils.historyWithLinks(myProject, new FilePathImpl(myRoot),
-                                     refs, consumer, isCanceled, paths, ArrayUtil.toStringArray(parameters));
+                                     refs, consumer, isCanceled, paths, true, ArrayUtil.toStringArray(parameters));
   }
 
   public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
