@@ -814,7 +814,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void decorateChangeList(LocalChangeList changeList, ColoredTreeCellRenderer cellRenderer, boolean selected,
                                  boolean expanded, boolean hasFocus) {
     LocalTask task = getAssociatedTask(changeList);
-    if (task != null) {
+    if (task != null && task.isIssue()) {
       cellRenderer.setIcon(task.getIcon());
     }
   }
