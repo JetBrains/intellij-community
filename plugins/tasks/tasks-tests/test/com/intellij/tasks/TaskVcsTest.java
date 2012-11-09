@@ -43,8 +43,8 @@ public class TaskVcsTest extends TaskManagerTestCase {
   private ChangeListManager myChangeListManager;
 
   public void testInitialState() {
-    assertEquals(1, myManager.getLocalTasks().length);
-    final LocalTaskImpl defaultTask = myManager.getLocalTasks()[0];
+    assertEquals(1, myManager.getLocalTasks().size());
+    final LocalTask defaultTask = myManager.getLocalTasks().get(0);
     assertEquals(defaultTask, myManager.getActiveTask());
     assertTrue(defaultTask.isDefault());
 
@@ -57,13 +57,13 @@ public class TaskVcsTest extends TaskManagerTestCase {
   }
 
   public void testSwitchingTasks() throws Exception {
-    final LocalTaskImpl defaultTask = myManager.getLocalTasks()[0];
+    final LocalTask defaultTask = myManager.getLocalTasks().get(0);
 
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myManager.activateTask(task, false, false);
 
-    assertEquals(2, myManager.getLocalTasks().length);
+    assertEquals(2, myManager.getLocalTasks().size());
 
     LocalTask localTask = myManager.getActiveTask();
     assertEquals(task, localTask);
@@ -215,7 +215,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
     myManager.getState().associateWithCurrentTaskForNewChangelist = false;
 
     addChangeList("New Changelist", "");
-    assertEquals(2, myManager.getLocalTasks().length);
+    assertEquals(2, myManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeLists().size());
     LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
     assertNotNull(newChangeList);
@@ -230,7 +230,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
     myManager.getState().associateWithTaskForNewChangelist = false;
 
     addChangeList("New Changelist", "");
-    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(1, myManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeLists().size());
     LocalChangeList newChangeList = myChangeListManager.findChangeList("New Changelist");
     assertNotNull(newChangeList);
@@ -253,13 +253,13 @@ public class TaskVcsTest extends TaskManagerTestCase {
   public void testSaveContextOnCommitForExistingTask() throws Exception {
     myManager.getState().saveContextOnCommit = true;
 
-    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(1, myManager.getLocalTasks().size());
 
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myManager.activateTask(task, false, true);
 
-    assertEquals(2, myManager.getLocalTasks().length);
+    assertEquals(2, myManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeLists().size());
     LocalTask localTask = myManager.getActiveTask();
     List<ChangeListInfo> changelists = localTask.getChangeLists();
@@ -269,7 +269,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
 
     CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
 
-    assertEquals(2, myManager.getLocalTasks().length); // no extra task created
+    assertEquals(2, myManager.getLocalTasks().size()); // no extra task created
     assertEquals(2, myChangeListManager.getChangeLists().size());
 
     assertEquals(localTask, myManager.getAssociatedTask(changeList)); // association should survive
@@ -278,24 +278,24 @@ public class TaskVcsTest extends TaskManagerTestCase {
   public void testSaveContextOnCommit() throws Exception {
     myManager.getState().saveContextOnCommit = true;
 
-    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(1, myManager.getLocalTasks().size());
     assertEquals(1, myChangeListManager.getChangeLists().size());
 
     myManager.getState().associateWithTaskForNewChangelist = false;
     LocalChangeList changeList = addChangeList("New Changelist", "");
     myManager.getState().associateWithTaskForNewChangelist = true;
 
-    assertEquals(1, myManager.getLocalTasks().length);
+    assertEquals(1, myManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeLists().size());
 
     CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
 
-    assertEquals(2, myManager.getLocalTasks().length); // extra task created
+    assertEquals(2, myManager.getLocalTasks().size()); // extra task created
     assertEquals(2, myChangeListManager.getChangeLists().size());
 
-    assertTrue(ContainerUtil.exists(myManager.getLocalTasks(), new Condition<LocalTaskImpl>() {
+    assertTrue(ContainerUtil.exists(myManager.getLocalTasks(), new Condition<LocalTask>() {
       @Override
-      public boolean value(final LocalTaskImpl task) {
+      public boolean value(final LocalTask task) {
         return task.getSummary().equals("New Changelist");
       }
     }));

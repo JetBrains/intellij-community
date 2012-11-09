@@ -1537,6 +1537,10 @@ public abstract class ChooseByNameBase {
     return myMaximumListSizeLimit;
   }
 
+  public void setMaximumListSizeLimit(final int maximumListSizeLimit) {
+    myMaximumListSizeLimit = maximumListSizeLimit;
+  }
+
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends AnAction {

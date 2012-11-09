@@ -57,6 +57,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   public static final String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
   public static final String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
+  @NonNls public static final String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
 
 
   private GroovyCommonClassNames() {

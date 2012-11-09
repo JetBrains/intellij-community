@@ -55,35 +55,42 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     return items;
   }
 
+  @Override
   @Nullable
   public String getPromptText() {
     return IdeBundle.message("prompt.gotoclass.enter.class.name");
   }
 
+  @Override
   public String getCheckBoxName() {
     return IdeBundle.message("checkbox.include.non.project.classes");
   }
 
+  @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.matches.found.in.project");
   }
 
+  @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
   }
 
+  @Override
   public char getCheckBoxMnemonic() {
     // Some combination like Alt+N, Ant+O, etc are a dead symbols, therefore
     // we have to change mnemonics for Mac users.
     return SystemInfo.isMac?'P':'n';
   }
 
+  @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries")) &&
            Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.includeLibraries"));
   }
 
+  @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
@@ -91,6 +98,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     }
   }
 
+  @Override
   public String getFullName(final Object element) {
     for(ChooseByNameContributor c: getContributors()) {
       if (c instanceof GotoClassContributor) {
@@ -102,6 +110,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     return getElementName(element);
   }
 
+  @Override
   @NotNull
   public String[] getSeparators() {
     if (mySeparators == null) {

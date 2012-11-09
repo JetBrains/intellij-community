@@ -357,9 +357,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       updateValidProperty();
-      if(isValid()){
-        updateHighlighters();
-      }
+      updateHighlighters();
     }
   }
 
@@ -373,9 +371,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
         // File can be invalidated after file changes name (extension also
         // can changes). The editor should be removed if it's invalid.
         updateValidProperty();
-        if(isValid()){
-          updateHighlighters();
-        }
+        updateHighlighters();
       }
     }
 

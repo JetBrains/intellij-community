@@ -38,8 +38,6 @@ public class ArrangementAnimationPanel extends JPanel {
   @Nullable private BufferedImage myCurrentImage;
   @Nullable private Listener      myListener;
 
-  private int myAnimationSteps = -1;
-
   private boolean myExpand;
   private boolean myHorizontal;
 
@@ -57,7 +55,6 @@ public class ArrangementAnimationPanel extends JPanel {
       return false;
     }
     myHorizontal = horizontal;
-    myAnimationSteps = ArrangementConstants.ANIMATION_STEPS - 1;
     myExpand = expand;
     myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
     assert myImage != null;
@@ -66,7 +63,27 @@ public class ArrangementAnimationPanel extends JPanel {
     graphics.setClip(0, 0, bounds.width, bounds.height);
     super.paint(graphics);
     graphics.dispose();
-    myCurrentImage = myImage;
+
+    if (expand) {
+      if (horizontal) {
+        myCurrentImage = myImage.getSubimage(0, 0, ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight());
+      }
+      else {
+        myCurrentImage = myImage.getSubimage(0, 0, myImage.getWidth(), ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP);
+      }
+    }
+    else {
+      if (horizontal) {
+        myCurrentImage = myImage.getSubimage(
+          0, 0, myImage.getWidth() - ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight()
+        );
+      }
+      else {
+        myCurrentImage = myImage.getSubimage(
+          0, 0, myImage.getWidth(), myImage.getHeight() - ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP
+        );
+      }
+    }
     invalidate();
     return true;
   }
@@ -79,7 +96,7 @@ public class ArrangementAnimationPanel extends JPanel {
   public boolean nextIteration() {
     int widthToUse = getImageWidthToUse();
     int heightToUse = getImageHeightToUse();
-    if (!myExpand && (widthToUse <= 1 || heightToUse <= 1)) {
+    if (widthToUse <= 0 || heightToUse <= 0) {
       myImage = null;
       myCurrentImage = null;
       return false;
@@ -88,13 +105,6 @@ public class ArrangementAnimationPanel extends JPanel {
     myCurrentImage = myImage.getSubimage(0, 0, widthToUse, heightToUse);
     
     invalidate();
-
-    myAnimationSteps--;
-    if (myAnimationSteps <= 0) {
-      myImage = null;
-      myCurrentImage = null;
-      return false;
-    }
     return true;
   }
 
@@ -135,36 +145,35 @@ public class ArrangementAnimationPanel extends JPanel {
   }
 
   private int getImageWidthToUse() {
-    assert myImage != null;
-    if (myHorizontal) {
-      return Math.max(1, myImage.getWidth() * getUnits() / ArrangementConstants.ANIMATION_STEPS);
+    assert myCurrentImage != null;
+    if (!myHorizontal) {
+      return myCurrentImage.getWidth();
     }
-    else {
-      return myImage.getWidth();
+    
+    int sign = myExpand ? 1 : -1;
+    int result = myCurrentImage.getWidth() + sign * ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP;
+
+    if (result <= 0 || result > myImage.getWidth()) {
+      return -1;
     }
+    return result;
   }
 
   private int getImageHeightToUse() {
-    assert myImage != null;
+    assert myCurrentImage != null;
     if (myHorizontal) {
-      return myImage.getHeight();
+      return myCurrentImage.getHeight();
     }
-    else {
-      return Math.max(1, myImage.getHeight() * getUnits() / ArrangementConstants.ANIMATION_STEPS);
+
+    int sign = myExpand ? 1 : -1;
+    int result = myCurrentImage.getHeight() + sign * ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP;
+
+    if (result <= 0 || result > myImage.getHeight()) {
+      return -1;
     }
+    return result;
   }
   
-  private int getUnits() {
-    int units;
-    if (myExpand) {
-      units = ArrangementConstants.ANIMATION_STEPS - myAnimationSteps;
-    }
-    else {
-      units = myAnimationSteps;
-    }
-    return units;
-  }
-
   public void setListener(@Nullable Listener listener) {
     myListener = listener;
   }

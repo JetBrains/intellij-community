@@ -120,20 +120,18 @@
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
-    <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" text="Toggle Expected Highlighting Markup"
-            id="ToggleHighlightingMarkup">
-      <add-to-group anchor="last" group-id="Internal"/>
-    </action>
+    <group id="Internal.DevKit" internal="true" text="DevKit" popup="true">
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ToggleHighlightingMarkupAction" text="Toggle Expected Highlighting Markup"
+              id="ToggleHighlightingMarkup"/>
 
-    <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
-            id="ShuffleNamesAction">
-      <add-to-group anchor="last" group-id="Internal"/>
-    </action>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
+              id="ShuffleNamesAction"/>
 
-    <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
-            id="ShowSerializedXml">
-      <add-to-group anchor="last" group-id="Internal"/>
-    </action>
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
+              id="ShowSerializedXml"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
   </actions>
 
 </idea-plugin>

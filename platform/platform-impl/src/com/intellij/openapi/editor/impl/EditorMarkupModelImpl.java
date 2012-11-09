@@ -35,7 +35,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
@@ -50,6 +49,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -68,23 +68,21 @@ import java.util.List;
 import java.util.Queue;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorMarkupModelImpl");
-
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final Icon ERRORS_FOUND_ICON = AllIcons.General.ErrorsFound;
   private static final int ERROR_ICON_WIDTH = ERRORS_FOUND_ICON.getIconWidth();
   private static final int ERROR_ICON_HEIGHT = ERRORS_FOUND_ICON.getIconHeight();
-  private static final int PREFERRED_WIDTH = ERRORS_FOUND_ICON.getIconWidth() + 3;
+  private static final int PREFERRED_WIDTH = ERROR_ICON_WIDTH + 3;
   private final EditorImpl myEditor;
-  private ErrorStripeRenderer myErrorStripeRenderer = null;
-  private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
-  private ErrorStripeListener[] myCachedErrorMarkerListeners = null;
+  // null renderer means we should not show traffic light icon
+  private ErrorStripeRenderer myErrorStripeRenderer;
+  private final List<ErrorStripeListener> myErrorMarkerListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean dimensionsAreValid;
   private int myEditorScrollbarTop = -1;
   private int myEditorTargetHeight = -1;
   private int myEditorSourceHeight = -1;
-  private ProperTextRange myDirtyYPositions = null;
+  private ProperTextRange myDirtyYPositions;
   private static final ProperTextRange WHOLE_DOCUMENT = new ProperTextRange(0,0);
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
@@ -222,7 +220,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     });
   }
 
-  public void doClick(final MouseEvent e, final int width) {
+  private void doClick(final MouseEvent e, final int width) {
     RangeHighlighter marker = getNearestRangeHighlighter(e, width);
     if (marker == null) return;
     int offset = marker.getStartOffset();
@@ -295,6 +293,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
 
+    myEditor.getVerticalScrollBar().updateUI(); // re-create increase/decrease buttons, in case of not-null renderer it will show traffic light icon
     repaintVerticalScrollBar();
   }
 
@@ -367,12 +366,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener {
     private PopupHandler myHandler;
-    private ErrorStripeButton myErrorStripeButton;
+    private JButton myErrorStripeButton;
     private BufferedImage myCachedTrack;
 
     @Override
     protected JButton createDecreaseButton(int orientation) {
-      myErrorStripeButton = new ErrorStripeButton();
+      myErrorStripeButton = myErrorStripeRenderer == null ? super.createDecreaseButton(orientation) : new ErrorStripeButton();
       return myErrorStripeButton;
     }
 
@@ -730,33 +729,23 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                              ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
-  private ErrorStripeListener[] getCachedErrorMarkerListeners() {
-    if (myCachedErrorMarkerListeners == null) {
-      myCachedErrorMarkerListeners = myErrorMarkerListeners.toArray(new ErrorStripeListener[myErrorMarkerListeners.size()]);
-    }
-
-    return myCachedErrorMarkerListeners;
-  }
-
   private void fireErrorMarkerClicked(RangeHighlighter marker, MouseEvent e) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ErrorStripeEvent event = new ErrorStripeEvent(getEditor(), e, marker);
-    ErrorStripeListener[] listeners = getCachedErrorMarkerListeners();
-    for (ErrorStripeListener listener : listeners) {
+    for (ErrorStripeListener listener : myErrorMarkerListeners) {
       listener.errorMarkerClicked(event);
     }
   }
 
   @Override
-  public void addErrorMarkerListener(@NotNull ErrorStripeListener listener) {
-    myCachedErrorMarkerListeners = null;
+  public void addErrorMarkerListener(@NotNull final ErrorStripeListener listener, @NotNull Disposable parent) {
     myErrorMarkerListeners.add(listener);
-  }
-
-  @Override
-  public void removeErrorMarkerListener(@NotNull ErrorStripeListener listener) {
-    myCachedErrorMarkerListeners = null;
-    boolean success = myErrorMarkerListeners.remove(listener);
-    LOG.assertTrue(success);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        myErrorMarkerListeners.remove(listener);
+      }
+    });
   }
 
   public void markDirtied(@NotNull ProperTextRange yPositions) {

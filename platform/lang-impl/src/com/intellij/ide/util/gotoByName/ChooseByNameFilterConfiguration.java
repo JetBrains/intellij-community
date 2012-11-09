@@ -34,6 +34,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
   /**
    * {@inheritDoc}
    */
+  @Override
   public Items getState() {
     return items;
   }
@@ -41,6 +42,7 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
   /**
    * {@inheritDoc}
    */
+  @Override
   public void loadState(final Items state) {
     items = state;
   }

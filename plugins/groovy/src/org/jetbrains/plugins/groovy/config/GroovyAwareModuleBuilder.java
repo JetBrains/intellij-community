@@ -16,17 +16,27 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.plugins.groovy.mvc.GroovySdkForNewModuleWizardStep;
+import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import javax.swing.*;
 
 /**
  * @author peter
  */
-public abstract class GroovyAwareModuleBuilder extends JavaModuleBuilder {
+public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   private final String myBuilderId;
   private final String myPresentableName;
   private final String myDescription;
   private final Icon myBigIcon;
+
+  @SuppressWarnings("UnusedDeclaration")
+  public GroovyAwareModuleBuilder() {
+    this("groovy", "Groovy Module", "Simple module with attached Groovy library", null);
+  }
 
   protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description, Icon bigIcon) {
     myBuilderId = builderId;
@@ -35,6 +45,17 @@ public abstract class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     myBigIcon = bigIcon;
   }
 
+  @Override
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework())};
+  }
+
+  //@Nullable
+  //@Override
+  //public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  //  return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework());
+  //}
+  //
   @Override
   public String getBuilderId() {
     return myBuilderId;
@@ -53,5 +74,14 @@ public abstract class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   @Override
   public String getPresentableName() {
     return myPresentableName;
+  }
+
+  @Override
+  public String getGroupName() {
+    return "Groovy";
+  }
+
+  protected MvcFramework getFramework() {
+    return null;
   }
 }

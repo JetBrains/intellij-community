@@ -714,16 +714,22 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
   }
 
   private static String getOptionalLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
-    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
-    if (expression.getParent() instanceof PsiReferenceExpression ||
-        types.length != 1 ||
-        !types[0].getType().equals(anonymousClass.getBaseClassType())) {
+    if (shouldShowExplicitLambdaType(anonymousClass, expression)) {
       final String baseClassName = ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
       if (baseClassName != null) {
         return "(" + baseClassName + ") ";
       }
     }
     return "";
+  }
+
+  private static boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+    if (expression.getParent() instanceof PsiReferenceExpression) {
+      return true;
+    }
+
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
+    return types.length != 1 || !types[0].getType().equals(anonymousClass.getBaseClassType());
   }
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {

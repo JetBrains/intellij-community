@@ -90,7 +90,7 @@ public class LoadContextAction extends BaseTaskAction {
       }
     });
     final TaskManager taskManager = TaskManager.getManager(project);
-    LocalTask[] tasks = taskManager.getLocalTasks();
+    List<LocalTask> tasks = taskManager.getLocalTasks();
     infos.addAll(ContainerUtil.mapNotNull(tasks, new NullableFunction<LocalTask, ContextHolder>() {
       public ContextHolder fun(final LocalTask task) {
         if (task.isActive()) {

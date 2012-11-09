@@ -375,4 +375,13 @@
   <problem_class>Constant conditions &amp; exceptions</problem_class>
   <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
 </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>67</line>
+    <package>&lt;default&gt;</package>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constant conditions &amp; exceptions</problem_class>
+    <description>Condition &lt;code&gt;i&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt; when reached</description>
+  </problem>
+
 </problems>

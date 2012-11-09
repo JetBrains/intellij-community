@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -182,8 +181,8 @@ public class SwitchTaskAction extends BaseTaskAction {
 
     final TaskManager manager = TaskManager.getManager(project);
     LocalTask activeTask = manager.getActiveTask();
-    LocalTask[] localTasks = manager.getLocalTasks();
-    Arrays.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    List<LocalTask> localTasks = manager.getLocalTasks();
+    Collections.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     ArrayList<LocalTask> temp = new ArrayList<LocalTask>();
     boolean vcsEnabled = manager.isVcsEnabled();
     for (final LocalTask task : localTasks) {
