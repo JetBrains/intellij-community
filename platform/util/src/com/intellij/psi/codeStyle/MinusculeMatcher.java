@@ -199,7 +199,7 @@ public class MinusculeMatcher implements Matcher {
       if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
         return null;
       }
-      if (myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
+      if (!allowSpecialChars && myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
         return null;
       }
       if (!Character.isUpperCase(p) || NameUtil.isWordStart(name, nextOccurrence)) {
