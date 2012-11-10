@@ -28,6 +28,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
-    boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+    boolean afterNew = JavaCompletionContributor.isInJavaContext(position) && JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
     int genericsStart = context.getTailOffset();
     context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
     JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
