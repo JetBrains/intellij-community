@@ -415,7 +415,7 @@ public class IncProjectBuilder {
       }
       else {
         context.processMessage(new CompilerMessage(
-          BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+          "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
         );
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {
