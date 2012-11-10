@@ -29,6 +29,13 @@ public class JpsUiDesignerConfigurationSerializer extends JpsProjectExtensionSer
   }
 
   @Override
+  public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+    final JpsUiDesignerConfigurationImpl.UiDesignerConfigurationState defaultState =
+      new JpsUiDesignerConfigurationImpl.UiDesignerConfigurationState();
+    JpsUiDesignerExtensionService.getInstance().setUiDesignerConfiguration(project, new JpsUiDesignerConfigurationImpl(defaultState));
+  }
+
+  @Override
   public void saveExtension(@NotNull JpsProject element, @NotNull Element componentTag) {
     JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(element);
     if (configuration != null) {

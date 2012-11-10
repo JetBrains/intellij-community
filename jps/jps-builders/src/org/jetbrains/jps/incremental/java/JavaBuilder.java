@@ -55,8 +55,6 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
-import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import javax.tools.*;
 import java.io.*;
@@ -116,6 +114,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static boolean OPTION_ENABLE_FORMS_INSTRUMENTATION = false;
+  private static boolean OPTION_COPY_FORMS_RUNTIME_CLASSES = false;
 
   static {
     registerClassPostProcessor(new ClassPostProcessor() {
@@ -163,6 +163,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
+  }
+
+  public static boolean isFormsInstrumentationEnabled() {
+    return OPTION_ENABLE_FORMS_INSTRUMENTATION;
+  }
+
+  public static void setFormsInstrumentationEnabled(boolean enabled) {
+    OPTION_ENABLE_FORMS_INSTRUMENTATION = enabled;
+  }
+
+  public static boolean isCopyFormsRuntime() {
+    return OPTION_COPY_FORMS_RUNTIME_CLASSES;
+  }
+
+  public static void setCopyFormsRuntime(boolean copy) {
+    OPTION_COPY_FORMS_RUNTIME_CLASSES = copy;
   }
 
   public JavaBuilder(Executor tasksExecutor) {
@@ -263,7 +279,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
       String message = e.getMessage();
       if (message == null) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        e.printStackTrace(new PrintStream(out));
+        final PrintStream stream = new PrintStream(out);
+        try {
+          e.printStackTrace(stream);
+        }
+        finally {
+          stream.close();
+        }
         message = "Internal error: \n" + out.toString();
       }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
@@ -312,8 +334,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      pd.getProject()).isAddNotNullAssertions();
+    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
     final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
@@ -327,6 +348,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
+
+        if (OPTION_COPY_FORMS_RUNTIME_CLASSES && !forms.isEmpty()) {
+          for (ModuleBuildTarget target : chunk.getTargets()) {
+            if (!target.isTests()) {
+              final File outputDir = target.getOutputDir();
+              if (outputDir != null) {
+                CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+              }
+            }
+          }
+        }
+
         final Set<File> srcPath = new HashSet<File>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
@@ -365,21 +398,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
-            if (!forms.isEmpty()) {
+            if (OPTION_ENABLE_FORMS_INSTRUMENTATION && !forms.isEmpty()) {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.getProject());
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
-                  for (ModuleBuildTarget target : chunk.getTargets()) {
-                    if (!target.isTests()) {
-                      final File outputDir = target.getOutputDir();
-                      if (outputDir != null) {
-                        CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
-                      }
-                    }
-                  }
-                }
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
