@@ -31,18 +31,8 @@ public class JavaTemplateCompletionProcessor implements TemplateCompletionProces
   @Override
   public boolean nextTabOnItemSelected(final ExpressionContext context, final LookupElement item) {
     final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
-    if (elements != null) {
-      if (elements.size() != 1) return false;
-      final PsiElement element = elements.get(0);
-      if (element instanceof PsiPackage) {
-        return false;
-      }
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        if (method.getParameterList().getParametersCount() != 0) {
-          return false;
-        }
-      }
+    if (elements != null && elements.size() == 1 && elements.get(0) instanceof PsiPackage) {
+      return false;
     }
     return true;
   }

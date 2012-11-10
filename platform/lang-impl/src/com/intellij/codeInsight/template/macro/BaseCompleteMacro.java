@@ -18,10 +18,10 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -88,13 +88,7 @@ public abstract class BaseCompleteMacro extends Macro {
               lookup.addLookupListener(new MyLookupListener(context));
             }
             else {
-              TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-              if (templateState != null) {
-                TextRange range = templateState.getCurrentVariableRange();
-                if (range != null && range.getLength() > 0) {
-                  templateState.nextTab();
-                }
-              }
+              considerNextTab(editor);
             }
           }
         }, "", null);
@@ -104,6 +98,16 @@ public abstract class BaseCompleteMacro extends Macro {
       runnable.run();
     } else {
       ApplicationManager.getApplication().invokeLater(runnable);
+    }
+  }
+
+  private static void considerNextTab(Editor editor) {
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      TextRange range = templateState.getCurrentVariableRange();
+      if (range != null && range.getLength() > 0 && editor.getCaretModel().getOffset() == range.getEndOffset()) {
+        templateState.nextTab();
+      }
     }
   }
 
@@ -133,23 +137,25 @@ public abstract class BaseCompleteMacro extends Macro {
       }
 
       final Project project = myContext.getProject();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      Runnable runnable = new Runnable() {
         @Override
         public void run() {
           new WriteCommandAction(project) {
             @Override
             protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-              final Editor editor = myContext.getEditor();
+              Editor editor = myContext.getEditor();
               if (editor != null) {
-                TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-                if (templateState != null) {
-                  templateState.nextTab();
-                }
+                considerNextTab(editor);
               }
             }
           }.execute();
         }
-      }, ModalityState.current(), project.getDisposed());
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.current(), project.getDisposed());
+      }
 
     }
   }
