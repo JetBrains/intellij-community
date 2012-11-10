@@ -28,17 +28,18 @@ class VisibleNodesAndEdges {
     private final int size;
     private final ReadOnlyList<RowOfNode> rows;
     private final ReadOnlyList<HideCommits> hideCommitsList;
-    private final VisibleNodesAndEdges curClass = this;
+
     private final CacheGet<Integer, RowOfNode> visibleNodes = new CacheGet<Integer, RowOfNode>(new Get<Integer, RowOfNode>() {
         @Override
         public RowOfNode get(Integer key) {
-            return curClass.calculateGetVisibleNodes(key);
+            return VisibleNodesAndEdges.this.calculateGetVisibleNodes(key);
         }
     }, 100);
+
     private final CacheGet<Integer, ReadOnlyList<Edge>> downEdges = new CacheGet<Integer, ReadOnlyList<Edge>>(new Get<Integer, ReadOnlyList<Edge>>() {
         @Override
         public ReadOnlyList<Edge> get(Integer key) {
-            return curClass.getDownEdgesNotCache(key);
+            return VisibleNodesAndEdges.this.getDownEdgesNotCache(key);
         }
     }, 100);
 
