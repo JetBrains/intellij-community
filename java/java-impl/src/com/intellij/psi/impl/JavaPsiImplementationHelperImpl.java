@@ -139,7 +139,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     final VirtualFile folder = virtualFile.getParent();
     if (sourceRoot != null && folder != null) {
       String relativePath = VfsUtilCore.getRelativePath(folder, sourceRoot, '/');
-      LOG.assertTrue(relativePath != null);
+      if (relativePath == null) {
+        throw new AssertionError("Null relative path: folder=" + folder + "; root=" + sourceRoot);
+      }
       List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
       if (orderEntries.isEmpty()) {
         LOG.error("Inconsistent: " + DirectoryIndex.getInstance(myProject).getInfoForDirectory(folder).toString());
