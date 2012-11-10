@@ -2,6 +2,6 @@ class A {
     <T> void foo(T[] ts) {}
 
     {
-        foo(new Object[]);
+        foo(new Object[]{<caret>});
     }
 }

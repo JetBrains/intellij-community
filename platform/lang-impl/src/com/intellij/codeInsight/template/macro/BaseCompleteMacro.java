@@ -126,7 +126,7 @@ public abstract class BaseCompleteMacro extends Macro {
       if (item == null) return;
 
       char c = event.getCompletionChar();
-      if (c != Lookup.REPLACE_SELECT_CHAR && c != Lookup.NORMAL_SELECT_CHAR && c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      if (!LookupEvent.isSpecialCompletionChar(c)) {
         return;
       }
 

@@ -72,7 +72,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   @NonNls private static final String EXCEPTION_TAG = "exception";
-  static final ElementPattern<PsiElement> AFTER_NEW =
+  public static final ElementPattern<PsiElement> AFTER_NEW =
       psiElement().afterLeaf(
           psiElement().withText(PsiKeyword.NEW).andNot(
               psiElement().afterLeaf(
