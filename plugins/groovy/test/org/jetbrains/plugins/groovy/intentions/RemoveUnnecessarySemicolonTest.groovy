@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.intentions
 
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -73,6 +74,7 @@ class RemoveUnnecessarySemicolonTest extends LightCodeInsightFixtureTestCase {
   }
   
   void testBig() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
     doTest('''\
 <selection>/*
  * Copyright 2000-2011 JetBrains s.r.o.
