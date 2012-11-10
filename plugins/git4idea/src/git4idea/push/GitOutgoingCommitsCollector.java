@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.*;
 import git4idea.branch.GitBranchPair;
@@ -248,6 +249,16 @@ class GitOutgoingCommitsCollector {
 
   @NotNull
   private static GitCommitsByRepoAndBranch collectOutgoingCommits(@NotNull GitPushSpecs pushSpecs) throws VcsException {
+    // TODO remove when tested
+    if (Registry.is("git.pause.when.collecting.outgoing.commits")) {
+      try {
+        TimeUnit.SECONDS.sleep(5);
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
+
     Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareReposAndBranchesToPush(pushSpecs.getSpecs());
     Set<GitRepository> repositories = reposAndBranchesToPush.keySet();
 
