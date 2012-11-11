@@ -38,36 +38,48 @@ public class ArrangementAnimationPanel extends JPanel {
   @Nullable private BufferedImage myCurrentImage;
   @Nullable private Listener      myListener;
 
-  private boolean myExpand;
-  private boolean myHorizontal;
+  private final boolean myExpand;
+  private final boolean myHorizontal;
+  private boolean myDelayedAnimation;
+  private boolean myAnimated;
 
-  public ArrangementAnimationPanel(@NotNull JComponent content) {
+  public ArrangementAnimationPanel(@NotNull JComponent content, boolean expand, boolean horizontal) {
     super(new GridBagLayout());
     myContent = content;
+    myExpand = expand;
+    myHorizontal = horizontal;
     add(content, new GridBag().fillCell().weightx(1).weighty(1));
     setOpaque(true);
     setBackground(UIUtil.getListBackground());
     doLayout();
   }
 
-  public void startAnimation(boolean expand, boolean horizontal) {
-    Dimension bounds = myContent.getPreferredSize();
-    myContent.setBounds(0, 0, bounds.width, bounds.height);
+  public void startAnimation() {
+    myDelayedAnimation = true;
+  }
+
+  private void prepareForAnimation() {
+    Dimension size = myContent.getPreferredSize();
+    Rectangle bounds = myContent.getBounds();
+    applyDoubledBuffered(myContent, false);
+    //myContent.setDoubleBuffered(false);
+    myContent.setBounds(0, 0, size.width, size.height);
     myContent.validate();
-    myHorizontal = horizontal;
-    myExpand = expand;
-    myImage = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+    myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     assert myImage != null;
     final Graphics2D graphics = myImage.createGraphics();
     UISettings.setupAntialiasing(graphics);
-    graphics.setClip(0, 0, bounds.width, bounds.height);
+    graphics.setClip(0, 0, size.width, size.height);
     graphics.setColor(UIUtil.getListBackground());
-    graphics.fillRect(0, 0, bounds.width, bounds.height);
+    graphics.fillRect(0, 0, size.width, size.height);
     myContent.paint(graphics);
     graphics.dispose();
 
-    if (expand) {
-      if (horizontal) {
+    myContent.setBounds(bounds);
+    applyDoubledBuffered(myContent, true);
+
+    if (myExpand) {
+      if (myHorizontal) {
         myCurrentImage = myImage.getSubimage(0, 0, ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight());
       }
       else {
@@ -75,7 +87,7 @@ public class ArrangementAnimationPanel extends JPanel {
       }
     }
     else {
-      if (horizontal) {
+      if (myHorizontal) {
         myCurrentImage = myImage.getSubimage(
           0, 0, myImage.getWidth() - ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP, myImage.getHeight()
         );
@@ -87,6 +99,13 @@ public class ArrangementAnimationPanel extends JPanel {
       }
     }
     invalidate();
+  }
+  
+  private static void applyDoubledBuffered(JComponent component, boolean doubleBuffered) {
+    component.setDoubleBuffered(doubleBuffered);
+    for (int i = 0; i < component.getComponentCount(); i++) {
+      applyDoubledBuffered((JComponent)component.getComponent(i), doubleBuffered);
+    }
   }
 
   /**
@@ -100,17 +119,23 @@ public class ArrangementAnimationPanel extends JPanel {
     if (widthToUse <= 0 || heightToUse <= 0) {
       myImage = null;
       myCurrentImage = null;
+      myAnimated = true;
       return false;
     }
 
     myCurrentImage = myImage.getSubimage(0, 0, widthToUse, heightToUse);
-    
+
     invalidate();
     return true;
   }
 
   @Override
   public void paint(Graphics g) {
+    if (myDelayedAnimation) {
+      prepareForAnimation();
+      myDelayedAnimation = false;
+    }
+
     if (myCurrentImage == null) {
       super.paint(g);
       return;
@@ -124,24 +149,25 @@ public class ArrangementAnimationPanel extends JPanel {
 
   @Override
   public Dimension getMinimumSize() {
-    if (myCurrentImage == null) {
-      return myContent.getMinimumSize();
-    }
-    return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
+    return getPreferredSize();
   }
 
   @Override
   public Dimension getMaximumSize() {
-    if (myCurrentImage == null) {
-      return myContent.getMaximumSize();
-    }
-    return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
+    return getPreferredSize();
   }
 
   @Override
   public Dimension getPreferredSize() {
-    if (myCurrentImage == null) {
+    if (myAnimated) {
       return myContent.getPreferredSize();
+    }
+
+    if (myCurrentImage == null) {
+      Dimension size = myContent.getPreferredSize();
+      int width = (myHorizontal && myExpand) ? ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP : size.width;
+      int height = (!myHorizontal && myExpand) ? ArrangementConstants.ANIMATION_ITERATION_PIXEL_STEP : size.height;
+      return new Dimension(width, height);
     }
     return new Dimension(myCurrentImage.getWidth(), myCurrentImage.getHeight());
   }

@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement.component;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRuleEditor;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesList;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.util.CalloutBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,24 +32,29 @@ import java.awt.*;
  */
 public class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback {
 
-  @NotNull private final ArrangementMatchingRulesList  myList;
-  @NotNull private final ArrangementAnimationPanel     myRenderer;
-  @NotNull private final Insets                        myBorderInsets;
-  @NotNull private final ArrangementMatchingRuleEditor myEditor;
+  @NotNull private final ArrangementMatchingRulesControl myList;
+  @NotNull private final ArrangementAnimationPanel       myRenderer;
+  @NotNull private final Insets                          myBorderInsets;
+  @NotNull private final ArrangementMatchingRuleEditor   myEditor;
 
   private final int myRow;
 
-  public ArrangementEditorComponent(@NotNull ArrangementMatchingRulesList list, int row, @NotNull ArrangementMatchingRuleEditor editor) {
+  public ArrangementEditorComponent(@NotNull ArrangementMatchingRulesControl list, int row, @NotNull ArrangementMatchingRuleEditor editor) {
     myList = list;
     myRow = row;
     myEditor = editor;
-    JPanel borderPanel = new JPanel(new BorderLayout());
+    JPanel borderPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public String toString() {
+        return "callout border panel for " + myEditor;
+      }
+    };
     borderPanel.setBackground(UIUtil.getListBackground());
     borderPanel.add(editor);
     CalloutBorder border = new CalloutBorder();
     borderPanel.setBorder(border);
     myBorderInsets = border.getBorderInsets(borderPanel);
-    myRenderer = new ArrangementAnimationPanel(borderPanel);
+    myRenderer = new ArrangementAnimationPanel(borderPanel, true, false);
   }
 
   @NotNull
@@ -59,12 +64,12 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
   }
 
   public void expand() {
-    new ArrangementAnimationManager(myRenderer, this, true, false).startAnimation();
+    new ArrangementAnimationManager(myRenderer, this).startAnimation();
   }
 
   @Override
   public void onAnimationIteration(boolean finished) {
-    myList.repaintRows(myRow, myRow, false);
+    myList.repaintRows(myRow, myList.getModel().getSize() - 1, false);
   }
 
   public void applyAvailableWidth(int width) {

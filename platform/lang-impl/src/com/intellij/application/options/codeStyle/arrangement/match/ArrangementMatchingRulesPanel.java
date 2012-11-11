@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class ArrangementMatchingRulesPanel extends JPanel {
 
-  @NotNull private final ArrangementMatchingRulesList myList;
+  @NotNull private final ArrangementMatchingRulesControl myList;
 
   public ArrangementMatchingRulesPanel(@NotNull ArrangementNodeDisplayManager displayManager,
                                        @NotNull ArrangementColorsProvider colorsProvider,
@@ -46,26 +46,26 @@ public class ArrangementMatchingRulesPanel extends JPanel {
     setLayout(new GridBagLayout());
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
-    ArrangementMatchingRulesList.RepresentationCallback callback = new ArrangementMatchingRulesList.RepresentationCallback() {
+    ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
       @Override
       public void ensureVisible(@NotNull Rectangle r) {
         Rectangle visibleRect = viewport.getViewRect();
         if (r.y <= visibleRect.y) {
           return;
         }
-        
-        int excessiveHeight = r.y + r.height -  (visibleRect.y + visibleRect.height);
+
+        int excessiveHeight = r.y + r.height - (visibleRect.y + visibleRect.height);
         if (excessiveHeight <= 0) {
           return;
         }
-        
+
         int verticalShift = Math.min(r.y - visibleRect.y, excessiveHeight);
         if (verticalShift > 0) {
           viewport.setViewPosition(new Point(visibleRect.x, visibleRect.y + verticalShift));
         }
       }
     };
-    myList = new ArrangementMatchingRulesList(displayManager, colorsProvider, settingsFilter, callback);
+    myList = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myList);
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
   }

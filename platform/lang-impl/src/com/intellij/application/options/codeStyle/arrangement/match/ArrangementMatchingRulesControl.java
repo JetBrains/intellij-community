@@ -26,7 +26,7 @@ import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -45,9 +46,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 10/31/12 1:23 PM
  */
-public class ArrangementMatchingRulesList extends JBList {
+public class ArrangementMatchingRulesControl extends JBTable {
 
-  @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesList.class.getName());
+  @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesControl.class.getName());
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
 
   @NotNull private final IntObjectMap<ArrangementListRowDecorator> myComponents = new IntObjectMap<ArrangementListRowDecorator>();
@@ -55,34 +56,44 @@ public class ArrangementMatchingRulesList extends JBList {
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final ArrangementMatchingRuleEditor        myEditor;
   @NotNull private final RepresentationCallback               myRepresentationCallback;
+  @NotNull private final MyRenderer                           myRenderer;
 
   private int myRowUnderMouse = -1;
   private int myEditorRow     = -1;
   private boolean mySkipSelectionChange;
 
-  public ArrangementMatchingRulesList(@NotNull ArrangementNodeDisplayManager displayManager,
-                                      @NotNull ArrangementColorsProvider colorsProvider,
-                                      @NotNull ArrangementStandardSettingsAware settingsFilter,
-                                      @NotNull RepresentationCallback callback)
+  public ArrangementMatchingRulesControl(@NotNull ArrangementNodeDisplayManager displayManager,
+                                         @NotNull ArrangementColorsProvider colorsProvider,
+                                         @NotNull ArrangementStandardSettingsAware settingsFilter,
+                                         @NotNull RepresentationCallback callback)
   {
-    super(new ArrangementMatchingRulesListModel());
+    super(new ArrangementMatchingRulesModel());
     myRepresentationCallback = callback;
     myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
-    setCellRenderer(new MyListCellRenderer());
+    myRenderer = new MyRenderer();
+    setDefaultRenderer(Object.class, myRenderer);
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    setShowColumns(false);
+    setShowGrid(false);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
-      @Override public void mouseMoved(MouseEvent e) { onMouseMoved(e); }
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        onMouseMoved(e);
+      }
     });
-    addListSelectionListener(new ListSelectionListener() {
-      @Override public void valueChanged(ListSelectionEvent e) { onSelectionChange(e); }
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        onSelectionChange(e);
+      }
     });
   }
 
   @NotNull
   @Override
-  public ArrangementMatchingRulesListModel getModel() {
-    return (ArrangementMatchingRulesListModel)super.getModel();
+  public ArrangementMatchingRulesModel getModel() {
+    return (ArrangementMatchingRulesModel)super.getModel();
   }
 
   public void setRules(@Nullable List<StdArrangementMatchRule> rules) {
@@ -94,7 +105,7 @@ public class ArrangementMatchingRulesList extends JBList {
     }
 
     for (StdArrangementMatchRule rule : rules) {
-      getModel().addElement(rule);
+      getModel().add(rule);
     }
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
@@ -119,7 +130,7 @@ public class ArrangementMatchingRulesList extends JBList {
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
-    int i = locationToIndex(e.getPoint());
+    int i = rowAtPoint(e.getPoint());
     if (i != myRowUnderMouse) {
       onMouseExited();
     }
@@ -153,7 +164,7 @@ public class ArrangementMatchingRulesList extends JBList {
   
   
   private void onMousePressed(@NotNull MouseEvent e) {
-    int i = locationToIndex(e.getPoint());
+    int i = rowAtPoint(e.getPoint());
     if (i < 0) {
       return;
     }
@@ -191,7 +202,7 @@ public class ArrangementMatchingRulesList extends JBList {
   }
 
   private void onMouseEntered(@NotNull MouseEvent e) {
-    myRowUnderMouse = locationToIndex(e.getPoint());
+    myRowUnderMouse = rowAtPoint(e.getPoint());
     ArrangementListRowDecorator decorator = myComponents.get(myRowUnderMouse);
     if (decorator != null) {
       decorator.onMouseEntered(e);
@@ -244,11 +255,11 @@ public class ArrangementMatchingRulesList extends JBList {
     if (myEditorRow < 0) {
       return;
     }
-    repaintRows(0, getModel().size() - 1, false); // Update 'selected' status
+    repaintRows(0, getModel().getSize() - 1, false); // Update 'selected' status
     myComponents.shiftKeys(myEditorRow, - 1);
     mySkipSelectionChange = true;
     try {
-      getModel().removeElementAt(myEditorRow);
+      getModel().removeRow(myEditorRow);
     }
     finally {
       mySkipSelectionChange = false;
@@ -269,12 +280,13 @@ public class ArrangementMatchingRulesList extends JBList {
     myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
-      getModel().insertElementAt(editor, myEditorRow);
+      getModel().insertRow(myEditorRow, new Object[]{editor});
     }
     finally {
       mySkipSelectionChange = false;
     }
-    Rectangle bounds = getCellBounds(selectedRow, myEditorRow);
+    
+    Rectangle bounds = getRowsBounds(selectedRow, myEditorRow);
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
     }
@@ -283,17 +295,17 @@ public class ArrangementMatchingRulesList extends JBList {
     // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
     // corresponding cached renderer is used for animation.
     editor.expand();
-    repaintRows(selectedRow, getModel().size() - 1, false);
+    repaintRows(selectedRow, getModel().getRowCount() - 1, false);
   }
 
   @NotNull
   public List<StdArrangementMatchRule> getRules() {
-    if (getModel().isEmpty()) {
+    if (getModel().getSize() <= 0) {
       return Collections.emptyList();
     }
     List<StdArrangementMatchRule> result = new ArrayList<StdArrangementMatchRule>();
-    for (int i = 0; i < getModel().size(); i++) {
-      Object element = getModel().get(i);
+    for (int i = 0; i < getModel().getSize(); i++) {
+      Object element = getModel().getElementAt(i);
       if (element instanceof StdArrangementMatchRule) {
         result.add((StdArrangementMatchRule)element);
       }
@@ -302,40 +314,49 @@ public class ArrangementMatchingRulesList extends JBList {
   }
   
   public void repaintRows(int first, int last, boolean rowStructureChanged) {
-    Rectangle bounds = getCellBounds(first, last);
-    if (rowStructureChanged) {
-      for (int i = first; i <= last; i++) {
+    for (int i = first; i <= last; i++) {
+      if (rowStructureChanged) {
         myComponents.remove(i);
       }
+      setRowHeight(i, myRenderer.getRendererComponent(i).getPreferredSize().height);
     }
-    if (bounds != null) {
-      repaint(bounds);
-    }
+    getModel().fireTableRowsUpdated(first, last);
   }
-  
-  private class MyListCellRenderer implements ListCellRenderer {
+
+  private Rectangle getRowsBounds(int first, int last) {
+    Rectangle firstRect = getCellRect(first, 0, true);
+    Rectangle lastRect = getCellRect(last, 0, true);
+    return new Rectangle(firstRect.x, firstRect.y, lastRect.width, lastRect.y + lastRect.height - firstRect.y);
+  }
+
+  private class MyRenderer implements TableCellRenderer {
+
+    public Component getRendererComponent(int row) {
+      return getTableCellRendererComponent(ArrangementMatchingRulesControl.this, getModel().getElementAt(row), false, false, row, 0);
+    }
+    
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value instanceof ArrangementRepresentationAware) {
         return ((ArrangementRepresentationAware)value).getRenderer();
       }
-      ArrangementListRowDecorator component = myComponents.get(index);
+      ArrangementListRowDecorator component = myComponents.get(row);
       if (component == null) {
         if (!(value instanceof StdArrangementMatchRule)) {
           return EMPTY_RENDERER;
         }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         component = new ArrangementListRowDecorator(myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
-        myComponents.set(index, component);
-        if (myRowUnderMouse == index) {
+        myComponents.set(row, component);
+        if (myRowUnderMouse == row) {
           component.setBackground(UIUtil.getDecoratedRowColor());
         }
         else {
           component.setBackground(UIUtil.getListBackground());
         }
       }
-      component.setRowIndex((myEditorRow >= 0 && index > myEditorRow) ? index : index + 1);
-      component.setSelected(getSelectionModel().isSelectedIndex(index) || (myEditorRow >= 0 && index == myEditorRow - 1));
+      component.setRowIndex((myEditorRow >= 0 && row > myEditorRow) ? row : row + 1);
+      component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
       return component.getUiComponent();
     }
   }

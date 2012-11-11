@@ -162,7 +162,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel) {
+    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel, false, true) {
       @Override
       public void paint(Graphics g) {
         Point point = ArrangementConfigUtil.getLocationOnScreen(this);
