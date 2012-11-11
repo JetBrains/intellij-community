@@ -51,8 +51,8 @@
         </property>
       </activation>
       <properties>
-        <idea.version>${idea11.version}</idea.version>
-        <plugin.supported.build.from>110.3</plugin.supported.build.from><!--118.749-->
+        <idea.version>${idea12.version}</idea.version>
+        <plugin.supported.build.from>118.749</plugin.supported.build.from><!--118.749-->
         <plugin.supported.build.to />
       </properties>
     </profile>
@@ -67,7 +67,7 @@
       <properties>
         <idea.version>${idea11.version}</idea.version>
         <plugin.supported.build.from>110.3</plugin.supported.build.from>
-        <plugin.supported.build.to>118</plugin.supported.build.to>
+        <plugin.supported.build.to>118.748</plugin.supported.build.to>
       </properties>
     </profile>
     <profile>
@@ -156,11 +156,11 @@
   <properties>
     <idea9.version>9.0.4</idea9.version>
     <idea10.version>10.5.4</idea10.version>
-    <idea11.version>11.1.3</idea11.version>
+    <idea11.version>11.1.4</idea11.version>
     <idea12.version>12.0-SNAPSHOT</idea12.version>
 
     <!-- maven.build.timestamp since 2.1.0-M1 -->
-    <maven.min.version>2.1.0</maven.min.version>
+    <maven.min.version>2.2.1</maven.min.version>
     <!-- Idea requires JDK 1.6 -->
     <jdk.min.version>1.6</jdk.min.version>
 
@@ -175,8 +175,8 @@
     <plugin.vendor>${project.organization.name}</plugin.vendor>
     <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
     <plugin.vendor.email>lombok-plugin@plushnikov.de</plugin.vendor.email>
-    <lombok.version>0.11.0</lombok.version>
-    <lombok-pg.version>0.11.0</lombok-pg.version>
+    <lombok.version>0.11.6</lombok.version>
+    <lombok-pg.version>0.11.3</lombok-pg.version>
     <lombok-maven-plugin.version>0.10.2.0</lombok-maven-plugin.version>
     <lombok-annotations.includes>lombok/extern/**,
       lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,

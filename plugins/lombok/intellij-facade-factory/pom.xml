@@ -40,6 +40,10 @@
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
+      <artifactId>util-rt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>

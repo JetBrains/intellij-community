@@ -47,6 +47,11 @@
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
+      <artifactId>util-rt</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea</artifactId>
       <type>pom</type>
       <scope>provided</scope>
