@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
  */
 public class GitLogger {
 
+  public static final Logger CORE_LOG = Logger.getInstance("GitCore");
   public static final Logger PUSH_LOG = Logger.getInstance("GitPush");
 
 }

@@ -15,6 +15,7 @@
  */
 package git4idea.push
 
+import git4idea.branch.GitBranchPair
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor
 import git4idea.test.GitLightTest
@@ -96,7 +97,7 @@ class GitPushSpecTest extends GitLightTest {
   }
 
   void assertSpec(String local, String remote) {
-    GitPushSpec spec = GitPushSpec.collect(myRepository)
+    GitBranchPair spec = GitBranchPair.findCurrentAnTracked(myRepository)
     assertEquals("Incorrect local branch to push", local, spec.getSource().getName())
     if (remote != null) {
       assertEquals("Incorrect remote branch to push", remote, spec.getDest().getNameForLocalOperations())

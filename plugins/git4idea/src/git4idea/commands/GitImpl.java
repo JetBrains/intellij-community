@@ -25,9 +25,9 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
+import git4idea.branch.GitBranchPair;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
-import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -368,7 +368,7 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitBranchPair pushSpec,
                                       @NotNull GitLineHandlerListener... listeners) {
     GitRemote remote = pushSpec.getDest().getRemote();
     GitBranch remoteBranch = pushSpec.getDest();

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 import git4idea.GitLogger;
 import git4idea.GitPlatformFacade;
+import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -54,7 +55,7 @@ class GitPushUtil {
         LOG.warn("Couldn't retrieve current repository");
         return GitPushSpecs.empty();
       }
-      return new GitPushSpecs(Collections.singletonMap(repository, GitPushSpec.collect(repository)));
+      return new GitPushSpecs(Collections.singletonMap(repository, GitBranchPair.findCurrentAnTracked(repository)));
     }
   }
 
@@ -63,9 +64,9 @@ class GitPushUtil {
                                                                                  @NotNull Project project) {
     GitRepositoryManager manager = facade.getRepositoryManager(project);
     List<GitRepository> repositories = manager.getRepositories();
-    Map<GitRepository, GitPushSpec> map = new HashMap<GitRepository, GitPushSpec>();
+    Map<GitRepository, GitBranchPair> map = new HashMap<GitRepository, GitBranchPair>();
     for (GitRepository repository : repositories) {
-      map.put(repository, GitPushSpec.collect(repository));
+      map.put(repository, GitBranchPair.findCurrentAnTracked(repository));
     }
     return new GitPushSpecs(map);
   }

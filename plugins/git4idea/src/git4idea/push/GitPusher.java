@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.config.GitConfigUtil;
@@ -44,7 +45,10 @@ import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -181,7 +185,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitPushRepoResult pushRepository(@NotNull GitPushSpec pushSpec,
+  private GitPushRepoResult pushRepository(@NotNull GitBranchPair pushSpec,
                                            @NotNull GitRepository repository, @NotNull GitCommitsByRepoAndBranch commits) {
     GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec);
     String output = simplePushResult.getOutput();
@@ -234,7 +238,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec) {
+  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository, @NotNull GitBranchPair pushSpec) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
     }
@@ -300,7 +304,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static String formPushSpec(@NotNull GitPushSpec spec, @NotNull GitRemote remote) {
+  private static String formPushSpec(@NotNull GitBranchPair spec, @NotNull GitRemote remote) {
     String destWithRemote = spec.getDest().getName();
     String prefix = remote.getName() + "/";
     String destName;
@@ -315,7 +319,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitBranchPair pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
     GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
     if (rejectedDetector.rejected()) {
@@ -432,7 +436,7 @@ public final class GitPusher {
 
   @NotNull
   private static GitPushSpecs retain(@NotNull GitPushSpecs initialSpecs, @NotNull Map<GitRepository, GitBranch> branchesToContinue) {
-    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
+    Map<GitRepository, GitBranchPair> specs = new HashMap<GitRepository, GitBranchPair>();
     for (Map.Entry<GitRepository, GitBranch> entry : branchesToContinue.entrySet()) {
       specs.put(entry.getKey(), initialSpecs.get(entry.getKey()));
     }

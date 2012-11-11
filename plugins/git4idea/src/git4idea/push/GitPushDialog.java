@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import git4idea.*;
+import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -195,9 +196,9 @@ public class GitPushDialog extends DialogWrapper {
   @NotNull
   public GitPushSpecs getPushSpecs() {
     Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
+    Map<GitRepository, GitBranchPair> specs = new HashMap<GitRepository, GitBranchPair>();
     for (GitRepository repository : selectedRepositories) {
-      GitPushSpec spec = new GitPushSpec(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
+      GitBranchPair spec = new GitBranchPair(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
       specs.put(repository, spec);
     }
     return new GitPushSpecs(specs);

@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,9 +30,9 @@ import java.util.Map;
  */
 class GitPushSpecs {
 
-  @NotNull private final Map<GitRepository, GitPushSpec> mySpecs;
+  @NotNull private final Map<GitRepository, GitBranchPair> mySpecs;
 
-  GitPushSpecs(@NotNull Map<GitRepository, GitPushSpec> specs) {
+  GitPushSpecs(@NotNull Map<GitRepository, GitBranchPair> specs) {
     mySpecs = specs;
   }
 
@@ -41,15 +42,15 @@ class GitPushSpecs {
   }
 
   @NotNull
-  Map<GitRepository, GitPushSpec> getSpecs() {
+  Map<GitRepository, GitBranchPair> getSpecs() {
     return mySpecs;
   }
 
-  GitPushSpec get(@NotNull GitRepository repository) {
+  GitBranchPair get(@NotNull GitRepository repository) {
     return mySpecs.get(repository);
   }
 
   static GitPushSpecs empty() {
-    return new GitPushSpecs(Collections.<GitRepository, GitPushSpec>emptyMap());
+    return new GitPushSpecs(Collections.<GitRepository, GitBranchPair>emptyMap());
   }
 }

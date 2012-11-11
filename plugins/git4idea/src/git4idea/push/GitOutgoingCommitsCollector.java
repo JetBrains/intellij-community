@@ -275,13 +275,13 @@ class GitOutgoingCommitsCollector {
   }
 
   @NotNull
-  private static Map<GitRepository, List<GitBranchPair>> prepareReposAndBranchesToPush(@NotNull Map<GitRepository, GitPushSpec> pushSpecs)
+  private static Map<GitRepository, List<GitBranchPair>> prepareReposAndBranchesToPush(@NotNull Map<GitRepository, GitBranchPair> pushSpecs)
     throws VcsException
   {
     Set<GitRepository> repositories = pushSpecs.keySet();
     Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
     for (GitRepository repository : repositories) {
-      GitPushSpec pushSpec = pushSpecs.get(repository);
+      GitBranchPair pushSpec = pushSpecs.get(repository);
       if (pushSpec == null) {
         continue;
       }
@@ -296,7 +296,7 @@ class GitOutgoingCommitsCollector {
     Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
 
     for (GitBranchPair sourceDest : sourcesDestinations) {
-      GitLocalBranch source = sourceDest.getBranch();
+      GitLocalBranch source = sourceDest.getSource();
       GitRemoteBranch dest = sourceDest.getDest();
 
       List<GitCommit> commits = Collections.emptyList();
