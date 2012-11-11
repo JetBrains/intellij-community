@@ -17,19 +17,16 @@ package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashMap;
 import git4idea.GitLogger;
 import git4idea.GitPlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.settings.GitSyncRepoSetting;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Utilities specific to push.
@@ -43,8 +40,9 @@ class GitPushUtil {
   @NotNull
   static GitPushSpecs getRepositoriesAndSpecsToPush(@NotNull GitPlatformFacade facade, @NotNull Project project) {
     GitSyncRepoSetting syncSetting = facade.getSettings(project).getSyncSetting();
+
     if (syncSetting.equals(GitSyncRepoSetting.SYNC)) {
-      return getSpecsToPushForAllRepositories(facade, project);
+      return getSpecsForAllRepositories(facade, project, null);
     }
     else {
       if (facade.getRepositoryManager(project).moreThanOneRoot() && syncSetting.equals(GitSyncRepoSetting.NOT_DECIDED)) {
@@ -53,21 +51,20 @@ class GitPushUtil {
       GitRepository repository = GitBranchUtil.getCurrentRepository(project);
       if (repository == null) {
         LOG.warn("Couldn't retrieve current repository");
-        return GitPushSpecs.empty();
       }
-      return new GitPushSpecs(Collections.singletonMap(repository, GitBranchPair.findCurrentAnTracked(repository)));
+      return getSpecsForAllRepositories(facade, project, repository);
     }
   }
 
   @NotNull
-  public static GitPushSpecs getSpecsToPushForAllRepositories(@NotNull GitPlatformFacade facade,
-                                                                                 @NotNull Project project) {
-    GitRepositoryManager manager = facade.getRepositoryManager(project);
-    List<GitRepository> repositories = manager.getRepositories();
-    Map<GitRepository, GitBranchPair> map = new HashMap<GitRepository, GitBranchPair>();
+  private static GitPushSpecs getSpecsForAllRepositories(@NotNull GitPlatformFacade facade, @NotNull Project project,
+                                                         @Nullable GitRepository selectedRepository) {
+    List<GitRepository> repositories = facade.getRepositoryManager(project).getRepositories();
+    GitPushSpecs specs = new GitPushSpecs();
     for (GitRepository repository : repositories) {
-      map.put(repository, GitBranchPair.findCurrentAnTracked(repository));
+      boolean selected = selectedRepository == null || repository.equals(selectedRepository);
+      specs.put(repository, GitBranchPair.findCurrentAnTracked(repository), selected);
     }
-    return new GitPushSpecs(map);
+    return specs;
   }
 }

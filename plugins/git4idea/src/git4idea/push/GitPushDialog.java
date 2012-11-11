@@ -26,7 +26,6 @@ import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +42,7 @@ public class GitPushDialog extends DialogWrapper {
   private static final Logger LOG = GitLogger.PUSH_LOG;
   private static final String DEFAULT_REMOTE = "origin";
 
+  @NotNull private final Collection<GitRepository> myAllRepositories;
   @NotNull private final GitPushSpecs myInitialPushSpecs;
   @NotNull private final GitOutgoingCommitsCollector myOutgoingCommitsCollector;
 
@@ -53,26 +53,27 @@ public class GitPushDialog extends DialogWrapper {
   public GitPushDialog(@NotNull Project project, @NotNull GitPushSpecs pushSpecs) {
     super(project);
     myInitialPushSpecs = pushSpecs;
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-
-    Collection<GitRepository> repositories = myInitialPushSpecs.getRepositories();
+    myAllRepositories = GitUtil.getRepositoryManager(project).getRepositories();
 
     myOutgoingCommitsCollector = GitOutgoingCommitsCollector.getInstance(project);
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
 
-    myListPanel = new GitPushLog(project, manager.getRepositories(), new RepositoryCheckboxListener());
-    myRefspecPanel = new GitManualPushToBranch(repositories.size() > 1, new RefreshButtonListener());
+    myListPanel = new GitPushLog(project, myAllRepositories, new RepositoryCheckboxListener());
+    myRefspecPanel = new GitManualPushToBranch(myAllRepositories.size() > 1, new RefreshButtonListener());
 
     init();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Git Push");
-    update();
+    updateTargetBranchField();
   }
 
-  private void update() {
+  private void updateTargetBranchField() {
     Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
+    if (repositories == null) {
+      repositories = myInitialPushSpecs.getSelectedRepositories();
+    }
     Collection<GitRemote> commonRemotes = getRemotesWithCommonNames(repositories);
     myRefspecPanel.setRemotes(commonRemotes, getDefaultRemote(repositories));
 
@@ -174,7 +175,7 @@ public class GitPushDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(pushSpecs.getRepositories(), commits);
+            myListPanel.setCommits(pushSpecs.getSelectedRepositories(), commits);
             myLoadingPanel.stopLoading();
           }
         }, modalityState);
@@ -194,13 +195,19 @@ public class GitPushDialog extends DialogWrapper {
 
   @NotNull
   public GitPushSpecs getPushSpecs() {
-    Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    Map<GitRepository, GitBranchPair> specs = new HashMap<GitRepository, GitBranchPair>();
-    for (GitRepository repository : selectedRepositories) {
+    GitPushSpecs specs = new GitPushSpecs();
+    for (GitRepository repository : myAllRepositories) {
       GitBranchPair spec = new GitBranchPair(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
-      specs.put(repository, spec);
+      specs.put(repository, spec, isSelected(repository));
     }
-    return new GitPushSpecs(specs);
+    return specs;
+  }
+
+  private boolean isSelected(@NotNull GitRepository repository) {
+    Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
+    return selectedRepositories != null
+           ? selectedRepositories.contains(repository)
+           : myInitialPushSpecs.getSelectedRepositories().contains(repository);
   }
 
   @NotNull
@@ -249,7 +256,7 @@ public class GitPushDialog extends DialogWrapper {
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
     @Override public void consume(Boolean checked) {
-      update();
+      updateTargetBranchField();
     }
   }
 

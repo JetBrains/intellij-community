@@ -36,6 +36,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -302,8 +303,10 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   /**
-   * @return repositories selected (via checkboxes) to be pushed.
+   * @return repositories selected (via checkboxes) to be pushed,
+   * or null if the tree is not ready (therefore no repositories could be selected).
    */
+  @Nullable
   Collection<GitRepository> getSelectedRepositories() {
     if (myAllRepositories.size() == 1) {
       return myAllRepositories;
@@ -312,12 +315,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     try {
       TREE_CONSTRUCTION_LOCK.readLock().lock();  // wait for tree to be constructed
       if (!myTreeWasConstructed) {
-        return myAllRepositories;
+        return null;
       }
       else {
         Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
-        if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began => returning all repos.
-          return myAllRepositories;
+        if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began
+          return null;
         }
 
         for (int i = 0; i < myRootNode.getChildCount(); i++) {

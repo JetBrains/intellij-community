@@ -165,8 +165,8 @@ public final class GitPusher {
     GitPushResult pushResult = new GitPushResult(myProject);
 
     GitCommitsByRepoAndBranch commits = myOutgoingCommitsCollector.waitForCompletionAndGetCommits();
-    for (GitRepository repository : pushSpecs.getRepositories()) {
-      if (commits.get(repository).getAllCommits().size() == 0) {
+    for (GitRepository repository : pushSpecs.getSelectedRepositories()) {
+      if (!commits.get(repository).hasAnythingToPush()) {
         // don't push repositories when we know that there is nothing to push.
         continue;
       }
@@ -436,11 +436,12 @@ public final class GitPusher {
 
   @NotNull
   private static GitPushSpecs retain(@NotNull GitPushSpecs initialSpecs, @NotNull Map<GitRepository, GitBranch> branchesToContinue) {
-    Map<GitRepository, GitBranchPair> specs = new HashMap<GitRepository, GitBranchPair>();
-    for (Map.Entry<GitRepository, GitBranch> entry : branchesToContinue.entrySet()) {
-      specs.put(entry.getKey(), initialSpecs.get(entry.getKey()));
+    GitPushSpecs specs = new GitPushSpecs();
+    for (Map.Entry<GitRepository, GitBranchPair> entry : initialSpecs.getAllSpecs().entrySet()) {
+      GitRepository repository = entry.getKey();
+      specs.put(repository, entry.getValue(), initialSpecs.isSelected(repository) && branchesToContinue.keySet().contains(repository));
     }
-    return new GitPushSpecs(specs);
+    return specs;
   }
 
   private void saveUpdateSettings(@NotNull UpdateSettings updateSettings) {

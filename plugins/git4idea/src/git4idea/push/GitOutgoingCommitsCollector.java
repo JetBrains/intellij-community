@@ -220,7 +220,7 @@ class GitOutgoingCommitsCollector {
       }
     }
 
-    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareReposAndBranchesToPush(pushSpecs.getSpecs());
+    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareReposAndBranchesToPush(pushSpecs.getAllSpecs());
     Set<GitRepository> repositories = reposAndBranchesToPush.keySet();
 
     Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();

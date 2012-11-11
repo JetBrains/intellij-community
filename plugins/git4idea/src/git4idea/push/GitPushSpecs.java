@@ -15,42 +15,71 @@
  */
 package git4idea.push;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import git4idea.branch.GitBranchPair;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Just a container for {@link GitPushSpec} per repository.
+ * <p>A container for push specs (source and target branches) per repository.</p>
+ *
+ * <p>We need GitPushSpecs for two operations:
+ *    <ul>
+ *      <li>to collect outgoing commits (in all repositories);</li>
+ *      <li>to push (in selected repositories).</li>
+ *    </ul>
+ *
+ * <p>That said, repositories that are not pushed, will have the parameter "selected" false.</p>
  *
  * @author Kirill Likhodedov
  */
 class GitPushSpecs {
 
   @NotNull private final Map<GitRepository, GitBranchPair> mySpecs;
+  @NotNull private final Map<GitRepository, Boolean> mySelectedRepositories;
 
-  GitPushSpecs(@NotNull Map<GitRepository, GitBranchPair> specs) {
-    mySpecs = specs;
+  GitPushSpecs() {
+    mySpecs = new HashMap<GitRepository, GitBranchPair>();
+    mySelectedRepositories = new HashMap<GitRepository, Boolean>();
+  }
+
+  static GitPushSpecs empty() {
+    return new GitPushSpecs();
   }
 
   @NotNull
-  Collection<GitRepository> getRepositories() {
-    return mySpecs.keySet();
-  }
-
-  @NotNull
-  Map<GitRepository, GitBranchPair> getSpecs() {
+  Map<GitRepository, GitBranchPair> getAllSpecs() {
     return mySpecs;
+  }
+
+  void put(@NotNull GitRepository repository, @NotNull GitBranchPair branchPair, boolean selected) {
+    mySpecs.put(repository, branchPair);
+    mySelectedRepositories.put(repository, selected);
   }
 
   GitBranchPair get(@NotNull GitRepository repository) {
     return mySpecs.get(repository);
   }
 
-  static GitPushSpecs empty() {
-    return new GitPushSpecs(Collections.<GitRepository, GitBranchPair>emptyMap());
+  @NotNull
+  public Collection<GitRepository> getSelectedRepositories() {
+    return Collections2.filter(mySpecs.keySet(), new Predicate<GitRepository>() {
+      @Override
+      public boolean apply(@Nullable GitRepository input) {
+        assert input != null;
+        return mySelectedRepositories.get(input);
+      }
+    });
   }
+
+  public boolean isSelected(@NotNull GitRepository repository) {
+    return mySelectedRepositories.get(repository);
+  }
+
 }
