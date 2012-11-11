@@ -82,7 +82,7 @@ public final class GitPusher {
 
   public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull GitPlatformFacade facade) {
     GitPushSpecs repositoriesToPush = GitPushUtil.getRepositoriesAndSpecsToPush(facade, project);
-    GitPushDialog dialog = new GitPushDialog(project, repositoriesToPush);
+    GitPushDialog dialog = new GitPushDialog(project, facade, repositoriesToPush);
     dialog.show();
     if (dialog.isOK()) {
       runPushInBackground(project, facade, dialog.getPushSpecs());

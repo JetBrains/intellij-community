@@ -24,8 +24,10 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import git4idea.*;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.settings.GitSyncRepoSetting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +45,8 @@ public class GitPushDialog extends DialogWrapper {
   private static final String DEFAULT_REMOTE = "origin";
 
   @NotNull private final Collection<GitRepository> myAllRepositories;
+  @NotNull private final Project myProject;
+  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final GitPushSpecs myInitialPushSpecs;
   @NotNull private final GitOutgoingCommitsCollector myOutgoingCommitsCollector;
 
@@ -50,8 +54,10 @@ public class GitPushDialog extends DialogWrapper {
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final GitManualPushToBranch myRefspecPanel;
 
-  public GitPushDialog(@NotNull Project project, @NotNull GitPushSpecs pushSpecs) {
+  public GitPushDialog(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull GitPushSpecs pushSpecs) {
     super(project);
+    myProject = project;
+    myFacade = facade;
     myInitialPushSpecs = pushSpecs;
     myAllRepositories = GitUtil.getRepositoryManager(project).getRepositories();
 
@@ -175,7 +181,7 @@ public class GitPushDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(pushSpecs.getSelectedRepositories(), commits);
+            myListPanel.setCommits(defaultRepository(), pushSpecs.getSelectedRepositories(), commits);
             myLoadingPanel.stopLoading();
           }
         }, modalityState);
@@ -191,6 +197,19 @@ public class GitPushDialog extends DialogWrapper {
         }, modalityState);
       }
     });
+  }
+
+  @Nullable
+  private GitRepository defaultRepository() {
+    GitSyncRepoSetting syncSetting = myFacade.getSettings(myProject).getSyncSetting();
+    if (syncSetting.equals(GitSyncRepoSetting.SYNC)) {
+      return null;
+    }
+    GitRepository currentRepository = GitBranchUtil.getCurrentRepository(myProject);
+    if (currentRepository == null) {
+      LOG.info("Couldn't identify current repository");
+    }
+    return currentRepository;
   }
 
   @NotNull

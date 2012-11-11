@@ -50,7 +50,7 @@ class GitPushUtil {
       }
       GitRepository repository = GitBranchUtil.getCurrentRepository(project);
       if (repository == null) {
-        LOG.warn("Couldn't retrieve current repository");
+        LOG.info("Couldn't identify current repository");
       }
       return getSpecsForAllRepositories(facade, project, repository);
     }

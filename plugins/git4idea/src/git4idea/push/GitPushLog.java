@@ -159,11 +159,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  void setCommits(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
+  void setCommits(@Nullable GitRepository defaultRepository, @NotNull Collection<GitRepository> selectedRepositories,
+                  @NotNull GitCommitsByRepoAndBranch commits) {
     try {
       TREE_CONSTRUCTION_LOCK.writeLock().lock();
       myRootNode.removeAllChildren();
-      createNodes(selectedRepositories, commits);
+      createNodes(defaultRepository, selectedRepositories, commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
@@ -216,19 +217,28 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private void createNodes(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
-    for (GitRepository repository : sortRepositories(selectedRepositories, commits)) {
+  private void createNodes(@Nullable GitRepository defaultRepository,
+                           @NotNull Collection<GitRepository> selectedRepositories,
+                           @NotNull GitCommitsByRepoAndBranch commits) {
+    for (GitRepository repository : sortRepositories(defaultRepository, selectedRepositories, commits)) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
       createRepoNode(repository, selectedRepositories.contains(repository), commitsByBranch, myRootNode);
     }
   }
 
   @NotNull
-  private static List<GitRepository> sortRepositories(@NotNull final Collection<GitRepository> selectedRepositories,
+  private static List<GitRepository> sortRepositories(@Nullable final GitRepository defaultRepository,
+                                                      @NotNull final Collection<GitRepository> selectedRepositories,
                                                       @NotNull final GitCommitsByRepoAndBranch commits) {
     List<GitRepository> repos = new ArrayList<GitRepository>(commits.getRepositories());
     Collections.sort(repos, new Comparator<GitRepository>() {
       @Override public int compare(GitRepository r1, GitRepository r2) {
+        if (r1.equals(defaultRepository)) {
+          return -1;
+        }
+        if (r2.equals(defaultRepository)) {
+          return 1;
+        }
         // deselected repositories - to the end
         if (selectedRepositories.contains(r1) && !selectedRepositories.contains(r2)) {
           return -1;
