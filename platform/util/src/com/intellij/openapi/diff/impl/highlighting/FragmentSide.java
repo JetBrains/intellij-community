@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
+import org.jetbrains.annotations.NotNull;
 
 import java.security.InvalidParameterException;
 
@@ -86,7 +87,6 @@ public abstract class FragmentSide {
 
   public static FragmentSide chooseSide(DiffFragment oneSide) {
     LOG.assertTrue(oneSide.isOneSide());
-    LOG.assertTrue(!oneSide.getText1().equals(oneSide.getText2()));
     return oneSide.getText1() == null ? SIDE2 : SIDE1;
   }
 
