@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 public enum FragmentSide {
@@ -94,7 +93,6 @@ public enum FragmentSide {
 
   public static FragmentSide chooseSide(DiffFragment oneSide) {
     LOG.assertTrue(oneSide.isOneSide());
-    LOG.assertTrue(!Comparing.equal(oneSide.getText1(), oneSide.getText2()));
     return oneSide.getText1() == null ? SIDE2 : SIDE1;
   }
 
