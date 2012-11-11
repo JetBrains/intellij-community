@@ -93,19 +93,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
 
 import static com.intellij.psi.PsiModifier.*;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.ANNOTATION;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.KEYWORD;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.MAP_KEY;
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 
 /**
  * @author ven
@@ -519,18 +515,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return null;
   }
 
-  private void checkScriptField(GrAnnotation annotation) {
-    final PsiAnnotationOwner owner = annotation.getOwner();
-    final GrMember container = PsiTreeUtil.getParentOfType(((PsiElement)owner), GrMember.class);
-    if (container != null) {
-      if (container.getContainingClass() instanceof GroovyScriptClass) {
-        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body"));
-      }
-      else {
-        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script"));
-      }
-    }
-  }
 
   @Override
   public void visitVariable(GrVariable variable) {
@@ -1188,29 +1172,21 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       return;
     }
+
+    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
+      if (checker.checkApplicability(myHolder, annotation)) return;
+    }
+
     PsiElement parent = annotation.getParent();
     PsiElement owner = parent.getParent();
 
     final PsiElement ownerToUse = parent instanceof PsiModifierList ? owner : parent;
 
-    String[] elementTypeFields;
-    //hack for @Field: Field accepts local vars but our type inferrer thinks that local var with @Field is field itself.
-    if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(anno.getQualifiedName()) &&
-        ownerToUse instanceof GrVariableDeclaration &&
-        GroovyRefactoringUtil.isLocalVariable(((GrVariableDeclaration)ownerToUse).getVariables()[0])) {
-      elementTypeFields = new String[]{"LOCAL_VARIABLE"};
-    }
-    else {
-      elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
-    }
+    String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
     if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
-      String description = JavaErrorMessages
-        .message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
+      final String annotationTargetText = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
+      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), annotationTargetText);
       myHolder.createErrorAnnotation(ref, description);
-    }
-
-    if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(qname)) {
-      checkScriptField(annotation);
     }
   }
 
@@ -1221,9 +1197,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiClass anno = ResolveUtil.resolveAnnotation(annotationArgumentList);
     if (anno == null) return;
 
-
-    if ("groovy.lang.Newify".equals(anno.getQualifiedName()) && annotation.getParameterList().getAttributes().length == 0) {
-      return;
+    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
+      if (checker.checkArgumentList(myHolder, annotation)) return;
     }
 
     final GrAnnotationNameValuePair[] attributes = annotationArgumentList.getAttributes();
