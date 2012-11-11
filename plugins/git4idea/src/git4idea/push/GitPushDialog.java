@@ -159,7 +159,6 @@ public class GitPushDialog extends DialogWrapper {
 
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
-    loadCommitsInBackground(myInitialPushSpecs);
 
     JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
