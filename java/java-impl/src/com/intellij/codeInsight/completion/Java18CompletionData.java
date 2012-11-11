@@ -20,32 +20,33 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class Java18CompletionData extends Java15CompletionData {
-  private static final PsiElementPattern<PsiElement, ?> AFTER_PARENTH_IN_EXT_METHOD = psiElement()
-    .afterLeaf(psiElement(JavaTokenType.RPARENTH).withParent(PsiParameterList.class))
-    .withSuperParent(3, psiClass().isInterface().nonAnnotationType());
-
   private static final PsiElementPattern<PsiElement, ?> AFTER_DOUBLE_COLON = psiElement()
     .afterLeaf(psiElement(JavaTokenType.DOUBLE_COLON));
 
   @Override
   public void fillCompletions(final CompletionParameters parameters, final CompletionResultSet result) {
-    final PsiElement position = parameters.getPosition();
+    PsiElement position = parameters.getPosition();
 
     if (!inComment(position)) {
-      if (AFTER_PARENTH_IN_EXT_METHOD.accepts(position)) {
-        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.SPACE));
+      if (AFTER_DOUBLE_COLON.accepts(position)) {
+        PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
+        TailType tail = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tail));
         return;
       }
 
-      if (AFTER_DOUBLE_COLON.accepts(position)) {
-        final PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
-        final TailType tailType = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
-        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tailType));
-        return;
+      if (isSuitableForClass(position)) {
+        PsiElement scope = position.getParent();
+        while (scope != null && !(scope instanceof PsiFile)) {
+          if (scope instanceof PsiClass && ((PsiClass)scope).isInterface()) {
+            result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
+            break;
+          }
+          scope = scope.getParent();
+        }
       }
     }
 

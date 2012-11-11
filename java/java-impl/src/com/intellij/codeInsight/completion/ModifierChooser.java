@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 17.02.2003
- * Time: 17:03:09
- * To change this template use Options | File Templates.
+ * @author ik
+ * @since 17.02.2003
  */
-
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ModifierChooser {
+  private static final String[][] CLASS_MODIFIERS = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
+  };
+  private static final String[][] CLASS_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.NATIVE},
+    {PsiKeyword.SYNCHRONIZED},
+    {PsiKeyword.STRICTFP},
+    {PsiKeyword.VOLATILE},
+    {PsiKeyword.TRANSIENT}
+  };
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
+    {PsiKeyword.STATIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
+  };
 
   static String[] getKeywords(@NotNull PsiElement position) {
     final PsiModifierList list = findModifierList(position);
@@ -61,27 +75,11 @@ public class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list) {
-    return addKeywords(list, new String[][]{
-      new String[]{"public"},
-      new String[]{"final", "abstract"}
-    });
+    return addKeywords(list, CLASS_MODIFIERS);
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface) {
-    return addKeywords(list, inInterface ? new String[][]{
-      new String[]{"public", "protected"},
-      new String[]{"static"},
-      new String[]{"final", "abstract"}
-    } : new String[][]{
-      new String[]{"public", "protected", "private"},
-      new String[]{"static"},
-      new String[]{"final", "abstract"},
-      new String[]{"native"},
-      new String[]{"synchronized"},
-      new String[]{"strictfp"},
-      new String[]{"volatile"},
-      new String[]{"transient"}
-    });
+    return addKeywords(list, inInterface ? INTERFACE_MEMBER_MODIFIERS : CLASS_MEMBER_MODIFIERS);
   }
 
   private static String[] addKeywords(PsiModifierList list, String[][] keywordSets) {
@@ -90,7 +88,7 @@ public class ModifierChooser {
       final String[] keywords = keywordSets[keywordSets.length - i - 1];
       boolean containModifierFlag = false;
       if (list != null) {
-        for (String keyword : keywords) {
+        for (@PsiModifier.ModifierConstant String keyword : keywords) {
           if (list.hasExplicitModifier(keyword)) {
             containModifierFlag = true;
             break;
@@ -115,19 +113,19 @@ public class ModifierChooser {
 
   private static boolean shouldSuggestModifiers(PsiElement element) {
     PsiElement parent = element.getParent();
-    while(parent != null && (parent instanceof PsiJavaCodeReferenceElement
-                             || parent instanceof PsiErrorElement || parent instanceof PsiTypeElement
-                             || parent instanceof PsiMethod || parent instanceof PsiVariable
-                             || parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList
-                             || parent instanceof PsiDocComment
-                             || element.getText().equals(parent.getText()))){
+    while (parent != null && (parent instanceof PsiJavaCodeReferenceElement ||
+                              parent instanceof PsiErrorElement || parent instanceof PsiTypeElement ||
+                              parent instanceof PsiMethod || parent instanceof PsiVariable ||
+                              parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList ||
+                              parent instanceof PsiDocComment ||
+                              element.getText().equals(parent.getText()))) {
       parent = parent.getParent();
       if (parent instanceof JspClassLevelDeclarationStatement) {
         parent = parent.getContext();
       }
     }
 
-    if(parent == null) return false;
+    if (parent == null) return false;
 
     PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
 
@@ -139,5 +137,4 @@ public class ModifierChooser {
 
     return false;
   }
-
 }
