@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -39,15 +38,13 @@ public class LocalInspectionEP extends InspectionEP implements LocalInspectionTo
   @Attribute("unfair")
   public boolean unfair;
 
-  @Nullable
   @Override
-  public String getID() {
+  public String getDefaultID() {
     return id;
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public String getDefaultAlternativeID() {
     return alternativeId;
   }
 }

@@ -146,4 +146,19 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
       throw new RuntimeException(e);
     }
   }
+
+  @Override
+  public String getDefaultShortName() {
+    return getShortName();
+  }
+
+  @Override
+  public String getDefaultDisplayName() {
+    return getDisplayName();
+  }
+
+  @Override
+  public String getDefaultGroupDisplayName() {
+    return getGroupDisplayName();
+  }
 }

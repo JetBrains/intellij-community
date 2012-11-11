@@ -53,9 +53,9 @@ public abstract class InspectionProfileEntry {
   private Boolean myUseNewSerializer = null;
 
   interface DefaultNameProvider {
-    @Nullable String getShortName();
-    @Nullable String getDisplayName();
-    @Nullable String getGroupDisplayName();
+    @Nullable String getDefaultShortName();
+    @Nullable String getDefaultDisplayName();
+    @Nullable String getDefaultGroupDisplayName();
   }
 
   protected volatile DefaultNameProvider myNameProvider = null;
@@ -68,7 +68,7 @@ public abstract class InspectionProfileEntry {
   @Nls @NotNull
   public String getGroupDisplayName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getGroupDisplayName();
+      final String name = myNameProvider.getDefaultGroupDisplayName();
       if (name != null) {
         return name;
       }
@@ -97,7 +97,7 @@ public abstract class InspectionProfileEntry {
   @Nls @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getDisplayName();
+      final String name = myNameProvider.getDefaultDisplayName();
       if (name != null) {
         return name;
       }
@@ -114,7 +114,7 @@ public abstract class InspectionProfileEntry {
   @NonNls @NotNull
   public String getShortName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getShortName();
+      final String name = myNameProvider.getDefaultShortName();
       if (name != null) {
         return name;
       }

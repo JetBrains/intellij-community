@@ -36,8 +36,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
 
   interface LocalDefaultNameProvider extends DefaultNameProvider {
-    @Nullable String getID();
-    @Nullable String getAlternativeID();
+    @Nullable String getDefaultID();
+    @Nullable String getDefaultAlternativeID();
   }
 
   /**
@@ -62,7 +62,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NotNull
   public String getID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
-      final String id = ((LocalDefaultNameProvider)myNameProvider).getID();
+      final String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
       if (id != null) {
         return id;
       }
@@ -74,7 +74,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @Nullable
   public String getAlternativeID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
-      return ((LocalDefaultNameProvider)myNameProvider).getAlternativeID();
+      return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
     }
     return null;
   }
