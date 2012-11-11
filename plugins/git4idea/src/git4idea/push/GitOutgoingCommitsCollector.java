@@ -15,12 +15,13 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.history.GitHistoryUtils;
@@ -35,16 +36,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collects outgoing commits (commits to be pushed) for all repositories and holds this information.
  *
- * <p>The contract of the current implementations (probably, some or the limitations will be removed in the future):
+ * <p>The contract of the current implementation (probably, some or the limitations will be removed in the future):
  * <ul>
  *   <li>If you want to request outgoing commits (and force refresh, even if they were previously collected),
- *       call {@link #collect(ResultHandler)}. {@link GitPushDialog} should do it to get the up-to-date list of commits to push.</li>
- *   <li>If you want to get the list of outgoing commits, but not sure if the list is ready, call
- *       {@link #waitForCompletionAndGetCommits(boolean)} and {@link #getCommits() get commits}.
- *       It will collect commits if they were not collected yet. It won't refresh the list if
- *       commits were collected, unless you specify the {@code refresh} parameter to it. <br/><br/>
- *       The latter is needed, when pushing without opening a push dialog (Commit & Push and if this behavior is switched on in the
- *       settings): otherwise we will get the list of commits requested by previous push dialog, which might be very out-of-date.</li>
+ *       call {@link #collect(GitPushSpecs, ResultHandler)}. {@link GitPushDialog} should do it to get the up-to-date list of commits to push.</li>
+ *   <li>If you want just to get the list of outgoing commits, but not sure if the list is ready, call
+ *       {@link #waitForCompletionAndGetCommits()} and {@link #getCommits() get commits}.
+ *       It will collect commits if they were not collected yet.</li>
  * </ul>
  * </p>
  *
@@ -54,58 +52,40 @@ class GitOutgoingCommitsCollector {
 
   private static final Logger LOG = GitLogger.PUSH_LOG;
 
-  @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
-
-  @NotNull private State myState;
+  @NotNull private final QueueProcessor<GitPushSpecs> myProcessor = new QueueProcessor<GitPushSpecs>(new Collector());
   @NotNull private final Object STATE_LOCK = new Object();
-  @NotNull private final Queue<ResultHandler> completionHandlers = new ArrayDeque<ResultHandler>();
-  private int refreshWaiters;
+  @NotNull private final Queue<ResultHandler> myResultHandlers = new ArrayDeque<ResultHandler>();
 
   @NotNull private GitCommitsByRepoAndBranch myCommits = GitCommitsByRepoAndBranch.empty();
   @Nullable private String myError;
 
   /**
-   * Individual locks for threads which request {@link #waitForCompletionAndGetCommits(boolean)}.
+   * Individual locks for threads which request {@link #waitForCompletionAndGetCommits()}.
    */
   @NotNull private final ThreadLocal<Object> WAITER_LOCK = new ThreadLocal<Object>();
 
   /**
-   * Pass an instance of this handler to {@link #collect(ResultHandler)} to handle result when collecting of outgoing commits completes.
+   * Pass an instance of this handler to {@link #collect(GitPushSpecs, ResultHandler)}
+   * to handle result when collecting of outgoing commits completes.
    */
   interface ResultHandler {
-    void onSuccess(GitCommitsByRepoAndBranch commits);
-    void onError(String error);
+    void onSuccess(@NotNull GitCommitsByRepoAndBranch commits);
+    void onError(@NotNull String error);
   }
 
   private static final ResultHandler EMPTY_RESULT_HANDLER = new ResultHandler() {
     @Override
-    public void onSuccess(GitCommitsByRepoAndBranch commits) {
+    public void onSuccess(@NotNull GitCommitsByRepoAndBranch commits) {
     }
 
     @Override
-    public void onError(String error) {
+    public void onError(@NotNull String error) {
     }
   };
 
 
-  /**
-   * Current state of the component.
-   */
-  private enum State {
-    EMPTY, // nothing was collected, need to load.
-    BUSY,  // currently loading, please wait.
-    READY  // everything loaded; refresh may be requested via the collect() method
-  }
-
   static GitOutgoingCommitsCollector getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitOutgoingCommitsCollector.class);
-  }
-
-  GitOutgoingCommitsCollector(@NotNull Project project, @NotNull GitPlatformFacade facade) {
-    myProject = project;
-    myPlatformFacade = facade;
-    myState = State.EMPTY;
   }
 
   /**
@@ -113,40 +93,27 @@ class GitOutgoingCommitsCollector {
    * @param onComplete Executed after completed (successful or failed) execution of the task.
    *                   It is executed in the current thread, so if you need it on AWT, include "invokeLater" to the handler.
    */
-  void collect(@Nullable ResultHandler onComplete) {
+  void collect(@NotNull GitPushSpecs pushSpecs, @Nullable ResultHandler onComplete) {
     synchronized (STATE_LOCK) {
-      if (myState == State.READY || myState == State.EMPTY) { // start initial collecting or refresh already collected info
-        myState = State.BUSY;
-        ApplicationManager.getApplication().executeOnPooledThread(new Updater());
-      }
-      else if (myState == State.BUSY) { // somebody already started collection => we request more up-to-date info afterwards.
-        refreshWaiters++;
-      }
+      // if several collect requests go one by one, it is enough to have only one update: it will receive the up-to-date information.
+      // so we are removing any other pending requests.
+      myProcessor.clear();
+      myProcessor.add(pushSpecs);
 
       // register the action that will be run after collection completes.
-      // important to add at least fake action not to break the order of [collection requested-execute post-action].
-      completionHandlers.offer(onComplete != null ? onComplete : EMPTY_RESULT_HANDLER);
+      // important to add at least a fake action not to break the order of [collection requested-execute post-action].
+      myResultHandlers.offer(onComplete != null ? onComplete : EMPTY_RESULT_HANDLER);
     }
   }
 
   /**
    * <ul>
-   *   <li>If collection has completed, and no need to {@code refresh}, immediately returns.</li>
-   *   <li>If collection is in progress, waits for the completion.
-   *       But if {@code refresh} is needed, starts new completion to get up-to-date results.</li>
-   *   <li>If collection hasn't been started yet, starts it and waits for the completion.</li>
+   *   <li>If collection has completed immediately returns.</li>
+   *   <li>If collection is in progress, waits for the completion.</li>
    * </ul>
-   * @param refresh If the list of commits need to be re-queries even if we already have a version of it.
    */
-  GitCommitsByRepoAndBranch waitForCompletionAndGetCommits(boolean refresh) {
-    // if nobody has initialized the collection yet, or we need up-to-date version suspecting that something might have changed,
-    // then initialize collection.
-    synchronized (STATE_LOCK) {
-      if (myState == State.EMPTY || refresh) {
-        collect(null); // makes State BUSY and starts collection
-      }
-    }
-
+  @NotNull
+  GitCommitsByRepoAndBranch waitForCompletionAndGetCommits() {
     while (!isReady()) {
       try {
         synchronized (WAITER_LOCK) {
@@ -163,7 +130,7 @@ class GitOutgoingCommitsCollector {
 
   private boolean isReady() {
     synchronized (STATE_LOCK) {
-      return myState == State.READY;
+      return myProcessor.isEmpty();
     }
   }
 
@@ -181,11 +148,7 @@ class GitOutgoingCommitsCollector {
     }
   }
 
-  private boolean errorHappened() {
-    return getError() != null;
-  }
-
-  private void doCollect() {
+  private void doCollect(@NotNull GitPushSpecs pushSpecs) {
     // currently we clear the collected information before each collect.
     // TODO Later we will persist it (providing in the Outgoing view) and update on push and other operations
     synchronized (STATE_LOCK) {
@@ -194,7 +157,7 @@ class GitOutgoingCommitsCollector {
     }
 
     try {
-      GitCommitsByRepoAndBranch commits = collectOutgoingCommits(GitPushUtil.getSpecsToPushForAllRepositories(myPlatformFacade, myProject));
+      GitCommitsByRepoAndBranch commits = collectOutgoingCommits(pushSpecs);
       synchronized (STATE_LOCK) {
         myCommits = commits;
         myError = null;
@@ -212,8 +175,9 @@ class GitOutgoingCommitsCollector {
     if (handler == null) {
       return;
     }
-    if (errorHappened()) {
-      handler.onError(getError());
+    String error = getError();
+    if (error != null) {
+      handler.onError(error);
     }
     else {
       handler.onSuccess(getCommits());
@@ -221,28 +185,25 @@ class GitOutgoingCommitsCollector {
   }
 
   // executed on a pooled thread
-  private class Updater implements Runnable {
-    public void run() {
-      doCollect();
+  private class Collector implements Consumer<GitPushSpecs> {
+
+    @Override
+    public void consume(@NotNull GitPushSpecs pushSpecs) {
+      doCollect(pushSpecs);
       synchronized (STATE_LOCK) {
-        if (refreshWaiters > 0) { // if collection was requested again, we need to refresh information
-          refreshWaiters = 0;     // but only once: we will get the up-to-date information anyway.
-
-          // execute the correspondent handler
-          handleResult(completionHandlers.poll());
-
-          // queue the next update (in a separate thread to release the lock and return).
-          ApplicationManager.getApplication().executeOnPooledThread(new Updater());
+        if (!myProcessor.hasPendingJobs()) {
+          // when we are completely up-to-date, execute all remaining tasks
+          while (!myResultHandlers.isEmpty()) {
+            handleResult(myResultHandlers.poll());
+          }
         }
         else {
-          myState = State.READY;
-          // when we are completely up-to-date execute all remaining tasks
-          while (!completionHandlers.isEmpty()) {
-            handleResult(completionHandlers.poll());
-          }
+          // execute only the correspondent handler
+          handleResult(myResultHandlers.poll());
         }
       }
     }
+
   }
 
   /*******************************************  ACTUAL COMMITS COLLECTION IS BELOW ********************************************************/

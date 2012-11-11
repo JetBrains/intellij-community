@@ -164,7 +164,7 @@ public final class GitPusher {
   private GitPushResult tryPushAndGetResult(@NotNull GitPushSpecs pushSpecs) {
     GitPushResult pushResult = new GitPushResult(myProject);
 
-    GitCommitsByRepoAndBranch commits = myOutgoingCommitsCollector.waitForCompletionAndGetCommits(false);
+    GitCommitsByRepoAndBranch commits = myOutgoingCommitsCollector.waitForCompletionAndGetCommits();
     for (GitRepository repository : pushSpecs.getRepositories()) {
       if (commits.get(repository).getAllCommits().size() == 0) {
         // don't push repositories when we know that there is nothing to push.

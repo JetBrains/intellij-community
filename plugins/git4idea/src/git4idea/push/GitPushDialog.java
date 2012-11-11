@@ -168,9 +168,9 @@ public class GitPushDialog extends DialogWrapper {
   private void loadCommitsInBackground(final GitPushSpecs pushSpecs) {
     final ModalityState modalityState = ModalityState.stateForComponent(getRootPane());
     myLoadingPanel.startLoading();
-    myOutgoingCommitsCollector.collect(new GitOutgoingCommitsCollector.ResultHandler() {
+    myOutgoingCommitsCollector.collect(pushSpecs, new GitOutgoingCommitsCollector.ResultHandler() {
       @Override
-      public void onSuccess(final GitCommitsByRepoAndBranch commits) {
+      public void onSuccess(@NotNull final GitCommitsByRepoAndBranch commits) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -181,7 +181,7 @@ public class GitPushDialog extends DialogWrapper {
       }
 
       @Override
-      public void onError(final String error) {
+      public void onError(@NotNull final String error) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
