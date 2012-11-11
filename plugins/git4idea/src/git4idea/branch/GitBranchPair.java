@@ -61,7 +61,8 @@ public class GitBranchPair {
 
   @Override
   public String toString() {
-    return mySource + "->" + myDest;
+    String dest = myDest == null ? "nowhere" : myDest.getFullName();
+    return mySource.getName() + "->" + dest;
   }
 
   @Override
