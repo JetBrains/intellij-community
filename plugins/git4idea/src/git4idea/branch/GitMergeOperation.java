@@ -348,7 +348,7 @@ class GitMergeOperation extends GitBranchOperation {
     return "merge";
   }
 
-  private static void refresh(GitRepository... repositories) {
+  private void refresh(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
       repository.update();

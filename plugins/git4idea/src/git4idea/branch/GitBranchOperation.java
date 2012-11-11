@@ -243,10 +243,10 @@ abstract class GitBranchOperation {
   /**
    * Asynchronously refreshes the VFS root directory of the given repository.
    */
-  protected static void refreshRoot(@NotNull GitRepository repository) {
+  protected void refreshRoot(@NotNull GitRepository repository) {
     // marking all files dirty, because sometimes FileWatcher is unable to process such a large set of changes that can happen during
     // checkout on a large repository: IDEA-89944
-    GitUtil.hardRefresh(repository.getRoot());
+    myFacade.hardRefresh(repository.getRoot());
   }
 
   protected void fatalLocalChangesError(@NotNull String reference) {

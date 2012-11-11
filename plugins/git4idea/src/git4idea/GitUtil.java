@@ -925,7 +925,4 @@ public class GitUtil {
     }
   }
 
-  public static void hardRefresh(VirtualFile dir) {
-    VfsUtil.markDirtyAndRefresh(true, true, false, dir);
-  }
 }
