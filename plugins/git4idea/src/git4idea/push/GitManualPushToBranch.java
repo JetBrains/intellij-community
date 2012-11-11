@@ -24,7 +24,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,6 +78,8 @@ class GitManualPushToBranch extends JPanel {
       .setDefaultInsets(new Insets(0, 0, UIUtil.DEFAULT_VGAP, 5))
     ;
     JLabel targetBranchLabel = new JBLabel("Target branch: ");
+    targetBranchLabel.setDisplayedMnemonic('b');
+    targetBranchLabel.setLabelFor(myDestBranchTextField);
 
     panel.add(targetBranchLabel, g.nextLine().next());
     panel.add(myRemoteSelectorComponent, g.next());
