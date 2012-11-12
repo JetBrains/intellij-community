@@ -21,9 +21,9 @@ setProperty("ideaPlugins", "${ideaHome}/plugins")
 
 setProperty("output", "${basedir}/../dist")
 
-setProperty("jarName", "${output}/rest-${pluginRevision}.jar")
+setProperty("jarName", "${output}/localization-${pluginRevision}.jar")
 
-setProperty("srcDir", "${pluginHome}/rest/src")
+setProperty("srcDir", "${pluginHome}/localization/src")
 setProperty("resourcesDir", "${pluginHome}/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
 setProperty("artifactsDir", "${output}/artifacts")
@@ -59,7 +59,7 @@ target(name: "compile", description: "Compile module rest") {
 
   ant.path(id: "sourcepath") {
     dirset(dir: "${pluginHome}") {
-      include(name: "rest/src")
+      include(name: "localization/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -126,7 +126,7 @@ target(name: "compile", description: "Compile module rest") {
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(dir: "${pluginHome}/rest/resources/META-INF")
+    fileset(dir: "${pluginHome}/localization/resources/META-INF")
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
