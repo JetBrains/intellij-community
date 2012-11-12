@@ -1777,10 +1777,6 @@ public class UIUtil {
     return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
   }
 
-  public static Color getTitledBorderTitleColor() {
-    return Color.BLACK;
-  }
-
   /**
    * @deprecated use getBorderColor instead
    */

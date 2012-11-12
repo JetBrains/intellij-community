@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     add(mySeparator, gb);
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
     myLabel.setFont(UIUtil.getTitledBorderFont());
-    myLabel.setForeground(UIUtil.getTitledBorderTitleColor());
+    myLabel.setForeground(UIUtil.getLabelForeground());
     originalText = text;
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
 
