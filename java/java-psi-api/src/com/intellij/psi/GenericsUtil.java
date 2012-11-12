@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,6 +33,8 @@ import java.util.*;
  * @author ven
  */
 public class GenericsUtil {
+
+  private static final Logger LOG = Logger.getInstance("#" + GenericsUtil.class.getName());
 
   private GenericsUtil() {}
 
@@ -296,6 +299,7 @@ public class GenericsUtil {
               toPut = accepted;
             }
           }
+          LOG.assertTrue(toPut == null || toPut.isValid(), toPut);
           substitutor = substitutor.put(typeParameter, toPut);
         }
         final PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
