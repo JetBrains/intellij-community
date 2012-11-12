@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiAnnotationMethodImpl");
   private PatchedSoftReference<PsiAnnotationMemberValue> myCachedDefaultValue = null;
 
   public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
@@ -52,11 +51,6 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   @Override
-  public boolean isExtensionMethod() {
-    return false;
-  }
-
-  @Override
   public PsiAnnotationMemberValue getDefaultValue() {
     final PsiMethodStub stub = getStub();
     if (stub != null) {
@@ -71,7 +65,8 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
       }
 
       @NonNls final String annoText = "@interface _Dummy_ { Class foo() default " + text + "; }";
-      final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", annoText);
+      final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+      final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, annoText);
       final PsiAnnotationMemberValue value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();
       myCachedDefaultValue = new PatchedSoftReference<PsiAnnotationMemberValue>(value);
       return value;

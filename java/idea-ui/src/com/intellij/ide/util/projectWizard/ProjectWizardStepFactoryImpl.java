@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.*;
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -43,7 +42,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createNameAndLocationStep(final WizardContext wizardContext) {
-    return new ProjectNameStep(wizardContext, null);
+    return new ProjectNameStep(wizardContext);
   }
 
   /**

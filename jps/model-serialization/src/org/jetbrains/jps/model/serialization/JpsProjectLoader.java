@@ -158,6 +158,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
         if (component != null) {
           serializer.loadExtension(myProject, component);
         }
+        else {
+          serializer.loadExtensionWithDefaultSettings(myProject);
+        }
       }
     }
     loadModules(iprRoot, projectSdkType);

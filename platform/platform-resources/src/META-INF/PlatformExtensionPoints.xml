@@ -112,6 +112,8 @@
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
   <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
+  <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
+
   <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
   
   <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
  * @author Max Medvedev
  */
 class GrAssignabilityTest extends GrHighlightingTestBase {
-  InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] as InspectionProfileEntry[]}
+  InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
 
   public void testIncompatibleTypesAssignments() { doTest(); }
 
@@ -399,6 +399,33 @@ private int getObjects() {
   void testForInAssignability() {
     testHighlighting('''\
 for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+''')
+  }
+
+  void testAssignabilityOfMethodProvidedByCategoryAnnotation() {
+    testHighlighting('''\
+@Category(List)
+class EvenSieve {
+    def getNo2() {
+        removeAll { 4 % 2 == 0 } //correct access
+        add<warning descr="'add' in 'java.util.List<E>' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">(2, 3)</warning>
+    }
+}
+''')
+  }
+
+  void testAssignabilityOfCategoryMethod() {
+    testHighlighting('''
+class Cat {
+  static foo(Class c, int x) {}
+}
+
+class X {}
+
+use(Cat) {
+  X.foo(1)
+}
+
 ''')
   }
 }

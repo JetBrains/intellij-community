@@ -51,7 +51,7 @@ public class CustomizationUtil {
   }
 
   public static ActionGroup correctActionGroup(final ActionGroup group, final CustomActionsSchema schema, final String defaultGroupName) {
-    if (!schema.isCorrectActionGroup(group)){
+    if (!schema.isCorrectActionGroup(group, defaultGroupName)){
        return group;
      }
     String text = group.getTemplatePresentation().getText();
@@ -161,7 +161,7 @@ public class CustomizationUtil {
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
-    CustomActionsSchema.fillActionGroups(root);
+    schema.fillActionGroups(root);
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();

@@ -116,9 +116,11 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
     final TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
     final boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, isExtension);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation);
 
-    return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
+    final PsiMethodStubImpl stub = new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
+    stub.setExtensionMethodMark(isExtension);
+    return stub;
   }
 
   @Override

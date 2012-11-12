@@ -73,8 +73,9 @@ public class DarculaTextBorder implements Border, UIResource {
       //g.fillRect(2, 1, cX-2, height - 2); //left
       //g.fillRect(cX + cW , 1, width-cW - cX, height - 2); //right
       //g.fillRect(1, 1, width - 2, cY); //top
-      //g.fillRect(1, cY + cH, width - 2, height - 2); //bottom
-      g.setColor(c.isEnabled() && ((JTextComponent)c).isEditable() ? new Color(0x939393) : new Color(0x535353));
+      //g.fillRect(1, cY + cH, width - 2, heigh7t - 2); //bottom
+      boolean editable = !(c instanceof JTextComponent) || (((JTextComponent)c).isEditable());
+      g.setColor(c.isEnabled() && editable ? new Color(0x939393) : new Color(0x535353));
       g.drawRect(1, 1, width - 2, height - 2);
     }
     g.translate(-x, -y);

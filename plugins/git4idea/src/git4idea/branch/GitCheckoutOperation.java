@@ -229,7 +229,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     return false;
   }
 
-  private static void refresh(GitRepository... repositories) {
+  private void refresh(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
       // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()

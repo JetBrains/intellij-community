@@ -76,10 +76,11 @@ import java.util.*;
  */
 public class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrabDependencies");
-  private static final String GRAB_ANNO = "groovy.lang.Grab";
-  private static final String GRAPES_ANNO = "groovy.lang.Grapes";
-  private static final String GRAB_EXCLUDE_ANNO = "groovy.lang.GrabExclude";
-  private static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
+
+  public static final String GRAB_ANNO = "groovy.lang.Grab";
+  public static final String GRAPES_ANNO = "groovy.lang.Grapes";
+  public static final String GRAB_EXCLUDE_ANNO = "groovy.lang.GrabExclude";
+  public static final String GRAB_RESOLVER_ANNO = "groovy.lang.GrabResolver";
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
 
   @NotNull

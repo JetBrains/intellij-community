@@ -39,7 +39,7 @@ import java.util.List;
 @SuppressWarnings({"UnusedDeclaration"})
 public class LocalTaskImpl extends LocalTask {
 
-  @NonNls static final String DEFAULT_TASK_ID = "Default";
+  @NonNls public static final String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
   private String mySummary = "";
@@ -134,18 +134,19 @@ public class LocalTaskImpl extends LocalTask {
   }
 
   private void copy(Task issue) {
+    mySummary = issue.getSummary();
+    myDescription = issue.getDescription();
+    myComments = issue.getComments();
+    myClosed = issue.isClosed();
     myCreated = issue.getCreated();
     if (Comparing.compare(myUpdated, issue.getUpdated()) < 0) {
       myUpdated = issue.getUpdated();
     }
-    myPresentableName = issue.getPresentableName();    
-    mySummary = issue.getSummary();
-    myClosed = issue.isClosed();
-    myIssueUrl = issue.getIssueUrl();
     myType = issue.getType();
-    myDescription = issue.getDescription();
-    myComments = issue.getComments();
+    myPresentableName = issue.getPresentableName();
     myCustomIcon = issue.getCustomIcon();
+    myIssueUrl = issue.getIssueUrl();
+    myRepository = issue.getRepository();
   }
 
   public void setId(String id) {

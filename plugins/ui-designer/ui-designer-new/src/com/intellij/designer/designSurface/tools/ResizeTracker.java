@@ -17,6 +17,7 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
@@ -24,6 +25,7 @@ import com.intellij.designer.utils.Position;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -197,5 +199,12 @@ public class ResizeTracker extends InputTool {
       }
     }
     return myOperations;
+  }
+
+  @Override
+  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      myToolProvider.loadDefaultTool();
+    }
   }
 }

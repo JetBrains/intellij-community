@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
     if (icon != null) {
       g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);
     }
-    g.setColor(Color.BLACK);
+    g.setColor(UIUtil.getLabelForeground());
     g.drawString(path, 2 + (icon == null ? 0 : icon.getIconWidth()) + 2, h - 3);
     cache.put(path, img);
     return img;

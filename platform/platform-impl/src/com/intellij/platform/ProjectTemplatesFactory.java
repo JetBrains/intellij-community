@@ -28,7 +28,7 @@ public interface ProjectTemplatesFactory {
   ExtensionPointName<ProjectTemplatesFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplatesFactory");
 
   String OTHER_GROUP = "Other";
-  String CUSTOM_GROUP = "Custom";
+  String CUSTOM_GROUP = "User-defined";
 
   @NotNull
   String[] getGroups();

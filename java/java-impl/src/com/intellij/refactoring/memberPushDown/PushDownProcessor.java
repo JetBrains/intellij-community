@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -358,20 +357,17 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-        final PsiMethod methodBySignature =
-          MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
+        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
-          final boolean wasInterface = myClass.isInterface();
           newMember = (PsiMethod)targetClass.add(method);
-          if (wasInterface) {
+          if (myClass.isInterface()) {
             if (!targetClass.isInterface()) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              final PsiJavaToken extMethodMarker = PsiImplUtil.findExtensionMethodMarker((PsiMethod)newMember);
-              if (extMethodMarker == null) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
+              if (newMember.hasModifierProperty(PsiModifier.DEFAULT)) {
+                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
               }
               else {
-                extMethodMarker.delete();
+                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
               }
             }
           }

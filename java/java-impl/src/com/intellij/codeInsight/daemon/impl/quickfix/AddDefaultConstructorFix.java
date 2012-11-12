@@ -33,7 +33,7 @@ public class AddDefaultConstructorFix extends AddMethodFix {
   }
 
   private static String generateConstructor(final String className, @PsiModifier.ModifierConstant final String modifier) {
-    if (modifier == PsiModifier.PACKAGE_LOCAL) {
+    if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
       return className + "() {}";
     }
     return modifier + " " + className + "() {}";

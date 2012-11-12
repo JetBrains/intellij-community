@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -792,5 +792,13 @@ public class TypesUtil {
       }
     }, new PsiType[initializers.length]);
     return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
+  }
+
+  public static boolean resolvesTo(PsiType type, String fqn) {
+    if (type instanceof PsiClassType) {
+      final PsiClass resolved = ((PsiClassType)type).resolve();
+      return resolved != null && fqn.equals(resolved.getQualifiedName());
+    }
+    return false;
   }
 }

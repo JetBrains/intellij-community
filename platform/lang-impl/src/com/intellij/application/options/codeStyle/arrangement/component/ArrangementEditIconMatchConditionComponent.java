@@ -158,8 +158,8 @@ public class ArrangementEditIconMatchConditionComponent extends JPanel implement
   }
 
   @Override
-  public void onMousePress(@NotNull MouseEvent event) {
-    myDelegate.onMousePress(event);
+  public void onMouseRelease(@NotNull MouseEvent event) {
+    myDelegate.onMouseRelease(event);
   }
 
   @Override

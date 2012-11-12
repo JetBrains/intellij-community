@@ -143,11 +143,6 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  public boolean isExtensionMethod() {
-    return myMethod.isExtensionMethod();
-  }
-
-  @Override
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);

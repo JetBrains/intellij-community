@@ -159,8 +159,10 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
-    PsiImplUtil.setName(getNameIdentifier(), name);
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    final PsiIdentifier identifier = getNameIdentifier();
+    if (identifier == null) throw new IncorrectOperationException("Empty name: " + this);
+    PsiImplUtil.setName(identifier, name);
     return this;
   }
 
@@ -312,16 +314,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public boolean isExtensionMethod() {
-    final PsiMethodStub stub = getStub();
-    if (stub != null) {
-      return stub.isExtensionMethod();
-    }
-
-    return PsiImplUtil.isExtensionMethod(this);
-  }
-
-  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethod(this);
@@ -349,9 +341,14 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public PsiElement getOriginalElement() {
-    PsiClass originalClass = (PsiClass)getContainingClass().getOriginalElement();
-    final PsiMethod originalMethod = originalClass.findMethodBySignature(this, false);
-    return originalMethod != null ? originalMethod : this;
+    final PsiClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      final PsiMethod originalMethod = ((PsiClass)containingClass.getOriginalElement()).findMethodBySignature(this, false);
+      if (originalMethod != null) {
+        return originalMethod;
+      }
+    }
+    return this;
   }
 
   @Override
@@ -391,5 +388,4 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   protected boolean isVisibilitySupported() {
     return true;
   }
-
 }

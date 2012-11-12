@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui.tree;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.project.Project;
@@ -90,6 +91,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
         if (value instanceof ProjectRootNode) {
           setText(getProjectNodeText());
+          setIcon(AllIcons.Nodes.Project);
           return this;
         }
         FileNode fileNode = (FileNode)value;

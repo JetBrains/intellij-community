@@ -19,12 +19,16 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +73,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
         String calledName = methodExpression.getReferenceName();
         if (calledName == null) return;
         if ("setTitle".equals(calledName)) {
-          if (!isMethodOfClass(expression, "com.intellij.openapi.ui.DialogWrapper")) return;
+          if (!isMethodOfClass(expression, DialogWrapper.class.getName(), FileChooserDescriptor.class.getName())) return;
           PsiExpression[] args = expression.getArgumentList().getExpressions();
           if (args.length == 0) {
             return;
@@ -81,7 +85,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
           }
         }
         else if (calledName.startsWith("show") && (calledName.endsWith("Dialog") || calledName.endsWith("Message"))) {
-          if (!isMethodOfClass(expression, "com.intellij.openapi.ui.Messages")) return;
+          if (!isMethodOfClass(expression, Messages.class.getName())) return;
           PsiExpression[] args = expression.getArgumentList().getExpressions();
           PsiMethod psiMethod = expression.resolveMethod();
           assert psiMethod != null;
@@ -102,16 +106,17 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private static boolean isMethodOfClass(PsiMethodCallExpression expression, String className) {
+  private static boolean isMethodOfClass(PsiMethodCallExpression expression, String... classNames) {
     PsiMethod psiMethod = expression.resolveMethod();
     if (psiMethod == null) {
       return false;
     }
     PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null || !className.equals(containingClass.getQualifiedName())) {
+    if (containingClass == null) {
       return false;
     }
-    return true;
+    String name = containingClass.getQualifiedName();
+    return ArrayUtil.contains(name, classNames);
   }
 
   @Nullable
@@ -144,7 +149,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
 
   @Nullable
   private static Property getPropertyArgument(PsiMethodCallExpression arg) {
-    PsiExpression[] args = ((PsiMethodCallExpression)arg).getArgumentList().getExpressions();
+    PsiExpression[] args = arg.getArgumentList().getExpressions();
     if (args.length > 0) {
       PsiReference[] references = args[0].getReferences();
       for (PsiReference reference : references) {

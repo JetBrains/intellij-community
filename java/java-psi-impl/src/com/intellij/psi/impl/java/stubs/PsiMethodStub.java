@@ -29,7 +29,6 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
   boolean isConstructor();
   boolean isVarArgs();
   boolean isAnnotationMethod();
-  boolean isExtensionMethod();
 
   @Nullable String getDefaultValueText();
   @NotNull TypeInfo getReturnTypeText(boolean doResolve);

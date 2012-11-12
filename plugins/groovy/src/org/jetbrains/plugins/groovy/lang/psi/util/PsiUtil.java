@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -82,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -480,7 +480,7 @@ public class PsiUtil {
       if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
       }
-      else if (context instanceof GroovyFileBase && context.isPhysical()) {
+      else if (context instanceof GroovyFileBase && !isInDummyFile(context)) {
         return ((GroovyFileBase)context).getScriptClass();
       }
 
@@ -1232,11 +1232,7 @@ public class PsiUtil {
   public static PsiType extractIteratedType(GrForInClause forIn) {
     GrExpression iterated = forIn.getIteratedExpression();
     if (iterated == null) return null;
-    PsiType type = iterated.getType();
-    if (type == null) return null;
-
-    if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
-    return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, true);
+    return ClosureParameterEnhancer.findTypeForIteration(iterated, forIn);
   }
 
   public static boolean isThisReference(@Nullable PsiElement expression) {

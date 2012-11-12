@@ -145,6 +145,10 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
       buffer.append(PsiModifier.STRICTFP);
       buffer.append(' ');
     }
+    if (hasModifierProperty(PsiModifier.DEFAULT)) {
+      buffer.append(PsiModifier.DEFAULT);
+      buffer.append(' ');
+    }
   }
 
   @Override

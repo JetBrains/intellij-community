@@ -33,11 +33,14 @@ import org.jetbrains.annotations.NotNull
  */
 class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatformFacade {
 
+  private static final GitVcsApplicationSettings ourAppSettings = new GitVcsApplicationSettings()
+
   private GitMockVcs myVcs;
   private TestNotificator myNotificator;
   private TestDialogManager myTestDialogManager;
   private GitTestRepositoryManager myRepositoryManager;
   private GitMockVcsManager myVcsManager;
+  private GitVcsSettings mySettings
 
   GitTestPlatformFacade() {
     myRepositoryManager = new GitTestRepositoryManager();
@@ -65,7 +68,10 @@ class GitTestPlatformFacade extends DvcsTestPlatformFacade implements GitPlatfor
   @NotNull
   @Override
   public GitVcsSettings getSettings(Project project) {
-    return new GitVcsSettings(new GitVcsApplicationSettings());
+    if (mySettings == null) {
+      mySettings = new GitVcsSettings(ourAppSettings);
+    }
+    return mySettings;
   }
 
   @NotNull

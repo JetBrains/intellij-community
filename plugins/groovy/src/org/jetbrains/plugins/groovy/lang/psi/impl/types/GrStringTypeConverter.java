@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
@@ -39,8 +40,8 @@ public class GrStringTypeConverter extends GrTypeConverter {
       return null;
     }
 
-    if (lType == PsiType.BOOLEAN || resolvesTo(lType, JAVA_LANG_BOOLEAN)) return true;
-    if (resolvesTo(lType, JAVA_LANG_CLASS)) return true;
+    if (lType == PsiType.BOOLEAN || TypesUtil.resolvesTo(lType, JAVA_LANG_BOOLEAN)) return true;
+    if (TypesUtil.resolvesTo(lType, JAVA_LANG_CLASS)) return true;
     if (isEnum(lType)) return true;
 
     return null;

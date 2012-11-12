@@ -20,9 +20,13 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +36,7 @@ import java.util.*;
 public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
   private final List<ModuleWizardStep> myCommonFinishingSteps = new ArrayList<ModuleWizardStep>();
-  private final Map<String, List<ModuleWizardStep>> mySpecificSteps = new HashMap<String, List<ModuleWizardStep>>();
+  private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<String, ModuleWizardStep>();
   @NonNls private List<String> myTypes = new ArrayList<String>();
   private List<ModuleWizardStep> mySelectedSteps;
 
@@ -48,13 +52,15 @@ public class StepSequence {
     myCommonFinishingSteps.add(step);
   }
 
-  public void addSpecificStep(String type, ModuleWizardStep step) {
-    List<ModuleWizardStep> list = mySpecificSteps.get(type);
-    if (list == null) {
-      list = new ArrayList<ModuleWizardStep>();
-      mySpecificSteps.put(type, list);
+  public void addStepsForBuilder(ModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
+    String id = builder.getBuilderId();
+    if (!mySpecificSteps.containsKey(id)) {
+      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
     }
-    list.add(step);
+  }
+
+  public void addSpecificStep(String type, ModuleWizardStep step) {
+    mySpecificSteps.putValue(type, step);
   }
 
   public List<ModuleWizardStep> getSelectedSteps() {
@@ -62,10 +68,8 @@ public class StepSequence {
       mySelectedSteps = new ArrayList<ModuleWizardStep>();
       mySelectedSteps.addAll(myCommonSteps);
       for (String type : myTypes) {
-        final List<ModuleWizardStep> steps = mySpecificSteps.get(type);
-        if (steps != null) {
-          mySelectedSteps.addAll(steps);
-        }
+        Collection<ModuleWizardStep> steps = mySpecificSteps.get(type);
+        mySelectedSteps.addAll(steps);
       }
       mySelectedSteps.addAll(myCommonFinishingSteps);
       ContainerUtil.removeDuplicates(mySelectedSteps);
@@ -105,9 +109,7 @@ public class StepSequence {
   public List<ModuleWizardStep> getAllSteps() {
     final List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
     result.addAll(myCommonSteps);
-    for (List<ModuleWizardStep> steps : mySpecificSteps.values()) {
-      result.addAll(steps);
-    }
+    result.addAll(mySpecificSteps.values());
     result.addAll(myCommonFinishingSteps);
     ContainerUtil.removeDuplicates(result);
     return result;
@@ -115,13 +117,5 @@ public class StepSequence {
 
   public ModuleWizardStep getFirstStep() {
     return myCommonSteps.get(0);
-  }
-
-  public void addFrom(StepSequence from, String common) {
-    for (ModuleWizardStep step : from.myCommonSteps) {
-      addSpecificStep(common, step);
-    }
-    myCommonFinishingSteps.addAll(from.myCommonFinishingSteps);
-    mySpecificSteps.putAll(from.mySpecificSteps);
   }
 }

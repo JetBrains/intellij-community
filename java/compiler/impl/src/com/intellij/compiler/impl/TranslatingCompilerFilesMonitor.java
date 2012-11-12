@@ -1711,9 +1711,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
   
-  public static boolean isMarkedForCompilation(Project project, VirtualFile file) {
-    final CompilerManager compilerManager = CompilerManager.getInstance(project);
-    return !compilerManager.isUpToDate(compilerManager.createFilesCompileScope(new VirtualFile[]{file}));
+  public boolean isMarkedForCompilation(Project project, VirtualFile file) {
+    if (CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER) {
+      final CompilerManager compilerManager = CompilerManager.getInstance(project);
+      return !compilerManager.isUpToDate(compilerManager.createFilesCompileScope(new VirtualFile[]{file}));
+    }
+    return isMarkedForRecompilation(getProjectId(project), getFileId(file));
   }
   
   private boolean isMarkedForRecompilation(int projectId, final int srcId) {

@@ -159,6 +159,10 @@ public class PathMappingSettings implements Cloneable {
     element.addContent(XmlSerializer.serialize(mappings));
   }
 
+  public void addAll(PathMappingSettings settings) {
+    myPathMappings.addAll(settings.getPathMappings());
+  }
+
   @Tag("mapping")
   public static class PathMapping {
     private String myLocalRoot;

@@ -31,7 +31,6 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -44,7 +43,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -110,13 +112,22 @@ public class IncProjectBuilder {
     CompileContextImpl context = null;
     try {
       context = createContext(scope, true, false);
+      final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target);
-          if (myProjectDescriptor.fsState.hasWorkToDo(target)) {
-            // this will serve as a marker that compiler has work to do
-            myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
-            return;
+          final Map<BuildRootDescriptor, Set<File>> toRecompile = fsState.getSourcesToRecompile(context, target);
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
+          synchronized (toRecompile) {
+            for (Set<File> files : toRecompile.values()) {
+              for (File file : files) {
+                if (scope.isAffected(target, file)) {
+                  // this will serve as a marker that compiler has work to do
+                  myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
+                  return;
+                }
+              }
+            }
           }
         }
       }
@@ -210,21 +221,21 @@ public class IncProjectBuilder {
     //cleanupJavacNameTable();
   }
 
-  private static boolean ourClenupFailed = false;
+  //private static boolean ourClenupFailed = false;
 
-  private static void cleanupJavacNameTable() {
-    try {
-      if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
-        final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
-        freelistField.setAccessible(true);
-        freelistField.set(null, com.sun.tools.javac.util.List.nil());
-      }
-    }
-    catch (Throwable e) {
-      ourClenupFailed = true;
-      //LOG.info(e);
-    }
-  }
+  //private static void cleanupJavacNameTable() {
+  //  try {
+  //    if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
+  //      final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+  //      freelistField.setAccessible(true);
+  //      freelistField.set(null, com.sun.tools.javac.util.List.nil());
+  //    }
+  //  }
+  //  catch (Throwable e) {
+  //    ourClenupFailed = true;
+  //    //LOG.info(e);
+  //  }
+  //}
 
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
@@ -404,7 +415,7 @@ public class IncProjectBuilder {
       }
       else {
         context.processMessage(new CompilerMessage(
-          BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+          "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
         );
         // clean only those files we are aware of
         for (BuildTarget<?> target : entry.getValue()) {

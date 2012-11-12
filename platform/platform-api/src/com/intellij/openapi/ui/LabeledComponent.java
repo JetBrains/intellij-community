@@ -107,7 +107,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
 
   public void setLabelLocation(@NonNls String borderConstrains) {
     String constrains = findBorderConstrains(borderConstrains);
-    if (constrains == null || constrains == myLabelConstraints) return;
+    if (constrains == null || constrains.equals(myLabelConstraints)) return;
     myLabelConstraints = borderConstrains;
     insertLabel();
   }

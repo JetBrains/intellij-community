@@ -66,10 +66,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myIcon = icon;
   }
 
-  private static ActionGroup getActionGroup(final String id) {
-    return (ActionGroup)ActionManager.getInstance().getAction(id);
-  }
-
   private Content createConsoleContent() {
     Content result = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
                                         XDebuggerBundle.message("debugger.session.tab.console.content.name"),
@@ -87,7 +83,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                         AllIcons.Debugger.Value, null);
     result.setCloseable(false);
 
-    ActionGroup group = getActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
+    ActionGroup group = getCustomizedActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
     result.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, variablesView.getTree());
 
     return result;
@@ -159,7 +155,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartAction.registerShortcut(myUi.getComponent());
     }
 
-    leftToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+    leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
 
     //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);
@@ -199,7 +195,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     leftToolbar.add(new ContextHelpAction(executor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
-    topToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+    topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
 
     session.getDebugProcess().registerAdditionalActions(leftToolbar, topToolbar);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);

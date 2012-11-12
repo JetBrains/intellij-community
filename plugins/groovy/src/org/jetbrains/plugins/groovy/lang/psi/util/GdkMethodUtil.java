@@ -16,11 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +125,7 @@ public class GdkMethodUtil {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
-        if (isCategoryMethod(element, null, null)) {
+        if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
           PsiMethod method = (PsiMethod)element;
           return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
         }
@@ -126,14 +133,6 @@ public class GdkMethodUtil {
       }
     };
     return categoryClass.processDeclarations(delegate, state, null, place);
-  }
-
-  private static boolean acceptClass(@Nullable PsiType type, @NotNull PsiClass aClass) {
-    if (!(type instanceof PsiClassType)) return false;
-
-    PsiClass resolved = ((PsiClassType)type).resolve();
-
-    return InheritanceUtil.isInheritorOrSelf(aClass, resolved, true);
   }
 
   public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor) {
@@ -212,16 +211,17 @@ public class GdkMethodUtil {
     for (GrStatement statement : statements) {
       if (statement == lastParent) break;
 
-      final Pair<PsiClassType, PsiClass> result = getMixinTypes(statement);
+      final Trinity<PsiClassType, GrReferenceExpression, PsiClass> result = getMixinTypes(statement);
 
       if (result != null) {
         final PsiClassType subjectType = result.first;
-        final PsiClass mixin = result.second;
+        final GrReferenceExpression qualifier = result.second;
+        final PsiClass mixin = result.third;
 
         final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
           @Override
           public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
-            if (isCategoryMethod(element, subjectType, null)) {
+            if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, subjectType, qualifier, null)) {
               PsiMethod method = (PsiMethod)element;
               return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
             }
@@ -239,14 +239,14 @@ public class GdkMethodUtil {
   }
 
   @Nullable
-  private static Pair<PsiClassType, PsiClass> getMixinTypes(GrStatement statement) {
+  private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(GrStatement statement) {
     if (statement instanceof GrMethodCall) {
       GrMethodCall call = (GrMethodCall)statement;
-      PsiClassType original = getTypeToMixIn(call);
+      Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
       PsiClass mix = getTypeToMix(call);
 
       if (original != null && mix != null) {
-        return new Pair<PsiClassType, PsiClass>(original, mix);
+        return new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix);
 
       }
     }
@@ -282,13 +282,13 @@ public class GdkMethodUtil {
   }
 
   @Nullable
-  private static PsiClassType getTypeToMixIn(GrMethodCall methodCall) {
+  private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
     if (invoked instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
       if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
         GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
-        PsiClassType type = getPsiClassFromReference(qualifier);
+        Pair<PsiClassType, GrReferenceExpression> type = getPsiClassFromReference(qualifier);
         if (type != null) {
           return type;
         }
@@ -301,7 +301,7 @@ public class GdkMethodUtil {
           if (qualifier instanceof GrReferenceExpression) {
             GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
             if (qqualifier != null) {
-              PsiClassType type1 = getPsiClassFromReference(qqualifier);
+              Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromReference(qqualifier);
               if (type1 != null) {
                 return type1;
               }
@@ -309,7 +309,7 @@ public class GdkMethodUtil {
             else {
               PsiType qtype = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)qualifier);
               if (qtype instanceof PsiClassType && ((PsiClassType)qtype).resolve() != null) {
-                return (PsiClassType)qtype;
+                return Pair.create((PsiClassType)qtype, (GrReferenceExpression)qualifier);
               }
             }
           }
@@ -334,22 +334,21 @@ public class GdkMethodUtil {
     return mixinRef instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)mixinRef).getReferenceName());
   }
 
-  private static PsiClassType getPsiClassFromReference(GrExpression ref) {
+  @Nullable
+  private static Pair<PsiClassType, GrReferenceExpression> getPsiClassFromReference(GrExpression ref) {
     if (isClassRef(ref)) ref = ((GrReferenceExpression)ref).getQualifier();
     if (ref instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)ref).resolve();
       if (resolved instanceof PsiClass) {
         PsiType type = ref.getType();
         LOG.assertTrue(type instanceof PsiClassType, "reference resolved into PsiClass should have PsiClassType");
-        return ((PsiClassType)type);
+        return Pair.create((PsiClassType)type, (GrReferenceExpression)ref);
       }
     }
     return null;
   }
 
-  public static boolean isCategoryMethod(@Nullable PsiElement element, @Nullable PsiType qualifierType, @Nullable PsiSubstitutor substitutor) {
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
+  public static boolean isCategoryMethod(@NotNull PsiMethod method, @Nullable PsiType qualifierType, @Nullable PsiElement place, @Nullable PsiSubstitutor substitutor) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
 
@@ -364,6 +363,58 @@ public class GdkMethodUtil {
     if (substitutor != null) {
       selfType = substitutor.substitute(selfType);
     }
-    return TypesUtil.isAssignable(selfType, qualifierType, element.getManager(), element.getResolveScope());
+
+    final GlobalSearchScope scope = method.getResolveScope();
+    final Project project = method.getProject();
+    final PsiManager manager = method.getManager();
+
+    if (selfType instanceof PsiClassType &&
+        ((PsiClassType)selfType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
+        place instanceof GrReferenceExpression &&
+        ((GrReferenceExpression)place).resolve() instanceof PsiClass) {   // ClassType.categoryMethod()  where categoryMethod(Class<> cl, ...)
+      return TypesUtil.isAssignable(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope), manager, scope);
+    }
+    return TypesUtil.isAssignable(selfType, qualifierType, manager, scope);
+  }
+
+  @Nullable
+  public static PsiClassType getCategoryType(@NotNull final PsiClass categoryAnnotationOwner) {
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(categoryAnnotationOwner.getProject());
+    return cachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
+      @Override
+      public Result<PsiClassType> compute() {
+        return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+
+      @Nullable
+      private PsiClassType inferCategoryType(final PsiClass aClass) {
+        return RecursionManager.doPreventingRecursion(aClass, true, new NullableComputable<PsiClassType>() {
+          @Nullable
+          @Override
+          public PsiClassType compute() {
+            final PsiModifierList modifierList = aClass.getModifierList();
+            if (modifierList == null) return null;
+
+            final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
+            if (annotation == null) return null;
+
+            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+            if (!(value instanceof GrReferenceExpression)) return null;
+
+            if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
+            if (!(value instanceof GrReferenceExpression)) return null;
+
+            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+            if (!(resolved instanceof PsiClass)) return null;
+
+            String className = ((PsiClass)resolved).getQualifiedName();
+            if (className == null) className = ((PsiClass)resolved).getName();
+            if (className == null) return null;
+
+            return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
+          }
+        });
+      }
+    });
   }
 }

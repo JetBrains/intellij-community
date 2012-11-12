@@ -34,8 +34,6 @@ import git4idea.commands.GitCommandResult;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
-import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitCommit;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -47,7 +45,10 @@ import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,21 +78,24 @@ public final class GitPusher {
   @NotNull private final GitPushSettings myPushSettings;
   @NotNull private final Git myGit;
   @NotNull private final GitPlatformFacade myPlatformFacade;
+  private GitOutgoingCommitsCollector myOutgoingCommitsCollector;
 
   public static void showPushDialogAndPerformPush(@NotNull Project project, @NotNull GitPlatformFacade facade) {
-    final GitPushDialog dialog = new GitPushDialog(project);
+    GitPushSpecs repositoriesToPush = GitPushUtil.getRepositoriesAndSpecsToPush(facade, project);
+    GitPushDialog dialog = new GitPushDialog(project, facade, repositoriesToPush);
     dialog.show();
     if (dialog.isOK()) {
-      runPushInBackground(project, facade, dialog);
+      runPushInBackground(project, facade, dialog.getPushSpecs());
     }
   }
 
-  private static void runPushInBackground(@NotNull final Project project, @NotNull final GitPlatformFacade facade,
-                                          @NotNull final GitPushDialog dialog) {
+  private static void runPushInBackground(@NotNull final Project project,
+                                          @NotNull final GitPlatformFacade facade,
+                                          final GitPushSpecs pushSpecs) {
     Task.Backgroundable task = new Task.Backgroundable(project, INDICATOR_TEXT, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        new GitPusher(project, facade, indicator).push(dialog.getPushInfo());
+        new GitPusher(project, facade, indicator).push(pushSpecs);
       }
     };
     GitVcs.runInBackground(task);
@@ -134,89 +138,14 @@ public final class GitPusher {
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
     myGit = ServiceManager.getService(Git.class);
-  }
-
-  /**
-   * @param pushSpecs which branches in which repositories should be pushed.
-   *                               The most common situation is all repositories in the project with a single currently active branch for
-   *                               each of them.
-   * @throws VcsException if couldn't query 'git log' about commits to be pushed.
-   * @return
-   */
-  @NotNull
-  GitCommitsByRepoAndBranch collectCommitsToPush(@NotNull Map<GitRepository, GitPushSpec> pushSpecs) throws VcsException {
-    Map<GitRepository, List<GitBranchPair>> reposAndBranchesToPush = prepareRepositoriesAndBranchesToPush(pushSpecs);
-    
-    Map<GitRepository, GitCommitsByBranch> commitsByRepoAndBranch = new HashMap<GitRepository, GitCommitsByBranch>();
-    for (GitRepository repository : myRepositories) {
-      List<GitBranchPair> branchPairs = reposAndBranchesToPush.get(repository);
-      if (branchPairs == null) {
-        continue;
-      }
-      GitCommitsByBranch commitsByBranch = collectsCommitsToPush(repository, branchPairs);
-      commitsByRepoAndBranch.put(repository, commitsByBranch);
-    }
-    return new GitCommitsByRepoAndBranch(commitsByRepoAndBranch);
-  }
-
-  @NotNull
-  private Map<GitRepository, List<GitBranchPair>> prepareRepositoriesAndBranchesToPush(@NotNull Map<GitRepository, GitPushSpec> pushSpecs) throws VcsException {
-    Map<GitRepository, List<GitBranchPair>> res = new HashMap<GitRepository, List<GitBranchPair>>();
-    for (GitRepository repository : myRepositories) {
-      GitPushSpec pushSpec = pushSpecs.get(repository);
-      if (pushSpec == null) {
-        continue;
-      }
-      res.put(repository, Collections.singletonList(new GitBranchPair(pushSpec.getSource(), pushSpec.getDest())));
-    }
-    return res;
-  }
-
-  @NotNull
-  private GitCommitsByBranch collectsCommitsToPush(@NotNull GitRepository repository, @NotNull List<GitBranchPair> sourcesDestinations)
-    throws VcsException {
-    Map<GitBranch, GitPushBranchInfo> commitsByBranch = new HashMap<GitBranch, GitPushBranchInfo>();
-
-    for (GitBranchPair sourceDest : sourcesDestinations) {
-      GitLocalBranch source = sourceDest.getBranch();
-      GitRemoteBranch dest = sourceDest.getDest();
-      assert dest != null : "Destination branch can't be null here for branch " + source;
-
-      List<GitCommit> commits;
-      GitPushBranchInfo.Type type;
-      if (dest == NO_TARGET_BRANCH) {
-        commits = collectRecentCommitsOnBranch(repository, source);
-        type = GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET;
-      }
-      else if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
-        commits = collectCommitsToPush(repository, source.getName(), dest.getName());
-        type = GitPushBranchInfo.Type.STANDARD;
-      } 
-      else {
-        commits = collectRecentCommitsOnBranch(repository, source);
-        type = GitPushBranchInfo.Type.NEW_BRANCH;
-      }
-      commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, type));
-    }
-
-    return new GitCommitsByBranch(commitsByBranch);
-  }
-
-  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
-    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
-  }
-
-  @NotNull
-  private List<GitCommit> collectCommitsToPush(@NotNull GitRepository repository, @NotNull String source, @NotNull String destination)
-    throws VcsException {
-    return GitHistoryUtils.history(myProject, repository.getRoot(), destination + ".." + source);
+    myOutgoingCommitsCollector = GitOutgoingCommitsCollector.getInstance(myProject);
   }
 
   /**
    * Makes push, shows the result in a notification. If push for current branch is rejected, shows a dialog proposing to update.
    */
-  public void push(@NotNull GitPushInfo pushInfo) {
-    push(pushInfo, null, null, 0);
+  public void push(@NotNull GitPushSpecs pushSpecs) {
+    push(pushSpecs, null, null, 0);
   }
 
   /**
@@ -226,21 +155,22 @@ public final class GitPusher {
    * option.
    * Also, at the end results are merged and are shown in a single notification.
    */
-  private void push(@NotNull GitPushInfo pushInfo, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, int attempt) {
-    GitPushResult result = tryPushAndGetResult(pushInfo);
-    handleResult(pushInfo, result, previousResult, updateSettings, attempt);
+  private void push(@NotNull GitPushSpecs pushSpecs, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, int attempt) {
+    GitPushResult result = tryPushAndGetResult(pushSpecs);
+    handleResult(pushSpecs, result, previousResult, updateSettings, attempt);
   }
 
   @NotNull
-  private GitPushResult tryPushAndGetResult(@NotNull GitPushInfo pushInfo) {
+  private GitPushResult tryPushAndGetResult(@NotNull GitPushSpecs pushSpecs) {
     GitPushResult pushResult = new GitPushResult(myProject);
-    
-    GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
-    for (GitRepository repository : commits.getRepositories()) {
-      if (commits.get(repository).getAllCommits().size() == 0) {  // don't push repositories where there is nothing to push. Note that when a branch is created, several recent commits are stored in the pushInfo.
+
+    GitCommitsByRepoAndBranch commits = myOutgoingCommitsCollector.waitForCompletionAndGetCommits();
+    for (GitRepository repository : pushSpecs.getSelectedRepositories()) {
+      if (!commits.get(repository).hasAnythingToPush()) {
+        // don't push repositories when we know that there is nothing to push.
         continue;
       }
-      GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);
+      GitPushRepoResult repoResult = pushRepository(pushSpecs.get(repository), repository, commits);
       if (repoResult.getType() == GitPushRepoResult.Type.NOT_PUSHING) {
         continue;
       }
@@ -255,12 +185,11 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitPushRepoResult pushRepository(@NotNull GitPushInfo pushInfo,
-                                           @NotNull GitCommitsByRepoAndBranch commits,
-                                           @NotNull GitRepository repository) {
-    GitPushSpec pushSpec = pushInfo.getPushSpecs().get(repository);
-    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec, commits.get(repository));
+  private GitPushRepoResult pushRepository(@NotNull GitBranchPair pushSpec,
+                                           @NotNull GitRepository repository, @NotNull GitCommitsByRepoAndBranch commits) {
+    GitSimplePushResult simplePushResult = pushAndGetSimpleResult(repository, pushSpec);
     String output = simplePushResult.getOutput();
+
     switch (simplePushResult.getType()) {
       case SUCCESS:
         return successOrErrorRepoResult(commits, repository, output, true);
@@ -309,13 +238,12 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository,
-                                                            @NotNull GitPushSpec pushSpec, @NotNull GitCommitsByBranch commitsByBranch) {
+  private GitSimplePushResult pushAndGetSimpleResult(@NotNull GitRepository repository, @NotNull GitBranchPair pushSpec) {
     if (pushSpec.getDest() == NO_TARGET_BRANCH) {
       return GitSimplePushResult.notPushed();
     }
 
-    GitRemote remote = pushSpec.getRemote();
+    GitRemote remote = pushSpec.getDest().getRemote();
     String httpUrl = null;
     for (String pushUrl : remote.getPushUrls()) {
       if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
@@ -334,7 +262,7 @@ public final class GitPusher {
     }
     
     if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
-      setUpstream(repository, pushSpec.getSource(), pushSpec.getRemote(),  pushSpec.getDest());
+      setUpstream(repository, pushSpec.getSource(), pushSpec.getDest().getRemote(),  pushSpec.getDest());
     }
     
     return pushResult;
@@ -376,7 +304,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private static String formPushSpec(@NotNull GitPushSpec spec, @NotNull GitRemote remote) {
+  private static String formPushSpec(@NotNull GitBranchPair spec, @NotNull GitRemote remote) {
     String destWithRemote = spec.getDest().getName();
     String prefix = remote.getName() + "/";
     String destName;
@@ -391,7 +319,7 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitBranchPair pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
     GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
     if (rejectedDetector.rejected()) {
@@ -454,7 +382,7 @@ public final class GitPusher {
   // if in a failed repo, a branch was rejected that had nothing to push, don't notify about the rejection.
   // Besides all of the above, don't confuse users with 1 repository with all this "repository/root" stuff;
   // don't confuse users which push only a single branch with all this "branch" stuff.
-  private void handleResult(@NotNull GitPushInfo pushInfo, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings, 
+  private void handleResult(@NotNull GitPushSpecs pushSpecs, @NotNull GitPushResult result, @Nullable GitPushResult previousResult, @Nullable UpdateSettings updateSettings,
                             int pushAttempt) {
     result.mergeFrom(previousResult);
 
@@ -468,7 +396,7 @@ public final class GitPusher {
     else {
       // there were no errors, but there might be some rejected branches on some of the repositories
       // => for current branch propose to update and re-push it. For others just warn
-      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesFromCurrentBranchToTrackedBranch(pushInfo);
+      Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = result.getRejectedPushesFromCurrentBranchToTrackedBranch(pushSpecs);
 
       if (pushAttempt <= MAX_PUSH_ATTEMPTS && !rejectedPushesForCurrentBranch.isEmpty()) {
 
@@ -494,7 +422,7 @@ public final class GitPusher {
           boolean updateResult = update(repositoriesToUpdate, updateSettings.getUpdateMethod());
           if (updateResult) {
             myProgressIndicator.setText(INDICATOR_TEXT);
-            GitPushInfo newPushInfo = pushInfo.retain(rejectedPushesForCurrentBranch);
+            GitPushSpecs newPushInfo = retain(pushSpecs, rejectedPushesForCurrentBranch);
             push(newPushInfo, adjustedPushResult, updateSettings, pushAttempt + 1);
             return; // don't notify - next push will notify all results in compound
           }
@@ -504,6 +432,16 @@ public final class GitPusher {
 
       result.createNotification().notify(myProject);
     }
+  }
+
+  @NotNull
+  private static GitPushSpecs retain(@NotNull GitPushSpecs initialSpecs, @NotNull Map<GitRepository, GitBranch> branchesToContinue) {
+    GitPushSpecs specs = new GitPushSpecs();
+    for (Map.Entry<GitRepository, GitBranchPair> entry : initialSpecs.getAllSpecs().entrySet()) {
+      GitRepository repository = entry.getKey();
+      specs.put(repository, entry.getValue(), initialSpecs.isSelected(repository) && branchesToContinue.keySet().contains(repository));
+    }
+    return specs;
   }
 
   private void saveUpdateSettings(@NotNull UpdateSettings updateSettings) {

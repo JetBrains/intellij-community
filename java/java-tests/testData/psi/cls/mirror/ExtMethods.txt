@@ -7,5 +7,5 @@ package pkg;
 interface ExtMethods {
     void m1();
 
-    void m2() { /* compiled code */ }
+    default void m2() { /* compiled code */ }
 }

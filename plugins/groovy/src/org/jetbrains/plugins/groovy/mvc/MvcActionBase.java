@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
 
   @Nullable
   public static Pair<MvcFramework, Module> guessFramework(AnActionEvent event) {
-    final Module module = event.getData(event.getPlace() == ActionPlaces.MAIN_MENU ? DataKeys.MODULE : DataKeys.MODULE_CONTEXT);
+    final Module module = event.getData(event.getPlace().equals(ActionPlaces.MAIN_MENU) ? LangDataKeys.MODULE : LangDataKeys.MODULE_CONTEXT);
 
     if (module != null) {
       MvcFramework commonPluginModuleFramework = MvcFramework.findCommonPluginModuleFramework(module);

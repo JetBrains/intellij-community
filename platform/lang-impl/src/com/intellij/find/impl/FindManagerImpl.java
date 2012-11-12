@@ -186,10 +186,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       @Override
       public void consume(FindModel findModel) {
         String stringToFind = findModel.getStringToFind();
-        if (stringToFind.isEmpty()) {
-          return;
+        if (!StringUtil.isEmpty(stringToFind)) {
+          FindSettings.getInstance().addStringToFind(stringToFind);
         }
-        FindSettings.getInstance().addStringToFind(stringToFind);
         if (!findModel.isMultipleFiles()) {
           setFindWasPerformed();
         }
@@ -215,7 +214,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         }
       };
       myFindDialog.setModal(false);
-    } else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
+    }
+    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
       myFindDialog.setModel(model);
       myFindDialog.setOkHandler(handler);
       return;

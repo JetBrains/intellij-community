@@ -17,8 +17,9 @@
 package com.intellij.find;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public abstract class FindSettings{
 
@@ -84,8 +85,10 @@ public abstract class FindSettings{
 
   public abstract void addDirectory(String s);
 
+  @NotNull
   public abstract String[] getRecentFindStrings();
 
+  @NotNull
   public abstract String[] getRecentReplaceStrings();
 
   /**
@@ -95,9 +98,11 @@ public abstract class FindSettings{
    * @return the recent file masks list
    * @since 5.0.2
    */
+  @NotNull
   public abstract String[] getRecentFileMasks();
 
-  public abstract ArrayList<String> getRecentDirectories();
+  @NotNull
+  public abstract List<String> getRecentDirectories();
 
   public abstract void setWithSubdirectories(boolean b);
 

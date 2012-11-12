@@ -251,6 +251,12 @@ public class QueueProcessor<T> {
     }
   }
 
+  public boolean hasPendingJobs() {
+    synchronized (myQueue) {
+      return !myQueue.isEmpty();
+    }
+  }
+
   private static class MyOverrideEquals {
     private final Object myDelegate;
 

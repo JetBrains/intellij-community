@@ -258,7 +258,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return flags;
   }
 
-  private static int packMethodFlags(final int access) {
+  private static int packMethodFlags(final int access, boolean isInterface) {
     int flags = packCommonFlags(access);
 
     if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
@@ -269,6 +269,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
     if ((access & Opcodes.ACC_ABSTRACT) != 0) {
       flags |= ModifierFlags.ABSTRACT_MASK;
+    }
+    else if (isInterface) {
+      flags |= ModifierFlags.DEFENDER_MASK;
     }
     if ((access & Opcodes.ACC_STRICT) != 0) {
       flags |= ModifierFlags.STRICTFP_MASK;
@@ -388,19 +391,19 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
     boolean isAnnotationMethod = myResult.isAnnotationType();
-    boolean isExtensionMethod = myResult.isInterface() && (access & Opcodes.ACC_ABSTRACT) == 0;
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, isExtensionMethod);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
-    String canonicalMethodName = isConstructor ? myResult.getName() : name;
+    final String canonicalMethodName = isConstructor ? myResult.getName() : name;
     final List<String> args = new ArrayList<String>();
     final List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
 
-    PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
+    final PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
 
-    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access));
+    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
+
     boolean parsedViaGenericSignature = false;
     String returnType;
     if (signature == null) {

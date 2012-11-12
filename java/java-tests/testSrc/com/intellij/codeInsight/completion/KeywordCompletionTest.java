@@ -27,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords";
 
-  private static final String[] FILE_SCOPE_KEYWORDS = new String[]{
-    "package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", null};
-  private static final String[] CLASS_SCOPE_KEYWORDS = new String[]{
-    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", null};
-  private static final String[] CLASS_SCOPE_KEYWORDS_2 = new String[]{
-    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract"};
+  private static final String[] FILE_SCOPE_KEYWORDS = {
+    "package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", "default", null};
+  private static final String[] CLASS_SCOPE_KEYWORDS = {
+    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", null};
+  private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
+    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default"};
+  private static final String[] INTERFACE_SCOPE_KEYWORDS = {
+    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default"};
 
   @NotNull
   @Override
@@ -46,6 +48,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testClassScope2() throws Exception { doTest(4, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope3() throws Exception { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() throws Exception { doTest(10, CLASS_SCOPE_KEYWORDS_2); }
+  public void testInterfaceScope() throws Exception { doTest(8, INTERFACE_SCOPE_KEYWORDS); }
   public void testAfterAnnotations() throws Exception { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
   public void testExtends1() throws Exception { doTest(2, "extends", "implements", null); }
   public void testExtends2() throws Exception { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
@@ -96,7 +99,6 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testContinue() throws Exception { doTest(false); }
   public void testThrowsOnSeparateLine() throws Exception { doTest(true); }
   public void testDefaultInAnno() throws Exception { doTest(false); }
-  public void testDefaultInExtMethod() throws Exception { doTest(false); }
   public void testNullInMethodCall() throws Exception { doTest(true); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(1, "new"); }
@@ -127,6 +129,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
   }
 
+  // todo: check included/excluded variants separately
   protected void doTest(int finalCount, @NonNls String... values) {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
     testByCount(finalCount, values);

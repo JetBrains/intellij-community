@@ -22,19 +22,29 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.AdapterProcessor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class FindInProjectManager {
   private final Project myProject;
@@ -49,7 +59,7 @@ public class FindInProjectManager {
     myProject = project;
   }
 
-  public void findInProject(DataContext dataContext) {
+  public void findInProject(@NotNull DataContext dataContext) {
     final boolean isOpenInNewTabEnabled;
     final boolean[] toOpenInNewTab = new boolean[1];
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
@@ -73,7 +83,6 @@ public class FindInProjectManager {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     FindUtil.initStringToFindWithSelection(findModel, editor);
 
-
     findManager.showFindDialog(findModel, new Runnable() {
       @Override
       public void run() {
@@ -95,9 +104,9 @@ public class FindInProjectManager {
         final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-
-        manager.searchAndShowUsages(
-            new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
+        UsageTarget usageTarget = StringUtil.isEmpty(findModel.getStringToFind()) ? createFileByTypeTarget(findModel)
+                                                         : new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind());
+        manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
           new Factory<UsageSearcher>() {
             @Override
             public UsageSearcher create() {
@@ -108,7 +117,7 @@ public class FindInProjectManager {
 
                   try {
                     FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
-                                                 new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
+                                                 true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
                   }
                   finally {
                     myIsFindInProgress = false;
@@ -124,6 +133,90 @@ public class FindInProjectManager {
       }
     });
     findModel.setOpenInNewTabVisible(false);
+  }
+
+  private static UsageTarget createFileByTypeTarget(@NotNull FindModel model) {
+    final String filter = model.getFileFilter();
+    return new UsageTarget() {
+      @Override
+      public void findUsages() {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public void findUsagesInEditor(@NotNull FileEditor editor) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
+        throw new IncorrectOperationException();
+      }
+
+      @Override
+      public boolean isValid() {
+        return true;
+      }
+
+      @Override
+      public boolean isReadOnly() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public VirtualFile[] getFiles() {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+
+      @Override
+      public void update() {
+      }
+
+      @Nullable
+      @Override
+      public String getName() {
+        return "Files with mask \""+filter+"\"";
+      }
+
+      @Nullable
+      @Override
+      public ItemPresentation getPresentation() {
+        return new ItemPresentation() {
+          @Nullable
+          @Override
+          public String getPresentableText() {
+            return getName();
+          }
+
+          @Nullable
+          @Override
+          public String getLocationString() {
+            return null;
+          }
+
+          @Nullable
+          @Override
+          public Icon getIcon(boolean unused) {
+            return null;
+          }
+        };
+      }
+
+      @Override
+      public void navigate(boolean requestFocus) {
+      }
+
+      @Override
+      public boolean canNavigate() {
+        return false;
+      }
+
+      @Override
+      public boolean canNavigateToSource() {
+        return false;
+      }
+    };
   }
 
   public boolean isWorkInProgress() {

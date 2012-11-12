@@ -35,6 +35,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceAdapter;
+import java.awt.dnd.DragSourceDropEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -61,7 +64,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     myProject = project;
     myPaletteManager = PaletteManager.getInstance(myProject);
     myProviders = Extensions.getExtensions(PaletteItemProvider.EP_NAME, project);
-    for(PaletteItemProvider provider: myProviders) {
+    for (PaletteItemProvider provider : myProviders) {
       provider.addListener(myPropertyChangeListener);
     }
 
@@ -71,6 +74,15 @@ public class PaletteWindow extends JPanel implements DataProvider {
     KeyStroke escStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
     new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
     refreshPalette();
+
+    DragSource.getDefaultDragSource().addDragSourceListener(new DragSourceAdapter() {
+      @Override
+      public void dragDropEnd(DragSourceDropEvent event) {
+        if (!event.getDropSuccess() && event.getDragSourceContext().getComponent() instanceof PaletteComponentList) {
+          clearActiveItem();
+        }
+      }
+    });
   }
 
   public void refreshPalette() {
@@ -78,7 +90,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   public void refreshPalette(@Nullable VirtualFile selectedFile) {
-    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+    for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       groupHeader.getComponentList().removeListSelectionListener(myListSelectionListener);
     }
     String[] oldTabNames = collectTabNames(myGroups);
@@ -97,15 +109,15 @@ public class PaletteWindow extends JPanel implements DataProvider {
       PaletteContentWindow contentWindow = new PaletteContentWindow();
       myScrollPane.getViewport().setView(contentWindow);
 
-      for(PaletteGroup group: currentGroups) {
+      for (PaletteGroup group : currentGroups) {
         addGroupToControl(group, contentWindow);
       }
 
       final JComponent view = (JComponent)myScrollPane.getViewport().getView();
       if (view != null) {
         view.revalidate();
-        for(Component component: view.getComponents()) {
-          ((JComponent) component).revalidate();
+        for (Component component : view.getComponents()) {
+          ((JComponent)component).revalidate();
         }
       }
     }
@@ -114,12 +126,12 @@ public class PaletteWindow extends JPanel implements DataProvider {
         remove(myScrollPane);
         add(myTabbedPane);
       }
-      for(String tabName: tabNames) {
+      for (String tabName : tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
         JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());
         myTabbedPane.add(tabName, scrollPane);
-        for(PaletteGroup group: currentGroups) {
+        for (PaletteGroup group : currentGroups) {
           if (group.getTabName().equals(tabName)) {
             addGroupToControl(group, contentWindow);
           }
@@ -142,7 +154,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   private static String[] collectTabNames(final Collection<PaletteGroup> groups) {
     Set<String> result = new TreeSet<String>();
-    for(PaletteGroup group: groups) {
+    for (PaletteGroup group : groups) {
       result.add(group.getTabName());
     }
     return ArrayUtil.toStringArray(result);
@@ -153,11 +165,11 @@ public class PaletteWindow extends JPanel implements DataProvider {
     if (selectedFile == null) {
       VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
       if (editedFiles.length > 0) {
-        selectedFile = editedFiles [0];
+        selectedFile = editedFiles[0];
       }
     }
     if (selectedFile != null) {
-      for(PaletteItemProvider provider: myProviders) {
+      for (PaletteItemProvider provider : myProviders) {
         PaletteGroup[] groups = provider.getActiveGroups(selectedFile);
         Collections.addAll(result, groups);
       }
@@ -178,23 +190,25 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   public void clearActiveItem() {
     if (getActiveItem() == null) return;
-    for(PaletteGroupHeader group: myGroupHeaders) {
+    for (PaletteGroupHeader group : myGroupHeaders) {
       group.getComponentList().clearSelection();
     }
     ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
     myPaletteManager.notifySelectionChanged(event);
   }
 
-  @Nullable public PaletteItem getActiveItem() {
-    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+  @Nullable
+  public PaletteItem getActiveItem() {
+    for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
-        return (PaletteItem) groupHeader.getComponentList().getSelectedValue();
+        return (PaletteItem)groupHeader.getComponentList().getSelectedValue();
       }
     }
     return null;
   }
 
-  @Nullable public Object getData(String dataId) {
+  @Nullable
+  public Object getData(String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
@@ -206,7 +220,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       Object data = item.getData(myProject, dataId);
       if (data != null) return data;
     }
-    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+    for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if ((groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) || groupHeader == myLastFocusedGroup) {
         return groupHeader.getGroup().getData(myProject, dataId);
       }
@@ -218,9 +232,9 @@ public class PaletteWindow extends JPanel implements DataProvider {
         activeScrollPane = myScrollPane;
       }
       else {
-        activeScrollPane = (JScrollPane) myTabbedPane.getSelectedComponent();
+        activeScrollPane = (JScrollPane)myTabbedPane.getSelectedComponent();
       }
-      PaletteContentWindow activeContentWindow = (PaletteContentWindow) activeScrollPane.getViewport().getView();
+      PaletteContentWindow activeContentWindow = (PaletteContentWindow)activeScrollPane.getViewport().getView();
       PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
       if (groupHeader != null) {
         return groupHeader.getGroup().getData(myProject, dataId);
@@ -235,18 +249,18 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   void setLastFocusedGroup(final PaletteGroupHeader focusedGroup) {
     myLastFocusedGroup = focusedGroup;
-    for(PaletteGroupHeader group: myGroupHeaders) {
+    for (PaletteGroupHeader group : myGroupHeaders) {
       group.getComponentList().clearSelection();
     }
   }
 
   private class MyListSelectionListener implements ListSelectionListener {
     public void valueChanged(ListSelectionEvent e) {
-      PaletteComponentList sourceList = (PaletteComponentList) e.getSource();
-      for(int i=e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+      PaletteComponentList sourceList = (PaletteComponentList)e.getSource();
+      for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
         if (sourceList.isSelectedIndex(i)) {
           // selection is being added
-          for(PaletteGroupHeader group: myGroupHeaders) {
+          for (PaletteGroupHeader group : myGroupHeaders) {
             if (group.getComponentList() != sourceList) {
               group.getComponentList().clearSelection();
             }
@@ -266,8 +280,8 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   private static class MyScrollPanePopupHandler extends PopupHandler {
     public void invokePopup(Component comp, int x, int y) {
-      JScrollPane scrollPane = (JScrollPane) comp;
-      PaletteContentWindow contentWindow = (PaletteContentWindow) scrollPane.getViewport().getView();
+      JScrollPane scrollPane = (JScrollPane)comp;
+      PaletteContentWindow contentWindow = (PaletteContentWindow)scrollPane.getViewport().getView();
       if (contentWindow != null) {
         PaletteGroupHeader groupHeader = contentWindow.getLastGroupHeader();
         if (groupHeader != null) {

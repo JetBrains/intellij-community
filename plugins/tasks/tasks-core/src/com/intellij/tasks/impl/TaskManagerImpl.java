@@ -134,7 +134,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
-  private long myProjectOpenedTime;
+  private long myProjectOpenedTime = 0;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -166,6 +166,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskDeactivated(final LocalTask task) {
+        assert task.getActivated() != 0;
         task.setTimeSpent(task.getTimeSpent() + System.currentTimeMillis() - task.getActivated());
       }
 
@@ -178,7 +179,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myProjectManagerListener = new ProjectManagerAdapter() {
       @Override
       public boolean canCloseProject(final Project project) {
+        assert myProjectOpenedTime != 0;
         getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
+        assert myActiveTask.getActivated() != 0;
         myActiveTask.setTimeSpent(myActiveTask.getTimeSpent() + System.currentTimeMillis() - myActiveTask.getActivated());
         return true;
       }
@@ -331,7 +334,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return ContainerUtil.filter(myTasks.values(), new Condition<LocalTask>() {
         @Override
         public boolean value(final LocalTask task) {
-          return withClosed || !task.isClosedLocally();
+          return withClosed || !isLocallyClosed(task);
         }
       });
     }
@@ -776,6 +779,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length > 0;
   }
 
+  @Override
+  public boolean isLocallyClosed(final LocalTask localTask) {
+    return isVcsEnabled() && localTask.getChangeLists().isEmpty();
+  }
+
   @Nullable
   @Override
   public LocalTask getAssociatedTask(LocalChangeList list) {
@@ -790,19 +798,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void associateWithTask(LocalChangeList changeList, final boolean withCurrent) {
+  public void trackContext(LocalChangeList changeList) {
     ChangeListInfo changeListInfo = new ChangeListInfo(changeList);
-    if (withCurrent) {
-      getActiveTask().addChangelist(changeListInfo);
-    }
-    else {
-      String changeListName = changeList.getName();
-      LocalTaskImpl task = createLocalTask(changeListName);
-      task.addChangelist(changeListInfo);
-      addTask(task);
-      if (changeList.isDefault()) {
-        activateTask(task, false, false);
-      }
+    String changeListName = changeList.getName();
+    LocalTaskImpl task = createLocalTask(changeListName);
+    task.addChangelist(changeListInfo);
+    addTask(task);
+    if (changeList.isDefault()) {
+      activateTask(task, false, false);
     }
   }
 
@@ -819,7 +822,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void decorateChangeList(LocalChangeList changeList, ColoredTreeCellRenderer cellRenderer, boolean selected,
                                  boolean expanded, boolean hasFocus) {
     LocalTask task = getAssociatedTask(changeList);
-    if (task != null) {
+    if (task != null && task.isIssue()) {
       cellRenderer.setIcon(task.getIcon());
     }
   }
@@ -846,11 +849,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String getChangelistName(Task task) {
-    TaskRepository repository = task.getRepository();
-    if (repository != null && myConfig.changelistNameFormat != null) {
+    if (task.isIssue() && myConfig.changelistNameFormat != null) {
       return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
     }
     return task.getSummary();
+  }
+
+  public ChangeListAdapter getChangeListListener() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myChangeListListener;
+    }
+    throw new UnsupportedOperationException();
   }
 
   public static class Config {
@@ -870,8 +879,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean clearContext = true;
     public boolean createChangelist = true;
     public boolean saveContextOnCommit = true;
-    public boolean associateWithTaskForNewChangelist = true;
-    public boolean associateWithCurrentTaskForNewChangelist = true;
+    public boolean trackContextForNewChangelist = false;
     public boolean markAsInProgress = false;
     public String changelistNameFormat = "{id} {summary}";
 

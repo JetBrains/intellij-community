@@ -40,7 +40,7 @@ public class ImportProjectAction extends ImportModuleAction {
   }
 
   @Override
-  protected List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+  public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
     Project newProject = NewProjectUtil.createFromWizard(wizard, project);
     return  newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
   }

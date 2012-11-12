@@ -56,15 +56,10 @@ public class CreateFromScratchMode extends WizardMode {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
-    return addSteps(context, modulesProvider, new StepSequence(), builders);
-  }
 
-  static StepSequence addSteps(WizardContext context,
-                               ModulesProvider modulesProvider,
-                               StepSequence sequence, ModuleBuilder[] builders) {
-
+    StepSequence sequence = new StepSequence();
     for (ModuleBuilder builder : builders) {
-      CreateFromTemplateMode.addStepsForBuilder(builder, context, modulesProvider, sequence);
+      sequence.addStepsForBuilder(builder, context, modulesProvider);
     }
     return sequence;
   }

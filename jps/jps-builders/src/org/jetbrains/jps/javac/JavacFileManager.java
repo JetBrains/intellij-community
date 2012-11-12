@@ -7,6 +7,7 @@ import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -79,13 +80,23 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   @Override
   public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
     checkCanceled();
-    return super.getFileForInput(location, packageName, relativeName);
+    final FileObject fo = super.getFileForInput(location, packageName, relativeName);
+    if (fo == null) {
+      // workaround javac bug (missing null-check): throwing exception here instead of returning null
+      throw new FileNotFoundException("Resource does not exist : " + location + '/' + packageName + '/' + relativeName);
+    }
+    return fo;
   }
 
   @Override
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
-    return super.getJavaFileForInput(location, className, kind);
+    final JavaFileObject fo = super.getJavaFileForInput(location, className, kind);
+    if (fo == null) {
+      // workaround javac bug (missing null-check): throwing exception here instead of returning null
+      throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
+    }
+    return fo;
   }
 
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {

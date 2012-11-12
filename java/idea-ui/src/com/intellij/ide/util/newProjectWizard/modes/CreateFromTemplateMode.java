@@ -18,7 +18,6 @@ package com.intellij.ide.util.newProjectWizard.modes;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -27,7 +26,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +68,7 @@ public class CreateFromTemplateMode extends WizardMode {
     for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
       Collection<ProjectTemplate> templates = entry.getValue();
       if (templates.size() == 1 &&
-          !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
 
         if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
           sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
@@ -80,16 +78,6 @@ public class CreateFromTemplateMode extends WizardMode {
       sorted.putValues(entry.getKey(), templates);
     }
     return sorted;
-  }
-
-  static void addStepsForBuilder(ModuleBuilder builder,
-                                         WizardContext context,
-                                         ModulesProvider modulesProvider,
-                                         StepSequence sequence) {
-    final String id = builder.getBuilderId();
-    for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      sequence.addSpecificStep(id, step);
-    }
   }
 
   @NotNull
@@ -115,7 +103,7 @@ public class CreateFromTemplateMode extends WizardMode {
     MultiMap<String, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {
-      addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider, sequence);
+      sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);
     }
     mySelectTemplateStep = new SelectTemplateStep(context, sequence, map);
     sequence.addCommonStep(mySelectTemplateStep);

@@ -30,7 +30,7 @@ public class DnDImage {
   }
 
   public DnDImage(Image image) {
-    this(image, null);
+    this(image, new Point(0,0));
   }
 
   public Image getImage() {

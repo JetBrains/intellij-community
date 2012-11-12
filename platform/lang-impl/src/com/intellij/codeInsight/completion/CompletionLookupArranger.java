@@ -502,11 +502,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
       String withoutSpaces = StringUtil.replace(textInserted, new String[]{" ", "\t", "\n"}, new String[]{"", "", ""});
       int spared = withoutSpaces.length() - indicator.getLookup().itemPattern(item).length();
-      if (completionChar != Lookup.NORMAL_SELECT_CHAR &&
-          completionChar != Lookup.REPLACE_SELECT_CHAR &&
-          completionChar != Lookup.AUTO_INSERT_SELECT_CHAR &&
-          completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
-          withoutSpaces.contains(String.valueOf(completionChar))) {
+      if (!LookupEvent.isSpecialCompletionChar(completionChar) && withoutSpaces.contains(String.valueOf(completionChar))) {
         spared--;
       }
       if (spared > 0) {

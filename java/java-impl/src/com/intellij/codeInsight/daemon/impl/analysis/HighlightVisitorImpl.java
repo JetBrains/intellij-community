@@ -705,14 +705,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
 
-  @Override public void visitModifierList(PsiModifierList list) {
+  @Override
+  public void visitModifierList(PsiModifierList list) {
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
-    if (!myHolder.hasErrorResults() && parent instanceof PsiMethod) {
-      myHolder.add(HighlightMethodUtil.checkMethodCanHaveBody((PsiMethod)parent));
-    }
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCanHaveBody(method));
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
         try {

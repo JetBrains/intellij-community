@@ -15,16 +15,17 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementAtomMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementConditionInfo;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -59,10 +60,10 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   @NotNull private final Map<Object, ArrangementAtomMatchConditionComponent> myComponents =
     new HashMap<Object, ArrangementAtomMatchConditionComponent>();
 
-  @NotNull private final ArrangementMatchingRulesList       myList;
-  @NotNull private final ArrangementStandardSettingsAware   myFilter;
-  @NotNull private final ArrangementColorsProvider          myColorsProvider;
-  
+  @NotNull private final ArrangementMatchingRulesControl  myControl;
+  @NotNull private final ArrangementStandardSettingsAware myFilter;
+  @NotNull private final ArrangementColorsProvider        myColorsProvider;
+
   @Nullable private ArrangementConditionInfo myConditionInfo;
   private int myRow = -1;
   private int myLabelWidth;
@@ -70,11 +71,11 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
                                        @NotNull ArrangementColorsProvider provider,
                                        @NotNull ArrangementNodeDisplayManager displayManager,
-                                       @NotNull ArrangementMatchingRulesList list)
+                                       @NotNull ArrangementMatchingRulesControl control)
   {
     myFilter = filter;
     myColorsProvider = provider;
-    myList = list;
+    myControl = control;
     init(displayManager);
     addMouseListener(new MouseAdapter() {
       @Override
@@ -101,7 +102,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     if (values == null || values.isEmpty()) {
       return;
     }
-    
+
     MultiRowFlowPanel valuesPanel = new MultiRowFlowPanel(
       FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
     );
@@ -137,8 +138,8 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       component.setSelected(false);
     }
 
-    ArrangementMatchingRulesListModel model = myList.getModel();
-    if (row < 0 || row >= model.size()) {
+    ArrangementMatchingRulesModel model = myControl.getModel();
+    if (row < 0 || row >= model.getSize()) {
       myRow = -1;
       return;
     }
@@ -168,7 +169,8 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   private void updateState() {
     assert myConditionInfo != null;
     ArrangementMatchCondition newCondition = myConditionInfo.buildCondition();
-    myList.getModel().set(myRow, newCondition);
+    myControl.getModel().set(myRow, newCondition == null ? null : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition)));
+    myControl.repaintRows(myRow, myRow, true);
     updateState(myRow);
   }
 
@@ -191,13 +193,16 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       return;
     }
     ArrangementAtomMatchConditionComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
-    if (clickedComponent == null || !clickedComponent.isEnabled()) {
-      return;
+    if (clickedComponent != null && clickedComponent.isEnabled()) {
+      onComponentSelected(clickedComponent);
     }
-    ArrangementAtomMatchCondition chosenCondition = clickedComponent.getMatchCondition();
+  }
+  
+  private void onComponentSelected(@NotNull ArrangementAtomMatchConditionComponent component) {
+    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
     boolean remove = myConditionInfo.hasCondition(chosenCondition.getValue());
-    clickedComponent.setSelected(!remove);
-    repaintComponent(clickedComponent);
+    component.setSelected(!remove);
+    repaintComponent(component);
     if (remove) {
       myConditionInfo.removeCondition(chosenCondition);
       updateState();
@@ -252,5 +257,10 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       SwingUtilities.convertPointFromScreen(location, this);
       repaint(location.x, location.y, bounds.width, bounds.height);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "matching rule editor";
   }
 }

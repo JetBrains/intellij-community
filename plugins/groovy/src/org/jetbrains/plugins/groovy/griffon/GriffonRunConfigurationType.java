@@ -16,11 +16,14 @@
 
 package org.jetbrains.plugins.groovy.griffon;
 
+import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +39,13 @@ public class GriffonRunConfigurationType implements ConfigurationType {
       @Override
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new GriffonRunConfiguration(this, project, GRIFFON_APPLICATION, "run-app");
+      }
+
+      @Override
+      public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
+        if (providerID == CompileStepBeforeRun.ID) {
+          task.setEnabled(false);
+        }
       }
     };
   }

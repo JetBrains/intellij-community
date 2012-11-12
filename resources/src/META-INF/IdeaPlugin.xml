@@ -456,6 +456,9 @@
     <localInspection language="JAVA" suppressId="deprecation" shortName="Deprecation" displayName="Deprecated API usage" groupName=""
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
+    <localInspection language="JAVA" suppressId="extensionSyntax" bundle="messages.InspectionsBundle" key="deprecated.defender.syntax.description"
+                     groupName="" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection"/>
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupName="XML"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.util.xml.DeprecatedClassUsageInspection"/>
     <localInspection language="JAVA" shortName="EqualsAndHashcode" bundle="messages.InspectionsBundle" key="inspection.equals.hashcode.display.name"

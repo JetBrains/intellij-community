@@ -78,12 +78,15 @@ final class GitCommitsByBranch {
     return new GitCommitsByBranch(res);
   }
 
-  @NotNull
-  public Collection<GitCommit> getAllCommits() {
-    Collection<GitCommit> commits = new ArrayList<GitCommit>();
-    for (GitPushBranchInfo branchInfo : myCommitsByBranch.values()) {
-      commits.addAll(branchInfo.getCommits());
+  boolean hasAnythingToPush() {
+    Collection<GitCommit> allCommits = new ArrayList<GitCommit>();
+    for (GitPushBranchInfo info : myCommitsByBranch.values()) {
+      if (info.getType() == GitPushBranchInfo.Type.NEW_BRANCH || info.getType() == GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET) {
+        return true;
+      }
+      allCommits.addAll(info.getCommits());
     }
-    return commits;
+    return !allCommits.isEmpty();
   }
+
 }

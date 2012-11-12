@@ -119,21 +119,13 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       });
     }
 
-    DefaultActionGroup stepping = new DefaultActionGroup();
+    DefaultActionGroup topToolbar = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
-    stepping.add(actionManager.getAction(DebuggerActions.SHOW_EXECUTION_POINT));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(DebuggerActions.STEP_OVER));
-    stepping.add(actionManager.getAction(DebuggerActions.STEP_INTO));
-    stepping.add(actionManager.getAction(DebuggerActions.FORCE_STEP_INTO));
-    stepping.add(actionManager.getAction(DebuggerActions.STEP_OUT));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(DebuggerActions.POP_FRAME));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(DebuggerActions.EVALUATE_EXPRESSION));
-    myUi.getOptions().setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
+    topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+    topToolbar.add(actionManager.getAction(DebuggerActions.POP_FRAME), new Constraints(Anchor.AFTER, XDebuggerActions.STEP_OUT));
+    topToolbar.add(Separator.getInstance(), new Constraints(Anchor.BEFORE, DebuggerActions.POP_FRAME));
+    topToolbar.add(Separator.getInstance(), new Constraints(Anchor.AFTER, DebuggerActions.POP_FRAME));
+    myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
@@ -258,38 +250,34 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     myDebugUIEnvironment.initLogs(myRunContentDescriptor, getLogManager());
 
-    DefaultActionGroup group = new DefaultActionGroup();
+    DefaultActionGroup leftToolbar = new DefaultActionGroup();
 
     if (executionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)executionResult).getRestartActions();
       if (actions != null) {
-        group.addAll(actions);
+        leftToolbar.addAll(actions);
         if (actions.length > 0) {
-          group.addSeparator();
+          leftToolbar.addSeparator();
         }
       }
     }
     final AnAction[] profileActions = executionResult.getActions();
-    group.addAll(profileActions);
+    leftToolbar.addAll(profileActions);
 
-    addActionToGroup(group, XDebuggerActions.RESUME);
-    addActionToGroup(group, XDebuggerActions.PAUSE);
-    addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+    leftToolbar.add(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
     if (executionResult instanceof DefaultExecutionResult) {
-      group.addAll(((DefaultExecutionResult)executionResult).getAdditionalStopActions());
+      AnAction[] actions = ((DefaultExecutionResult)executionResult).getAdditionalStopActions();
+      for (AnAction action : actions) {
+        leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
+      }
     }
 
-    group.addSeparator();
+    leftToolbar.addSeparator();
+    addAction(leftToolbar, DebuggerActions.EXPORT_THREADS);
+    addAction(leftToolbar, DebuggerActions.DUMP_THREADS);
+    leftToolbar.addSeparator();
 
-    addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
-    addActionToGroup(group, XDebuggerActions.MUTE_BREAKPOINTS);
-
-    group.addSeparator();
-    addAction(group, DebuggerActions.EXPORT_THREADS);
-    addAction(group, DebuggerActions.DUMP_THREADS);
-    group.addSeparator();
-
-    group.add(myUi.getOptions().getLayoutActions());
+    leftToolbar.add(myUi.getOptions().getLayoutActions());
 
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
     final AnAction commonSettingsList = myUi.getOptions().getSettingsActions();
@@ -317,15 +305,15 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     settings.addSeparator();
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
 
-    group.add(settings);
+    leftToolbar.add(settings);
 
-    group.addSeparator();
+    leftToolbar.addSeparator();
 
-    addActionToGroup(group, PinToolwindowTabAction.ACTION_NAME);
+    addActionToGroup(leftToolbar, PinToolwindowTabAction.ACTION_NAME);
 
-    myDebugUIEnvironment.initActions(myRunContentDescriptor, group);
+    myDebugUIEnvironment.initActions(myRunContentDescriptor, leftToolbar);
 
-    myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     return myRunContentDescriptor;
   }
