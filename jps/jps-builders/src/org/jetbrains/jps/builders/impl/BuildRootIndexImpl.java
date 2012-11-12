@@ -8,11 +8,9 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.ResourcesOnlyRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -20,10 +18,6 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -52,41 +46,6 @@ public class BuildRootIndexImpl implements BuildRootIndex {
         addRoots(dataPaths, rootsProviders, target, model, index, ignoredFileIndex);
       }
     }
-
-    // registering resource-only roots for annotation processor's generated classes
-    Map<String, List<ModuleBuildTarget>> moduleNameToTargetsMap = null;
-
-    final JpsProject project = model.getProject();
-    final ProjectPaths paths = new ProjectPaths(project);
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    for (ProcessorConfigProfile profile : compilerConfig.getAnnotationProcessingConfigurations()) {
-      if (!profile.isEnabled()) {
-        continue;
-      }
-      for (String moduleName : profile.getModuleNames()) {
-        if (moduleNameToTargetsMap == null) {
-          moduleNameToTargetsMap = buildModuleNameToTargetsMap(targetIndex); // lazy init
-        }
-        final List<ModuleBuildTarget> targets = moduleNameToTargetsMap.get(moduleName);
-        if (targets != null) {
-          for (ModuleBuildTarget target : targets) {
-            final File annotationOut = paths.getAnnotationProcessorGeneratedSourcesOutputDir(target.getModule(), target.isTests(), profile);
-            if (annotationOut != null) {
-              if (findJavaRootDescriptor(null, annotationOut) == null && !FileUtil.filesEqual(annotationOut, target.getOutputDir())) {
-                // register only if the root is not under already existing roots and not is the same as target's output root
-                final ResourcesOnlyRootDescriptor descriptor = new ResourcesOnlyRootDescriptor(annotationOut, target, true, false, "");
-                registerDescriptor(descriptor);
-                //noinspection unchecked
-                final List<BuildRootDescriptor> descriptors = (List<BuildRootDescriptor>)myRootsByTarget.get(target);
-                assert descriptors != null;
-                descriptors.add(descriptor);
-              }
-            }
-          }
-        }
-      }
-    }
-
   }
 
   private <R extends BuildRootDescriptor> void addRoots(BuildDataPaths dataPaths, Iterable<AdditionalRootsProviderService> rootsProviders,

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
+public final class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
   private final String myModuleName;
   private final JavaModuleBuildTargetType myTargetType;
 

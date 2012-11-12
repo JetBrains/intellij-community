@@ -34,7 +34,6 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.ResourcesOnlyRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -202,9 +201,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-          if (descriptor instanceof ResourcesOnlyRootDescriptor) {
-            return true;
-          }
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
