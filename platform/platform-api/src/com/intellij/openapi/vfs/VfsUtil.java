@@ -714,14 +714,15 @@ public class VfsUtil extends VfsUtilCore {
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean loadChildren, VirtualFile... files) {
+  @NotNull
+  public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile... files) {
     List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
     if (list.isEmpty()) {
-      return;
+      return Collections.emptyList();
     }
 
     for (VirtualFile file : list) {
-      if (loadChildren) {
+      if (reloadChildren) {
         file.getChildren();
       }
 
@@ -734,7 +735,12 @@ public class VfsUtil extends VfsUtilCore {
         }
       }
     }
+    return list;
+  }
 
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile... files) {
+    List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
+    if (list.isEmpty()) return;
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
   }
 }
