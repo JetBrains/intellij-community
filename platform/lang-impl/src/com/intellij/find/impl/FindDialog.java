@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -34,7 +33,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -58,6 +57,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -107,7 +107,7 @@ public class FindDialog extends DialogWrapper {
   private ScopeChooserCombo myScopeCombo;
   protected JLabel myReplacePrompt;
 
-  public FindDialog(Project project, FindModel model, Consumer<FindModel> myOkHandler){
+  public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
     super(project, true);
     myProject = project;
     myModel = model;
@@ -119,7 +119,6 @@ public class FindDialog extends DialogWrapper {
     init();
     initByModel();
     updateReplaceVisibility();
-    //myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());
   }
 
   private void updateTitle() {
@@ -148,9 +147,6 @@ public class FindDialog extends DialogWrapper {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
-    //if (myLivePreviewController != null) {
-    //  myLivePreviewController.cleanUp();
-    //}
     super.dispose();
   }
 
@@ -164,6 +160,7 @@ public class FindDialog extends DialogWrapper {
     return myModel.isReplaceState() ? "replaceTextDialog" : "findTextDialog";
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     if (!myModel.isMultipleFiles() && !myModel.isReplaceState() && myModel.isFindAllEnabled()) {
@@ -172,6 +169,7 @@ public class FindDialog extends DialogWrapper {
     return new Action[] { getOKAction(), getCancelAction(), getHelpAction() };
   }
 
+  @NotNull
   private Action getFindAllAction() {
     return myFindAllAction = new AbstractAction(FindBundle.message("find.all.button")) {
       @Override
@@ -227,13 +225,13 @@ public class FindDialog extends DialogWrapper {
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
 
-  private void revealWhitespaces(ComboBox comboBox) {
+  private void revealWhitespaces(@NotNull ComboBox comboBox) {
     ComboBoxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject, comboBox);
     comboBox.setEditor(comboBoxEditor);
     comboBox.setRenderer(new EditorComboBoxRenderer(comboBoxEditor));
   }
 
-  private void initCombobox(final ComboBox comboBox) {
+  private void initCombobox(@NotNull final ComboBox comboBox) {
     comboBox.setEditable(true);
     comboBox.setMaximumRowCount(8);
 
@@ -270,7 +268,7 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
-  private void handleComboBoxValueChanged(final ComboBox comboBox) {
+  private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
     Object item = comboBox.getEditor().getItem();
     if (item != null && !item.equals(comboBox.getSelectedItem())){
       int caretPosition = getCaretPosition(comboBox);
@@ -280,33 +278,22 @@ public class FindDialog extends DialogWrapper {
     validateFindButton();
   }
 
+  @NotNull
   public FindModel getModel() {
     return myModel;
   }
 
-  @Nullable
-  public FindModel getCurrentModel() {
-    FindModel validateModel = (FindModel)myModel.clone();
-    applyTo(validateModel, false);
-
-
-    if (getValidationInfo(validateModel) == null) {
-      return validateModel;
-    }
-    return null;
-  }
-
-  public void setOkHandler(Consumer<FindModel> okHandler) {
+  public void setOkHandler(@NotNull Consumer<FindModel> okHandler) {
     myOkHandler = okHandler;
   }
 
-  public void setModel(FindModel model) {
+  public void setModel(@NotNull FindModel model) {
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
   }
 
-  private static int getCaretPosition(JComboBox comboBox) {
+  private static int getCaretPosition(@NotNull JComboBox comboBox) {
     Component editorComponent = comboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField){
       JTextField textField = (JTextField)editorComponent;
@@ -315,7 +302,7 @@ public class FindDialog extends DialogWrapper {
     return 0;
   }
 
-  private static void setCaretPosition(JComboBox comboBox, int position) {
+  private static void setCaretPosition(@NotNull JComboBox comboBox, int position) {
     Component editorComponent = comboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField){
       JTextField textField = (JTextField)editorComponent;
@@ -324,18 +311,13 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void validateFindButton() {
-    final String toFind = getStringToFind();
-    if (toFind == null || toFind.length() == 0){
-      setOKStatus(false);
-      return;
-    }
+    boolean okStatus = canSearchThisString() ||
+                       myRbDirectory != null && myRbDirectory.isSelected() && StringUtil.isEmpty(getDirectory());
+    setOKStatus(okStatus);
+  }
 
-    if (myRbDirectory != null && myRbDirectory.isSelected() &&
-      (getDirectory() == null || getDirectory().length() == 0)){
-      setOKStatus(false);
-      return;
-    }
-    setOKStatus(true);
+  private boolean canSearchThisString() {
+    return !StringUtil.isEmpty(getStringToFind()) || !myModel.isReplaceState() && !myModel.isFindAllEnabled() && getFileTypeMask() != null;
   }
 
   private void setOKStatus(boolean value) {
@@ -360,7 +342,20 @@ public class FindDialog extends DialogWrapper {
     topOptionsPanel.setLayout(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, 0));
     topOptionsPanel.add(createFindOptionsPanel());
     optionsPanel.add(topOptionsPanel, gbConstraints);
-    if (!myModel.isMultipleFiles()){
+    if (myModel.isMultipleFiles()) {
+      optionsPanel.add(createGlobalScopePanel(), gbConstraints);
+      gbConstraints.weightx = 1;
+      gbConstraints.weighty = 1;
+      gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+
+      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+      optionsPanel.add(createFilterPanel(),gbConstraints);
+
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
+      optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
+      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    }
+    else {
       if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
         JPanel leftOptionsPanel = new JPanel();
         leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
@@ -379,19 +374,6 @@ public class FindDialog extends DialogWrapper {
         bottomOptionsPanel.add(createOriginPanel());
       }
     }
-    else{
-      optionsPanel.add(createGlobalScopePanel(), gbConstraints);
-      gbConstraints.weightx = 1;
-      gbConstraints.weighty = 1;
-      gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-      optionsPanel.add(createFilterPanel(),gbConstraints);
-
-      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
-      optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
-    }
 
     if (myModel.isOpenInNewTabVisible()){
       JPanel openInNewTabWindowPanel = new JPanel(new BorderLayout());
@@ -406,6 +388,7 @@ public class FindDialog extends DialogWrapper {
     return optionsPanel;
   }
 
+  @NotNull
   private JComponent createFilterPanel() {
     JPanel filterPanel = new JPanel();
     filterPanel.setLayout(new BorderLayout());
@@ -417,11 +400,16 @@ public class FindDialog extends DialogWrapper {
     filterPanel.add(myUseFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
     initFileFilter(myFileFilter, myUseFileFilter);
-
+    myUseFileFilter.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validateFindButton();
+      }
+    });
     return filterPanel;
   }
 
-  public static void initFileFilter(final JComboBox fileFilter, final JCheckBox useFileFilter) {
+  public static void initFileFilter(@NotNull final JComboBox fileFilter, @NotNull final JCheckBox useFileFilter) {
     fileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
     for(int i=fileMasks.length-1; i >= 0; i--) {
@@ -433,13 +421,13 @@ public class FindDialog extends DialogWrapper {
       new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if (!useFileFilter.isSelected()) {
-            fileFilter.setEnabled(false);
-          }
-          else {
+          if (useFileFilter.isSelected()) {
             fileFilter.setEnabled(true);
             fileFilter.getEditor().selectAll();
             fileFilter.getEditor().getEditorComponent().requestFocusInWindow();
+          }
+          else {
+            fileFilter.setEnabled(false);
           }
         }
       }
@@ -458,13 +446,13 @@ public class FindDialog extends DialogWrapper {
     ValidationInfo validationInfo = getValidationInfo(validateModel);
 
     if (validationInfo == null) {
-
       myModel.copyFrom(validateModel);
       updateFindSettings();
 
       super.doOKAction();
       myOkHandler.consume(myModel);
-    } else {
+    }
+    else {
       String message = validationInfo.message;
       if (message != null) {
         Messages.showMessageDialog(
@@ -522,7 +510,8 @@ public class FindDialog extends DialogWrapper {
     return true;
   }
 
-  private ValidationInfo getValidationInfo(FindModel model) {
+  @Nullable("null means OK")
+  private ValidationInfo getValidationInfo(@NotNull FindModel model) {
     if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
       PsiDirectory directory = FindInProjectUtil.getPsiDirectory(model, myProject);
       if (directory == null) {
@@ -530,12 +519,12 @@ public class FindDialog extends DialogWrapper {
       }
     }
 
-    String toFind = (String)myInputComboBox.getSelectedItem();
-    if (toFind != null && toFind.isEmpty()) {
+    if (!canSearchThisString()) {
       return new ValidationInfo("String to find is empty", myInputComboBox);
     }
 
     if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {
+      String toFind = getStringToFind();
       try {
         boolean isCaseSensitive = myCbCaseSensitive != null && myCbCaseSensitive.isSelected() && myCbCaseSensitive.isEnabled();
         Pattern pattern =
@@ -549,10 +538,10 @@ public class FindDialog extends DialogWrapper {
       }
     }
 
-    final String mask = (myFileFilter == null || !myUseFileFilter.isSelected()) ? null : (String)myFileFilter.getSelectedItem();
+    final String mask = getFileTypeMask();
 
     if (mask != null) {
-      if (mask.length() == 0) {
+      if (mask.isEmpty()) {
         return new ValidationInfo(FindBundle.message("find.filter.empty.file.mask.error"), myFileFilter);
       }
       else {
@@ -588,10 +577,10 @@ public class FindDialog extends DialogWrapper {
   }
 
   private boolean isSkipResultsWhenOneUsage() {
-    return myCbToSkipResultsWhenOneUsage!=null &&
-    myCbToSkipResultsWhenOneUsage.isSelected();
+    return myCbToSkipResultsWhenOneUsage!=null && myCbToSkipResultsWhenOneUsage.isSelected();
   }
 
+  @NotNull
   private JPanel createFindOptionsPanel() {
     JPanel findOptionsPanel = new JPanel();
     findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group"), true));
@@ -653,11 +642,6 @@ public class FindDialog extends DialogWrapper {
     myCbCaseSensitive.addActionListener(actionListener);
     myCbPreserveCase.addActionListener(actionListener);
 
-//    if(isReplaceState) {
-//      myCbPromptOnReplace = new JCheckBox("Prompt on replace", true);
-//      myCbPromptOnReplace.setMnemonic('P');
-//      findOptionsPanel.add(myCbPromptOnReplace);
-//    }
     return findOptionsPanel;
   }
 
@@ -666,7 +650,7 @@ public class FindDialog extends DialogWrapper {
     if (myReplaceComboBox != null) updateFileTypeForEditorComponent(myReplaceComboBox);
   }
 
-  private void updateFileTypeForEditorComponent(final ComboBox inputComboBox) {
+  private void updateFileTypeForEditorComponent(@NotNull ComboBox inputComboBox) {
     final Component editorComponent = inputComboBox.getEditor().getEditorComponent();
 
     if (editorComponent instanceof EditorTextField) {
@@ -687,20 +671,23 @@ public class FindDialog extends DialogWrapper {
   private void updateControls() {
     if (myCbRegularExpressions.isSelected()) {
       myCbWholeWordsOnly.makeUnselectable(false);
-    } else {
+    }
+    else {
       myCbWholeWordsOnly.makeSelectable();
     }
     if (myModel.isReplaceState()) {
       if (myCbRegularExpressions.isSelected() || myCbCaseSensitive.isSelected()) {
         myCbPreserveCase.makeUnselectable(false);
-      } else {
+      }
+      else {
         myCbPreserveCase.makeSelectable();
       }
 
       if (myCbPreserveCase.isSelected()) {
         myCbRegularExpressions.makeUnselectable(false);
         myCbCaseSensitive.makeUnselectable(false);
-      } else {
+      }
+      else {
         myCbRegularExpressions.makeSelectable();
         myCbCaseSensitive.makeSelectable();
       }
@@ -712,6 +699,7 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
   private JPanel createDirectionPanel() {
     JPanel directionPanel = new JPanel();
     directionPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.direction.group"), true));
@@ -728,6 +716,7 @@ public class FindDialog extends DialogWrapper {
     return directionPanel;
   }
 
+  @NotNull
   private JComponent createGlobalScopePanel() {
     JPanel scopePanel = new JPanel();
     scopePanel.setLayout(new GridBagLayout());
@@ -830,20 +819,15 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbModule);
     bgScope.add(myRbCustomScope);
 
-    myRbProject.addActionListener(new ActionListener() {
+    ActionListener validateAll = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
       }
-    });
-    myRbCustomScope.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        validateScopeControls();
-        validateFindButton();
-      }
-    });
+    };
+    myRbProject.addActionListener(validateAll);
+    myRbCustomScope.addActionListener(validateAll);
 
     myRbDirectory.addActionListener(new ActionListener() {
       @Override
@@ -871,7 +855,6 @@ public class FindDialog extends DialogWrapper {
           @Override
           public void consume(final List<VirtualFile> files) {
             myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
-            //validateFindButton();
           }
         });
       }
@@ -880,13 +863,15 @@ public class FindDialog extends DialogWrapper {
     return scopePanel;
   }
 
-  private static StateRestoringCheckBox createCheckbox(String message) {
+  @NotNull
+  private static StateRestoringCheckBox createCheckbox(@NotNull String message) {
     final StateRestoringCheckBox cb = new StateRestoringCheckBox(message);
     cb.setFocusable(false);
     return cb;
   }
 
-  private static StateRestoringCheckBox createCheckbox(boolean selected, String message) {
+  @NotNull
+  private static StateRestoringCheckBox createCheckbox(boolean selected, @NotNull String message) {
     final StateRestoringCheckBox cb = new StateRestoringCheckBox(message, selected);
     cb.setFocusable(false);
     return cb;
@@ -906,6 +891,7 @@ public class FindDialog extends DialogWrapper {
     myScopeCombo.setEnabled(myRbCustomScope.isSelected());
   }
 
+  @NotNull
   private JPanel createScopePanel() {
     JPanel scopePanel = new JPanel();
     scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), true));
@@ -931,6 +917,7 @@ public class FindDialog extends DialogWrapper {
     return scopePanel;
   }
 
+  @NotNull
   private JPanel createOriginPanel() {
     JPanel originPanel = new JPanel();
     originPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.origin.group"), true));
@@ -947,10 +934,13 @@ public class FindDialog extends DialogWrapper {
     return originPanel;
   }
 
+  @NotNull
   private String getStringToFind() {
     String string = (String)myInputComboBox.getEditor().getItem();
     return string == null ? "" : string;
   }
+
+  @NotNull
   private String getStringToReplace() {
     String item = (String)myReplaceComboBox.getEditor().getItem();
     return item == null ? "" : item;
@@ -960,7 +950,7 @@ public class FindDialog extends DialogWrapper {
     return (String)myDirectoryComboBox.getSelectedItem();
   }
 
-  private static void setStringsToComboBox(String[] strings, ComboBox combo, String selected) {
+  private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox combo, String selected) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
     }
@@ -973,11 +963,11 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
-  private void setDirectories(ArrayList strings, String directoryName) {
+  private void setDirectories(@NotNull List<String> strings, String directoryName) {
     if (myDirectoryComboBox.getItemCount() > 0){
       myReplaceComboBox.removeAllItems();
     }
-    if (directoryName != null && directoryName.length() > 0){
+    if (directoryName != null && !directoryName.isEmpty()){
       if (strings.contains(directoryName)){
         strings.remove(directoryName);
       }
@@ -993,8 +983,7 @@ public class FindDialog extends DialogWrapper {
 
 
 
-  private void applyTo(FindModel model, boolean findAll) {
-
+  private void applyTo(@NotNull FindModel model, boolean findAll) {
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
 
     if (model.isReplaceState()) {
@@ -1008,7 +997,7 @@ public class FindDialog extends DialogWrapper {
 
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     String stringToFind = getStringToFind();
-    if (stringToFind.length() > 0) {
+    if (!stringToFind.isEmpty()) {
       model.setStringToFind(stringToFind);
     }
 
@@ -1058,12 +1047,17 @@ public class FindDialog extends DialogWrapper {
 
     model.setFindAll(findAll);
 
+    String mask = getFileTypeMask();
+    model.setFileFilter(mask);
+  }
+
+  @Nullable
+  private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
       mask = (String)myFileFilter.getSelectedItem();
     }
-    model.setFileFilter(mask);
-
+    return mask;
   }
 
 
@@ -1081,7 +1075,7 @@ public class FindDialog extends DialogWrapper {
       if (!StringUtil.isEmptyOrSpaces(dirName)) {
         VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(dirName);
         if (dir != null) {
-          Module module = ModuleUtil.findModuleForFile(dir, myProject);
+          Module module = ModuleUtilCore.findModuleForFile(dir, myProject);
           if (module != null) {
             myModuleComboBox.setSelectedItem(module.getName());
           }
@@ -1133,7 +1127,7 @@ public class FindDialog extends DialogWrapper {
 
       myCbWithSubdirectories.setSelected(myModel.isWithSubdirectories());
 
-      if (myModel.getFileFilter()!=null && myModel.getFileFilter().length() > 0) {
+      if (myModel.getFileFilter()!=null && !myModel.getFileFilter().isEmpty()) {
         myFileFilter.setSelectedItem(myModel.getFileFilter());
         myFileFilter.setEnabled(true);
         myUseFileFilter.setSelected(true);
@@ -1168,7 +1162,6 @@ public class FindDialog extends DialogWrapper {
       setStringsToComboBox(FindSettings.getInstance().getRecentReplaceStrings(), myReplaceComboBox, myModel.getStringToReplace());
     }
     updateControls();
-
   }
 }
 
