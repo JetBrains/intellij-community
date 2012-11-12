@@ -18,7 +18,6 @@ package com.intellij.ide.util.newProjectWizard.modes;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -82,16 +81,6 @@ public class CreateFromTemplateMode extends WizardMode {
     return sorted;
   }
 
-  static void addStepsForBuilder(ModuleBuilder builder,
-                                         WizardContext context,
-                                         ModulesProvider modulesProvider,
-                                         StepSequence sequence) {
-    final String id = builder.getBuilderId();
-    for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      sequence.addSpecificStep(id, step);
-    }
-  }
-
   @NotNull
   @Override
   public String getDisplayName(WizardContext context) {
@@ -115,7 +104,7 @@ public class CreateFromTemplateMode extends WizardMode {
     MultiMap<String, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {
-      addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider, sequence);
+      sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);
     }
     mySelectTemplateStep = new SelectTemplateStep(context, sequence, map);
     sequence.addCommonStep(mySelectTemplateStep);
