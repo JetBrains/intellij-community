@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * ChangeListManager updates scheduler.
@@ -45,7 +46,7 @@ public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private static final String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
-  private final ScheduledExecutorService myExecutor;
+  private final AtomicReference<ScheduledExecutorService> myExecutor;
   private final Runnable myDelegate;
   private final Object myLock;
   private volatile boolean myStarted;
@@ -62,7 +63,7 @@ public class UpdateRequestsQueue {
   private final boolean myTrackHeavyLatch;
   private final Getter<Boolean> myIsStoppedGetter;
 
-  public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final Runnable delegate) {
+  public UpdateRequestsQueue(final Project project, final AtomicReference<ScheduledExecutorService> executor, final Runnable delegate) {
     myProject = project;
     myExecutor = executor;
     myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty(ourHeavyLatchOptimization));
@@ -107,7 +108,7 @@ public class UpdateRequestsQueue {
           }
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
-          myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
+          myExecutor.get().schedule(runnable, 300, TimeUnit.MILLISECONDS);
           LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
         }
       }
@@ -118,6 +119,15 @@ public class UpdateRequestsQueue {
     synchronized (myLock) {
       myStopped = true;
     }
+  }
+
+  public void forceGo() {
+    synchronized (myLock) {
+      myStopped = false;
+      myRequestSubmitted = false;
+      myRequestRunning = false;
+    }
+    schedule();
   }
 
   public void go() {

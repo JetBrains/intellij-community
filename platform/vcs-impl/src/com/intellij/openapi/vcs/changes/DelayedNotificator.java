@@ -21,22 +21,23 @@ import com.intellij.util.EventDispatcher;
 
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DelayedNotificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
   private final EventDispatcher<ChangeListListener> myDispatcher;
   // this is THE SAME service as is used for change list manager update (i.e. one thread for both processes)
-  private final ScheduledExecutorService myService;
+  private final AtomicReference<ScheduledExecutorService> myService;
   private final MyProxyDispatcher myProxyDispatcher;
 
-  public DelayedNotificator(EventDispatcher<ChangeListListener> dispatcher, final ScheduledExecutorService service) {
+  public DelayedNotificator(EventDispatcher<ChangeListListener> dispatcher, final AtomicReference<ScheduledExecutorService> service) {
     myDispatcher = dispatcher;
     myService = service;
     myProxyDispatcher = new MyProxyDispatcher();
   }
 
   public void callNotify(final ChangeListCommand command) {
-    myService.execute(new Runnable() {
+    myService.get().execute(new Runnable() {
       public void run() {
         try {
           command.doNotify(myDispatcher);
@@ -54,7 +55,7 @@ public class DelayedNotificator {
 
   private class MyProxyDispatcher implements ChangeListListener {
     public void changeListAdded(final ChangeList list) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListAdded(list);
         }
@@ -62,7 +63,7 @@ public class DelayedNotificator {
     }
 
     public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changesRemoved(changes, fromList);
         }
@@ -70,7 +71,7 @@ public class DelayedNotificator {
     }
 
     public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changesAdded(changes, toList);
         }
@@ -78,7 +79,7 @@ public class DelayedNotificator {
     }
 
     public void changeListRemoved(final ChangeList list) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListRemoved(list);
         }
@@ -86,7 +87,7 @@ public class DelayedNotificator {
     }
 
     public void changeListChanged(final ChangeList list) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListChanged(list);
         }
@@ -94,7 +95,7 @@ public class DelayedNotificator {
     }
 
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListRenamed(list, oldName);
         }
@@ -102,7 +103,7 @@ public class DelayedNotificator {
     }
 
     public void changeListCommentChanged(final ChangeList list, final String oldComment) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment);
         }
@@ -110,7 +111,7 @@ public class DelayedNotificator {
     }
 
     public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changesMoved(changes, fromList, toList);
         }
@@ -118,7 +119,7 @@ public class DelayedNotificator {
     }
 
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList);
         }
@@ -126,7 +127,7 @@ public class DelayedNotificator {
     }
 
     public void unchangedFileStatusChanged() {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().unchangedFileStatusChanged();
         }
@@ -134,7 +135,7 @@ public class DelayedNotificator {
     }
 
     public void changeListUpdateDone() {
-      myService.execute(new Runnable() {
+      myService.get().execute(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().changeListUpdateDone();
         }
