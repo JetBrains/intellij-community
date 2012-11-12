@@ -234,23 +234,10 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
 
     if (myEditorRow >= 0) {
-      if (myEditorRow == selectedRow) {
-        mySkipSelectionChange = true;
-        try {
-          getSelectionModel().setSelectionInterval(myEditorRow - 1, myEditorRow - 1);
-        }
-        finally {
-          mySkipSelectionChange = false;
-        }
-        return;
-      }
-      else {
-        hideEditor();
-      }
+      hideEditor();
     }
     
     // There is a possible case that there was an active editor in a row before the selected.
-    selectedRow = selectionModel.getMinSelectionIndex();
     ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
     if (toEdit != null) {
       showEditor(selectedRow);
@@ -266,7 +253,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     mySkipSelectionChange = true;
     try {
       getModel().removeRow(myEditorRow);
-      getSelectionModel().clearSelection();
+      ListSelectionModel selectionModel = getSelectionModel();
+      if (selectionModel.getMinSelectionIndex() == selectionModel.getMaxSelectionIndex()) {
+        // One row is selected and editor for it is collapsed.
+        selectionModel.clearSelection();
+      }
     }
     finally {
       mySkipSelectionChange = false;
@@ -392,8 +383,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
 
     @Override
     public boolean stopCellEditing() {
+      boolean result = super.stopCellEditing();
       myValue = null;
-      return true;
+      return result;
     }
   }
   
