@@ -324,23 +324,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     mySdk = sdk;
     final Application app = ApplicationManager.getApplication();
     final MessageBusConnection connection = app.getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-        for (VFileEvent event : events) {
-          final VirtualFile file = event.getFile();
-          if (file != null) {
-            for (VirtualFile root : roots) {
-              if (VfsUtilCore.isAncestor(root, file, false)) {
-                clearCaches();
-                return;
-              }
-            }
-          }
-        }
-      }
-    });
+    if (!PySdkUtil.isRemote(sdk)) {
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, new MySdkRootWatcher());
+    }
   }
 
   public Sdk getSdk() {
@@ -772,5 +758,23 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void showInstallationError(Project project, String title, String description) {
     PyPIPackageUtil.showError(project, title, description);
+  }
+
+  private class MySdkRootWatcher extends BulkFileListener.Adapter {
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+      for (VFileEvent event : events) {
+        final VirtualFile file = event.getFile();
+        if (file != null) {
+          for (VirtualFile root : roots) {
+            if (VfsUtilCore.isAncestor(root, file, false)) {
+              clearCaches();
+              return;
+            }
+          }
+        }
+      }
+    }
   }
 }
