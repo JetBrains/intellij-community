@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -46,6 +44,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -458,7 +457,7 @@ public class PythonSdkType extends SdkType {
           updateSdkRootsFromSysPath(sdk, sdkModificator, indicator);
           updateUserAddedPaths(sdk, sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            refreshSkeletonsOfSDK(project, sdk, getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), null);
+            PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk, getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), null);
             PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           }
         }
@@ -723,60 +722,6 @@ public class PythonSdkType extends SdkType {
 
   public boolean isRootTypeApplicable(final OrderRootType type) {
     return type == OrderRootType.CLASSES;
-  }
-
-  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk) throws InvalidSdkException {
-    refreshSkeletonsOfSDK(project, sdk, findSkeletonsPath(sdk), new Ref<Boolean>(false));
-  }
-
-  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag)
-    throws InvalidSdkException {
-    final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
-    final List<String> failedSdks = new SmartList<String>();
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    List<String> sdk_errors;
-    final String homePath = sdk.getHomePath();
-    if (skeletonsPath == null) {
-      LOG.info("Could not find skeletons path for SDK path " + homePath);
-    }
-    else {
-      LOG.info("Refreshing skeletons for " + homePath);
-      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
-      if (sdk_errors.size() > 0) {
-        String sdkName = sdk.getName();
-        List<String> knownErrors = errors.get(sdkName);
-        if (knownErrors == null) {
-          errors.put(sdkName, sdk_errors);
-        }
-        else {
-          knownErrors.addAll(sdk_errors);
-        }
-      }
-    }
-    if (failedSdks.size() > 0 || errors.size() > 0) {
-      int module_errors = 0;
-      for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
-      String message;
-      if (failedSdks.size() > 0) {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failedSdks.size());
-      }
-      else {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
-      }
-      Notifications.Bus.notify(
-        new Notification(
-          SKELETONS_TOPIC, PyBundle.message("sdk.some.skeletons.failed"), message,
-          NotificationType.WARNING,
-          new NotificationListener() {
-            @Override
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              new SkeletonErrorsDialog(errors, failedSdks).setVisible(true);
-            }
-          }
-        )
-      );
-    }
   }
 
   public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {

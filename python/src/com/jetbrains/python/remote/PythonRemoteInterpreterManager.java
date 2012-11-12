@@ -17,7 +17,7 @@ import com.intellij.remotesdk.RemoteSshProcess;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.ui.RemoteProjectSettings;
-import com.jetbrains.python.sdk.PySkeletonGenerator;
+import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
