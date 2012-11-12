@@ -178,7 +178,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return false;
+        return myMatchers != null && myMatchers.length > 0;
       }
 
       @Override
