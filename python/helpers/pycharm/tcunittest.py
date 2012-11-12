@@ -47,7 +47,7 @@ class TeamcityTestResult(TestResult):
     quot = val[0]
     count = 1
     quote_ind = val[count:].find(quot)
-    while val[count+quote_ind-1] == "\\":
+    while val[count+quote_ind-1] == "\\" and quote_ind != -1:
       count = count + quote_ind + 1
       quote_ind = val[count:].find(quot)
 
@@ -60,7 +60,7 @@ class TeamcityTestResult(TestResult):
       val = val[val_index+2:].strip()
       quot = val[0]
       quote_ind = val[count:].find(quot)
-      while val[count+quote_ind-1] == "\\":
+      while val[count+quote_ind-1] == "\\" and quote_ind != -1:
         count = count + quote_ind + 1
         quote_ind = val[count:].find(quot)
       return val[0:quote_ind+count+1]
