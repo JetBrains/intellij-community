@@ -376,6 +376,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         }
 
         it.remove();
+        mySharedConfigurations.remove(settings.getConfiguration().getUniqueID());
+        myConfigurationToBeforeTasksMap.remove(settings.getConfiguration());
+        myRecentlyUsedTemporaries.remove(settings.getConfiguration());
         invalidateConfigurationIcon(configuration);
         myDispatcher.getMulticaster().runConfigurationRemoved(configuration);
         break;
@@ -411,9 +414,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (!myOrdered) { //compatibility
       List<Pair<String, RunnerAndConfigurationSettings>> order
         = new ArrayList<Pair<String, RunnerAndConfigurationSettings>>(myConfigurations.size());
+      final List<String> folderNames = new ArrayList<String>();
       for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
         order.add(Pair.create(getUniqueName(each.getConfiguration()), each));
+        String folderName = each.getFolderName();
+        if (folderName != null && !folderNames.contains(folderName)) {
+          folderNames.add(folderName);
+        }
       }
+      folderNames.add(null);
       myConfigurations.clear();
 
       if (myOrder.isEmpty()) {
@@ -435,6 +444,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         Collections.sort(order, new Comparator<Pair<String, RunnerAndConfigurationSettings>>() {
           @Override
           public int compare(Pair<String, RunnerAndConfigurationSettings> o1, Pair<String, RunnerAndConfigurationSettings> o2) {
+            int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
+            int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
+            if (i1 != i2) {
+              return i1 - i2;
+            }
             boolean temporary1 = o1.getSecond().isTemporary();
             boolean temporary2 = o2.getSecond().isTemporary();
             if (temporary1 == temporary2) {
