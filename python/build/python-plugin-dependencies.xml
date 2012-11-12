@@ -1,0 +1,8 @@
+<idea-plugin>
+  <!-- This version of python-plugin-dependencies.xml is used in release versions of the
+       Python plugin and contains the real list of optional dependencies for the Python plugin.
+  -->
+  <depends optional="true" config-file="python-uml.xml">com.intellij.diagram</depends>
+  <depends optional="true" config-file="python-js-debugger-plugin-common.xml">JavaScriptDebugger</depends>
+  <depends optional="true" config-file="django-db-config.xml">com.intellij.persistence.database</depends>
+</idea-plugin>

@@ -19,6 +19,11 @@
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary
+       plugins are loaded as separate plugins) and another is used for the real release build (when auxiliary
+       plugins are packed inside the Python plugin jar) -->
+  <xi:include href="/META-INF/python-plugin-dependencies.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
