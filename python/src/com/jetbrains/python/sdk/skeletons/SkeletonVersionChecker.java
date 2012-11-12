@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.PythonHelpersLocator;

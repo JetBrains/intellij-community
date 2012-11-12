@@ -19,6 +19,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +55,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
           if (!containsAt && !containsNose && !containsPy) continue;
           SDKLOOP:
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
+            if (PySdkUtil.isRemote(sdk)) {
+              continue;
+            }
             for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
               if (path.contains(root)) {
                 if (containsNose) {
@@ -63,7 +67,8 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
                 else if (containsPy) {
                   updateTestFrameworks(sdk, PyNames.PY_TEST);
                   break SDKLOOP;
-                } else {
+                }
+                else {
                   updateTestFrameworks(sdk, PyNames.AT_TEST);
                   break SDKLOOP;
                 }

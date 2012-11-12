@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessOutput;
@@ -11,6 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -19,7 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
+import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVersionString;
 
 /**
  * @author traff
@@ -56,6 +59,9 @@ public class PySkeletonGenerator {
 
   public String getSkeletonsPath() {
     return mySkeletonsPath;
+  }
+
+  public void prepare() {
   }
 
   protected void generateSkeleton(String modname,

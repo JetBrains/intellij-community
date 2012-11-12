@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.PyBundle;

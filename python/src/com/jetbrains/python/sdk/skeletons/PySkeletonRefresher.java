@@ -1,14 +1,16 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -24,18 +26,25 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
+import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVersionString;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -72,6 +81,63 @@ public class PySkeletonRefresher {
   private SkeletonVersionChecker myVersionChecker;
 
   private PySkeletonGenerator mySkeletonsGenerator;
+
+  public static void refreshSkeletonsOfSdk(@Nullable Project project, @NotNull Sdk sdk) throws InvalidSdkException {
+    refreshSkeletonsOfSdk(project, sdk, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false));
+  }
+
+  public static void refreshSkeletonsOfSdk(@Nullable Project project,
+                                           @NotNull Sdk sdk,
+                                           String skeletonsPath,
+                                           @Nullable Ref<Boolean> migrationFlag)
+    throws InvalidSdkException {
+    final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
+    final List<String> failedSdks = new SmartList<String>();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    List<String> sdk_errors;
+    final String homePath = sdk.getHomePath();
+    if (skeletonsPath == null) {
+      LOG.info("Could not find skeletons path for SDK path " + homePath);
+    }
+    else {
+      LOG.info("Refreshing skeletons for " + homePath);
+      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
+      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
+      if (sdk_errors.size() > 0) {
+        String sdkName = sdk.getName();
+        List<String> knownErrors = errors.get(sdkName);
+        if (knownErrors == null) {
+          errors.put(sdkName, sdk_errors);
+        }
+        else {
+          knownErrors.addAll(sdk_errors);
+        }
+      }
+    }
+    if (failedSdks.size() > 0 || errors.size() > 0) {
+      int module_errors = 0;
+      for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
+      String message;
+      if (failedSdks.size() > 0) {
+        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failedSdks.size());
+      }
+      else {
+        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
+      }
+      Notifications.Bus.notify(
+        new Notification(
+          PythonSdkType.SKELETONS_TOPIC, PyBundle.message("sdk.some.skeletons.failed"), message,
+          NotificationType.WARNING,
+          new NotificationListener() {
+            @Override
+            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+              new SkeletonErrorsDialog(errors, failedSdks).setVisible(true);
+            }
+          }
+        )
+      );
+    }
+  }
 
   /**
    * Creates a new object that refreshes skeletons of given SDK.
@@ -165,6 +231,8 @@ public class PySkeletonRefresher {
       skeletonsDir.mkdirs();
     }
     final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
+
+    mySkeletonsGenerator.prepare();
 
     myBlacklist = loadBlacklist();
 
@@ -283,8 +351,16 @@ public class PySkeletonRefresher {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
       cleanUpSkeletons(skeletonsDir);
     }
+    if (PySdkUtil.isRemote(mySdk)) {
+      try {
+        ((PyPackageManagerImpl) PyPackageManager.getInstance(mySdk)).loadPackages();
+      }
+      catch (PyExternalProcessException e) {
+        // ignore - already logged
+      }
+    }
 
-    if (mustUpdateBuiltins && myProject != null) {
+    if ((mustUpdateBuiltins || PySdkUtil.isRemote(mySdk)) && myProject != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
