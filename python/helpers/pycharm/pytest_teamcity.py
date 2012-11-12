@@ -68,16 +68,13 @@ if PYVERSION > [1, 4, 0]:
 
   def pytest_runtest_logreport(report):
     name = items[report.nodeid]
-    if report.when != "call":
-      if report.when == "setup" and report.skipped:
-        messages.testIgnored(name)
-      return
 
-    if report.failed:
-      messages.testFailed(name, details=report.longrepr)
-    elif report.skipped:
+    if report.skipped:
       messages.testIgnored(name)
-    messages.testFinished(name)
+    elif report.failed:
+      messages.testFailed(name, details=report.longrepr)
+    elif report.when == "call":
+        messages.testFinished(name)
 
   def pytest_sessionfinish(session, exitstatus):
     if current_suite:
