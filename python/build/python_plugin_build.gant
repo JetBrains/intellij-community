@@ -73,6 +73,7 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/webDeployment/lib") {
       include(name: "jsch*.jar")
       include(name: "webDeployment.jar")
+      include(name: "commons-vfs*.jar")
     }
   }
 
