@@ -17,8 +17,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryDependencyScopeSuggester;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +31,9 @@ public class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggest
   @Nullable
   @Override
   public DependencyScope getDefaultDependencyScope(@NotNull Library library) {
-    if (LibraryUtil.isClassAvailableInLibrary(library, "junit.framework.TestCase")
-        || LibraryUtil.isClassAvailableInLibrary(library, "org.junit.Test")) {
+    VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    if (files.length == 1 && (LibraryUtil.isClassAvailableInLibrary(files, "junit.framework.TestCase")
+                              || LibraryUtil.isClassAvailableInLibrary(library, "org.junit.Test"))) {
       return DependencyScope.TEST;
     }
     return null;
