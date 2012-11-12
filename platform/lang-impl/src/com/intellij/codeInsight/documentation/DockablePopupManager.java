@@ -221,4 +221,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       restartAutoUpdate(false);
     }
   }
+
+  public boolean hasActiveDockedDocWindow() {
+    return myToolWindow != null && myToolWindow.isVisible();
+  }
 }
