@@ -20,9 +20,9 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySkeletonRefresher;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SkeletonVersionChecker;
+import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
