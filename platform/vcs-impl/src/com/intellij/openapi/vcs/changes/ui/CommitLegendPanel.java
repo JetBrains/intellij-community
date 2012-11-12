@@ -54,9 +54,10 @@ public class CommitLegendPanel {
     myDeletedPanel.setBackground(background);
     if (UIUtil.isUnderDarcula()) {
       final Color color = UIUtil.getSeparatorColor();
-      myModifiedPanel.setBorder(new TitledBorder(new LineBorder(color, 1)));
-      myNewPanel.setBorder(new TitledBorder(new LineBorder(color, 1)));
-      myDeletedPanel.setBorder(new TitledBorder(new LineBorder(color, 1)));
+      final TitledBorder border = new TitledBorder(new LineBorder(color, 1));
+      myModifiedPanel.setBorder(border);
+      myNewPanel.setBorder(border);
+      myDeletedPanel.setBorder(border);
     }
 
     myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
