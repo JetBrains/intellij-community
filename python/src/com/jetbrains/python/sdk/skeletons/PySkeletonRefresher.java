@@ -232,6 +232,8 @@ public class PySkeletonRefresher {
     }
     final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
 
+    mySkeletonsGenerator.prepare();
+
     myBlacklist = loadBlacklist();
 
     indicate(PyBundle.message("sdk.gen.querying.$0", readablePath));

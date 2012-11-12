@@ -61,6 +61,9 @@ public class PySkeletonGenerator {
     return mySkeletonsPath;
   }
 
+  public void prepare() {
+  }
+
   protected void generateSkeleton(String modname,
                                   String modfilename,
                                   List<String> assemblyRefs,
