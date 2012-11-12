@@ -357,17 +357,22 @@ public class MavenModuleImporter {
       return;
     }
 
+    String oldAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(false);
+    String oldTestAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(true);
+    String annotationProcessorDirectory = null;
+    String testAnnotationProcessorDirectory = null;
+
     ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
 
     ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
 
     if (shouldEnableAnnotationProcessors()) {
-      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
+      annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
       if (annotationProcessorDirectory == null) {
         annotationProcessorDirectory = DEFAULT_ANNOTATION_PATH_OUTPUT;
       }
 
-      String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
+      testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
       if (testAnnotationProcessorDirectory == null) {
         testAnnotationProcessorDirectory = DEFAULT_TEST_ANNOTATION_OUTPUT;
       }
@@ -444,14 +449,61 @@ public class MavenModuleImporter {
         compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
       }
     }
+
+    if (!Boolean.parseBoolean(System.getProperty("idea.maven.dont.exclude.annotation.processors.output"))) {
+      if (!oldAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
+        removeFromCompilerExclude(oldAnnotationProcessorDirectory);
+      }
+
+      if (!oldTestAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldTestAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
+        removeFromCompilerExclude(oldTestAnnotationProcessorDirectory);
+      }
+
+      if (annotationProcessorDirectory != null) {
+        addToCompilerExclude(annotationProcessorDirectory);
+      }
+      if (testAnnotationProcessorDirectory != null) {
+        addToCompilerExclude(testAnnotationProcessorDirectory);
+      }
+    }
+  }
+
+  private void addToCompilerExclude(@NotNull String path) {
+    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
+
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
+    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
+
+    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
+      if (url.equals(description.getUrl())) return;
+    }
+
+    excludedCfg.addExcludeEntryDescription(new ExcludeEntryDescription(url, true, false, excludedCfg));
+  }
+
+  private void removeFromCompilerExclude(@NotNull String path) {
+    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
+
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
+    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
+
+    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
+      if (url.equals(description.getUrl())) {
+        excludedCfg.removeExcludeEntryDescription(description);
+      }
+    }
   }
 
   @Nullable
   private String getRelativeAnnotationProcessorDirectory(boolean isTest) {
-    String absoluteAnnotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
-    String absoluteProjectDirectory = myMavenProject.getDirectory();
+    String annotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
+    File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
+    if (!annotationProcessorDirectoryFile.isAbsolute()) {
+      return annotationProcessorDirectory;
+    }
 
-    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), new File(absoluteAnnotationProcessorDirectory));
+    String absoluteProjectDirectory = myMavenProject.getDirectory();
+    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), annotationProcessorDirectoryFile);
   }
 
   private boolean shouldEnableAnnotationProcessors() {

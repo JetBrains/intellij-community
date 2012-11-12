@@ -51,6 +51,11 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     myCachedDescriptions = null;
   }
 
+  public synchronized void removeExcludeEntryDescription(ExcludeEntryDescription description) {
+    myExcludeEntryDescriptions.remove(description);
+    myCachedDescriptions = null;
+  }
+
   public synchronized void removeAllExcludeEntryDescriptions() {
     myExcludeEntryDescriptions.clear();
     myCachedDescriptions = null;
