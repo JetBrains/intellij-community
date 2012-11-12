@@ -73,6 +73,11 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
       public TaskRepository getRepository() {
         return repository;
       }
+
+      @Override
+      public boolean isIssue() {
+        return true;
+      }
     });
     myFixture.completeBasic();
     myFixture.checkResult(after);

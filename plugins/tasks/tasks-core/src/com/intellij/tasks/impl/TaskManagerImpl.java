@@ -134,7 +134,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
-  private long myProjectOpenedTime;
+  private long myProjectOpenedTime = 0;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -166,6 +166,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskDeactivated(final LocalTask task) {
+        assert task.getActivated() != 0;
         task.setTimeSpent(task.getTimeSpent() + System.currentTimeMillis() - task.getActivated());
       }
 
@@ -178,7 +179,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myProjectManagerListener = new ProjectManagerAdapter() {
       @Override
       public boolean canCloseProject(final Project project) {
+        assert myProjectOpenedTime != 0;
         getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
+        assert myActiveTask.getActivated() != 0;
         myActiveTask.setTimeSpent(myActiveTask.getTimeSpent() + System.currentTimeMillis() - myActiveTask.getActivated());
         return true;
       }

@@ -39,7 +39,7 @@ import java.util.List;
 @SuppressWarnings({"UnusedDeclaration"})
 public class LocalTaskImpl extends LocalTask {
 
-  @NonNls static final String DEFAULT_TASK_ID = "Default";
+  @NonNls public static final String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
   private String mySummary = "";
