@@ -5,6 +5,7 @@
   <vendor>JetBrains</vendor>
   <version>1.0.SNAPSHOT</version>
   <idea-version since-build="122.0" until-build="123.0"/>
+  <depends>com.intellij.modules.lang</depends>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
