@@ -20,6 +20,7 @@ import com.intellij.application.options.codeStyle.arrangement.component.Arrangem
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
@@ -41,7 +42,9 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @NotNull private final ArrangementRuleIndexControl        myRowIndexControl;
   @NotNull private final ArrangementMatchConditionComponent myDelegate;
-  @NotNull private final ActionButton                       myEditButton;
+  @NotNull private final MyActionButton                     myEditButton;
+  
+  @Nullable private Rectangle myScreenBounds;
 
   public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate) {
     myDelegate = delegate;
@@ -50,7 +53,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     Presentation presentation = action.getTemplatePresentation().clone();
     Icon editIcon = presentation.getIcon();
     Dimension buttonSize = new Dimension(editIcon.getIconWidth(), editIcon.getIconHeight());
-    myEditButton = new ActionButton(action, presentation, ArrangementConstants.RULE_TREE_PLACE, buttonSize);
+    myEditButton = new MyActionButton(action, presentation, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE, buttonSize);
     myEditButton.setVisible(false);
 
     FontMetrics metrics = getFontMetrics(getFont());
@@ -78,6 +81,12 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @Override
   protected void paintComponent(Graphics g) {
+    Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+    if (point != null) {
+      Rectangle bounds = getBounds();
+      myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+    }
+    
     FontMetrics metrics = g.getFontMetrics();
     int baseLine = SimpleColoredComponent.getTextBaseLine(metrics, metrics.getHeight());
     myRowIndexControl.setBaseLine(baseLine + ArrangementConstants.VERTICAL_GAP + myDelegate.getUiComponent().getBounds().y - myRowIndexControl.getBounds().y);
@@ -103,8 +112,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Nullable
   @Override
   public Rectangle getScreenBounds() {
-    // TODO den implement 
-    return null;
+    return myScreenBounds;
   }
 
   @Override
@@ -115,12 +123,23 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseEntered(@NotNull MouseEvent e) {
     setBackground(UIUtil.getDecoratedRowColor());
+    myEditButton.setVisible(true);
     return myDelegate.onMouseEntered(e);
   }
 
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
+    Rectangle bounds = getButtonScreenBounds();
+    if (bounds != null) {
+      boolean selected = bounds.contains(event.getLocationOnScreen());
+      boolean wasSelected = myEditButton.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+      if (selected ^ wasSelected) {
+        return myScreenBounds;
+      }
+    }
+
     return myDelegate.onMouseMove(event);
   }
 
@@ -133,11 +152,32 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseExited() {
     setBackground(UIUtil.getListBackground());
+    myEditButton.setVisible(false);
     return myDelegate.onMouseExited(); 
   }
-
+  
+  @Nullable
+  private Rectangle getButtonScreenBounds() {
+    if (myScreenBounds == null) {
+      return null;
+    }
+    Rectangle bounds = myEditButton.getBounds();
+    return new Rectangle(bounds.x + myScreenBounds.x, bounds.y + myScreenBounds.y, bounds.width, bounds.height); 
+  }
+  
   @Override
   public String toString() {
     return "list row decorator for " + myDelegate.toString();
+  }
+  
+  private static class MyActionButton extends ActionButton {
+    MyActionButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+      super(action, presentation, place, minimumSize);
+    }
+
+    @NotNull
+    public Presentation getPresentation() {
+      return myPresentation;
+    }
   }
 }

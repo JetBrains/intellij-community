@@ -49,7 +49,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     TitleWithToolbar top = new TitleWithToolbar(
       ApplicationBundle.message("arrangement.settings.section.match"),
       ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOLBAR,
-      ArrangementConstants.RULE_EDITOR_TOOLBAR_PLACE
+      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE
     );
 
     JBScrollPane scrollPane = new JBScrollPane();

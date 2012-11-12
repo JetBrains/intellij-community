@@ -26,15 +26,15 @@ import org.jetbrains.annotations.NonNls;
  * @since 8/13/12 11:48 AM
  */
 public class ArrangementConstants {
-  
+
   public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
-  
+
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOLBAR      = "Arrangement.RuleEditor.ToolBar";
 
-  @NonNls public static final String RULE_EDITOR_PLACE         = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String RULE_EDITOR_TOOLBAR_PLACE = "Arrangement.RuleEditor.ToolBar.Place";
-  @NonNls public static final String RULE_TREE_PLACE           = "Arrangement.RuleTree.Place";
+  @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE         = "Arrangement.Rule.Match.Control.Place";
 
   public static final int HORIZONTAL_PADDING    = 8;
   public static final int VERTICAL_PADDING      = 4;
