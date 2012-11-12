@@ -112,7 +112,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
       if (child == null) {
         return;
       }
-      if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression) {
+      if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression
+          || parent instanceof PsiArrayAccessExpression || parent instanceof PsiArrayInitializerExpression) {
         registerError(expression);
         return;
       }
@@ -121,11 +122,9 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
       if (parentPrecedence > childPrecedence) {
         if (ignoreClarifyingParentheses) {
           if (child instanceof PsiPolyadicExpression) {
-            if (parent instanceof PsiPolyadicExpression) {
-              return;
-            } else if (parent instanceof PsiConditionalExpression) {
-              return;
-            } else if (parent instanceof PsiInstanceOfExpression) {
+            if (parent instanceof PsiPolyadicExpression ||
+                parent instanceof PsiConditionalExpression ||
+                parent instanceof PsiInstanceOfExpression) {
               return;
             }
           }
