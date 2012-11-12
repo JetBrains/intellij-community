@@ -2,15 +2,19 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,13 +28,16 @@ public class PyDocReference extends PyReferenceImpl {
     super(element, context);
   }
 
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    return HighlightSeverity.WARNING;
+  }
 
   @NotNull
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     ResolveResult[] results = super.multiResolve(incompleteCode);
     if (results.length == 0) {
-      final ResolveResultList ret = new ResolveResultList();
       PsiFile file = myElement.getContainingFile();
       final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
       final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myElement);
@@ -45,11 +52,10 @@ public class PyDocReference extends PyReferenceImpl {
             ResolveProcessor processor = new ResolveProcessor(referencedName);
 
             PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
-            PsiElement uexpr = processor.getResult();
-            if (uexpr != null) ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, uexpr));
-            if (ret.size() > 0) {
-              return ret.toArray(new RatedResolveResult[ret.size()]);
-            }
+            final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
+                                                                                         pair.getFirst());
+            if (resultList.size() > 0)
+              return resultList.toArray(new RatedResolveResult[resultList.size()]);
           }
         }
       }
@@ -57,11 +63,9 @@ public class PyDocReference extends PyReferenceImpl {
       ResolveProcessor processor = new ResolveProcessor(referencedName);
 
       PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, referencedName, file);
-      PsiElement uexpr = processor.getResult();
-      if (uexpr != null) ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, uexpr));
-      if (ret.size() > 0) {
-        return ret.toArray(new RatedResolveResult[ret.size()]);
-      }
+      final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, file, file);
+      if (resultList.size() > 0)
+        return resultList.toArray(new RatedResolveResult[resultList.size()]);
     }
     return results;
   }

@@ -213,6 +213,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
+    return getResultsFromProcessor(referencedName, processor, realContext, roof);
+  }
+
+  protected List<RatedResolveResult> getResultsFromProcessor(String referencedName,
+                                                             ResolveProcessor processor,
+                                                             PsiElement realContext, PsiElement roof) {
+    ResolveResultList ret = new ResolveResultList();
     PsiElement uexpr = processor.getResult();
     final List<PsiElement> definers = processor.getDefiners();
     if (uexpr != null) {
@@ -257,7 +264,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
       // sort what we got
-      for (PsiElement hit : processor.getDefiners()) {
+      for (PsiElement hit : definers) {
         ret.poke(hit, getRate(hit));
       }
       final PsiElement packageInit = PyUtil.turnDirIntoInit(uexpr);
@@ -265,8 +272,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         uexpr = packageInit; // an import statement may have returned a dir
       }
     }
-    else if (!processor.getDefiners().isEmpty()) {
-      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, processor.getDefiners()));
+    else if (!definers.isEmpty()) {
+      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definers));
     }
     PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
@@ -301,7 +308,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     if (uexpr != null) {
-      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
+      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), definers));
     }
 
     return ret;

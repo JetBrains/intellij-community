@@ -21,13 +21,11 @@ public class PyDocstringVisitorFilter implements PythonVisitorFilter {
       return false;
     }
     if (visitorClass == PyDocstringInspection.class || visitorClass == PyStatementEffectInspection.class ||
-        visitorClass == PyUnboundLocalVariableInspection.class || visitorClass == PyUnnecessaryBackslashInspection.class ||
-        visitorClass == PyUnresolvedReferencesInspection.class) {
+        visitorClass == PyUnboundLocalVariableInspection.class || visitorClass == PyUnnecessaryBackslashInspection.class) {
       return false;
     }
     //annotators
-    if (visitorClass == DocStringAnnotator.class || visitorClass == ParameterListAnnotator.class || visitorClass == ReturnAnnotator.class ||
-        visitorClass == HighlightingAnnotator.class)
+    if (visitorClass == DocStringAnnotator.class || visitorClass == ParameterListAnnotator.class || visitorClass == ReturnAnnotator.class || visitorClass == HighlightingAnnotator.class)
       return false;
     return true;
   }
