@@ -421,6 +421,28 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return myPackagesCache != null;
   }
 
+  /**
+   * Returns the list of packages for the SDK without initiating a remote connection. Returns null
+   * for a remote interpreter if the list of packages was not loaded.
+   *
+   * @return the list of packages or null
+   */
+  @Nullable
+  public synchronized List<PyPackage> getPackagesFast() {
+    if (myPackagesCache != null) {
+      return myPackagesCache;
+    }
+    if (PySdkUtil.isRemote(mySdk)) {
+      return null;
+    }
+    try {
+      return getPackages();
+    }
+    catch (PyExternalProcessException e) {
+      throw new UnsupportedOperationException("can't have PyExternalProcessException when running tool for local SDK");
+    }
+  }
+
   @NotNull
   public synchronized List<PyPackage> getPackages() throws PyExternalProcessException {
     if (myPackagesCache == null) {
@@ -428,28 +450,42 @@ public class PyPackageManagerImpl extends PyPackageManager {
         throw myExceptionCache;
       }
 
-      try {
-        final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
-        myPackagesCache = parsePackagingToolOutput(output);
-        Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
-          @Override
-          public int compare(PyPackage aPackage, PyPackage aPackage1) {
-            return aPackage.getName().compareTo(aPackage1.getName());
-          }
-        });
-      }
-      catch (PyExternalProcessException e) {
-        myExceptionCache = e;
-        LOG.info("Error loading packages list: " + e.getMessage(), e);
-        throw e;
-      }
+      loadPackages();
     }
     return myPackagesCache;
   }
 
+  public synchronized void loadPackages() throws PyExternalProcessException {
+    try {
+      final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
+      myPackagesCache = parsePackagingToolOutput(output);
+      Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
+        @Override
+        public int compare(PyPackage aPackage, PyPackage aPackage1) {
+          return aPackage.getName().compareTo(aPackage1.getName());
+        }
+      });
+    }
+    catch (PyExternalProcessException e) {
+      myExceptionCache = e;
+      LOG.info("Error loading packages list: " + e.getMessage(), e);
+      throw e;
+    }
+  }
+
   @Nullable
   public PyPackage findPackage(String name) throws PyExternalProcessException {
-    for (PyPackage pkg : getPackages()) {
+    return findPackageByName(name, getPackages());
+  }
+
+  @Nullable
+  public PyPackage findPackageFast(String name) {
+    final List<PyPackage> packages = getPackagesFast();
+    return packages != null ? findPackageByName(name, packages) : null;
+  }
+
+  private static PyPackage findPackageByName(String name, List<PyPackage> packages) {
+    for (PyPackage pkg : packages) {
       if (name.equals(pkg.getName())) {
         return pkg;
       }
@@ -458,12 +494,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   public boolean hasPip() {
-    try {
-      return findPackage(PACKAGE_PIP) != null;
-    }
-    catch (PyExternalProcessException e) {
-      return false;
-    }
+    return findPackageFast(PACKAGE_PIP) != null;
   }
 
   @NotNull

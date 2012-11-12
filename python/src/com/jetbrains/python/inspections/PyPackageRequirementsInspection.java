@@ -169,6 +169,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               if (sdk != null) {
                 requirements = getTransitiveRequirements(sdk, requirements, new HashSet<PyPackage>());
               }
+              if (requirements == null) return;
               for (PyRequirement req : requirements) {
                 if (packageName.equalsIgnoreCase(req.getName())) {
                   return;
@@ -202,21 +203,20 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
   }
 
-  @NotNull
+  @Nullable
   private static Set<PyRequirement> getTransitiveRequirements(@NotNull Sdk sdk, @NotNull Collection<PyRequirement> requirements,
                                                               @NotNull Set<PyPackage> visited) {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
-    try {
-      final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackages();
-      for (PyRequirement req : requirements) {
-        final PyPackage pkg = req.match(packages);
-        if (pkg != null && !visited.contains(pkg)) {
-          visited.add(pkg);
-          results.addAll(getTransitiveRequirements(sdk, pkg.getRequirements(), visited));
-        }
+    final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackagesFast();
+    if (packages == null) return null;
+    for (PyRequirement req : requirements) {
+      final PyPackage pkg = req.match(packages);
+      if (pkg != null && !visited.contains(pkg)) {
+        visited.add(pkg);
+        final Set<PyRequirement> transitive = getTransitiveRequirements(sdk, pkg.getRequirements(), visited);
+        if (transitive == null) return null;
+        results.addAll(transitive);
       }
-    }
-    catch (PyExternalProcessException ignored) {
     }
     return results;
   }
@@ -237,13 +237,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
     if (requirements != null) {
-      final List<PyPackage> packages;
-      try {
-        packages = manager.getPackages();
-      }
-      catch (PyExternalProcessException ignored) {
-        return null;
-      }
+      final List<PyPackage> packages = manager.getPackagesFast();
+      if (packages == null) return null;
       final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
       for (PyRequirement req : requirements) {
         if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null) {

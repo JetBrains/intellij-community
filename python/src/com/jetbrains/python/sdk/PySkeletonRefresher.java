@@ -24,6 +24,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NonNls;
@@ -283,8 +286,16 @@ public class PySkeletonRefresher {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
       cleanUpSkeletons(skeletonsDir);
     }
+    if (PySdkUtil.isRemote(mySdk)) {
+      try {
+        ((PyPackageManagerImpl) PyPackageManager.getInstance(mySdk)).loadPackages();
+      }
+      catch (PyExternalProcessException e) {
+        // ignore - already logged
+      }
+    }
 
-    if (mustUpdateBuiltins && myProject != null) {
+    if ((mustUpdateBuiltins || PySdkUtil.isRemote(mySdk)) && myProject != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
