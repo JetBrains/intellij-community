@@ -178,12 +178,12 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   }
 
   @Override
-  public void onMousePress(@NotNull MouseEvent event) {
+  public void onMouseRelease(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
     for (ArrangementMatchConditionComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
-        component.onMousePress(event);
+        component.onMouseRelease(event);
         return;
       }
     }

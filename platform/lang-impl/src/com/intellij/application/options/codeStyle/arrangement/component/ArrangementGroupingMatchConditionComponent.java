@@ -88,7 +88,7 @@ public class ArrangementGroupingMatchConditionComponent extends JPanel implement
   }
 
   @Override
-  public void onMousePress(@NotNull MouseEvent event) {
+  public void onMouseRelease(@NotNull MouseEvent event) {
   }
 
   @Override

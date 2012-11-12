@@ -16,15 +16,16 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/12 6:24 PM
+ * @since 11/12/12 12:34 PM
  */
-public interface ArrangementRepresentationAware {
-  
+public interface ArrangementEditorAware {
+
   @NotNull
   JComponent getComponent();
 }

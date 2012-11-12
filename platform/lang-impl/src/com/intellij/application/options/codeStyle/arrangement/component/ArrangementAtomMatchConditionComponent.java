@@ -244,7 +244,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   }
 
   @Override
-  public void onMousePress(@NotNull MouseEvent event) {
+  public void onMouseRelease(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
       myCloseCallback.consume(this);

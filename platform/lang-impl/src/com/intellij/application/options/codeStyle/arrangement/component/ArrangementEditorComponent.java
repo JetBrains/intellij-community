@@ -30,10 +30,12 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 11/7/12 6:19 PM
  */
-public class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback {
+public class ArrangementEditorComponent implements ArrangementRepresentationAware, ArrangementAnimationManager.Callback,
+                                                   ArrangementEditorAware
+{
 
   @NotNull private final ArrangementMatchingRulesControl myList;
-  @NotNull private final ArrangementAnimationPanel       myRenderer;
+  @NotNull private final ArrangementAnimationPanel       myComponent;
   @NotNull private final Insets                          myBorderInsets;
   @NotNull private final ArrangementMatchingRuleEditor   myEditor;
 
@@ -54,17 +56,17 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
     CalloutBorder border = new CalloutBorder();
     borderPanel.setBorder(border);
     myBorderInsets = border.getBorderInsets(borderPanel);
-    myRenderer = new ArrangementAnimationPanel(borderPanel, true, false);
+    myComponent = new ArrangementAnimationPanel(borderPanel, true, false);
   }
 
   @NotNull
   @Override
-  public JComponent getRenderer() {
-    return myRenderer;
+  public JComponent getComponent() {
+    return myComponent;
   }
 
   public void expand() {
-    new ArrangementAnimationManager(myRenderer, this).startAnimation();
+    new ArrangementAnimationManager(myComponent, this).startAnimation();
   }
 
   @Override
