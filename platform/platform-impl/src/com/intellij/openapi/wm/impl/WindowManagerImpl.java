@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
 public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
+
   private static boolean ourAlphaModeLibraryLoaded;
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String X_ATTR = "x";
@@ -220,6 +220,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);

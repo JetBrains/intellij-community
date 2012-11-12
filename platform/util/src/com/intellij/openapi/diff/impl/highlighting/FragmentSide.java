@@ -93,7 +93,6 @@ public enum FragmentSide {
 
   public static FragmentSide chooseSide(DiffFragment oneSide) {
     LOG.assertTrue(oneSide.isOneSide());
-    LOG.assertTrue(oneSide.getText1() != oneSide.getText2());
     return oneSide.getText1() == null ? SIDE2 : SIDE1;
   }
 

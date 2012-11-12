@@ -91,6 +91,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   private final ArtifactRepository myLocalRepository;
   private final Maven3ServerConsoleLogger myConsoleWrapper;
 
+  private final Properties mySystemProperties;
+
   private volatile MavenServerProgressIndicator myCurrentIndicator;
 
   public Maven3ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
@@ -158,9 +160,11 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     myContainer = FieldAccessor.get(MavenCli.class, cli, "container");
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
+    mySystemProperties = FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties");
+
     myMavenSettings = buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"),
                                     settings,
-                                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties"),
+                                    mySystemProperties,
                                     FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
 
     myLocalRepository = createLocalRepository(settings.getSnapshotUpdatePolicy());
@@ -373,6 +377,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       result.setPom(file);
 
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
+
+      result.setSystemProperties(mySystemProperties);
 
       return result;
     }

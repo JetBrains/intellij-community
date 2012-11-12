@@ -139,6 +139,8 @@
                     serviceImplementation="git4idea.roots.GitRootProblemNotifier"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
+    <projectService serviceInterface="git4idea.push.GitOutgoingCommitsCollector"
+                    serviceImplementation="git4idea.push.GitOutgoingCommitsCollector"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>

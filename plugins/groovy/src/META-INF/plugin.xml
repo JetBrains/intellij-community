@@ -73,9 +73,12 @@
     <extensionPoint name="closureCompleter" interface="org.jetbrains.plugins.groovy.lang.completion.ClosureCompleter"/>
 
     <extensionPoint name="methodMayBeStaticInspectionFilter" interface="org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspectionFilter"/>
+
+    <extensionPoint name="customAnnotationChecker" interface="org.jetbrains.plugins.groovy.annotator.CustomAnnotationChecker"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
+
     <groovyFrameworkConfigNotification order="last"
                                        implementation="org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification"/>
 
@@ -155,6 +158,10 @@
 
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
+
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.FieldAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.NewifyAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.GrabAnnotationChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -162,6 +169,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
+
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.geb.GebContentDeclarationSearcher"/>
 
     <itemPresentationProvider forClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl"

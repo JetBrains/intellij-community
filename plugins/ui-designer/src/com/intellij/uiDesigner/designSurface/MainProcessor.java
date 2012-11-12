@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public final class MainProcessor extends EventProcessor{
       myCurrentProcessor.processKeyEvent(e);
     }
     else if (e.getID() == KeyEvent.KEY_TYPED && Character.isLetterOrDigit(e.getKeyChar()) &&
-      (e.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)) == 0) {
+      (e.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) == 0) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
       if (selection.size() > 0) {
         final RadComponent component = selection.get(0);

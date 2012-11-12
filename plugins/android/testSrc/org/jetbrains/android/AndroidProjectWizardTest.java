@@ -16,13 +16,19 @@
 package org.jetbrains.android;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
+import org.jetbrains.android.newProject.AndroidModuleBuilder;
+import org.jetbrains.android.newProject.AndroidModuleWizardStep;
+import org.jetbrains.android.newProject.AndroidProjectTemplatesFactory;
 import org.jetbrains.android.sdk.AndroidSdkType;
 
 import java.util.Arrays;
@@ -34,7 +40,35 @@ import java.util.Arrays;
 public class AndroidProjectWizardTest extends ProjectWizardTestCase {
 
   public void testCreateProject() throws Exception {
-    createProjectFromTemplate(ProjectTemplatesFactory.OTHER_GROUP, "Android Module", null);
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Application", new Consumer<ModuleWizardStep>() {
+      @Override
+      public void consume(ModuleWizardStep step) {
+        if (step instanceof AndroidModuleWizardStep) {
+          ProjectBuilder builder = myWizard.getProjectBuilder();
+          assertTrue(builder instanceof AndroidModuleBuilder);
+          String name = ((AndroidModuleBuilder)builder).getName();
+          assertTrue(name, StringUtil.isNotEmpty(name));
+        }
+      }
+    });
+  }
+
+  public void testCreateLibrary() throws Exception {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Library Module", new Consumer<ModuleWizardStep>() {
+      @Override
+      public void consume(ModuleWizardStep step) {
+        if (step instanceof AndroidModuleWizardStep) {
+          ProjectBuilder builder = myWizard.getProjectBuilder();
+          assertTrue(builder instanceof AndroidModuleBuilder);
+          String name = ((AndroidModuleBuilder)builder).getName();
+          assertTrue(name, StringUtil.isNotEmpty(name));
+        }
+      }
+    });
+  }
+
+  public void testCreateEmptyProject() throws Exception {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Empty Android Module", null);
   }
 
   @Override

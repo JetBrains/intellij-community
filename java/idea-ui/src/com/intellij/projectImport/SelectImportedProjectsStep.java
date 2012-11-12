@@ -43,7 +43,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
         return getElementText(item);
       }
 
-      protected Icon getItemIcon(final T item) {
+      protected Icon getItemIcon(@NotNull final T item) {
         return getElementIcon (item);
       }
     };

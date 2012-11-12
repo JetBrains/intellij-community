@@ -63,8 +63,12 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
 
   private final HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
 
-  private static final List<Pair> myIdToNameList = new ArrayList<Pair>();
-  static {
+  private final List<Pair> myIdToNameList = new ArrayList<Pair>();
+
+  @NonNls private static final String GROUP = "group";
+  private static final Logger LOG = Logger.getInstance("#" + CustomActionsSchema.class.getName());
+
+  public CustomActionsSchema() {
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));
     myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP));
@@ -76,10 +80,18 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     myIdToNameList.add(new Pair(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar"));
-  }
 
-  @NonNls private static final String GROUP = "group";
-  private static final Logger LOG = Logger.getInstance("#" + CustomActionsSchema.class.getName());
+    CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
+      new CustomizableActionGroupProvider.CustomizableActionGroupRegistrar() {
+        @Override
+        public void addCustomizableActionGroup(@NotNull String groupId, @NotNull String groupTitle) {
+          myIdToNameList.add(new Pair(groupId, groupTitle));
+        }
+      };
+    for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
+      provider.registerGroups(registrar);
+    }
+  }
 
   public static CustomActionsSchema getInstance() {
     return ServiceManager.getService(CustomActionsSchema.class);
@@ -199,7 +211,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
   }
 
-  public static void fillActionGroups(DefaultMutableTreeNode root){
+  public void fillActionGroups(DefaultMutableTreeNode root){
     final ActionManager actionManager = ActionManager.getInstance();
     for (Pair pair : myIdToNameList) {
       final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(pair.first);
@@ -210,23 +222,21 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
   }
 
 
-  public boolean isCorrectActionGroup(ActionGroup group) {
+  public boolean isCorrectActionGroup(ActionGroup group, String defaultGroupName) {
     if (myActions.isEmpty()){
       return false;
     }
-    if (group.getTemplatePresentation() != null &&
-        group.getTemplatePresentation().getText() != null) {
 
-      final String text = group.getTemplatePresentation().getText();
-
+    final String text = group.getTemplatePresentation().getText();
+    if (text != null) {
       for (ActionUrl url : myActions) {
-        if (url.getGroupPath().contains(text)) {
+        if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
         }
         if (url.getComponent() instanceof Group) {
           final Group urlGroup = (Group)url.getComponent();
           String id = urlGroup.getName() != null ? urlGroup.getName() : urlGroup.getId();
-          if (id == null || id.equals(text)) {
+          if (id == null || id.equals(text) || id.equals(defaultGroupName)) {
             return true;
           }
         }
@@ -256,7 +266,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     return result;
   }
 
-public void removeIconCustomization(String actionId) {
+  public void removeIconCustomization(String actionId) {
     myIconCustomizations.remove(actionId);
   }
 

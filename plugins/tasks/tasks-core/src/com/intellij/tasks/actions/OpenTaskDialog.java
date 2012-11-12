@@ -173,10 +173,6 @@ public class OpenTaskDialog extends DialogWrapper {
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
     }
-    else if (task instanceof LocalTask && !((LocalTask)task).isClosedLocally()) {
-      myCreateChangelist.setSelected(true);
-      myCreateChangelist.setEnabled(false);
-    }
     else {
       myCreateChangelist.setSelected(taskManager.getState().createChangelist);
       myCreateChangelist.setEnabled(true);

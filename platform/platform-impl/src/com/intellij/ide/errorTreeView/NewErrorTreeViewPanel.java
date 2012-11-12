@@ -63,7 +63,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private ErrorViewStructure myErrorViewStructure;
   private ErrorViewTreeBuilder myBuilder;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  
+  private volatile boolean myIsDisposed = false;
+
   public interface ProcessController {
     void stopProcess();
 
@@ -166,9 +167,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void dispose() {
+    myIsDisposed = true;
+    myErrorViewStructure.clear();
     myUpdateAlarm.cancelAllRequests();
-    Disposer.dispose(myBuilder);
     Disposer.dispose(myUpdateAlarm);
+    Disposer.dispose(myBuilder);
   }
 
   public void performCopy(@NotNull DataContext dataContext) {
@@ -249,7 +252,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void updateTree() {
-    myBuilder.updateTree();
+    if (!myIsDisposed) {
+      myBuilder.updateTree();
+    }
   }
 
   public void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
@@ -264,6 +269,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          int line,
                          int column,
                          @Nullable Object data) {
+    if (myIsDisposed) {
+      return;
+    }
     myErrorViewStructure.addMessage(ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, underFileGroup, file, line, column, data);
     myBuilder.updateTree();
   }
@@ -275,7 +283,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
                          @Nullable String exportTextPrefix,
                          @Nullable String rendererTextPrefix,
                          @Nullable Object data) {
-
+    if (myIsDisposed) {
+      return;
+    }
     VirtualFile file = data instanceof VirtualFile ? (VirtualFile)data : null;
     if (file == null && navigatable instanceof OpenFileDescriptor) {
       file = ((OpenFileDescriptor)navigatable).getFile();
@@ -418,6 +428,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private void updateProgress() {
+    if (myIsDisposed) {
+      return;
+    }
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       @Override
@@ -432,7 +445,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         }
       }
     }, 50, ModalityState.NON_MODAL);
-    
+
   }
 
   

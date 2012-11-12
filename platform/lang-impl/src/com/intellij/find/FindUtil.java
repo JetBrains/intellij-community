@@ -198,7 +198,7 @@ public class FindUtil {
     doSearch(project, editor, caretOffset, true, model, true);
   }
 
-  public static void find(final Project project, final Editor editor) {
+  public static void find(@NotNull final Project project, @NotNull final Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final FindManager findManager = FindManager.getInstance(project);
     String s = editor.getSelectionModel().getSelectedText();
@@ -266,7 +266,7 @@ public class FindUtil {
   }
 
   @Nullable
-  public static List<Usage> findAll(final Project project, final Editor editor, final FindModel findModel) {
+  public static List<Usage> findAll(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) return null;
@@ -664,11 +664,12 @@ public class FindUtil {
   }
 
   @Nullable
-  private static FindResult doSearch(Project project,
-                                     final Editor editor,
+  private static FindResult doSearch(@NotNull Project project,
+                                     @NotNull final Editor editor,
                                      int offset,
                                      boolean toWarn,
-                                     FindModel model, boolean adjustEditor) {
+                                     @NotNull FindModel model,
+                                     boolean adjustEditor) {
     FindManager findManager = FindManager.getInstance(project);
     Document document = editor.getDocument();
 

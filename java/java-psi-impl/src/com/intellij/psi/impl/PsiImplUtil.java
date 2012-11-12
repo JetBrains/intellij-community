@@ -559,19 +559,6 @@ public class PsiImplUtil {
     return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
   }
 
-  public static boolean isExtensionMethod(@NotNull PsiMethod method) {
-    return findExtensionMethodMarker(method) != null;
-  }
-
-  @Nullable
-  public static PsiJavaToken findExtensionMethodMarker(@Nullable PsiMethod method) {
-    if (method == null) return null;
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) return null;
-    final PsiElement previous = PsiTreeUtil.skipSiblingsBackward(body, PsiComment.class, PsiWhiteSpace.class);
-    return previous instanceof PsiJavaToken && PsiUtil.isJavaToken(previous, JavaTokenType.DEFAULT_KEYWORD) ? (PsiJavaToken)previous : null;
-  }
-
   public static PsiElement handleMirror(PsiElement element) {
     return element instanceof PsiMirrorElement ? ((PsiMirrorElement)element).getPrototype() : element;
   }

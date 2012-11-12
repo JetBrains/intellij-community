@@ -235,7 +235,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         eventMulticaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
-            myDocumentationManager.setAllowContentUpdateFromContext(true);
+            if (myHint != null) {
+              myDocumentationManager.updateToolwindowContext();
+            }
           }
         }, project);
       }

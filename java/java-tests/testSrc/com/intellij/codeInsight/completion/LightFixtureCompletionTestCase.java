@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -49,7 +50,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   protected void selectItem(LookupElement item, final char completionChar) {
     final LookupImpl lookup = getLookup();
     lookup.setCurrentItem(item);
-    if (completionChar == 0 || completionChar == '\n' || completionChar == '\t' || completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+    if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       new WriteCommandAction.Simple(getProject()) {
         @Override
         protected void run() throws Throwable {

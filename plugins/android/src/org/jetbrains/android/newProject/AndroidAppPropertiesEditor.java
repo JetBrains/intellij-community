@@ -30,6 +30,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -125,7 +126,12 @@ public class AndroidAppPropertiesEditor {
   }
 
   private String validatePackageName(boolean library) {
-    String candidate = myPackageNameField.getText().trim();
+    final String candidate = myPackageNameField.getText().trim();
+    return doValidatePackageName(library, candidate, myModulesProvider);
+  }
+
+  @NotNull
+  static String doValidatePackageName(boolean library, @NotNull String candidate, @Nullable ModulesProvider modulesProvider) {
     if (candidate.length() == 0) {
       return AndroidBundle.message("specify.package.name.error");
     }
@@ -137,7 +143,7 @@ public class AndroidAppPropertiesEditor {
     }
 
     if (!library) {
-      for (Module module : myModulesProvider.getModules()) {
+      for (Module module : modulesProvider.getModules()) {
         final AndroidFacet facet = AndroidFacet.getInstance(module);
         if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
           final Manifest manifest = facet.getManifest();

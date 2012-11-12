@@ -123,17 +123,16 @@
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
       <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
-      <separator/>
-      <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
-      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-      <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-      <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-      <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
-      <separator/>
-      <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
-      <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
-      <separator/>
-      <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
+      <group id="Internal.Dump" text="Dump" internal="true" popup="true">
+        <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
+        <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
+        <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
+        <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
+        <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
+        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
+                text="Dump all comments in the project"/>
+      </group>
+
       <separator/>
       <group id="Internal.VFS" text="VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
@@ -143,12 +142,13 @@
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load all files content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction" text="Load all VFS stored files content"/>
         <!--<action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>-->
+        <separator/>
+        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
+        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
       </group>
 
       <separator/>
 
-      <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
-              text="Dump all comments in the project"/>
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
               text="Test Rebuild Performance"/>
       <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"

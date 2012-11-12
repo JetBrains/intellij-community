@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -142,12 +141,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     if (tasks.size() == 1 && task != null) {
       group.add(new AnAction("&Switch to") {
         public void actionPerformed(AnActionEvent e) {
-          if (!tasks.get(0).isTemp()) {
-            manager.activateTask(task, !shiftPressed.get(), true);
-          }
-          else {
-            GotoTaskAction.showOpenTaskDialog(project, task);
-          }
+          manager.activateTask(task, !shiftPressed.get(), false);
         }
       });
     }
@@ -182,15 +176,14 @@ public class SwitchTaskAction extends BaseTaskAction {
 
     final TaskManager manager = TaskManager.getManager(project);
     LocalTask activeTask = manager.getActiveTask();
-    LocalTask[] localTasks = manager.getLocalTasks();
-    Arrays.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    List<LocalTask> localTasks = manager.getLocalTasks();
+    Collections.sort(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     ArrayList<LocalTask> temp = new ArrayList<LocalTask>();
-    boolean vcsEnabled = manager.isVcsEnabled();
     for (final LocalTask task : localTasks) {
       if (task == activeTask) {
         continue;
       }
-      if (vcsEnabled && task.isClosedLocally()) {
+      if (manager.isLocallyClosed(task)) {
         temp.add(task);
         continue;
       }
@@ -198,18 +191,18 @@ public class SwitchTaskAction extends BaseTaskAction {
       group.add(new TaskListItem(task, group.size() == 1 ? "" : null, false) {
         @Override
         void select() {
-          manager.activateTask(task, !shiftPressed.get(), true);
+          manager.activateTask(task, !shiftPressed.get(), false);
         }
       });
     }
-    if (vcsEnabled && !temp.isEmpty()) {
+    if (!temp.isEmpty()) {
       for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 15); i++) {
         final LocalTask task = temp.get(i);
 
         group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
           @Override
           void select() {
-            GotoTaskAction.showOpenTaskDialog(project, task);
+            manager.activateTask(task, !shiftPressed.get(), false);
           }
         });
       }

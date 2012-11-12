@@ -468,7 +468,7 @@ public class ExpectedHighlightingData {
     }
 
     if (!failMessage.isEmpty()) {
-      compareTexts(infos, text, failMessage, filePath);
+      compareTexts(infos, text, failMessage + "\n", filePath);
     }
   }
 

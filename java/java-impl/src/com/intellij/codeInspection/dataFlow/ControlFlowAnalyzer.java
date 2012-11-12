@@ -1094,15 +1094,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
-      PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
 
-      if (nextOperand != null) {
-        ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
-        branchToFail.add(onFail);
-        addInstruction(onFail);
-      }
+      ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
+      branchToFail.add(onFail);
+      addInstruction(onFail);
     }
 
+    addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
     GotoInstruction toSuccess = new GotoInstruction(-1);
     addInstruction(toSuccess);
     PushInstruction pushFalse = new PushInstruction(myFactory.getConstFactory().getFalse(), null);

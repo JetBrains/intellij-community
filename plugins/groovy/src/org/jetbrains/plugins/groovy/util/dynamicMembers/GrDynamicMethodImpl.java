@@ -176,11 +176,6 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.isVarArgs();
   }
 
-  @Override
-  public boolean isExtensionMethod() {
-    return myMethod.isExtensionMethod();
-  }
-
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);

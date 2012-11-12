@@ -62,6 +62,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -69,7 +70,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.branch.GitBranchUiUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -675,6 +675,11 @@ public class GitLogUI implements Disposable {
         return custom == null ? super.getCellRenderer(row, column) : custom;
       }
     };
+
+    if (UIUtil.isUnderDarcula()) {
+      myJBTable.setStriped(true);
+      myJBTable.setShowGrid(false);
+    }
     final TableLinkMouseListener tableLinkListener = new TableLinkMouseListener() {
       @Override
       protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
@@ -1469,7 +1474,7 @@ public class GitLogUI implements Disposable {
       }
     }
     if (myClearedHighlightingRoots.isEmpty()) {
-      return myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground();
+      return myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.isUnderDarcula() ? UIUtil.getTableBackground().darker() : UIUtil.getTableBackground();
     }
     final CommitI commitAt = myTableModel.getCommitAt(row);
     if (commitAt.holdsDecoration()) {
@@ -1480,30 +1485,30 @@ public class GitLogUI implements Disposable {
            (myTableModel.isInCurrentBranch(row) ? Colors.highlighted : UIUtil.getTableBackground());
   }
 
-  private Color getLogicBackground(final boolean isSelected, final int row) {
-    Color bkgColor;
-    final CommitI commitAt = myTableModel.getCommitAt(row);
-    GitCommit gitCommit = null;
-    if (commitAt != null && (! commitAt.holdsDecoration())) {
-      gitCommit = fullCommitPresentation(commitAt);
-    }
-
-    if (isSelected) {
-      bkgColor = UIUtil.getTableSelectionBackground();
-    } else {
-      bkgColor = UIUtil.getTableBackground();
-      if (gitCommit != null) {
-        if (myDetailsCache.getStashName(commitAt.selectRepository(myRootsUnderVcs), gitCommit.getShortHash()) != null) {
-          bkgColor = Colors.stashed;
-        } else if (gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
-          bkgColor = Colors.commonThisBranch;
-        } else if (gitCommit.isOnLocal()) {
-          bkgColor = Colors.ownThisBranch;
-        }
-      }
-    }
-    return bkgColor;
-  }
+  //private Color getLogicBackground(final boolean isSelected, final int row) {
+  //  Color bkgColor;
+  //  final CommitI commitAt = myTableModel.getCommitAt(row);
+  //  GitCommit gitCommit = null;
+  //  if (commitAt != null && (! commitAt.holdsDecoration())) {
+  //    gitCommit = fullCommitPresentation(commitAt);
+  //  }
+  //
+  //  if (isSelected) {
+  //    bkgColor = UIUtil.getTableSelectionBackground();
+  //  } else {
+  //    bkgColor = UIUtil.getTableBackground();
+  //    if (gitCommit != null) {
+  //      if (myDetailsCache.getStashName(commitAt.selectRepository(myRootsUnderVcs), gitCommit.getShortHash()) != null) {
+  //        bkgColor = Colors.stashed;
+  //      } else if (gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
+  //        bkgColor = Colors.commonThisBranch;
+  //      } else if (gitCommit.isOnLocal()) {
+  //        bkgColor = Colors.ownThisBranch;
+  //      }
+  //    }
+  //  }
+  //  return bkgColor;
+  //}
 
   private ColumnInfo<Object, String> AUTHOR;
 
@@ -1730,14 +1735,10 @@ public class GitLogUI implements Disposable {
   }
 
   interface Colors {
-    Color tag = new Color(241, 239, 158);
-    Color remote = new Color(188,188,252);
-    Color local = new Color(117,238,199);
-    Color ownThisBranch = new Color(198,255,226);
-    Color commonThisBranch = new Color(223,223,255);
-    Color stashed = Gray._225;
-    Color highlighted = new Color(210,255,233);
-    //Color highlighted = new Color(204,255,230);
+    Color tag = UIUtil.isUnderDarcula() ? new Color(0x7D7B12) : new Color(0xf1ef9e);
+    Color remote = UIUtil.isUnderDarcula() ? new Color(0xbcbcfc).darker().darker() : new Color(0xbcbcfc);
+    Color local = UIUtil.isUnderDarcula() ? new Color(0x0D6D4F) : new Color(0x75eec7);
+    Color highlighted = UIUtil.isUnderDarcula() ? UIUtil.getTableBackground() : new Color(210,255,233);
   }
 
   private class MyCherryPick extends DumbAwareAction {
@@ -2565,7 +2566,8 @@ public class GitLogUI implements Disposable {
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
-      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
+      final String name = GitBranchUtil
+        .getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkoutNewBranchStartingFrom(name, reference, Collections.singletonList(repository), myRefresh);

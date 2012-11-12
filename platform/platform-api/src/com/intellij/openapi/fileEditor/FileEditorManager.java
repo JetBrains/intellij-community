@@ -150,11 +150,9 @@ public abstract class FileEditorManager {
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
-   * @param listener
-   * @param parentDisposable
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
-  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable);
+  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Removes specified <code>listener</code>

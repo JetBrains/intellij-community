@@ -188,7 +188,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final PsiElement position = parameters.getPosition();
-    if (!PsiUtilBase.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE)) {
+    if (!isInJavaContext(position)) {
       return;
     }
 
@@ -241,6 +241,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
+  }
+
+  public static boolean isInJavaContext(PsiElement position) {
+    return PsiUtilBase.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE);
   }
 
   public static void addAllClasses(CompletionParameters parameters,

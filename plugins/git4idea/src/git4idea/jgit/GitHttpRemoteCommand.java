@@ -19,15 +19,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import git4idea.push.GitSimplePushResult;
-import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Ref;
@@ -49,7 +50,7 @@ interface GitHttpRemoteCommand {
 
   String getUrl();
   void setUrl(String url);
-  void run() throws InvalidRemoteException, URISyntaxException, TransportException;
+  void run() throws GitAPIException, URISyntaxException, TransportException;
   void cleanup();
   GitHttpCredentialsProvider getCredentialsProvider();
   String getLogString();
@@ -70,7 +71,7 @@ interface GitHttpRemoteCommand {
     }
 
     @Override
-    public void run() throws InvalidRemoteException {
+    public void run() throws GitAPIException {
       FetchCommand fetchCommand = myGit.fetch();
       fetchCommand.setRemote(myUrl);
       fetchCommand.setRefSpecs(myRefSpecs);
@@ -131,7 +132,7 @@ interface GitHttpRemoteCommand {
     }
 
     @Override
-    public void run() throws InvalidRemoteException {
+    public void run() throws GitAPIException {
       CloneCommand cloneCommand = Git.cloneRepository();
       cloneCommand.setDirectory(myTargetDirectory);
       cloneCommand.setURI(myUrl);

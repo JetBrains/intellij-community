@@ -1,5 +1,5 @@
 class Super {
   void foo(String[] params, int... indices) {
-      foo(new String[<caret>], 0);
+      foo(new String[]{<caret>}, 0);
     }
 }

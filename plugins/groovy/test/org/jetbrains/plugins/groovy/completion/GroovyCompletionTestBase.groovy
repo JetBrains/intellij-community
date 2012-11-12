@@ -14,96 +14,99 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.groovy.GroovyFileType
-/**
- * @author Maxim.Medvedev
- */
+
 abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
+
   protected void doSmartTest() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    checkResult();
+    doCompletionTest(CompletionType.SMART)
+  }
+
+  protected void doBasicTest(String before =  null, String after = null) {
+    doCompletionTest(before, after, CompletionType.BASIC)
   }
 
   protected void doSmartTest(String before, String after) {
-    myFixture.configureByText('_a.groovy', before)
-    myFixture.complete(CompletionType.SMART)
-    assertNull(myFixture.lookupElements)
-    myFixture.checkResult(after)
+    doCompletionTest(before, after, CompletionType.SMART)
   }
 
   protected void checkResult() {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
-  protected void doBasicTest(String type = "") {
-    myFixture.testCompletionTyping(getTestName(false) + ".groovy", type, getTestName(false) + "_after.groovy");
+  protected void doCompletionTest(String before = null, String after = null, String type = "", CompletionType ct) {
+    if (before == null) {
+      myFixture.configureByFile(getTestName(false) + ".groovy")
+    }
+    else {
+      myFixture.configureByText(getTestName(false) + ".groovy", before)
+    }
+
+    myFixture.complete(ct)
+    type.each { myFixture.type(it) }
+
+    assertNull(myFixture.lookupElements)
+    if (after == null) {
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true)
+    }
+    else {
+      myFixture.checkResult(after, true)
+    }
   }
 
-  protected void doBasicTest(String before, String after) {
-    myFixture.configureByText('_a.groovy', before)
-    myFixture.completeBasic()
-    assertNull(myFixture.lookupElements)
-    myFixture.checkResult(after)
+  protected void doVariantableTest(String before = null, String type = "", CompletionType ct, CompletionResult testType = CompletionResult.equal, String... variants) {
+    if (before == null) {
+      myFixture.configureByFile(getTestName(false) + ".groovy")
+    }
+    else {
+      myFixture.configureByText(getTestName(false) + ".groovy", before)
+    }
+
+    myFixture.complete(ct)
+    type.each { myFixture.type(it) }
+
+    assertNotNull(myFixture.lookupElements)
+
+    final actual = myFixture.lookupElementStrings
+    switch (testType) {
+      case CompletionResult.contain:
+        assertTrue(actual.containsAll(variants))
+        break
+      case CompletionResult.equal:
+        assertOrderedEquals(actual, variants)
+        break
+      case CompletionResult.notContain:
+        variants.each {
+          assertFalse(actual.contains(it))
+        }
+    }
   }
 
 
   public void doVariantableTest(String... variants) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.BASIC);
-    assertOrderedEquals(myFixture.lookupElementStrings, variants);
+    doVariantableTest(CompletionType.BASIC, variants)
   }
 
   public void doHasVariantsTest(String... variants) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.BASIC);
-    if (!myFixture.lookupElementStrings.containsAll(variants)) {
-      assertOrderedEquals(myFixture.lookupElementStrings, variants)
-    }
+    doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, variants)
   }
 
   public void doSmartCompletion(String... variants) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    final List<String> list = myFixture.lookupElementStrings;
-    assertNotNull(list);
-    assertOrderedEquals(list, variants);
+    doVariantableTest(CompletionType.SMART, variants)
   }
-
-  void doSmartVariantableTest(String before, String... variants) {
-    myFixture.configureByText(getTestName(false) + ".groovy", before);
-    myFixture.complete(CompletionType.SMART);
-    final List<String> list = myFixture.lookupElementStrings;
-    assertNotNull(list);
-    assertOrderedEquals(list, variants);
-  }
-
 
   public void checkCompletion(String before, String type, String after) {
-    myFixture.configureByText("a.groovy", before);
-    myFixture.completeBasic();
-    myFixture.type(type);
-    myFixture.checkResult(after);
+    doCompletionTest(before, after, type, CompletionType.BASIC)
   }
 
   public void checkSingleItemCompletion(String before, String after) {
-    myFixture.configureByText("a.groovy", before);
-    assert !myFixture.completeBasic();
-    myFixture.checkResult(after);
+    doCompletionTest(before, after, CompletionType.BASIC)
   }
 
   public void doNoVariantsTest(String before, String... excludedVariants) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
-    myFixture.completeBasic()
-    final excluded = ContainerUtil.newHashSet(excludedVariants)
-    for (String lookup : myFixture.lookupElementStrings) {
-      assertFalse(lookup, excluded.contains(lookup))
-    }
+    doVariantableTest(before, "", CompletionType.BASIC, CompletionResult.notContain, excludedVariants)
   }
 
   protected static def caseSensitiveNone() {

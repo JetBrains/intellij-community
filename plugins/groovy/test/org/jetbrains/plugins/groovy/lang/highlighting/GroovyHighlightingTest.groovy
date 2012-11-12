@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -927,5 +927,18 @@ enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> 
 def (a, b)
 def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>)
 ''')
+  }
+
+  void 'test create method from usage is available in static method'() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    testHighlighting('''\
+class A {
+  static foo() {
+    <warning descr="Cannot resolve symbol 'abc'">a<caret>bc</warning>()
+  }
+}
+''')
+
+    assertNotNull(myFixture.findSingleIntention("Create Method 'abc'"))
   }
 }

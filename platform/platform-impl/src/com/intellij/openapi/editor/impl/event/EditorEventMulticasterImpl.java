@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.event;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -42,15 +43,15 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
   private final EventDispatcher<FocusChangeListener> myFocusChangeListenerMulticaster = EventDispatcher.create(FocusChangeListener.class);
 
-  public void registerDocument(DocumentEx document) {
+  public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
-  public void registerEditor(EditorEx editor) {
+  public void registerEditor(@NotNull EditorEx editor) {
     editor.addEditorMouseListener(myEditorMouseMulticaster.getMulticaster());
     editor.addEditorMouseMotionListener(myEditorMouseMotionMulticaster.getMulticaster());
-    ((EditorMarkupModel) editor.getMarkupModel()).addErrorMarkerListener(myErrorStripeMulticaster.getMulticaster());
+    ((EditorMarkupModel) editor.getMarkupModel()).addErrorMarkerListener(myErrorStripeMulticaster.getMulticaster(), ((EditorImpl)editor).getDisposable());
     editor.getCaretModel().addCaretListener(myCaretMulticaster.getMulticaster());
     editor.getSelectionModel().addSelectionListener(mySelectionMulticaster.getMulticaster());
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaMulticaster.getMulticaster());

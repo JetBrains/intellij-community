@@ -37,6 +37,9 @@ public abstract class JpsLoaderBase {
       if (componentTag != null) {
         serializer.loadExtension(element, componentTag);
       }
+      else {
+        serializer.loadExtensionWithDefaultSettings(element);
+      }
     }
     else {
       LOG.debug("Cannot load component " + serializer.getComponentName() + ": " + configFile + " doesn't exist");

@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
-    <orderEntry type="module" module-name="ui-designer-jps-plugin" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
   </component>
 </module>

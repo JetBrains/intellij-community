@@ -24,10 +24,12 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -165,7 +167,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   private List<UsageInfo> findUsages(final FindModel findModel) {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    return FindInProjectUtil.findUsages(findModel, psiDirectory, myProject);
+    List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
+    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector);
+    return result;
   }
 
   public void testFindWholeWordsInProperties() throws Exception {

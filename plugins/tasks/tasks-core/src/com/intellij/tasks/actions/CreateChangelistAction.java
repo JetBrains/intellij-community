@@ -39,9 +39,15 @@ public class CreateChangelistAction extends BaseTaskAction {
       if (manager == null || !manager.isVcsEnabled()) {
         presentation.setText(getTemplatePresentation().getText());
         presentation.setEnabled(false);
-      } else {
-        presentation.setText("Create changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
+      }
+      else {
         presentation.setEnabled(true);
+        if (manager.getActiveTask().getChangeLists().size() == 0) {
+          presentation.setText("Create changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
+        }
+        else {
+          presentation.setText("Add changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
+        }
       }
     }
   }
@@ -51,7 +57,8 @@ public class CreateChangelistAction extends BaseTaskAction {
     TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
     assert manager != null;
     LocalTask activeTask = manager.getActiveTask();
-    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, manager.getChangelistName(activeTask), null);
+    String name =
+      Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, manager.getChangelistName(activeTask), null);
     if (name != null) {
       manager.createChangeList(activeTask, name);
     }

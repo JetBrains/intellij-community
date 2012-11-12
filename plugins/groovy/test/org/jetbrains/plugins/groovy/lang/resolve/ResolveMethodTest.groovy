@@ -1111,4 +1111,322 @@ setFo<caret>o(2)
     assertEquals('setFoo', resolved.name)
   }
 
+  void testRuntimeMixin1() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+metaClass.mixin(Foo)
+d<caret>oSmth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin2() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+this.metaClass.mixin(Foo)
+do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin3() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.metaClass.mixin(Foo)
+do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin4() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.class.mixin(Foo)
+do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin5() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.mixin(Foo)
+do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin6() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    metaClass.mixin(Foo)
+    d<caret>oSmth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin7() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    this.metaClass.mixin(Foo)
+    do<caret>Smth()
+  }
+}
+
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin8() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.metaClass.mixin(Foo)
+    do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin9() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.class.mixin(Foo)
+    do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin10() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.mixin(Foo)
+    do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin11() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+metaClass.mixin(Foo)
+new _a().d<caret>oSmth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin12() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+this.metaClass.mixin(Foo)
+new _a().do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin13() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.metaClass.mixin(Foo)
+new _a().do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin14() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.class.mixin(Foo)
+new _a().do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin15() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+_a.mixin(Foo)
+new _a().do<caret>Smth()
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin16() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    metaClass.mixin(Foo)
+    new _a().d<caret>oSmth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin17() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    this.metaClass.mixin(Foo)
+    new _a().do<caret>Smth()
+  }
+}
+
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin18() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.metaClass.mixin(Foo)
+    new _a().do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin19() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.class.mixin(Foo)
+    new _a().do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin20() {
+    resolveByText('''\
+class Foo {
+    public static void doSmth(Script u) {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.mixin(Foo)
+    new _a().do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testRuntimeMixin21() {
+    resolveByText('''\
+class Foo {
+    public void doSmth() {
+        println "hello"
+    }
+}
+
+class _a {
+  def foo() {
+    _a.mixin(Foo)
+    new _a().do<caret>Smth()
+  }
+}
+''', PsiMethod)
+  }
 }

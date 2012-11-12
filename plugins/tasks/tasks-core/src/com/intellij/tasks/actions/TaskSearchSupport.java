@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.Task;
@@ -24,6 +25,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +61,14 @@ public class TaskSearchSupport {
     });
   }
 
-  public static List<Task> getRepositoriesTasks(final TaskManager myManager, String pattern, int max, long since, boolean forceRequest, final boolean withClosed) {
-    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed);
+  public static List<Task> getRepositoriesTasks(final TaskManager myManager,
+                                                String pattern,
+                                                int max,
+                                                long since,
+                                                boolean forceRequest,
+                                                final boolean withClosed,
+                                                @NotNull final ProgressIndicator cancelled) {
+    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed, cancelled);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }

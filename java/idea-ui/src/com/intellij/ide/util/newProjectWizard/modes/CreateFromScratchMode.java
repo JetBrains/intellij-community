@@ -20,11 +20,9 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.ModuleType;
@@ -58,30 +56,12 @@ public class CreateFromScratchMode extends WizardMode {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
-    return addSteps(context, modulesProvider, this, new StepSequence(), builders);
-  }
 
-  static StepSequence addSteps(WizardContext context,
-                               ModulesProvider modulesProvider,
-                               WizardMode mode,
-                               StepSequence sequence, ModuleBuilder[] builders) {
-    if (!(mode instanceof CreateFromTemplateMode)) {
-      sequence.addCommonStep(new ProjectNameWithTypeStep(context, sequence, mode));
-    }
+    StepSequence sequence = new StepSequence();
     for (ModuleBuilder builder : builders) {
-      addStepsForBuilder(builder, context, modulesProvider, sequence);
+      sequence.addStepsForBuilder(builder, context, modulesProvider);
     }
     return sequence;
-  }
-
-  private static void addStepsForBuilder(ModuleBuilder builder,
-                                         WizardContext context,
-                                         ModulesProvider modulesProvider,
-                                         StepSequence sequence) {
-    final String id = builder.getBuilderId();
-    for (ModuleWizardStep step : builder.createWizardSteps(context, modulesProvider)) {
-      sequence.addSpecificStep(id, step);
-    }
   }
 
   public boolean isAvailable(WizardContext context) {

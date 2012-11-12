@@ -15,10 +15,11 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.component;
 
-import com.intellij.application.options.codeStyle.arrangement.*;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.action.ArrangementRemoveConditionAction;
-import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -161,7 +162,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
-    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel) {
+    myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel, false, true) {
       @Override
       public void paint(Graphics g) {
         Point point = ArrangementConfigUtil.getLocationOnScreen(this);

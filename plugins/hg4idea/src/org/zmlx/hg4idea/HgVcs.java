@@ -54,8 +54,8 @@ import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
+import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -91,7 +91,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
   private MessageBusConnection messageBusConnection;
-  private final HgGlobalSettings globalSettings;
+  @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
@@ -109,7 +109,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgIncomingOutgoingWidget myOutgoingWidget;
 
   public HgVcs(Project project,
-               HgGlobalSettings globalSettings,
+               @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
                ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
@@ -137,6 +137,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return new HgProjectConfigurable(getProject(), projectSettings);
   }
 
+  @NotNull
   public HgProjectSettings getProjectSettings() {
     return projectSettings;
   }
@@ -378,6 +379,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return globalSettings.getHgExecutable();
   }
 
+  @NotNull
   public HgGlobalSettings getGlobalSettings() {
     return globalSettings;
   }

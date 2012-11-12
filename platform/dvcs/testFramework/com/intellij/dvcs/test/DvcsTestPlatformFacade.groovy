@@ -138,5 +138,7 @@ public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
     ] as SaveAndSyncHandler
   }
 
-
+  @Override
+  void hardRefresh(VirtualFile root) {
+  }
 }

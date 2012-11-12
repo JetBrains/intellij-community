@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -135,6 +136,11 @@ public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
   @Override
   public SaveAndSyncHandler getSaveAndSyncHandler() {
     return SaveAndSyncHandlerImpl.getInstance();
+  }
+
+  @Override
+  public void hardRefresh(@NotNull VirtualFile root) {
+    VfsUtil.markDirtyAndRefresh(true, true, false, root);
   }
 
 }

@@ -15,11 +15,13 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;
@@ -82,6 +84,10 @@ public abstract class TaskRepository  {
    * @throws Exception
    */
   public abstract Task[] getIssues(@Nullable String query, int max, long since) throws Exception;
+
+  public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
+    return getIssues(query, max, since);
+  }
 
   @Nullable
   public abstract Task findTask(String id) throws Exception;

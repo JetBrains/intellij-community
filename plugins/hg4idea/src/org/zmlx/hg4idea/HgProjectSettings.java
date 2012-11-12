@@ -16,17 +16,18 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "hg4idea.settings",
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
-  private final HgGlobalSettings myAppSettings;
+ @NotNull private final HgGlobalSettings myAppSettings;
 
   private State myState = new State();
 
-  public HgProjectSettings(HgGlobalSettings appSettings) {
+  public HgProjectSettings(@NotNull HgGlobalSettings appSettings) {
     myAppSettings = appSettings;
   }
 
@@ -59,14 +60,6 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myAppSettings.getHgExecutable();
   }
 
-  public boolean isAutodetectHg() {
-    return myAppSettings.isAutodetectHg();
-  }
-
-  public void enableAutodetectHg() {
-    myAppSettings.enableAutodetectHg();
-  }
-
   public void setHgExecutable(String text) {
     myAppSettings.setHgExecutable(text);
   }
@@ -77,5 +70,10 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
   public void setRunViaBash(boolean runViaBash) {
     myAppSettings.setRunViaBash(runViaBash);
+  }
+
+  @NotNull
+  public HgGlobalSettings getGlobalSettings() {
+    return myAppSettings;
   }
 }

@@ -93,29 +93,32 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
-        int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
-        for (File file : entry.getValue()) {
-          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-          addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-          final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
-          if (outputPaths != null) {
-            changedOutputPaths.addAll(outputPaths);
-            for (String outputPath : outputPaths) {
-              filesToDelete.putValue(outputPath, sourcePath);
-              final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-              if (sources != null) {
-                for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                  addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (filesToRecompile) {
+        for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
+          int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
+          for (File file : entry.getValue()) {
+            String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
+            addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
+            final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
+            if (outputPaths != null) {
+              changedOutputPaths.addAll(outputPaths);
+              for (String outputPath : outputPaths) {
+                filesToDelete.putValue(outputPath, sourcePath);
+                final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+                if (sources != null) {
+                  for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+                    addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+                  }
                 }
               }
             }
           }
         }
-      }
-      for (Set<File> files : filesToRecompile.values()) {
-        for (File file : files) {
-          srcOutMapping.remove(file.getPath());
+        for (Set<File> files : filesToRecompile.values()) {
+          for (File file : files) {
+            srcOutMapping.remove(file.getPath());
+          }
         }
       }
       for (String outputPath : changedOutputPaths) {

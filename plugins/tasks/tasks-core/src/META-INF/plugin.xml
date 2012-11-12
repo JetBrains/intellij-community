@@ -124,6 +124,10 @@
     <tasks.repositoryType implementation="com.intellij.tasks.generic.assembla.AssemblaRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
+
+    <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
+                factoryClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"
+                conditionClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"/>
   </extensions>
 
 </idea-plugin>

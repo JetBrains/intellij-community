@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,14 +74,11 @@ public class CaptionIcon implements Icon {
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    final Graphics2D graphics2D = (Graphics2D)g;
-    final Paint oldPaint = graphics2D.getPaint();
-    final Stroke oldStroke = graphics2D.getStroke();
-    final Font oldFont = graphics2D.getFont();
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
-    graphics2D.setPaint(myBgrnd);
+    ((Graphics2D)g).setPaint(myBgrnd);
 
-    myForm.draw(c, graphics2D, myWidth, myHeight, x, y, myWithContinuation, myEmphasize);
+    myForm.draw(c, (Graphics2D)g, myWidth, myHeight, x, y, myWithContinuation, myEmphasize);
 
     g.setFont(myFont);
     g.setColor(UIUtil.getTextAreaForeground());
@@ -91,9 +90,7 @@ public class CaptionIcon implements Icon {
       g.drawString(" +", x + myWidth - 2 - myAddWidth, y + myHeight - 3);
     }
 
-    graphics2D.setPaint(oldPaint);
-    graphics2D.setStroke(oldStroke);
-    graphics2D.setFont(oldFont);
+    config.restore();
   }
 
   public int getIconWidth() {
@@ -105,17 +102,7 @@ public class CaptionIcon implements Icon {
       @Override
       public void draw(Component c, Graphics2D g, int width, int height, int x, int y, boolean withPlus, boolean emphasize) {
         g.fillRect(x + 2, y, width, height);
-
-        g.setPaint(UIUtil.getTextAreaForeground());
-        final BasicStroke stroke;
-        if (emphasize) {
-          stroke = new BasicStroke(1);
-        } else {
-          stroke = new BasicStroke(1);
-          g.setColor(Color.gray);
-          //stroke = new BasicStroke(1, 1, 1, 1, new float[]{2f,2f}, 1f);
-        }
-        g.setStroke(stroke);
+        g.setColor(UIUtil.isUnderDarcula() ? Color.gray.darker() : Color.gray);
         g.drawRect(x + 2, y, width, height - 1);
       }
     },
@@ -124,9 +111,8 @@ public class CaptionIcon implements Icon {
       public void draw(Component c, Graphics2D g, int width, int height, int x, int y, boolean withPlus, boolean emphasize) {
         g.fillRoundRect(x + 2, y, width, height, 5, 5);
 
-        g.setPaint(UIUtil.getTextAreaForeground());
         final BasicStroke stroke = new BasicStroke(1);
-        g.setColor(Color.gray);
+        g.setColor(UIUtil.isUnderDarcula() ? Color.gray.darker() : Color.gray);
         g.setStroke(stroke);
         g.drawRoundRect(x + 2, y, width, height - 1, 5, 5);
       }

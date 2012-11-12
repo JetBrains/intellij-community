@@ -20,8 +20,8 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDis
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesList;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesListModel;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -40,16 +40,16 @@ import java.util.Set;
  * @since 8/10/12 2:53 PM
  */
 public class ArrangementMatchNodeComponentFactory {
-  
+
   private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchNodeComponentFactory.class.getName());
-  
-  @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
-  @NotNull private final ArrangementColorsProvider     myColorsProvider;
-  @NotNull private final ArrangementMatchingRulesList  myList;
+
+  @NotNull private final ArrangementNodeDisplayManager   myDisplayManager;
+  @NotNull private final ArrangementColorsProvider       myColorsProvider;
+  @NotNull private final ArrangementMatchingRulesControl myList;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
                                               @NotNull ArrangementColorsProvider provider,
-                                              @NotNull ArrangementMatchingRulesList list)
+                                              @NotNull ArrangementMatchingRulesControl list)
   {
     myDisplayManager = manager;
     myColorsProvider = provider;
@@ -103,7 +103,7 @@ public class ArrangementMatchNodeComponentFactory {
     @Override
     public void consume(@NotNull ArrangementAtomMatchConditionComponent component) {
       ArrangementAtomMatchCondition condition = component.getMatchCondition();
-      ArrangementMatchingRulesListModel model = myList.getModel();
+      ArrangementMatchingRulesModel model = myList.getModel();
       int i = getRuleIndex();
       if (i < 0) {
         return;
@@ -132,7 +132,7 @@ public class ArrangementMatchNodeComponentFactory {
       }
 
       ArrangementAnimationPanel panel = component.getAnimationPanel();
-      new ArrangementAnimationManager(panel, this, false, true).startAnimation();
+      new ArrangementAnimationManager(panel, this).startAnimation();
     }
 
     @Override
@@ -141,12 +141,12 @@ public class ArrangementMatchNodeComponentFactory {
       if (!finished) {
         return;
       }
-      ArrangementMatchingRulesListModel model = myList.getModel();
+      ArrangementMatchingRulesModel model = myList.getModel();
       boolean repaintToBottom = getRuleIndex() < 0;
       if (repaintToBottom) {
         Object removeCandidate = model.getElementAt(myRow);
         if (removeCandidate instanceof DummyElement) {
-          model.remove(myRow);
+          model.removeRow(myRow);
         }
       }
 
@@ -158,8 +158,8 @@ public class ArrangementMatchNodeComponentFactory {
     private int getRuleIndex() {
       // We can't just use model.indexOf(myRule) because there is a possible case that the model contain equal
       // rules (rule1.equals(rule2) == true). That's why we have a helper method for search by reference identity. 
-      ArrangementMatchingRulesListModel model = myList.getModel();
-      for (int i = 0, max = model.size(); i < max; i++) {
+      ArrangementMatchingRulesModel model = myList.getModel();
+      for (int i = 0, max = model.getSize(); i < max; i++) {
         if (model.getElementAt(i) == myRule) {
           return i;
         }

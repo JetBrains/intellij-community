@@ -98,4 +98,6 @@ public interface DvcsPlatformFacade {
 
   @NotNull
   SaveAndSyncHandler getSaveAndSyncHandler();
+
+  void hardRefresh(@NotNull VirtualFile root);
 }

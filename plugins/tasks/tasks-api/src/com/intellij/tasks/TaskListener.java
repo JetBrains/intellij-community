@@ -22,5 +22,11 @@ import java.util.EventListener;
  */
 public interface TaskListener extends EventListener {
 
+  void taskDeactivated(LocalTask task);
+
   void taskActivated(LocalTask task);
+
+  void taskAdded(LocalTask task);
+
+  void taskRemoved(LocalTask task);
 }

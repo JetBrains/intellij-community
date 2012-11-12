@@ -21,6 +21,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -38,6 +39,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RefreshSessionImpl extends RefreshSession {
+  private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
@@ -94,19 +97,24 @@ public class RefreshSessionImpl extends RefreshSession {
     boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      final LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
       fs.markSuspiciousFilesDirty(workQueue);
-      final FileWatcher watcher = fs.getFileWatcher();
+      FileWatcher watcher = fs.getFileWatcher();
 
       for (VirtualFile file : workQueue) {
-        final NewVirtualFile nvf = (NewVirtualFile)file;
+        NewVirtualFile nvf = (NewVirtualFile)file;
         if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }
 
         RefreshWorker worker = new RefreshWorker(file, myIsRecursive);
+        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
+        if (t != 0) {
+          t = System.currentTimeMillis() - t;
+          LOG.debug(file + " scanned in " + t + " ms, events: " + events);
+        }
         myEvents.addAll(events);
         if (!events.isEmpty()) hasEventsToFire = true;
       }

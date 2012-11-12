@@ -2,6 +2,7 @@ package org.jetbrains.jps.uiDesigner.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
@@ -18,6 +19,8 @@ public class JpsUiDesignerExtensionServiceImpl extends JpsUiDesignerExtensionSer
 
   @Override
   public void setUiDesignerConfiguration(@NotNull JpsProject project, @NotNull JpsUiDesignerConfiguration configuration) {
+    JavaBuilder.setCopyFormsRuntime(configuration.isCopyFormsRuntimeToOutput());
+    JavaBuilder.setFormsInstrumentationEnabled(configuration.isInstrumentClasses());
     project.getContainer().setChild(JpsUiDesignerConfigurationImpl.ROLE, configuration);
   }
 }

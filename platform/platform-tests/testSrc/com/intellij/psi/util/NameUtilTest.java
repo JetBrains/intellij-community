@@ -531,4 +531,9 @@ public class NameUtilTest extends UsefulTestCase {
    assertTrue(c.matchingFragments("an", "Changes") != null);
    assertTrue(c.matchingFragments("a", "Changes") != null);
  }
+
+  public void testFilePatterns() {
+    assertMatches("groovy*.jar", "groovy-1.7.jar");
+    assertDoesntMatch("*.ico", "a.i.c.o");
+  }
 }

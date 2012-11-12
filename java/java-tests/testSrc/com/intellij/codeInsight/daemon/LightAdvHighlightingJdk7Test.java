@@ -17,11 +17,11 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -45,13 +45,13 @@ import java.util.List;
 public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
 
-  private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
-    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
+  private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
+    enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
-  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
-    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
+  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, Class<?>... classes) {
+    enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
@@ -93,16 +93,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg12() throws Exception { doTest(false, false); }
   public void testDiamondNeg13() throws Exception { doTest(false, false); }
   public void testDiamondNeg14() throws Exception { doTest(false, false); }
-  public void testDiamondMisc() throws Exception {
-    final LanguageLevel oldLevel = getLanguageLevel();
-    try {
-      setLanguageLevel(LanguageLevel.JDK_1_7);
-      doTest(false, false);
-    }
-    finally {
-      setLanguageLevel(oldLevel);
-    }
-  }
+  public void testDiamondMisc() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() throws Exception { doTest(false, false); }
   public void testInnerInTypeArguments() throws Exception { doTest(false, false); }
 
@@ -138,28 +129,25 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testJavacQuirks() throws Exception {
-    setLanguageLevel(LanguageLevel.JDK_1_6);
-    doTest(true, false);
-  }
-
+  public void testJavacQuirks() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testMultiCatch() throws Exception { doTest(false, false); }
   public void testTryWithResources() throws Exception { doTest(false, false); }
-  public void testTryWithResourcesWarn() throws Exception { doTest(true, false, new DefUseInspection()); }
+  public void testTryWithResourcesWarn() throws Exception { doTest(true, false, DefUseInspection.class); }
   public void testSafeVarargsApplicability() throws Exception { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
   public void testGenericsArrayCreation() throws Exception { doTest(false, false); }
   public void testPreciseRethrow() throws Exception { doTest(false, false); }
   public void testImprovedCatchAnalysis() throws Exception { doTest(true, false); }
   public void testPolymorphicTypeCast() throws Exception { doTest(true, false); }
-  public void testErasureClashConfusion() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }
-  public void testUnused() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }
+  public void testErasureClashConfusion() throws Exception { doTest(true, false, UnusedDeclarationInspection.class); }
+  public void testUnused() throws Exception { doTest(true, false, UnusedDeclarationInspection.class); }
   public void testSuperBound() throws Exception { doTest(false, false); }
   public void testExtendsBound() throws Exception { doTest(false, false); }
   public void testIDEA84533() throws Exception { doTest(false, false); }
   public void testClassLiteral() throws Exception { doTest(false, false); }
   public void testExtensionMethods() throws Exception { doTest(false, false); }
+  public void testExtensionMethodSyntax() throws Exception { doTest(true, false, DeprecatedDefenderSyntaxInspection.class); }
   public void testMethodReferences() throws Exception { doTest(false, true, false); }
   public void testUsedMethodsByMethodReferences() throws Exception { doTest(true, true, false); }
   public void testLambdaExpressions() throws Exception { doTest(false, true, false); }

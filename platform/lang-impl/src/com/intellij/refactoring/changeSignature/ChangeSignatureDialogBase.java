@@ -611,7 +611,7 @@ public abstract class ChangeSignatureDialogBase<
     }
   }
 
-  private boolean mayPropagateParameters() {
+  protected boolean mayPropagateParameters() {
     final List<ParamInfo> infos = getParameters();
     if (infos.size() <= myMethod.getParametersCount()) return false;
     for (int i = 0; i < myMethod.getParametersCount(); i++) {

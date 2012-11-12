@@ -66,7 +66,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   @Override
   public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
     JpsAntArtifactExtension extension = getBuildExtension(artifact, buildPhase);
-    if (extension != null && extension.isEnabled()) {
+    if (extension != null && extension.isEnabled() && !StringUtil.isEmpty(extension.getFileUrl())) {
       return Collections.singletonList(new AntArtifactBuildTask(extension));
     }
     return Collections.emptyList();
@@ -155,7 +155,10 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       programParams.add("-buildfile");
       final String buildFilePath = JpsPathUtil.urlToPath(myExtension.getFileUrl());
       programParams.add(buildFilePath);
-      programParams.add(myExtension.getTargetName());
+      final String targetName = myExtension.getTargetName();
+      if (targetName != null) {
+        programParams.add(targetName);
+      }
 
       List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
                                                                           Collections.<String>emptyList(), classpath, vmParams, programParams, false);
@@ -182,7 +185,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
             if (exitCode != 0) {
               context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, errorOutput.toString()));
               context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                         "target '" + myExtension.getTargetName() + "' in '" + buildFilePath + "' finished with exit code " + exitCode));
+                                                         "target '" +
+                                                         targetName + "' in '" + buildFilePath + "' finished with exit code " + exitCode));
               hasErrors.set(true);
             }
           }

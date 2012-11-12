@@ -808,7 +808,7 @@ public class RefactoringUtil {
   }
 
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
-    if (!method.isExtensionMethod()) {
+    if (!method.hasModifierProperty(PsiModifier.DEFAULT)) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
         body.delete();

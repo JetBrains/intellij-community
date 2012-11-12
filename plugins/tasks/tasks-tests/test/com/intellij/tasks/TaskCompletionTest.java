@@ -10,7 +10,6 @@ import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 
@@ -23,7 +22,7 @@ import java.util.List;
 public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public TaskCompletionTest() {
-    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
+//    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
   public void testTaskCompletion() throws Exception {

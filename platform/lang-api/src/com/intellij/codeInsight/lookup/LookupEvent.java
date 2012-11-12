@@ -59,4 +59,9 @@ public class LookupEvent extends EventObject {
   public boolean isCanceledExplicitly() {
     return myCanceledExplicitly;
   }
+
+  public static boolean isSpecialCompletionChar(char c) {
+    return c == Lookup.AUTO_INSERT_SELECT_CHAR || c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
+           c == Lookup.NORMAL_SELECT_CHAR || c == Lookup.REPLACE_SELECT_CHAR;
+  }
 }

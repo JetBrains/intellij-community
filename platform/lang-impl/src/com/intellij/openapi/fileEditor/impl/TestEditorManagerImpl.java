@@ -428,7 +428,7 @@ import java.util.Map;
   }
 
   @Override
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
+  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
   }
 
   @Override

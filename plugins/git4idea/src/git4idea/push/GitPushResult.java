@@ -175,7 +175,7 @@ class GitPushResult {
   }
 
   @NotNull
-  Map<GitRepository, GitBranch> getRejectedPushesFromCurrentBranchToTrackedBranch(GitPushInfo pushInfo) {
+  Map<GitRepository, GitBranch> getRejectedPushesFromCurrentBranchToTrackedBranch(GitPushSpecs pushSpecs) {
     final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch = new HashMap<GitRepository, GitBranch>();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : group().myRejectedResults.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -209,7 +209,7 @@ class GitPushResult {
         LOG.info("Couldn't get tracked branch for branch " + currentBranch, e);
         continue;
       }
-      if (!pushInfo.getPushSpecs().get(repository).getDest().getName().equals(trackedBranchName)) {
+      if (!pushSpecs.get(repository).getDest().getName().equals(trackedBranchName)) {
         // push from current branch was rejected, but it was a push not to the tracked branch => ignore
         continue;
       }

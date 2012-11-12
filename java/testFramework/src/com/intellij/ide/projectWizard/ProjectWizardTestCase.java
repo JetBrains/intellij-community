@@ -1,17 +1,19 @@
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.actions.ImportModuleAction;
+import com.intellij.ide.actions.ImportProjectAction;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,6 +22,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +44,20 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
   protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<ModuleWizardStep> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
-    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    try {
+      myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    }
+    catch (Throwable e) {
+      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(), new Condition<Project>() {
+        @Override
+        public boolean value(Project project) {
+          return myWizard.getProjectName().equals(project.getName());
+        }
+      });
+      throw new RuntimeException(e);
+    }
     assertNotNull(myCreatedProject);
+    UIUtil.dispatchAllInvocationEvents();
 
     Project[] projects = myProjectManager.getOpenProjects();
     assertEquals(2, projects.length);
@@ -123,22 +138,38 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   }
 
   protected Module importProjectFrom(String path, ProjectImportProvider... providers) {
-    return importFrom(path, null, providers);
+    Module module = importFrom(path, null, providers);
+    if (module != null) {
+      myCreatedProject = module.getProject();
+    }
+    return module;
   }
 
-  private Module importFrom(String path, @Nullable Project project, ProjectImportProvider... providers) {
+  private Module importFrom(String path, @Nullable Project project, final ProjectImportProvider... providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
-    myWizard = new TestWizard(project, path, providers);
-    runWizard(null);
-    if (project == null) {
-      myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
-      return myCreatedProject == null ? null : ModuleManager.getInstance(myCreatedProject).getModules()[0];
-    }
-    else {
-      return createModuleFromWizard();
-    }
+    ImportModuleAction action = new ImportModuleAction() {
+      @Override
+      protected AddModuleWizard createWizard(Project project, List<ProjectImportProvider> available, String path) {
+        myWizard = new TestWizard(project, path, providers);
+        return myWizard;
+      }
+
+      @Override
+      protected boolean processWizard(AddModuleWizard wizard) {
+        runWizard(null);
+        return true;
+      }
+
+      @Override
+      public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+        return project == null ? new ImportProjectAction().createFromWizard(project, wizard) : super.createFromWizard(project, wizard);
+      }
+    };
+
+    List<Module> modules = action.doImport(project, file);
+    return modules == null || modules.isEmpty() ? null : modules.get(0);
   }
 
   protected static class TestWizard extends AddModuleWizard {

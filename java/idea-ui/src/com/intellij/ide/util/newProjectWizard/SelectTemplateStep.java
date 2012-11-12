@@ -35,15 +35,14 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -82,12 +81,6 @@ import java.util.List;
  */
 public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep {
 
-  private static final Condition<ProjectTemplate> TEMPLATE_CONDITION = new Condition<ProjectTemplate>() {
-    @Override
-    public boolean value(ProjectTemplate template) {
-      return !(template instanceof DirectoryProjectGenerator);
-    }
-  };
   private SimpleTree myTemplatesTree;
   private JPanel mySettingsPanel;
   private SearchTextField mySearchField;
@@ -130,7 +123,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   private ModuleBuilder myModuleBuilder;
 
-  public SelectTemplateStep(WizardContext context, StepSequence sequence) {
+  public SelectTemplateStep(WizardContext context, StepSequence sequence, final MultiMap<String, ProjectTemplate> map) {
 
     myWizardContext = context;
     mySequence = sequence;
@@ -151,37 +144,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
-    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
-    final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
-    for (ProjectTemplatesFactory factory : factories) {
-      for (String group : factory.getGroups()) {
-        ProjectTemplate[] templates = factory.createTemplates(group, context);
-        List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
-                                                                                                                        TEMPLATE_CONDITION);
-        if (!values.isEmpty()) {
-          groups.putValues(group, values);
-        }
-      }
-    }
-    final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
-    // put single leafs under "Other"
-    for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
-      Collection<ProjectTemplate> templates = entry.getValue();
-      if (templates.size() == 1 &&
-          !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
-
-        if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
-          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
-          continue;
-        }
-      }
-      sorted.putValues(entry.getKey(), templates);
-    }
-
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
       public SimpleNode[] getChildren() {
-        return ContainerUtil.map2Array(sorted.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
+        return ContainerUtil.map2Array(map.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
           @Override
           public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
             return new GroupNode(entry.getKey(), entry.getValue());
@@ -801,6 +767,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myModuleNameDocListenerEnabled = false;
     myModuleName.setText(moduleName);
     myModuleNameDocListenerEnabled = true;
+  }
+
+  @NotNull
+  public JTextField getModuleNameField() {
+    return myModuleName;
   }
 
   protected String getModuleName() {

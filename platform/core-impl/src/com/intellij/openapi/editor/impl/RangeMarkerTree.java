@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -104,13 +103,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       try {
         String msg = errMsg(node);
         if (msg != null) {
-          System.gc();
-          System.gc();
-          System.gc();
-          msg = errMsg(node);
-          if (msg != null) {
-            LOG.error(msg);
-          }
+          LOG.warn(msg);
         }
       }
       finally {
@@ -119,21 +112,17 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     return node;
   }
-  private String errMsg(RMNode<T> node) {
-    @NonNls final StringBuilder msg = new StringBuilder();
+  private String errMsg(@NotNull RMNode<T> node) {
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(new Processor<Object>() {
       @Override
       public boolean process(Object t) {
-        msg.append(t).append("\n");
         alive.incrementAndGet();
         return true;
       }
     });
     if (alive.get() > DUPLICATE_LIMIT) {
-      msg.insert(0, "Too many range markers (" + alive +") registered in "+this+":\n");
-
-      return msg.toString();
+      return "Too many range markers (" + alive + ") registered in "+this+"\n";
     }
 
     return null;
