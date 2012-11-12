@@ -31,12 +31,15 @@ import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettin
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -54,7 +57,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
   @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesControl.class.getName());
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel(ApplicationBundle.message("arrangement.text.empty.rule"));
 
-  @NotNull private final IntObjectMap<ArrangementListRowDecorator> myComponents = new IntObjectMap<ArrangementListRowDecorator>();
+  @NotNull private final IntObjectMap<ArrangementListRowDecorator> myComponents   = new IntObjectMap<ArrangementListRowDecorator>();
+  @NotNull private final TIntArrayList                             mySelectedRows = new TIntArrayList();
 
   @NotNull private final ArrangementMatchNodeComponentFactory myFactory;
   @NotNull private final ArrangementMatchingRuleEditor        myEditor;
@@ -91,6 +95,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
       public void valueChanged(ListSelectionEvent e) {
         onSelectionChange(e);
       }
+    });
+    getModel().addTableModelListener(new TableModelListener() {
+      @Override public void tableChanged(TableModelEvent e) { onTableChange(e); }
     });
   }
 
@@ -215,11 +222,25 @@ public class ArrangementMatchingRulesControl extends JBTable {
       repaintRows(myRowUnderMouse, myRowUnderMouse, false);
     }
   }
-
-  private void onSelectionChange(@NotNull ListSelectionEvent e) {
-    if (mySkipSelectionChange || e.getValueIsAdjusting()) {
-      return;
+  
+  public void runOperationIgnoreSelectionChange(@NotNull Runnable task) {
+    mySkipSelectionChange = true;
+    try {
+      task.run();
     }
+    finally {
+      mySkipSelectionChange = false;
+      refreshEditor();
+    }
+  }
+  
+  private void onSelectionChange(@NotNull ListSelectionEvent e) {
+    if (!mySkipSelectionChange && !e.getValueIsAdjusting()) {
+      refreshEditor();
+    }
+  }
+
+  public void refreshEditor() {
     ListSelectionModel selectionModel = getSelectionModel();
     if (selectionModel.isSelectionEmpty()) {
       hideEditor();
@@ -236,7 +257,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     if (myEditorRow >= 0) {
       hideEditor();
     }
-    
+
     // There is a possible case that there was an active editor in a row before the selected.
     ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
     if (toEdit != null) {
@@ -244,7 +265,26 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
   }
 
-  private void hideEditor() {
+  private void onTableChange(@NotNull TableModelEvent e) {
+    final int signum;
+    switch (e.getType()) {
+      case TableModelEvent.INSERT:
+        signum = 1;
+        break;
+      case TableModelEvent.DELETE:
+        signum = -1;
+        for (int i = e.getLastRow(); i >= e.getFirstRow(); i--) {
+          myComponents.remove(i);
+        }
+        break;
+      default:
+        return;
+    }
+    int shift = Math.abs(e.getFirstRow() - e.getLastRow() + 1) * signum;
+    myComponents.shiftKeys(e.getFirstRow(), shift);
+  }
+
+  public void hideEditor() {
     if (myEditorRow < 0) {
       return;
     }
@@ -330,6 +370,25 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return new Rectangle(firstRect.x, firstRect.y, lastRect.width, lastRect.y + lastRect.height - firstRect.y);
   }
 
+  @NotNull
+  public TIntArrayList getSelectedModelRows() {
+    mySelectedRows.clear();
+    int min = selectionModel.getMinSelectionIndex();
+    if (min >= 0) {
+      for (int i = selectionModel.getMaxSelectionIndex();  i >= min; i--) {
+        if ((myEditorRow >= 0 && i == myEditorRow - 1)
+            || (i != myEditorRow && selectionModel.isSelectedIndex(i)))
+        {
+          mySelectedRows.add(i);
+        }
+      }
+    }
+    else if (myEditorRow > 0) {
+      mySelectedRows.add(myEditorRow - 1);
+    }
+    return mySelectedRows;
+  }
+  
   private class MyRenderer implements TableCellRenderer {
 
     public Component getRendererComponent(int row) {

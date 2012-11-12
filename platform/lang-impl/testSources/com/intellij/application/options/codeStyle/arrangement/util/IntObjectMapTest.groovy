@@ -75,4 +75,18 @@ class IntObjectMapTest {
     assertNull(map.get(15))
     assertEquals(20, map.get(22))
   }
+  
+  @Test
+  void "shift backwards starting from null"() {
+    def map = new IntObjectMap<Integer>(4)
+    map.set(1, 10)
+    map.set(3, 30)
+    map.set(4, 40)
+    
+    map.shiftKeys(2, -1)
+    assertEquals(10, map.get(1))
+    assertEquals(30, map.get(2))
+    assertEquals(40, map.get(3))
+    assertNull(map.get(4))
+  }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -25,7 +26,9 @@ import org.jetbrains.annotations.NonNls;
  * @since 8/13/12 11:48 AM
  */
 public class ArrangementConstants {
-
+  
+  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
+  
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOLBAR      = "Arrangement.RuleEditor.ToolBar";
 
@@ -46,7 +49,6 @@ public class ArrangementConstants {
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 
   public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
-  public static final DataKey<Runnable> REMOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Remove");
 
   public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
     = DataKey.create("Arrangement.Rule.Function.Update.Move");
