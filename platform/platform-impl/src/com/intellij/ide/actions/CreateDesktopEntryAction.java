@@ -88,7 +88,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
                                         @NotNull final ProgressIndicator indicator,
                                         final boolean globalEntry) {
     if (!isAvailable()) return;
-    final double step = (1.0 - indicator.getFraction()) / 3;
+    final double step = (1.0 - indicator.getFraction()) / 3.0;
 
     try {
       indicator.setText(ApplicationBundle.message("desktop.entry.checking"));
@@ -204,9 +204,12 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   private static void install(final File entryFile, final boolean globalEntry) throws IOException, ExecutionException, InterruptedException {
     try {
       if (globalEntry) {
-        final String source = "#!/bin/sh\n" +
-                              "xdg-desktop-menu install --mode system \"" + entryFile.getAbsolutePath() + "\"";
-        final File script = ExecUtil.createTempExecutableScript("sudo", ".sh", source);
+        final File script = ExecUtil.createTempExecutableScript(
+          "sudo", ".sh", "#!/bin/sh\n" +
+                         "xdg-desktop-menu install --mode system \"" + entryFile.getAbsolutePath() + "\"\n" +
+                         "RV=$?\n" +
+                         "xdg-desktop-menu forceupdate --mode system\n" +
+                         "exit $RV\n");
         script.deleteOnExit();
         final int result = ExecUtil.sudoAndGetResult(script.getAbsolutePath(), ApplicationBundle.message("desktop.entry.sudo.prompt"));
         if (result != 0) throw new RuntimeException("'" + script.getAbsolutePath() + "' : " + result);
@@ -214,6 +217,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       else {
         final int result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
         if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
+        ExecUtil.execAndGetResult("xdg-desktop-menu", "forceupdate", "--mode", "user");
       }
     }
     finally {
