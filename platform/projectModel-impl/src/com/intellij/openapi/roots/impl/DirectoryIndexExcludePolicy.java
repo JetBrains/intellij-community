@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,7 +30,9 @@ public interface DirectoryIndexExcludePolicy {
   ExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME = ExtensionPointName.create("com.intellij.directoryIndexExcludePolicy");
 
   boolean isExcludeRoot(VirtualFile file);
-  boolean isExcludeRootForModule(final Module module, final VirtualFile file);
+  boolean isExcludeRootForModule(@NotNull Module module, final VirtualFile file);
+  @NotNull
   VirtualFile[] getExcludeRootsForProject();
-  VirtualFilePointer[] getExcludeRootsForModule(ModuleRootModel rootModel);
+  @NotNull
+  VirtualFilePointer[] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel);
 }
