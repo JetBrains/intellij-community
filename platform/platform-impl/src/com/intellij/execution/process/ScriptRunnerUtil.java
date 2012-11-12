@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
@@ -59,12 +60,7 @@ public final class ScriptRunnerUtil {
 
   public static String getProcessOutput(@NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
-    return getProcessOutput(commandLine, STDOUT_OUTPUT_KEY_FILTER);
-  }
-
-  public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter)
-    throws ExecutionException {
-    return getProcessOutput(commandLine, outputTypeFilter, DEFAULT_TIMEOUT);
+    return getProcessOutput(commandLine, STDOUT_OUTPUT_KEY_FILTER, DEFAULT_TIMEOUT);
   }
 
   public static String getProcessOutput(@NotNull GeneralCommandLine commandLine, @NotNull Condition<Key> outputTypeFilter, long timeout)
@@ -136,137 +132,58 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable VirtualFile scriptFile,
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
-                                                                  ScriptOutputType scriptOutputType,
+                                                                  Condition<Key> scriptOutputType,
                                                                   @NonNls String... parameters)
     throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
-    final StringBuilder standardOutput = scriptOutputType.readStandardOutput() ? new StringBuilder() : null;
-    final StringBuilder errorOutput = scriptOutputType.readErrorOutput() ? new StringBuilder() : null;
-    final StringBuilder mergedOutput =
-      (scriptOutputType.readStandardOutput() && scriptOutputType.readErrorOutput()) ? new StringBuilder() : null;
-    addReadingProcessListener(scriptOutputType, processHandler, standardOutput, errorOutput, mergedOutput);
+    ScriptOutput output = new ScriptOutput(scriptOutputType);
+    processHandler.addProcessListener(output);
     processHandler.startNotify();
 
     if (!processHandler.waitFor(timeout)) {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");
       throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
-    LOG.debug("script output: " + standardOutput);
-    return new ScriptOutput(scriptOutputType, standardOutput, errorOutput, mergedOutput);
+    LOG.debug("script output: " + output.myFilteredOutput);
+    return output;
   }
 
-  private static void checkOutputs(ScriptOutputType scriptOutputType,
-                                   StringBuilder standardOutput,
-                                   StringBuilder errorOutput,
-                                   StringBuilder mergedOutput) {
-    if (scriptOutputType.readStandardOutput()) {
-      LOG.assertTrue(standardOutput != null);
-    }
-    if (scriptOutputType.readErrorOutput()) {
-      LOG.assertTrue(errorOutput != null);
-      if (scriptOutputType.readStandardOutput()) {
-        LOG.assertTrue(mergedOutput != null);
-      }
-    }
-  }
-
-  private static void addReadingProcessListener(final ScriptOutputType scriptOutputType,
-                                                OSProcessHandler processHandler,
-                                                @Nullable final StringBuilder standardOutput,
-                                                @Nullable final StringBuilder errorOutput,
-                                                @Nullable final StringBuilder mergedOutput) {
-    checkOutputs(scriptOutputType, standardOutput, errorOutput, mergedOutput);
-
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT && scriptOutputType.readStandardOutput()) {
-          LOG.assertTrue(standardOutput != null);
-          standardOutput.append(event.getText());
-        }
-        else if (outputType == ProcessOutputTypes.STDERR && scriptOutputType.readErrorOutput()) {
-          LOG.assertTrue(errorOutput != null);
-          errorOutput.append(event.getText());
-        }
-        if (scriptOutputType.readStandardOutput() && scriptOutputType.readErrorOutput()) {
-          LOG.assertTrue(mergedOutput != null);
-          mergedOutput.append(event.getText());
-        }
-      }
-    });
-  }
-
-  public static enum ScriptOutputType {
-    Standard {
-      @Override
-      public boolean readStandardOutput() {
-        return true;
-      }
-
-      @Override
-      public boolean readErrorOutput() {
-        return false;
-      }
-    }, Error {
-      @Override
-      public boolean readStandardOutput() {
-        return false;
-      }
-
-      @Override
-      public boolean readErrorOutput() {
-        return true;
-      }
-    }, StandardAndError {
-      @Override
-      public boolean readStandardOutput() {
-        return true;
-      }
-
-      @Override
-      public boolean readErrorOutput() {
-        return true;
-      }
-    };
-
-    public abstract boolean readStandardOutput();
-
-    public abstract boolean readErrorOutput();
-  }
-
-  public static class ScriptOutput {
-    private final ScriptOutputType myScriptOutputType;
-    public final StringBuilder myStandardOutput;
-    public final StringBuilder myErrorOutput;
+  public static class ScriptOutput extends ProcessAdapter {
+    private final Condition<Key> myScriptOutputType;
+    public final StringBuilder myFilteredOutput;
     public final StringBuilder myMergedOutput;
 
-    private ScriptOutput(ScriptOutputType scriptOutputType,
-                         @Nullable StringBuilder standardOutput,
-                         @Nullable StringBuilder errorOutput,
-                         @Nullable StringBuilder mergedOutput) {
-      checkOutputs(scriptOutputType, standardOutput, errorOutput, mergedOutput);
+    private ScriptOutput(Condition<Key> scriptOutputType) {
       myScriptOutputType = scriptOutputType;
-      myStandardOutput = standardOutput;
-      myErrorOutput = errorOutput;
-      myMergedOutput = mergedOutput;
+      myFilteredOutput = new StringBuilder();
+      myMergedOutput = new StringBuilder();
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    public String getErrorOutput() {
-      LOG.assertTrue(myScriptOutputType.readErrorOutput());
-      return myErrorOutput.toString();
-    }
-
-    public String getStandardOutput() {
-      LOG.assertTrue(myScriptOutputType.readStandardOutput());
-      return myStandardOutput.toString();
+    public String getFilteredOutput() {
+      return myFilteredOutput.toString();
     }
 
     public String getMergedOutput() {
-      LOG.assertTrue(myScriptOutputType.readStandardOutput());
-      LOG.assertTrue(myScriptOutputType.readErrorOutput());
       return myMergedOutput.toString();
+    }
+
+    public String[] getOutputToParseArray() {
+      return getFilteredOutput().split("\n");
+    }
+
+    public String getDescriptiveOutput() {
+      String outputToParse = getFilteredOutput();
+      return StringUtil.isEmpty(outputToParse) ? getMergedOutput() : outputToParse;
+    }
+
+    @Override
+    public void onTextAvailable(ProcessEvent event, Key outputType) {
+      final String text = event.getText();
+      if (myScriptOutputType.value(outputType)) {
+        myFilteredOutput.append(text);
+      }
+      myMergedOutput.append(text);
     }
   }
 }
