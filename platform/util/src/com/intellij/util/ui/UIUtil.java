@@ -74,7 +74,7 @@ public class UIUtil {
     @NotNull
     @Override
     protected Boolean compute() {
-      if (!SystemInfo.isLinux) {
+      if (!SystemInfo.isXWindow) {
         return false;
       }
       try {

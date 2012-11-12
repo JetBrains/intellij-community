@@ -284,7 +284,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private static boolean matchesPlatform(Keymap keymap) {
     final String name = keymap.getName();
     if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
-      return !SystemInfo.isMac && !SystemInfo.isLinux;
+      return SystemInfo.isWindows;
     }
     else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || "Mac OS X 10.5+".equals(name)) {
       return SystemInfo.isMac;
