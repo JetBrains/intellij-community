@@ -32,7 +32,7 @@ setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
 target(name: "clean", description: "Cleanup output") {
-  ant.delete(dir: "${output}", failonerror: "false")
+  //ant.delete(dir: "${output}", failonerror: "false")
   ant.delete(dir: "${classesDir}", failonerror: "false")
   ant.delete(dir: "${outDir}/classes", failonerror: "false")
   //ant.delete(dir: "${outDir}/dist", failonerror: "false")
