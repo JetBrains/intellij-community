@@ -933,62 +933,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  public static class SVNStatusHolder {
-
-    private final SVNStatus myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-    private final boolean myIsLocked;
-
-    public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-      myIsLocked = value != null && value.isLocked();
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public boolean isLocked() {
-      return myIsLocked;
-    }
-
-    public SVNStatus getStatus() {
-      return myValue;
-    }
-  }
-
-  public static class SVNInfoHolder {
-
-    private final SVNInfo myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-
-    public SVNInfoHolder(long entriesStamp, long fileStamp, SVNInfo value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public SVNInfo getInfo() {
-      return myValue;
-    }
-  }
-
   private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
