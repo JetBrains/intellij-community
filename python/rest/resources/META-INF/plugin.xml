@@ -3,6 +3,7 @@
   <id>org.jetbrains.plugins.rest</id>
   <description>This plugin enables support for reStructuredText files (*.rst)</description>
   <vendor>JetBrains</vendor>
+  <version>1.0.SNAPSHOT</version>
   <idea-version since-build="122.0" until-build="123.0"/>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
