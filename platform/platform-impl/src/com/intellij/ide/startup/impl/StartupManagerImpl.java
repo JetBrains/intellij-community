@@ -131,7 +131,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     for (final StartupActivity extension : extensions) {
       final Runnable runnable = new Runnable() {
         public void run() {
-          extension.runActivity(myProject);
+          if (!myProject.isDisposed()) {
+            extension.runActivity(myProject);
+          }
         }
       };
       if (extension instanceof DumbAware) {
