@@ -96,7 +96,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pluginResources")
     }
     connectorPlugins.each {
-      dirset(dir: ${pluginHome}) {
+      dirset(dir: "${pluginHome}") {
         include(name: "${it}/src")
       }
     }
