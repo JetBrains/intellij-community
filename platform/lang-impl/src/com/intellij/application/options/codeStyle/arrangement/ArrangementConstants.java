@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NonNls;
 public class ArrangementConstants {
 
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW  = "Arrangement.RuleEditor.ToolWIndow";
+  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOLBAR      = "Arrangement.RuleEditor.ToolBar";
 
-  @NonNls public static final String RULE_EDITOR_PLACE             = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String RULE_EDITOR_TOOL_WINDOW_PLACE = "Arrangement.RuleEditor.ToolWindow.Place";
-  @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
+  @NonNls public static final String RULE_EDITOR_PLACE         = "Arrangement.RuleEditor.Place";
+  @NonNls public static final String RULE_EDITOR_TOOLBAR_PLACE = "Arrangement.RuleEditor.ToolBar.Place";
+  @NonNls public static final String RULE_TREE_PLACE           = "Arrangement.RuleTree.Place";
 
   public static final int HORIZONTAL_PADDING    = 8;
   public static final int VERTICAL_PADDING      = 4;
