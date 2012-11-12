@@ -74,7 +74,7 @@ public class UIUtil {
     @NotNull
     @Override
     protected Boolean compute() {
-      if (!SystemInfo.isLinux) {
+      if (!SystemInfo.isXWindow) {
         return false;
       }
       try {
@@ -1775,10 +1775,6 @@ public class UIUtil {
   public static Font getTitledBorderFont() {
     Font defFont = getLabelFont();
     return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
-  }
-
-  public static Color getTitledBorderTitleColor() {
-    return Color.BLACK;
   }
 
   /**

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -12,20 +27,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_IO_FILE;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author peter
@@ -240,22 +252,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return ((GrRangeType)iterType).getIterationType();
     }
 
-    if (InheritanceUtil.isInheritor(iterType, GroovyCommonClassNames.GROOVY_LANG_INT_RANGE)) {
-      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, context);
-    }
-    if (InheritanceUtil.isInheritor(iterType, GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE)) {
-      PsiElement element = qualifier;
-      element = skipParentheses(element, false);
-      if (element instanceof GrReferenceExpression) {
-        GrReferenceExpression ref = (GrReferenceExpression)element;
-        element = skipParentheses(ref.resolve(), false);
-      }
-      if (element instanceof GrRangeExpression) {
-        return getRangeElementType((GrRangeExpression)element);
-      }
-      return null;
-    }
-
     PsiType res = PsiUtil.extractIterableTypeParameter(iterType, true);
     if (res != null) {
       return PsiImplUtil.normalizeWildcardTypeByPosition(res, qualifier);
@@ -267,20 +263,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
     if (InheritanceUtil.isInheritor(iterType, CommonClassNames.JAVA_UTIL_MAP)) {
       return getEntryForMap(iterType, context);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiType getRangeElementType(GrRangeExpression range) {
-    GrExpression left = range.getLeftOperand();
-    GrExpression right = range.getRightOperand();
-    if (right != null) {
-      final PsiType leftType = left.getType();
-      final PsiType rightType = right.getType();
-      if (leftType != null && rightType != null) {
-        return TypesUtil.getLeastUpperBound(leftType, rightType, range.getManager());
-      }
     }
     return null;
   }

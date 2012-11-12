@@ -115,7 +115,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     });
 
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
-    LOG.assertTrue(containerBlock != null, local);
+    if (containerBlock == null) {
+      final String message = RefactoringBundle.getCannotRefactorMessage("Variable is declared outside a code block");
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+      return;
+    }
 
     final PsiExpression defToInline = innerClassesWithUsages.isEmpty()
                                       ? getDefToInline(local, refExpr, containerBlock)

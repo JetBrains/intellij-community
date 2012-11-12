@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PairFunction;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -124,7 +125,7 @@ public class ShowUIDefaultsAction extends AnAction {
               return panel;
             } else if (value instanceof Icon) {
               try {
-                final Icon icon = (Icon)value;
+                final Icon icon = new IconWrap((Icon)value);
                 if (icon.getIconHeight() <= 20) {
                   label.setIcon(icon);
                 }
@@ -159,5 +160,33 @@ public class ShowUIDefaultsAction extends AnAction {
         return panel;
       }
     }.show();
+  }
+
+  private class IconWrap implements Icon {
+    private final Icon myIcon;
+
+    public IconWrap(Icon icon) {
+      myIcon = icon;
+    }
+
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      try {
+        myIcon.paintIcon(c, g, x, y);
+      } catch (Exception e) {
+        EmptyIcon.ICON_0.paintIcon(c, g, x, y);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myIcon.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myIcon.getIconHeight();
+    }
   }
 }

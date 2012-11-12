@@ -218,8 +218,17 @@ public class ParenthesesUtils {
       return;
     }
     final PsiElement parent = parenthesizedExpression.getParent();
-    if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression) {
+    if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression ||
+        parent instanceof PsiArrayInitializerExpression) {
       final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+      removeParentheses(newExpression, ignoreClarifyingParentheses);
+      return;
+    }
+    else if (parent instanceof PsiArrayAccessExpression) {
+      // use addAfter() + delete() instead of replace() to
+      // workaround automatic insertion of parentheses by psi
+      final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
+      parenthesizedExpression.delete();
       removeParentheses(newExpression, ignoreClarifyingParentheses);
       return;
     }
@@ -402,7 +411,8 @@ public class ParenthesesUtils {
   }
 
   public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression) {
-    if (parentExpression instanceof PsiParenthesizedExpression) {
+    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayAccessExpression ||
+        parentExpression instanceof PsiArrayInitializerExpression) {
       return false;
     }
     final int parentPrecedence = getPrecedence(parentExpression);

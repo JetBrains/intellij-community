@@ -834,7 +834,7 @@
       <reference ref="Arrangement.Rule.Edit"/>
     </group>
     
-    <group id="Arrangement.RuleEditor.ToolWIndow">
+    <group id="Arrangement.RuleEditor.ToolBar">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Move.Up"/>

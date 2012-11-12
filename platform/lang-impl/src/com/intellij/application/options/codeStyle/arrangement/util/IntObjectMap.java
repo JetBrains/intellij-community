@@ -79,11 +79,11 @@ public class IntObjectMap<V> {
     myMaxUsed = -1;
   }
   
-  public void shiftKeys(int from, int shift) {
+  public void shiftKeys(final int from, int shift) {
     if (shift == 0 || from > myMaxUsed) {
       return;
     }
-
+    
     int newEnd = myMaxUsed + shift;
     if (newEnd >= myData.length) {
       int minCapacity = newEnd + 1;
@@ -93,10 +93,17 @@ public class IntObjectMap<V> {
       }
       myData = Arrays.copyOf(myData, newCapacity);
     }
-    System.arraycopy(myData, from, myData, from + shift, myMaxUsed - from + 1);
+    
+    int effectiveFrom = from;
+    while (myData[effectiveFrom] == null ) {
+      if (++effectiveFrom >= myData.length) {
+        return;
+      }
+    }
+    System.arraycopy(myData, effectiveFrom, myData, effectiveFrom + shift, myMaxUsed - effectiveFrom + 1);
 
     if (shift > 0) {
-      for (int i = from, max = from + shift; i < max; i++) {
+      for (int i = effectiveFrom, max = effectiveFrom + shift; i < max; i++) {
         myData[i] = null;
       }
     }

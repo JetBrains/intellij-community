@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public final class IdeMouseEventDispatcher {
       }
     }
 
-    if (SystemInfo.isLinux && e.isPopupTrigger() && e.getButton() != 3) {
+    if (SystemInfo.isXWindow && e.isPopupTrigger() && e.getButton() != 3) {
       // we can do better than silly triggering popup on everything but left click
       resetPopupTrigger(e);
     }

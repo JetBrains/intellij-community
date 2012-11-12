@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull final PsiType qualifierType,
                                      @NotNull PsiScopeProcessor processor,
-                                     @NotNull GroovyPsiElement place,
+                                     @NotNull final GroovyPsiElement place,
                                      @NotNull ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
@@ -70,7 +70,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
         @Override
         public boolean execute(@NotNull PsiElement element, ResolveState state) {
-          if (GdkMethodUtil.isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
+          if (element instanceof PsiMethod && GdkMethodUtil.isCategoryMethod((PsiMethod)element, qualifierType, place, state.get(PsiSubstitutor.KEY))) {
             PsiMethod method = (PsiMethod)element;
             String originInfo = getOriginInfo(method);
             return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);

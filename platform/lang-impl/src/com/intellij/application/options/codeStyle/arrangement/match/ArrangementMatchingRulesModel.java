@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,6 +87,6 @@ public class ArrangementMatchingRulesModel extends DefaultTableModel {
 
   @Override
   public boolean isCellEditable(int row, int column) {
-    return false;
+    return getValueAt(row, column) instanceof ArrangementEditorAware;
   }
 }

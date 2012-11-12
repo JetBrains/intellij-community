@@ -49,14 +49,11 @@ public class HgPusher {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
-  private static Pattern PUSH_NO_CHANGES = Pattern.compile(".*no changes found.*");
 
   private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
 
   public HgPusher(Project project) {
     myProject = project;
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   public void showDialogAndPush() {
@@ -141,6 +138,7 @@ public class HgPusher {
   }
 
   private static int getNumberOfPushedCommits(HgCommandResult result) {
+    int numberOfCommitsInAllSubrepos = 0;
     if (!HgErrorUtil.isAbort(result)) {
       final List<String> outputLines = result.getOutputLines();
       for (String outputLine : outputLines) {
@@ -148,16 +146,15 @@ public class HgPusher {
         final Matcher matcher = PUSH_COMMITS_PATTERN.matcher(outputLine);
         if (matcher.matches()) {
           try {
-            return Integer.parseInt(matcher.group(1));
+            numberOfCommitsInAllSubrepos += Integer.parseInt(matcher.group(1));
           }
           catch (NumberFormatException e) {
             LOG.info("getNumberOfPushedCommits ", e);
             return -1;
           }
-        } else if (PUSH_NO_CHANGES.matcher(outputLine).matches()) {
-          return 0;
         }
       }
+      return numberOfCommitsInAllSubrepos;
     }
     return -1;
   }

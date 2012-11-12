@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -177,7 +178,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return false;
+        return myMatchers != null && myMatchers.length > 0;
       }
 
       @Override
@@ -316,7 +317,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
 //    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) &&
+                                   !(myModuleBuilder instanceof EmptyModuleBuilder) &&
+                                   myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();
@@ -470,6 +473,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       myModuleBuilder.setModuleFilePath(
         FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       myModuleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
+      if (myModuleBuilder instanceof TemplateModuleBuilder) {
+        myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
+      }
     }
 
     if (mySettingsStep != null) {

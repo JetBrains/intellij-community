@@ -45,7 +45,7 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
     ProjectTemplate[] templates = {
       new BuilderBasedTemplate(new AndroidModuleBuilder()),
       new AndroidProjectTemplate("Empty Android Module",
-                                 "Simple <b>Android</b> module with configured Android SDK and without any pre-defined structure",
+                                 "Simple Android module with configured Android SDK and without any pre-defined structure",
                                  new AndroidModuleBuilder(null) {
 
                                    @Override
@@ -61,14 +61,19 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
                                  }),
 
       new AndroidProjectTemplate("Android Library Module",
-                                 "",
+                                 "Android library modules hold shared Android source code and resources " +
+                                 "that can be referenced by other Android modules",
                                  new AndroidModuleBuilder.Library())
     };
     if (context.getProject() == null) {
       return templates;
     }
     else {
-      AndroidProjectTemplate test = new AndroidProjectTemplate("Android Test Module", "", new AndroidModuleBuilder.Test());
+      AndroidProjectTemplate test = new AndroidProjectTemplate("Android Test Module",
+                                                               "Android test modules contain Android applications that you write using " +
+                                                               "the <a href='http://developer.android.com/tools/testing/index.html'>" +
+                                                               "Testing and Instrumentation framework</a>",
+                                                               new AndroidModuleBuilder.Test());
       return ArrayUtil.append(templates, test);
     }
   }

@@ -20,7 +20,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -90,8 +93,8 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @Nullable
   @Override
-  public BuildRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
-    for (BuildRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
+  public MavenResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+    for (MavenResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
       }

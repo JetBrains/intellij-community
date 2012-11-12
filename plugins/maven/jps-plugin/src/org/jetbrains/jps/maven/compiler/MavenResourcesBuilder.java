@@ -3,7 +3,6 @@ package org.jetbrains.jps.maven.compiler;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -11,6 +10,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.BuildOperations;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -52,12 +52,12 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     final Date timestamp = new Date();
 
     @Nullable
-    final Set<File> cleanedSources;
+    final Map<MavenResourcesTarget, Set<File>> cleanedSources;
     if (context.isProjectRebuild()) {
       cleanedSources = null;
     }
     else {
-      cleanedSources = cleanOutputsCorrespondingToChangedFiles(holder, context, target);
+      cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
     }
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
@@ -98,7 +98,10 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         }
         finally {
           if (cleanedSources != null) {
-            cleanedSources.remove(file);
+            final Set<File> files = cleanedSources.get(target);
+            if (files != null) {
+              files.remove(file);
+            }
           }
         }
         return true;
@@ -153,42 +156,16 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     if (cleanedSources != null) {
       // cleanup mapping for the files that were copied before but not copied now
-      final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      for (File file : cleanedSources) {
-        mapping.remove(file.getPath());
-      }
-    }
-  }
-
-  private static Set<File> cleanOutputsCorrespondingToChangedFiles(
-    DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder,
-    final CompileContext context,
-    MavenResourcesTarget target) throws IOException {
-
-    final THashSet<File> targetDirtyFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    final THashSet<File> cleanedSources = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
-      @Override
-      public boolean apply(MavenResourcesTarget target, File file, MavenResourceRootDescriptor root) throws IOException {
-        targetDirtyFiles.add(file);
-        return true;
-      }
-    });
-    if (!targetDirtyFiles.isEmpty()) {
-      final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      for (File dirtyFile : targetDirtyFiles) {
-        // check if the file has been copied before
-        final String path = dirtyFile.getPath();
-        final Collection<String> outputs = mapping.getOutputs(path);
-        if (outputs != null) {
-          for (String output : outputs) {
-            new File(output).delete();
+      for (Map.Entry<MavenResourcesTarget, Set<File>> entry : cleanedSources.entrySet()) {
+        final Set<File> files = entry.getValue();
+        if (!files.isEmpty()) {
+          final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(entry.getKey());
+          for (File file : files) {
+            mapping.remove(file.getPath());
           }
-          cleanedSources.add(dirtyFile);
         }
       }
     }
-    return cleanedSources;
   }
 
 

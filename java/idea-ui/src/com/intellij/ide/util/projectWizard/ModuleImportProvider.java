@@ -48,6 +48,6 @@ public class ModuleImportProvider extends ProjectImportProvider {
   @Nullable
   @Override
   public String getFileSample() {
-    return "*.iml file";
+    return "*.iml";
   }
 }

@@ -20,6 +20,8 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 /**
@@ -50,6 +52,13 @@ public class CommitLegendPanel {
     myModifiedPanel.setBackground(background);
     myNewPanel.setBackground(background);
     myDeletedPanel.setBackground(background);
+    if (UIUtil.isUnderDarcula()) {
+      final Color color = UIUtil.getSeparatorColor();
+      final TitledBorder border = new TitledBorder(new LineBorder(color, 1));
+      myModifiedPanel.setBorder(border);
+      myNewPanel.setBorder(border);
+      myDeletedPanel.setBorder(border);
+    }
 
     myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
     myNewLabel.setForeground(FileStatus.ADDED.getColor());

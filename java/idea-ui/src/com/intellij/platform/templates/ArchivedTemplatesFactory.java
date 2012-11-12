@@ -41,7 +41,6 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
 
-  public static final String CUSTOM_GROUP = "Custom";
   private static final String ZIP = ".zip";
 
   private final NotNullLazyValue<MultiMap<String, URL>> myGroups = new NotNullLazyValue<MultiMap<String, URL>>() {

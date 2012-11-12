@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncFutureFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -38,6 +40,11 @@ public class EmptyQuery<R> implements Query<R> {
 
   public boolean forEach(@NotNull final Processor<R> consumer) {
     return true;
+  }
+
+  @Override
+  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<R> consumer) {
+    return AsyncFutureFactory.wrap(true);
   }
 
   public R[] toArray(final R[] a) {

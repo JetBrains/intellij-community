@@ -110,7 +110,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       myCloseButtonBounds = null;
     }
     else {
-      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
+      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.MATCHING_RULES_CONTROL_PLACE, buttonSize) {
         @Override
         protected Icon getIcon() {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
@@ -244,7 +244,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   }
 
   @Override
-  public void onMousePress(@NotNull MouseEvent event) {
+  public void onMouseRelease(@NotNull MouseEvent event) {
     Rectangle buttonBounds = getCloseButtonScreenBounds();
     if (buttonBounds != null && myCloseCallback != null && buttonBounds.contains(event.getLocationOnScreen())) {
       myCloseCallback.consume(this);

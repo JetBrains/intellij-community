@@ -15,9 +15,11 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 /**
@@ -93,6 +95,13 @@ public class SelectionTracker extends TargetingTool {
     }
     else {
       myArea.select(myComponent);
+    }
+  }
+
+  @Override
+  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      myToolProvider.loadDefaultTool();
     }
   }
 }

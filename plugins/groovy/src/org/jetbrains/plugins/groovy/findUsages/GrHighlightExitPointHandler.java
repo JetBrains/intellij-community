@@ -67,11 +67,16 @@ public class GrHighlightExitPointHandler extends HighlightUsagesHandlerBase<PsiE
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
         final PsiElement returnElement = instruction.getElement();
-        if (returnElement == null) return true;
-        final TextRange range = returnElement.getTextRange();
-        myReadUsages.add(range);
+        if (returnElement != null && isCorrectReturn(returnElement)) {
+          final TextRange range = returnElement.getTextRange();
+          myReadUsages.add(range);
+        }
         return true;
       }
     });
+  }
+
+  private static boolean isCorrectReturn(@Nullable PsiElement e) {
+    return e instanceof GrReturnStatement || e instanceof GrThrowStatement || e instanceof GrExpression;
   }
 }

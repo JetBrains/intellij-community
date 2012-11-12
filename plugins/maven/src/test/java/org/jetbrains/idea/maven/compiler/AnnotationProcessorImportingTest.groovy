@@ -131,6 +131,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated")
+
+    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("out/generated")} != null
   }
 
   public void testImportAnnotationProcessorOptions() {

@@ -55,26 +55,36 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
 
   @Override
   public void update(AnActionEvent e) {
-    setEnabled(myTable, e.getPresentation());
+    setEnabled(myTable, e, e.getPresentation());
   }
 
   @Override
   public void update() {
-    setEnabled(myTable, getTemplatePresentation());
+    setEnabled(myTable, null, getTemplatePresentation());
   }
 
-  private static void setEnabled(RadPropertyTable table, Presentation presentation) {
+  private static void setEnabled(RadPropertyTable table, AnActionEvent e, Presentation presentation) {
     Property property = table.getSelectionProperty();
-    presentation.setEnabled(property != null && (property.getJavadocElement() != null || !StringUtil.isEmpty(property.getJavadocText())));
+    presentation.setEnabled(property != null &&
+                            (property.getJavadocElement() != null || !StringUtil.isEmpty(property.getJavadocText())) &&
+                            (e == null || e.getProject() != null));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     final DocumentationComponent component = new DocumentationComponent(documentationManager);
 
     final Property property = myTable.getSelectionProperty();
+    if (property == null) {
+      return;
+    }
+
     PsiElement javadocElement = property.getJavadocElement();
 
     ActionCallback callback;

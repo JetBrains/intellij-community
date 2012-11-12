@@ -65,7 +65,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   /** @deprecated use {@linkplain #hasXdgOpen()} (to remove in IDEA 13) */
-  public static final boolean hasXdgOpen = isLinux;
+  public static final boolean hasXdgOpen = isXWindow;
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override

@@ -66,18 +66,18 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
 
     private final String myName;
     private final String myWindowsPath;
-    private final String myLinuxPath;
+    private final String myUnixPath;
     private final String myMacPath;
     private final Icon myIcon;
 
     BrowserFamily(final String name,
                   @NonNls final String windowsPath,
-                  @NonNls final String linuxPath,
+                  @NonNls final String unixPath,
                   @NonNls final String macPath,
                   final Icon icon) {
       myName = name;
       myWindowsPath = windowsPath;
-      myLinuxPath = linuxPath;
+      myUnixPath = unixPath;
       myMacPath = macPath;
       myIcon = icon;
     }
@@ -92,11 +92,11 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       if (SystemInfo.isWindows) {
         return myWindowsPath;
       }
-      else if (SystemInfo.isLinux) {
-        return myLinuxPath;
-      }
       else if (SystemInfo.isMac) {
         return myMacPath;
+      }
+      else if (SystemInfo.isUnix) {
+        return myUnixPath;
       }
 
       return null;

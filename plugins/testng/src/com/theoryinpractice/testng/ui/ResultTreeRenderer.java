@@ -93,7 +93,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     }
                     return PoolOfTestIcons.PASSED_ICON;
                 case MessageHelper.SKIPPED_TEST:
-                    return PoolOfTestIcons.SKIPPED_ICON;
+                    return PoolOfTestIcons.IGNORED_ICON;
                 case MessageHelper.FAILED_TEST:
                     return PoolOfTestIcons.FAILED_ICON;
                 case MessageHelper.TEST_STARTED:
@@ -107,7 +107,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 if (resultMessage != null && resultMessage.getResult() == MessageHelper.PASSED_TEST) {
                   return PoolOfTestIcons.FAILED_ICON;
                 }
-                return PoolOfTestIcons.SKIPPED_ICON;
+                return PoolOfTestIcons.IGNORED_ICON;
               }
               return PoolOfTestIcons.NOT_RAN;
             }
@@ -119,7 +119,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 Icon icon = getIcon(result);
                 if (icon == PoolOfTestIcons.FAILED_ICON) {
                     hasFail = true;
-                } else if (icon == PoolOfTestIcons.SKIPPED_ICON) {
+                } else if (icon == PoolOfTestIcons.IGNORED_ICON) {
                     hasSkipped = true;
                 } else if (icon == PoolOfTestIcons.TERMINATED_ICON) {
                     hasTerminated = true;
@@ -129,7 +129,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             }
             if (hasTerminated) return PoolOfTestIcons.TERMINATED_ICON;
             if (hasFail) return PoolOfTestIcons.FAILED_ICON;
-            if (hasSkipped) return PoolOfTestIcons.SKIPPED_ICON;
+            if (hasSkipped) return PoolOfTestIcons.IGNORED_ICON;
             if (hasTearDownFailure) return PoolOfTestIcons.TEAR_DOWN_FAILURE;
         }
         return PoolOfTestIcons.PASSED_ICON;

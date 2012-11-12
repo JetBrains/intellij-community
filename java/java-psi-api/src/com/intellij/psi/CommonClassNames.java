@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,4 +91,5 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
   @NonNls String JAVA_IO_FILE = "java.io.File";
   String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
+  @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
 }

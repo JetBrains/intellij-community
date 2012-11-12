@@ -72,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -816,9 +817,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (method instanceof GrGdkMethod && place instanceof GrReferenceExpression) {
         final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
         final PsiType qualifierType = inferQualifierTypeByPlace((GrReferenceExpression)place);
+
+        final GrExpression qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)place);
+
+        //check methods processed by @Category(ClassWhichProcessMethod) annotation
         if (qualifierType != null &&
-            !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, methodResolveResult.getSubstitutor()) &&
-            !checkCategoryQualifier((GrReferenceExpression)place, staticMethod, methodResolveResult.getSubstitutor())) {
+            !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, qualifier, methodResolveResult.getSubstitutor()) &&
+            !checkCategoryQualifier((GrReferenceExpression)place, qualifier, staticMethod, methodResolveResult.getSubstitutor())) {
           registerError(((GrReferenceExpression)place).getReferenceNameElement(), GroovyInspectionBundle
             .message("category.method.0.cannot.be.applied.to.1", method.getName(), qualifierType.getCanonicalText()));
           return false;
@@ -861,13 +866,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
-    private static boolean checkCategoryQualifier(GrReferenceExpression place, PsiMethod gdkMethod, PsiSubstitutor substitutor) {
-      PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, place.getQualifier());
+    private static boolean checkCategoryQualifier(GrReferenceExpression place,
+                                                  GrExpression qualifier,
+                                                  PsiMethod gdkMethod,
+                                                  PsiSubstitutor substitutor) {
+      PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, qualifier);
 
       if (categoryAnnotationOwner != null) {
         PsiClassType categoryType = GdkMethodUtil.getCategoryType(categoryAnnotationOwner);
         if (categoryType != null) {
-          return GdkMethodUtil.isCategoryMethod(gdkMethod, categoryType, substitutor);
+          return GdkMethodUtil.isCategoryMethod(gdkMethod, categoryType, qualifier, substitutor);
         }
       }
 
@@ -877,7 +885,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private static PsiClass inferCategoryAnnotationOwner(GrReferenceExpression place, GrExpression qualifier) {
       if (qualifier == null) {
         GrMethod container = PsiTreeUtil.getParentOfType(place, GrMethod.class, true, GrMember.class);
-        if (container != null && !container.hasModifierProperty(PsiModifier.STATIC)) { //only instance classes can be qualified by category class
+        if (container != null && !container.hasModifierProperty(PsiModifier.STATIC)) { //only instance methods can be qualified by category class
           return container.getContainingClass();
         }
       }

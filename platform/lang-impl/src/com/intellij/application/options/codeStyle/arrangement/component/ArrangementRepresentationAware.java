@@ -26,5 +26,5 @@ import javax.swing.*;
 public interface ArrangementRepresentationAware {
   
   @NotNull
-  JComponent getRenderer();
+  JComponent getComponent();
 }

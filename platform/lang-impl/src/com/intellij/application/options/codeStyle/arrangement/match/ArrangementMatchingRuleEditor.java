@@ -15,16 +15,17 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementAtomMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementConditionInfo;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -168,7 +169,8 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   private void updateState() {
     assert myConditionInfo != null;
     ArrangementMatchCondition newCondition = myConditionInfo.buildCondition();
-    myControl.getModel().set(myRow, newCondition);
+    myControl.getModel().set(myRow, newCondition == null ? null : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition)));
+    myControl.repaintRows(myRow, myRow, true);
     updateState(myRow);
   }
 
@@ -191,13 +193,16 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       return;
     }
     ArrangementAtomMatchConditionComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
-    if (clickedComponent == null || !clickedComponent.isEnabled()) {
-      return;
+    if (clickedComponent != null && clickedComponent.isEnabled()) {
+      onComponentSelected(clickedComponent);
     }
-    ArrangementAtomMatchCondition chosenCondition = clickedComponent.getMatchCondition();
+  }
+  
+  private void onComponentSelected(@NotNull ArrangementAtomMatchConditionComponent component) {
+    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
     boolean remove = myConditionInfo.hasCondition(chosenCondition.getValue());
-    clickedComponent.setSelected(!remove);
-    repaintComponent(clickedComponent);
+    component.setSelected(!remove);
+    repaintComponent(component);
     if (remove) {
       myConditionInfo.removeCondition(chosenCondition);
       updateState();
