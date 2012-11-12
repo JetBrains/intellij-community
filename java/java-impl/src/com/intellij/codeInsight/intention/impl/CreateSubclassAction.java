@@ -43,8 +43,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -272,15 +272,20 @@ public class CreateSubclassAction extends BaseIntentionAction {
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 
           final TextRange textRange = targetClass.getTextRange();
-          final int startClassOffset = textRange.getStartOffset();
+          final RangeMarker startClassOffset = editor.getDocument().createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
-              final PsiElement psiElement = containingFile.findElementAt(startClassOffset);
-              final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-              LOG.assertTrue(aTargetClass != null, psiElement);
-              chooseAndImplement(psiClass, project, aTargetClass, editor);
+              try {
+                final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
+                final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+                LOG.assertTrue(aTargetClass != null, psiElement);
+                chooseAndImplement(psiClass, project, aTargetClass, editor);
+              }
+              finally {
+                startClassOffset.dispose();
+              }
             }
           }, getTitle(psiClass));
         }
