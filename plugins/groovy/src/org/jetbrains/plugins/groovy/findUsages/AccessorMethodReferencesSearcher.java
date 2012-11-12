@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
     final PsiMethod method = queryParameters.getMethod();
 
     final String propertyName;
-    if (GdkMethodUtil.isCategoryMethod(method, null, PsiSubstitutor.EMPTY)) {
+    if (GdkMethodUtil.isCategoryMethod(method, null, null, PsiSubstitutor.EMPTY)) {
       final GrGdkMethod cat = GrGdkMethodImpl.createGdkMethod(method, false, null);
       propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)cat);
     }
