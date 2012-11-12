@@ -56,7 +56,7 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
 
     if (checkAvailableForReturn(elementAt)) return true;
 
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyReferenceExpression.class);
 
     if (problemElement == null) return false;
     if (problemElement instanceof PyQualifiedExpression) {
@@ -145,7 +145,7 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyQualifiedExpression.class);
+    PyExpression problemElement = PyUtil.findProblemElement(editor, file, PyNamedParameter.class, PyReferenceExpression.class);
     PyParameter parameter = null;
     PsiReference reference = null;
     String name = null;

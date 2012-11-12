@@ -47,7 +47,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     myText = PyBundle.message("INTN.specify.type");
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
     if (checkAvailableForReturn(elementAt)) return true;
 
 
@@ -134,7 +134,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
     String kind = "type";
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
 
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyQualifiedExpression.class);
+    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
     PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
     PyCallExpression callExpression = null;
     if (assignmentStatement != null) {
