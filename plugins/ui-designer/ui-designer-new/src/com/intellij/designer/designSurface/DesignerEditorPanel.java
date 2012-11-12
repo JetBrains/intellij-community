@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
@@ -970,7 +971,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
                 message.myQuickFix.run();
               }
             };
-            popupAction.getTemplatePresentation().setText(message.myLinkText + message.myAfterLinkText);
+            popupAction.getTemplatePresentation().setText(cleanText(message.myLinkText + message.myAfterLinkText));
             popupGroup.add(popupAction);
             defaultAction[0] = popupAction;
           }
@@ -982,7 +983,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
                   pair.second.run();
                 }
               };
-              popupAction.getTemplatePresentation().setText(pair.first);
+              popupAction.getTemplatePresentation().setText(cleanText(pair.first));
               popupGroup.add(popupAction);
               if (defaultAction[0] == null) {
                 defaultAction[0] = popupAction;
@@ -1002,11 +1003,40 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     @Override
     protected void update(FixableMessageInfo item, Presentation presentation, boolean popup) {
       if (popup) {
-        presentation.setText(item.myBeforeLinkText);
+        presentation.setText(cleanText(item.myBeforeLinkText));
       }
       else {
         presentation.setText(myTitle);
       }
+    }
+
+    private String cleanText(String text) {
+      if (text != null) {
+        text = text.trim();
+        text = StringUtil.replace(text, "&nbsp;", " ");
+        text = StringUtil.replace(text, "\n", " ");
+
+        StringBuilder builder = new StringBuilder();
+        int length = text.length();
+        boolean whitespace = false;
+
+        for (int i = 0; i < length; i++) {
+          char ch = text.charAt(i);
+          if (ch == ' ') {
+            if (!whitespace) {
+              whitespace = true;
+              builder.append(ch);
+            }
+          }
+          else {
+            whitespace = false;
+            builder.append(ch);
+          }
+        }
+
+        text = builder.toString();
+      }
+      return text;
     }
 
     @Override
