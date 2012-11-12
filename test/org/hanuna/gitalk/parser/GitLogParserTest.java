@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.parser;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitLogData;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ import static org.hanuna.gitalk.TestUtils.toStr;
  */
 public class GitLogParserTest {
     private void runTestParseCommitData(String in, String out) {
-        CommitData cd = GitLogParser.parseCommitData(in);
+        CommitLogData cd = GitLogParser.parseCommitData(in);
         assertEquals(out, toStr(cd));
     }
 

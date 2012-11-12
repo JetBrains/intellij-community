@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitLogData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
@@ -31,13 +31,13 @@ class MutableCommit implements Commit {
         childrens.add(children);
     }
 
-    public void set(@NotNull CommitData data, @NotNull ReadOnlyList<Commit> parents, int index) {
-        assert !wasRead : "double set commit data";
+    public void set(@NotNull CommitLogData logData, @NotNull ReadOnlyList<Commit> parents, int index) {
+        assert !wasRead : "double set commit logData";
         wasRead = true;
         this.parents = parents;
-        this.author = data.getAuthor();
-        this.message = data.getCommitMessage();
-        this.timeStamp = data.getTimeStamp();
+        this.author = logData.getAuthor();
+        this.message = logData.getCommitMessage();
+        this.timeStamp = logData.getTimeStamp();
         this.index = index;
     }
 

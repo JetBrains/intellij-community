@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitLogData;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
@@ -31,16 +31,16 @@ public class CommitListBuilder {
         cache.remove(hash);
     }
 
-    public void append(@NotNull CommitData data) {
-        MutableCommit commit = getCommit(data.getHash());
-        List<Commit> parents = new ArrayList<Commit>(data.getParentsHash().size());
-        for (Hash hash : data.getParentsHash()) {
+    public void append(@NotNull CommitLogData logData) {
+        MutableCommit commit = getCommit(logData.getHash());
+        List<Commit> parents = new ArrayList<Commit>(logData.getParentsHash().size());
+        for (Hash hash : logData.getParentsHash()) {
             MutableCommit parent = getCommit(hash);
             parents.add(parent);
             parent.addChildren(commit);
         }
-        removeCommit(data.getHash());
-        commit.set(data, new SimpleReadOnlyList<Commit>(parents), commits.size());
+        removeCommit(logData.getHash());
+        commit.set(logData, new SimpleReadOnlyList<Commit>(parents), commits.size());
         commits.add(commit);
     }
 

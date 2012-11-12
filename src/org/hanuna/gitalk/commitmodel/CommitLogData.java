@@ -6,7 +6,7 @@ import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 /**
  * @author erokhins
  */
-public class CommitData {
+public class CommitLogData {
     @NotNull
     private final Hash hash;
     @NotNull
@@ -17,7 +17,7 @@ public class CommitData {
     @NotNull
     private final String commitMessage;
 
-    public CommitData(Hash hash, ReadOnlyList<Hash> parents, String author, long timeStamp, String commitMessage) {
+    public CommitLogData(Hash hash, ReadOnlyList<Hash> parents, String author, long timeStamp, String commitMessage) {
         this.hash = hash;
         this.parents = parents;
         this.author = author;

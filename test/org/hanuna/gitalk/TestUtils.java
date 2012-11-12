@@ -1,7 +1,7 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitLogData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 
@@ -17,7 +17,7 @@ public class TestUtils {
             return hash.toStrHash();
         }
     }
-    public static String toStr(CommitData cd) {
+    public static String toStr(CommitLogData cd) {
         StringBuilder sb = new StringBuilder();
         sb.append(toStr(cd.getHash())).append("|-");
         for (Hash hash : cd.getParentsHash()) {

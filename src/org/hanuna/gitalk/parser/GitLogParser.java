@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.parser;
 
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.CommitLogData;
 import org.hanuna.gitalk.commitmodel.CommitsModel;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
@@ -24,7 +24,7 @@ public class GitLogParser {
     private static final Pattern pattern = Pattern.compile(regExp);
     private static final int DEFAULT_FIRST_PART_SIZE = 5000;
 
-    public static CommitData parseCommitData(String inputStr) {
+    public static CommitLogData parseCommitData(String inputStr) {
         Matcher matcher = pattern.matcher(inputStr);
         if (matcher.matches()) {
             Hash hash = Hash.buildHash(matcher.group(1));
@@ -43,7 +43,7 @@ public class GitLogParser {
                     hashs.add(Hash.buildHash(parentsStr[i]));
                 }
             }
-            return new CommitData(hash, new SimpleReadOnlyList<Hash>(hashs), author, timeStamp, message);
+            return new CommitLogData(hash, new SimpleReadOnlyList<Hash>(hashs), author, timeStamp, message);
         } else {
             throw new IllegalArgumentException("unexpected format of string:" + inputStr);
         }
@@ -70,8 +70,8 @@ public class GitLogParser {
     public CommitsModel getFirstPart() throws IOException {
         String line = null;
         while (countLines < firstPartSize && (line = input.readLine()) != null) {
-            CommitData data = parseCommitData(line);
-            builder.append(data);
+            CommitLogData logData = parseCommitData(line);
+            builder.append(logData);
             countLines++;
         }
         if (line == null) {
@@ -84,8 +84,8 @@ public class GitLogParser {
     public CommitsModel getFullModel() throws IOException  {
         String line = null;
         while ((line = input.readLine()) != null) {
-            CommitData data = parseCommitData(line);
-            builder.append(data);
+            CommitLogData logData = parseCommitData(line);
+            builder.append(logData);
             countLines++;
         }
         return builder.build(true);
