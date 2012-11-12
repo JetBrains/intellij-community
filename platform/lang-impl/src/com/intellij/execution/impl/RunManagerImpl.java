@@ -986,8 +986,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       BeforeRunTask task = provider.createTask(settings);
       if (task != null && task.isEnabled()) {
         Key<? extends BeforeRunTask> providerID = provider.getId();
-        _tasks.add(task);
         settings.getFactory().configureBeforeRunTaskDefaults(providerID, task);
+        if (task.isEnabled()) {
+          _tasks.add(task);
+        }
       }
     }
     return _tasks;
