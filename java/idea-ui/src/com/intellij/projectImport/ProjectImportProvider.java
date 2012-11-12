@@ -73,6 +73,14 @@ public abstract class ProjectImportProvider {
     return false;
   }
 
+  public String getPathToBeImported(VirtualFile file) {
+    return getDefaultPath(file);
+  }
+
+  public static String getDefaultPath(VirtualFile file) {
+    return file.isDirectory() ? file.getPath() : file.getParent().getPath();
+  }
+
   public boolean canCreateNewProject() {
     return true;
   }

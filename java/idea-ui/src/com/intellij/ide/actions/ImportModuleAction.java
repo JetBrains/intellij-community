@@ -101,10 +101,17 @@ public class ImportModuleAction extends AnAction {
       return Collections.emptyList();
     }
 
-    String path = file.isDirectory() ? file.getPath() : file.getParent().getPath();
-    AddModuleWizard wizard = new AddModuleWizard(project, path, available.toArray(new ProjectImportProvider[available.size()]));
+    String path;
+    if (available.size() == 1) {
+      path = available.get(0).getPathToBeImported(file);
+    }
+    else {
+      path = ProjectImportProvider.getDefaultPath(file);
+    }
+
+    AddModuleWizard wizard = createWizard(project, available, path);
     if (wizard.getStepCount() > 0) {
-      if (wizard.showAndGet()) {
+      if (processWizard(wizard)) {
         return createFromWizard(project, wizard);
       }
       return Collections.emptyList();
@@ -116,8 +123,16 @@ public class ImportModuleAction extends AnAction {
     }
   }
 
+  protected boolean processWizard(AddModuleWizard wizard) {
+    return wizard.showAndGet();
+  }
 
-  protected List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+  protected AddModuleWizard createWizard(Project project, List<ProjectImportProvider> available, String path) {
+    return new AddModuleWizard(project, path, available.toArray(new ProjectImportProvider[available.size()]));
+  }
+
+
+  public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
     Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
     return Collections.singletonList(module);
   }
