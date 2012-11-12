@@ -67,6 +67,13 @@ target(name: "compile", description: "Compile module python") {
       include(name: "coverage.jar")
       include(name: "coverage-agent.jar")
     }
+    fileset(dir: "${ideaPlugins}/JavaScriptDebugger/lib") {
+      include(name: "JavaScriptDebugger.jar")
+    }
+    fileset(dir: "${ideaPlugins}/webDeployment/lib") {
+      include(name: "jsch*.jar")
+      include(name: "webDeployment.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
