@@ -2,14 +2,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
@@ -38,14 +37,12 @@ import java.util.List;
 /**
  * @author nik
  */
-public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescriptor> {
-  private final String myModuleName;
+public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
   private final ResourcesTargetType myTargetType;
 
   public ResourcesTarget(@NotNull JpsModule module, ResourcesTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
-    myModuleName = module.getName();
   }
 
   @Nullable
@@ -64,18 +61,9 @@ public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescrip
     return result;
   }
 
-  public String getModuleName() {
-    return myModuleName;
-  }
-
   @Override
   public boolean isTests() {
     return myTargetType.isTests();
-  }
-
-  @Override
-  public String getId() {
-    return myModuleName;
   }
 
   @Override
@@ -92,6 +80,8 @@ public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescrip
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 
+    final THashSet<File> addedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+
     roots_loop:
     for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
       for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
@@ -100,14 +90,16 @@ public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescrip
         }
       }
       final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
-      roots.add(new ResourceRootDescriptor(sourceRoot.getFile(), this, false, packagePrefix));
+      final File rootFile = sourceRoot.getFile();
+      roots.add(new ResourceRootDescriptor(rootFile, this, false, packagePrefix, computeRootExcludes(rootFile, index)));
+      addedRoots.add(rootFile);
     }
 
     final ProcessorConfigProfile profile = findAnnotationProcessingProfile(model);
     if (profile != null) {
       final File annotationOut = new ProjectPaths(model.getProject()).getAnnotationProcessorGeneratedSourcesOutputDir(getModule(), isTests(), profile);
-      if (annotationOut != null && !FileUtil.filesEqual(annotationOut, getOutputDir())) {
-        roots.add(new ResourceRootDescriptor(annotationOut, this, true, ""));
+      if (annotationOut != null && !addedRoots.contains(annotationOut) && !FileUtil.filesEqual(annotationOut, getOutputDir())) {
+        roots.add(new ResourceRootDescriptor(annotationOut, this, true, "", computeRootExcludes(annotationOut, index)));
       }
     }
 
@@ -119,8 +111,9 @@ public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescrip
     final Collection<ProcessorConfigProfile> allProfiles =
       JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(model.getProject()).getAnnotationProcessingConfigurations();
     ProcessorConfigProfile profile = null;
+    final String moduleName = getModule().getName();
     for (ProcessorConfigProfile p : allProfiles) {
-      if (p.getModuleNames().contains(getModuleName())) {
+      if (p.getModuleNames().contains(moduleName)) {
         if (p.isEnabled()) {
           profile = p;
         }
@@ -130,16 +123,10 @@ public final class ResourcesTarget extends ModuleBasedTarget<ResourceRootDescrip
     return profile;
   }
 
-  @Override
-  public ResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
-    List<ResourceRootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<ResourcesTargetType>singletonList(myTargetType), null);
-    return ContainerUtil.getFirstItem(descriptors);
-  }
-
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Resources for '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
+    return "Resources for '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override

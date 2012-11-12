@@ -197,7 +197,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (ModuleBuildTarget target : generationOutputs.keySet()) {
       File root = new File(generationOutputs.get(target));
-      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, ""));
+      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.<File>emptySet()));
     }
   }
 
@@ -238,7 +238,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
     File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      File targetRoot = new File(commonRoot, target.getModuleName() + File.separator + target.getTargetType().getTypeId());
+      File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
       if (!FileUtil.delete(targetRoot)) {
         throw new IOException("External make cannot clean " + targetRoot.getPath());
       }
@@ -256,7 +256,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModule().getName()));
         return null;
       }
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());

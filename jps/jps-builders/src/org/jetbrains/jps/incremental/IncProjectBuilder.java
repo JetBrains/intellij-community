@@ -787,7 +787,7 @@ public class IncProjectBuilder {
             }
           };
         if (!context.isProjectRebuild()) {
-          final Map<ModuleBuildTarget, Set<File>> cleanedSources = FSOperations
+          final Map<ModuleBuildTarget, Set<File>> cleanedSources = BuildOperations
             .cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
           for (Map.Entry<ModuleBuildTarget, Set<File>> entry : cleanedSources.entrySet()) {
             final ModuleBuildTarget target = entry.getKey();

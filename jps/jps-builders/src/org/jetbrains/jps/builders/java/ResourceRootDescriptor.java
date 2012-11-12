@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
@@ -21,15 +22,14 @@ public final class ResourceRootDescriptor extends BuildRootDescriptor {
   @NotNull private final ResourcesTarget myTarget;
   private final boolean myGenerated;
   @NotNull private final String myPackagePrefix;
+  @NotNull private final Set<File> myExcludes;
 
-  public ResourceRootDescriptor(@NotNull File root,
-                                @NotNull ResourcesTarget target,
-                                boolean isGenerated,
-                                @NotNull String packagePrefix) {
+  public ResourceRootDescriptor(@NotNull File root, @NotNull ResourcesTarget target, boolean isGenerated, @NotNull String packagePrefix, @NotNull Set<File> excludes) {
     myRoot = root;
     myTarget = target;
     myGenerated = isGenerated;
     myPackagePrefix = packagePrefix;
+    myExcludes = excludes;
   }
 
   @Override
@@ -40,6 +40,12 @@ public final class ResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public File getRootFile() {
     return myRoot;
+  }
+
+  @NotNull
+  @Override
+  public Set<File> getExcludedRoots() {
+    return myExcludes;
   }
 
   @Override

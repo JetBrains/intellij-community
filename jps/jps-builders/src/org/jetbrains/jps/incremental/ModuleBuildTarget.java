@@ -1,14 +1,14 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -23,25 +23,24 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
-public final class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDescriptor> {
-  private final String myModuleName;
+public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
   private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
-    myModuleName = module.getName();
   }
 
   @Nullable
@@ -67,18 +66,9 @@ public final class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDes
     return result;
   }
 
-  public String getModuleName() {
-    return myModuleName;
-  }
-
   @Override
   public boolean isTests() {
     return myTargetType.isTests();
-  }
-
-  @Override
-  public String getId() {
-    return myModuleName;
   }
 
   @Override
@@ -106,30 +96,26 @@ public final class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDes
     List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
+    final Set<File> moduleExcludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    moduleExcludes.addAll(index.getModuleExcludes(myModule));
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
       for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
-        if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
+        if (provider.isExcludedFromCompilation(myModule, sourceRoot) || JpsPathUtil.isUnder(moduleExcludes, sourceRoot.getFile())) {
           continue roots_loop;
         }
       }
-      String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix));
+      final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
+      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, computeRootExcludes(sourceRoot.getFile(), index)));
     }
     return roots;
-  }
-
-  @Override
-  public JavaSourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
-    List<JavaSourceRootDescriptor> descriptors = rootIndex.getRootDescriptors(new File(rootId), Collections.<JavaModuleBuildTargetType>singletonList(myTargetType), null);
-    return ContainerUtil.getFirstItem(descriptors);
   }
 
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Module '" + myModuleName + "' " + (myTargetType.isTests() ? "tests" : "production");
+    return "Module '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
   }
 
   @Override
@@ -148,12 +134,6 @@ public final class ModuleBuildTarget extends ModuleBasedTarget<JavaSourceRootDes
     if (bytecodeTarget != null) {
       fingerprint += bytecodeTarget.hashCode();
     }
-
-    // todo: can we tolerate project rebuild because of resource pattern changes?
-    //final List<String> patterns = config.getResourcePatterns();
-    //for (String pattern : patterns) {
-    //  fingerprint += pattern.hashCode();
-    //}
 
     out.write(Integer.toHexString(fingerprint));
   }

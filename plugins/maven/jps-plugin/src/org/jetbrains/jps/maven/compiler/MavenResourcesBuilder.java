@@ -10,8 +10,8 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.BuildOperations;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -57,7 +57,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       cleanedSources = null;
     }
     else {
-      cleanedSources = FSOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
+      cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
     }
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {

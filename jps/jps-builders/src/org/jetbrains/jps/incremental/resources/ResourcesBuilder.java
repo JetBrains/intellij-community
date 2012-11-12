@@ -62,7 +62,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       cleanedSources = null;
     }
     else {
-      cleanedSources = FSOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
+      cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
     }
 
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);

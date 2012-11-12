@@ -5,7 +5,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
@@ -113,7 +116,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public BuildRootDescriptor findRootDescriptor(String rootId,
+  public ArtifactRootDescriptor findRootDescriptor(String rootId,
                                                 BuildRootIndex rootIndex) {
     return rootIndex.getTargetRoots(this, null).get(Integer.valueOf(rootId));
   }
