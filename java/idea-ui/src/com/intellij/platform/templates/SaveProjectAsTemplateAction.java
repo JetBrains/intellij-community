@@ -15,11 +15,14 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -45,6 +48,13 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = getEventProject(e);
     assert project != null;
+    StorageScheme scheme = ((ProjectEx)project).getStateStore().getStorageScheme();
+    if (scheme != StorageScheme.DIRECTORY_BASED) {
+      Messages.showErrorDialog(project, "Project templates do not support old .ipr (file-based) format.\n" +
+                                        "Please convert your project via File->Save as Directory-Based format.", CommonBundle.getErrorTitle());
+      return;
+    }
+
     VirtualFile descriptionFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArchivedProjectTemplate.DESCRIPTION_PATH.split("/"));
     SaveProjectAsTemplateDialog dialog = new SaveProjectAsTemplateDialog(project, descriptionFile);
     if (dialog.showAndGet()) {
