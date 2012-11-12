@@ -133,7 +133,7 @@ target(name: "compile", description: "Compile module rest") {
                     match: "since-build=\"\\d+\\.\\d+\"",
                     replace: "since-build=\"${ideaBuildNumber}\"")
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
-                    match: "1.0.SNAPSHOT",
+                    match: "\\d+\\.SNAPSHOT",
                     replace: "${ideaBuildNumber}")
 }
 
