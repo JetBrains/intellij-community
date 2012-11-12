@@ -428,4 +428,20 @@ use(Cat) {
 
 ''')
   }
+
+  void testImplicitConversionToArray() {
+    testHighlighting('''\
+String[] foo() {
+    return 'ab'
+}
+
+String[] foox() {
+  return 2
+}
+
+int[] bar() {
+  return <warning descr="Cannot assign 'String' to 'int[]'">'ab'</warning>
+}
+''')
+  }
 }

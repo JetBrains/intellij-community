@@ -240,29 +240,37 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
-    if (iterType instanceof PsiArrayType) {
-      return TypesUtil.boxPrimitiveType(((PsiArrayType)iterType).getComponentType(), context.getManager(), context.getResolveScope());
+
+    final PsiType type = findTypeForIteration(iterType, context);
+    if (type == null) return null;
+
+    return PsiImplUtil.normalizeWildcardTypeByPosition(type, qualifier);
+  }
+
+  public static PsiType findTypeForIteration(PsiType type, PsiElement context) {
+    if (type instanceof PsiArrayType) {
+      return TypesUtil.boxPrimitiveType(((PsiArrayType)type).getComponentType(), context.getManager(), context.getResolveScope());
     }
-    if (iterType instanceof GrTupleType) {
-      PsiType[] types = ((GrTupleType)iterType).getParameters();
+    if (type instanceof GrTupleType) {
+      PsiType[] types = ((GrTupleType)type).getParameters();
       return types.length == 1 ? types[0] : null;
     }
 
-    if (iterType instanceof GrRangeType) {
-      return ((GrRangeType)iterType).getIterationType();
+    if (type instanceof GrRangeType) {
+      return ((GrRangeType)type).getIterationType();
     }
 
-    PsiType res = PsiUtil.extractIterableTypeParameter(iterType, true);
+    PsiType res = PsiUtil.extractIterableTypeParameter(type, true);
     if (res != null) {
-      return PsiImplUtil.normalizeWildcardTypeByPosition(res, qualifier);
+      return res;
     }
 
-    if (TypesUtil.isClassType(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(iterType, JAVA_IO_FILE)) {
+    if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, context);
     }
 
-    if (InheritanceUtil.isInheritor(iterType, CommonClassNames.JAVA_UTIL_MAP)) {
-      return getEntryForMap(iterType, context);
+    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      return getEntryForMap(type, context);
     }
     return null;
   }
