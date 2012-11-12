@@ -114,9 +114,10 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     if (includeIgnored) {
       command.addParameters("--no-ignore");
     }
-    if (! collectParentExternals) {
+    // no way in interface to ignore externals
+    /*if (! collectParentExternals) {
       command.addParameters("--ignore-externals");
-    }
+    }*/
 
     //--changelist (--cl) ARG
     changelistsToCommand(changeLists, command);

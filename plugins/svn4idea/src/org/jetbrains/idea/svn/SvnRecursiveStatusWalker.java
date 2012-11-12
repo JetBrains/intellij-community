@@ -64,7 +64,7 @@ public class SvnRecursiveStatusWalker {
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
         try {
-          item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, false, myHandler, null);
+          item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
           myHandler.checkIfCopyRootWasReported();
         }
         catch (SVNException e) {
