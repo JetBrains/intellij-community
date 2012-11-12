@@ -35,7 +35,7 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
 {
 
   @NotNull private final ArrangementMatchingRulesControl myList;
-  @NotNull private final ArrangementAnimationPanel       myComponent;
+  @NotNull private final JComponent                      myComponent;
   @NotNull private final Insets                          myBorderInsets;
   @NotNull private final ArrangementMatchingRuleEditor   myEditor;
 
@@ -56,7 +56,9 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
     CalloutBorder border = new CalloutBorder();
     borderPanel.setBorder(border);
     myBorderInsets = border.getBorderInsets(borderPanel);
-    myComponent = new ArrangementAnimationPanel(borderPanel, true, false);
+    myComponent = borderPanel;
+    myList.repaintRows(myRow, myList.getModel().getSize() - 1, true);
+    //myComponent = new ArrangementAnimationPanel(borderPanel, true, false);
   }
 
   @NotNull
@@ -66,7 +68,7 @@ public class ArrangementEditorComponent implements ArrangementRepresentationAwar
   }
 
   public void expand() {
-    new ArrangementAnimationManager(myComponent, this).startAnimation();
+    //new ArrangementAnimationManager(myComponent, this).startAnimation();
   }
 
   @Override
