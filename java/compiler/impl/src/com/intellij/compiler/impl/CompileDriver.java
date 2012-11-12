@@ -612,7 +612,7 @@ public class CompileDriver {
     final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true);
 
     StatusBar.Info.set("", myProject, "Compiler");
-    if (useExtProcessBuild && BuildManager.getInstance().rescanRequired(myProject)) {
+    if (useExtProcessBuild) {
       // ensure the project model seen by build process is up-to-date
       myProject.save();
     }
