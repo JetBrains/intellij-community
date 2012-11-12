@@ -29,6 +29,7 @@ class Paths {
   final artifacts
   final artifacts_core
   final artifacts_core_upsource
+  final artifacts_jps
 
   def Paths(String out) {
     sandbox = out
@@ -39,6 +40,7 @@ class Paths {
     artifacts = "$sandbox/artifacts"
     artifacts_core = "$artifacts/core"
     artifacts_core_upsource = "$artifacts/core-upsource"
+    artifacts_jps = "$artifacts/jps"
   }
 }
 
@@ -52,13 +54,14 @@ target(compile: "Compile project") {
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
-  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core].each {
+  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core, paths.artifacts_jps].each {
     ant.mkdir(dir: it)
   }
 
   projectBuilder.targetFolder = "$out/classes"
   projectBuilder.cleanOutput()
   projectBuilder.buildProduction()
+  projectBuilder.makeModuleTests(findModule("jps-builders"))
 }
 
 private String appInfoFile() {
@@ -102,6 +105,8 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   notifyArtifactBuilt(paths.artifacts_core)
   layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
   notifyArtifactBuilt(paths.artifacts_core_upsource)
+  layouts.layout_jps(home, paths.artifacts_jps)
+  notifyArtifactBuilt(paths.artifacts_jps)
 
   layout(paths.distAll) {
     dir("bin") {
