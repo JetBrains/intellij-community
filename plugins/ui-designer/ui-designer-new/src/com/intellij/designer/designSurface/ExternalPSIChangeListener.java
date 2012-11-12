@@ -97,6 +97,14 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     return myUpdateRenderer;
   }
 
+  public boolean ensureUpdateRenderer() {
+    if (myRunState) {
+      return true;
+    }
+    myUpdateRenderer = true;
+    return false;
+  }
+
   public void addRequest(final Runnable runnable) {
     clear();
     myAlarm.addRequest(new Runnable() {

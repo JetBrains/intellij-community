@@ -569,6 +569,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener.deactivate();
   }
 
+  public void buildProject() {
+    if (myPSIChangeListener.ensureUpdateRenderer()) {
+      updateRenderer(true);
+    }
+  }
+
   @Override
   public void dispose() {
     myPSIChangeListener.dispose();
