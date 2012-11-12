@@ -495,7 +495,8 @@ public abstract class DialogWrapper {
     return panel;
   }
 
-  private Action[] filter(Action[] actions) {
+  @NotNull
+  private Action[] filter(@NotNull Action[] actions) {
     ArrayList<Action> answer = new ArrayList<Action>();
     for (Action action : actions) {
       if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
@@ -877,6 +878,7 @@ public abstract class DialogWrapper {
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
+  @NotNull
   protected Action[] createActions() {
     if (getHelpId() == null) {
       if (SystemInfo.isMac) {

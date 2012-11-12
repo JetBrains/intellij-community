@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -317,23 +318,27 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     addStringToList(s, RECENT_DIR_STRINGS, MAX_RECENT_SIZE);
   }
 
+  @NotNull
   @Override
   public String[] getRecentFindStrings(){
     return ArrayUtil.toStringArray(RECENT_FIND_STRINGS);
   }
 
+  @NotNull
   @Override
   public String[] getRecentReplaceStrings(){
     return ArrayUtil.toStringArray(RECENT_REPLACE_STRINGS);
   }
 
+  @NotNull
   @Override
   public String[] getRecentFileMasks() {
     return ArrayUtil.toStringArray(RECENT_FILE_MASKS);
   }
 
+  @NotNull
   @Override
-  public ArrayList<String> getRecentDirectories(){
+  public List<String> getRecentDirectories(){
     return new ArrayList<String>(RECENT_DIR_STRINGS);
   }
 
