@@ -15,12 +15,13 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +43,13 @@ public class ArrangementMatchingRulesPanel extends JPanel {
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
-    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("arrangement.settings.section.match")));
-    setLayout(new GridBagLayout());
+    super(new GridBagLayout());
+    TitleWithToolbar top = new TitleWithToolbar(
+      ApplicationBundle.message("arrangement.settings.section.match"),
+      ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOLBAR,
+      ArrangementConstants.RULE_EDITOR_TOOLBAR_PLACE
+    );
+    
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
     ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
@@ -67,6 +73,8 @@ public class ArrangementMatchingRulesPanel extends JPanel {
     };
     myList = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myList);
+    
+    add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
   }
 
