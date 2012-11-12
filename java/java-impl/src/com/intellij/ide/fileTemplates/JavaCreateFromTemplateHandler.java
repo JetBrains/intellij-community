@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * @author yole
@@ -80,10 +80,10 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     }
   }
 
-  static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Properties props) throws IncorrectOperationException {
+  static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Map<String, Object> props) throws IncorrectOperationException {
     if (!template.isTemplateOfType(StdFileTypes.JAVA)) return;
 
-    String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+    String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
       PsiPackageStatement packageStatement = file.getPackageStatement();
       if (packageStatement != null) {
@@ -98,7 +98,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,
-                                       String templateText, Properties props) throws IncorrectOperationException {
+                                       String templateText, Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
     PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
@@ -120,13 +120,11 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   @Override
-  public Properties prepareProperties(Properties props) {
-    String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+  public void prepareProperties(Map<String, Object> props) {
+    String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     if(packageName == null || packageName.length() == 0){
-      props = new Properties(props);
-      props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+      props.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     }
-    return props;
   }
 
   public static boolean canCreate(PsiDirectory dir) {
