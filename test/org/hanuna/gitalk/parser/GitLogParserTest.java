@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.parser;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitLogData;
+import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.junit.Test;
 

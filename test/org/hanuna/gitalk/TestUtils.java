@@ -1,7 +1,8 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitLogData;
+import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 
@@ -32,20 +33,29 @@ public class TestUtils {
     public static String toStr(Commit node) {
         StringBuilder sb = new StringBuilder();
         sb.append(node.hash().toStrHash()).append("|-");
-        for (Commit commit : node.getParents()) {
+        CommitData data = node.getData();
+        if (data == null) {
+            throw new IllegalStateException();
+        }
+        for (Commit commit : data.getParents()) {
             sb.append(commit.hash().toStrHash()).append("|-");
         }
-        sb.append(node.getMessage()).append("|-");
-        sb.append(node.getAuthor()).append("|-");
-        sb.append(node.getTimeStamp()).append("|-");
+        sb.append(data.getMessage()).append("|-");
+        sb.append(data.getAuthor()).append("|-");
+        sb.append(data.getTimeStamp()).append("|-");
         return sb.toString();
     }
 
     public static String toShortStr(Commit node) {
         StringBuilder sb = new StringBuilder();
-        sb.append(node.index()).append("|-");
-        for (Commit commit : node.getParents()) {
-            sb.append(commit.index()).append("|-");
+        CommitData data = node.getData();
+        if (data == null) {
+            throw new IllegalStateException();
+        }
+        sb.append(data.getLogIndex());
+        sb.append("|-");
+        for (Commit commit : data.getParents()) {
+            sb.append(commit.getData().getLogIndex()).append("|-");
         }
         sb.append(node.hash().toStrHash());
         return sb.toString();

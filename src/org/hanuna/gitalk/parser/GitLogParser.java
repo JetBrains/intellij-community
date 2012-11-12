@@ -1,9 +1,10 @@
 package org.hanuna.gitalk.parser;
 
-import org.hanuna.gitalk.commitmodel.CommitLogData;
-import org.hanuna.gitalk.commitmodel.CommitsModel;
+import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
+import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
+import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
 
 import java.io.BufferedReader;
@@ -43,7 +44,7 @@ public class GitLogParser {
                     hashs.add(Hash.buildHash(parentsStr[i]));
                 }
             }
-            return new CommitLogData(hash, new SimpleReadOnlyList<Hash>(hashs), author, timeStamp, message);
+            return new CommitLogData(hash, new SimpleReadOnlyList<Hash>(hashs), message, author, timeStamp);
         } else {
             throw new IllegalArgumentException("unexpected format of string:" + inputStr);
         }
@@ -67,7 +68,7 @@ public class GitLogParser {
         }
     }
 
-    public CommitsModel getFirstPart() throws IOException {
+    public ReadOnlyList<Commit> getFirstPart() throws IOException {
         String line = null;
         while (countLines < firstPartSize && (line = input.readLine()) != null) {
             CommitLogData logData = parseCommitData(line);
@@ -81,7 +82,7 @@ public class GitLogParser {
         }
     }
 
-    public CommitsModel getFullModel() throws IOException  {
+    public ReadOnlyList<Commit> getFullModel() throws IOException  {
         String line = null;
         while ((line = input.readLine()) != null) {
             CommitLogData logData = parseCommitData(line);

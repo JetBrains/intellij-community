@@ -1,46 +1,25 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitLogData;
+import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
-import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author erokhins
  */
 class MutableCommit implements Commit {
     private final Hash hash;
-    private boolean wasRead = false;
-    private ReadOnlyList<Commit> parents;
-    private List<Commit> childrens = new ArrayList<Commit>(1);
-    private String author;
-    private String message;
-    private long timeStamp;
-    private int index = -1;
+    private CommitData commitData = null;
 
-    public MutableCommit(Hash hash) {
+    public MutableCommit(@NotNull Hash hash) {
         this.hash = hash;
     }
 
-    public void addChildren(Commit children) {
-        childrens.add(children);
+    public void setCommitData(@NotNull CommitData commitData) {
+        this.commitData = commitData;
     }
-
-    public void set(@NotNull CommitLogData logData, @NotNull ReadOnlyList<Commit> parents, int index) {
-        assert !wasRead : "double set commit logData";
-        wasRead = true;
-        this.parents = parents;
-        this.author = logData.getAuthor();
-        this.message = logData.getCommitMessage();
-        this.timeStamp = logData.getTimeStamp();
-        this.index = index;
-    }
-
 
     @NotNull
     @Override
@@ -48,57 +27,9 @@ class MutableCommit implements Commit {
         return hash;
     }
 
+    @Nullable
     @Override
-    public boolean wasRead() {
-        return wasRead;
+    public CommitData getData() {
+        return commitData;
     }
-
-    @NotNull
-    @Override
-    public ReadOnlyList<Commit> getParents() {
-        return parents;
-    }
-
-    @NotNull
-    @Override
-    public ReadOnlyList<Commit> getChildren() {
-        return new SimpleReadOnlyList<Commit>(childrens);
-    }
-
-    @NotNull
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    @NotNull
-    @Override
-    public String getAuthor() {
-        return author;
-    }
-
-    @Override
-    public long getTimeStamp() {
-        return timeStamp;
-    }
-
-
-    public boolean equals(Object obj) {
-        if (obj instanceof Commit) {
-            return ((Commit) obj).hash().equals(hash);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return hash.hashCode();
-    }
-
-    @Override
-    public int index() {
-        assert wasRead : "index undefined";
-        return index;
-    }
-
 }
