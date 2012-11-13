@@ -226,9 +226,10 @@ public class BuildOperations {
       final File outputFile = new File(outputFilePath);
       for (File outputRoot : myOutputs) {
         if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
-          final String relativePath = FileUtil.getRelativePath(outputRoot, outputFile);
+          String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
+          final String relativePath = FileUtil.getRelativePath(outputRootPath, FileUtil.toSystemIndependentName(outputFilePath), '/');
           if (relativePath != null) {
-            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputRoot.getPath()), FileUtil.toSystemIndependentName(relativePath));
+            myFileGeneratedEvent.add(outputRootPath, relativePath);
           }
           break;
         }

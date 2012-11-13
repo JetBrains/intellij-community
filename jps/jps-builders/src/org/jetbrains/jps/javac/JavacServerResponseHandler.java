@@ -37,10 +37,12 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
         final JavacRemoteProto.Message.Response.CompileMessage.Kind messageKind = compileMessage.getKind();
 
         if (messageKind == JavacRemoteProto.Message.Response.CompileMessage.Kind.STD_OUT) {
-          myDiagnosticSink.outputLineAvailable(compileMessage.getText());
+          if (compileMessage.hasText()) {
+            myDiagnosticSink.outputLineAvailable(compileMessage.getText());
+          }
         }
         else {
-          final String sourceUri = compileMessage.getSourceUri();
+          final String sourceUri = compileMessage.hasSourceUri()? compileMessage.getSourceUri() : null;
           final JavaFileObject srcFileObject = sourceUri != null? new DummyJavaFileObject(URI.create(sourceUri)) : null;
           myDiagnosticSink.report(new DummyDiagnostic(convertKind(messageKind), srcFileObject, compileMessage));
         }
@@ -52,11 +54,11 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
         final JavacRemoteProto.Message.Response.OutputObject outputObject = response.getOutputObject();
         final JavacRemoteProto.Message.Response.OutputObject.Kind kind = outputObject.getKind();
 
-        final String outputRoot = outputObject.getOutputRoot();
+        final String outputRoot = outputObject.hasOutputRoot()? outputObject.getOutputRoot() : null;
         final File outputRootFile = outputRoot != null? new File(outputRoot) : null;
 
         final OutputFileObject.Content fileObjectContent;
-        final ByteString content = outputObject.getContent();
+        final ByteString content = outputObject.hasContent()? outputObject.getContent() : null;
         if (content != null) {
           final byte[] bytes = content.toByteArray();
           fileObjectContent = new OutputFileObject.Content(bytes, 0, bytes.length);
@@ -65,15 +67,15 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
           fileObjectContent = null;
         }
 
-        final String sourceUri = outputObject.getSourceUri();
+        final String sourceUri = outputObject.hasSourceUri()? outputObject.getSourceUri() : null;
         final URI srcUri = sourceUri != null? URI.create(sourceUri) : null;
         final OutputFileObject fileObject = new OutputFileObject(
           null,
           outputRootFile,
-          outputObject.getRelativePath(),
+          outputObject.hasRelativePath()? outputObject.getRelativePath() : null,
           new File(outputObject.getFilePath()),
           convertKind(kind),
-          outputObject.getClassName(),
+          outputObject.hasClassName()? outputObject.getClassName() : null,
           srcUri,
           fileObjectContent
         );
@@ -92,7 +94,9 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
       }
 
       if (responseType == JavacRemoteProto.Message.Response.Type.BUILD_COMPLETED) {
-        myTerminatedSuccessfully = response.getCompletionStatus();
+        if (response.hasCompletionStatus()) {
+          myTerminatedSuccessfully = response.getCompletionStatus();
+        }
         return true;
       }
 
@@ -105,7 +109,17 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
 
     if (messageType == JavacRemoteProto.Message.Type.FAILURE) {
       final JavacRemoteProto.Message.Failure failure = msg.getFailure();
-      myDiagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, failure.getStacktrace()));
+      final StringBuilder buf = new StringBuilder();
+      if (failure.hasDescription()) {
+        buf.append(failure.getDescription());
+      }
+      if (failure.hasStacktrace()) {
+        if (buf.length() > 0) {
+          buf.append("\n");
+        }
+        buf.append(failure.getStacktrace());
+      }
+      myDiagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, buf.toString()));
       return true;
     }
 
@@ -159,23 +173,23 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
     }
 
     public long getPosition() {
-      return myCompileMessage.getProblemLocationOffset();
+      return myCompileMessage.hasProblemLocationOffset()? myCompileMessage.getProblemLocationOffset() : -1;
     }
 
     public long getStartPosition() {
-      return myCompileMessage.getProblemBeginOffset();
+      return myCompileMessage.hasProblemBeginOffset()? myCompileMessage.getProblemBeginOffset() : -1;
     }
 
     public long getEndPosition() {
-      return myCompileMessage.getProblemEndOffset();
+      return myCompileMessage.hasProblemEndOffset()? myCompileMessage.getProblemEndOffset() : -1;
     }
 
     public long getLineNumber() {
-      return myCompileMessage.getLine();
+      return myCompileMessage.hasLine()? myCompileMessage.getLine() : -1;
     }
 
     public long getColumnNumber() {
-      return myCompileMessage.getColumn();
+      return myCompileMessage.hasColumn()? myCompileMessage.getColumn() : -1;
     }
 
     public String getCode() {
@@ -183,7 +197,7 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
     }
 
     public String getMessage(Locale locale) {
-      return myCompileMessage.getText();
+      return myCompileMessage.hasText()? myCompileMessage.getText() : null;
     }
   }
 }

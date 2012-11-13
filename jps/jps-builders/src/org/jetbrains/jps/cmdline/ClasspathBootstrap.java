@@ -133,6 +133,8 @@ public class ClasspathBootstrap {
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
     }
+    cp.add(getResourcePath(JpsModel.class));  // jps-model-api
+    cp.add(getResourcePath(JpsModelImpl.class));  // jps-model-impl
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(Version.class)); // netty
 
