@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
@@ -287,7 +288,10 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
-            pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
+            long stamp = timestamps.getStamp(file, descriptor.getTarget());
+            if (stamp != FileSystemUtil.lastModified(file)) {
+              pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
+            }
           }
         }
       }
