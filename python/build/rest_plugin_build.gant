@@ -10,8 +10,6 @@ setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
 setProperty("ideaHome", "${ideaDir}/jdk16")
 
-setProperty("pluginHelp", "${outDir}/help")
-
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 
 setProperty("pluginHome", "${basedir}/..")
@@ -23,27 +21,22 @@ setProperty("ideaPlugins", "${ideaHome}/plugins")
 
 setProperty("output", "${basedir}/../dist")
 
-setProperty("zipdir", "${output}/zip")
-setProperty("plugindir", "${zipdir}/python")
-setProperty("zipname", "python-${pluginRevision}.zip")
+setProperty("jarName", "${output}/rest-${pluginRevision}.jar")
 
-setProperty("srcDir", "${pluginHome}/src")
+setProperty("srcDir", "${pluginHome}/rest/src")
 setProperty("resourcesDir", "${pluginHome}/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
-setProperty("testSrcDir", "${pluginHome}/testSrc")
 setProperty("artifactsDir", "${output}/artifacts")
 
 setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
-def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml"]
-
 target(name: "clean", description: "Cleanup output") {
-  ant.delete(dir: "${output}", failonerror: "false")
+  //ant.delete(dir: "${output}", failonerror: "false")
   ant.delete(dir: "${classesDir}", failonerror: "false")
   ant.delete(dir: "${outDir}/classes", failonerror: "false")
-  ant.delete(dir: "${outDir}/dist", failonerror: "false")
-  ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
+  //ant.delete(dir: "${outDir}/dist", failonerror: "false")
+  //ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
   ant.delete(dir: "${outDir}/jar", failonerror: "false")
   ant.delete(dir: "${outDir}/deploy", failonerror: "false")
   ant.delete(dir: "${ideaDir}/jdk16", failonerror: "false")
@@ -56,55 +49,17 @@ target(name: "unzip") {
   }
 }
 
-target(name: "compile", description: "Compile module python") {
+target(name: "compile", description: "Compile module rest") {
   depends("unzip")
   ant.path(id: "classpath.lib") {
     fileset(dir: "${ideaLib}") {
       include(name: "?*.jar")
     }
-    fileset(dir: "${ideaPlugins}/yaml/lib") {
-      include(name: "yaml.jar")
-    }
-    fileset(dir: "${ideaPlugins}/coverage/lib") {
-      include(name: "coverage.jar")
-      include(name: "coverage-agent.jar")
-    }
-    fileset(dir: "${ideaPlugins}/JavaScriptDebugger/lib") {
-      include(name: "JavaScriptDebugger.jar")
-    }
-    fileset(dir: "${ideaPlugins}/webDeployment/lib") {
-      include(name: "jsch*.jar")
-      include(name: "webDeployment.jar")
-      include(name: "commons-vfs*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/uml/lib") {
-      include(name: "*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
-      include(name: "*.jar")
-    }
   }
 
   ant.path(id: "sourcepath") {
     dirset(dir: "${pluginHome}") {
-      include(name: "resources")
-      include(name: "src")
-      include(name: "pluginSrc")
-      include(name: "pydevSrc")
-      include(name: "openapi/src")
-      include(name: "psi-api/src")
-      include(name: "pluginResources")
-    }
-    connectorPlugins.each {
-      dirset(dir: "${pluginHome}") {
-        include(name: "${it}/src")
-      }
-    }
-    dirset(dir: "${pluginHome}/../ultimate/ultimate-verifier") {
-      include(name: "src")
-    }
-    dirset(dir: "${pluginHome}/../plugins/remote-run") {
-      include(name: "src")
+      include(name: "rest/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -162,46 +117,30 @@ target(name: "compile", description: "Compile module python") {
 
   //copy resources
   ant.copy(todir: "${classesDir}") {
-    fileset(dir: "${resourcesDir}") {
+    fileset(dir: "${srcDir}") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginResourcesDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-    fileset(dir: "${pluginHome}/src") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-    connectorPlugins.each {
-      fileset(dir: "${pluginHome}/${it}/resources") {
-        patternset(refid: "resources.pt")
-        type(type: "file")
-      }
-    }
-    fileset(dir: "${pluginHome}/../community/colorSchemes/src")
   }
 
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/plugin.xml")
-    fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
-    connectorPlugins.each {
-      fileset(file: "${pluginHome}/${it}/resources/META-INF/${it}-plugin.xml")
-    }
+    fileset(dir: "${pluginHome}/rest/resources/META-INF")
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
                     match: "since-build=\"\\d+\\.\\d+\"",
                     replace: "since-build=\"${ideaBuildNumber}\"")
+  ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
+                    match: "\\d+\\.SNAPSHOT",
+                    replace: "${ideaBuildNumber}")
 }
 
 target(name: "jar", description: "Generate jar file") {
   depends("compile")
   ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${output}/python.jar", basedir: "${classesDir}") {
+  ant.jar(destfile: "${jarName}", basedir: "${classesDir}") {
     manifest() {
       attribute(name: "Revision", value: "${pluginRevision}")
       //<!--<attribute name="Build" value="${plugin.version}"/>-->
@@ -209,48 +148,21 @@ target(name: "jar", description: "Generate jar file") {
   }
 }
 
-target(name: "zip", description: "Generate zip plugin file") {
-  depends("jar")
-
-  ant.mkdir(dir: "${zipdir}")
-
-  // copy plugin jar
-  ant.mkdir(dir: "${plugindir}/lib")
-  ant.move(file: "${output}/python.jar", todir: "${plugindir}/lib")
-
-  ant.mkdir(dir: "${plugindir}/helpers")
-  ant.copy(todir: "${plugindir}/helpers") {
-    fileset(dir: "${pluginHome}/helpers") {
-      include(name: "**/*")
-    }
-  }
-
-  ant.mkdir(dir: "${plugindir}/help")
-  ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
-  ant.copy(file: "${pluginHelp}/pytonpluginhelp_mac.jar", tofile: "${plugindir}/help/pythonpluginhelp_mac.jar")
-
-  ant.move(file: "${debugEgg}", todir: "${plugindir}")
-
-  ant.zip(basedir: "${zipdir}", destfile: "${output}/${zipname}")
-}
-
 target(name: "build") {
   depends("clean")
   depends("unzip")
   depends("compile")
-  egg = buildDebuggerEgg(outDir, pluginHome, "PythonPlugin-${buildNumber}")
-  setProperty("debugEgg", "$egg")
 }
 
 target(name: "dist", description: "main target") {
   depends("build")
-  depends("zip")
+  depends("jar")
 }
 
 target(name: "artifacts") {
   depends("dist")
   ant.mkdir(dir: "${artifactsDir}")
-  ant.move(file: "${output}/${zipname}", todir: "${artifactsDir}")
+  ant.move(file: "${jarName}", todir: "${artifactsDir}")
 }
 
 target('default': "Build artifacts") {

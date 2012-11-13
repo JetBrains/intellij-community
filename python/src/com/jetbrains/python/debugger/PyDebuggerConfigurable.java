@@ -1,27 +1,11 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.CommonBundle;
-import com.intellij.javascript.debugger.JSDebuggerBundle;
-import com.intellij.javascript.debugger.settings.JSDebuggerSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author traff

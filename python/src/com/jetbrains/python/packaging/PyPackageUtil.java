@@ -121,7 +121,7 @@ public class PyPackageUtil {
       roots = ModuleRootManager.getInstance(module).getContentRoots();
     }
     for (VirtualFile root : roots) {
-      collectPackageNames(project, root, "", packageNames);
+      collectPackageNames(project, root, packageNames);
     }
     return packageNames;
   }
@@ -160,17 +160,14 @@ public class PyPackageUtil {
   }
 
   private static void collectPackageNames(@NotNull final Project project,
-                                          @NotNull VirtualFile root,
-                                          @NotNull final String prefix,
+                                          @NotNull final VirtualFile root,
                                           @NotNull final List<String> results) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!fileIndex.isIgnored(file) && file.findChild(PyNames.INIT_DOT_PY) != null) {
-          final String name = prefix + file.getName();
-          results.add(name);
-          collectPackageNames(project, file, name + ".", results);
+        if (!fileIndex.isIgnored(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
+          results.add(VfsUtilCore.getRelativePath(file, root, '.'));
         }
         return true;
       }

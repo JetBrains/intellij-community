@@ -95,6 +95,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 public void run(@NotNull ProgressIndicator indicator) {
                   for (final Sdk sdk : sdksToUpdate) {
                     try {
+                      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
                       updateSdk(project, sdk);
                     }
                     catch (InvalidSdkException e) {
