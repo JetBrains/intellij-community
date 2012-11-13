@@ -917,6 +917,7 @@ public class AbstractPopup implements JBPopup {
         }
       });
     } else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -925,7 +926,7 @@ public class AbstractPopup implements JBPopup {
             return;
           }
 
-          if (ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus && prevOwner != null) {
+          if (false && ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus && prevOwner != null) {
             IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
           }
 
