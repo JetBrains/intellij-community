@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 
 /**
  * @author Maxim.Medvedev
@@ -37,25 +35,10 @@ public class GrContainerTypeConverter extends GrTypeConverter {
     if (isMethodCallConversion(context)) {
       return null;
     }
+    if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
 
-    final PsiType lComponentType;
-    final PsiType rComponentType;
-
-    if (lType instanceof PsiArrayType) {
-      lComponentType = ((PsiArrayType)lType).getComponentType();
-      if (context instanceof GrExpression) {
-        rComponentType = ClosureParameterEnhancer.findTypeForIteration((GrExpression)context, context);
-      }
-      else {
-        rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, context);
-      }
-    }
-    else {
-      if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
-      lComponentType = extractComponentType(lType);
-      rComponentType = extractComponentType(rType);
-    }
-
+    final PsiType lComponentType = extractComponentType(lType);
+    final PsiType rComponentType = extractComponentType(rType);
 
     if (lComponentType == null || rComponentType == null) return Boolean.TRUE;
     if (TypesUtil.isAssignable(lComponentType, rComponentType, context)) return Boolean.TRUE;
