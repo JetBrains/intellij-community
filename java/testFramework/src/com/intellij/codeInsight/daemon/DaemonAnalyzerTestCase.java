@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
@@ -36,6 +37,7 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -53,10 +55,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -172,9 +171,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (isPerformanceTest()) {
       IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
-      ReferenceProvidersRegistry.getInstance(); // preload tons of classes
+      ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
-      LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.JAVA); // pile of annotator classes loads
+      LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE); // pile of annotator classes loads
       LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);
       ProblemHighlightFilter.EP_NAME.getExtensions();
       Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
@@ -445,12 +444,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return new WriteCommandAction<PsiClass>(getProject()) {
       @Override
       protected void run(Result<PsiClass> result) throws Throwable {
-        final String qname =
-          ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
+        final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+        final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
+        final String qname = javaFile.getClasses()[0].getQualifiedName();
+        assertNotNull(qname);
         final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
         File dir;
         if (files.length > 0) {
-          dir = VfsUtil.virtualToIoFile(files[0]);
+          dir = VfsUtilCore.virtualToIoFile(files[0]);
         }
         else {
           dir = createTempDirectory();
@@ -461,10 +462,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
         File file = new File(dir, qname.replace('.', '/') + ".java");
         FileUtil.createIfDoesntExist(file);
-        VirtualFile vFile =
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+        VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+        assertNotNull(vFile);
         VfsUtil.saveText(vFile, text);
-        PsiClass psiClass = ((PsiJavaFile)myPsiManager.findFile(vFile)).getClasses()[0];
+        PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
+        assertNotNull(psiFile);
+        PsiClass psiClass = psiFile.getClasses()[0];
         result.setResult(psiClass);
 
       }

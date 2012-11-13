@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -272,7 +273,8 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     final String classString = beanClassBuilder.buildBeanClass();
 
     try {
-      final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(method.getProject()).createFileFromText(className + ".java", classString);
+      final PsiFileFactory factory = PsiFileFactory.getInstance(method.getProject());
+      final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(className + ".java", JavaFileType.INSTANCE, classString);
       if (myCreateInnerClass) {
         final PsiClass containingClass = method.getContainingClass();
         final PsiClass[] classes = newFile.getClasses();

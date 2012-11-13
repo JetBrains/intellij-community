@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -160,7 +162,8 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         String text = getFileText();
 
         if (text != null) {
-          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + newFileName, text);
+          final FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(newFileName);
+          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + newFileName, type, text);
           final PsiElement psiElement = CodeStyleManager.getInstance(project).reformat(psiFile);
           text = psiElement.getText();
         }
