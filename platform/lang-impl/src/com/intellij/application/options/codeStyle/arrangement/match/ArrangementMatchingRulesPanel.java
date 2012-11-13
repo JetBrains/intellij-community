@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -70,6 +71,9 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     };
     myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myControl);
+    CustomizationUtil.installPopupHandler(
+      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
+    );
 
     TitleWithToolbar top = new TitleWithToolbar(
       ApplicationBundle.message("arrangement.settings.section.match"),
