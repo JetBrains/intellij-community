@@ -21,17 +21,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -290,6 +295,50 @@ public class SvnUtil {
       return SvnBundle.message("dialog.show.svn.map.table.version13.text");
     }
     return "";
+  }
+
+  public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
+    return splitIntoWc(vcs, changes, new Convertor<Change, File>() {
+      @Override
+      public File convert(Change o) {
+        return ChangesUtil.getFilePath(o).getIOFile();
+      }
+    });
+  }
+
+  public static Collection<List<File>> splitFilesIntoWc(final SvnVcs vcs, final List<File> committables) {
+    return splitIntoWc(vcs, committables, Convertor.SELF);
+  }
+
+  public static <T> Collection<List<T>> splitIntoWc(final SvnVcs vcs, final List<T> committables,
+                                                    Convertor<T, File> convertor) {
+    if (committables.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+
+    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, T>() {
+      @Override
+      protected Collection<T> createCollection() {
+        return new ArrayList<T>();
+      }
+    };
+    for (T committable : committables) {
+      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
+      if (path == null) {
+        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(null, null), committable);
+      } else {
+        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
+      }
+    }
+
+    if (result.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+    final Collection<List<T>> result2 = new ArrayList<List<T>>();
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
+      result2.add((List<T>)entry.getValue());
+    }
+    return result2;
   }
 
   private static class LocationsCrawler implements SvnWCRootCrawler {
