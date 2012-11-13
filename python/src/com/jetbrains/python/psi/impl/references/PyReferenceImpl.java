@@ -221,9 +221,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                              PsiElement realContext, PsiElement roof) {
     ResolveResultList ret = new ResolveResultList();
     PsiElement uexpr = processor.getResult();
-    final List<PsiElement> definers = processor.getDefiners();
     if (uexpr != null) {
-      if (definers.isEmpty()) {
+      if (processor.getDefiners().isEmpty()) {
         final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null) {
@@ -264,7 +263,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
       // sort what we got
-      for (PsiElement hit : definers) {
+      for (PsiElement hit : processor.getDefiners()) {
         ret.poke(hit, getRate(hit));
       }
       final PsiElement packageInit = PyUtil.turnDirIntoInit(uexpr);
@@ -272,8 +271,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         uexpr = packageInit; // an import statement may have returned a dir
       }
     }
-    else if (!definers.isEmpty()) {
-      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definers));
+    else if (!processor.getDefiners().isEmpty()) {
+      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, processor.getDefiners()));
     }
     PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
@@ -308,7 +307,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     if (uexpr != null) {
-      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), definers));
+      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
     }
 
     return ret;
