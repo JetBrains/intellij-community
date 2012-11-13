@@ -424,4 +424,8 @@ public class AnnotationUtil {
     }
     return annotations;
   }
+
+  public static boolean isInsideAnnotation(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+  }
 }

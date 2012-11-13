@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -132,11 +133,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
     final PsiElement element = findElementAtCaret(editor, file);
     PsiPolyadicExpression binaryExpression = getEnclosingLiteralConcatenation(element);
-    return binaryExpression != null && !isInsideAnnotation(binaryExpression);
-  }
-
-  private static boolean isInsideAnnotation(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+    return binaryExpression != null && !AnnotationUtil.isInsideAnnotation(binaryExpression);
   }
 
   @Nullable
