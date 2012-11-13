@@ -137,9 +137,10 @@ public abstract class MvcFramework {
         ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME);
       }
       module.putUserData(CREATE_APP_STRUCTURE, null);
-      final int result = Messages.showYesNoCancelDialog(module.getProject(),
-                                             "Create default " + getDisplayName() + " directory structure in module '" + module.getName() + "'?",
-                                             "Create " + getDisplayName() + " application", "Run 'create-&app'", "Run 'create-&plugin'", "&Cancel", getIcon());
+      String message = "Create default " + getDisplayName() + " directory structure in module '" + module.getName() + "'?";
+      final int result = Messages.showDialog(module.getProject(), message,
+                                             "Create " + getDisplayName() + " application",
+                                             new String[]{"Run 'create-&app'", "Run 'create-&plugin'", "&Cancel"}, 0, getIcon());
       if (result < 0 || result > 1) {
         return;
       }
