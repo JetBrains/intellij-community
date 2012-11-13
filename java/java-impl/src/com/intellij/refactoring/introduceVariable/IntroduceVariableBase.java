@@ -389,7 +389,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (hasErrors[0]) return null;
 
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
-      assert refExpr != null;
+      if (refExpr == null) return null;
       if (toBeExpression == refExpr && refIdx[0] > 0) {
         return null;
       }

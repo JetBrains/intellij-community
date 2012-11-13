@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -53,15 +54,12 @@ public class JavaTemplateUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName);
   }
 
-  public static void setPackageNameAttribute (@NotNull Properties properties, @NotNull PsiDirectory directory) {
+  public static String getPackageName(@NotNull PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage != null) {
-      String packageName = aPackage.getQualifiedName();
-      if (packageName.length() > 0) {
-        properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, packageName);
-        return;
-      }
-    }
-    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, "");
+    return aPackage != null ? aPackage.getQualifiedName() : "";
+  }
+
+  public static void setPackageNameAttribute(@NotNull Properties properties, @NotNull PsiDirectory directory) {
+    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, getPackageName(directory));
   }
 }

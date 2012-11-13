@@ -22,7 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * @author yole
@@ -32,11 +32,11 @@ public interface CreateFromTemplateHandler {
 
   boolean handlesTemplate(FileTemplate template);
   PsiElement createFromTemplate(Project project, PsiDirectory directory, final String fileName, FileTemplate template, String templateText,
-                                Properties props) throws IncorrectOperationException;
+                                Map<String, Object> props) throws IncorrectOperationException;
 
   boolean canCreate(final PsiDirectory[] dirs);
   boolean isNameRequired();
   String getErrorMessage();
 
-  Properties prepareProperties(Properties props);
+  void prepareProperties(Map<String, Object> props);
 }

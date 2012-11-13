@@ -17,9 +17,11 @@ package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
@@ -41,16 +43,25 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @NotNull private final ArrangementRuleIndexControl        myRowIndexControl;
   @NotNull private final ArrangementMatchConditionComponent myDelegate;
-  @NotNull private final ActionButton                       myEditButton;
+  @NotNull private final ArrangementMatchingRulesControl    myControl;
+  @NotNull private final MyActionButton                     myEditButton;
 
-  public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate) {
+  @Nullable private Rectangle myScreenBounds;
+
+  private boolean myBeingEdited;
+  private boolean myUnderMouse;
+
+  public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate,
+                                     @NotNull ArrangementMatchingRulesControl control)
+  {
     myDelegate = delegate;
+    myControl = control;
 
     AnAction action = ActionManager.getInstance().getAction("Arrangement.Rule.Edit");
     Presentation presentation = action.getTemplatePresentation().clone();
     Icon editIcon = presentation.getIcon();
     Dimension buttonSize = new Dimension(editIcon.getIconWidth(), editIcon.getIconHeight());
-    myEditButton = new ActionButton(action, presentation, ArrangementConstants.RULE_TREE_PLACE, buttonSize);
+    myEditButton = new MyActionButton(action, presentation, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE, buttonSize);
     myEditButton.setVisible(false);
 
     FontMetrics metrics = getFontMetrics(getFont());
@@ -78,6 +89,12 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @Override
   protected void paintComponent(Graphics g) {
+    Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+    if (point != null) {
+      Rectangle bounds = getBounds();
+      myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+    }
+    
     FontMetrics metrics = g.getFontMetrics();
     int baseLine = SimpleColoredComponent.getTextBaseLine(metrics, metrics.getHeight());
     myRowIndexControl.setBaseLine(baseLine + ArrangementConstants.VERTICAL_GAP + myDelegate.getUiComponent().getBounds().y - myRowIndexControl.getBounds().y);
@@ -86,6 +103,26 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   public void setRowIndex(int row) {
     myRowIndexControl.setIndex(row);
+  }
+
+  public void setUnderMouse(boolean underMouse) {
+    myUnderMouse = underMouse;
+    if (myUnderMouse) {
+      setBackground(UIUtil.getDecoratedRowColor());
+    }
+    else {
+      setBackground(UIUtil.getListBackground());
+    }
+  }
+
+  public void setBeingEdited(boolean beingEdited) {
+    if (myBeingEdited && !beingEdited) {
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, false);
+    }
+    if (!beingEdited && !myUnderMouse) {
+      myEditButton.setVisible(false);
+    }
+    myBeingEdited = beingEdited;
   }
 
   @NotNull
@@ -103,8 +140,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Nullable
   @Override
   public Rectangle getScreenBounds() {
-    // TODO den implement 
-    return null;
+    return myScreenBounds;
   }
 
   @Override
@@ -115,17 +151,46 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseEntered(@NotNull MouseEvent e) {
     setBackground(UIUtil.getDecoratedRowColor());
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
     return myDelegate.onMouseEntered(e);
   }
 
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
+    Rectangle bounds = getButtonScreenBounds();
+    if (!myBeingEdited && bounds != null) {
+      boolean selected = bounds.contains(event.getLocationOnScreen());
+      boolean wasSelected = myEditButton.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+      if (selected ^ wasSelected) {
+        return myScreenBounds;
+      }
+    }
+
     return myDelegate.onMouseMove(event);
   }
 
   @Override
   public void onMouseRelease(@NotNull MouseEvent event) {
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
+    Rectangle bounds = getButtonScreenBounds();
+    if (bounds != null && bounds.contains(event.getLocationOnScreen())) {
+      if (myBeingEdited) {
+        myControl.hideEditor();
+        myBeingEdited = false;
+      }
+      else {
+        int row = myControl.getRowByRenderer(this);
+        if (row >= 0) {
+          myControl.showEditor(row);
+          myBeingEdited = true;
+        }
+      }
+      event.consume();
+      return;
+    }
     myDelegate.onMouseRelease(event); 
   }
 
@@ -133,11 +198,34 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseExited() {
     setBackground(UIUtil.getListBackground());
+    if (!myBeingEdited) {
+      myEditButton.setVisible(false);
+    }
     return myDelegate.onMouseExited(); 
   }
-
+  
+  @Nullable
+  private Rectangle getButtonScreenBounds() {
+    if (myScreenBounds == null) {
+      return null;
+    }
+    Rectangle bounds = myEditButton.getBounds();
+    return new Rectangle(bounds.x + myScreenBounds.x, bounds.y + myScreenBounds.y, bounds.width, bounds.height); 
+  }
+  
   @Override
   public String toString() {
     return "list row decorator for " + myDelegate.toString();
+  }
+  
+  private static class MyActionButton extends ActionButton {
+    MyActionButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+      super(action, presentation, place, minimumSize);
+    }
+
+    @NotNull
+    public Presentation getPresentation() {
+      return myPresentation;
+    }
   }
 }

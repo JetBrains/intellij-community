@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class RunnerMediator {
    *
    */
   public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    if (isWindows()) {
+    if (SystemInfo.isWindows) {
       injectRunnerCommand(commandLine);
     }
 
@@ -87,8 +87,8 @@ public class RunnerMediator {
   }
 
   @Nullable
-  private String getRunnerPath() {
-    if (isWindows()) {
+  private static String getRunnerPath() {
+    if (SystemInfo.isWindows) {
       final String path = System.getenv("IDEA_RUNNERW");
       if (path != null && new File(path).exists()) {
         return path;
@@ -103,7 +103,7 @@ public class RunnerMediator {
     }
   }
 
-  private void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
+  private static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
@@ -111,28 +111,27 @@ public class RunnerMediator {
     }
   }
 
+  /** @deprecated use {@link SystemInfo#isUnix} (to remove in IDEA 13) */
   public static boolean isUnix() {
-    return SystemInfo.isLinux || SystemInfo.isMac;
+    return SystemInfo.isUnix;
   }
 
+  /** @deprecated use {@link SystemInfo#isWindows} (to remove in IDEA 13) */
   public static boolean isWindows() {
-    if (File.separatorChar == '\\') {
-      return true;
-    }
-    return false;
+    return SystemInfo.isWindows;
   }
 
   /**
    * Destroys process tree: in case of windows via imitating ctrl+break, in case of unix via sending sig_kill to every process in tree.
-   * @param process to kill with all subprocesses
+   * @param process to kill with all sub-processes.
    */
   public static boolean destroyProcess(Process process) {
     try {
-      if (isWindows()) {
+      if (SystemInfo.isWindows) {
         sendCtrlBreakThroughStream(process);
         return true;
       }
-      else if (isUnix()) {
+      else if (SystemInfo.isUnix) {
         return UnixProcessManager.sendSigKillToProcessTree(process);
       }
       else {
@@ -145,14 +144,8 @@ public class RunnerMediator {
     }
   }
 
-  /**
-   *
-   */
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
-
-
-    public CustomDestroyProcessHandler(@NotNull Process process,
-                                       @NotNull GeneralCommandLine commandLine) {
+    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
       super(process, commandLine.getCommandLineString());
     }
 

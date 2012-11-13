@@ -32,7 +32,12 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
-    final String annotationFQN = annClass.getQualifiedName();
+    final String annotationFQN = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return annClass.getQualifiedName();
+      }
+    });
     assert annotationFQN != null;
 
     final PsiManagerImpl psiManager = (PsiManagerImpl)annClass.getManager();

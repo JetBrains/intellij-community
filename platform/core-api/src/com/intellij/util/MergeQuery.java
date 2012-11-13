@@ -19,6 +19,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.concurrency.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,8 +53,37 @@ public class MergeQuery<T> implements Query<T>{
     return processSubQuery(consumer, myQuery1) && processSubQuery(consumer, myQuery2);
   }
 
+  public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<T> consumer) {
+    final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+
+    final AsyncFuture<Boolean> fq = processSubQueryAsync(consumer, myQuery1);
+
+    fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
+      @Override
+      public void onSuccess(Boolean value) {
+        if (!value.booleanValue()) {
+          result.set(false);
+        }
+        else {
+          final AsyncFuture<Boolean> fq2 = processSubQueryAsync(consumer, myQuery2);
+          fq2.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result));
+        }
+      }
+    });
+    return result;
+  }
+
+
   private <V extends T> boolean processSubQuery(final Processor<T> consumer, Query<V> query1) {
     return query1.forEach(new Processor<V>() {
+      public boolean process(final V t) {
+        return consumer.process(t);
+      }
+    });
+  }
+
+  private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(final Processor<T> consumer, Query<V> query1) {
+    return query1.forEachAsync(new Processor<V>() {
       public boolean process(final V t) {
         return consumer.process(t);
       }

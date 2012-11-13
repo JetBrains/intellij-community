@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -34,6 +35,9 @@ import java.awt.*;
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
+    if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
+      c.setBorder(null);
+    }
     return new DarculaCheckBoxUI();
   }
 

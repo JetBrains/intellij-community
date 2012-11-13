@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,4 +187,11 @@ char* read_line(FILE* stream) {
     input_buf[pos] = '\0';
   }
   return input_buf;
+}
+
+
+bool is_parent_path(const char* parent_path, const char* child_path) {
+  size_t parent_len = strlen(parent_path);
+  return strncmp(parent_path, child_path, parent_len) == 0 &&
+         (parent_len == strlen(child_path) || child_path[parent_len] == '/');
 }

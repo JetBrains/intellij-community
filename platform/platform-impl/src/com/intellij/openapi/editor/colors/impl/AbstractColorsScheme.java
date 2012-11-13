@@ -547,7 +547,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private static String getDefaultFontName() {
     if (SystemInfo.isMacOSSnowLeopard) return "Menlo";
-    if (SystemInfo.isLinux) {
+    if (SystemInfo.isXWindow) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if ("DejaVu Sans Mono".equals(font.getName())) {
           return font.getFontName();

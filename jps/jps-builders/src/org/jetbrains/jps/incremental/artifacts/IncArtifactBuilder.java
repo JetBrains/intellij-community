@@ -237,7 +237,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildFSState fsState = context.getProjectDescriptor().fsState;
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (Pair<String, String> pair : paths) {
-          File file = new File(pair.getFirst(), pair.getSecond());
+          String relativePath = pair.getSecond();
+          File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
           Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
           for (BuildRootDescriptor descriptor : descriptors) {
             try {

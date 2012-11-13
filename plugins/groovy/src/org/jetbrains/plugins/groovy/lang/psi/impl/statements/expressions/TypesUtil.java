@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
@@ -274,6 +275,14 @@ public class TypesUtil {
       else if (isClassType(lType, JAVA_LANG_STRING)) {
         return true;
       }
+      else if (lType instanceof PsiArrayType) {
+        PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
+        PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
+        if (rComponentType != null && isAssignable(lComponentType, rComponentType, manager, scope)) {
+          return true;
+        }
+      }
+
     }
 
     rType = boxPrimitiveType(rType, manager, scope);

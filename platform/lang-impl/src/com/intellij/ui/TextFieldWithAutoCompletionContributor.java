@@ -58,58 +58,59 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
     PsiFile file = parameters.getOriginalFile();
     final TextFieldWithAutoCompletionListProvider<T> provider = file.getUserData(KEY);
 
-    if (provider != null) {
-      String adv = provider.getAdvertisement();
-      if (adv == null) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
-        if (shortcut != null) {
-          adv = provider.getQuickDocHotKeyAdvertisement(shortcut);
+    if (provider == null) {
+      return;
+    }
+    String adv = provider.getAdvertisement();
+    if (adv == null) {
+      final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
+      if (shortcut != null) {
+        adv = provider.getQuickDocHotKeyAdvertisement(shortcut);
+      }
+    }
+    if (adv != null) {
+      result.addLookupAdvertisement(adv);
+    }
+
+    final String prefix = provider.getPrefix(parameters);
+    if (prefix == null) {
+      return;
+    }
+    if (parameters.getInvocationCount() == 0 && !file.getUserData(AUTO_POPUP_KEY)) {   // is autopopup
+      return;
+    }
+    final PrefixMatcher prefixMatcher = provider.createPrefixMatcher(prefix);
+    if (prefixMatcher != null) {
+      result = result.withPrefixMatcher(prefixMatcher);
+    }
+
+    Collection<T> items = provider.getItems(prefix, true, parameters);
+    addCompletionElements(result, provider, items, -10000);
+
+    Future<Collection<T>>
+      future =
+      ApplicationManager.getApplication().executeOnPooledThread(new Callable<Collection<T>>() {
+        @Override
+        public Collection<T> call() {
+          return provider.getItems(prefix, false, parameters);
+        }
+      });
+
+    while (true) {
+      try {
+        Collection<T> tasks = future.get(100, TimeUnit.MILLISECONDS);
+        if (tasks != null) {
+          addCompletionElements(result, provider, tasks, 0);
+          return;
         }
       }
-      if (adv != null) {
-        result.addLookupAdvertisement(adv);
+      catch (ProcessCanceledException e) {
+        throw e;
       }
+      catch (Exception ignore) {
 
-      final String prefix = provider.getPrefix(parameters);
-      if (prefix == null) {
-        return;
       }
-      if (parameters.getInvocationCount() == 0 && !file.getUserData(AUTO_POPUP_KEY)) {   // is autopopup
-        return;
-      }
-      final PrefixMatcher prefixMatcher = provider.createPrefixMatcher(prefix);
-      if (prefixMatcher != null) {
-        result = result.withPrefixMatcher(prefixMatcher);
-      }
-
-      Collection<T> items = provider.getItems(prefix, true, parameters);
-      addCompletionElements(result, provider, items, -10000);
-
-      Future<Collection<T>>
-        future =
-        ApplicationManager.getApplication().executeOnPooledThread(new Callable<Collection<T>>() {
-          @Override
-          public Collection<T> call() {
-            return provider.getItems(prefix, false, parameters);
-          }
-        });
-
-      while (true) {
-        try {
-          Collection<T> tasks = future.get(100, TimeUnit.MILLISECONDS);
-          if (tasks != null) {
-            addCompletionElements(result, provider, tasks, 0);
-            return;
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception ignore) {
-
-        }
-        ProgressManager.checkCanceled();
-      }
+      ProgressManager.checkCanceled();
     }
   }
 

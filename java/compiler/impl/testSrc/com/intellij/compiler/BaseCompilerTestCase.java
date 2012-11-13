@@ -1,5 +1,7 @@
 package com.intellij.compiler;
 
+import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -226,7 +228,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
               if (aborted) {
                 Assert.fail("compilation aborted");
               }
-              result.set(new CompilationLog(CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete(),
+              ExitStatus status = CompileDriver.getExternalBuildExitStatus(compileContext);
+              result.set(new CompilationLog(status == ExitStatus.UP_TO_DATE,
+                                            CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete(),
                                             compileContext.getMessages(CompilerMessageCategory.ERROR),
                                             compileContext.getMessages(CompilerMessageCategory.WARNING)));
             }
@@ -363,10 +367,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected class CompilationLog {
     private final Set<String> myRecompiledPaths;
     private final Set<String> myDeletedPaths;
+    private final boolean myExternalBuildUpToDate;
     private final CompilerMessage[] myErrors;
     private final CompilerMessage[] myWarnings;
 
-    public CompilationLog(String[] recompiledPaths, String[] deletedPaths, CompilerMessage[] errors, CompilerMessage[] warnings) {
+    public CompilationLog(boolean externalBuildUpToDate, String[] recompiledPaths, String[] deletedPaths, CompilerMessage[] errors, CompilerMessage[] warnings) {
+      myExternalBuildUpToDate = externalBuildUpToDate;
       myErrors = errors;
       myWarnings = warnings;
       myRecompiledPaths = getRelativePaths(recompiledPaths);
@@ -374,8 +380,13 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     public void assertUpToDate() {
-      checkRecompiled();
-      checkDeleted();
+      if (useExternalCompiler()) {
+        assertTrue(myExternalBuildUpToDate);
+      }
+      else {
+        checkRecompiled();
+        checkDeleted();
+      }
     }
 
     public void assertRecompiled(String... expected) {

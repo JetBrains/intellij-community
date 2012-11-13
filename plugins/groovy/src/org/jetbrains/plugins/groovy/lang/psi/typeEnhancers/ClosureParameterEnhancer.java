@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -154,7 +156,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         if (params.length == 2) {
           if (index == 0) {
-            return getEntryForMap(type, closure);
+            return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
           }
           return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
         }
@@ -179,7 +181,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         return res;
       }
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        return getEntryForMap(type, closure);
+        return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
       }
     }
     else if (GdkMethodUtil.EACH_PERMUTATION.equals(methodName) && params.length == 1) {
@@ -226,45 +228,65 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
 
   @Nullable
-  private static PsiType getEntryForMap(PsiType map, PsiElement context) {
+  private static PsiType getEntryForMap(PsiType map, final Project project, final GlobalSearchScope scope) {
     PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
     PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
-    if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
-      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(
-        "java.util.Map.Entry<" + key.getCanonicalText() + ", " + value.getCanonicalText() + ">", context);
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, scope);
+    if (entryClass == null) {
+      if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
+        final String text = String.format("%s<%s,%s>", CommonClassNames.JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
+        return factory.createTypeFromText(text, null);
+      }
+      else {
+        return factory.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP_ENTRY, scope);
+      }
     }
-    return TypesUtil.createTypeByFQClassName("java.util.Map.Entry", context);
+    else {
+      return factory.createType(entryClass, key, value);
+    }
   }
 
   @Nullable
   public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
-    if (iterType instanceof PsiArrayType) {
-      return TypesUtil.boxPrimitiveType(((PsiArrayType)iterType).getComponentType(), context.getManager(), context.getResolveScope());
+
+    final PsiType type = findTypeForIteration(iterType, context.getManager(), context.getResolveScope());
+    if (type == null) return null;
+
+    return PsiImplUtil.normalizeWildcardTypeByPosition(type, qualifier);
+  }
+
+  public static PsiType findTypeForIteration(PsiType type,
+                                             final PsiManager manager,
+                                             final GlobalSearchScope resolveScope) {
+    if (type instanceof PsiArrayType) {
+      return TypesUtil.boxPrimitiveType(((PsiArrayType)type).getComponentType(), manager, resolveScope);
     }
-    if (iterType instanceof GrTupleType) {
-      PsiType[] types = ((GrTupleType)iterType).getParameters();
+    if (type instanceof GrTupleType) {
+      PsiType[] types = ((GrTupleType)type).getParameters();
       return types.length == 1 ? types[0] : null;
     }
 
-    if (iterType instanceof GrRangeType) {
-      return ((GrRangeType)iterType).getIterationType();
+    if (type instanceof GrRangeType) {
+      return ((GrRangeType)type).getIterationType();
     }
 
-    PsiType res = PsiUtil.extractIterableTypeParameter(iterType, true);
+    PsiType res = PsiUtil.extractIterableTypeParameter(type, true);
     if (res != null) {
-      return PsiImplUtil.normalizeWildcardTypeByPosition(res, qualifier);
+      return res;
     }
 
-    if (TypesUtil.isClassType(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(iterType, JAVA_IO_FILE)) {
-      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, context);
+    if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
+      return PsiType.getJavaLangString(manager, resolveScope);
     }
 
-    if (InheritanceUtil.isInheritor(iterType, CommonClassNames.JAVA_UTIL_MAP)) {
-      return getEntryForMap(iterType, context);
+    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      return getEntryForMap(type, manager.getProject(), resolveScope);
     }
-    return null;
+    return type;
   }
 
   @Nullable

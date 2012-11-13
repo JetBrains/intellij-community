@@ -76,7 +76,7 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
 
       final Project project = context.getProject();
 
-      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass("java.util.Map.Entry", parent.getResolveScope());
+      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, parent.getResolveScope());
       if (entry == null) return null;
 
       final PsiClassType entryType = JavaPsiFacade.getElementFactory(project).createType(entry, typeParams);

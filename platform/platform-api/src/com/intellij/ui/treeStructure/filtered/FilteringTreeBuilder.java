@@ -163,7 +163,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       public void run() {
         revalidateTree();
 
-        Object toSelect = myLastSuccessfulSelect != null ? myLastSuccessfulSelect : preferredSelection;
+        Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
         if (adjustSelection && toSelect != null) {
           final FilteringTreeStructure.FilteringNode nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);

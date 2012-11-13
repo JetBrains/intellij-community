@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +110,36 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     }
 
     return null;
+  }
+
+  public static List<TextRange> expandToWholeLinesWithBlanks(CharSequence text, TextRange range) {
+    List<TextRange> result = CollectionFactory.arrayList();
+    result.addAll(expandToWholeLine(text, range, true));
+
+    TextRange last = result.isEmpty() ? range : result.get(result.size() - 1);
+    int start = last.getStartOffset();
+    int end = last.getEndOffset();
+    while (true) {
+      int blankLineEnd = CharArrayUtil.shiftForward(text, end, " \t");
+      if (blankLineEnd >= text.length() || text.charAt(blankLineEnd) != '\n') {
+        break;
+      }
+      end = blankLineEnd + 1;
+    }
+    if (end == last.getEndOffset()) {
+      while (start > 0 && text.charAt(start - 1) == '\n') {
+        int blankLineStart = CharArrayUtil.shiftBackward(text, start - 2, " \t");
+        if (blankLineStart <= 0 || text.charAt(blankLineStart) != '\n') {
+          break;
+        }
+        start = blankLineStart + 1;
+      }
+    }
+    if (start != last.getStartOffset() || end != last.getEndOffset()) {
+      result.add(new TextRange(start, end));
+    }
+
+    return result;
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {

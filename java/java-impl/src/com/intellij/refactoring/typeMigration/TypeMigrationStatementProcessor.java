@@ -343,7 +343,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
     else {
       myLabeler.setConversionMapping(expression, conversion);
-      myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), myTypeEvaluator.evaluateType(expression));
+      final PsiType psiType = myTypeEvaluator.evaluateType(expression);
+      LOG.assertTrue(psiType != null,  expression);
+      myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), psiType);
     }
   }
 

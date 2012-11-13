@@ -116,7 +116,7 @@ public class ScreenUtil {
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
     Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
-    if (SystemInfo.isLinux && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+    if (SystemInfo.isXWindow && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
       return fixGlobalInsets(gc.getBounds(), insets);
     }
     return insets;

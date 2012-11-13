@@ -51,6 +51,15 @@ public class FormatterUtil {
     return type == TokenType.WHITE_SPACE || (type != TokenType.ERROR_ELEMENT && node.getTextLength() == 0);
   }
 
+  public static boolean isOneOf(@Nullable ASTNode node, @NotNull IElementType... types) {
+    if (node == null) return false;
+    IElementType elementType = node.getElementType();
+    for (IElementType each : types) {
+      if (elementType == each) return true;
+    }
+    return false;
+  }
+
   @Nullable
   public static ASTNode getPrevious(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
     if (node == null) return null;
@@ -139,8 +148,16 @@ public class FormatterUtil {
   }
 
   public static boolean isPrecededBy(@Nullable ASTNode node, IElementType expectedType) {
+    return isPrecededBy(node, expectedType, IElementType.EMPTY_ARRAY);
+  }
+
+  public static boolean isPrecededBy(@Nullable ASTNode node, IElementType expectedType, TokenSet skipTypes) {
+    return isPrecededBy(node, expectedType, skipTypes.getTypes());
+  }
+
+  public static boolean isPrecededBy(@Nullable ASTNode node, IElementType expectedType, IElementType... skipTypes) {
     ASTNode prevNode = node == null ? null : node.getTreePrev();
-    while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
+    while (prevNode != null && (isWhitespaceOrEmpty(prevNode) || isOneOf(prevNode, skipTypes))) {
       prevNode = prevNode.getTreePrev();
     }
     if (prevNode == null) return false;
@@ -148,8 +165,16 @@ public class FormatterUtil {
   }
 
   public static boolean isPrecededBy(@Nullable ASTNode node, TokenSet expectedTypes) {
+    return isPrecededBy(node, expectedTypes, IElementType.EMPTY_ARRAY);
+  }
+
+  public static boolean isPrecededBy(@Nullable ASTNode node, TokenSet expectedTypes, TokenSet skipTypes) {
+    return isPrecededBy(node, expectedTypes, skipTypes.getTypes());
+  }
+
+  public static boolean isPrecededBy(@Nullable ASTNode node, TokenSet expectedTypes, IElementType... skipTypes) {
     ASTNode prevNode = node == null ? null : node.getTreePrev();
-    while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
+    while (prevNode != null && (isWhitespaceOrEmpty(prevNode) || isOneOf(prevNode, skipTypes))) {
       prevNode = prevNode.getTreePrev();
     }
     if (prevNode == null) return false;
@@ -157,8 +182,16 @@ public class FormatterUtil {
   }
 
   public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType) {
+    return isFollowedBy(node, expectedType, IElementType.EMPTY_ARRAY);
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType, TokenSet skipTypes) {
+    return isFollowedBy(node, expectedType, skipTypes.getTypes());
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType, IElementType... skipTypes) {
     ASTNode nextNode = node == null ? null : node.getTreeNext();
-    while (nextNode != null && isWhitespaceOrEmpty(nextNode)) {
+    while (nextNode != null && (isWhitespaceOrEmpty(nextNode) || isOneOf(nextNode, skipTypes))) {
       nextNode = nextNode.getTreeNext();
     }
     if (nextNode == null) return false;

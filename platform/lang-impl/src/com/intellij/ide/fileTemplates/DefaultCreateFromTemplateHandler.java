@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * @author yole
@@ -38,7 +38,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
                                        final String templateText,
-                                       final Properties props) throws IncorrectOperationException {
+                                       final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
@@ -80,7 +80,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   @Override
-  public Properties prepareProperties(Properties props) {
-    return props;
+  public void prepareProperties(Map<String, Object> props) {
+    // ignore
   }
 }
