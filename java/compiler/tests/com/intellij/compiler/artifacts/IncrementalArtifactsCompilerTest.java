@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.testFramework.PsiTestUtil;
 
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.renameFile;
@@ -117,6 +118,24 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       changeFile(file, "b");
       make(a);
       assertOutput(a, fs().archive("f.jar").file("file.txt", "b"));
+    }
+
+    public void testDoNotTreatClassFileAsDirtyAfterMake() {
+      VirtualFile file = createFile("src/A.java", "class A{}");
+      Module module = addModule("a", file.getParent());
+      VirtualFile out = createChildDirectory(file.getParent().getParent(), "module-out");
+      PsiTestUtil.addContentRoot(module, out);
+      PsiTestUtil.setCompilerOutputPath(module, out.getUrl(), false);
+
+      Artifact a = addArtifact(root().module(module));
+      make(a);
+      assertOutput(a, fs().file("A.class"));
+      make(a).assertUpToDate();
+
+      changeFile(file, "class A{int a;}");
+      make(a);
+      assertOutput(a, fs().file("A.class"));
+      make(a).assertUpToDate();
     }
   }
 

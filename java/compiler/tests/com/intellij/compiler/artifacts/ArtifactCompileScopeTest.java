@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.compiler.BaseCompilerTestCase;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
@@ -89,7 +90,10 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     compile(true, file1).assertRecompiledAndDeleted(aPath, aPath);
 
     ensureTimeChanged();
-    make(module).assertUpToDate();
+    BaseCompilerTestCase.CompilationLog make = make(module);
+    if (!useExternalCompiler()) {
+      make.assertUpToDate();
+    }
 
     ensureTimeChanged();
     final String[] bothPaths = {"out/production/module/A.class", "out/production/module/B.class"};
