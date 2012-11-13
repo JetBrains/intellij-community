@@ -45,7 +45,7 @@ import java.util.List;
  * Contributor-based goto model
  */
 public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
+  public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
   protected final Project myProject;
   private final ChooseByNameContributor[] myContributors;
@@ -76,7 +76,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public String[] getNames(final boolean checkBoxState) {
     final Set<String> names = new ConcurrentHashSet<String>();
 
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), ProgressManager.getInstance().getProgressIndicator(), false,
+    long start = System.currentTimeMillis();
+    List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, ProgressManager.getInstance().getProgressIndicator(), false,
                                                 new Processor<ChooseByNameContributor>() {
                                                   @Override
                                                   public boolean process(ChooseByNameContributor contributor) {
@@ -97,7 +99,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
                                                     return true;
                                                   }
                                                 });
-
+    long finish = System.currentTimeMillis();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getNames(): "+(finish-start)+"ms; (got "+names.size()+" elements)");
+    }
     return ArrayUtil.toStringArray(names);
   }
 

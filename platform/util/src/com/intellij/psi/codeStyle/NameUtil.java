@@ -27,6 +27,7 @@ import java.util.List;
 
 public class NameUtil {
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
+    @Override
     public String fun(final String s) {
       return s.toLowerCase();
     }
@@ -42,10 +43,9 @@ public class NameUtil {
   public static String[] nameToWords(String name){
     ArrayList<String> array = new ArrayList<String>();
     int index = 0;
-    int wordStart;
 
     while(index < name.length()){
-      wordStart = index;
+      int wordStart = index;
       int upperCaseCount = 0;
       int lowerCaseCount = 0;
       int digitCount = 0;
@@ -101,8 +101,6 @@ public class NameUtil {
     }
 
     @NonNls final StringBuilder buffer = new StringBuilder();
-    boolean lastIsUppercase = false;
-    boolean prevIsUppercase = false;
     final boolean endsWithSpace = !forCompletion && StringUtil.endsWithChar(pattern, ' ');
     if (!forCompletion) {
       pattern = pattern.trim();
@@ -112,6 +110,7 @@ public class NameUtil {
     if (uppercaseOnly) {
       allowToLower = false;
     }*/
+    boolean prevIsUppercase = false;
     if (exactPrefixLen > 0) {
       char c = pattern.charAt(exactPrefixLen - 1);
       prevIsUppercase = Character.isUpperCase(c) || Character.isDigit(c);
@@ -137,8 +136,8 @@ public class NameUtil {
       buffer.append("_*");  // ignore leading underscores
     }
 
-    boolean firstIdentifierLetter = (exactPrefixLen == 0);
-    //System.out.println("pattern = " + pattern);
+    boolean firstIdentifierLetter = exactPrefixLen == 0;
+    boolean lastIsUppercase = false;
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
@@ -284,7 +283,7 @@ public class NameUtil {
       startWord = StringUtil.toUpperCase(startWord);
     }
     else {
-      if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
+      if (prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')) {
         startWord = startWord.toLowerCase();
       }
       else {
@@ -328,16 +327,14 @@ public class NameUtil {
   }
 
   static boolean isWordStart(String text, int i) {
-    if (isWordStart(text.charAt(i))) {
+    char c = text.charAt(i);
+    if (isWordStart(c)) {
       return true;
     }
-    if (!Character.isLetterOrDigit(text.charAt(i))) {
+    if (!Character.isLetterOrDigit(c)) {
       return false;
     }
-    if (i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1))) {
-      return true;
-    }
-    return false;
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
   }
 
   static boolean isWordStart(char p) {
@@ -350,16 +347,34 @@ public class NameUtil {
     }
 
     int i = start;
-    while (i < text.length() && isWordStart(text, i)) {
+    boolean prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
+    while (i < text.length()) {
+      char c = text.charAt(i);
+      if (!isWordStart(c)) {
+        if (!Character.isLetterOrDigit(c)) {
+          break;
+        }
+        if (prevIsLetterOrDigit) {
+          break;
+        }
+      }
+      prevIsLetterOrDigit = true;
       i++;
     }
+
     if (i > start + 1) {
       if (i == text.length() || !Character.isLetterOrDigit(text.charAt(i))) {
         return i;
       }
       return i - 1;
     }
-    while (i < text.length() && !isWordStart(text, i) && Character.isLetterOrDigit(text.charAt(i))) {
+    /*boolean */prevIsLetterOrDigit = i > 0 && Character.isLetterOrDigit(text.charAt(i - 1));
+    while (i < text.length()){
+      char c = text.charAt(i);
+      if (!Character.isLetterOrDigit(c)) break;
+      if (isWordStart(c)) break;
+      if (!prevIsLetterOrDigit) break;
+      prevIsLetterOrDigit = true;
       i++;
     }
     return i;

@@ -1461,6 +1461,7 @@ public abstract class ChooseByNameBase {
     private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
                                       @NotNull final ProgressIndicator cancelled) {
+      long start = System.currentTimeMillis();
       myProvider.filterElements(
         ChooseByNameBase.this, pattern, myCheckboxState,
         cancelled,
@@ -1478,6 +1479,10 @@ public abstract class ChooseByNameBase {
           }
         }
       );
+      long end = System.currentTimeMillis();
+      if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
+        ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
+      }
     }
 
     private void showCard(final String card, final int delay) {
