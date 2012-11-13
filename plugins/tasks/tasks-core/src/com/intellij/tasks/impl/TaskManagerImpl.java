@@ -181,8 +181,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       public boolean canCloseProject(final Project project) {
         assert myProjectOpenedTime != 0;
         getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
+        myProjectOpenedTime = 0;
         assert myActiveTask.getActivated() != 0;
         myActiveTask.setTimeSpent(myActiveTask.getTimeSpent() + System.currentTimeMillis() - myActiveTask.getActivated());
+        myActiveTask.setActivated(0);
         return true;
       }
     };
