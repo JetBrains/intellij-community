@@ -275,7 +275,7 @@ public final class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, MODULE_SOURCE_FLAG);
   }
 
-  void setInModuleSource(boolean inModuleSource) {
+  public void setInModuleSource(boolean inModuleSource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
   }
 
@@ -283,7 +283,7 @@ public final class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, TEST_SOURCE_FLAG);
   }
 
-  void setTestSource(boolean testSource) {
+  public void setTestSource(boolean testSource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, TEST_SOURCE_FLAG, testSource);
   }
 
@@ -291,7 +291,7 @@ public final class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, LIBRARY_SOURCE_FLAG);
   }
 
-  void setInLibrarySource(boolean inLibrarySource) {
+  public void setInLibrarySource(boolean inLibrarySource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
   }
 
@@ -299,19 +299,19 @@ public final class DirectoryInfo {
     return module;
   }
 
-  void setModule(Module module) {
+  public void setModule(Module module) {
     this.module = module;
   }
 
-  void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
+  public void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
     this.libraryClassRoot = libraryClassRoot;
   }
 
-  void setContentRoot(VirtualFile contentRoot) {
+  public void setContentRoot(VirtualFile contentRoot) {
     this.contentRoot = contentRoot;
   }
 
-  void setSourceRoot(@NotNull VirtualFile sourceRoot) {
+  public void setSourceRoot(@NotNull VirtualFile sourceRoot) {
     this.sourceRoot = sourceRoot;
   }
 
