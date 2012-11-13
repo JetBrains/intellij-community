@@ -420,9 +420,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext) {
-    KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    Component component = focusManager.getFocusOwner();
-    JComponent focusOwner=component instanceof JComponent ? (JComponent)component : null;
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    JComponent focusOwner = component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -502,10 +501,20 @@ public class PopupFactoryImpl extends JBPopupFactory {
           }
         }
       }
-    } else if (component instanceof PopupOwner){
+    }
+    else if (component instanceof JTable) {
+      JTable table = (JTable)component;
+      int column = table.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+      int row = Math.max(table.getSelectionModel().getLeadSelectionIndex(), table.getSelectionModel().getAnchorSelectionIndex());
+      Rectangle rect = table.getCellRect(row, column, false);
+      if (!visibleRect.intersects(rect)) {
+        table.scrollRectToVisible(rect);
+      }
+      popupMenuPoint = new Point(rect.x, rect.y + rect.height);
+    }
+    else if (component instanceof PopupOwner) {
       popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
     }
-    // TODO[vova] add usability for JTable
     if (popupMenuPoint == null) {
       popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);
     }
