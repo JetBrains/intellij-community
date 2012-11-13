@@ -357,6 +357,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return new Rectangle(firstRect.x, firstRect.y, lastRect.width, lastRect.y + lastRect.height - firstRect.y);
   }
 
+  /**
+   * @return    selected model rows sorted in descending order
+   */
   @NotNull
   public TIntArrayList getSelectedModelRows() {
     mySelectedRows.clear();

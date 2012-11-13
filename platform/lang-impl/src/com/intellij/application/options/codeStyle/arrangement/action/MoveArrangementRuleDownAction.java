@@ -36,8 +36,7 @@ public class MoveArrangementRuleDownAction extends AnAction implements DumbAware
 
   @Override
   public void update(AnActionEvent e) {
-    Function<Boolean,Boolean> function = ArrangementConstants.UPDATE_MOVE_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    e.getPresentation().setEnabled(function != null && function.fun(false));
+    // TODO den implement
   }
 
   @Override

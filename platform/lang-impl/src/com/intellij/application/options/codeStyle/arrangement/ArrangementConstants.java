@@ -48,8 +48,6 @@ public class ArrangementConstants {
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 
-  public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
-    = DataKey.create("Arrangement.Rule.Function.Update.Move");
   public static final DataKey<Consumer<Boolean/* move up? */>> MOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Move");
   
   private ArrangementConstants() {
