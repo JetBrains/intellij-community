@@ -256,7 +256,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     mySkipSelectionChange = true;
     try {
-      getModel().removeRow(myEditorRow);
+      ArrangementMatchingRulesModel model = getModel();
+      model.removeRow(myEditorRow);
+      if (myEditorRow > 0 && model.getElementAt(myEditorRow - 1) instanceof EmptyArrangementRuleComponent) {
+        model.removeRow(myEditorRow - 1);
+      }
     }
     finally {
       mySkipSelectionChange = false;
