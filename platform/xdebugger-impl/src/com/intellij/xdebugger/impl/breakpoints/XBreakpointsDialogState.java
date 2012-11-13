@@ -25,7 +25,7 @@ import java.util.Set;
  * @author nik
 */
 @Tag("breakpoints-dialog")
-public class XBreakpointTypeDialogState {
+public class XBreakpointsDialogState {
   private Set<String> mySelectedGroupingRules = new HashSet<String>();
 
   @Tag("selected-grouping-rules")
