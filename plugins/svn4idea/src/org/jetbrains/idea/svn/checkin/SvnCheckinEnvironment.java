@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -43,12 +42,17 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -84,7 +88,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private List<VcsException> commitInt(List<File> paths, final String comment, final boolean force, final boolean recursive,
                                        final Set<String> feedback) {
     final List<VcsException> exception = new ArrayList<VcsException>();
-    final Collection<File> committables = getCommitables(paths);
+    final List<File> committables = getCommitables(paths);
 
     final SVNCommitClient committer = mySvnVcs.createCommitClient();
 
@@ -156,42 +160,17 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
-  private void doCommit(Collection<File> committables,
+  private void doCommit(List<File> committables,
                         ProgressIndicator progress,
                         SVNCommitClient committer,
                         String comment,
                         boolean force,
                         boolean recursive,
                         List<VcsException> exception, final Set<String> feedback) {
-    final Collection<Collection<File>> collections = splitIntoWc(committables);
-    for (Collection<File> collection : collections) {
+    final Collection<List<File>> collections = SvnUtil.splitFilesIntoWc(mySvnVcs, committables);
+    for (List<File> collection : collections) {
       doCommitOneWc(collection, progress, committer, comment, force, recursive, exception, feedback);
     }
-  }
-
-  private Collection<Collection<File>> splitIntoWc(Collection<File> committables) {
-    if (committables.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, File> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, File>();
-    for (File committable : committables) {
-      final RootUrlInfo path = mySvnVcs.getSvnFileUrlMapping().getWcRootForFilePath(committable);
-      if (path == null) {
-        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(null, null), committable);
-      } else {
-        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
-      }
-    }
-
-    if (result.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-    final Collection<Collection<File>> result2 = new ArrayList<Collection<File>>();
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : result.entrySet()) {
-      result2.add(entry.getValue());
-    }
-    return result2;
   }
 
   private void doCommitOneWc(Collection<File> committables,
@@ -265,7 +244,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static class Adder {
-    private final Collection<File> myResult = new ArrayList<File>();
+    private final List<File> myResult = new ArrayList<File>();
     private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
     public void add(final File file) {
@@ -276,12 +255,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
 
-    public Collection<File> getResult() {
+    public List<File> getResult() {
       return myResult;
     }
   }
 
-  private Collection<File> getCommitables(List<File> paths) {
+  private List<File> getCommitables(List<File> paths) {
     final Adder adder = new Adder();
 
     SVNStatusClient statusClient = mySvnVcs.createStatusClient();

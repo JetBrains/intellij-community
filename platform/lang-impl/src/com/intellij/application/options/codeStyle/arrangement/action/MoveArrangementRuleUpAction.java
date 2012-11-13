@@ -15,19 +15,18 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
  * @since 9/28/12 12:16 PM
  */
-public class MoveArrangementRuleUpAction extends AnAction implements DumbAware {
+public class MoveArrangementRuleUpAction extends AbstractMoveArrangementRuleAction {
 
   public MoveArrangementRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.up.text"));
@@ -35,16 +34,19 @@ public class MoveArrangementRuleUpAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    Function<Boolean,Boolean> function = ArrangementConstants.UPDATE_MOVE_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    e.getPresentation().setEnabled(function != null && function.fun(true));
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Consumer<Boolean> function = ArrangementConstants.MOVE_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    if (function != null) {
-      function.consume(true);
-    }
+  protected void fillMappings(@NotNull ArrangementMatchingRulesControl control, @NotNull List<int[]> mappings) {
+    TIntArrayList rows = control.getSelectedModelRows();
+    rows.reverse();
+    int top = -1;
+    for (int i = 0; i < rows.size(); i++) {
+      int row = rows.get(i);
+      if (row == top + 1) {
+        mappings.add(new int[] { row, row });
+        top++;
+      }
+      else {
+        mappings.add(new int[]{ row, row - 1 });
+      }
+    } 
   }
 }

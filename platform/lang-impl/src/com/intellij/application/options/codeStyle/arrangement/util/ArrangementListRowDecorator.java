@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -42,12 +43,19 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @NotNull private final ArrangementRuleIndexControl        myRowIndexControl;
   @NotNull private final ArrangementMatchConditionComponent myDelegate;
+  @NotNull private final ArrangementMatchingRulesControl    myControl;
   @NotNull private final MyActionButton                     myEditButton;
-  
+
   @Nullable private Rectangle myScreenBounds;
 
-  public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate) {
+  private boolean myBeingEdited;
+  private boolean myUnderMouse;
+
+  public ArrangementListRowDecorator(@NotNull ArrangementMatchConditionComponent delegate,
+                                     @NotNull ArrangementMatchingRulesControl control)
+  {
     myDelegate = delegate;
+    myControl = control;
 
     AnAction action = ActionManager.getInstance().getAction("Arrangement.Rule.Edit");
     Presentation presentation = action.getTemplatePresentation().clone();
@@ -97,6 +105,30 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myRowIndexControl.setIndex(row);
   }
 
+  public void setUnderMouse(boolean underMouse) {
+    myUnderMouse = underMouse;
+    if (myUnderMouse) {
+      setBackground(UIUtil.getDecoratedRowColor());
+    }
+    else {
+      setBackground(UIUtil.getListBackground());
+    }
+  }
+
+  public void setBeingEdited(boolean beingEdited) {
+    if (myBeingEdited && !beingEdited) {
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, false);
+    }
+    if (!beingEdited && !myUnderMouse) {
+      myEditButton.setVisible(false);
+    }
+    if (beingEdited && !myBeingEdited) {
+      myEditButton.setVisible(true);
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, true);
+    }
+    myBeingEdited = beingEdited;
+  }
+
   @NotNull
   @Override
   public ArrangementMatchCondition getMatchCondition() {
@@ -123,15 +155,16 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseEntered(@NotNull MouseEvent e) {
     setBackground(UIUtil.getDecoratedRowColor());
-    myEditButton.setVisible(true);
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
     return myDelegate.onMouseEntered(e);
   }
 
   @Nullable
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
     Rectangle bounds = getButtonScreenBounds();
-    if (bounds != null) {
+    if (!myBeingEdited && bounds != null) {
       boolean selected = bounds.contains(event.getLocationOnScreen());
       boolean wasSelected = myEditButton.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
       myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
@@ -145,6 +178,23 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
 
   @Override
   public void onMouseRelease(@NotNull MouseEvent event) {
+    myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
+    Rectangle bounds = getButtonScreenBounds();
+    if (bounds != null && bounds.contains(event.getLocationOnScreen())) {
+      if (myBeingEdited) {
+        myControl.hideEditor();
+        myBeingEdited = false;
+      }
+      else {
+        int row = myControl.getRowByRenderer(this);
+        if (row >= 0) {
+          myControl.showEditor(row);
+          myBeingEdited = true;
+        }
+      }
+      event.consume();
+      return;
+    }
     myDelegate.onMouseRelease(event); 
   }
 
@@ -152,7 +202,9 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   @Override
   public Rectangle onMouseExited() {
     setBackground(UIUtil.getListBackground());
-    myEditButton.setVisible(false);
+    if (!myBeingEdited) {
+      myEditButton.setVisible(false);
+    }
     return myDelegate.onMouseExited(); 
   }
   

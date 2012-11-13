@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -39,25 +40,26 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
   }
 
   @Override
-  public boolean isExcludeRoot(final VirtualFile f) {
+  public boolean isExcludeRoot(final VirtualFile file) {
     CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
-    if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
+    if (isEqualWithFileOrUrl(file, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
 
     for (Module m : ModuleManager.getInstance(myProject).getModules()) {
       CompilerModuleExtension rm = CompilerModuleExtension.getInstance(m);
-      if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
-      if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
+      if (isEqualWithFileOrUrl(file, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
+      if (isEqualWithFileOrUrl(file, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
     }
     return false;
   }
 
   @Override
-  public boolean isExcludeRootForModule(final Module module, final VirtualFile excludeRoot) {
+  public boolean isExcludeRootForModule(@NotNull final Module module, final VirtualFile excludeRoot) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     return Comparing.equal(compilerModuleExtension.getCompilerOutputPath(), excludeRoot) ||
            Comparing.equal(compilerModuleExtension.getCompilerOutputPathForTests(), excludeRoot);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getExcludeRootsForProject() {
     VirtualFile outputPath = CompilerProjectExtension.getInstance(myProject).getCompilerOutput();
@@ -67,8 +69,9 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public VirtualFilePointer[] getExcludeRootsForModule(final ModuleRootModel rootModel) {
+  public VirtualFilePointer[] getExcludeRootsForModule(@NotNull final ModuleRootModel rootModel) {
     ArrayList<VirtualFilePointer> result = new ArrayList<VirtualFilePointer>();
     final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
@@ -87,12 +90,12 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
     return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(new VirtualFilePointer[result.size()]);
   }
 
-  private static boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
+  private static boolean isEqualWithFileOrUrl(VirtualFile file, VirtualFile fileToCompareWith, String url) {
     if (fileToCompareWith != null) {
-      if (Comparing.equal(fileToCompareWith, f)) return true;
+      if (Comparing.equal(fileToCompareWith, file)) return true;
     }
     else if (url != null) {
-      if (FileUtil.pathsEqual(url, f.getUrl())) return true;
+      if (FileUtil.pathsEqual(url, file.getUrl())) return true;
     }
     return false;
   }

@@ -55,8 +55,14 @@ public abstract class Task implements TaskInfo, Progressive {
     myCanBeCancelled = canBeCancelled;
   }
 
+  /**
+   * This callback will be invoked on AWT dispatch thread.
+   */
   public void onCancel() {}
 
+  /**
+   * This callback will be invoked on AWT dispatch thread.
+   */
   public void onSuccess() {}
 
   public final Project getProject() {

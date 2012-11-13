@@ -29,6 +29,7 @@ public class IntObjectMap<V> {
   
   @NotNull private Object[] myData;
   private int myMaxUsed = -1;
+  private int mySize;
 
   public IntObjectMap() {
     this(16);
@@ -54,6 +55,9 @@ public class IntObjectMap<V> {
       }
       myData = Arrays.copyOf(myData, newCapacity);
     }
+    if (myData[key] == null) {
+      mySize++;
+    }
     myData[key] = value;
     myMaxUsed = Math.max(myMaxUsed, key);
   }
@@ -61,6 +65,9 @@ public class IntObjectMap<V> {
   public void remove(int key) {
     if (key < 0 || key >= myData.length) {
       return;
+    }
+    if (myData[key] != null) {
+      mySize--;
     }
     myData[key] = null;
     if (key == myMaxUsed) {
@@ -72,11 +79,13 @@ public class IntObjectMap<V> {
       }
       myMaxUsed = -1;
     }
+    
   }
 
   public void clear() {
     myData = new Object[myData.length];
     myMaxUsed = -1;
+    mySize = 0;
   }
   
   public void shiftKeys(final int from, int shift) {
@@ -114,5 +123,9 @@ public class IntObjectMap<V> {
     }
 
     myMaxUsed += shift;
+  }
+  
+  public int size() {
+    return mySize;
   }
 }

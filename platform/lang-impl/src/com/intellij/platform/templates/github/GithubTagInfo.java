@@ -1,8 +1,10 @@
 package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Simonchik
@@ -145,4 +147,10 @@ public class GithubTagInfo {
       return myLabelVersion - other.myLabelVersion;
     }
   }
+
+  @Nullable
+  public static GithubTagInfo tryCast(@Nullable Object o) {
+    return ObjectUtils.tryCast(o, GithubTagInfo.class);
+  }
+
 }

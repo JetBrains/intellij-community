@@ -21,12 +21,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 
 import java.io.File;
+import java.io.IOException;
 
 public class FoldersImportingTest extends MavenImportingTestCase {
   public void testSimpleProjectStructure() throws Exception {
@@ -646,8 +646,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("targetCustom/generated-sources/src",
-                         "targetCustom/generated-test-sources/test");
+    createProjectSubDirsWithFile("targetCustom/generated-sources/src",
+                                 "targetCustom/generated-test-sources/test");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -859,10 +859,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   public void testDoesNotExcludeGeneratedSourcesUnderTargetDir() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("target/foo",
-                         "target/bar",
-                         "target/generated-sources/baz",
-                         "target/generated-test-sources/bazz");
+    createProjectSubDirsWithFile("target/foo",
+                                 "target/bar",
+                                 "target/generated-sources/baz",
+                                 "target/generated-test-sources/bazz");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -993,10 +993,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   public void testAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("target/generated-sources/foo",
-                         "target/generated-sources/annotations",
-                         "target/generated-test-sources/test-annotations",
-                         "target/generated-test-sources/foo");
+    createProjectSubDirsWithFile("target/generated-sources/foo",
+                                 "target/generated-sources/annotations",
+                                 "target/generated-test-sources/test-annotations",
+                                 "target/generated-test-sources/foo");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1017,14 +1017,13 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   public void testCustomAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("anno",
-                         "test-anno",
-                         "target/generated-sources/foo",
-                         "target/generated-sources/annotations",
-                         "target/generated-sources/test-annotations",
-                         "target/generated-test-sources/foo");
+    createProjectSubDirsWithFile("anno",
+                                 "target/generated-sources/foo",
+                                 "target/generated-sources/annotations",
+                                 "target/generated-sources/test-annotations",
+                                 "target/generated-test-sources/foo");
 
-    createProjectSubFile("anno/aaa.java");
+    createProjectSubDir("test-anno");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1060,5 +1059,11 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
   private CompilerModuleExtension getCompilerExtension(String moduleName) {
     return ModuleRootManager.getInstance(getModule(moduleName)).getModuleExtension(CompilerModuleExtension.class);
+  }
+
+  private void createProjectSubDirsWithFile(String ... dirs) throws IOException {
+    for (String dir : dirs) {
+      createProjectSubFile(dir + "/a.txt");
+    }
   }
 }

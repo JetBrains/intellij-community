@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -105,10 +106,11 @@ public class MagicNumberInspection extends BaseInspection {
       if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
-      final PsiElement parent = expression.getParent();
-      if (ignoreInAnnotations && parent instanceof PsiNameValuePair) {
+      final boolean insideAnnotation = AnnotationUtil.isInsideAnnotation(expression);
+      if (ignoreInAnnotations && insideAnnotation) {
         return;
       }
+      final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
         registerError(parent);
       }

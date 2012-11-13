@@ -266,7 +266,7 @@ public class ExpressionParser {
       builder.advanceLexer();
 
       final ReferenceParser.TypeInfo typeInfo =
-        myParser.getReferenceParser().parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+        myParser.getReferenceParser().parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | ReferenceParser.CONJUNCTIONS);
       if (typeInfo == null || !expect(builder, JavaTokenType.RPARENTH)) {
         typeCast.rollbackTo();
         return parsePostfix(builder);

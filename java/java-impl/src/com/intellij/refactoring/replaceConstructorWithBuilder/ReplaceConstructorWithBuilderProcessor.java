@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Sep-2008
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -54,6 +50,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author anna
+ * @since 04-Sep-2008
+ */
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
   public static final String REFACTORING_NAME = "Replace Constructor with Builder";
   private final PsiMethod[] myConstructors;
@@ -105,12 +105,12 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
   @Nullable
   private PsiClass createBuilderClass() {
-
     final PsiClass psiClass = myConstructors[0].getContainingClass();
     assert psiClass != null;
     final PsiTypeParameterList typeParameterList = psiClass.getTypeParameterList();
-    final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(myProject)
-      .createFileFromText(myClassName + ".java", "public class " + myClassName + (typeParameterList != null ? typeParameterList.getText() : "") + "{}");
+    final String text = "public class " + myClassName + (typeParameterList != null ? typeParameterList.getText() : "") + "{}";
+    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(myClassName + ".java", JavaFileType.INSTANCE, text);
 
     final PsiFile containingFile = myConstructors[0].getContainingFile();
     final PsiDirectory containingDirectory = containingFile.getContainingDirectory();

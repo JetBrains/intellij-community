@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.MoveRenameReplaceCheck;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnChangeProvider;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -62,31 +59,40 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
     listener.indeterminate();
     final SvnChangeProvider changeProvider = (SvnChangeProvider) mySvnVcs.getChangeProvider();
-    
+    final Collection<List<Change>> collections = SvnUtil.splitChangesIntoWc(mySvnVcs, changes);
+    for (List<Change> collection : collections) {
+      rollbackGroupForWc(collection, exceptions, listener, changeProvider);
+    }
+  }
+
+  private void rollbackGroupForWc(List<Change> changes,
+                                  final List<VcsException> exceptions,
+                                  final RollbackProgressListener listener,
+                                  SvnChangeProvider changeProvider) {
     final UnversionedFilesGroupCollector collector = new UnversionedFilesGroupCollector();
 
     final ChangesChecker checker = new ChangesChecker(changeProvider, collector);
     checker.gather(changes);
     exceptions.addAll(checker.getExceptions());
 
-      final SVNWCClient client = mySvnVcs.createWCClient();
-      client.setEventHandler(new ISVNEventHandler() {
-        public void handleEvent(SVNEvent event, double progress) {
-          if (event.getAction() == SVNEventAction.REVERT) {
-            final File file = event.getFile();
-            if (file != null) {
-              listener.accept(file);
-            }
-          }
-          if (event.getAction() == SVNEventAction.FAILED_REVERT) {
-            exceptions.add(new VcsException("Revert failed"));
+    final SVNWCClient client = mySvnVcs.createWCClient();
+    client.setEventHandler(new ISVNEventHandler() {
+      public void handleEvent(SVNEvent event, double progress) {
+        if (event.getAction() == SVNEventAction.REVERT) {
+          final File file = event.getFile();
+          if (file != null) {
+            listener.accept(file);
           }
         }
+        if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+          exceptions.add(new VcsException("Revert failed"));
+        }
+      }
 
-        public void checkCancelled() {
-          listener.checkCanceled();
-        }
-      });
+      public void checkCancelled() {
+        listener.checkCanceled();
+      }
+    });
 
     final List<Trinity<File, File, File>> fromTo = collector.getFromTo();
     final List<Trinity<File, File, File>> fromToModified = new ArrayList<Trinity<File, File, File>>();

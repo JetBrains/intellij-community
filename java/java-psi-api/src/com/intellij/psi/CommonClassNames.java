@@ -92,4 +92,5 @@ public interface CommonClassNames {
   @NonNls String JAVA_IO_FILE = "java.io.File";
   String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
   @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
+  @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
 }

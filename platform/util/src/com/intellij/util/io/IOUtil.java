@@ -128,10 +128,12 @@ public class IOUtil {
   public static boolean isAscii(final String str) {
     for (int i = 0; i != str.length(); ++ i) {
       final char c = str.charAt(i);
-      if (c < 0 || c >= 128) {
-        return false;
-      }
+      if (!isAscii(c)) return false;
     }
     return true;
+  }
+
+  public static boolean isAscii(char c) {
+    return c >= 0 && c < 128;
   }
 }

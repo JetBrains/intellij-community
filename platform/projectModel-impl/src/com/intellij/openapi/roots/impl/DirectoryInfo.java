@@ -35,7 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 
-public class DirectoryInfo {
+public final class DirectoryInfo {
   private Module module; // module to which content it belongs or null
   private VirtualFile libraryClassRoot; // class root in library
   private VirtualFile contentRoot;
@@ -52,6 +52,9 @@ public class DirectoryInfo {
    * orderEntry to (classes of) which a directory belongs
    */
   private OrderEntry[] orderEntries;
+
+  public DirectoryInfo() {
+  }
 
   @TestOnly
   @SuppressWarnings({"unchecked"})
@@ -237,7 +240,7 @@ public class DirectoryInfo {
     }
   };
 
-  static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
+  public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
     @Override
     public int compare(OrderEntry o1, OrderEntry o2) {
       String name1 = o1.getOwnerModule().getName();
@@ -246,7 +249,7 @@ public class DirectoryInfo {
     }
   };
 
-  void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
+  public void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
     orderEntries = internedOrderEntries;
   }
 

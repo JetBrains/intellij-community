@@ -45,6 +45,7 @@ import java.util.List;
 public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   private static final String WHOLE_PROJECT = "<whole project>";
+  @NotNull private final Project myProject;
   private JPanel myPanel;
   private JTextField myName;
   private EditorTextField myDescription;
@@ -53,6 +54,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
+    myProject = project;
 
     setTitle("Save Project As Template");
     Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -113,8 +115,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   File getTemplateFile() {
     String name = myName.getText();
-    String configURL = ArchivedTemplatesFactory.getCustomTemplatesPath();
-    return new File(configURL + "/" + name + ".zip");
+    return ArchivedTemplatesFactory.getTemplateFile(name);
   }
 
   String getDescription() {
@@ -122,10 +123,10 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
   }
 
   @Nullable
-  String getModuleToSave() {
+  Module getModuleToSave() {
     String item = (String)myModuleCombo.getSelectedItem();
     if (item == null || item.equals(WHOLE_PROJECT)) return null;
-    return item;
+    return ModuleManager.getInstance(myProject).findModuleByName(item);
   }
 
   private final static Logger LOG = Logger.getInstance(SaveProjectAsTemplateDialog.class);

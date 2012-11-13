@@ -134,15 +134,14 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression9() { doParserTest("(I)p -> null"); }
   public void testLambdaExpression10() { doParserTest("(I)(p -> null)"); }
   public void testLambdaExpression11() { doParserTest("() -> { }"); }
-  public void testLambdaExpression12() { doParserTest("<T>() -> new C<T>()"); }  // these two expressions
-  public void testLambdaExpression13() { doParserTest("<T>t -> t"); }            // should no longer be parsed
+  public void testLambdaExpression12() { doParserTest("(I1 & I2) () -> null"); }
+  public void testLambdaExpression13() { doParserTest("(I1 & I2) () -> {}"); }
   public void testLambdaExpression14() { doParserTest("(String t) -> t"); }
   public void testLambdaExpression15() { doParserTest("(int a, int b) -> a + b"); }
   public void testLambdaExpression16() { doParserTest("(final int x) -> x"); }
   public void testLambdaExpression17() { doParserTest("(String s -> s"); }
   public void testLambdaExpression18() { doParserTest("(java.lang.String s, -> s"); }
   public void testLambdaExpression19() { doParserTest("(@A T t) -> (null)"); }
-
   public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
 
   private void doParserTest(@NonNls final String text) {
