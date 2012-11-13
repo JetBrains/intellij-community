@@ -372,10 +372,10 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 }
 
 
-static bool is_watchable(const char* mnt, const char* fs) {
+static bool is_watchable(const char* fs) {
   // don't watch special and network filesystems
-  return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
-           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0 || strcmp(fs, MNTTYPE_SWAP) == 0);
+  return !(strncmp(fs, "dev", 3) == 0 || strcmp(fs, "proc") == 0 || strcmp(fs, "sysfs") == 0 || strcmp(fs, MNTTYPE_SWAP) == 0 ||
+           strncmp(fs, "fuse", 4) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0);
 }
 
 static array* unwatchable_mounts() {
@@ -391,7 +391,7 @@ static array* unwatchable_mounts() {
   struct mntent* ent;
   while ((ent = getmntent(mtab)) != NULL) {
     userlog(LOG_DEBUG, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
-    if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_dir, ent->mnt_type)) {
+    if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_type)) {
       CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL);
     }
   }
