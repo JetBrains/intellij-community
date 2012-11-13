@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -28,8 +24,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class PsiFileFactory {
   public static Key<PsiFile> ORIGINAL_FILE = Key.create("ORIGINAL_FILE");
+
   public static PsiFileFactory getInstance(Project project) {
     return ServiceManager.getService(project, PsiFileFactory.class);
   }
@@ -37,13 +37,14 @@ public abstract class PsiFileFactory {
   /**
    * Please use {@link #createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence)},
    * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
-   *
+   * <p/>
    * Creates a file from the specified text.
    *
    * @param name the name of the file to create (the extension of the name determines the file type).
    * @param text the text of the file to create.
    * @return the created file.
-   * @throws com.intellij.util.IncorrectOperationException if the file type with specified extension is binary.
+   * @throws com.intellij.util.IncorrectOperationException
+   *          if the file type with specified extension is binary.
    */
   @Deprecated
   @NotNull
@@ -54,11 +55,11 @@ public abstract class PsiFileFactory {
 
   @NotNull
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                      long modificationStamp, boolean physical);
+                                             long modificationStamp, boolean physical);
 
   @NotNull
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                      long modificationStamp, boolean physical, boolean markAsCopy);
+                                             long modificationStamp, boolean physical, boolean markAsCopy);
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text);
 
@@ -71,5 +72,5 @@ public abstract class PsiFileFactory {
   public abstract PsiFile createFileFromText(FileType fileType, String fileName, CharSequence chars, int startOffset, int endOffset);
 
   @Nullable
-  public abstract PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original);  
+  public abstract PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original);
 }

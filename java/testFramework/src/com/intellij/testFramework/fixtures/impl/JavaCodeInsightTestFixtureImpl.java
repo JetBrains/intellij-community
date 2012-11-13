@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,8 +56,9 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     final String qName =
       ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
-          final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
-          return aClass.getQualifiedName();
+          final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+          final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, classText);
+          return javaFile.getClasses()[0].getQualifiedName();
         }
       });
     assert qName != null;

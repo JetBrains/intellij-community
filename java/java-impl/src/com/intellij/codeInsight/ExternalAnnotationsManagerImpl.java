@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 26-Jun-2007
- */
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
@@ -25,6 +20,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -84,6 +80,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author anna
+ * @since 26-Jun-2007
+ */
 public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
@@ -650,8 +650,8 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     }
 
     try {
-      return (XmlFile)directory
-        .add(PsiFileFactory.getInstance(myPsiManager.getProject()).createFileFromText(ANNOTATIONS_XML, "<root></root>"));
+      final PsiFileFactory factory = PsiFileFactory.getInstance(myPsiManager.getProject());
+      return (XmlFile)directory.add(factory.createFileFromText(ANNOTATIONS_XML, XmlFileType.INSTANCE, "<root></root>"));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -683,7 +684,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
       }
       if (directory != null) {
-        final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(newClassName + ".java", classString);
+        final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+        final PsiFile newFile = factory.createFileFromText(newClassName + ".java", JavaFileType.INSTANCE, classString);
         final PsiElement addedFile = directory.add(newFile);
         final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
         final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedFile);
