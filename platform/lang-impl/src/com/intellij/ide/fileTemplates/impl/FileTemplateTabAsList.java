@@ -18,7 +18,9 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +44,15 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         onTemplateSelected();
+      }
+    });
+    new ListSpeedSearch(myList, new Function<Object, String>() {
+      @Override
+      public String fun(final Object o) {
+        if (o instanceof FileTemplate) {
+          return ((FileTemplate)o).getName();
+        }
+        return null;
       }
     });
   }
