@@ -151,6 +151,7 @@ public class GroovycRunner {
     }
     catch (Throwable e) {
       e.printStackTrace();
+      System.exit(1);
     }
     /*
     finally {

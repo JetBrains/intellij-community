@@ -205,7 +205,12 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     }
 
     final int exitValue = getProcess().exitValue();
-    if (messages.isEmpty() && exitValue != 0) {
+    if (exitValue != 0) {
+      for (CompilerMessage message : messages) {
+        if (message.getKind() == BuildMessage.Kind.ERROR) {
+          return messages;
+        }
+      }
       messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.ERROR, "Internal groovyc error: code " + exitValue));
     }
 
