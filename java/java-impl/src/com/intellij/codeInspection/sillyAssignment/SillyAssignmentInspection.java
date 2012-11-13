@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInspection.sillyAssignment;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Comparing;
@@ -38,7 +37,7 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return JavaErrorMessages.message("assignment.to.itself");
+    return InspectionsBundle.message("inspection.variable.assigned.to.itself.display.name");
   }
 
   @NotNull
@@ -64,15 +63,27 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
       }
 
       @Override public void visitVariable(final PsiVariable variable) {
-        final PsiExpression initializer = variable.getInitializer();
+        final PsiExpression initializer = PsiUtil.deparenthesizeExpression(variable.getInitializer());
         if (initializer instanceof PsiAssignmentExpression) {
-          final PsiExpression lExpr = ((PsiAssignmentExpression)initializer).getLExpression();
-          if (lExpr instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression refExpr = (PsiReferenceExpression)lExpr;
-            if (!refExpr.isQualified() && refExpr.isReferenceTo(variable)) {
-              holder.registerProblem(lExpr, JavaErrorMessages.message("assignment.to.declared.variable", variable.getName()), 
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, (LocalQuickFix[])null);
-            }
+          final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)initializer).getLExpression());
+          checkExpression(variable, lExpr);
+        }
+        else {
+          checkExpression(variable, initializer);
+        }
+      }
+
+      private void checkExpression(PsiVariable variable, PsiExpression expression) {
+        if (!(expression instanceof PsiReferenceExpression)) {
+          return;
+        }
+        final PsiReferenceExpression refExpr = (PsiReferenceExpression)expression;
+        final PsiExpression qualifier = refExpr.getQualifierExpression();
+        if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression ||
+            variable.hasModifierProperty(PsiModifier.STATIC)) {
+          if (refExpr.isReferenceTo(variable)) {
+            holder.registerProblem(expression, InspectionsBundle.message("assignment.to.declared.variable.problem.descriptor",
+                                                                         variable.getName()), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
         }
       }
@@ -91,7 +102,7 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
     if (!(rExpression instanceof PsiReferenceExpression)) {
       if (!(rExpression instanceof PsiAssignmentExpression)) return;
       final PsiAssignmentExpression rAssignmentExpression = (PsiAssignmentExpression)rExpression;
-      final PsiExpression assignee = rAssignmentExpression.getLExpression();
+      final PsiExpression assignee = PsiUtil.deparenthesizeExpression(rAssignmentExpression.getLExpression());
       if (!(assignee instanceof PsiReferenceExpression)) return;
       rRef = (PsiReferenceExpression)assignee;
     } else {
@@ -100,7 +111,10 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
     PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
     PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return;
-    holder.registerProblem(assignment, JavaErrorMessages.message("assignment.to.itself"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, (LocalQuickFix[])null);
+    final PsiVariable variable = (PsiVariable)lRef.resolve();
+    if (variable == null) return;
+    holder.registerProblem(assignment, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
+                           ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
   /**
@@ -110,6 +124,9 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
     PsiElement lResolved = lRef.resolve();
     PsiElement rResolved = rRef.resolve();
     if (!manager.areElementsEquivalent(lResolved, rResolved)) return false;
+    if (!(lResolved instanceof PsiVariable)) return false;
+    final PsiVariable variable = (PsiVariable)lResolved;
+    if (variable.hasModifierProperty(PsiModifier.STATIC)) return true;
 
     PsiExpression lQualifier = lRef.getQualifierExpression();
     PsiExpression rQualifier = rRef.getQualifierExpression();
@@ -117,8 +134,8 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
       return sameInstanceReferences((PsiReferenceExpression)lQualifier, (PsiReferenceExpression)rQualifier, manager);
     }
     if (Comparing.equal(lQualifier, rQualifier)) return true;
-    boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression;
-    boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression;
+    boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression || lQualifier instanceof PsiSuperExpression;
+    boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression || rQualifier instanceof PsiSuperExpression;
     return lThis && rThis;
   }
 
