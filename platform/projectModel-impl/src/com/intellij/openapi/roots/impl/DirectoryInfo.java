@@ -237,7 +237,7 @@ public class DirectoryInfo {
     }
   };
 
-  static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
+  public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
     @Override
     public int compare(OrderEntry o1, OrderEntry o2) {
       String name1 = o1.getOwnerModule().getName();
@@ -246,7 +246,7 @@ public class DirectoryInfo {
     }
   };
 
-  void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
+  public void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
     orderEntries = internedOrderEntries;
   }
 
