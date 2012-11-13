@@ -79,7 +79,7 @@ target('default': 'The default target') {
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
-            home, null, paths)
+            home, null, paths, true)
 }
 
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
@@ -90,10 +90,10 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
-            home, null, paths)
+             home, null, paths)
 }
 
-def layoutAll(Map args, String home, String out, Paths _paths = null) {
+def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
   Paths paths = _paths != null ? _paths : new Paths(out)
 
   wireBuildDate(args.buildNumber, appInfoFile())
@@ -105,8 +105,10 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   notifyArtifactBuilt(paths.artifacts_core)
   layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
   notifyArtifactBuilt(paths.artifacts_core_upsource)
-  layouts.layout_jps(home, paths.artifacts_jps)
-  notifyArtifactBuilt(paths.artifacts_jps)
+  if (buildJps) {
+    layouts.layout_jps(home, paths.artifacts_jps)
+    notifyArtifactBuilt(paths.artifacts_jps)
+  }
 
   layout(paths.distAll) {
     dir("bin") {
