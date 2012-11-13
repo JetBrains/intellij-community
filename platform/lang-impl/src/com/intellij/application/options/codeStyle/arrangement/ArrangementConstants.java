@@ -29,8 +29,8 @@ public class ArrangementConstants {
 
   public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
 
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOLBAR      = "Arrangement.RuleEditor.ToolBar";
+  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU       = "Arrangement.RuleEditor.Context.Menu";
+  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.RuleEditor.ToolBar";
 
   @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
   @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";

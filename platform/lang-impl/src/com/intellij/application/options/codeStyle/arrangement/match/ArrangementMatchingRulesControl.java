@@ -18,10 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement.match;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorComponent;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchNodeComponentFactory;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
+import com.intellij.application.options.codeStyle.arrangement.component.*;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
 import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,7 +27,6 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,18 +183,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     
     if (!e.isConsumed() && myEditorRow > 0 && myEditorRow == i + 1) {
       hideEditor();
-    }
-    //else {
-    //  ListSelectionModel selectionModel = getSelectionModel();
-    //  if (myEditorRow < 0
-    //      && selectionModel.isSelectedIndex(i)
-    //      && selectionModel.getMinSelectionIndex() == selectionModel.getMaxSelectionIndex())
-    //  {
-    //    
-    //    showEditor(i);
-    //  }
-    //} 
-    
+    }    
   }
   
   private void onMouseExited() {
@@ -235,12 +220,17 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
   
   private void onSelectionChange(@NotNull ListSelectionEvent e) {
-    if (!mySkipSelectionChange && !e.getValueIsAdjusting()) {
-      refreshEditor();
+    if (mySkipSelectionChange || e.getValueIsAdjusting()) {
+      return;
     }
+    refreshEditor();
   }
 
   public void refreshEditor() {
+    if (myEditorRow < 0) {
+      return;
+    }
+
     ListSelectionModel selectionModel = getSelectionModel();
     if (selectionModel.isSelectionEmpty()) {
       hideEditor();
@@ -254,15 +244,23 @@ public class ArrangementMatchingRulesControl extends JBTable {
       return;
     }
 
-    if (myEditorRow >= 0) {
+    if (selectedRow != myEditorRow && selectedRow != myEditorRow - 1) {
       hideEditor();
     }
+  }
 
-    // There is a possible case that there was an active editor in a row before the selected.
-    ArrangementListRowDecorator toEdit = myComponents.get(selectedRow);
-    if (toEdit != null) {
-      showEditor(selectedRow);
+  public void hideEditor() {
+    if (myEditorRow < 0) {
+      return;
     }
+    mySkipSelectionChange = true;
+    try {
+      getModel().removeRow(myEditorRow);
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+    myEditorRow = -1;
   }
 
   private void onTableChange(@NotNull TableModelEvent e) {
@@ -282,31 +280,16 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     int shift = Math.abs(e.getFirstRow() - e.getLastRow() + 1) * signum;
     myComponents.shiftKeys(e.getFirstRow(), shift);
+    if (myRowUnderMouse >= e.getFirstRow()) {
+      myRowUnderMouse = -1;
+    }
+    if (getModel().getSize() > 0) {
+      repaintRows(0, getModel().getSize() - 1, false);
+    }
   }
 
-  public void hideEditor() {
-    if (myEditorRow < 0) {
-      return;
-    }
-    repaintRows(0, getModel().getSize() - 1, false); // Update 'selected' status
-    myComponents.shiftKeys(myEditorRow, - 1);
-    mySkipSelectionChange = true;
-    try {
-      getModel().removeRow(myEditorRow);
-      ListSelectionModel selectionModel = getSelectionModel();
-      if (selectionModel.getMinSelectionIndex() == selectionModel.getMaxSelectionIndex()) {
-        // One row is selected and editor for it is collapsed.
-        selectionModel.clearSelection();
-      }
-    }
-    finally {
-      mySkipSelectionChange = false;
-    }
-    myEditorRow = -1;
-  }
-
-  private void showEditor(int selectedRow) {
-    myEditorRow = selectedRow + 1;
+  public void showEditor(int rowToEdit) {
+    myEditorRow = rowToEdit + 1;
     ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
     Container parent = getParent();
     int width = getBounds().width;
@@ -314,7 +297,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
-    myEditor.updateState(selectedRow);
+    myEditor.updateState(rowToEdit);
     myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
@@ -324,7 +307,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       mySkipSelectionChange = false;
     }
     
-    Rectangle bounds = getRowsBounds(selectedRow, myEditorRow);
+    Rectangle bounds = getRowsBounds(rowToEdit, myEditorRow);
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
     }
@@ -333,7 +316,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     // the cached renderer on atom condition removal (via click on 'close' button). The model is modified immediately then but
     // corresponding cached renderer is used for animation.
     editor.expand();
-    repaintRows(selectedRow, getModel().getRowCount() - 1, false);
+    repaintRows(rowToEdit, getModel().getRowCount() - 1, false);
     editCellAt(myEditorRow, 0);
   }
 
@@ -388,6 +371,15 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     return mySelectedRows;
   }
+
+  public int getRowByRenderer(@NotNull ArrangementListRowDecorator renderer) {
+    for (int i = 0, max = getModel().getSize(); i < max; i++) {
+      if (myComponents.get(i) == renderer) {
+        return i;
+      }
+    }
+    return -1;
+  }
   
   private class MyRenderer implements TableCellRenderer {
 
@@ -406,18 +398,15 @@ public class ArrangementMatchingRulesControl extends JBTable {
           return EMPTY_RENDERER;
         }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
-        component = new ArrangementListRowDecorator(myFactory.getComponent(rule.getMatcher().getCondition(), rule, true));
+        ArrangementMatchConditionComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
+        component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);
         myComponents.set(row, component);
-        if (myRowUnderMouse == row) {
-          component.setBackground(UIUtil.getDecoratedRowColor());
-        }
-        else {
-          component.setBackground(UIUtil.getListBackground());
-        }
-        setRowHeight(row, component.getPreferredSize().height);
       }
+      
+      component.setUnderMouse(myRowUnderMouse == row);
       component.setRowIndex((myEditorRow >= 0 && row > myEditorRow) ? row : row + 1);
       component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
+      component.setBeingEdited(myEditorRow >= 0 && myEditorRow == row + 1);
       return component.getUiComponent();
     }
   }

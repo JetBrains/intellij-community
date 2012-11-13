@@ -48,7 +48,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     super(new GridBagLayout());
     TitleWithToolbar top = new TitleWithToolbar(
       ApplicationBundle.message("arrangement.settings.section.match"),
-      ArrangementConstants.ACTION_GROUP_RULE_EDITOR_TOOLBAR,
+      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
       ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE
     );
 
