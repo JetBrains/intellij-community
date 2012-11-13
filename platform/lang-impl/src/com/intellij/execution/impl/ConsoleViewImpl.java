@@ -272,7 +272,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
          });
   }
 
-  protected ConsoleViewImpl(@NotNull final Project project, @NotNull GlobalSearchScope searchScope, boolean viewer, @Nullable FileType fileType,
+  protected ConsoleViewImpl(@NotNull final Project project,
+                            @NotNull GlobalSearchScope searchScope,
+                            boolean viewer,
+                            @Nullable FileType fileType,
                             @NotNull final ConsoleState initialState) {
     super(new BorderLayout());
     isViewer = viewer;
@@ -480,7 +483,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor = null;
       myHyperlinks = null;
     }
-  }
+    }
 
   private void cancelAllFlushRequests() {
     synchronized (myCurrentRequests) {
@@ -1516,7 +1519,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         startOffset = info.endOffset;
       }
       else {
-        startOffset = Math.max(deferredOffset, info.startOffset);
+        startOffset = Math.max(deferredOffset, Math.max(info.startOffset, offset));
       }
 
       buffer.addUserText(startOffset - deferredOffset, textToUse);
