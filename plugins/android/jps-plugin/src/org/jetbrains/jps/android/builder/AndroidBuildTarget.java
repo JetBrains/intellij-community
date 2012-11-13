@@ -51,7 +51,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(final BuildTargetRegistry registry) {
-    final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>(3);
 
     if (myTargetType == TargetType.PACKAGING) {
       result.add(new AndroidBuildTarget(TargetType.DEX, myModule));

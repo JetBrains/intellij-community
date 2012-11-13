@@ -1,9 +1,12 @@
 package org.jetbrains.jps.indices.impl;
 
-import org.jetbrains.jps.util.JpsPathUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;
@@ -13,8 +16,8 @@ import java.util.*;
  *         Date: 1/11/12
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
-  private final Set<File> myExcludedRoots = new HashSet<File>();
-  private final Map<JpsModule, List<File>> myModuleToExcludesMap = new HashMap<JpsModule, List<File>>();
+  private final Set<File> myExcludedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Map<JpsModule, List<File>> myModuleToExcludesMap = new THashMap<JpsModule, List<File>>();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
@@ -57,6 +60,9 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           contentToModule.put(file, parentModule);
         }
       }
+    }
+    for (List<File> files : myModuleToExcludesMap.values()) {
+      ((ArrayList<File>)files).trimToSize();
     }
   }
 
