@@ -32,20 +32,20 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  */
 public abstract class TokenSets {
 
-  public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
+  public static final TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
       mSL_COMMENT,
       mML_COMMENT,
       GROOVY_DOC_COMMENT
   );
   public static final TokenSet ALL_COMMENT_TOKENS = TokenSet.orSet(COMMENTS_TOKEN_SET, GROOVY_DOC_TOKENS);
 
-  public static TokenSet SEPARATORS = TokenSet.create(
+  public static final TokenSet SEPARATORS = TokenSet.create(
       mNLS,
       mSEMI
   );
 
 
-  public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
+  public static final TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
       TokenType.WHITE_SPACE
   );
 
@@ -96,17 +96,17 @@ public abstract class TokenSets {
                                                           kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH, kSYNCHRONIZED, kTHIS,
                                                           kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
 
-  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
-  public static TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
+  public static final TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
+  public static final TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
 
 
-  public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
+  public static final TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
       kPRIVATE,
       kPROTECTED,
       kPUBLIC
   );
 
-  public static TokenSet MODIFIERS = TokenSet.create(
+  public static final TokenSet MODIFIERS = TokenSet.create(
       kABSTRACT,
       kPRIVATE,
       kPUBLIC,
@@ -123,7 +123,7 @@ public abstract class TokenSets {
       kDEF
   );
 
-  public static TokenSet STRING_LITERALS = TokenSet.create(
+  public static final TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
       mREGEX_CONTENT,
       mDOLLAR_SLASH_REGEX_CONTENT,
@@ -135,7 +135,7 @@ public abstract class TokenSets {
       mDOLLAR_SLASH_REGEX_LITERAL
   );
 
-  public static TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
+  public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
 
   public static final TokenSet RELATIONS = TokenSet.create(
           mLT,
@@ -202,5 +202,5 @@ public abstract class TokenSets {
   );
 
   public static final TokenSet SHIFT_SIGNS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
-  public static TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF,  kIN, kAS);
+  public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF,  kIN, kAS);
 }
