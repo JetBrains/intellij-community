@@ -19,6 +19,11 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
     return myTypeId;
   }
 
+  @Override
+  public int hashCode() {
+    return myTypeId.hashCode();
+  }
+
   @NotNull
   public abstract List<T> computeAllTargets(@NotNull JpsModel model);
 
