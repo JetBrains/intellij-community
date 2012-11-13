@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties.xml;
+package com.intellij.reference;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,10 +21,9 @@ import java.lang.ref.SoftReference;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 5/25/12
+ * @since 25.05.2012
  */
 public abstract class SoftLazyValue<T> {
-
   private SoftReference<T> myReference;
 
   public T getValue() {
