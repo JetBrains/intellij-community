@@ -23,7 +23,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -41,7 +41,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     return new SdkPathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
       @Override
       protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
-        if (sdk.getSdkType() instanceof JavaSdk) {
+        if (sdk.getSdkType() instanceof JavaSdkType) {
           return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);
         }
         return super.adjustAddedFileSet(component, files);
