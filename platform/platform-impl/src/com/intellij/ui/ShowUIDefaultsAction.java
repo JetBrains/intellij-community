@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +42,7 @@ import java.util.EventObject;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowUIDefaultsAction extends AnAction {
+public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final UIDefaults defaults = UIManager.getDefaults();
@@ -58,7 +59,7 @@ public class ShowUIDefaultsAction extends AnAction {
     Arrays.sort(data, new Comparator<Object[]>() {
       @Override
       public int compare(Object[] o1, Object[] o2) {
-        return StringUtil.naturalCompare(o1[0].toString(), o2[0].toString());
+        return StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString());
       }
     });
 
