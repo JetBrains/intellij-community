@@ -216,7 +216,7 @@ public class MavenFoldersImporter {
   private void configGeneratedSourceFolder(@NotNull File targetDir, boolean isTestSources) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
       case GENERATED_SOURCE_FOLDER:
-        myModel.addSourceFolder(targetDir.getPath(), isTestSources);
+        myModel.addSourceFolder(targetDir.getPath(), isTestSources, true);
         break;
 
       case SUBFOLDER:
@@ -242,7 +242,7 @@ public class MavenFoldersImporter {
 
   private void addAsSourceFolder(@NotNull File dir, boolean isTestSources) {
     if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-      myModel.addSourceFolder(dir.getPath(), isTestSources);
+      myModel.addSourceFolder(dir.getPath(), isTestSources, true);
     }
   }
 

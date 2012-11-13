@@ -15,15 +15,15 @@
  */
 package com.intellij.execution.impl;
 
-import static com.intellij.execution.impl.ConsoleViewImpl.TokenInfo;
-import static com.intellij.execution.impl.ConsoleViewImpl.HyperlinkTokenInfo;
-
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.execution.impl.ConsoleViewImpl.HyperlinkTokenInfo;
+import static com.intellij.execution.impl.ConsoleViewImpl.TokenInfo;
 
 /**
  * Holds utility methods for console processing.
@@ -36,7 +36,7 @@ public class ConsoleUtil {
   private ConsoleUtil() {
   }
 
-  public static void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
+  public static void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType, @NotNull List<TokenInfo> tokens) {
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);

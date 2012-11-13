@@ -15,9 +15,7 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -26,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.ui.IdeBorderFactory;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,19 +44,13 @@ public class ArchivedProjectTemplate implements ProjectTemplate {
   private final String myDisplayName;
   private final URL myArchivePath;
   private final ModuleType myModuleType;
-  private final WizardContext myContext;
-  private final ProjectNameStep mySettingsStep;
 
   public ArchivedProjectTemplate(String displayName,
-                                 URL archivePath,
-                                 WizardContext context) {
+                                 URL archivePath) {
 
     myDisplayName = displayName;
     myArchivePath = archivePath;
-    myContext = context;
     myModuleType = computeModuleType(this);
-    mySettingsStep = new ProjectNameStep(context, null);
-    mySettingsStep.getComponent().setBorder(IdeBorderFactory.createEmptyBorder(0));
   }
 
   @NotNull

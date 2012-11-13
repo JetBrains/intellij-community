@@ -35,7 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 
-public class DirectoryInfo {
+public final class DirectoryInfo {
   private Module module; // module to which content it belongs or null
   private VirtualFile libraryClassRoot; // class root in library
   private VirtualFile contentRoot;
@@ -52,6 +52,9 @@ public class DirectoryInfo {
    * orderEntry to (classes of) which a directory belongs
    */
   private OrderEntry[] orderEntries;
+
+  public DirectoryInfo() {
+  }
 
   @TestOnly
   @SuppressWarnings({"unchecked"})
@@ -272,7 +275,7 @@ public class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, MODULE_SOURCE_FLAG);
   }
 
-  public void setInModuleSource(boolean inModuleSource) {
+  void setInModuleSource(boolean inModuleSource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
   }
 
@@ -280,7 +283,7 @@ public class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, TEST_SOURCE_FLAG);
   }
 
-  public void setTestSource(boolean testSource) {
+  void setTestSource(boolean testSource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, TEST_SOURCE_FLAG, testSource);
   }
 
@@ -288,7 +291,7 @@ public class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, LIBRARY_SOURCE_FLAG);
   }
 
-  public void setInLibrarySource(boolean inLibrarySource) {
+  void setInLibrarySource(boolean inLibrarySource) {
     sourceFlag = (byte)BitUtil.set(sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
   }
 
@@ -296,19 +299,19 @@ public class DirectoryInfo {
     return module;
   }
 
-  public void setModule(Module module) {
+  void setModule(Module module) {
     this.module = module;
   }
 
-  public void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
+  void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
     this.libraryClassRoot = libraryClassRoot;
   }
 
-  public void setContentRoot(VirtualFile contentRoot) {
+  void setContentRoot(VirtualFile contentRoot) {
     this.contentRoot = contentRoot;
   }
 
-  public void setSourceRoot(@NotNull VirtualFile sourceRoot) {
+  void setSourceRoot(@NotNull VirtualFile sourceRoot) {
     this.sourceRoot = sourceRoot;
   }
 

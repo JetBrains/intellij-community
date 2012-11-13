@@ -101,6 +101,11 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
     return PathManager.getConfigPath() + "/resources/projectTemplates";
   }
 
+  public static File getTemplateFile(String name) {
+    String configURL = getCustomTemplatesPath();
+    return new File(configURL + "/" + name + ".zip");
+  }
+
   @NotNull
   @Override
   public String[] getGroups() {
@@ -122,7 +127,7 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.toExternalForm() + "/" + child);
             String name = child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
-            templates.add(new ArchivedProjectTemplate(name, templateUrl, context));
+            templates.add(new ArchivedProjectTemplate(name, templateUrl));
           }
         }
       }

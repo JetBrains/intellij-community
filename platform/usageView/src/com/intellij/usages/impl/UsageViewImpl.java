@@ -139,7 +139,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
-  private Splitter myTreeSplitter;
+  private Splitter myPreviewSplitter;
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -266,13 +266,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     disposeUsageContextPanels();
 
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
-    myTreeSplitter = new Splitter();
-    myTreeSplitter.setFirstComponent(treePane);
+    myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
+    myPreviewSplitter.setFirstComponent(treePane);
 
-    myCentralPanel.add(myTreeSplitter, BorderLayout.CENTER);
+    myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
-      myTreeSplitter.setProportion(UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
+      myPreviewSplitter.setProportion(UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
@@ -316,10 +316,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       });
 
       tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-      myTreeSplitter.setSecondComponent(tabbedPane);
+      myPreviewSplitter.setSecondComponent(tabbedPane);
     }
     else {
-      myTreeSplitter.setProportion(1);
+      myPreviewSplitter.setProportion(1);
     }
 
     myCentralPanel.add(myButtonPanel, BorderLayout.SOUTH);
@@ -330,13 +330,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
     myCurrentUsageContextProvider = provider;
-    saveSplitterProportions();
     setupCentralPanel();
     updateOnSelectionChanged();
   }
 
   private void disposeUsageContextPanels() {
     if (myCurrentUsageContextPanel != null) {
+      saveSplitterProportions();
       Disposer.dispose(myCurrentUsageContextPanel);
       myCurrentUsageContextPanel = null;
     }
@@ -607,7 +607,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
     excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
     if (myCentralPanel != null) {
-      saveSplitterProportions();
       setupCentralPanel();
     }
     SwingUtilities.invokeLater(new Runnable() {
@@ -937,15 +936,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
-    saveSplitterProportions();
-
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
   private void saveSplitterProportions() {
-    if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
-      UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = myTreeSplitter.getProportion();
-    }
+    UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = myPreviewSplitter.getProportion();
   }
 
   @Override
