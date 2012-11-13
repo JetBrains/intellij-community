@@ -78,10 +78,11 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   private static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
+    final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
     PsiExpressionList list = call.getArgumentList();
     PsiMethod[] methods = target.findMethodsByName(name, false);
     for (PsiMethod method : methods) {
-      if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, list)) return true;
+      if (PsiUtil.isApplicable(method, resolveResult.getSubstitutor(), list)) return true;
     }
     return false;
   }
