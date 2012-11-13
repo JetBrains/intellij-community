@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,8 +280,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     PsiElement anchor = null;
     for (int i = modifiers.length - 1; i >= 0; i--) {
       PsiElement modifier = modifiers[i];
-      if (PRIORITY.get(modifier.getText()) <= myPriority) {
+      final int otherPriority = PRIORITY.get(modifier.getText());
+      if (otherPriority <= myPriority) {
         anchor = modifier;
+      }
+      else if (otherPriority > myPriority && anchor != null) {
         break;
       }
     }
