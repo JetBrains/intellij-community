@@ -34,7 +34,10 @@ import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Consumer;
@@ -58,6 +61,18 @@ public class CodeInsightUtil {
         final IElementType tokenType = token.getTokenType();
         if (tokenType.equals(JavaTokenType.SEMICOLON)) {
           expression = findElementInRange(file, startOffset, element2.getTextRange().getStartOffset(), PsiExpression.class);
+        }
+      }
+    }
+    if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
+      PsiElement element = PsiTreeUtil.skipSiblingsBackward(file.findElementAt(endOffset), PsiWhiteSpace.class);
+      if (element != null) {
+        element = PsiTreeUtil.skipSiblingsBackward(element.getLastChild(), PsiWhiteSpace.class, PsiComment.class);
+        if (element != null) {
+          final int newEndOffset = element.getTextRange().getEndOffset();
+          if (newEndOffset < endOffset) {
+            expression = findExpressionInRange(file, startOffset, newEndOffset);
+          }
         }
       }
     }
