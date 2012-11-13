@@ -55,18 +55,20 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       SpeedSearchUtil.appendColoredFragmentForMatcher(task.getPresentableName(), c, attr, myMatcher, bg, sel);
       panel.add(c, BorderLayout.CENTER);
     }
-    else if ("...".equals(value)){
+    else if ("...".equals(value)) {
       final SimpleColoredComponent c = new SimpleColoredComponent();
       c.setIcon(EmptyIcon.ICON_16);
       c.append((String)value);
       panel.add(c, BorderLayout.CENTER);
-    } else if (GotoTaskAction.CREATE_NEW_TASK_ACTION == value) {
+    }
+    else if (GotoTaskAction.CREATE_NEW_TASK_ACTION == value) {
       final SimpleColoredComponent c = new SimpleColoredComponent();
       c.setIcon(LayeredIcon.create(TasksIcons.Unknown, AllIcons.Actions.New));
       c.append(GotoTaskAction.CREATE_NEW_TASK_ACTION.getActionText());
       panel.add(c, BorderLayout.CENTER);
-    } else if (ChooseByNameBase.NON_PREFIX_SEPARATOR == value) {
-      panel.add(ChooseByNameBase.renderNonPrefixSeparatorComponent(UIUtil.getListBackground()), BorderLayout.CENTER);
+    }
+    else if (ChooseByNameBase.NON_PREFIX_SEPARATOR == value) {
+      return ChooseByNameBase.renderNonPrefixSeparatorComponent(UIUtil.getListBackground());
     }
 
     return panel;
