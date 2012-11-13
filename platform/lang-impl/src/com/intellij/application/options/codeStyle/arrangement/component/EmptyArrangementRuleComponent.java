@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.component;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -29,8 +30,11 @@ import java.awt.*;
  */
 public class EmptyArrangementRuleComponent extends JPanel implements ArrangementRepresentationAware {
   
-  public EmptyArrangementRuleComponent() {
+  private final int myHeight;
+  
+  public EmptyArrangementRuleComponent(int height) {
     super(new GridBagLayout());
+    myHeight = height;
     add(new JLabel(ApplicationBundle.message("arrangement.text.empty.rule")), new GridBag().anchor(GridBagConstraints.WEST));
     setBackground(UIUtil.getDecoratedRowColor());
   }
@@ -39,5 +43,11 @@ public class EmptyArrangementRuleComponent extends JPanel implements Arrangement
   @Override
   public JComponent getComponent() {
     return this;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    return new Dimension(size.width, myHeight);
   }
 }

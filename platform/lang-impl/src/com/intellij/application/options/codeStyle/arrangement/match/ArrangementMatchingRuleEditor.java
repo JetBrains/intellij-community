@@ -158,6 +158,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
         component.setEnabled(map.get(condition.getType()).contains(condition.getValue()));
       }
+      myConditionInfo = new ArrangementConditionInfo();
       return;
     }
     if (!(element instanceof StdArrangementMatchRule)) {
@@ -184,7 +185,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     assert myConditionInfo != null;
     ArrangementMatchCondition newCondition = myConditionInfo.buildCondition();
     Object modelValue = newCondition == null
-                        ? new EmptyArrangementRuleComponent()
+                        ? new EmptyArrangementRuleComponent(myControl.getRowHeight(myRow))
                         : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition));
     myControl.getModel().set(myRow, modelValue);
     myControl.repaintRows(myRow, myRow, true);

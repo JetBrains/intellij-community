@@ -42,18 +42,20 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     if (control == null) {
       return;
     }
-
+    
+    control.hideEditor();
     TIntArrayList rows = control.getSelectedModelRows();
     ArrangementMatchingRulesModel model = control.getModel();
     int rowToEdit;
     if (rows.size() == 1) {
       rowToEdit = rows.get(0) + 1;
-      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent() });
+      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)) });
     }
     else {
-      model.add(new EmptyArrangementRuleComponent());
-      rowToEdit = model.getSize() - 1;
+      rowToEdit = model.getSize();
+      model.add(new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)));
     }
     control.showEditor(rowToEdit);
+    control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
   }
 }

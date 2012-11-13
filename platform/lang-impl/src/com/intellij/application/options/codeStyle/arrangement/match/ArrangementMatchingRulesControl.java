@@ -79,6 +79,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowColumns(false);
     setShowGrid(false);
+    putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override
@@ -298,7 +299,6 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     editor.applyAvailableWidth(width);
     myEditor.updateState(rowToEdit);
-    myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
       getModel().insertRow(myEditorRow, new Object[]{editor});
@@ -411,14 +411,14 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
   }
   
-  private static class MyEditor extends AbstractTableCellEditor {
+  private class MyEditor extends AbstractTableCellEditor {
     
-    @Nullable private Object myValue;
+    private int myRow;
     
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof ArrangementEditorAware) {
-        myValue = value;
+        myRow = row;
         return ((ArrangementEditorAware)value).getComponent();
       }
       return null;
@@ -426,14 +426,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
 
     @Override
     public Object getCellEditorValue() {
-      return myValue;
-    }
-
-    @Override
-    public boolean stopCellEditing() {
-      boolean result = super.stopCellEditing();
-      myValue = null;
-      return result;
+      return myRow < getModel().getSize() ? getModel().getElementAt(myRow) : null;
     }
   }
   
