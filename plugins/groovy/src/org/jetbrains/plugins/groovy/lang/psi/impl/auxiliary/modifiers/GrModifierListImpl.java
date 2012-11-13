@@ -278,8 +278,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     final int myPriority = PRIORITY.get(name);
     final PsiElement[] modifiers = getModifiers();
     PsiElement anchor = null;
-    for (int i = modifiers.length - 1; i >= 0; i--) {
-      PsiElement modifier = modifiers[i];
+    for (PsiElement modifier : modifiers) {
       final int otherPriority = PRIORITY.get(modifier.getText());
       if (otherPriority <= myPriority) {
         anchor = modifier;
