@@ -15,10 +15,8 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 
@@ -35,10 +33,6 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
     if (!ConcatenationUtils.isConcatenation(element)) {
       return false;
     }
-    return !(excludeConcatenationsInsideAnnotations && isInsideAnnotation(element));
-  }
-
-  private static boolean isInsideAnnotation(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+    return !(excludeConcatenationsInsideAnnotations && AnnotationUtil.isInsideAnnotation(element));
   }
 }

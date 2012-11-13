@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
@@ -34,7 +34,6 @@ import javax.swing.event.HyperlinkEvent;
  * @author spleaner
  */
 public class NotificationTestAction extends AnAction implements DumbAware {
-
   public static final String TEST_GROUP_ID = "Test Notification";
 
   public NotificationTestAction() {
@@ -56,17 +55,18 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     }
 
     final NotificationListener listener = new NotificationListener() {
-      public void hyperlinkUpdate(Notification n, HyperlinkEvent e) {
+      public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent e) {
         n.expire();
       }
     };
 
-    final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification", //"a",
-      "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. Long long long long. It should be long. Very long. Too long." +
+    final String message =
+      "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. " +
+      "Long long long long. It should be long. Very long. Too long. " +
       //StringUtil.repeat("line", 100) +
       //StringUtil.repeat("<br>line", 100) +
-      " And even longer.",
-      type, listener);
+      "And even longer.";
+    final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification", message, type, listener);
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
@@ -75,6 +75,5 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         messageBus.syncPublisher(Notifications.TOPIC).notify(notification);
       }
     });
-
   }
 }

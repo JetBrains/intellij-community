@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -39,7 +40,8 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
+    List<TextRange> result = CollectionFactory.arrayList(e.getTextRange());
+    result.addAll(expandToWholeLinesWithBlanks(editorText, e.getTextRange()));
 
     PsiElement firstChild = e.getFirstChild();
     PsiElement[] children = e.getChildren();
@@ -52,10 +54,10 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       }
 
       TextRange range = new TextRange(children[i].getTextRange().getStartOffset(), e.getTextRange().getEndOffset());
-      result.addAll(expandToWholeLine(editorText, range));
+      result.addAll(expandToWholeLinesWithBlanks(editorText, range));
 
       range = TextRange.create(firstChild.getTextRange());
-      result.addAll(expandToWholeLine(editorText, range));
+      result.addAll(expandToWholeLinesWithBlanks(editorText, range));
     }
     else if (firstChild instanceof PsiComment) {
       int i = 1;
@@ -66,11 +68,11 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       PsiElement last = children[i - 1] instanceof PsiWhiteSpace ? children[i - 2] : children[i - 1];
       TextRange range = new TextRange(firstChild.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
       if (range.contains(cursorOffset)) {
-        result.addAll(expandToWholeLine(editorText, range));
+        result.addAll(expandToWholeLinesWithBlanks(editorText, range));
       }
 
       range = new TextRange(children[i].getTextRange().getStartOffset(), e.getTextRange().getEndOffset());
-      result.addAll(expandToWholeLine(editorText, range));
+      result.addAll(expandToWholeLinesWithBlanks(editorText, range));
     }
 
     if (e instanceof PsiClass) {
@@ -98,7 +100,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
     if (start != 0) {
       int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
 
-      return expandToWholeLine(editorText, new TextRange(start, end));
+      return expandToWholeLinesWithBlanks(editorText, new TextRange(start, end));
     }
     return Collections.emptyList();
   }

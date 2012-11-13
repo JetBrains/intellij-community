@@ -178,7 +178,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-        return false;
+        return myMatchers != null && myMatchers.length > 0;
       }
 
       @Override
@@ -317,7 +317,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     }
 
 //    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) &&
+                                   !(myModuleBuilder instanceof EmptyModuleBuilder) &&
+                                   myExpertPanel.getComponentCount() > 0);
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();

@@ -25,6 +25,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -96,7 +97,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -281,13 +281,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
     if (! myConfiguration.isCleanupRun()) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           cleanup17copies();
           myConfiguration.setCleanupRun(true);
         }
-      });
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     } else {
       invokeRefreshSvnRoots(true);
     }
@@ -930,62 +930,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     catch (SVNException e) {
       return null;
-    }
-  }
-
-  public static class SVNStatusHolder {
-
-    private final SVNStatus myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-    private final boolean myIsLocked;
-
-    public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-      myIsLocked = value != null && value.isLocked();
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public boolean isLocked() {
-      return myIsLocked;
-    }
-
-    public SVNStatus getStatus() {
-      return myValue;
-    }
-  }
-
-  public static class SVNInfoHolder {
-
-    private final SVNInfo myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-
-    public SVNInfoHolder(long entriesStamp, long fileStamp, SVNInfo value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public SVNInfo getInfo() {
-      return myValue;
     }
   }
 

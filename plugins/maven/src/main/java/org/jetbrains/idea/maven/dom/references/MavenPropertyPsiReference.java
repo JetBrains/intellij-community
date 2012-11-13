@@ -60,6 +60,7 @@ import java.util.Set;
 public class MavenPropertyPsiReference extends MavenPsiReference {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
+  @Nullable
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
   private final boolean mySoft;
@@ -179,8 +180,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       if (result != null) return result;
     }
 
-    PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
-    if (result != null) return result;
+    if (myProjectDom != null) {
+      PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
+      if (result != null) return result;
+    }
 
     IProperty property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, myText);
     if (property != null) return property.getPsiElement();
@@ -379,8 +382,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private void collectPropertiesVariants(final List<Object> result) {
-    for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
-      result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+    if (myProjectDom != null) {
+      for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
+        result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+      }
     }
   }
 

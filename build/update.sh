@@ -29,3 +29,13 @@ rm -rf $WORK_IDEA_HOME/lib
 rm -rf $WORK_IDEA_HOME/plugins
 
 cp -R $DEV_IDEA_HOME/out/deploy/* $WORK_IDEA_HOME
+
+OS_TYPE=`uname -s`
+if [ "$OS_TYPE" = "Linux" ]; then
+  cp -a $DEV_IDEA_HOME/bin/linux/*.so $WORK_IDEA_HOME/bin
+  cp -a $DEV_IDEA_HOME/bin/linux/fsnotifier* $WORK_IDEA_HOME/bin
+elif [ "$OS_TYPE" = "Darwin" ]; then
+  cp -a $DEV_IDEA_HOME/bin/mac/*.jnilib $WORK_IDEA_HOME/bin
+  cp -a $DEV_IDEA_HOME/bin/mac/fsnotifier $WORK_IDEA_HOME/bin
+  cp -a $DEV_IDEA_HOME/bin/mac/relaunch $WORK_IDEA_HOME/bin
+fi

@@ -177,10 +177,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  public boolean hasActiveDockedDocWindow() {
-    return myToolWindow != null && myToolWindow.isVisible();
-  }
-  
   public void setAllowContentUpdateFromContext(boolean allow) {
     if (hasActiveDockedDocWindow()) {
       restartAutoUpdate(allow);

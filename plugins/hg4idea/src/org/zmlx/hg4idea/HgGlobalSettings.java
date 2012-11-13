@@ -69,25 +69,25 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   public String defaultHgExecutable() {
     if (myState.myHgExecutable == null) {
       String[] paths;
-      String programVariants;
+      String programName;
       if (SystemInfo.isWindows) {
-        programVariants = DEFAULT_WINDOWS_HG;
+        programName = DEFAULT_WINDOWS_HG;
         paths = DEFAULT_WINDOWS_PATHS;
       }
       else {
-        programVariants = DEFAULT_UNIX_HG;
+        programName = DEFAULT_UNIX_HG;
         paths = DEFAULT_UNIX_PATHS;
       }
 
       for (String p : paths) {
-        File f = new File(p, programVariants);
+        File f = new File(p, programName);
         if (f.exists()) {
           myState.myHgExecutable = f.getAbsolutePath();
           break;
         }
       }
       if (myState.myHgExecutable == null) { // otherwise, take the first variant and hope it's in $PATH
-        myState.myHgExecutable = programVariants;
+        myState.myHgExecutable = programName;
       }
     }
     return myState.myHgExecutable;

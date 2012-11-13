@@ -342,7 +342,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private class ResourcePanel {
     public final Tree myTree;
     public final AbstractTreeBuilder myTreeBuilder;
-    public final JPanel myComponent;
+    public final JBSplitter myComponent;
 
     private final JPanel myPreviewPanel;
     private final JTextArea myTextArea;
@@ -409,11 +409,13 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       });
       new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
-      myComponent = new JPanel(new BorderLayout(0, 5));
-      myComponent.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+      myComponent = new JBSplitter(true, 0.8f);
+      myComponent.setSplitterProportionKey("android.resource_dialog_splitter");
+
+      myComponent.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
 
       myPreviewPanel = new JPanel(new CardLayout());
-      myComponent.add(myPreviewPanel, BorderLayout.SOUTH);
+      myComponent.setSecondComponent(myPreviewPanel);
 
       myTextArea = new JTextArea(5, 20);
       myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);

@@ -29,6 +29,7 @@ public class IntObjectMap<V> {
   
   @NotNull private Object[] myData;
   private int myMaxUsed = -1;
+  private int mySize;
 
   public IntObjectMap() {
     this(16);
@@ -54,6 +55,9 @@ public class IntObjectMap<V> {
       }
       myData = Arrays.copyOf(myData, newCapacity);
     }
+    if (myData[key] == null) {
+      mySize++;
+    }
     myData[key] = value;
     myMaxUsed = Math.max(myMaxUsed, key);
   }
@@ -61,6 +65,9 @@ public class IntObjectMap<V> {
   public void remove(int key) {
     if (key < 0 || key >= myData.length) {
       return;
+    }
+    if (myData[key] != null) {
+      mySize--;
     }
     myData[key] = null;
     if (key == myMaxUsed) {
@@ -72,18 +79,20 @@ public class IntObjectMap<V> {
       }
       myMaxUsed = -1;
     }
+    
   }
 
   public void clear() {
     myData = new Object[myData.length];
     myMaxUsed = -1;
+    mySize = 0;
   }
   
-  public void shiftKeys(int from, int shift) {
+  public void shiftKeys(final int from, int shift) {
     if (shift == 0 || from > myMaxUsed) {
       return;
     }
-
+    
     int newEnd = myMaxUsed + shift;
     if (newEnd >= myData.length) {
       int minCapacity = newEnd + 1;
@@ -93,10 +102,17 @@ public class IntObjectMap<V> {
       }
       myData = Arrays.copyOf(myData, newCapacity);
     }
-    System.arraycopy(myData, from, myData, from + shift, myMaxUsed - from + 1);
+    
+    int effectiveFrom = from;
+    while (myData[effectiveFrom] == null ) {
+      if (++effectiveFrom >= myData.length) {
+        return;
+      }
+    }
+    System.arraycopy(myData, effectiveFrom, myData, effectiveFrom + shift, myMaxUsed - effectiveFrom + 1);
 
     if (shift > 0) {
-      for (int i = from, max = from + shift; i < max; i++) {
+      for (int i = effectiveFrom, max = effectiveFrom + shift; i < max; i++) {
         myData[i] = null;
       }
     }
@@ -107,5 +123,9 @@ public class IntObjectMap<V> {
     }
 
     myMaxUsed += shift;
+  }
+  
+  public int size() {
+    return mySize;
   }
 }

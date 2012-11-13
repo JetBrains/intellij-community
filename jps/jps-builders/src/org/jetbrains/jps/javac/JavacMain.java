@@ -41,8 +41,7 @@ public class JavacMain {
         break;
       }
       if (compiler == null) {
-        final String message = "Eclipse Batch Compiler was not found in classpath";
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
         return false;
       }
     }
@@ -50,6 +49,10 @@ public class JavacMain {
     final boolean nowUsingJavac;
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
+      if (compiler == null) {
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        return false;
+      }
       nowUsingJavac = true;
     }
     else {

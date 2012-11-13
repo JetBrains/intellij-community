@@ -99,6 +99,7 @@ protected JButton createArrowButton() {
   @Override
   public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
     final Graphics2D g = (Graphics2D)g2;
+    if (arrowButton == null) return; //NPE on laf change
     final Rectangle arrowButtonBounds = arrowButton.getBounds();
     final int xxx = arrowButtonBounds.x - 5;
     if (editor != null) {

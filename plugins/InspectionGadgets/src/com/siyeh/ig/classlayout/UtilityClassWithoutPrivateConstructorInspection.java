@@ -57,15 +57,13 @@ public class UtilityClassWithoutPrivateConstructorInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "utility.class.without.private.constructor.display.name");
+    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "utility.class.without.private.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
   }
 
   @Override
@@ -101,32 +99,29 @@ public class UtilityClassWithoutPrivateConstructorInspection
     return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
 
-  private static class CreateEmptyPrivateConstructor
-    extends InspectionGadgetsFix {
+  private static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "utility.class.without.private.constructor.create.quickfix");
+      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
-      final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
-      if (aClass == null) {
+      final PsiElement parent = classNameIdentifier.getParent();
+      if (!(parent instanceof PsiClass)) {
         return;
       }
-      final Query<PsiReference> query =
-        ReferencesSearch.search(aClass, aClass.getUseScope());
+      final PsiClass aClass = (PsiClass)parent;
+      final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
       for (PsiReference reference : query) {
         if (reference == null) {
           continue;
         }
         final PsiElement element = reference.getElement();
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiNewExpression) {
+        final PsiElement context = element.getParent();
+        if (context instanceof PsiNewExpression) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               Messages.showInfoMessage(aClass.getProject(),
@@ -152,18 +147,17 @@ public class UtilityClassWithoutPrivateConstructorInspection
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "utility.class.without.private.constructor.make.quickfix");
+      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
-      final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
-      if (aClass == null) {
+      final PsiElement parent = classNameIdentifier.getParent();
+      if (!(parent instanceof PsiClass)) {
         return;
       }
+      final PsiClass aClass = (PsiClass)parent;
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();

@@ -7,19 +7,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -142,6 +143,70 @@ public class BuildOperations {
     return dropped;
   }
 
+  public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
+  Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    try {
+      final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
+
+      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
+      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
+        private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
+
+        @Override
+        public boolean apply(T target, File file, R sourceRoot) throws IOException {
+          SourceToOutputMapping srcToOut = mappingsCache.get(target);
+          if (srcToOut == null) {
+            srcToOut = dataManager.getSourceToOutputMap(target);
+            mappingsCache.put(target, srcToOut);
+          }
+          final String srcPath = file.getPath();
+          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
+          if (outputs != null) {
+            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
+            for (String output : outputs) {
+              if (outputsToLog != null) {
+                outputsToLog.add(output);
+              }
+              final File outFile = new File(output);
+              final boolean deleted = outFile.delete();
+              if (deleted && shouldPruneOutputDirs) {
+                final File parent = outFile.getParentFile();
+                if (parent != null) {
+                  dirsToDelete.add(parent);
+                }
+              }
+            }
+            if (!outputs.isEmpty()) {
+              context.processMessage(new FileDeletedEvent(outputs));
+            }
+            Set<File> cleaned = cleanedSources.get(target);
+            if (cleaned == null) {
+              cleaned = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+              cleanedSources.put(target, cleaned);
+            }
+            cleaned.add(file);
+          }
+          return true;
+        }
+      });
+
+      if (outputsToLog != null && context.isMake()) {
+        logger.logDeletedFiles(outputsToLog);
+      }
+      // attempting to delete potentially empty directories
+      FSOperations.pruneEmptyDirs(dirsToDelete);
+
+      return cleanedSources;
+    }
+    catch (Exception e) {
+      throw new ProjectBuildException(e);
+    }
+  }
+
   private static class BuildOutputConsumerImpl implements BuildOutputConsumer {
     private final BuildTarget<?> myTarget;
     private final CompileContext myContext;
@@ -161,9 +226,10 @@ public class BuildOperations {
       final File outputFile = new File(outputFilePath);
       for (File outputRoot : myOutputs) {
         if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
-          final String relativePath = FileUtil.getRelativePath(outputRoot, outputFile);
+          String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
+          final String relativePath = FileUtil.getRelativePath(outputRootPath, FileUtil.toSystemIndependentName(outputFilePath), '/');
           if (relativePath != null) {
-            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputRoot.getPath()), FileUtil.toSystemIndependentName(relativePath));
+            myFileGeneratedEvent.add(outputRootPath, relativePath);
           }
           break;
         }

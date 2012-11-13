@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 
@@ -24,7 +25,7 @@ import com.intellij.openapi.project.DumbAware;
  * @author Denis Zhdanov
  * @since 10/29/12 11:01 AM
  */
-public class EditArrangementRuleAction extends AnAction implements DumbAware {
+public class EditArrangementRuleAction extends AnAction implements DumbAware, Toggleable {
 
   public EditArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.edit.text"));
@@ -34,6 +35,5 @@ public class EditArrangementRuleAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     // TODO den implement
-    System.out.println("EditArrangementRuleAction.actionPerformed()");
   }
 }

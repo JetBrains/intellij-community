@@ -9,6 +9,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
@@ -22,13 +23,20 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public final boolean isGeneratedSources;
   public final boolean isTemp;
   private final String myPackagePrefix;
+  private final Set<File> myExcludes;
 
-  public JavaSourceRootDescriptor(@NotNull File root, @NotNull ModuleBuildTarget target, boolean isGenerated, boolean isTemp, @NotNull String packagePrefix) {
+  public JavaSourceRootDescriptor(@NotNull File root,
+                                  @NotNull ModuleBuildTarget target,
+                                  boolean isGenerated,
+                                  boolean isTemp,
+                                  @NotNull String packagePrefix,
+                                  @NotNull Set<File> excludes) {
     this.root = root;
     this.target = target;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
     myPackagePrefix = packagePrefix;
+    myExcludes = excludes;
   }
 
   @Override
@@ -38,6 +46,12 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
            ", root=" + root +
            ", generated=" + isGeneratedSources +
            '}';
+  }
+
+  @NotNull
+  @Override
+  public Set<File> getExcludedRoots() {
+    return myExcludes;
   }
 
   @NotNull

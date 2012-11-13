@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.*;
@@ -57,7 +58,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
   @Override
   @NotNull
   public String getName() {
-    return myPackages[myIndex].getName();
+    return StringUtil.notNullize(myPackages[myIndex].getName());
   }
 
   @Override

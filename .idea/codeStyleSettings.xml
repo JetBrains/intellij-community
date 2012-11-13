@@ -87,6 +87,20 @@
         <option name="WHILE_BRACE_FORCE" value="1" />
         <option name="FOR_BRACE_FORCE" value="1" />
         <option name="FIELD_ANNOTATION_WRAP" value="0" />
+        <AndroidXmlCodeStyleSettings>
+          <option name="LAYOUT_SETTINGS">
+            <value />
+          </option>
+          <option name="MANIFEST_SETTINGS">
+            <value />
+          </option>
+          <option name="VALUE_RESOURCE_FILE_SETTINGS">
+            <value />
+          </option>
+          <option name="OTHER_SETTINGS">
+            <value />
+          </option>
+        </AndroidXmlCodeStyleSettings>
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
@@ -259,7 +273,6 @@
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
         </codeStyleSettings>
         <codeStyleSettings language="SQL">
-          <option name="KEEP_LINE_BREAKS" value="false" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
         </codeStyleSettings>
         <codeStyleSettings language="XML">
