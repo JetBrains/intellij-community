@@ -359,7 +359,9 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
 
-      BooleanOptionKey key = new BooleanOptionKey(fieldName, groupName, getRenamedTitle(fieldName, title), field);
+      BooleanOptionKey key = new BooleanOptionKey(fieldName, 
+                                                  getRenamedTitle(groupName, groupName),
+                                                  getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
     catch (NoSuchFieldException e) {
@@ -370,17 +372,12 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private String getRenamedTitle(String fieldName, String defaultTitle) {
-    String renamed = myRenamedFields.get(fieldName);
-    return renamed == null ? defaultTitle : renamed;
-  }
-
   protected void initCustomOptions(String groupName) {
     for (CustomBooleanOptionInfo option : myCustomOptions.get(groupName)) {
       try {
         Field field = option.settingClass.getField(option.fieldName);
         myKeys.add(new CustomBooleanOptionKey(option.fieldName,
-                                              groupName,
+                                              getRenamedTitle(groupName, groupName),
                                               getRenamedTitle(option.fieldName, option.title),
                                               option.anchor, option.anchorFieldName,
                                               option.settingClass, field));
@@ -392,6 +389,11 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
         LOG.error(e);
       }
     }
+  }
+
+  private String getRenamedTitle(String fieldName, String defaultTitle) {
+    String renamed = myRenamedFields.get(fieldName);
+    return renamed == null ? defaultTitle : renamed;
   }
 
   private static class MyTreeCellRenderer implements TreeCellRenderer {
