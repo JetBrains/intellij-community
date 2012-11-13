@@ -570,26 +570,25 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       });
       myCacheRefreshTimer.setInitialDelay(0);
-
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
           myCacheRefreshTimer.start();
         }
       });
-    }
 
-    myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
-        getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
-      }
-    });
-    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
-      public void run() {
-        myTimeTrackingTimer.start();
-      }
-    });
+      myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+          getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
+        }
+      });
+      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+        public void run() {
+          myTimeTrackingTimer.start();
+        }
+      });
+    }
 
     LocalTask defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
