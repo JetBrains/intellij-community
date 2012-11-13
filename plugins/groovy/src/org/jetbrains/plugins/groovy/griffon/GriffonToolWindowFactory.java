@@ -102,8 +102,19 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
     }
 
     final VirtualFile applicationPropertiesFile = GriffonFramework.getInstance().getApplicationPropertiesFile(module);
-    if (applicationPropertiesFile != null) {
-      PsiFile appProperties = PsiManager.getInstance(module.getProject()).findFile(applicationPropertiesFile);
+    addFileNode(result, module, viewSettings, applicationPropertiesFile);
+
+    for (VirtualFile file : root.getChildren()) {
+      String name = file.getNameWithoutExtension();
+      if (name.endsWith("GriffonAddon") || name.endsWith("GriffonPlugin")) {
+        addFileNode(result, module, viewSettings, file);
+      }
+    }
+  }
+
+  private static void addFileNode(List<AbstractTreeNode> result, Module module, ViewSettings viewSettings, VirtualFile file) {
+    if (file != null) {
+      PsiFile appProperties = PsiManager.getInstance(module.getProject()).findFile(file);
       if (appProperties != null) {
         result.add(new FileNode(module, appProperties, null, viewSettings));
       }
