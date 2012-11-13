@@ -48,6 +48,7 @@ public class MoveArrangementRuleUpAction extends AnAction implements DumbAware {
     }
 
     TIntArrayList rows = control.getSelectedModelRows();
+    rows.reverse();
     int top = -1;
     for (int i = 0; i < rows.size(); i++) {
       int row = rows.get(i);
