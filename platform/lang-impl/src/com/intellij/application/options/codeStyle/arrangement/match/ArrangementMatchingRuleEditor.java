@@ -60,7 +60,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
   @NotNull private final Map<Object, ArrangementAtomMatchConditionComponent> myComponents =
     new HashMap<Object, ArrangementAtomMatchConditionComponent>();
-
+  
   @NotNull private final ArrangementMatchingRulesControl  myControl;
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @NotNull private final ArrangementColorsProvider        myColorsProvider;
@@ -222,6 +222,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     repaintComponent(component);
     if (remove) {
       myConditionInfo.removeCondition(chosenCondition.getValue());
+      ensureConsistency();
       updateState();
       return;
     }
@@ -254,6 +255,32 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     }
     myConditionInfo.addAtomCondition(chosenCondition);
     updateState();
+  }
+
+  private void ensureConsistency() {
+    if (myConditionInfo == null) {
+      return;
+    }
+    ArrangementMatchCondition condition = myConditionInfo.buildCondition();
+    Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
+    for (ArrangementAtomMatchConditionComponent c : myComponents.values()) {
+      Object v = c.getMatchCondition().getValue();
+      if (!myConditionInfo.hasCondition(v)) {
+        continue;
+      }
+      boolean remain = false;
+      for (Set<?> s : map.values()) {
+        if (s.contains(v)) {
+          remain = true;
+          break;
+        }
+      }
+      if (!remain) {
+        myConditionInfo.removeCondition(v);
+        ensureConsistency();
+        return;
+      }
+    }
   }
 
   @Nullable

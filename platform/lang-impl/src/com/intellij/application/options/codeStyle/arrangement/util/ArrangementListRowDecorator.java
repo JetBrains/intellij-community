@@ -122,6 +122,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     if (!beingEdited && !myUnderMouse) {
       myEditButton.setVisible(false);
     }
+    if (beingEdited && !myBeingEdited) {
+      myEditButton.setVisible(true);
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, true);
+    }
     myBeingEdited = beingEdited;
   }
 

@@ -44,11 +44,11 @@ public class ArrangementConfigUtil {
   }
 
   /**
-   * Allows to answer what new settings are available for a particular match condition.
+   * Allows to answer what settings are available for a particular match condition.
    *
    * @param filter     filter to use
    * @param condition  object that encapsulates information about current arrangement matcher settings
-   * @return           map which contains information on what new new settings are available at the current situation
+   * @return           map which contains information on what settings are available at the current situation
    */
   @NotNull
   public static Map<ArrangementSettingType, Set<?>> buildAvailableConditions(@NotNull ArrangementStandardSettingsAware filter,
