@@ -55,6 +55,11 @@ public class PyDocstringParserDefinition extends PythonParserDefinition {
       }
 
       @Override
+      public String toString() {
+        return "DocstringFile:" + getName();
+      }
+
+      @Override
       public LanguageLevel getLanguageLevel() {
         final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(getProject());
         final PsiLanguageInjectionHost host = languageManager.getInjectionHost(this);
