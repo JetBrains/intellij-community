@@ -25,6 +25,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -96,7 +97,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -281,13 +281,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
     if (! myConfiguration.isCleanupRun()) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           cleanup17copies();
           myConfiguration.setCleanupRun(true);
         }
-      });
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     } else {
       invokeRefreshSvnRoots(true);
     }
