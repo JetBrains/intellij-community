@@ -17,8 +17,6 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -47,8 +45,6 @@ public class ArrangementConstants {
   public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 40;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
-
-  public static final DataKey<Consumer<Boolean/* move up? */>> MOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Move");
   
   private ArrangementConstants() {
   }
