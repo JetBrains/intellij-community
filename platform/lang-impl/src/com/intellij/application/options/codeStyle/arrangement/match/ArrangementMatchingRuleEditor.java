@@ -20,6 +20,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDis
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementAtomMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.component.EmptyArrangementRuleComponent;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementConditionInfo;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -89,16 +90,16 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(5));
 
-    Map<ArrangementSettingType, Collection<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
+    Map<ArrangementSettingType, Set<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
     addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
   }
 
   private void addRowIfPossible(@NotNull ArrangementSettingType key,
-                                @NotNull Map<ArrangementSettingType, Collection<?>> supportedSettings,
+                                @NotNull Map<ArrangementSettingType, Set<?>> supportedSettings,
                                 @NotNull ArrangementNodeDisplayManager manager)
   {
-    Collection<?> values = supportedSettings.get(key);
+    Set<?> values = supportedSettings.get(key);
     if (values == null || values.isEmpty()) {
       return;
     }
@@ -129,8 +130,14 @@ public class ArrangementMatchingRuleEditor extends JPanel {
    *              <code>'-1'</code> as an indication that no settings should be active
    */
   public void updateState(int row) {
-    myRow = row;
-    myConditionInfo = null;
+    updateState(row, true);
+  }
+  
+  private void updateState(int row, boolean newModel) {
+    if (newModel) {
+      myRow = row;
+      myConditionInfo = null;
+    }
 
     // Reset state.
     for (ArrangementAtomMatchConditionComponent component : myComponents.values()) {
@@ -145,15 +152,22 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     }
 
     Object element = model.getElementAt(row);
+    if (element instanceof EmptyArrangementRuleComponent) {
+      for (ArrangementAtomMatchConditionComponent component : myComponents.values()) {
+        ArrangementAtomMatchCondition condition = component.getMatchCondition();
+        Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
+        component.setEnabled(map.get(condition.getType()).contains(condition.getValue()));
+      }
+      return;
+    }
     if (!(element instanceof StdArrangementMatchRule)) {
-      myRow = -1;
       return;
     }
 
     ArrangementMatchCondition condition = ((StdArrangementMatchRule)element).getMatcher().getCondition();
     myConditionInfo = ArrangementUtil.extractConditions(condition);
 
-    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
+    Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
         ArrangementAtomMatchConditionComponent component = myComponents.get(id);
@@ -169,9 +183,12 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   private void updateState() {
     assert myConditionInfo != null;
     ArrangementMatchCondition newCondition = myConditionInfo.buildCondition();
-    myControl.getModel().set(myRow, newCondition == null ? null : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition)));
+    Object modelValue = newCondition == null
+                        ? new EmptyArrangementRuleComponent()
+                        : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition));
+    myControl.getModel().set(myRow, modelValue);
     myControl.repaintRows(myRow, myRow, true);
-    updateState(myRow);
+    updateState(myRow, false);
   }
 
   public void applyAvailableWidth(int width) {
@@ -204,7 +221,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     component.setSelected(!remove);
     repaintComponent(component);
     if (remove) {
-      myConditionInfo.removeCondition(chosenCondition);
+      myConditionInfo.removeCondition(chosenCondition.getValue());
       updateState();
       return;
     }

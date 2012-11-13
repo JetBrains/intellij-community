@@ -25,8 +25,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Contains various utility methods to be used during showing arrangement settings.
@@ -49,10 +51,10 @@ public class ArrangementConfigUtil {
    * @return           map which contains information on what new new settings are available at the current situation
    */
   @NotNull
-  public static Map<ArrangementSettingType, Collection<?>> buildAvailableConditions(@NotNull ArrangementStandardSettingsAware filter,
+  public static Map<ArrangementSettingType, Set<?>> buildAvailableConditions(@NotNull ArrangementStandardSettingsAware filter,
                                                                                     @Nullable ArrangementMatchCondition condition)
   {
-    Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
+    Map<ArrangementSettingType, Set<?>> result = new EnumMap<ArrangementSettingType, Set<?>>(ArrangementSettingType.class);
     processData(filter, condition, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());
     processData(filter, condition, result, ArrangementSettingType.MODIFIER, ArrangementModifier.values());
     return result;
@@ -60,17 +62,17 @@ public class ArrangementConfigUtil {
 
   private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
                                       @Nullable ArrangementMatchCondition settings,
-                                      @NotNull Map<ArrangementSettingType, Collection<?>> result,
+                                      @NotNull Map<ArrangementSettingType, Set<?>> result,
                                       @NotNull ArrangementSettingType type,
                                       @NotNull T[] values)
   {
-    List<T> data = null;
+    Set<T> data = null;
     for (T v : values) {
       if (!isEnabled(v, filter, settings)) {
         continue;
       }
       if (data == null) {
-        data = new ArrayList<T>();
+        data = new HashSet<T>();
       }
       data.add(v);
     }

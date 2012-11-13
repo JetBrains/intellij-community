@@ -46,12 +46,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
                                        @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     super(new GridBagLayout());
-    TitleWithToolbar top = new TitleWithToolbar(
-      ApplicationBundle.message("arrangement.settings.section.match"),
-      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
-      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE
-    );
-
+    
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
     ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
@@ -76,6 +71,12 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myControl);
 
+    TitleWithToolbar top = new TitleWithToolbar(
+      ApplicationBundle.message("arrangement.settings.section.match"),
+      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
+      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE,
+      myControl
+    );
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
   }

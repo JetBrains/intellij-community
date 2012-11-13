@@ -32,11 +32,16 @@ import java.awt.*;
  */
 public class TitleWithToolbar extends JPanel {
 
-  public TitleWithToolbar(@NotNull String title, @NotNull String actionGroupId, @NotNull String place) {
+  public TitleWithToolbar(@NotNull String title,
+                          @NotNull String actionGroupId,
+                          @NotNull String place,
+                          @NotNull JComponent targetComponent)
+  {
     super(new GridBagLayout());
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup group = (ActionGroup)actionManager.getAction(actionGroupId);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, group, true);
+    actionToolbar.setTargetComponent(targetComponent);
 
     add(new MyTitleComponent(title), new GridBag().weightx(1).anchor(GridBagConstraints.WEST).fillCellHorizontally());
     add(actionToolbar.getComponent(), new GridBag().anchor(GridBagConstraints.CENTER));
