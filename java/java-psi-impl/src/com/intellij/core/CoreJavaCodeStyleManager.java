@@ -15,10 +15,14 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   @Override
@@ -96,16 +101,75 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @Override
   public String suggestUniqueVariableName(@NonNls String baseName, PsiElement place, boolean lookForward) {
-    return null;
+    int index = 0;
+    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
+    NextName:
+    while (true) {
+      String name = baseName;
+      if (index > 0) {
+        name += index;
+      }
+      index++;
+      if (PsiUtil.isVariableNameUnique(name, place)) {
+        if (lookForward) {
+          final String name1 = name;
+          PsiElement run = scope;
+          while (run != null) {
+            class CancelException extends RuntimeException {
+            }
+            try {
+              run.accept(new JavaRecursiveElementWalkingVisitor() {
+                @Override
+                public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+                }
+
+                @Override public void visitVariable(PsiVariable variable) {
+                  if (name1.equals(variable.getName())) {
+                    throw new CancelException();
+                  }
+                }
+              });
+            }
+            catch (CancelException e) {
+              continue NextName;
+            }
+            run = run.getNextSibling();
+            if (scope instanceof PsiMethod) {//do not check next member for param name conflict
+              break;
+            }
+          }
+
+        }
+        return name;
+      }
+    }
   }
 
   @NotNull
   @Override
-  public SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
+  public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo,
                                                      PsiElement place,
                                                      boolean ignorePlaceName,
                                                      boolean lookForward) {
-    return SuggestedNameInfo.NULL_INFO;
+    final String[] names = baseNameInfo.names;
+    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<String>(names.length);
+    for (String name : names) {
+      if (ignorePlaceName && place instanceof PsiNamedElement) {
+        final String placeName = ((PsiNamedElement)place).getName();
+        if (Comparing.strEqual(placeName, name)) {
+          uniqueNames.add(name);
+          continue;
+        }
+      }
+      uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
+    }
+
+    return new SuggestedNameInfo(ArrayUtil.toStringArray(uniqueNames)) {
+      @Override
+      public void nameChosen(String name) {
+        baseNameInfo.nameChosen(name);
+      }
+    };
   }
 
   @Override

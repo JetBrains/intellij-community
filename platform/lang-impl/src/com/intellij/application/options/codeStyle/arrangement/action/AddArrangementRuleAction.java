@@ -16,10 +16,14 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.component.EmptyArrangementRuleComponent;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import gnu.trove.TIntArrayList;
 
 /**
  * @author Denis Zhdanov
@@ -34,9 +38,24 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Runnable function = ArrangementConstants.NEW_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    if (function != null) {
-      function.run();
+    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    if (control == null) {
+      return;
     }
+    
+    control.hideEditor();
+    TIntArrayList rows = control.getSelectedModelRows();
+    ArrangementMatchingRulesModel model = control.getModel();
+    int rowToEdit;
+    if (rows.size() == 1) {
+      rowToEdit = rows.get(0) + 1;
+      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)) });
+    }
+    else {
+      rowToEdit = model.getSize();
+      model.add(new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)));
+    }
+    control.showEditor(rowToEdit);
+    control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);
   }
 }

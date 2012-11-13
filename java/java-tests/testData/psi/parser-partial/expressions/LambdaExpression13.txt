@@ -1,10 +1,29 @@
 PsiJavaFile:LambdaExpression13.java
-  PsiErrorElement:Unparsed tokens
-    PsiJavaToken:LT('<')
-    PsiIdentifier:T('T')
-    PsiJavaToken:GT('>')
-    PsiIdentifier:t('t')
+  PsiTypeCastExpression:(I1 & I2) () -> {}
+    PsiJavaToken:LPARENTH('(')
+    PsiTypeElement:I1 & I2
+      PsiTypeElement:I1
+        PsiJavaCodeReferenceElement:I1
+          PsiIdentifier:I1('I1')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:AND('&')
+      PsiWhiteSpace(' ')
+      PsiTypeElement:I2
+        PsiJavaCodeReferenceElement:I2
+          PsiIdentifier:I2('I2')
+          PsiReferenceParameterList
+            <empty list>
+    PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiJavaToken:ARROW('->')
-    PsiWhiteSpace(' ')
-    PsiIdentifier:t('t')
+    PsiLambdaExpression:() -> {}
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:ARROW('->')
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')

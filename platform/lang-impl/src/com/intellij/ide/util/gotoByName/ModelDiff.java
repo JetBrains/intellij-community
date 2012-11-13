@@ -83,7 +83,6 @@ public class ModelDiff {
 
     @Override
     public void apply() {
-      //System.out.println("removing: "+this);
       myListModel.removeRangeFromModel(start, end);
     }
 

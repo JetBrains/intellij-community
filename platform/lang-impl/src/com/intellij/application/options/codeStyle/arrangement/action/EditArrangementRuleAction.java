@@ -15,11 +15,14 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import gnu.trove.TIntArrayList;
 
 /**
  * @author Denis Zhdanov
@@ -31,9 +34,23 @@ public class EditArrangementRuleAction extends AnAction implements DumbAware, To
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.edit.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.edit.description"));
   }
-  
+
+  @Override
+  public void update(AnActionEvent e) {
+    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    e.getPresentation().setEnabled(control != null && control.getSelectedModelRows().size() == 1);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
-    // TODO den implement
+    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    if (control == null) {
+      return;
+    }
+    TIntArrayList rows = control.getSelectedModelRows();
+    if (rows.size() != 1) {
+      return;
+    }
+    control.showEditor(rows.get(0));
   }
 }

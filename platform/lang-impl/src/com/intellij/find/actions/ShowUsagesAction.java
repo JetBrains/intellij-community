@@ -336,6 +336,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
             Container parent = processIcon.getParent();
             parent.remove(processIcon);
             parent.repaint();
+            pingEDT.ping(); // repaint title
             synchronized (usages) {
               if (visibleNodes.isEmpty()) {
                 if (usages.isEmpty()) {
@@ -422,7 +423,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      for (int i=end-1; i>=start; i--) {
+      for (int i=end; i>=start; i--) {
         removeRow(i);
       }
     }
@@ -504,7 +505,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return new InplaceButton("Options..." + shortcutText, AllIcons.General.Settings, new ActionListener() {
+    return new InplaceButton("Settings..." + shortcutText, AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {

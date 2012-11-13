@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.plugins.groovy.griffon.GriffonCreateProjectDialog">
+  <grid id="27dc6" binding="myComponent" layout-manager="GridLayoutManager" row-count="6" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="500" height="162"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="8db57" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="e4473"/>
+          <text value="Additional &amp;options:"/>
+        </properties>
+      </component>
+      <component id="e4473" class="javax.swing.JTextField" binding="myOptionField">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <minimum-size width="150" height="-1"/>
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <columns value="100"/>
+        </properties>
+      </component>
+      <component id="64b00" class="javax.swing.JRadioButton" binding="myCreateApp" default-binding="true">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Create an &amp;application (create-app)"/>
+        </properties>
+      </component>
+      <component id="34959" class="javax.swing.JRadioButton" binding="myCreatePlugin">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Create a &amp;plugin (create-plugin)"/>
+        </properties>
+      </component>
+      <component id="58a43" class="javax.swing.JRadioButton" binding="myCreateAddon">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Create an a&amp;ddon (create-addon)"/>
+        </properties>
+      </component>
+      <component id="d9e96" class="javax.swing.JRadioButton" binding="myCreateArchetype">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Create an a&amp;rchetype (create-archetype)"/>
+        </properties>
+      </component>
+      <component id="5fcd3" class="javax.swing.JLabel" binding="myCreateLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Label"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="myButtonGroup1">
+      <member id="64b00"/>
+      <member id="34959"/>
+      <member id="58a43"/>
+      <member id="d9e96"/>
+    </group>
+  </buttonGroups>
+</form>

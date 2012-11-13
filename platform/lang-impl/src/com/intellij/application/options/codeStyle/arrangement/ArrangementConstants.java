@@ -29,8 +29,8 @@ public class ArrangementConstants {
 
   public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
 
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU       = "Arrangement.RuleEditor.Context.Menu";
-  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.RuleEditor.ToolBar";
+  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU    = "Arrangement.Rule.Match.Control.Context.Menu";
+  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Match.Control.ToolBar";
 
   @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
   @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";
@@ -47,8 +47,6 @@ public class ArrangementConstants {
   public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 40;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
-
-  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
 
   public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
     = DataKey.create("Arrangement.Rule.Function.Update.Move");
