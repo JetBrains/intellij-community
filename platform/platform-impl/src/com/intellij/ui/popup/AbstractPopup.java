@@ -461,7 +461,8 @@ public class AbstractPopup implements JBPopup {
       showInCenterOf(focused);
     }
     else {
-      final JFrame frame = WindowManager.getInstance().getFrame(myProject);
+      final WindowManager manager = WindowManager.getInstance();
+      final JFrame frame = myProject != null ? manager.getFrame(myProject) : manager.findVisibleFrame();
       showInCenterOf(frame.getRootPane());
     }
   }
