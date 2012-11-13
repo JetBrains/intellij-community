@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -53,6 +55,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -62,6 +66,7 @@ import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingToken
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mCOMMA;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mELVIS;
 import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mQUESTION;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.mSEMI;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_ASTERISKS;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_START;
@@ -230,6 +235,33 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     if (myType2 == ARGUMENTS) createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     if (myType2 == CLOSABLE_BLOCK) createSpaceInCode(myGroovySettings.SPACE_BEFORE_CLOSURE_LBRACE);
+  }
+
+  @Override
+  public void visitFile(GroovyFileBase file) {
+    if (myType1 == PACKAGE_DEFINITION && myType2 != mSEMI ||
+        myType1 == mSEMI && getStatementBySemicolon(myChild1.getPsi()) instanceof GrPackageDefinition) {
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, 100);
+    }
+    else if (myType2 == PACKAGE_DEFINITION) {
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_BEFORE_PACKAGE + 1, mySettings.KEEP_LINE_BREAKS, 100);
+    }
+    else {
+      super.visitFile(file);
+    }
+  }
+
+  @Nullable
+  private static GrTopStatement getStatementBySemicolon(@NotNull PsiElement semi) {
+    PsiElement prev = semi.getPrevSibling();
+    while (prev != null &&
+           TokenSets.WHITE_SPACES_OR_COMMENTS.contains(prev.getNode().getElementType()) &&
+           prev.getText().indexOf('\n') < 0) {
+      prev = prev.getPrevSibling();
+    }
+
+    if (prev instanceof GrTopStatement) return (GrTopStatement)prev;
+    return null;
   }
 
   public void visitClosure(GrClosableBlock closure) {
