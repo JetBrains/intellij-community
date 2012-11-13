@@ -17,7 +17,10 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -55,7 +58,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       }
     }
     else {
-      g.setColor(state == ActionButtonComponent.PUSHED ? UIUtil.getPanelBackground().darker() : ALPHA_40);
+      final Color bg = UIUtil.getPanelBackground();
+      final boolean dark = UIUtil.isUnderDarcula();
+      g.setColor(state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
       g.fillRect(1, 1, dimension.width - 2, dimension.height - 2);
     }
   }
@@ -71,9 +76,12 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       }
     }
     else {
-      g.setColor(UIUtil.getPanelBackground().darker().darker());
+      final double shift = UIUtil.isUnderDarcula() ? 1/0.49 : 0.49;
+      g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
       ((Graphics2D)g).setStroke(BASIC_STROKE);
+      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       g.drawRoundRect(r.x, r.y, r.width - 2, r.height - 2, 4, 4);
+      config.restore();
     }
   }
 

@@ -28,9 +28,8 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -83,43 +82,38 @@ public class SaveAsTemplateAction extends AnAction {
                                                                          substring(startOffset,
                                                                                    selection.getEndOffset()));
     final int offsetDelta = startOffset;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+    new WriteCommandAction.Simple(project, (String)null) {
       @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
+      protected void run() throws Throwable {
+        Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
 
-            for (PsiElement element : psiElements) {
-              for (PsiReference reference : element.getReferences()) {
-                if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference) reference).getQualifier() == null) {
-                  String canonicalText = reference.getCanonicalText();
-                  TextRange referenceRange = reference.getRangeInElement();
-                  final TextRange elementTextRange = element.getTextRange();
-                  LOG.assertTrue(elementTextRange != null, elementTextRange);
-                  final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);
-                  final String oldText = document.getText(range);
-                  // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
-                  // they will be duplicated
-                  int pos = canonicalText.indexOf('<');
-                  if (pos > 0 && !oldText.contains("<")) {
-                    canonicalText = canonicalText.substring(0, pos);
-                  }
-                  if (!canonicalText.equals(oldText)) {
-                    rangeToText.put(document.createRangeMarker(range), canonicalText);
-                  }
-                }
+        for (PsiElement element : psiElements) {
+          for (PsiReference reference : element.getReferences()) {
+            if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
+              String canonicalText = reference.getCanonicalText();
+              TextRange referenceRange = reference.getRangeInElement();
+              final TextRange elementTextRange = element.getTextRange();
+              LOG.assertTrue(elementTextRange != null, elementTextRange);
+              final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);
+              final String oldText = document.getText(range);
+              // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
+              // they will be duplicated
+              int pos = canonicalText.indexOf('<');
+              if (pos > 0 && !oldText.contains("<")) {
+                canonicalText = canonicalText.substring(0, pos);
+              }
+              if (!canonicalText.equals(oldText)) {
+                rangeToText.put(document.createRangeMarker(range), canonicalText);
               }
             }
-
-            for (Map.Entry<RangeMarker, String> entry : rangeToText.entrySet()) {
-              document.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
-            }
           }
-        });
+        }
+
+        for (Map.Entry<RangeMarker, String> entry : rangeToText.entrySet()) {
+          document.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
+        }
       }
-    }, null, null);
+    }.execute();
 
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);

@@ -61,14 +61,19 @@ void set_inotify_callback(void (* callback)(char*, int));
 int get_inotify_fd();
 int get_watch_count();
 bool watch_limit_reached();
-int watch(const char* root);
+int watch(const char* root, array* mounts);
 void unwatch(int id);
 bool process_inotify_input();
 void close_inotify();
 
 
 // reads one line from stream, trims trailing carriage return if any
-// returns pointer to the internal buffer (will be overwriten on next call)
+// returns pointer to the internal buffer (will be overwritten on next call)
 char* read_line(FILE* stream);
+
+
+// path comparison
+bool is_parent_path(const char* parent_path, const char* child_path);
+
 
 #endif

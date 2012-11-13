@@ -37,7 +37,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -84,26 +87,8 @@ public class CreateExternalAction extends DumbAwareAction {
   private void doInBackground(Project project, VirtualFile vf, String url, boolean checkout, String target) {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(url);
       final File ioFile = new File(vf.getPath());
-      final SVNWCClient wcClient = vcs.createWCClient();
-      final SVNPropertyData propertyData =
-        wcClient.doGetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
-      String newValue;
-      if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
-        final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
-        for (SVNExternal external : externals) {
-          if (Comparing.equal(external.getPath(), target)) {
-            AbstractVcsHelper.getInstance(project).showError(new VcsException("Selected destination conflicts with existing: " + external.toString()), "Create External");
-            return;
-          }
-        }
-        final String string = createExternalDefinitionString(url, target);
-        newValue = propertyData.getValue().getString() + "\n" + string;
-      } else {
-        newValue = createExternalDefinitionString(url, target);
-      }
-      wcClient.doSetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), false, SVNDepth.EMPTY, null, null);
+      if (addToExternalProperty(vcs, ioFile, target, url)) return;
       final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
       final FilePathImpl filePath = new FilePathImpl(ioFile, true);
       dirtyScopeManager.fileDirty(filePath);
@@ -135,7 +120,30 @@ public class CreateExternalAction extends DumbAwareAction {
     }
   }
 
-  private String createExternalDefinitionString(String url, String target) {
+  public static boolean addToExternalProperty(SvnVcs vcs, File ioFile, String target, String url) throws SVNException {
+    final SVNWCClient wcClient = vcs.createWCClient();
+    final SVNPropertyData propertyData =
+      wcClient.doGetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+    String newValue;
+    if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
+      final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
+      for (SVNExternal external : externals) {
+        if (Comparing.equal(external.getPath(), target)) {
+          AbstractVcsHelper
+            .getInstance(vcs.getProject()).showError(new VcsException("Selected destination conflicts with existing: " + external.toString()), "Create External");
+          return true;
+        }
+      }
+      final String string = createExternalDefinitionString(url, target);
+      newValue = propertyData.getValue().getString() + "\n" + string;
+    } else {
+      newValue = createExternalDefinitionString(url, target);
+    }
+    wcClient.doSetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), false, SVNDepth.EMPTY, null, null);
+    return false;
+  }
+
+  public static String createExternalDefinitionString(String url, String target) {
     return url + " " + target;
   }
 

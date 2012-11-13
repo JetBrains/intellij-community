@@ -20,6 +20,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
@@ -34,6 +35,7 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
+  public static final Key<Boolean> CLASS_NAME_REFERENCE_FRAGMENT = Key.create("CLASS_NAME_REFERENCE_FRAGMENT");
   private Project myProject;
   private PsiClass mySelectedClass;
   private String myChooserTitle;
@@ -52,6 +54,7 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
         if (resolveScope != null) {
           fragment.forceResolveScope(resolveScope);
         }
+        fragment.putUserData(CLASS_NAME_REFERENCE_FRAGMENT, true);
         return PsiDocumentManager.getInstance(project).getDocument(fragment);
       }
     }, selectedClass != null ? selectedClass.getQualifiedName() : "");

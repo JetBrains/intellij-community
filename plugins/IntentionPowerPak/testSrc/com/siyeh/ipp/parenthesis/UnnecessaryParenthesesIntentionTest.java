@@ -15,6 +15,8 @@ public class UnnecessaryParenthesesIntentionTest extends IPPTestCase {
   public void testStringParentheses() { assertIntentionNotAvailable(); }
   public void testComparisonParentheses() { assertIntentionNotAvailable(); }
   public void testNotCommutative2() { doTest(); }
+  public void testArrayInitializer() { doTest(); }
+  public void testArrayAccessExpression() { doTest(); }
 
   @Override
   protected String getRelativePath() {

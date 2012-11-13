@@ -60,7 +60,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,7 +75,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static ScheduledExecutorService ourUpdateAlarm = createChangeListExecutor();
+  private static final AtomicReference<ScheduledExecutorService> ourUpdateAlarm = new AtomicReference<ScheduledExecutorService>();
+  static {
+    ourUpdateAlarm.set(createChangeListExecutor());
+  }
 
   private static ScheduledThreadPoolExecutor createChangeListExecutor() {
     return VcsUtil.createExecutor("Change List Updater");
@@ -1376,7 +1378,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static void waitUpdateAlarm() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    ourUpdateAlarm.execute(new Runnable() {
+    ourUpdateAlarm.get().execute(new Runnable() {
       @Override
       public void run() {
         semaphore.up();
@@ -1387,8 +1389,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void stopEveryThingIfInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ourUpdateAlarm.shutdownNow();
-    ourUpdateAlarm = createChangeListExecutor();
+    ourUpdateAlarm.get().shutdownNow();
+    ourUpdateAlarm.set(createChangeListExecutor());
+  }
+
+  public void forceGoInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myUpdater.forceGo();
   }
 
   /**
@@ -1419,17 +1426,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
     private RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
-    private final ExecutorService myService;
+    private final AtomicReference<ScheduledExecutorService> myService;
 
 
-    public MyChangesDeltaForwarder(final Project project, final ExecutorService service) {
+    public MyChangesDeltaForwarder(final Project project, final AtomicReference<ScheduledExecutorService> service) {
       myService = service;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      myService.submit(new Runnable() {
+      myService.get().submit(new Runnable() {
         public void run() {
           final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
           if (correctedPair == null) return;
@@ -1439,7 +1446,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      myService.submit(new Runnable() {
+      myService.get().submit(new Runnable() {
         public void run() {
           final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
           if (correctedPair == null) return;

@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -26,12 +27,14 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ArrangementConstants {
 
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
-  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW  = "Arrangement.RuleEditor.ToolWIndow";
+  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
 
-  @NonNls public static final String RULE_EDITOR_PLACE             = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String RULE_EDITOR_TOOL_WINDOW_PLACE = "Arrangement.RuleEditor.ToolWindow.Place";
-  @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
+  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU    = "Arrangement.Rule.Match.Control.Context.Menu";
+  @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Match.Control.ToolBar";
+
+  @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE         = "Arrangement.Rule.Match.Control.Place";
 
   public static final int HORIZONTAL_PADDING    = 8;
   public static final int VERTICAL_PADDING      = 4;
@@ -44,9 +47,6 @@ public class ArrangementConstants {
   public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 40;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
-
-  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
-  public static final DataKey<Runnable> REMOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Remove");
 
   public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
     = DataKey.create("Arrangement.Rule.Function.Update.Move");

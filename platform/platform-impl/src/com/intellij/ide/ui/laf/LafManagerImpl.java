@@ -422,7 +422,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private boolean checkLookAndFeel(final UIManager.LookAndFeelInfo lafInfo, final boolean confirm) {
     String message = null;
 
-    if (lafInfo.getName().contains("GTK") && SystemInfo.isLinux && !SystemInfo.isJavaVersionAtLeast("1.6.0_12")) {
+    if (lafInfo.getName().contains("GTK") && SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast("1.6.0_12")) {
       message = IdeBundle.message("warning.problem.laf.1");
     }
 

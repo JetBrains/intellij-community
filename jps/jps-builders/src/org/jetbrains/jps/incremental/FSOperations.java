@@ -13,15 +13,12 @@ import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -121,15 +118,6 @@ public class FSOperations {
   }
 
   static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles) throws IOException {
-    final Set<File> excludes;
-    if (target instanceof ModuleBuildTarget) {
-      excludes = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      final ModuleExcludeIndex index = context.getProjectDescriptor().getModuleExcludeIndex();
-      excludes.addAll(index.getModuleExcludes(((ModuleBuildTarget)target).getModule()));
-    }
-    else {
-      excludes = Collections.emptySet();
-    }
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
@@ -137,14 +125,13 @@ public class FSOperations {
         continue;
       }
       context.getProjectDescriptor().fsState.clearRecompile(rd);
-      traverseRecursively(context, rd, rd.getRootFile(), excludes, timestamps, forceMarkDirty, currentFiles);
+      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles);
     }
   }
 
   private static void traverseRecursively(CompileContext context,
                                           final BuildRootDescriptor rd,
                                           final File file,
-                                          Set<File> excludes,
                                           @NotNull final Timestamps tsStorage,
                                           final boolean forceDirty,
                                           @Nullable Set<File> currentFiles) throws IOException {
@@ -153,9 +140,9 @@ public class FSOperations {
     }
     final File[] children = file.listFiles();
     if (children != null) { // is directory
-      if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {
+      if (children.length > 0 && !rd.getExcludedRoots().contains(file)) {
         for (File child : children) {
-          traverseRecursively(context, rd, child, excludes, tsStorage, forceDirty, currentFiles);
+          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles);
         }
       }
     }
@@ -173,6 +160,28 @@ public class FSOperations {
       if (currentFiles != null) {
         currentFiles.add(file);
       }
+    }
+  }
+
+  public static void pruneEmptyDirs(@Nullable final THashSet<File> dirsToDelete) {
+    THashSet<File> additionalDirs = null;
+    THashSet<File> toDelete = dirsToDelete;
+    while (toDelete != null) {
+      for (File file : toDelete) {
+        // important: do not force deletion if the directory is not empty!
+        final boolean deleted = file.delete();
+        if (deleted) {
+          final File parentFile = file.getParentFile();
+          if (parentFile != null) {
+            if (additionalDirs == null) {
+              additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            }
+            additionalDirs.add(parentFile);
+          }
+        }
+      }
+      toDelete = additionalDirs;
+      additionalDirs = null;
     }
   }
 }

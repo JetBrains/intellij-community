@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -333,28 +334,31 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
         return;
       }
 
-      final GraphicsConfig c = new GraphicsConfig(g);
-      c.setAntialiasing(true);
+      final GraphicsConfig c = GraphicsUtil.setupAAPainting(g);
+      GraphicsUtil.setupAntialiasing(g, true, true);
 
       int arc = 8;
-
-      g.setColor(UIUtil.getPanelBackground());
-      g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
-      
-      Color bg = getBackground().darker().darker();
-      bg = ColorUtil.toAlpha(bg, 230);
-
-      g.setColor(bg);
-
+      Color bg = getBackground();
       final Rectangle bounds = myProcessName.getBounds();
       final Rectangle label = SwingUtilities.convertRectangle(myProcessName.getParent(), bounds, this);
 
-
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
 
-      g.setColor(UIUtil.getPanelBackground());
-      g.fillRoundRect(0, getHeight() / 2, getWidth() - 1, getHeight() / 2, arc, arc);
-      g.fillRect(0, (int)label.getMaxY() + 1, getWidth() - 1, getHeight() / 2);
+      if (!UIUtil.isUnderDarcula()) {
+        bg = ColorUtil.toAlpha(bg.darker().darker(), 230);
+        g.setColor(bg);
+
+        g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+
+        g.setColor(UIUtil.getPanelBackground());
+        g.fillRoundRect(0, getHeight() / 2, getWidth() - 1, getHeight() / 2, arc, arc);
+        g.fillRect(0, (int)label.getMaxY() + 1, getWidth() - 1, getHeight() / 2);
+      } else {
+        bg = bg.brighter();
+        g.setColor(bg);
+        g.drawLine(0, (int)label.getMaxY() + 1, getWidth() - 1, (int)label.getMaxY() + 1);
+      }
 
       g.setColor(bg);
       g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates various functionality related to showing arrangement nodes to end-users.
@@ -62,8 +63,8 @@ public class ArrangementNodeDisplayManager {
   }
 
   private void refreshMaxWidths() {
-    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
-    for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
+    Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
+    for (Map.Entry<ArrangementSettingType, Set<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getKey(), entry.getValue()));
     }
   }

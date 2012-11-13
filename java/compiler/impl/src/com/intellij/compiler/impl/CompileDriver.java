@@ -93,6 +93,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
@@ -595,7 +596,7 @@ public class CompileDriver {
   }
 
 
-  public static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
 
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
@@ -612,7 +613,7 @@ public class CompileDriver {
     final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true);
 
     StatusBar.Info.set("", myProject, "Compiler");
-    if (useExtProcessBuild && BuildManager.getInstance().rescanRequired(myProject)) {
+    if (useExtProcessBuild) {
       // ensure the project model seen by build process is up-to-date
       myProject.save();
     }
@@ -748,6 +749,11 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  @Nullable @TestOnly
+  public static ExitStatus getExternalBuildExitStatus(CompileContext context) {
+    return context.getUserData(COMPILE_SERVER_BUILD_STATUS);
   }
 
   private void doCompile(final CompileContextImpl compileContext,

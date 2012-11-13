@@ -1,9 +1,16 @@
 <html>
 <body>
-Reports any calls of abstract methods within a constructor of an
-abstract class. Such calls may result in subtle bugs, as the object is not guaranteed to be initialized
+Reports any calls of <b>abstract</b> methods of the current class during object construction.
+A call is during object construction if it is made inside a constructor, in an non-static instance initializer,
+in a non-static field initializer or inside a <b>clone()</b>, <b>readObject()</b> or <b>readObjectNoData()</b> method.
+Such calls may result in subtle bugs, as the object is not guaranteed to be initialized
 before the method call occurs.
 <!-- tooltip end -->
+<p>
+The inspections <i>Overridable method called during object construction</i>,
+<i>Overridden method called during object construction</i> and
+<i>Abstract method called during object construction</i> report overlapping problem sets and only one should be enabled at a time
+to prevent duplicate warnings.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

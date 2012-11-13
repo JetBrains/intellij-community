@@ -56,7 +56,7 @@ public class DarculaTest {
     }
     catch (UnsupportedLookAndFeelException ignored) {}
     final JFrame frame = new JFrame("Darcula Demo");
-    frame.setSize(600, 500);
+    frame.setSize(900, 500);
     final DarculaTest form = new DarculaTest();
     final JPanel root = form.myRoot;
     frame.setContentPane(root);

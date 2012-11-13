@@ -187,7 +187,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   private static boolean matchesQualifier(final Object element,
                                           @NotNull final ChooseByNameBase base,
-                                          final List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
+                                          @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return false;
 
@@ -220,6 +220,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return true;
   }
 
+  @NotNull
   private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(String qualifierPattern, final ChooseByNameBase base) {
     return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
       @NotNull

@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.notSet;
+import static com.intellij.util.BitUtil.set;
 
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
@@ -35,6 +37,7 @@ public class ReferenceParser {
   public static final int WILDCARD = 0x04;
   public static final int DIAMONDS = 0x08;
   public static final int DISJUNCTIONS = 0x10;
+  public static final int CONJUNCTIONS = 0x20;
 
   public static class TypeInfo {
     public boolean isPrimitive = false;
@@ -61,29 +64,32 @@ public class ReferenceParser {
 
   @Nullable
   public TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
-    final TypeInfo typeInfo = parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS),
-                                            isSet(flags, ELLIPSIS));
+    final TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
-    if (typeInfo != null && isSet(flags, DISJUNCTIONS) && builder.getTokenType() == JavaTokenType.OR) {
-      typeInfo.marker = typeInfo.marker.precede();
+    if (typeInfo != null) {
+      assert notSet(flags, DISJUNCTIONS|CONJUNCTIONS) : "don't not set both flags simultaneously";
+      final IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
 
-      while (builder.getTokenType() == JavaTokenType.OR) {
-        builder.advanceLexer();
-        if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
-          error(builder, JavaErrorMessages.message("expected.identifier"));
+      if (operator != null && builder.getTokenType() == operator) {
+        typeInfo.marker = typeInfo.marker.precede();
+
+        while (builder.getTokenType() == operator) {
+          builder.advanceLexer();
+          if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
+            error(builder, JavaErrorMessages.message("expected.identifier"));
+          }
+          parseTypeInfo(builder, flags, false);
         }
-        parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
-      }
 
-      typeInfo.marker.done(JavaElementType.TYPE);
+        typeInfo.marker.done(JavaElementType.TYPE);
+      }
     }
 
     return typeInfo;
   }
 
   @Nullable
-  private TypeInfo parseTypeInfo(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard, final boolean badWildcard,
-                                 final boolean diamonds, final boolean ellipsis) {
+  private TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags, final boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
@@ -96,14 +102,14 @@ public class ReferenceParser {
       typeInfo.isPrimitive = true;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, eatLastDot, true, false, false, false, diamonds, typeInfo);
+      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
-    else if ((wildcard || badWildcard) && tokenType == JavaTokenType.QUEST) {
+    else if ((isSet(flags, WILDCARD) || badWildcard) && tokenType == JavaTokenType.QUEST) {
       type.drop();
-      typeInfo.marker = parseWildcardType(builder, wildcard);
+      typeInfo.marker = parseWildcardType(builder, isSet(flags, WILDCARD));
       return typeInfo.marker != null ? typeInfo : null;
     }
-    else if (diamonds && tokenType == JavaTokenType.GT) {
+    else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       emptyElement(builder, JavaElementType.DIAMOND_TYPE);
       type.done(JavaElementType.TYPE);
       typeInfo.marker = type;
@@ -133,7 +139,7 @@ public class ReferenceParser {
       type = type.precede();
     }
 
-    if (ellipsis && builder.getTokenType() == JavaTokenType.ELLIPSIS) {
+    if (isSet(flags, ELLIPSIS) && builder.getTokenType() == JavaTokenType.ELLIPSIS) {
       type = type.precede();
       builder.advanceLexer();
       type.done(JavaElementType.TYPE);
@@ -263,9 +269,10 @@ public class ReferenceParser {
       return false;
     }
 
+    final int flags = set(set(EAT_LAST_DOT, WILDCARD, wildcard), DIAMONDS, diamonds);
     boolean isOk = true;
     while (true) {
-      if (parseTypeInfo(builder, true, wildcard, true, diamonds, false) == null) {
+      if (parseTypeInfo(builder, flags, true) == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
       }
       else {

@@ -24,8 +24,10 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Arrays;
@@ -61,10 +63,10 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
     final PsiType type = parameters[0].getType();
     final PsiType collection = substitutor.substitute(type);
 
-    final PsiType iterable = PsiUtil.extractIterableTypeParameter(collection, true);
+    final PsiType iterable = getIteratedType(parent, collection);
     if (iterable != null) {
       return Arrays.asList(
-        new ClosureParameterInfo(PsiImplUtil.normalizeWildcardTypeByPosition(iterable, (GrExpression)parent).getCanonicalText(), "entry"),
+        new ClosureParameterInfo(iterable.getCanonicalText(), "entry"),
         new ClosureParameterInfo("int", "i")
       );
     }
@@ -74,7 +76,7 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
 
       final Project project = context.getProject();
 
-      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass("java.util.Map.Entry", parent.getResolveScope());
+      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, parent.getResolveScope());
       if (entry == null) return null;
 
       final PsiClassType entryType = JavaPsiFacade.getElementFactory(project).createType(entry, typeParams);
@@ -84,5 +86,22 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
     }
 
     return Arrays.asList(new ClosureParameterInfo(collection.getCanonicalText(), "entry"), new ClosureParameterInfo("int", "i"));
+  }
+
+  private static PsiType getIteratedType(PsiElement parent, PsiType collection) {
+    if (parent instanceof GrReferenceExpression) {
+      final GrExpression qualifier = ((GrReferenceExpression)parent).getQualifier();
+      if (qualifier != null) {
+        return ClosureParameterEnhancer.findTypeForIteration(qualifier, parent);
+      }
+    }
+
+    final PsiType iterable = PsiUtil.extractIterableTypeParameter(collection, true);
+    if (iterable != null && parent instanceof GrExpression) {
+      return PsiImplUtil.normalizeWildcardTypeByPosition(iterable, (GrExpression)parent);
+    }
+    else {
+      return iterable;
+    }
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
-import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class CreateFromTemplateMode extends WizardMode {
     for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
       Collection<ProjectTemplate> templates = entry.getValue();
       if (templates.size() == 1 &&
-          !ArchivedTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
 
         if (!(templates.iterator().next() instanceof ArchivedProjectTemplate)) {
           sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);

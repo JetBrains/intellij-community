@@ -15,14 +15,18 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
+import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,16 +38,16 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 10/30/12 5:28 PM
  */
-public class ArrangementMatchingRulesPanel extends JPanel {
+public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
-  @NotNull private final ArrangementMatchingRulesControl myList;
+  @NotNull private final ArrangementMatchingRulesControl myControl;
 
   public ArrangementMatchingRulesPanel(@NotNull ArrangementNodeDisplayManager displayManager,
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
-    setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("arrangement.settings.section.match")));
-    setLayout(new GridBagLayout());
+    super(new GridBagLayout());
+    
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
     ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
@@ -65,17 +69,37 @@ public class ArrangementMatchingRulesPanel extends JPanel {
         }
       }
     };
-    myList = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
-    scrollPane.setViewportView(myList);
+    myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
+    scrollPane.setViewportView(myControl);
+    CustomizationUtil.installPopupHandler(
+      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
+    );
+
+    TitleWithToolbar top = new TitleWithToolbar(
+      ApplicationBundle.message("arrangement.settings.section.match"),
+      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
+      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE,
+      myControl
+    );
+    add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
   }
 
   @NotNull
   public List<StdArrangementMatchRule> getRules() {
-    return myList.getRules();
+    return myControl.getRules();
   }
   
   public void setRules(@Nullable List<StdArrangementMatchRule> rules) {
-    myList.setRules(rules);
+    myControl.setRules(rules);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (ArrangementConstants.MATCHING_RULES_CONTROL_KEY.is(dataId)) {
+      return myControl;
+    }
+    return null;
   }
 }

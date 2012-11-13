@@ -32,7 +32,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -359,7 +358,7 @@ public class IncProjectBuilder {
         context.processMessage(new FileDeletedEvent(outs));
       }
     }
-    pruneEmptyDirs(dirsToDelete);
+    FSOperations.pruneEmptyDirs(dirsToDelete);
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
@@ -757,7 +756,7 @@ public class IncProjectBuilder {
         Utils.REMOVED_SOURCES_KEY.set(context, targetToRemovedSources);
       }
 
-      pruneEmptyDirs(dirsToDelete);
+      FSOperations.pruneEmptyDirs(dirsToDelete);
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
@@ -787,7 +786,20 @@ public class IncProjectBuilder {
               FSOperations.processFilesToRecompile(context, chunk, processor);
             }
           };
-        deleteOutputsOfDirtyFiles(context, dirtyFilesHolder);
+        if (!context.isProjectRebuild()) {
+          final Map<ModuleBuildTarget, Set<File>> cleanedSources = BuildOperations
+            .cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
+          for (Map.Entry<ModuleBuildTarget, Set<File>> entry : cleanedSources.entrySet()) {
+            final ModuleBuildTarget target = entry.getKey();
+            final Set<File> files = entry.getValue();
+            if (!files.isEmpty()) {
+              final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+              for (File srcFile : files) {
+                mapping.setOutputs(srcFile.getPath(), Collections.<String>emptyList());
+              }
+            }
+          }
+        }
 
         BUILDER_CATEGORY_LOOP:
         for (BuilderCategory category : BuilderCategory.values()) {
@@ -858,88 +870,6 @@ public class IncProjectBuilder {
     }
 
     return doneSomething;
-  }
-
-  private static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
-  void deleteOutputsOfDirtyFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
-    if (context.isProjectRebuild()) {
-      return;
-    }
-
-    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-    try {
-      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
-      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> storageMap = new HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
-
-        @Override
-        public boolean apply(T target, File file, R sourceRoot) throws IOException {
-          SourceToOutputMapping srcToOut = storageMap.get(target);
-          if (srcToOut == null) {
-            srcToOut = dataManager.getSourceToOutputMap(target);
-            storageMap.put(target, srcToOut);
-          }
-          final String srcPath = file.getPath();
-          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
-
-          if (outputs != null) {
-            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
-            for (String output : outputs) {
-              if (outputsToLog != null) {
-                outputsToLog.add(output);
-              }
-              final File outFile = new File(output);
-              final boolean deleted = outFile.delete();
-              if (deleted && shouldPruneOutputDirs) {
-                final File parent = outFile.getParentFile();
-                if (parent != null) {
-                  dirsToDelete.add(parent);
-                }
-              }
-            }
-            if (!outputs.isEmpty()) {
-              context.processMessage(new FileDeletedEvent(outputs));
-            }
-            srcToOut.setOutputs(srcPath, Collections.<String>emptyList());
-          }
-          return true;
-        }
-      });
-
-      if (outputsToLog != null && context.isMake()) {
-        logger.logDeletedFiles(outputsToLog);
-      }
-      // attempting to delete potentially empty directories
-      pruneEmptyDirs(dirsToDelete);
-    }
-    catch (Exception e) {
-      throw new ProjectBuildException(e);
-    }
-  }
-
-  private static void pruneEmptyDirs(@Nullable final THashSet<File> dirsToDelete) {
-    THashSet<File> additionalDirs = null;
-    THashSet<File> toDelete = dirsToDelete;
-    while (toDelete != null) {
-      for (File file : toDelete) {
-        // important: do not force deletion if the directory is not empty!
-        final boolean deleted = file.delete();
-        if (deleted) {
-          final File parentFile = file.getParentFile();
-          if (parentFile != null) {
-            if (additionalDirs == null) {
-              additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-            }
-            additionalDirs.add(parentFile);
-          }
-        }
-      }
-      toDelete = additionalDirs;
-      additionalDirs = null;
-    }
   }
 
   private static List<ChunkGroup> buildChunkGroups(BuildTargetIndex index) {

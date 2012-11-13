@@ -62,11 +62,6 @@ import java.util.*;
 public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager {
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
-    "javax.annotation.Resource",
-    "javax.xml.ws.WebServiceRef",
-    "javax.persistence.PersistenceContext",
-    "javax.persistence.PersistenceUnit",
-    "javax.persistence.GeneratedValue"
   };
 
   // null means uninitialized

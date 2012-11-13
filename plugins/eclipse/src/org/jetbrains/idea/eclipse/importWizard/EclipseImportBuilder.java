@@ -136,6 +136,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     });
 
+    setFileToImport(path);
     return getParameters().workspace != null;
   }
 

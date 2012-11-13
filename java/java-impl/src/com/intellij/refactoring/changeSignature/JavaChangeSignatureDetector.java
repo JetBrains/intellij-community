@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,10 +139,12 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   private static boolean isInsideMethodSignature(PsiElement element, @NotNull PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     final TextRange textRange = element.getTextRange();
+    final PsiModifierList psiModifierList = method.getModifierList();
+    if (psiModifierList instanceof LightModifierList) return false;
     if (body != null) {
-      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset();
+      return textRange.getEndOffset() <= body.getTextOffset() && textRange.getStartOffset() >= psiModifierList.getTextRange().getEndOffset();
     }
-    return textRange.getStartOffset() >= method.getModifierList().getTextRange().getEndOffset() &&
+    return textRange.getStartOffset() >= psiModifierList.getTextRange().getEndOffset() &&
            textRange.getEndOffset() <= method.getTextRange().getEndOffset();
   }
 

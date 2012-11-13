@@ -47,7 +47,7 @@ import java.util.Set;
  * <ul>
  * <li>for Macs we perform synchronization with system clipboard on a separate thread and schedule it when IDEA frame is activated
  * or Copy/Cut action in Swing component is invoked, and use native method calls to access system clipboard lock-free (?);</li>
- * <li>for Linux we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
+ * <li>for X Window we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
  * </ul>
  * </p>
  *
@@ -73,8 +73,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isLinux) {
-      myClipboardHandler = new LinuxClipboardHandler();
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isXWindow) {
+      myClipboardHandler = new XWinClipboardHandler();
     }
     else {
       myClipboardHandler = new ClipboardHandler();
@@ -304,7 +304,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     return result;
   }
 
-  private static class LinuxClipboardHandler extends ClipboardHandler {
+  private static class XWinClipboardHandler extends ClipboardHandler {
     private static final FlavorTable FLAVOR_MAP = (FlavorTable)SystemFlavorMap.getDefaultFlavorMap();
 
     private volatile Transferable myCurrentContent = null;

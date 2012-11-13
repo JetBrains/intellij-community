@@ -828,13 +828,13 @@
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementRuleDownAction"
             icon="AllIcons.ToolbarDecorator.MoveDown"/>
     
-    <group id="Arrangement.RuleEditor.Context.Menu">
+    <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Edit"/>
     </group>
     
-    <group id="Arrangement.RuleEditor.ToolWIndow">
+    <group id="Arrangement.Rule.Match.Control.ToolBar">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Move.Up"/>
