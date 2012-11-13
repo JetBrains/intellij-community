@@ -1,6 +1,5 @@
 package com.intellij.platform.templates.github;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,53 +26,8 @@ public class DownloadUtil {
   public static final String CONTENT_LENGTH_TEMPLATE = "${content-length}";
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
-  @NotNull
-  private static String formatGithubRepositoryName(@Nullable String userName, @NotNull String repositoryName) {
-    StringBuilder builder = new StringBuilder("github-");
-    if (userName != null) {
-      builder.append(userName).append("-");
-    }
-    return builder.append(repositoryName).toString();
-  }
-
-  private static File getCacheDir(@Nullable String userName, @NotNull String repositoryName) {
-    File generatorsDir = new File(PathManager.getSystemPath(), "projectGenerators");
-    String dirName = formatGithubRepositoryName(userName, repositoryName);
-    File dir = new File(generatorsDir, dirName);
-    try {
-      return dir.getCanonicalFile();
-    } catch (IOException e) {
-      return dir;
-    }
-  }
-
-  public static File findCacheFile(@Nullable String userName, @NotNull String repositoryName, @NotNull String cacheFileName) {
-    File dir = getCacheDir(userName, repositoryName);
-    return new File(dir, cacheFileName);
-  }
-
   /**
-   * Downloads content of {@code url} to {@code outputFile}.
-   * {@code outputFile} won't be modified in case of any I/O download errors.
-   *
-   * @param indicator   progress indicator
-   * @param url         url to download
-   * @param outputFile  output file
-   */
-  public static void downloadAtomically(@Nullable ProgressIndicator indicator,
-                                        @NotNull String url,
-                                        @NotNull File outputFile,
-                                        @Nullable String userName,
-                                        @NotNull String repositoryName) throws IOException
-  {
-    String fileName = new File(repositoryName).getName();
-    String tempFileName = String.format("github-%s-%s-%s", userName, fileName, outputFile.getName());
-    File tempFile = FileUtil.createTempFile(tempFileName + "-", ".tmp");
-    downloadAtomically(indicator, url, outputFile, tempFile);
-  }
-
-  /**
-   * Downloads content of {@code url} to {@code outputFile}.
+   * Downloads content of {@code url} to {@code outputFile} and uses .
    * {@code outputFile} won't be modified in case of any I/O download errors.
    *
    * @param indicator   progress indicator
@@ -95,44 +48,6 @@ public class DownloadUtil {
     }
   }
 
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public static void downloadContentToFileWithProgressSynchronously(
-    @Nullable Project project,
-    @NotNull final String url,
-    @NotNull String progressTitle,
-    @NotNull final File outputFile,
-    @Nullable final String userName,
-    @NotNull final String repositoryName) throws GeneratorException
-  {
-    Outcome<File> outcome = provideDataWithProgressSynchronously(
-      project,
-      progressTitle,
-      "Downloading zip archive" + CONTENT_LENGTH_TEMPLATE + " ...",
-      new Callable<File>() {
-        @Override
-        public File call() throws Exception {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          downloadAtomically(progress, url, outputFile, userName, repositoryName);
-          return outputFile;
-        }
-      }, new Producer<Boolean>() {
-      @Override
-      public Boolean produce() {
-        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
-      }
-    }
-    );
-    File out = outcome.get();
-    if (out != null) {
-      return;
-    }
-    Exception e = outcome.getException();
-    if (e != null) {
-      throw new GeneratorException("Can not fetch content from " + url);
-    }
-    throw new GeneratorException("Download was cancelled");
-  }
 
   @NotNull
   public static <V> Outcome<V> provideDataWithProgressSynchronously(
@@ -213,13 +128,13 @@ public class DownloadUtil {
       substituteContentLength(progress, originalText, contentLength);
       NetUtils.copyStreamContent(progress, in, output, contentLength);
     } catch (IOException e) {
-      LOG.warn("Can not download '" + location
-               + "', response code: " + urlConnection.getResponseCode()
-               + ", response message: " + urlConnection.getResponseMessage()
-               + ", headers: " + urlConnection.getHeaderFields(),
-               e
+      throw new IOException(
+        "Can not download '" + location
+        + "', response code: " + urlConnection.getResponseCode()
+        + ", response message: " + urlConnection.getResponseMessage()
+        + ", headers: " + urlConnection.getHeaderFields(),
+        e
       );
-      throw e;
     }
     finally {
       try {

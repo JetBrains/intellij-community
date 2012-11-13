@@ -30,7 +30,6 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = ContainerUtil.newArrayList();
   private final GithubTagInfo myMasterTag;
   private JComboBox myComboBox;
-  private final GithubTagListProvider myProvider;
   private JComponent myComponent;
   private JLabel myErrorMessage;
   private JButton myReloadButton;
@@ -53,8 +52,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       }
     });
 
-    myProvider = new GithubTagListProvider(ghUserName, ghRepoName);
-    ImmutableSet<GithubTagInfo> cachedTags = myProvider.getCachedTags();
+    final GithubTagListProvider provider = new GithubTagListProvider(ghUserName, ghRepoName);
+    ImmutableSet<GithubTagInfo> cachedTags = provider.getCachedTags();
     if (cachedTags != null) {
       updateTagList(cachedTags);
     }
@@ -63,14 +62,10 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        asyncUpdateTags();
+        provider.updateTagListAsynchronously(GithubProjectGeneratorPeer.this);
       }
     });
-    asyncUpdateTags();
-  }
-
-  private void asyncUpdateTags() {
-    myProvider.updateTagListAsynchronously(this);
+    provider.updateTagListAsynchronously(this);
   }
 
   void updateTagList(@NotNull ImmutableSet<GithubTagInfo> tags) {
@@ -78,7 +73,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       return;
     }
     List<GithubTagInfo> sortedTags = createSortedTagList(tags);
-    GithubTagInfo selectedItem = ObjectUtils.tryCast(myComboBox.getSelectedItem(), GithubTagInfo.class);
+    GithubTagInfo selectedItem = GithubTagInfo.tryCast(myComboBox.getSelectedItem());
     if (selectedItem == null && sortedTags.size() > 0) {
       selectedItem = sortedTags.get(0);
     }
@@ -90,8 +85,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     if (selectedItem != null) {
       // restore previously selected item
       for (int i = 0; i < myComboBox.getItemCount(); i++) {
-        GithubTagInfo
-          item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
+        GithubTagInfo item = GithubTagInfo.tryCast(myComboBox.getItemAt(i));
         if (item != null && item.getName().equals(selectedItem.getName())) {
           myComboBox.setSelectedIndex(i);
           break;
