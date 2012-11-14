@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +32,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProvider {
   private static final String KEY = "AndroidLayoutSelectedEditor";
+  private static VirtualFile myCurrentOpenedFile;
 
   @Nullable
   @Override
   public FileEditorProvider getSelectedProvider(Project project, VirtualFile openedFile) {
+    myCurrentOpenedFile = null;
+
     if (!AndroidDesignerEditorProvider.acceptLayout(project, openedFile)) {
       return null;
     }
@@ -58,27 +62,33 @@ public class AndroidSelectedFileEditorProvider implements SelectedFileEditorProv
     public void projectOpened() {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
-          myProject.getMessageBus().connect(myProject)
-            .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-              @Override
-              public void fileOpened(FileEditorManager source, VirtualFile file) {
-              }
+          MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+          connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+            @Override
+            public void beforeFileOpened(FileEditorManager source, VirtualFile file) {
+              myCurrentOpenedFile = file;
+            }
+          });
+          connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+            @Override
+            public void fileOpened(FileEditorManager source, VirtualFile file) {
+            }
 
-              @Override
-              public void fileClosed(FileEditorManager source, VirtualFile file) {
-              }
+            @Override
+            public void fileClosed(FileEditorManager source, VirtualFile file) {
+            }
 
-              @Override
-              public void selectionChanged(FileEditorManagerEvent event) {
-                VirtualFile file = event.getNewFile();
-                if (file != null && AndroidDesignerEditorProvider.acceptLayout(myProject, file)) {
-                  FileEditorProvider provider = EditorHistoryManager.getInstance(myProject).getSelectedProvider(file);
-                  if (provider != null) {
-                    PropertiesComponent.getInstance(myProject).setValue(KEY, provider.getEditorTypeId());
-                  }
+            @Override
+            public void selectionChanged(FileEditorManagerEvent event) {
+              VirtualFile file = event.getNewFile();
+              if (file != null && AndroidDesignerEditorProvider.acceptLayout(myProject, file)) {
+                FileEditorProvider provider = EditorHistoryManager.getInstance(myProject).getSelectedProvider(file);
+                if (provider != null && file != myCurrentOpenedFile) {
+                  PropertiesComponent.getInstance(myProject).setValue(KEY, provider.getEditorTypeId());
                 }
               }
-            });
+            }
+          });
         }
       });
     }
