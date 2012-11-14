@@ -16,10 +16,12 @@
 package com.intellij.psi.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BY_NAME
 
 /**
  * @author Denis Zhdanov
@@ -67,6 +69,26 @@ class Test {
   private void getInner() {}
 }''',
       rules: [rule("get.*", PUBLIC), rule(PROTECTED)]
+    )
+  }
+  
+  void "test name and sort"() {
+    doTest(
+      initial: '''\
+class Test {
+  private void getC() {}
+  public void test() {}
+  public void getA() {}
+  public void getB() {}
+}''',
+      expected: '''\
+class Test {
+  public void getA() {}
+  public void getB() {}
+  private void getC() {}
+  public void test() {}
+}''',
+      rules: [rule(BY_NAME, "get.*")]
     )
   }
 }

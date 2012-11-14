@@ -70,6 +70,11 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
 
   @NotNull
   protected static StdArrangementMatchRule rule(@NotNull Object ... conditions) {
+    rule(ArrangementEntryOrderType.KEEP, conditions)
+  }
+  
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull ArrangementEntryOrderType orderType, @NotNull Object ... conditions) {
     def condition
     if (conditions.length == 1) {
       condition = atom(conditions[0])
@@ -78,7 +83,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
       condition = ArrangementUtil.combine(conditions.collect { atom(it) } as ArrangementMatchCondition[])
     }
     
-    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition))
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), orderType)
   }
   
   @NotNull

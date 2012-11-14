@@ -28,13 +28,17 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,9 +232,11 @@ public class ArrangementEngine {
     }
 
     Set<E> matched = new HashSet<E>();
-
+    
+    int startIndex;
     for (ArrangementMatchRule rule : rules) {
       matched.clear();
+      startIndex = arranged.size();
       for (E entry : unprocessed) {
         if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
           arranged.add(entry);
@@ -238,6 +244,11 @@ public class ArrangementEngine {
         }
       }
       unprocessed.removeAll(matched);
+      
+      // Sort by name if necessary.
+      if (rule.getOrderType() == ArrangementEntryOrderType.BY_NAME) {
+        sortByName(arranged, startIndex);
+      }
     }
     arranged.addAll(unprocessed);
 
@@ -254,6 +265,42 @@ public class ArrangementEngine {
     }
 
     return arranged;
+  }
+
+  private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries, int startIndex) {
+    int entriesToSortNumber = entries.size() - startIndex;
+    if (entriesToSortNumber < 2) {
+      return;
+    }
+    List<E> buffer = new ArrayList<E>(entriesToSortNumber);
+    List<E> subList = entries.subList(startIndex, entries.size());
+    buffer.addAll(subList);
+    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<E>();
+    int i = 0;
+    for (E e : buffer) {
+      weights.put(e, ++i);
+    }
+    ContainerUtil.sort(buffer, new Comparator<E>() {
+      @Override
+      public int compare(E e1, E e2) {
+        String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
+        String name2 = e2 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e2).getName() : null;
+        if (name1 != null && name2 != null) {
+          return name1.compareTo(name2);
+        }
+        else if (name1 == null && name2 == null) {
+          return weights.get(e1) - weights.get(e2);
+        }
+        else if (name2 == null) {
+          return -1;
+        }
+        else {
+          return 1;
+        }
+      }
+    });
+    subList.clear();
+    entries.addAll(buffer);
   }
 
   @SuppressWarnings("unchecked")

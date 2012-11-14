@@ -121,7 +121,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
           return null;
         }
 
-        Element orderTypeElement = element.getChild(ORDER_TYPE_ELEMENT_NAME);
+        Element orderTypeElement = ruleElement.getChild(ORDER_TYPE_ELEMENT_NAME);
         ArrangementEntryOrderType orderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
         if (orderTypeElement != null) {
           try {
