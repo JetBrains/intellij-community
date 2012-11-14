@@ -60,14 +60,6 @@ public void clear() {
 return ;
 }
 
-public boolean equals(java.lang.Object o) {
-return false;
-}
-
-public int hashCode() {
-return 0;
-}
-
 public java.lang.String get(int index) {
 return null;
 }
