@@ -36,7 +36,7 @@ setProperty("artifactsDir", "${output}/artifacts")
 setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
-def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml"]
+def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest"]
 
 target(name: "clean", description: "Cleanup output") {
   ant.delete(dir: "${output}", failonerror: "false")
@@ -82,6 +82,10 @@ target(name: "compile", description: "Compile module python") {
     }
     fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
       include(name: "*.jar")
+    }
+    fileset(dir: "${output}") {
+      include(name: "localization*.jar")
+      include(name: "rest*.jar")
     }
   }
 
