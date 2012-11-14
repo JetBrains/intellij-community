@@ -33,15 +33,13 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "math.random.cast.to.int.display.name");
+    return InspectionGadgetsBundle.message("math.random.cast.to.int.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "math.random.cast.to.int.problem.descriptor");
+    return InspectionGadgetsBundle.message("math.random.cast.to.int.problem.descriptor");
   }
 
   @Override
@@ -64,8 +62,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     return new MathRandomCastToIntegerFix();
   }
 
-  private static class MathRandomCastToIntegerFix
-    extends InspectionGadgetsFix {
+  private static class MathRandomCastToIntegerFix extends InspectionGadgetsFix {
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -114,8 +111,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     return new MathRandomCastToIntegerVisitor();
   }
 
-  private static class MathRandomCastToIntegerVisitor
-    extends BaseInspectionVisitor {
+  private static class MathRandomCastToIntegerVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
@@ -129,13 +125,11 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final PsiType type = castType.getType();
-      if (!PsiType.INT.equals(type)) {
+      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)operand;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       @NonNls
       final String referenceName = methodExpression.getReferenceName();
       if (!"random".equals(referenceName)) {
@@ -150,7 +144,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = containingClass.getQualifiedName();
-      if (!"java.lang.Math".equals(qualifiedName)) {
+      if (!"java.lang.Math".equals(qualifiedName) && !"java.lang.StrictMath".equals(qualifiedName)) {
         return;
       }
       registerError(methodCallExpression, expression);
