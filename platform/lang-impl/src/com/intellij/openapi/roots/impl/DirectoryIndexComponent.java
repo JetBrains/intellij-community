@@ -109,10 +109,12 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       myState = updateStateWithNewFile(file, parent);
     }
 
+    @NotNull
     private IndexState updateStateWithNewFile(@NotNull VirtualFile file, @NotNull VirtualFile parent) {
       final IndexState originalState = myState;
       IndexState state = originalState;
-      DirectoryInfo parentInfo = originalState.myDirToInfoMap.get(getId(parent));
+      int parentId = getId(parent);
+      DirectoryInfo parentInfo = originalState.myDirToInfoMap.get(parentId);
 
       // fill info for all nested roots
       for (Module eachModule : ModuleManager.getInstance(myProject).getModules()) {
@@ -147,7 +149,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       if (state == originalState) state = state.copy();
       state.fillMapWithModuleContent(file, module, parentInfo.getContentRoot(), null);
 
-      String parentPackage = state.myDirToPackageName.get(getId(parent));
+      String parentPackage = state.myDirToPackageName.get(parentId);
 
       if (module != null) {
         if (parentInfo.isInModuleSource()) {
