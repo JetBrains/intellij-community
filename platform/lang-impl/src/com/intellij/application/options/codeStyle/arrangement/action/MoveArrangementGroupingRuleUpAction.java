@@ -16,35 +16,58 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
+
+import javax.swing.table.DefaultTableModel;
 
 /**
  * @author Denis Zhdanov
- * @since 9/28/12 12:16 PM
+ * @since 11/14/12 10:52 AM
  */
-public class MoveArrangementRuleUpAction extends AnAction implements DumbAware {
+public class MoveArrangementGroupingRuleUpAction extends AnAction implements DumbAware {
 
-  public MoveArrangementRuleUpAction() {
+  public MoveArrangementGroupingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.up.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.up.description"));
   }
 
   @Override
   public void update(AnActionEvent e) {
-    Function<Boolean,Boolean> function = ArrangementConstants.UPDATE_MOVE_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    e.getPresentation().setEnabled(function != null && function.fun(true));
+    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    if (control == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    int[] rows = control.getSelectedRows();
+    e.getPresentation().setEnabled(rows.length == 1 && rows[0] != 0);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Consumer<Boolean> function = ArrangementConstants.MOVE_RULE_FUNCTION_KEY.getData(e.getDataContext());
-    if (function != null) {
-      function.consume(true);
+    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    if (control == null) {
+      return;
     }
+
+    int[] rows = control.getSelectedRows();
+    int row = rows[0];
+    if (rows.length != 1 || row == 0) {
+      return;
+    }
+
+    if (control.isEditing()) {
+      control.getCellEditor().stopCellEditing();
+    }
+
+    DefaultTableModel model = control.getModel();
+    Object value = model.getValueAt(row, 0);
+    model.removeRow(row);
+    model.insertRow(row - 1, new Object[] { value });
+    control.getSelectionModel().setSelectionInterval(row - 1, row - 1);
   }
 }

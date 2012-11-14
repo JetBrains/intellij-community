@@ -970,11 +970,19 @@ public class TypeConversionUtil {
         }
       }
       else {
+        boolean effectiveAllowUncheckedConversion = allowUncheckedConversion;
+        if (typeRight instanceof PsiCapturedWildcardType) {
+          effectiveAllowUncheckedConversion = false;
+          final PsiClass psiClass = PsiUtil.resolveClassInType(((PsiCapturedWildcardType)typeRight).getWildcard().getBound());
+          if (psiClass != null && !psiClass.hasTypeParameters()) {
+            effectiveAllowUncheckedConversion = allowUncheckedConversion;
+          }
+        }
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, allowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, allowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(typeRight, leftBound, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
       }
     }

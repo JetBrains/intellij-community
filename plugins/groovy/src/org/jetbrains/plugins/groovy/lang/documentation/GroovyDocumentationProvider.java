@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
@@ -335,6 +336,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (element == null) return null;
 
     String standard = JavaDocumentationProvider.generateExternalJavadoc(element);
+
+    if (element instanceof GrVariable &&
+        ((GrVariable)element).getTypeElementGroovy() == null &&
+        ((GrVariable)element).getTypeGroovy() != null &&
+        standard != null) {
+      final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
+
+      StringBuilder buffer = new StringBuilder(truncated);
+      buffer.append("<p> [inferred type] ");
+      JavaDocInfoGenerator.generateType(buffer, ((GrVariable)element).getTypeGroovy(), element);
+
+      if (!truncated.equals(standard)) {
+        buffer.append(BODY_HTML);
+      }
+      standard = buffer.toString();
+    }
 
     String gdslDoc = element.getUserData(NonCodeMembersHolder.DOCUMENTATION);
     if (gdslDoc != null) {

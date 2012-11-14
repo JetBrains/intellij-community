@@ -543,7 +543,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         myLabel.setEnabled(node.isEnabled());
       }
       else {
-        myLabel.setText(value.toString());
+        myLabel.setText(getRenamedTitle(value.toString(), value.toString()));
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
         myLabel.setEnabled(true);
       }

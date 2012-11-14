@@ -31,13 +31,15 @@ import org.jetbrains.annotations.Nullable;
 public interface DirectoryProjectGenerator<T> {
   ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
+  @NotNull
   @Nls
   String getName();
 
   @Nullable
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
-  void generateProject(final Project project, final VirtualFile baseDir, final T settings, Module module);
+  void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                       @NotNull final T settings, @NotNull final Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

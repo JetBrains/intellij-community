@@ -123,7 +123,7 @@ public class GroovycRunner {
       }, Phases.CONVERSION);
 
       addSources(forStubs, srcFiles, unit);
-      runPatchers(patchers, compilerMessages, unit, resourceLoader);
+      runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
 
       System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
       final List compiledFiles = GroovyCompilerWrapper.compile(compilerMessages, forStubs, unit);
@@ -151,6 +151,7 @@ public class GroovycRunner {
     }
     catch (Throwable e) {
       e.printStackTrace();
+      System.exit(1);
     }
     /*
     finally {
@@ -263,11 +264,11 @@ public class GroovycRunner {
     }
   }
 
-  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader) {
+  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
-          patcher.patchCompilationUnit(unit, loader);
+          patcher.patchCompilationUnit(unit, loader, srcFiles.toArray(new File[srcFiles.size()]));
         }
         catch (LinkageError e) {
           addExceptionInfo(compilerMessages, e, "Couldn't run " + patcher.getClass().getName());

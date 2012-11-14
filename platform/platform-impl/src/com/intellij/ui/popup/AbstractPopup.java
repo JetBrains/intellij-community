@@ -461,7 +461,8 @@ public class AbstractPopup implements JBPopup {
       showInCenterOf(focused);
     }
     else {
-      final JFrame frame = WindowManager.getInstance().getFrame(myProject);
+      final WindowManager manager = WindowManager.getInstance();
+      final JFrame frame = myProject != null ? manager.getFrame(myProject) : manager.findVisibleFrame();
       showInCenterOf(frame.getRootPane());
     }
   }
@@ -916,6 +917,7 @@ public class AbstractPopup implements JBPopup {
         }
       });
     } else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -924,7 +926,7 @@ public class AbstractPopup implements JBPopup {
             return;
           }
 
-          if (ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus) {
+          if (false && ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus && prevOwner != null) {
             IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
           }
 

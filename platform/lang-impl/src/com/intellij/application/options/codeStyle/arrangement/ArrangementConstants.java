@@ -15,10 +15,9 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -27,19 +26,23 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ArrangementConstants {
 
-  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
+  public static final DataKey<ArrangementGroupingRulesControl> GROUPING_RULES_CONTROL_KEY =
+    DataKey.create("Arrangement.Rule.Group.Control");
+  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY =
+    DataKey.create("Arrangement.Rule.Match.Control");
+
+  @NonNls public static final String ACTION_GROUP_GROUPING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Group.Control.ToolBar";
+  @NonNls public static final String GROUPING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Group.Control.ToolBar.Place";
 
   @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU    = "Arrangement.Rule.Match.Control.Context.Menu";
   @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Match.Control.ToolBar";
+  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Match.Control.ToolBar.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE                = "Arrangement.Rule.Match.Control.Place";
 
-  @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";
-  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE         = "Arrangement.Rule.Match.Control.Place";
-
-  public static final int HORIZONTAL_PADDING    = 8;
-  public static final int VERTICAL_PADDING      = 4;
-  public static final int HORIZONTAL_GAP        = 5;
-  public static final int VERTICAL_GAP          = 3;
+  public static final int HORIZONTAL_PADDING = 8;
+  public static final int VERTICAL_PADDING   = 4;
+  public static final int HORIZONTAL_GAP     = 5;
+  public static final int VERTICAL_GAP       = 3;
   public static final int CALLOUT_BORDER_HEIGHT = 10;
   public static final int BORDER_ARC_SIZE       = 12;
 
@@ -47,10 +50,6 @@ public class ArrangementConstants {
   public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 40;
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
-
-  public static final DataKey<NotNullFunction<Boolean/* move up? */, Boolean/* is enabled */>> UPDATE_MOVE_RULE_FUNCTION_KEY
-    = DataKey.create("Arrangement.Rule.Function.Update.Move");
-  public static final DataKey<Consumer<Boolean/* move up? */>> MOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Move");
   
   private ArrangementConstants() {
   }

@@ -1,17 +1,17 @@
 package org.jetbrains.jps.model.ex;
 
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author nik
  */
 public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
-  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new HashMap<JpsElementChildRole<?>, JpsElement>();
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new THashMap<JpsElementChildRole<?>, JpsElement>(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {

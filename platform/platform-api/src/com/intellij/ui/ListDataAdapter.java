@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties.xml;
+package com.intellij.ui;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.ref.SoftReference;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 5/25/12
+ *         Date: 11/14/12
  */
-public abstract class SoftLazyValue<T> {
-
-  private SoftReference<T> myReference;
-
-  public T getValue() {
-    T t;
-    if (myReference == null || (t = myReference.get()) == null) {
-      t = compute();
-      myReference = new SoftReference<T>(t);
-    }
-    return t;
+public class ListDataAdapter implements ListDataListener {
+  @Override
+  public void intervalAdded(ListDataEvent e) {
+    dataChanged(e);
   }
 
-  @NotNull
-  protected abstract T compute();
+  @Override
+  public void intervalRemoved(ListDataEvent e) {
+    dataChanged(e);
+  }
+
+  @Override
+  public void contentsChanged(ListDataEvent e) {
+    dataChanged(e);
+  }
+
+  protected void dataChanged(ListDataEvent e) {
+  }
 }

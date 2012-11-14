@@ -438,11 +438,20 @@ public class GriffonFramework extends MvcFramework {
 
       for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
         handleSrc(file.findChild("src"), sourceFolders);
-        handleGriffonApp(file.findChild("griffon-app"), sourceFolders);
+        VirtualFile griffonApp = file.findChild("griffon-app");
+        handleGriffonApp(griffonApp, sourceFolders);
         List<GriffonSourceInspector.GriffonSource> sources =
           GriffonSourceInspector.processModuleMetadata(myModule);
         for (GriffonSourceInspector.GriffonSource source : sources) {
           sourceFolders.add(source.getPath());
+        }
+        if (griffonApp != null) {
+          for (VirtualFile child : file.getChildren()) {
+            if (child.getNameWithoutExtension().endsWith("GriffonAddon")) {
+              sourceFolders.add("");
+              break;
+            }
+          }
         }
       }
       return sourceFolders.toArray(new String[sourceFolders.size()]);

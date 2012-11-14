@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskListenerAdapter;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -68,7 +69,7 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
       }
     });
 
-    myTimer = new Timer(1000, new ActionListener() {
+    myTimer = new Timer(TaskManagerImpl.TIME_TRACKING_TIME_UNIT, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         table.repaint();
@@ -112,7 +113,6 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
             component.append((String)value, getAttributes(isClosed, task.isActive(), isSelected));
             component.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
-            component.setIconOpaque(false);
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);
@@ -139,7 +139,6 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
       public String valueOf(final LocalTask task) {
         long timeSpent = task.getTimeSpent();
         if (task.isActive()) {
-          timeSpent += System.currentTimeMillis() - task.getActivated();
           return formatDuration(timeSpent);
         }
         return DateFormatUtil.formatDuration(timeSpent);

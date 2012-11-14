@@ -72,7 +72,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myControl);
     CustomizationUtil.installPopupHandler(
-      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
+      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
     );
 
     TitleWithToolbar top = new TitleWithToolbar(
@@ -82,7 +82,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
       myControl
     );
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
-    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
+    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
   @NotNull

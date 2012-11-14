@@ -257,6 +257,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   }
 
   private static class EmptyProjectGenerator extends WebProjectGenerator<Object> {
+    @NotNull
     @Nls
     @Override
     public String getName() {

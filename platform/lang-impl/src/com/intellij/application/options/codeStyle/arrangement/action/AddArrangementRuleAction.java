@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.component.EmptyArrangementRuleComponent;
+import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.openapi.actionSystem.AnAction;

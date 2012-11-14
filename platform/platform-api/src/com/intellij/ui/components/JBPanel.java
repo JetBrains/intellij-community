@@ -73,8 +73,8 @@ public class JBPanel extends JPanel {
       final int h = myBackgroundImage.getIconHeight();
       int x = 0;
       int y = 0;
-      while (x < getWidth()) {
-        while (y < getHeight()) {
+      while (w > 0 &&  x < getWidth()) {
+        while (h > 0 && y < getHeight()) {
           myBackgroundImage.paintIcon(this, g, x, y);
           y+=h;
         }

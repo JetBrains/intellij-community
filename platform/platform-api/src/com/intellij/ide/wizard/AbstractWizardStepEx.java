@@ -29,6 +29,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     Prev, Next, Finish
   }
 
+  @Nullable
   private String myTitle;
 
   public interface Listener extends StepListener {
@@ -37,7 +38,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
-  public AbstractWizardStepEx(final String title) {
+  public AbstractWizardStepEx(@Nullable final String title) {
     myTitle = title;
   }
 
@@ -56,7 +57,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     myEventDispatcher.addListener(listener);
   }
 
-  protected void setTitle(final String title) {
+  protected void setTitle(@Nullable final String title) {
     myTitle = title;
   }
 
@@ -85,6 +86,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   public abstract void commit(CommitType commitType) throws CommitStepException;
 
+  @Nullable
   public String getTitle() {
     return myTitle;
   }
