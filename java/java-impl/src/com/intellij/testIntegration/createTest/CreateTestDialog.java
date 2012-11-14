@@ -475,7 +475,10 @@ public class CreateTestDialog extends DialogWrapper {
       for (SourceFolder f : e.getSourceFolders()) {
         final VirtualFile file = f.getFile();
         if (file != null && f.isTestSource()) {
-          dirs.add(PsiManager.getInstance(myProject).findDirectory(file));
+          final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+          if (dir != null) {
+            dirs.add(dir);
+          }
         }
       }
     }
