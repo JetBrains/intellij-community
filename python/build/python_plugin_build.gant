@@ -39,10 +39,8 @@ setProperty("testClassesDir", "${basedir}/dist/test-classes")
 def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest"]
 
 target(name: "clean", description: "Cleanup output") {
-  ant.delete(dir: "${output}", failonerror: "false")
   ant.delete(dir: "${classesDir}", failonerror: "false")
   ant.delete(dir: "${outDir}/classes", failonerror: "false")
-  ant.delete(dir: "${outDir}/dist", failonerror: "false")
   ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
   ant.delete(dir: "${outDir}/jar", failonerror: "false")
   ant.delete(dir: "${outDir}/deploy", failonerror: "false")
