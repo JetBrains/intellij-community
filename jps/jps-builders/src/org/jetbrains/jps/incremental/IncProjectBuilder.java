@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -172,16 +171,13 @@ public class IncProjectBuilder {
         );
         throw new RebuildRequestedException(cause);
       }
+      else if (cause != null) {
+        myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, cause));
+      }
       else {
-        if (cause == null) {
-          final String msg = e.getMessage();
-          if (!StringUtil.isEmpty(msg)) {
-            myMessageDispatcher.processMessage(new ProgressMessage(msg));
-          }
-        }
-        else {
-          myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, cause));
-        }
+        String message = e.getMessage();
+        if (message == null) message = "Internal error";
+        myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.ERROR, message));
       }
     }
     finally {
@@ -592,18 +588,17 @@ public class IncProjectBuilder {
   }
 
   private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
-
     boolean doneSomething = false;
     try {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
       BuildOperations.ensureFSStateInitialized(context, chunk);
       if (context.isMake()) {
-        doneSomething |= processDeletedPaths(context, chunk.getTargets());
+        doneSomething = processDeletedPaths(context, chunk.getTargets());
       }
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
 
-      doneSomething = runBuildersForChunk(context, chunk);
+      doneSomething |= runBuildersForChunk(context, chunk);
 
       onChunkBuildComplete(context, chunk);
 
@@ -627,7 +622,7 @@ public class IncProjectBuilder {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
       try {
-        // restore deleted paths that were not procesesd by 'integrate'
+        // restore deleted paths that were not processed by 'integrate'
         final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
         if (map != null) {
           for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
@@ -642,6 +637,7 @@ public class IncProjectBuilder {
         }
       }
       catch (IOException e) {
+        //noinspection ThrowFromFinallyBlock
         throw new ProjectBuildException(e);
       }
       finally {
@@ -942,14 +938,14 @@ public class IncProjectBuilder {
   private static CompileContext createContextWrapper(final CompileContext delegate) {
     final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
-    final Set deletedKeysSet = new ConcurrentHashSet();
-    final Class<UserDataHolder> dataHolderinterface = UserDataHolder.class;
-    final Class<MessageHandler> messageHandlerinterface = MessageHandler.class;
+    final Set<Object> deletedKeysSet = new ConcurrentHashSet<Object>();
+    final Class<UserDataHolder> dataHolderInterface = UserDataHolder.class;
+    final Class<MessageHandler> messageHandlerInterface = MessageHandler.class;
     return (CompileContext)Proxy.newProxyInstance(loader, new Class[]{CompileContext.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         final Class<?> declaringClass = method.getDeclaringClass();
-        if (dataHolderinterface.equals(declaringClass)) {
+        if (dataHolderInterface.equals(declaringClass)) {
           final Object firstArgument = args[0];
           final boolean isGlobalContextKey = firstArgument instanceof Key && GLOBAL_CONTEXT_KEYS.contains((Key)firstArgument);
           if (!isGlobalContextKey) {
@@ -973,7 +969,7 @@ public class IncProjectBuilder {
             }
           }
         }
-        else if (messageHandlerinterface.equals(declaringClass)) {
+        else if (messageHandlerInterface.equals(declaringClass)) {
           final BuildMessage msg = (BuildMessage)args[0];
           if (msg.getKind() == BuildMessage.Kind.ERROR) {
             Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
