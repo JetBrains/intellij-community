@@ -161,7 +161,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   @NotNull
   public List<TreeItem<Pair<AbstractUrl, String>>> getFavoritesListRootUrls(@NotNull String name) {
     final List<TreeItem<Pair<AbstractUrl, String>>> pairs = myName2FavoritesRoots.get(name);
-    return pairs == null ? Collections.<TreeItem<Pair<AbstractUrl, String>>>emptyList() : pairs;
+    return pairs == null ? new ArrayList<TreeItem<Pair<AbstractUrl, String>>>() : pairs;
   }
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
