@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -27,6 +28,8 @@ import java.util.Set;
  *         Date: 7/8/12
  */
 public class FSOperations {
+  public static final Key<Set<File>> ALL_OUTPUTS_KEY = Key.create("_all_project_output_dirs_");
+
   public static void markDirty(CompileContext context, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
@@ -163,16 +166,25 @@ public class FSOperations {
     }
   }
 
-  public static void pruneEmptyDirs(@Nullable final THashSet<File> dirsToDelete) {
-    THashSet<File> additionalDirs = null;
-    THashSet<File> toDelete = dirsToDelete;
+  public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
+    Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
+    if (doNotDelete == null) {
+      doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
+        doNotDelete.addAll(target.getOutputRoots(context));
+      }
+      ALL_OUTPUTS_KEY.set(context, doNotDelete);
+    }
+
+    Set<File> additionalDirs = null;
+    Set<File> toDelete = dirsToDelete;
     while (toDelete != null) {
       for (File file : toDelete) {
         // important: do not force deletion if the directory is not empty!
         final boolean deleted = file.delete();
         if (deleted) {
           final File parentFile = file.getParentFile();
-          if (parentFile != null) {
+          if (parentFile != null && !doNotDelete.contains(parentFile)) {
             if (additionalDirs == null) {
               additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
             }
