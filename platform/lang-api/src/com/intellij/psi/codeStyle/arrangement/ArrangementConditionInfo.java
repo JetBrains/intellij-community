@@ -34,13 +34,18 @@ public class ArrangementConditionInfo {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myAtomConditions = ContainerUtilRt.newHashSet();
   @NotNull private final Set<Object>                        myConditions     = ContainerUtilRt.newHashSet();
-  
-  @Nullable private ArrangementNameMatchCondition myNameCondition;
 
-  public void setNameCondition(@Nullable ArrangementNameMatchCondition condition) {
-    myNameCondition = condition;
+  @Nullable private String myNamePattern;
+
+  @Nullable
+  public String getNamePattern() {
+    return myNamePattern;
   }
-  
+
+  public void setNamePattern(@Nullable String namePattern) {
+    myNamePattern = namePattern;
+  }
+
   public void addAtomCondition(@NotNull ArrangementAtomMatchCondition condition) {
     myAtomConditions.add(condition);
     myConditions.add(condition.getValue());
@@ -66,15 +71,15 @@ public class ArrangementConditionInfo {
   @Nullable
   public ArrangementMatchCondition buildCondition() {
     if (myAtomConditions.isEmpty()) {
-      return myNameCondition == null ? null : myNameCondition;
+      return myNamePattern == null ? null : new ArrangementNameMatchCondition(myNamePattern);
     }
-    else if (myAtomConditions.size() == 1 && myNameCondition == null) {
+    else if (myAtomConditions.size() == 1 && myNamePattern == null) {
       return myAtomConditions.iterator().next();
     }
     else {
       ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(myAtomConditions);
-      if (myNameCondition != null) {
-        result.addOperand(myNameCondition);
+      if (myNamePattern != null) {
+        result.addOperand(new ArrangementNameMatchCondition(myNamePattern));
       }
       return result;
     }

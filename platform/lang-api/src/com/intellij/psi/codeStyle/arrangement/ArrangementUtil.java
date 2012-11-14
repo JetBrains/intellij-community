@@ -183,7 +183,7 @@ public class ArrangementUtil {
 
       @Override
       public void visit(@NotNull ArrangementNameMatchCondition condition) {
-        result.setNameCondition(condition); 
+        result.setNamePattern(condition.getPattern()); 
       }
     });
     return result;

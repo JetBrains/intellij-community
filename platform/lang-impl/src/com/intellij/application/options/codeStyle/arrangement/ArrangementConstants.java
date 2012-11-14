@@ -46,9 +46,10 @@ public class ArrangementConstants {
   public static final int CALLOUT_BORDER_HEIGHT = 10;
   public static final int BORDER_ARC_SIZE       = 12;
 
-  public static final int ANIMATION_ITERATION_PIXEL_STEP  = 5;
-  public static final int ANIMATION_STEPS_TIME_GAP_MILLIS = 40;
-
+  public static final int ANIMATION_ITERATION_PIXEL_STEP     = 5;
+  public static final int ANIMATION_STEPS_TIME_GAP_MILLIS    = 40;
+  public static final int NAME_CONDITION_UPDATE_DELAY_MILLIS = 1500;
+  
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
   
   private ArrangementConstants() {

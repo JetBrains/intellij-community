@@ -381,6 +381,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   @Override
+  public boolean isNameFilterSupported() {
+    return true;
+  }
+
+  @Override
   public boolean isEnabled(@NotNull ArrangementGroupingType groupingType, @Nullable ArrangementEntryOrderType orderType) {
     Set<ArrangementEntryOrderType> orderTypes = GROUPING_RULES.get(groupingType);
     if (orderTypes == null) {

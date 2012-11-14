@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
+import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
@@ -42,6 +43,13 @@ public interface ArrangementStandardSettingsAware {
    */
   @Nullable
   StdArrangementSettings getDefaultSettings();
+
+  /**
+   * @return    <code>true</code> if name-based rules are supported by the current rearranger (it knows
+   *            about {@link NameAwareArrangementEntry});
+   *            <code>false</code> otherwise
+   */
+  boolean isNameFilterSupported();
   
   /**
    * Allows to answer if given entry type can be applied for the rule specified by the given settings node.
