@@ -188,6 +188,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   static {
+    System.setProperty("svnkit.log.native.calls", "true");
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
     SVNDebugLog.setDefaultLog(logger);
 
