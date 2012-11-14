@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -424,13 +425,24 @@ public class ProfileManager {
     locales.add(new LocaleData(null, null, language2Regions.isEmpty() ? "Any locale" : "Other locale"));
 
     LocaleData newLocale = null;
-    if (myProfile.getLocaleLanguage() != null && myProfile.getLocaleRegion() != null) {
-      LocaleData oldLocale = new LocaleData(myProfile.getLocaleLanguage(), myProfile.getLocaleRegion(), "");
+    if (myProfile.getLocaleLanguage() != null || myProfile.getLocaleRegion() != null) {
+      String localeLanguage = myProfile.getLocaleLanguage();
+      String localeRegion = myProfile.getLocaleRegion();
+      LocaleData newLocaleWithoutRegion = null;
+
       for (LocaleData locale : locales) {
-        if (locale.equals(oldLocale)) {
-          newLocale = locale;
-          break;
+        if (Comparing.equal(locale.getLanguage(), localeLanguage)) {
+          if (Comparing.equal(locale.getRegion(), localeRegion)) {
+            newLocale = locale;
+            break;
+          }
+          if (newLocaleWithoutRegion == null) {
+            newLocaleWithoutRegion = locale;
+          }
         }
+      }
+      if (newLocale == null) {
+        newLocale = newLocaleWithoutRegion;
       }
     }
     if (newLocale == null) {
