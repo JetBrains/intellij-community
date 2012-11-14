@@ -65,7 +65,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       for (ArrangementGroupingRule group : groupings) {
         Element groupElement = new Element(GROUP_ELEMENT_NAME);
         groupingsElement.addContent(groupElement);
-        groupElement.addContent(new Element(TYPE_ELEMENT_NAME).setText(group.getRule().toString()));
+        groupElement.addContent(new Element(TYPE_ELEMENT_NAME).setText(group.getGroupingType().toString()));
         groupElement.addContent(new Element(ORDER_TYPE_ELEMENT_NAME).setText(group.getOrderType().toString()));
       }
     }

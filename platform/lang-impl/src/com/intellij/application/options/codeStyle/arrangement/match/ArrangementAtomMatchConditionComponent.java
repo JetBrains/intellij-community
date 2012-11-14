@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.component;
+package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
@@ -110,7 +110,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       myCloseButtonBounds = null;
     }
     else {
-      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.MATCHING_RULES_CONTROL_PLACE, buttonSize) {
+      myCloseButton = new ActionButton(
+        action,
+        action.getTemplatePresentation().clone(),
+        ArrangementConstants.MATCHING_RULES_CONTROL_PLACE,
+        buttonSize)
+      {
         @Override
         protected Icon getIcon() {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();

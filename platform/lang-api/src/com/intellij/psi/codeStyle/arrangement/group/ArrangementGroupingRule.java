@@ -41,7 +41,7 @@ public class ArrangementGroupingRule {
   }
 
   @NotNull
-  public ArrangementGroupingType getRule() {
+  public ArrangementGroupingType getGroupingType() {
     return myGroupingType;
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.component;
+package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;

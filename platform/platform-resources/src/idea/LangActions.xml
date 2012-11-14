@@ -841,5 +841,8 @@
       <reference ref="Arrangement.Rule.Move.Down"/>
     </group>
     
+    <group id="Arrangement.Rule.Group.Control.ToolBar">
+    </group>
+    
   </actions>
 </component>

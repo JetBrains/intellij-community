@@ -18,14 +18,18 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProviderImpl;
+import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesPanel;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -50,7 +54,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final Language                         myLanguage;
   @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
-  @NotNull private final ArrangementMatchingRulesPanel myMatchingRulesPanel;
+  @NotNull private final ArrangementGroupingRulesPanel    myGroupingRulesPanel;
+  @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
@@ -77,7 +82,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       mySettingsAware, colorsProvider, representationManager
     );
     
+    myGroupingRulesPanel = new ArrangementGroupingRulesPanel(displayManager, mySettingsAware);
     myMatchingRulesPanel = new ArrangementMatchingRulesPanel(displayManager, colorsProvider, mySettingsAware);
+    
+    myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1));
   }
 
@@ -102,27 +110,28 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
     return result;
   }
-  
+
   @Override
   public void apply(CodeStyleSettings settings) {
-    // TODO den implement 
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
+    commonSettings.setArrangementSettings(new StdArrangementSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules()));
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    StdArrangementSettings s = new StdArrangementSettings(myMatchingRulesPanel.getRules());
-    return false;
-    // TODO den add grouping rules support
-    //return !Comparing.equal(getSettings(settings), s);
+    StdArrangementSettings s = new StdArrangementSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules());
+    return !Comparing.equal(getSettings(settings), s);
   }
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
     StdArrangementSettings s = getSettings(settings);
     if (s == null) {
+      myGroupingRulesPanel.setRules(null);
       myMatchingRulesPanel.setRules(null);
     }
     else {
+      myGroupingRulesPanel.setRules(new ArrayList<ArrangementGroupingRule>(s.getGroupings()));
       myMatchingRulesPanel.setRules(copy(s.getRules()));
     }
   }

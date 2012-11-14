@@ -201,7 +201,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        switch (rule.getRule()) {
+        switch (rule.getGroupingType()) {
           case GETTERS_AND_SETTERS:
             setupGettersAndSetters(parseInfo);
             break;
@@ -285,7 +285,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     Set<ArrangementGroupingType> groupingRules = EnumSet.noneOf(ArrangementGroupingType.class);
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        groupingRules.add(rule.getRule());
+        groupingRules.add(rule.getGroupingType());
       }
     }
     return groupingRules;

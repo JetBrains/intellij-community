@@ -27,17 +27,18 @@ public class ArrangementConstants {
 
   public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
 
+  @NonNls public static final String ACTION_GROUP_GROUPING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Group.Control.ToolBar";
+  @NonNls public static final String GROUPING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Group.Control.ToolBar.Place";
+
   @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU    = "Arrangement.Rule.Match.Control.Context.Menu";
   @NonNls public static final String ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Match.Control.ToolBar";
+  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Match.Control.ToolBar.Place";
+  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE                = "Arrangement.Rule.Match.Control.Place";
 
-  @NonNls public static final String RULE_EDITOR_PLACE                    = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE = "Arrangement.Rule.Match.Control.ToolBar.Place";
-  @NonNls public static final String MATCHING_RULES_CONTROL_PLACE         = "Arrangement.Rule.Match.Control.Place";
-
-  public static final int HORIZONTAL_PADDING    = 8;
-  public static final int VERTICAL_PADDING      = 4;
-  public static final int HORIZONTAL_GAP        = 5;
-  public static final int VERTICAL_GAP          = 3;
+  public static final int HORIZONTAL_PADDING = 8;
+  public static final int VERTICAL_PADDING   = 4;
+  public static final int HORIZONTAL_GAP     = 5;
+  public static final int VERTICAL_GAP       = 3;
   public static final int CALLOUT_BORDER_HEIGHT = 10;
   public static final int BORDER_ARC_SIZE       = 12;
 

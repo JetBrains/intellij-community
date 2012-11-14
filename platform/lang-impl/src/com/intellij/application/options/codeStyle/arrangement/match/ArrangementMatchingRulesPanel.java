@@ -72,7 +72,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myControl);
     CustomizationUtil.installPopupHandler(
-      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
+      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
     );
 
     TitleWithToolbar top = new TitleWithToolbar(

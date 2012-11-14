@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.component;
+package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRuleEditor;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.util.CalloutBorder;
