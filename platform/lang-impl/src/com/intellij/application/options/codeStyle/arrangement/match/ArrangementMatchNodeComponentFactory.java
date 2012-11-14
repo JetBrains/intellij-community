@@ -24,10 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,6 +79,11 @@ public class ArrangementMatchNodeComponentFactory {
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager));
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementNameMatchCondition condition) {
+        ref.set(new ArrangementNameConditionComponent(condition)); 
       }
     });
     return ref.get();

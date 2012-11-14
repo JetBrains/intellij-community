@@ -52,10 +52,6 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
     visitor.visit(this);
   }
 
-  public boolean isInverted() {
-    return myInverted;
-  }
-
   public void setInverted(boolean inverted) {
     myInverted = inverted;
   }

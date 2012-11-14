@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementNameMatchCondition;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +33,19 @@ import java.util.Set;
 public class ArrangementConditionInfo {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myAtomConditions = ContainerUtilRt.newHashSet();
-  @NotNull private final Set<Object> myConditions = ContainerUtilRt.newHashSet();
+  @NotNull private final Set<Object>                        myConditions     = ContainerUtilRt.newHashSet();
+  
+  @Nullable private ArrangementNameMatchCondition myNameCondition;
 
+  public void setNameCondition(@Nullable ArrangementNameMatchCondition condition) {
+    myNameCondition = condition;
+  }
+  
   public void addAtomCondition(@NotNull ArrangementAtomMatchCondition condition) {
     myAtomConditions.add(condition);
     myConditions.add(condition.getValue());
   }
-  
+
   public boolean hasCondition(@NotNull Object condition) {
     return myConditions.contains(condition);
   }
@@ -59,13 +66,17 @@ public class ArrangementConditionInfo {
   @Nullable
   public ArrangementMatchCondition buildCondition() {
     if (myAtomConditions.isEmpty()) {
-      return null;
+      return myNameCondition == null ? null : myNameCondition;
     }
-    if (myAtomConditions.size() == 1) {
+    else if (myAtomConditions.size() == 1 && myNameCondition == null) {
       return myAtomConditions.iterator().next();
     }
     else {
-      return new ArrangementCompositeMatchCondition(myAtomConditions);
+      ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(myAtomConditions);
+      if (myNameCondition != null) {
+        result.addOperand(myNameCondition);
+      }
+      return result;
     }
   }
 }

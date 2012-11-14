@@ -217,7 +217,7 @@ public class ArrangementEngine {
       }
       else {
         if (dependencies.size() == 1 && dependencies.get(0) == entry.getParent()) {
-          // Handle a situation when the entry is condifured to be at the first parent's children.
+          // Handle a situation when the entry is configured to be at the first parent's children.
           arranged.add(entry);
         }
         else {
