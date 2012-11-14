@@ -260,14 +260,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         public ShortcutSet getShortcut() {
           return CustomShortcutSet.fromString("DELETE", "BACK_SPACE");
         }
-      }).addExtraAction(new AnActionButton("Edit", AllIcons.Actions.Edit) {
+      }).setEditAction(new AnActionButtonRunnable() {
         @Override
-        public ShortcutSet getShortcut() {
-          return CommonShortcuts.getRename();
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void run(AnActionButton button) {
           final List<FavoritesListNode> nodes = getSelectedListsNodes();
           if (nodes.size() == 1) {
             final FavoritesListProvider.Operation customEdit = myFavoritesManager.getCustomEdit(nodes.get(0).getName());
@@ -276,20 +271,22 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             }
           }
         }
-
+      }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled() {
+        public boolean isEnabled(AnActionEvent e) {
           final List<FavoritesListNode> nodes = getSelectedListsNodes();
           if (nodes.size() == 1) {
             final FavoritesListProvider.Operation customEdit = myFavoritesManager.getCustomEdit(nodes.get(0).getName());
             if (customEdit != null && customEdit.willHandle(myTree)) {
+              e.getPresentation().setText(customEdit.getCustomName());
               return true;
             }
           }
           return false;
         }
-      }).addExtraAction(new AnActionButton(exportToTextFileAction.getTemplatePresentation().getText(),
-                                           exportToTextFileAction.getTemplatePresentation().getIcon()) {
+      })
+      .addExtraAction(new AnActionButton(exportToTextFileAction.getTemplatePresentation().getText(),
+                                         exportToTextFileAction.getTemplatePresentation().getIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           exportToTextFileAction.actionPerformed(e);
