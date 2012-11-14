@@ -1,0 +1,10 @@
+<templates>
+  <template>
+    <name>Facelets Demo</name>
+    <description><![CDATA[
+    Demonstrates IDEA support for Facelets technology
+    ]]>
+    </description>
+    <path>facelets.zip</path>
+  </template>
+</templates>

@@ -50,6 +50,7 @@ import java.util.zip.ZipInputStream;
 *         Date: 10/19/12
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
+
   private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
     @Nullable
     @Override
@@ -57,6 +58,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       return s.contains(".idea") ? null : s;
     }
   };
+
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
