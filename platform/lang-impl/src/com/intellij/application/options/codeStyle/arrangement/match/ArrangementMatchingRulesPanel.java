@@ -82,7 +82,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
       myControl
     );
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
-    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
+    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
   @NotNull

@@ -52,7 +52,7 @@ public class ArrangementGroupingRulesPanel extends JPanel {
     );
     
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
-    add(myControl, new GridBag().fillCell().weightx(1).weighty(1));
+    add(myControl, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
   public void setRules(@Nullable List<ArrangementGroupingRule> rules) {

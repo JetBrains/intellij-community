@@ -22,10 +22,10 @@ import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +54,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     getColumnModel().getColumn(0).setCellEditor(new MyEditor());
     setShowColumns(false);
     setShowGrid(false);
+    setBorder(IdeBorderFactory.createBorder());
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
     for (ArrangementGroupingType groupingType : ArrangementGroupingType.values()) {
