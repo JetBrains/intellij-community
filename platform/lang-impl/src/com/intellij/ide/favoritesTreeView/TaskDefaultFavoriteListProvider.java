@@ -201,7 +201,7 @@ public class TaskDefaultFavoriteListProvider implements FavoritesListProvider {
 
       @Override
       public String getCustomName() {
-        return null;
+        return "Edit Note";
       }
 
       @Override
