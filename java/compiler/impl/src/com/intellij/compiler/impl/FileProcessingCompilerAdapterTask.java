@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.make;
+package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.impl.CompilerCacheManager;
-import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.FileProcessingCompilerStateCache;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.project.DumbService;
@@ -33,14 +30,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is an adapter for Form2SourceCompiler to CompileTask interface
+ * This is an adapter for running any FileProcessingCompiler as a compiler task
  *
  *
  * @author Eugene Zhuravlev
  *         Date: 9/5/12
  */
-public class SourceInstrumentationTask implements CompileTask{
-  private final Form2SourceCompiler myCompiler = new Form2SourceCompiler();
+public class FileProcessingCompilerAdapterTask implements CompileTask{
+  private final FileProcessingCompiler myCompiler;
+
+  public FileProcessingCompilerAdapterTask(FileProcessingCompiler compiler) {
+    myCompiler = compiler;
+  }
+
+  public FileProcessingCompiler getCompiler() {
+    return myCompiler;
+  }
 
   @Override
   public boolean execute(CompileContext context) {
