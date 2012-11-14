@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.WorkingTimeMeasurer;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 /**
@@ -78,8 +77,7 @@ public class DFAEngine<E> {
 
   @Nullable
   private ArrayList<E> performDFA(boolean timeout) {
-    ThreadMXBean tm = ManagementFactory.getThreadMXBean();
-    long startTime = tm.getCurrentThreadUserTime();
+    WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(ourTimeLimit);
 
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
     CallEnvironment env = new MyCallEnvironment(myFlow.length);
@@ -103,7 +101,7 @@ public class DFAEngine<E> {
 
         while (!workList.isEmpty()) {
           count++;
-          if (timeout && count % 512 == 0 && tm.getCurrentThreadUserTime() - startTime > ourTimeLimit) return null;
+          if (timeout && count % 512 == 0 && measurer.isTimeOver()) return null;
 
           ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();
