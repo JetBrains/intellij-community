@@ -3,6 +3,11 @@ package com.intellij.lang.javascript.boilerplate;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.WebProjectGenerator;
@@ -10,13 +15,13 @@ import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,13 +32,21 @@ import java.util.Set;
  */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
+  private static final String CONTROL_PLACE = "Github.Project.Generator.Reload";
+
+  private enum UpdateStatus {
+    UPDATING, IDLE
+  }
+
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = ContainerUtil.newArrayList();
   private final GithubTagInfo myMasterTag;
+  private final GithubTagListProvider myTagListProvider;
+  private final AsyncProcessIcon myLoadingVersionIcon = new AsyncProcessIcon("Getting github tags");
   private JComboBox myComboBox;
   private JComponent myComponent;
   private JLabel myErrorMessage;
-  private JButton myReloadButton;
   private JPanel myVersionPanel;
+  private JPanel myActionPanel;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
     String ghUserName = generator.getGithubUserName();
@@ -52,23 +65,19 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       }
     });
 
-    final GithubTagListProvider provider = new GithubTagListProvider(ghUserName, ghRepoName);
-    ImmutableSet<GithubTagInfo> cachedTags = provider.getCachedTags();
+    myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
+    fillActionPanel();
+    ImmutableSet<GithubTagInfo> cachedTags = myTagListProvider.getCachedTags();
     if (cachedTags != null) {
-      updateTagList(cachedTags);
+      tagsUpdated(cachedTags);
     }
 
     myErrorMessage.setText(null);
-    myReloadButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        provider.updateTagListAsynchronously(GithubProjectGeneratorPeer.this);
-      }
-    });
-    provider.updateTagListAsynchronously(this);
+    reloadTagsInBackground();
   }
 
-  void updateTagList(@NotNull ImmutableSet<GithubTagInfo> tags) {
+  void tagsUpdated(@NotNull ImmutableSet<GithubTagInfo> tags) {
+    show(UpdateStatus.IDLE);
     if (!shouldUpdate(tags)) {
       return;
     }
@@ -168,6 +177,65 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @Override
   public void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener) {
     myListeners.add(listener);
+  }
+
+  private void reloadTagsInBackground() {
+    show(UpdateStatus.UPDATING);
+    myTagListProvider.updateTagListAsynchronously(this);
+  }
+
+  private void show(@NotNull UpdateStatus status) {
+    CardLayout cardLayout = (CardLayout) myActionPanel.getLayout();
+    cardLayout.show(myActionPanel, status.name());
+    if (status == UpdateStatus.UPDATING) {
+      myLoadingVersionIcon.resume();
+    }
+  }
+
+  private void fillActionPanel() {
+    myActionPanel.add(createReloadButtonPanel(), UpdateStatus.IDLE.name());
+    myActionPanel.add(createReloadInProgressPanel(), UpdateStatus.UPDATING.name());
+    show(UpdateStatus.IDLE);
+  }
+
+  @NotNull
+  private JPanel createReloadButtonPanel() {
+    ReloadAction reloadAction = new ReloadAction();
+    ActionButton reloadButton = new ActionButton(
+      reloadAction,
+      reloadAction.getTemplatePresentation().clone(),
+      CONTROL_PLACE,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+    );
+    JPanel panel = new JPanel(new BorderLayout(0, 0));
+    panel.add(reloadButton, BorderLayout.WEST);
+    return panel;
+  }
+
+  @NotNull
+  private JPanel createReloadInProgressPanel() {
+    JPanel panel = new JPanel(new BorderLayout(3, 0));
+    myLoadingVersionIcon.suspend();
+    panel.add(myLoadingVersionIcon, BorderLayout.CENTER);
+    panel.add(new JLabel("Loading..."), BorderLayout.EAST);
+    return panel;
+  }
+
+  private class ReloadAction extends AnAction {
+
+    private ReloadAction() {
+      super("Reload versions", null, AllIcons.Actions.Refresh);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      GithubProjectGeneratorPeer.this.reloadTagsInBackground();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
   }
 
 }

@@ -72,7 +72,7 @@ public class GithubTagListProvider {
             LOG.info(getGeneratorName() + "Cache has been successfully updated");
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               public void run() {
-                peer.updateTagList(tags);
+                peer.tagsUpdated(tags);
               }
             });
             return;
