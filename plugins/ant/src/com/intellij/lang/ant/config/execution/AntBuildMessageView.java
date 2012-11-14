@@ -375,9 +375,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
 
   private synchronized void addCommand(LogCommand command) {
-    myLog.add(command);
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(myFlushLogRunnable, 100L);
+    if (!myAlarm.isDisposed()) {
+      myLog.add(command);
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(myFlushLogRunnable, 100L);
+    }
   }
 
   public void startBuild(String buildName) {
