@@ -50,7 +50,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
 
   @Nullable private final JComboBox myOrderTypeBox;
 
-  public ArrangementGroupingComponent(@NotNull ArrangementNodeDisplayManager displayManager,
+  public ArrangementGroupingComponent(@NotNull final ArrangementNodeDisplayManager displayManager,
                                       @NotNull ArrangementGroupingType groupingType,
                                       @NotNull Collection<ArrangementEntryOrderType> availableOrderTypes)
   {
@@ -87,6 +87,12 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     }
     else {
       myOrderTypeBox = new JComboBox(availableOrderTypes.toArray());
+      myOrderTypeBox.setRenderer(new ListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          return new JLabel(displayManager.getDisplayValue(value));
+        }
+      });
     }
 
     init();
@@ -139,7 +145,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     boolean checked = isChecked();
     myGroupingTypeLabel.setEnabled(checked);
     if (myOrderTypeBox != null) {
-      myOrderTypeBox.setEditable(checked);
+      myOrderTypeBox.setEnabled(checked);
     }
   }
 
