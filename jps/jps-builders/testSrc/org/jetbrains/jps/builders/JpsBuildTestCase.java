@@ -112,7 +112,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
     try {
-      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourceFile(Object.class).getCanonicalPath()));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

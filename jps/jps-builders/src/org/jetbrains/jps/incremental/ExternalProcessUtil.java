@@ -77,7 +77,7 @@ public class ExternalProcessUtil {
             }
             commandLineWrapperArgs = Arrays.asList(
               "-classpath",
-              ClasspathBootstrap.getResourcePath(wrapperClass).getPath(),
+              ClasspathBootstrap.getResourcePath(wrapperClass),
               wrapperClass.getName(),
               classpathFile.getAbsolutePath()
             );

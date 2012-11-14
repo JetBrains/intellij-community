@@ -79,6 +79,7 @@
     <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
     <extensionPoint name="compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
     <extensionPoint name="compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin"/>
+    <extensionPoint name="compileServer.pathProvider" area="IDEA_PROJECT" interface="com.intellij.compiler.server.CompileServerPathProvider"/>
 
 
     <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>

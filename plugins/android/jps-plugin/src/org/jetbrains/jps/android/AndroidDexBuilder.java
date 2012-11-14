@@ -349,8 +349,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     programParamList.add("--exclude");
 
     final List<String> classPath = new ArrayList<String>();
-    classPath.add(ClasspathBootstrap.getResourcePath(AndroidDxRunner.class).getPath());
-    classPath.add(ClasspathBootstrap.getResourcePath(FileUtilRt.class).getPath());
+    classPath.add(ClasspathBootstrap.getResourcePath(AndroidDxRunner.class));
+    classPath.add(ClasspathBootstrap.getResourcePath(FileUtilRt.class));
 
     final File outFile = new File(outFilePath);
     if (outFile.exists() && !outFile.delete()) {
