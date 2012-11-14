@@ -711,11 +711,10 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    final Color color = UIManager.getColor("List.selectionBackground");
-    if (color == null) {
+    if (isUnderNimbusLookAndFeel()) {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus
     }
-    return color;
+    return UIManager.getColor("List.selectionBackground");
   }
 
   public static Color getListUnfocusedSelectionBackground() {

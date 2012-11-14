@@ -4,5 +4,6 @@ public class MathRandomCastToInt {
 
   void foo() {
     int runs = (int) Math.random() * 1000000 * 2;
+    long random = (long) Math.random() * 10;
   }
 }

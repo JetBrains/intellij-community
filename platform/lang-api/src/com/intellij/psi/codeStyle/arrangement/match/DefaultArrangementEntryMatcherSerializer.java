@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -74,7 +75,6 @@ public class DefaultArrangementEntryMatcherSerializer {
   private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
 
   @NotNull private static final String COMPOSITE_CONDITION_NAME = "AND";
-  
   private static final Set<String> ATOM_SETTINGS_TYPES = new HashSet<String>();
 
   static {
@@ -145,6 +145,7 @@ public class DefaultArrangementEntryMatcherSerializer {
     switch (settingType) {
       case TYPE: value = ArrangementEntryType.valueOf(matcherElement.getText()); break;
       case MODIFIER: value = ArrangementModifier.valueOf(matcherElement.getText()); break;
+      case NAME: value = StringUtil.unescapeStringCharacters(matcherElement.getText()); break;
       default:
         LOG.warn(String.format(
           "Can't deserialize an arrangement entry matcher from element of type '%s' with text '%s'",
@@ -162,29 +163,32 @@ public class DefaultArrangementEntryMatcherSerializer {
     
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-      Element element = new Element(condition.getType().toString()).setText(condition.getValue().toString());
-      if (result == null) {
-        result = element;
+      String content = condition.getValue().toString();
+      if (condition.getType() == ArrangementSettingType.NAME) {
+        content = StringUtil.escapeStringCharacters(content);
       }
-      if (parent != null) {
-        parent.addContent(element);
-      }
+      Element element = new Element(condition.getType().toString()).setText(content);
+      register(element);
     }
 
     @Override
     public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
       Element composite = new Element(COMPOSITE_CONDITION_NAME);
-      if (result == null) {
-        result = composite;
-      }
-      if (parent != null) {
-        parent.addContent(composite);
-      }
+      register(composite);
       parent = composite;
       List<ArrangementMatchCondition> operands = new ArrayList<ArrangementMatchCondition>(condition.getOperands());
       ContainerUtil.sort(operands, CONDITION_COMPARATOR);
       for (ArrangementMatchCondition c : operands) {
         c.invite(this);
+      }
+    }
+
+    private void register(@NotNull Element element) {
+      if (result == null) {
+        result = element;
+      }
+      if (parent != null) {
+        parent.addContent(element);
       }
     }
   }

@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -97,7 +97,9 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     
     FontMetrics metrics = g.getFontMetrics();
     int baseLine = SimpleColoredComponent.getTextBaseLine(metrics, metrics.getHeight());
-    myRowIndexControl.setBaseLine(baseLine + ArrangementConstants.VERTICAL_GAP + myDelegate.getUiComponent().getBounds().y - myRowIndexControl.getBounds().y);
+    myRowIndexControl.setBaseLine(
+      baseLine + ArrangementConstants.VERTICAL_GAP + myDelegate.getUiComponent().getBounds().y - myRowIndexControl.getBounds().y
+    );
     super.paintComponent(g);
   }
 
@@ -121,6 +123,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     }
     if (!beingEdited && !myUnderMouse) {
       myEditButton.setVisible(false);
+    }
+    if (beingEdited && !myBeingEdited) {
+      myEditButton.setVisible(true);
+      myEditButton.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, true);
     }
     myBeingEdited = beingEdited;
   }

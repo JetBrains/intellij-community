@@ -59,7 +59,6 @@ public class LocalTaskImpl extends LocalTask {
   private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
   private long myTimeSpent = 0;
-  private long myActivated;
 
 
   /** for serialization */
@@ -270,15 +269,5 @@ public class LocalTaskImpl extends LocalTask {
 
   public void setTimeSpent(final long timeSpent) {
     myTimeSpent = timeSpent;
-  }
-
-  @Override
-  public long getActivated() {
-    return myActivated;
-  }
-
-  @Override
-  public void setActivated(final long time) {
-    myActivated = time;
   }
 }

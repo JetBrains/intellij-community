@@ -788,7 +788,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
           final Language dialect = (Language)myDialectComboBox.getSelectedItem();
           return PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, dialect == null ? language : dialect, text);
         }
-        return PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, text);
+        return PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + ext, type, text);
       }
     }
     catch (IncorrectOperationException e) {

@@ -28,7 +28,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeDialogState;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.GoToBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.RemoveBreakpointAction;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
   private Set<XBreakpointGroupingRule<B, ?>> getInitialGroupingRules() {
     HashSet<XBreakpointGroupingRule<B, ?>> rules = new HashSet<XBreakpointGroupingRule<B, ?>>();
-    XBreakpointTypeDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getDialogState(myType);
+    XBreakpointsDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getBreakpointsDialogSettings();
     if (settings != null) {
       for (XBreakpointGroupingRule<B, ?> rule : myAllGroupingRules) {
         if (settings.getSelectedGroupingRules().contains(rule.getId())) {
@@ -209,11 +209,11 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
       mySelectedPropertiesPanel.saveProperties();
     }
     if (!mySelectedGroupingRules.isEmpty()) {
-      XBreakpointTypeDialogState state = new XBreakpointTypeDialogState();
+      XBreakpointsDialogState state = new XBreakpointsDialogState();
       for (XBreakpointGroupingRule<B, ?> rule : mySelectedGroupingRules) {
         state.getSelectedGroupingRules().add(rule.getId());
       }
-      ((XBreakpointManagerImpl)getBreakpointManager()).putDialogState(myType, state);
+      ((XBreakpointManagerImpl)getBreakpointManager()).setBreakpointsDialogSettings(state);
     }
   }
 

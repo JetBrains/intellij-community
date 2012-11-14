@@ -23,6 +23,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -119,6 +120,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setRowHeight(0);
     new TreeSpeedSearch(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
+    final FavoritesComparator favoritesComparator =
+      new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID);
     myBuilder.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -129,6 +132,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             final Comparator<FavoritesTreeNodeDescriptor> comparator = myFavoritesManager.getCustomComparator(listNode1.getName());
             if (comparator != null) {
               return comparator.compare((FavoritesTreeNodeDescriptor) o1, (FavoritesTreeNodeDescriptor) o2);
+            } else {
+              return favoritesComparator.compare(o1, o2);
             }
           }
         }
@@ -260,14 +265,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         public ShortcutSet getShortcut() {
           return CustomShortcutSet.fromString("DELETE", "BACK_SPACE");
         }
-      }).addExtraAction(new AnActionButton("Edit", AllIcons.Actions.Edit) {
+      }).setEditAction(new AnActionButtonRunnable() {
         @Override
-        public ShortcutSet getShortcut() {
-          return CommonShortcuts.getRename();
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void run(AnActionButton button) {
           final List<FavoritesListNode> nodes = getSelectedListsNodes();
           if (nodes.size() == 1) {
             final FavoritesListProvider.Operation customEdit = myFavoritesManager.getCustomEdit(nodes.get(0).getName());
@@ -276,20 +276,22 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             }
           }
         }
-
+      }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled() {
+        public boolean isEnabled(AnActionEvent e) {
           final List<FavoritesListNode> nodes = getSelectedListsNodes();
           if (nodes.size() == 1) {
             final FavoritesListProvider.Operation customEdit = myFavoritesManager.getCustomEdit(nodes.get(0).getName());
             if (customEdit != null && customEdit.willHandle(myTree)) {
+              e.getPresentation().setText(customEdit.getCustomName());
               return true;
             }
           }
           return false;
         }
-      }).addExtraAction(new AnActionButton(exportToTextFileAction.getTemplatePresentation().getText(),
-                                           exportToTextFileAction.getTemplatePresentation().getIcon()) {
+      })
+      .addExtraAction(new AnActionButton(exportToTextFileAction.getTemplatePresentation().getText(),
+                                         exportToTextFileAction.getTemplatePresentation().getIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           exportToTextFileAction.actionPerformed(e);

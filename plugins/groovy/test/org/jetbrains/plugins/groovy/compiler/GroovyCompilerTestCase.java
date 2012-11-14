@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * @author aalmiray
  * @author peter
  */
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {

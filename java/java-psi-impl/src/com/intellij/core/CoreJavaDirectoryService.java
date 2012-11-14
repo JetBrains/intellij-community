@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -82,6 +83,14 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
                               @NotNull String name,
                               @NotNull String templateName,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public PsiClass createClass(@NotNull PsiDirectory dir,
+                              @NotNull String name,
+                              @NotNull String templateName,
+                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

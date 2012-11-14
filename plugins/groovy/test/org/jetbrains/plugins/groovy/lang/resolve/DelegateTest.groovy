@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMirrorElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -29,7 +30,7 @@ class DelegateTest extends GroovyResolveTestCase {
   protected String getBasePath() {
     return "${TestUtils.testDataPath}resolve/delegate/";
   }
-  
+
   private PsiMirrorElement doTest(String text) {
     def ref = configureByText(text)
     def resolved = ref.resolve()
@@ -38,8 +39,8 @@ class DelegateTest extends GroovyResolveTestCase {
     assertInstanceOf resolved, PsiMirrorElement
     return resolved as PsiMirrorElement
   }
-  
-  
+
+
   void testSimple() {
     doTest('''
 class A {
@@ -69,7 +70,7 @@ class B {
 new B().fo<caret>o()
 ''')
   }
-  
+
   void testSelectFirst1() {
     def resolved = doTest('''
 class A1 {
@@ -117,7 +118,7 @@ new B().fo<caret>o()
     def cc = prototype.containingClass
     assertEquals 'A2', cc.name
   }
-  
+
   void testSubstitutor1() {
     def resolved = doTest('''
 class Base<T> {
@@ -181,7 +182,7 @@ new C().test()
     }
   }
 
-  
+
   void testJavaDelegate() {
     myFixture.addFileToProject('A.java', '''
 class Base {
@@ -199,7 +200,7 @@ new B().fo<caret>o()''')
   }
 
   void testInheritanceCycle() {
-    def file = myFixture.configureByText ('a.groovy', '''
+    def file = myFixture.configureByText('a.groovy', '''
 class Base {
   @Delegate A a
 }
@@ -209,9 +210,65 @@ class A extends Base {
 
 new Base().foo()
 new A().foo()''') as GroovyFile
-    
+
     file.statements.each {
       assertNotNull((it as GrMethodCall).resolveMethod())
     }
+  }
+
+  void testCompoundHierarchy() {
+    myFixture.addFileToProject('Foo.java', '''\
+public interface Foo {
+    String getA();
+
+    @Deprecated
+    String getB();
+}
+''')
+    myFixture.addFileToProject('Bar.java', '''\
+public abstract class Bar implements Foo {
+    public String getA() {
+        return null;
+    }
+
+    @Deprecated
+    public String getB() {
+        return null;
+    }
+}
+''')
+    myFixture.addFileToProject('FooBar.java', '''
+public class FooBar extends Bar implements Foo {
+}
+''')
+    assertAllMethodsImplemented('Baz.groovy', '''\
+class Baz {
+    @Delegate(deprecated = true)
+    FooBar bare
+}
+''')
+  }
+
+  private void assertAllMethodsImplemented(String fileName, String text) {
+    def file = myFixture.configureByText(fileName, text) as GroovyFile
+
+    assertNotNull(file)
+    final clazz = file.classes[0]
+    assertNotNull(clazz)
+    assertEmpty OverrideImplementUtil.getMethodSignaturesToImplement(clazz)
+  }
+
+  void testDeprecatedFalse() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+interface Foo {
+    @Deprecated
+    void foo()
+}
+''')
+    assertAllMethodsImplemented('text.groovy', '''\
+class FooImpl implements Foo {
+    @Delegate(deprecated = false) Foo delegate
+}
+''')
   }
 }

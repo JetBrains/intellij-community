@@ -84,7 +84,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
   private final Disposable myDisposable= Disposer.newDisposable();
 
-  private static final Icon BG = IconLoader.getIcon("/frame_background.jpg");
+  private static final Icon BG = IconLoader.getIcon("/frame_background.png");
 
   IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
               final Application application, IdeFrame frame){

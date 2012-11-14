@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
@@ -93,7 +94,7 @@ public class UpdateCacheTest extends PsiTestCase{
   public void testFileCreation() throws Exception {
     PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
 
-    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", "class A{ Object o;}");
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", JavaFileType.INSTANCE, "class A{ Object o;}");
     file = (PsiFile)root.add(file);
     assertNotNull(file);
 

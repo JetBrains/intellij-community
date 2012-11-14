@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,9 @@ public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment
   public PsiComment handleContentChange(PsiComment psiComment, TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = psiComment.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
-    final FileType type = psiComment.getContainingFile().getFileType();
-    final PsiFile fromText =
-      PsiFileFactory.getInstance(psiComment.getProject()).createFileFromText("__." + type.getDefaultExtension(), newText);
-
-    final PsiComment newElement = PsiTreeUtil.getParentOfType(fromText.findElementAt(0), psiComment.getClass(), false);
+    FileType type = psiComment.getContainingFile().getFileType();
+    PsiFile fromText = PsiFileFactory.getInstance(psiComment.getProject()).createFileFromText("__." + type.getDefaultExtension(), type, newText);
+    PsiComment newElement = PsiTreeUtil.getParentOfType(fromText.findElementAt(0), psiComment.getClass(), false);
     assert newElement != null;
     return (PsiComment)psiComment.replace(newElement);
   }

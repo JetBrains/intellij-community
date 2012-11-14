@@ -36,6 +36,10 @@ import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
+ *
+ * @see #createDecorator(javax.swing.JList)
+ * @see #createDecorator(javax.swing.JTable)
+ * @see #createDecorator(javax.swing.JTree)
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ToolbarDecorator implements DataProvider, CommonActionsPanel.ListenerFactory {

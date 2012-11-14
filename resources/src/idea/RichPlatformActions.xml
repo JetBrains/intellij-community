@@ -382,7 +382,7 @@
     <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
               icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
+      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ReopenRecentProject"/>
       <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenProjectAction"
               icon="AllIcons.General.OpenProject"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
@@ -419,11 +419,14 @@
     <group>
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
-
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
-    <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template...">
+
+    <group>
+      <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
+      <action class="com.intellij.platform.templates.ManageProjectTemplatesAction" text="Manage Project Templates..."/>
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
-    </action>
+    </group>
+
   </actions>
 </component>

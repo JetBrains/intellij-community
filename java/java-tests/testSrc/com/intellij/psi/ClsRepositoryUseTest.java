@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -599,7 +600,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
                         "class Dummy {\n" +
                         "  { Map<Integer, Integer> list = new HashMap<Integer, Integer>();}\n" +
                         "}";
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("Dummy.java", text);
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("Dummy.java", JavaFileType.INSTANCE, text);
 
     PsiDeclarationStatement decl = (PsiDeclarationStatement)file.getClasses()[0].getInitializers()[0].getBody().getStatements()[0];
     PsiVariable list = (PsiVariable)decl.getDeclaredElements()[0];

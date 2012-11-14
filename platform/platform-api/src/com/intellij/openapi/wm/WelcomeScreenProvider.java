@@ -28,4 +28,6 @@ public interface WelcomeScreenProvider {
 
   @Nullable
   WelcomeScreen createWelcomeScreen(JRootPane rootPane);
+
+  boolean isAvailable();
 }

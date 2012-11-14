@@ -1343,6 +1343,8 @@
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
 
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
+
+    <welcomeScreen implementation="com.intellij.ide.ui.laf.darcula.DarculaWelcomeScreenProvider"/>
   </extensions>
 
   <actions>

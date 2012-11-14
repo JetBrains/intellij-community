@@ -238,7 +238,7 @@ public class PsiTestUtil {
 
   public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
     String originalTree = DebugUtil.psiTreeToString(file, false);
-    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getText());
+    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
     String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
     Assert.assertEquals(reparsedTree, originalTree);
   }

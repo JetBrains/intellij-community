@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -46,12 +47,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
                                        @NotNull ArrangementStandardSettingsAware settingsFilter)
   {
     super(new GridBagLayout());
-    TitleWithToolbar top = new TitleWithToolbar(
-      ApplicationBundle.message("arrangement.settings.section.match"),
-      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
-      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE
-    );
-
+    
     JBScrollPane scrollPane = new JBScrollPane();
     final JViewport viewport = scrollPane.getViewport();
     ArrangementMatchingRulesControl.RepresentationCallback callback = new ArrangementMatchingRulesControl.RepresentationCallback() {
@@ -75,9 +71,18 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     };
     myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
     scrollPane.setViewportView(myControl);
+    CustomizationUtil.installPopupHandler(
+      myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
+    );
 
+    TitleWithToolbar top = new TitleWithToolbar(
+      ApplicationBundle.message("arrangement.settings.section.match"),
+      ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTROL_TOOLBAR,
+      ArrangementConstants.MATCHING_RULES_CONTROL_TOOLBAR_PLACE,
+      myControl
+    );
     add(top, new GridBag().coverLine().fillCellHorizontally().weightx(1));
-    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1));
+    add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
   @NotNull

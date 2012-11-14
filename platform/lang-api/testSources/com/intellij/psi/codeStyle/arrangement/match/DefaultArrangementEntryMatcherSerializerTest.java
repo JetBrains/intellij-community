@@ -32,6 +32,7 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
 import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.MODIFIER;
+import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.NAME;
 import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.TYPE;
 import static org.junit.Assert.*;
 
@@ -104,6 +105,21 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     Element actual = mySerializer.serialize(new StdArrangementEntryMatcher(condition));
     assertNotNull(actual);
     checkElements(element, actual);
+  }
+
+  @Test
+  public void nameConditionOnly() {
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(NAME, "get*");
+    doTest(condition);
+  }
+  
+  @Test
+  public void compositeConditionWithName() {
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
+    condition.addOperand(new ArrangementAtomMatchCondition(TYPE, METHOD));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, SYNCHRONIZED));
+    condition.addOperand(new ArrangementAtomMatchCondition(NAME, ("get*")));
+    doTest(condition);
   }
 
   private static void checkElements(@NotNull Element expected, @NotNull Element actual) {

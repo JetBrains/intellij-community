@@ -15,7 +15,6 @@
  */
 package com.intellij.designer.componentTree;
 
-import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.clipboard.SimpleTransferable;
 import com.intellij.designer.designSurface.ComponentTargetFilter;
 import com.intellij.designer.designSurface.EditOperation;
@@ -256,8 +255,7 @@ public class TreeDropListener extends DropTargetAdapter {
 
   private void executeCommand() {
     if (myExecuteEnabled) {
-      myToolProvider.execute(Collections.singletonList(myTargetOperation),
-                             DesignerBundle.message("command.tool_operation", myContext.getType()));
+      myToolProvider.execute(Collections.singletonList(myTargetOperation), myContext.getMessage());
       if (myContext.isCreate()) {
         myArea.setSelection(myContext.getComponents());
       }

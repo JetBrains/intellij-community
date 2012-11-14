@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,9 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
                                                 boolean reformat,
                                                 String extension) throws IncorrectOperationException {
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
-    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("myclass" + "." + extension, content);
+    final String name = "myClass" + "." + extension;
+    final FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(name);
+    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, type, content);
     if (!(psiFile instanceof PsiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }

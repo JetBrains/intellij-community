@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates various functionality related to showing arrangement nodes to end-users.
@@ -47,6 +48,7 @@ import java.util.Map;
 public class ArrangementNodeDisplayManager {
 
   @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
+  
   @NotNull private final ArrangementStandardSettingsAware               myFilter;
   @NotNull private final ArrangementColorsProvider                      myColorsProvider;
   @NotNull private       ArrangementStandardSettingsRepresentationAware myRepresentationManager;
@@ -62,8 +64,8 @@ public class ArrangementNodeDisplayManager {
   }
 
   private void refreshMaxWidths() {
-    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
-    for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
+    Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
+    for (Map.Entry<ArrangementSettingType, Set<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getKey(), entry.getValue()));
     }
   }
@@ -118,8 +120,16 @@ public class ArrangementNodeDisplayManager {
       return value.toString();
     }
   }
-  
+
+  /**
+   * @param type  target condition type
+   * @return      max width in pixels for the condition value of the given type if any;
+   *              <code>'-1'</code> as an indication that no max width limit exists for the condition value of the given type
+   */
   public int getMaxWidth(@NotNull ArrangementSettingType type) {
+    if (type == ArrangementSettingType.NAME) {
+      return -1;
+    }
     return myMaxWidths.get(type);
   }
 

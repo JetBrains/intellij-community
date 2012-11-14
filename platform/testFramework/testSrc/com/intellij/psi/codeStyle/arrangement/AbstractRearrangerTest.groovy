@@ -59,17 +59,22 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
 
   @NotNull
-  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
+  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
     group(type, ArrangementEntryOrderType.KEEP)
   }
   
   @NotNull
-  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
+  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
     new ArrangementGroupingRule(type, order)
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull Object ... conditions) {
+    rule(ArrangementEntryOrderType.KEEP, conditions)
   }
   
   @NotNull
-  protected StdArrangementMatchRule rule(@NotNull Object ... conditions) {
+  protected static StdArrangementMatchRule rule(@NotNull ArrangementEntryOrderType orderType, @NotNull Object ... conditions) {
     def condition
     if (conditions.length == 1) {
       condition = atom(conditions[0])
@@ -78,11 +83,11 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
       condition = ArrangementUtil.combine(conditions.collect { atom(it) } as ArrangementMatchCondition[])
     }
     
-    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition))
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), orderType)
   }
   
   @NotNull
-  protected ArrangementAtomMatchCondition atom(@NotNull Object condition) {
+  protected static ArrangementAtomMatchCondition atom(@NotNull Object condition) {
     new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition)
   }
   

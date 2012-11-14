@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +33,28 @@ import java.util.Set;
 public class ArrangementConditionInfo {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myAtomConditions = ContainerUtilRt.newHashSet();
-  @NotNull private final Set<Object> myConditions = ContainerUtilRt.newHashSet();
+  @NotNull private final Set<Object>                        myConditions     = ContainerUtilRt.newHashSet();
+
+  @Nullable private String myNamePattern;
+
+  @Nullable
+  public String getNamePattern() {
+    return myNamePattern;
+  }
+
+  public void setNamePattern(@Nullable String namePattern) {
+    myNamePattern = namePattern;
+  }
 
   public void addAtomCondition(@NotNull ArrangementAtomMatchCondition condition) {
-    myAtomConditions.add(condition);
-    myConditions.add(condition.getValue());
+    switch (condition.getType()) {
+      case NAME: myNamePattern = condition.getValue().toString(); break;
+      default:
+        myAtomConditions.add(condition);
+        myConditions.add(condition.getValue());
+    }
   }
-  
+
   public boolean hasCondition(@NotNull Object condition) {
     return myConditions.contains(condition);
   }
@@ -59,13 +75,17 @@ public class ArrangementConditionInfo {
   @Nullable
   public ArrangementMatchCondition buildCondition() {
     if (myAtomConditions.isEmpty()) {
-      return null;
+      return myNamePattern == null ? null : new ArrangementAtomMatchCondition(ArrangementSettingType.NAME, myNamePattern);
     }
-    if (myAtomConditions.size() == 1) {
+    else if (myAtomConditions.size() == 1 && myNamePattern == null) {
       return myAtomConditions.iterator().next();
     }
     else {
-      return new ArrangementCompositeMatchCondition(myAtomConditions);
+      ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(myAtomConditions);
+      if (myNamePattern != null) {
+        result.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.NAME, myNamePattern));
+      }
+      return result;
     }
   }
 }

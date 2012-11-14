@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +30,14 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   private final List<BuildTarget<?>> myAllTargets;
 
   public BuildTargetIndexImpl(@NotNull JpsModel model) {
-    myTargets = new HashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
+    myTargets = new THashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
     List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<List<? extends BuildTarget<?>>>();
     for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
       List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
       myTargets.put(type, targets);
       targetsByType.add(targets);
     }
-    myDependencies = new HashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
+    myDependencies = new THashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
     myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
   }
 

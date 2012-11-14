@@ -126,7 +126,8 @@ public class IOUtil {
   }
 
   public static boolean isAscii(final String str) {
-    for (int i = 0; i != str.length(); ++ i) {
+    int length = str.length();
+    for (int i = 0; i != length; ++ i) {
       final char c = str.charAt(i);
       if (!isAscii(c)) return false;
     }

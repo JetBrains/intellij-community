@@ -56,6 +56,10 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final Callback SHOULD_ENABLE_URL = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public boolean callback(ID self, String selector, ID panel, ID url) {
+      if (ourImplMap.get(self) == null) {
+        // Since it has already been removed from the map, the file is likely to be valid if the user was able to select it
+        return true;
+      }
       if (url == null || url.intValue() == 0) return false;
       final ID filename = Foundation.invoke(url, "path");
       final String fileName = Foundation.toStringViaUTF8(filename);

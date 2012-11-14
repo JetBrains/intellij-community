@@ -32,16 +32,16 @@ public abstract class DirectoryIndex {
   @TestOnly
   public abstract void checkConsistency();
 
-  public abstract DirectoryInfo getInfoForDirectory(VirtualFile dir);
+  public abstract DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir);
 
-  public abstract boolean isProjectExcludeRoot(VirtualFile dir);
+  public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
 
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
   @Nullable
-  public abstract String getPackageName(VirtualFile dir); 
+  public abstract String getPackageName(@NotNull VirtualFile dir);
 
   public abstract boolean isInitialized();
 }

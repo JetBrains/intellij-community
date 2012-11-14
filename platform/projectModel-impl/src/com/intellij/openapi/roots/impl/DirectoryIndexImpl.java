@@ -55,7 +55,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
-  public DirectoryIndexImpl(Project project) {
+  public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
     myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
     myState = new IndexState();
@@ -142,18 +142,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myState = newState;
   }
 
-  private boolean isExcludeRootForModule(Module module, VirtualFile excludeRoot) {
+  private boolean isExcludeRootForModule(@NotNull Module module, VirtualFile excludeRoot) {
     for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
       if (policy.isExcludeRootForModule(module, excludeRoot)) return true;
     }
     return false;
   }
 
-  protected static ContentEntry[] getContentEntries(Module module) {
+  @NotNull
+  protected static ContentEntry[] getContentEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).getContentEntries();
   }
 
-  private static OrderEntry[] getOrderEntries(Module module) {
+  @NotNull
+  private static OrderEntry[] getOrderEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).getOrderEntries();
   }
 
@@ -162,7 +164,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Override
-  public DirectoryInfo getInfoForDirectory(VirtualFile dir) {
+  public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
     checkAvailability();
     dispatchPendingEvents();
 
@@ -171,7 +173,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Override
-  public boolean isProjectExcludeRoot(VirtualFile dir) {
+  public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
     checkAvailability();
     return dir instanceof VirtualFileWithId && myState.myProjectExcludeRoots.contains(getId(dir));
   }
@@ -233,7 +235,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Override
-  public String getPackageName(VirtualFile dir) {
+  public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof VirtualFileWithId)) return null;
     return myState.myDirToPackageName.get(getId(dir));
@@ -317,9 +319,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private DirectoryInfo getOrCreateDirInfo(int dirId) {
       DirectoryInfo info = myDirToInfoMap.get(dirId);
       if (info == null) {
-        info = new DirectoryInfo();
+        info = new DirectoryInfo(null, null,null,null,(byte)0,null);
         myDirToInfoMap.put(dirId, info);
       }
+      return info;
+    }
+    private DirectoryInfo storeInfo(DirectoryInfo info, int dirId) {
+      myDirToInfoMap.put(dirId, info);
       return info;
     }
 
@@ -330,7 +336,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       final int contentRootId = contentRoot == null ? 0 : getId(contentRoot);
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         @Override
-        protected DirectoryInfo updateInfo(VirtualFile file) {
+        protected DirectoryInfo updateInfo(@NotNull VirtualFile file) {
           if (progress != null) {
             progress.checkCanceled();
           }
@@ -349,9 +355,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
 
         @Override
-        protected void afterChildrenVisited(DirectoryInfo info) {
-          info.setModule(module);
-          info.setContentRoot(contentRoot);
+        protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+          info = info.withModule(module).withContentRoot(contentRoot);
+          storeInfo(info, getId(file));
         }
       });
     }
@@ -372,13 +378,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       @Override
       public void afterChildrenVisited(@NotNull VirtualFile file) {
-        afterChildrenVisited(myDirectoryInfoStack.pop());
+        afterChildrenVisited(file, myDirectoryInfoStack.pop());
       }
 
       @Nullable
-      protected abstract DirectoryInfo updateInfo(VirtualFile file);
+      protected abstract DirectoryInfo updateInfo(@NotNull VirtualFile file);
 
-      protected void afterChildrenVisited(DirectoryInfo info) {}
+      protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {}
     }
     
     private boolean isExcluded(int root, @NotNull VirtualFile dir) {
@@ -387,7 +393,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return excludes != null && excludes.contains(dir.getUrl());
     }
 
-    private void initModuleContents(Module module, boolean reverseAllSets, ProgressIndicator progress) {
+    private void initModuleContents(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress) {
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
 
@@ -436,7 +442,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         private final Stack<String> myPackages = new Stack<String>();
 
         @Override
-        protected DirectoryInfo updateInfo(VirtualFile file) {
+        protected DirectoryInfo updateInfo(@NotNull VirtualFile file) {
           if (progress != null) {
             progress.checkCanceled();
           }
@@ -450,9 +456,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             if (definedPackage != null && definedPackage.isEmpty()) return null; // another source root starts here
           }
 
-          info.setInModuleSource(true);
-          info.setTestSource(isTestSource);
-          info.setSourceRoot(sourceRoot);
+          info = info.withInModuleSource(true)
+          .withTestSource(isTestSource)
+          .withSourceRoot(sourceRoot);
+          storeInfo(info, id);
 
           String currentPackage = myPackages.isEmpty() ? packageName : getPackageNameForSubdir(myPackages.peek(), file.getName());
           myPackages.push(currentPackage);
@@ -461,8 +468,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
 
         @Override
-        protected void afterChildrenVisited(DirectoryInfo info) {
-          super.afterChildrenVisited(info);
+        protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+          super.afterChildrenVisited(file, info);
           myPackages.pop();
         }
       });
@@ -501,8 +508,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             if (definedPackage != null && definedPackage.isEmpty()) return false; // another library source root starts here
           }
 
-          info.setInLibrarySource(true);
-          info.setSourceRoot(sourceRoot);
+          info = info.withInLibrarySource(true)
+          .withSourceRoot(sourceRoot);
+          storeInfo(info, dirId);
 
           final String packageName = getCurrentValue();
           final String newPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
@@ -548,7 +556,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             if (definedPackage != null && definedPackage.isEmpty()) return false; // another library root starts here
           }
 
-          info.setLibraryClassRoot(classRoot);
+          info = info.withLibraryClassRoot(classRoot);
+          storeInfo(info, dirId);
 
           final String packageName = getCurrentValue();
           final String childPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
@@ -656,13 +665,14 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
 
         @Override
-        protected DirectoryInfo updateInfo(VirtualFile dir) {
+        protected DirectoryInfo updateInfo(@NotNull VirtualFile dir) {
           if (progress != null) {
             progress.checkCanceled();
           }
           if (isIgnored(dir)) return null;
 
-          DirectoryInfo info = myDirToInfoMap.get(getId(dir)); // do not create it here!
+          int dirId = getId(dir);
+          DirectoryInfo info = myDirToInfoMap.get(dirId); // do not create it here!
           if (info == null) return null;
 
           if (module != null) {
@@ -682,12 +692,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           OrderEntry[] oldParentEntries = myEntries.isEmpty() ? null : myEntries.peek();
           OrderEntry[] oldEntries = info.getOrderEntries();
           myEntries.push(oldEntries);
-          info.addOrderEntries(orderEntries, parentInfo, oldParentEntries);
+          info = info.withOrderEntries(orderEntries, parentInfo, oldParentEntries);
+          storeInfo(info, dirId);
           return info;
         }
 
         @Override
-        protected void afterChildrenVisited(DirectoryInfo info) {
+        protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
           myEntries.pop();
         }
       });
@@ -730,11 +741,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries, progress);
 
-      killOrderEntryArrayDuplicates();
+      internDirectoryInfos();
     }
 
-    private void killOrderEntryArrayDuplicates() {
-      Map<OrderEntry[], OrderEntry[]> interner = new THashMap<OrderEntry[], OrderEntry[]>(new TObjectHashingStrategy<OrderEntry[]>() {
+    private void internDirectoryInfos() {
+      final Map<DirectoryInfo, DirectoryInfo> diInterner = new THashMap<DirectoryInfo, DirectoryInfo>();
+      final Map<OrderEntry[], OrderEntry[]> oeInterner = new THashMap<OrderEntry[], OrderEntry[]>(new TObjectHashingStrategy<OrderEntry[]>() {
         @Override
         public int computeHashCode(OrderEntry[] object) {
           return Arrays.hashCode(object);
@@ -745,17 +757,25 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           return Arrays.equals(o1, o2);
         }
       });
-      for (Object v : myDirToInfoMap.getValues()) {
-        DirectoryInfo info = (DirectoryInfo)v;
-        OrderEntry[] entries = info.getOrderEntries();
-        if (entries.length != 0) {
-          OrderEntry[] interned = interner.get(entries);
+
+      myDirToInfoMap.transformValues(new TObjectFunction<DirectoryInfo, DirectoryInfo>() {
+        @Override
+        public DirectoryInfo execute(DirectoryInfo info) {
+          DirectoryInfo interned = diInterner.get(info);
           if (interned == null) {
-            interner.put(entries, interned = entries);
+            OrderEntry[] entries = info.getOrderEntries();
+            OrderEntry[] internedEntries = oeInterner.get(entries);
+            if (internedEntries == null) {
+              oeInterner.put(entries, entries);
+            }
+            else if (internedEntries != entries) {
+              info = info.withInternedEntries(internedEntries);
+            }
+            diInterner.put(info, interned = info);
           }
-          info.setInternedOrderEntries(interned);
+          return interned;
         }
-      }
+      });
     }
 
     private void initExcludedDirMap(Module[] modules, ProgressIndicator progress) {

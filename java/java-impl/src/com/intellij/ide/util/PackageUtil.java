@@ -372,4 +372,13 @@ public class PackageUtil {
     }
     return true;
   }
+
+  @NotNull
+  public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
+    PsiDirectory subDirectory = directory.findSubdirectory(directoryName);
+    if (subDirectory == null) {
+      subDirectory = directory.createSubdirectory(directoryName);
+    }
+    return subDirectory;
+  }
 }

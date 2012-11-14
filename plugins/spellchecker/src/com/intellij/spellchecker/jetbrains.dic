@@ -377,6 +377,7 @@ scriptlets
 securefile
 serializable
 serializer
+serializers
 servererror
 servlet
 shader

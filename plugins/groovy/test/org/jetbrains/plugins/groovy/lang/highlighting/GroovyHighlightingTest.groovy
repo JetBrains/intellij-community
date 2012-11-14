@@ -731,20 +731,6 @@ new Base() {
 ''')
   }
 
-  void testDelegateWithDeprecated() {
-    testHighlighting('''\
-interface Foo {
-    @Deprecated
-    void foo()
-}
-
-
-<error descr="Method 'foo' is not implemented">class FooImpl implements Foo</error> {
-    @Delegate(deprecated = false) Foo delegate
-}
-''')
-  }
-
   void testAbstractMethodWithBody() {
     testHighlighting('''\
 interface A {
@@ -940,5 +926,23 @@ class A {
 ''')
 
     assertNotNull(myFixture.findSingleIntention("Create Method 'abc'"))
+  }
+
+  void testTypeParameterIsCorrect() {
+    testHighlighting('''\
+class Component{}
+
+class Window extends Component{
+    Window(i) {
+    }
+}
+
+class Super <C extends Component> {
+
+}
+
+class Sub<W extends Window> extends Super<W> {
+}
+''')
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.tasks.timetracking;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -22,9 +23,8 @@ public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Proj
   public boolean value(final Project project) {
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask activeTask = manager.getActiveTask();
-    final boolean isNotUsed =
-      activeTask.isDefault() && manager.getLocalTasks().size() == 1 && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
-    return !isNotUsed;
+    final boolean isNotUsed = activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
+    return !isNotUsed && ApplicationManager.getApplication().isInternal();
   }
 
   @Override

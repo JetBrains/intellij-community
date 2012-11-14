@@ -91,9 +91,6 @@
     <extensionPoint name="configuration.ModuleStructureExtension"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
 
-    <extensionPoint name="java.highlighting.filter"
-                    interface="com.intellij.codeInsight.daemon.JavaHighlightingFilter"/>
-
     <extensionPoint name="projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
   </extensionPoints>

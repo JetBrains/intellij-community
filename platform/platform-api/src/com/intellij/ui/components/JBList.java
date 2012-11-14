@@ -192,6 +192,10 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return myEmptyText;
   }
 
+  public void setEmptyText(String text) {
+    myEmptyText.setText(text);
+  }
+
   @Override
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {

@@ -77,7 +77,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final List<BuildTarget<?>> dependencies = new ArrayList<BuildTarget<?>>();
+    final ArrayList<BuildTarget<?>> dependencies = new ArrayList<BuildTarget<?>>();
     enumerator.processModules(new Consumer<JpsModule>() {
       @Override
       public void consume(JpsModule module) {
@@ -87,6 +87,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
     }
+    dependencies.trimToSize();
     return dependencies;
   }
 

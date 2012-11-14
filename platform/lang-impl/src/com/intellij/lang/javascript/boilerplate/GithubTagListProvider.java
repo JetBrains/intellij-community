@@ -9,7 +9,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +28,7 @@ public class GithubTagListProvider {
   private final String myUserName;
   private final String myRepositoryName;
 
-  public GithubTagListProvider(@Nullable String userName, @NotNull String repositoryName) {
+  public GithubTagListProvider(@NotNull String userName, @NotNull String repositoryName) {
     myUserName = userName;
     myRepositoryName = repositoryName;
   }
@@ -37,7 +36,7 @@ public class GithubTagListProvider {
   @Nullable
   public ImmutableSet<GithubTagInfo> getCachedTags() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    File cacheFile = getCacheFile();
+    File cacheFile = getTagsCacheFile();
     if (cacheFile.isFile()) {
       try {
         ImmutableSet<GithubTagInfo> tags = readTagsFromFile(cacheFile);
@@ -50,36 +49,55 @@ public class GithubTagListProvider {
     return null;
   }
 
-  public void updateTagListAsynchronously(final GithubProjectGeneratorPeer peer) {
-    final String url = formatTagListDownloadUrl();
-    LOG.info(getGeneratorName() + " starting cache update from " + url + " ...");
-    Runnable action = new Runnable() {
-      public void run() {
-        File cacheFile = getCacheFile();
-        try {
-          DownloadUtil.downloadAtomically(null, url, cacheFile, myUserName, myRepositoryName);
-          final ImmutableSet<GithubTagInfo> infos = readTagsFromFile(cacheFile);
-          peer.setErrorMessage(null);
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              peer.updateTagList(infos);
-            }
-          });
-        }
-        catch (IOException e) {
-          peer.setErrorMessage("Can not fetch tag list from '" + url + "'!");
-        }
-        catch (GeneratorException e) {
-          peer.setErrorMessage(getGeneratorName() + " cache update failed");
-        }
-      }
-    };
+  public void updateTagListAsynchronously(@NotNull final GithubProjectGeneratorPeer peer) {
+    Runnable action = createUpdateTagListAction(peer);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
     }
     else {
       ApplicationManager.getApplication().executeOnPooledThread(action);
     }
+  }
+
+  private Runnable createUpdateTagListAction(@NotNull final GithubProjectGeneratorPeer peer) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        final String[] urls = formatTagListDownloadUrls();
+        String errorMessage = null;
+        peer.setErrorMessage(null);
+        for (String url : urls) {
+          try {
+            final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
+            LOG.info(getGeneratorName() + "Cache has been successfully updated");
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                peer.tagsUpdated(tags);
+              }
+            });
+            return;
+          }
+          catch (IOException e) {
+            errorMessage = "Can not fetch tags from " + url;
+            LOG.warn(getGeneratorName() + errorMessage, e);
+          }
+          catch (GeneratorException e) {
+            errorMessage = "Malformed JSON received from " + url;
+            LOG.warn(getGeneratorName() + errorMessage, e);
+          }
+        }
+        if (errorMessage != null) {
+          peer.setErrorMessage(errorMessage);
+        }
+      }
+    };
+  }
+
+  private ImmutableSet<GithubTagInfo> fetchGithubTagsByUrl(@NotNull final String url) throws IOException, GeneratorException {
+    LOG.info(getGeneratorName() + "starting cache update from " + url + " ...");
+    File cacheFile = getTagsCacheFile();
+    GithubDownloadUtil.downloadAtomically(null, url, cacheFile, myUserName, myRepositoryName);
+    return readTagsFromFile(cacheFile);
   }
 
   private String getGeneratorName() {
@@ -98,7 +116,7 @@ public class GithubTagListProvider {
     try {
       return parseContent(content);
     } catch (GeneratorException e) {
-      String message = String.format("%s parsing version list was failed: %s\n%s",
+      String message = String.format("%s parsing version list failed: %s\n%s",
                                      getGeneratorName(),
                                      e.getMessage(),
                                      content);
@@ -156,16 +174,17 @@ public class GithubTagListProvider {
   }
 
   @NotNull
-  private File getCacheFile() {
-    return DownloadUtil.findCacheFile(myUserName, myRepositoryName, "tags.json");
+  private File getTagsCacheFile() {
+    File dir = GithubDownloadUtil.getCacheDir(myUserName, myRepositoryName);
+    return new File(dir, "tags.json");
   }
 
   @NotNull
-  private String formatTagListDownloadUrl() {
-    StringBuilder builder = new StringBuilder("https://api.github.com/repos/");
-    if (myUserName != null) {
-      builder.append(myUserName).append("/");
-    }
-    return builder.append(myRepositoryName).append("/tags").toString();
+  private String[] formatTagListDownloadUrls() {
+    return new String[] {
+      "https://api.github.com/repos/" + myUserName + "/" + myRepositoryName + "/tags",
+      "http://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
+    };
   }
+
 }

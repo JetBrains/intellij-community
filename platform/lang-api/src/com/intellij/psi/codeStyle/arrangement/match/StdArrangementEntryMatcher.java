@@ -16,13 +16,11 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -88,11 +86,13 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   private static class MyVisitor implements ArrangementMatchConditionVisitor {
 
-    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = new ArrayList<ArrangementEntryMatcher>();
+    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = ContainerUtilRt.newArrayList();
     @NotNull private final Set<ArrangementEntryType>     myTypes     = EnumSet.noneOf(ArrangementEntryType.class);
     @NotNull private final Set<ArrangementModifier>      myModifiers = EnumSet.noneOf(ArrangementModifier.class);
 
-    private boolean             nestedComposite;
+    @Nullable private String myNamePattern;
+
+    private boolean nestedComposite;
 
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
@@ -102,6 +102,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
           break;
         case MODIFIER:
           myModifiers.add((ArrangementModifier)condition.getValue());
+          break;
+        case NAME:
+          myNamePattern = condition.getValue().toString();
       }
     }
 
@@ -123,11 +126,21 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     public ArrangementEntryMatcher getMatcher() {
       ByTypeArrangementEntryMatcher byType = myTypes.isEmpty() ? null : new ByTypeArrangementEntryMatcher(myTypes);
       ByModifierArrangementEntryMatcher byModifiers = myModifiers.isEmpty() ? null : new ByModifierArrangementEntryMatcher(myModifiers);
-      if (byType == null && byModifiers == null && myMatchers.isEmpty()) {
+      ByNameArrangementEntryMatcher byName = myNamePattern == null ? null : new ByNameArrangementEntryMatcher(myNamePattern);
+      int i = countNonNulls(byType, byModifiers, byName);
+      if (i == 0 && myMatchers.isEmpty()) {
         return ArrangementEntryMatcher.EMPTY;
       }
-      if (myMatchers.isEmpty() && (byType == null ^ byModifiers == null)) {
-        return byModifiers == null ? byType : byModifiers;
+      if (myMatchers.isEmpty() && i == 1) {
+        if (byType != null) {
+          return byType;
+        }
+        else if (byModifiers != null) {
+          return byModifiers;
+        }
+        else {
+          return byName;
+        }
       }
       else if (myMatchers.size() == 1) {
         return myMatchers.get(0);
@@ -143,8 +156,21 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
         if (byModifiers != null) {
           result.addMatcher(byModifiers);
         }
+        if (byName != null) {
+          result.addMatcher(byName);
+        }
         return result;
       }
+    }
+
+    private static int countNonNulls(Object... data) {
+      int result = 0;
+      for (Object o : data) {
+        if (o != null) {
+          result++;
+        }
+      }
+      return result;
     }
   }
 }

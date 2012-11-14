@@ -30,10 +30,16 @@ import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +59,7 @@ public class BreakpointMasterDetailPopupBuilder {
   private BreakpointItemsTreeController myTreeController;
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
     
-  private final Set<XBreakpointGroupingRule> myRulesEnabled = new HashSet<XBreakpointGroupingRule>();
+  private Set<XBreakpointGroupingRule> myRulesEnabled = new HashSet<XBreakpointGroupingRule>();
 
   @Nullable private Object myInitialBreakpoint;
 
@@ -137,17 +143,12 @@ public class BreakpointMasterDetailPopupBuilder {
     }
 
     if (!myIsViewer) {
-      for (XBreakpointGroupingRule rule : myRulesAvailable) {
-        if (rule.isAlwaysEnabled()) {
-          myRulesEnabled.add(rule);
-        }
-      }
+      myRulesEnabled = getInitialGroupingRules();
     }
 
     DefaultActionGroup actions = createActions();
 
-
-    myTreeController = new BreakpointItemsTreeController(getEnabledRulesList());
+    myTreeController = new BreakpointItemsTreeController(myRulesEnabled);
 
     JTree tree = myIsViewer ? new BreakpointsSimpleTree(myTreeController) : new BreakpointsCheckboxTree(myTreeController);
 
@@ -247,10 +248,39 @@ public class BreakpointMasterDetailPopupBuilder {
         for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
           provider.removeListener(listener);
         }
+        saveBreakpointsDialogState();
       }
     });
 
     return myPopup;
+  }
+
+  private void saveBreakpointsDialogState() {
+    final XBreakpointsDialogState dialogState = new XBreakpointsDialogState();
+    dialogState.setSelectedGroupingRules(new HashSet<String>(ContainerUtil.map(myRulesEnabled, new Function<XBreakpointGroupingRule, String>() {
+      @Override
+      public String fun(XBreakpointGroupingRule rule) {
+        return rule.getId();
+      }
+    })));
+    ((XBreakpointManagerImpl)getBreakpointManager()).setBreakpointsDialogSettings(dialogState);
+  }
+
+  private Set<XBreakpointGroupingRule> getInitialGroupingRules() {
+      java.util.HashSet<XBreakpointGroupingRule> rules = new java.util.HashSet<XBreakpointGroupingRule>();
+      XBreakpointsDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getBreakpointsDialogSettings();
+      if (settings != null) {
+        for (XBreakpointGroupingRule rule : myRulesAvailable) {
+          if (settings.getSelectedGroupingRules().contains(rule.getId()) || rule.isAlwaysEnabled()) {
+            rules.add(rule);
+          }
+        }
+      }
+      return rules;
+    }
+
+  private XBreakpointManager getBreakpointManager() {
+    return XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
@@ -358,17 +388,7 @@ public class BreakpointMasterDetailPopupBuilder {
       else {
         myRulesEnabled.remove(myRule);
       }
-      myTreeController.setGroupingRules(getEnabledRulesList());
+      myTreeController.setGroupingRules(myRulesEnabled);
     }
-  }
-
-  private List<XBreakpointGroupingRule> getEnabledRulesList() {
-    List<XBreakpointGroupingRule> result = new ArrayList<XBreakpointGroupingRule>();
-    for (XBreakpointGroupingRule rule : myRulesAvailable) {
-      if (myRulesEnabled.contains(rule)) {
-        result.add(rule);
-      }
-    }
-    return result;
   }
 }

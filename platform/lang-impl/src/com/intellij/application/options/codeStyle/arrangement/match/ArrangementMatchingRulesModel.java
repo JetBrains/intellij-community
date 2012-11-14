@@ -48,6 +48,10 @@ public class ArrangementMatchingRulesModel extends DefaultTableModel {
   public void set(int row, Object value) {
     setValueAt(value, row, 0);
   }
+
+  public void insert(int row, Object value) {
+    insertRow(row, new Object[] { value });
+  }
   
   @Override
   public void setValueAt(Object aValue, int row, int column) {

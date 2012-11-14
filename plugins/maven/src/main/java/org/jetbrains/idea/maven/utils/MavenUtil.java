@@ -203,29 +203,6 @@ public class MavenUtil {
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
   }
 
-  public static Properties getSystemProperties() {
-    Properties result = (Properties)System.getProperties().clone();
-    for (String each : new THashSet<String>((Set)result.keySet())) {
-      if (each.startsWith("idea.")) {
-        result.remove(each);
-      }
-    }
-    return result;
-  }
-
-  public static Properties getEnvProperties() {
-    Properties reuslt = new Properties();
-    for (Map.Entry<String, String> each : System.getenv().entrySet()) {
-      if (isMagicalProperty(each.getKey())) continue;
-      reuslt.put(each.getKey(), each.getValue());
-    }
-    return reuslt;
-  }
-
-  private static boolean isMagicalProperty(String key) {
-    return key.startsWith("=");
-  }
-
   public static File getPluginSystemDir(String folder) {
     // PathManager.getSystemPath() may return relative path
     return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();

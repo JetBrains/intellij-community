@@ -25,8 +25,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -96,6 +94,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   };
   static final String TASKS_NOTIFICATION_GROUP = "Task Group";
+  public static final int TIME_TRACKING_TIME_UNIT = 1000;
 
   private final Project myProject;
 
@@ -120,7 +119,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return result;
     }
   });
-  private final ProjectManagerAdapter myProjectManagerListener;
 
   @NotNull
   private LocalTask myActiveTask = createDefaultTask();
@@ -134,7 +132,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
-  private long myProjectOpenedTime = 0;
+  private Timer myTimeTrackingTimer;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -162,31 +160,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     };
-
-    addTaskListener(new TaskListenerAdapter() {
-      @Override
-      public void taskDeactivated(final LocalTask task) {
-        assert task.getActivated() != 0;
-        task.setTimeSpent(task.getTimeSpent() + System.currentTimeMillis() - task.getActivated());
-      }
-
-      @Override
-      public void taskActivated(final LocalTask task) {
-        task.setActivated(System.currentTimeMillis());
-      }
-    });
-
-    myProjectManagerListener = new ProjectManagerAdapter() {
-      @Override
-      public boolean canCloseProject(final Project project) {
-        assert myProjectOpenedTime != 0;
-        getState().myTotallyTimeSpent += System.currentTimeMillis() - myProjectOpenedTime;
-        assert myActiveTask.getActivated() != 0;
-        myActiveTask.setTimeSpent(myActiveTask.getTimeSpent() + System.currentTimeMillis() - myActiveTask.getActivated());
-        return true;
-      }
-    };
-    ProjectManager.getInstance().addProjectManagerListener(myProjectManagerListener);
   }
 
   @Override
@@ -573,8 +546,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myContextManager.pack(200, 50);
-
-    myProjectOpenedTime = System.currentTimeMillis();
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -599,10 +570,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       });
       myCacheRefreshTimer.setInitialDelay(0);
-
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
           myCacheRefreshTimer.start();
+        }
+      });
+
+      myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+          getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
+        }
+      });
+      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+        public void run() {
+          myTimeTrackingTimer.start();
         }
       });
     }
@@ -661,8 +644,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (myCacheRefreshTimer != null) {
       myCacheRefreshTimer.stop();
     }
+    if (myTimeTrackingTimer != null) {
+      myTimeTrackingTimer.stop();
+    }
     myChangeListManager.removeChangeListListener(myChangeListListener);
-    ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
   }
 
   public void updateIssues(final @Nullable Runnable onComplete) {

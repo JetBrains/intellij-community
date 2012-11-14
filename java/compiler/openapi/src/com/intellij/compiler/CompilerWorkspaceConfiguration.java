@@ -31,6 +31,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
     )}
 )
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
+  public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
+  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-XX:MaxPermSize=150m";
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
@@ -38,8 +40,8 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean USE_COMPILE_SERVER = true;
   public boolean MAKE_PROJECT_ON_SAVE = false;
   public boolean PARALLEL_COMPILATION = true;
-  public int COMPILER_PROCESS_HEAP_SIZE = 700;
-  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-XX:MaxPermSize=150m";
+  public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
+  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = DEFAULT_COMPILE_PROCESS_VM_OPTIONS;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

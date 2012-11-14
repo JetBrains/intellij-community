@@ -62,11 +62,5 @@ public class RemoveArrangementRuleAction extends AnAction {
         } 
       }
     });
-    
-    //int repaintMax = model.getSize() - 1;
-    //int min = rowsToRemove.get(rowsToRemove.size() - 1);
-    //if (repaintMax >= 0 && min <= repaintMax) {
-    //  control.repaintRows(min, repaintMax, true);
-    //}
   }
 }

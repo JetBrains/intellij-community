@@ -34,22 +34,22 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @NotNull
   protected abstract String getDisplayName();
 
-  @Nullable
+  @NotNull
   protected abstract String getGithubUserName();
 
   @NotNull
   protected abstract String getGithubRepositoryName();
+
+  @Nullable
+  public abstract String getDescription();
 
   private String getTitle() {
     return getDisplayName();
   }
 
   @Override
-  public void generateProject(@NotNull Project project, @NotNull final VirtualFile baseDir, @NotNull GithubTagInfo tag, @NotNull Module module) {
-    doGenerate(project, baseDir, tag);
-  }
-
-  protected void doGenerate(@Nullable Project project, @NotNull final VirtualFile baseDir, @NotNull GithubTagInfo tag) {
+  public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                              @NotNull GithubTagInfo tag, @NotNull Module module) {
     try {
       unpackToDir(project, new File(baseDir.getPath()), tag);
     }
@@ -89,7 +89,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       }
     }
     if (brokenZip) {
-      DownloadUtil.downloadContentToFileWithProgressSynchronously(
+      GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(
         project,
         tag.getZipballUrl(),
         getTitle(),
@@ -110,7 +110,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     } catch (UnsupportedEncodingException e) {
       LOG.warn("Can't urlEncode", e);
     }
-    return DownloadUtil.findCacheFile(getGithubUserName(), getGithubRepositoryName(), fileName);
+    return GithubDownloadUtil.findCacheFile(getGithubUserName(), getGithubRepositoryName(), fileName);
   }
 
   private void showErrorMessage(@NotNull String message) {
@@ -120,6 +120,4 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     Messages.showErrorDialog(project, fullMessage, title);
   }
 
-  @Nullable
-  public abstract String getDescription();
 }

@@ -198,7 +198,7 @@ public class BuildOperations {
         logger.logDeletedFiles(outputsToLog);
       }
       // attempting to delete potentially empty directories
-      FSOperations.pruneEmptyDirs(dirsToDelete);
+      FSOperations.pruneEmptyDirs(context, dirsToDelete);
 
       return cleanedSources;
     }

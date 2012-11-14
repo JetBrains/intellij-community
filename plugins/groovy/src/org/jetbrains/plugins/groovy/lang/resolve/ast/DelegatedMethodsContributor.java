@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashMap;
 import icons.JetgroovyIcons;
@@ -54,7 +54,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     initializeSignatures(clazz, PsiSubstitutor.EMPTY, signatures, processed);
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    process(clazz, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), processed, methods, clazz);
+    process(clazz, PsiSubstitutor.EMPTY, true, new HashSet<PsiClass>(), processed, methods, clazz);
 
     final Set<PsiMethod> result = new LinkedHashSet<PsiMethod>();
     for (PsiMethod method : methods) {
@@ -124,22 +124,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         addMethodChecked(signatures, method, substitutor, null);
       }
 
-      final List<PsiClassType> superTypes;
-      if (clazz instanceof GrTypeDefinition) {
-        final PsiReferenceList extendsList = clazz.getExtendsList();
-        final PsiReferenceList implementsList = clazz.getImplementsList();
-        final PsiClassType[] extendList = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
-        final PsiClassType[] implementList = implementsList == null ? PsiClassType.EMPTY_ARRAY : implementsList.getReferencedTypes();
-        
-        superTypes = new ArrayList<PsiClassType>(implementList.length+extendList.length);
-        ContainerUtil.addAll(superTypes, extendList);
-        ContainerUtil.addAll(superTypes, implementList);
-      }
-      else {
-        superTypes = Arrays.asList(clazz.getSuperTypes());
-      }
-      
-      for (PsiClassType type : superTypes) {
+      for (PsiClassType type : PsiClassImplUtil.getSuperTypes(clazz)) {
         final PsiClassType.ClassResolveResult result = type.resolveGenerics();
         final PsiClass superClass = result.getElement();
         if (superClass == null) continue;
@@ -153,11 +138,13 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
    *  The key method of contributor. It collects all delegating methods of clazz
    *
    * @param clazz class to process
-   * @param processed already visited classes
+   * @param processedWithoutDeprecated already visited classes which deprecated methods were not processsed
+   * @param processedAll already visited classes which all methods were processed
    * @param collector result collection
    */
   private static void process(PsiClass clazz,
                               PsiSubstitutor superClassSubstitutor,
+                              boolean shouldProcessDeprecated,
                               Set<PsiClass> processedWithoutDeprecated,
                               Set<PsiClass> processedAll,
                               List<PsiMethod> collector,
@@ -165,8 +152,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     final List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     //process super methods before delegated methods
-    for (PsiClassType superType : clazz.getSuperTypes()) {
-      processClassInner(superType, superClassSubstitutor, false, result, classToDelegateTo, processedWithoutDeprecated, processedAll);
+    for (PsiClassType superType : PsiClassImplUtil.getSuperTypes(clazz)) {
+      processClassInner(superType, superClassSubstitutor, shouldProcessDeprecated, result, classToDelegateTo, processedWithoutDeprecated, processedAll);
     }
 
     if (clazz instanceof GrTypeDefinition) {
@@ -214,7 +201,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     }
 
     collectMethods(psiClass, substitutor, shouldProcessDeprecated, classToDelegateTo, result);
-    process(psiClass, substitutor, processedWithoutDeprecated, processedAll, result, classToDelegateTo);
+    process(psiClass, substitutor, shouldProcessDeprecated, processedWithoutDeprecated, processedAll, result, classToDelegateTo);
   }
 
   private static void collectMethods(PsiClass currentClass,

@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -59,7 +60,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     if (elements != null) {
       final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
       for (PsiElement element : elements) {
-        if (element instanceof PsiClass) {
+        if (element instanceof PsiClass && checkClassUnderSources(element, project)) {
           result.add(new ClassSmartPointerNode(project, element, viewSettings));
         }
       }
@@ -68,9 +69,19 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  private boolean checkClassUnderSources(final PsiElement element, final Project project) {
+    final PsiFile file = element.getContainingFile();
+    if (file != null && file.getVirtualFile() != null) {
+      final FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
+      final VirtualFile vf = file.getVirtualFile();
+      return indexFacade.isInSource(vf) || indexFacade.isInSourceContent(vf);
+    }
+    return false;
+  }
+
   @Override
   public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
-    if (element instanceof PsiClass) {
+    if (element instanceof PsiClass && checkClassUnderSources((PsiElement)element, project)) {
       return new ClassSmartPointerNode(project, element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);

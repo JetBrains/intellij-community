@@ -143,6 +143,9 @@ public class ArrangementUtil {
     else if (condition instanceof ArrangementModifier) {
       return ArrangementSettingType.MODIFIER;
     }
+    else if (condition instanceof String) {
+      return ArrangementSettingType.NAME;
+    }
     else {
       throw new IllegalArgumentException(String.format(
         "Can't parse type for the given condition of class '%s': %s", condition.getClass(), condition

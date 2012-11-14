@@ -79,6 +79,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowColumns(false);
     setShowGrid(false);
+    setSurrendersFocusOnKeystroke(true);
+    putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override
@@ -211,6 +213,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
   public void runOperationIgnoreSelectionChange(@NotNull Runnable task) {
     mySkipSelectionChange = true;
     try {
+      if (isEditing()) {
+        getCellEditor().stopCellEditing();
+      }
       task.run();
     }
     finally {
@@ -227,6 +232,17 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   public void refreshEditor() {
+    ArrangementMatchingRulesModel model = getModel();
+    if (myEditorRow >= model.getSize()) {
+      myEditorRow = -1;
+      for (int i = 0, max = model.getSize(); i < max; i++) {
+        if (model.getElementAt(i) instanceof ArrangementEditorComponent) {
+          myEditorRow = i;
+          break;
+        }
+      }
+    }
+
     if (myEditorRow < 0) {
       return;
     }
@@ -255,7 +271,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     mySkipSelectionChange = true;
     try {
-      getModel().removeRow(myEditorRow);
+      ArrangementMatchingRulesModel model = getModel();
+      model.removeRow(myEditorRow);
+      if (myEditorRow > 0 && model.getElementAt(myEditorRow - 1) instanceof EmptyArrangementRuleComponent) {
+        model.removeRow(myEditorRow - 1);
+      }
     }
     finally {
       mySkipSelectionChange = false;
@@ -289,16 +309,24 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   public void showEditor(int rowToEdit) {
+    if (myEditorRow == rowToEdit + 1) {
+      return;
+    }
+    if (myEditorRow >= 0) {
+      if (myEditorRow < rowToEdit) {
+        rowToEdit--;
+      }
+      hideEditor();
+    }
     myEditorRow = rowToEdit + 1;
     ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
     Container parent = getParent();
     int width = getBounds().width;
     if (parent instanceof JViewport) {
-      width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+      width -= ((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
     myEditor.updateState(rowToEdit);
-    myComponents.shiftKeys(myEditorRow, 1);
     mySkipSelectionChange = true;
     try {
       getModel().insertRow(myEditorRow, new Object[]{editor});
@@ -306,7 +334,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     finally {
       mySkipSelectionChange = false;
     }
-    
+
     Rectangle bounds = getRowsBounds(rowToEdit, myEditorRow);
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
@@ -353,6 +381,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
     return new Rectangle(firstRect.x, firstRect.y, lastRect.width, lastRect.y + lastRect.height - firstRect.y);
   }
 
+  /**
+   * @return    selected model rows sorted in descending order
+   */
   @NotNull
   public TIntArrayList getSelectedModelRows() {
     mySelectedRows.clear();
@@ -411,14 +442,14 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
   }
   
-  private static class MyEditor extends AbstractTableCellEditor {
+  private class MyEditor extends AbstractTableCellEditor {
     
-    @Nullable private Object myValue;
+    private int myRow;
     
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof ArrangementEditorAware) {
-        myValue = value;
+        myRow = row;
         return ((ArrangementEditorAware)value).getComponent();
       }
       return null;
@@ -426,14 +457,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
 
     @Override
     public Object getCellEditorValue() {
-      return myValue;
-    }
-
-    @Override
-    public boolean stopCellEditing() {
-      boolean result = super.stopCellEditing();
-      myValue = null;
-      return result;
+      return myRow < getModel().getSize() ? getModel().getElementAt(myRow) : null;
     }
   }
   

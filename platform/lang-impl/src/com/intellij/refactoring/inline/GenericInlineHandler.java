@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,10 @@ public class GenericInlineHandler {
                                                                         Collection<? extends PsiReference> allReferences) {
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
     for (PsiReference ref : allReferences) {
+      if (ref == null) {
+        LOG.error("element: " + element.getClass()+ ", allReferences contains null!");
+        continue;
+      }
       PsiElement refElement = ref.getElement();
       LOG.assertTrue(refElement != null, ref.getClass().getName());
 

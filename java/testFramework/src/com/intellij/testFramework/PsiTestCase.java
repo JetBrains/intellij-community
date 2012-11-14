@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -69,7 +71,8 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected PsiFile createDummyFile(String fileName, String text) throws IncorrectOperationException {
-    return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, text);
+    FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
+    return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, type, text);
   }
 
   protected PsiFile createFile(@NonNls String fileName, String text) throws Exception {
