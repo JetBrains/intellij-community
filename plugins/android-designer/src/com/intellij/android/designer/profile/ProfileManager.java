@@ -28,7 +28,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -426,34 +426,14 @@ public class ProfileManager {
 
     LocaleData newLocale = null;
     if (myProfile.getLocaleLanguage() != null || myProfile.getLocaleRegion() != null) {
-      String localeLanguage = myProfile.getLocaleLanguage();
-      String localeRegion = myProfile.getLocaleRegion();
-      LocaleData newLocaleWithoutRegion = null;
-
-      for (LocaleData locale : locales) {
-        if (Comparing.equal(locale.getLanguage(), localeLanguage)) {
-          if (Comparing.equal(locale.getRegion(), localeRegion)) {
-            newLocale = locale;
-            break;
-          }
-          if (newLocaleWithoutRegion == null) {
-            newLocaleWithoutRegion = locale;
-          }
-        }
-      }
-      if (newLocale == null) {
-        newLocale = newLocaleWithoutRegion;
-      }
+      newLocale = findLocale(locales, myProfile.getLocaleLanguage(), myProfile.getLocaleRegion());
+    }
+    if (newLocale == null) {
+      newLocale = findLocale(locales, "en", null);
     }
     if (newLocale == null) {
       Locale defaultLocale = Locale.getDefault();
-      LocaleData defaultData = new LocaleData(defaultLocale.getLanguage(), defaultLocale.getCountry(), "");
-      for (LocaleData locale : locales) {
-        if (locale.equals(defaultData)) {
-          newLocale = locale;
-          break;
-        }
-      }
+      newLocale = findLocale(locales, defaultLocale.getLanguage(), defaultLocale.getCountry());
     }
     if (newLocale == null && locales.size() > 0) {
       newLocale = locales.get(0);
@@ -461,6 +441,22 @@ public class ProfileManager {
 
     myLocaleAction.setItems(locales, newLocale);
     updateLocale(newLocale);
+  }
+
+  @Nullable
+  private static LocaleData findLocale(List<LocaleData> locales, String localeLanguage, @Nullable String localeRegion) {
+    LocaleData localeWithoutRegion = null;
+    for (LocaleData locale : locales) {
+      if (StringUtil.equalsIgnoreCase(locale.getLanguage(), localeLanguage)) {
+        if (StringUtil.equalsIgnoreCase(locale.getRegion(), localeRegion)) {
+          return locale;
+        }
+        if (localeWithoutRegion == null) {
+          localeWithoutRegion = locale;
+        }
+      }
+    }
+    return localeWithoutRegion;
   }
 
   private void updatePlatform(@Nullable AndroidPlatform platform) {
