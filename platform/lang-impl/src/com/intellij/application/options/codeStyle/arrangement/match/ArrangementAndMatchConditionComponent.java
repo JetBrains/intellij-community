@@ -58,11 +58,9 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     setOpaque(false);
     setLayout(new GridBagLayout());
     final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
-    final List<ArrangementNameMatchCondition> nameConditions = new ArrayList<ArrangementNameMatchCondition>();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override public void visit(@NotNull ArrangementAtomMatchCondition condition) { operands.put(condition.getValue(), condition); }
       @Override public void visit(@NotNull ArrangementCompositeMatchCondition condition) { operands.put(condition, condition); }
-      @Override public void visit(@NotNull ArrangementNameMatchCondition condition) { nameConditions.add(condition); }
     };
     for (ArrangementMatchCondition operand : setting.getOperands()) {
       operand.invite(visitor);
@@ -74,12 +72,6 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
       ArrangementMatchConditionComponent component = factory.getComponent(operand, rule, true);
-      myComponents.add(component);
-      JComponent uiComponent = component.getUiComponent();
-      add(uiComponent, constraints);
-    }
-    for (ArrangementNameMatchCondition condition : nameConditions) {
-      ArrangementMatchConditionComponent component = factory.getComponent(condition, rule, true);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
       add(uiComponent, constraints);

@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementNameMatchCondition;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -33,6 +32,7 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.METHOD;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
 import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.MODIFIER;
+import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.NAME;
 import static com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType.TYPE;
 import static org.junit.Assert.*;
 
@@ -109,7 +109,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
 
   @Test
   public void nameConditionOnly() {
-    ArrangementNameMatchCondition condition = new ArrangementNameMatchCondition("get*");
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(NAME, "get*");
     doTest(condition);
   }
   
@@ -118,7 +118,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     condition.addOperand(new ArrangementAtomMatchCondition(TYPE, METHOD));
     condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, SYNCHRONIZED));
-    condition.addOperand(new ArrangementNameMatchCondition("get*"));
+    condition.addOperand(new ArrangementAtomMatchCondition(NAME, ("get*")));
     doTest(condition);
   }
 

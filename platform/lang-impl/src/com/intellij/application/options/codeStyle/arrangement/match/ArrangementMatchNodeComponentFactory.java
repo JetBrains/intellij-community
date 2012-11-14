@@ -80,11 +80,6 @@ public class ArrangementMatchNodeComponentFactory {
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager));
       }
-
-      @Override
-      public void visit(@NotNull ArrangementNameMatchCondition condition) {
-        ref.set(new ArrangementNameConditionComponent(condition)); 
-      }
     });
     return ref.get();
   }

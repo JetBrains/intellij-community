@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -85,10 +86,11 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   private static class MyVisitor implements ArrangementMatchConditionVisitor {
 
-    @NotNull private final List<ArrangementEntryMatcher> myMatchers     = ContainerUtilRt.newArrayList();
-    @NotNull private final Set<ArrangementEntryType>     myTypes        = EnumSet.noneOf(ArrangementEntryType.class);
-    @NotNull private final Set<ArrangementModifier>      myModifiers    = EnumSet.noneOf(ArrangementModifier.class);
-    @NotNull private final List<String>                  myNamePatterns = ContainerUtilRt.newArrayList();
+    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = ContainerUtilRt.newArrayList();
+    @NotNull private final Set<ArrangementEntryType>     myTypes     = EnumSet.noneOf(ArrangementEntryType.class);
+    @NotNull private final Set<ArrangementModifier>      myModifiers = EnumSet.noneOf(ArrangementModifier.class);
+
+    @Nullable private String myNamePattern;
 
     private boolean nestedComposite;
 
@@ -100,6 +102,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
           break;
         case MODIFIER:
           myModifiers.add((ArrangementModifier)condition.getValue());
+          break;
+        case NAME:
+          myNamePattern = condition.getValue().toString();
       }
     }
 
@@ -116,17 +121,12 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
       }
     }
 
-    @Override
-    public void visit(@NotNull ArrangementNameMatchCondition condition) {
-      myNamePatterns.add(condition.getPattern());
-    }
-
     @SuppressWarnings("ConstantConditions")
     @NotNull
     public ArrangementEntryMatcher getMatcher() {
       ByTypeArrangementEntryMatcher byType = myTypes.isEmpty() ? null : new ByTypeArrangementEntryMatcher(myTypes);
       ByModifierArrangementEntryMatcher byModifiers = myModifiers.isEmpty() ? null : new ByModifierArrangementEntryMatcher(myModifiers);
-      ByNameArrangementEntryMatcher byName = myNamePatterns.size() != 1 ? null : new ByNameArrangementEntryMatcher(myNamePatterns.get(0));
+      ByNameArrangementEntryMatcher byName = myNamePattern == null ? null : new ByNameArrangementEntryMatcher(myNamePattern);
       int i = countNonNulls(byType, byModifiers, byName);
       if (i == 0 && myMatchers.isEmpty()) {
         return ArrangementEntryMatcher.EMPTY;

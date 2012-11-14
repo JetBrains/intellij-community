@@ -79,6 +79,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowColumns(false);
     setShowGrid(false);
+    setSurrendersFocusOnKeystroke(true);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
     addMouseMotionListener(new MouseAdapter() {

@@ -351,10 +351,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
           n.invite(this);
         }
       }
-
-      @Override
-      public void visit(@NotNull ArrangementNameMatchCondition condition) {
-      }
     });
     Object key = typeRef.get() == null ? NO_TYPE : typeRef.get();
     Set<ArrangementModifier> modifiers = MODIFIERS_BY_TYPE.get(key);
@@ -378,6 +374,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @Override
   public StdArrangementSettings getDefaultSettings() {
     return DEFAULT_SETTINGS;
+  }
+
+  @Override
+  public boolean isNameFilterSupported() {
+    return true;
   }
 
   @Override

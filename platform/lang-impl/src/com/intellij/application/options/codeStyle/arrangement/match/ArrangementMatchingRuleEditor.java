@@ -19,6 +19,9 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementConditionInfo;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
@@ -30,6 +33,9 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.MultiRowFlowPanel;
 import com.intellij.util.ui.UIUtil;
@@ -37,11 +43,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
@@ -53,11 +65,12 @@ import java.util.List;
  */
 public class ArrangementMatchingRuleEditor extends JPanel {
 
-  @NotNull private final List<MultiRowFlowPanel> myRows = new ArrayList<MultiRowFlowPanel>();
+  @NotNull private final Map<Object, ArrangementAtomMatchConditionComponent> myComponents = ContainerUtilRt.newHashMap();
+  @NotNull private final List<MultiRowFlowPanel>                             myRows       = ContainerUtilRt.newArrayList();
 
-  @NotNull private final Map<Object, ArrangementAtomMatchConditionComponent> myComponents =
-    new HashMap<Object, ArrangementAtomMatchConditionComponent>();
-  
+  @NotNull private final Alarm       myAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final JBTextField myNameField = new JBTextField(20);
+
   @NotNull private final ArrangementMatchingRulesControl  myControl;
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @NotNull private final ArrangementColorsProvider        myColorsProvider;
@@ -65,6 +78,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   @Nullable private ArrangementConditionInfo myConditionInfo;
   private int myRow = -1;
   private int myLabelWidth;
+  private boolean myRequestFocus;
 
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
                                        @NotNull ArrangementColorsProvider provider,
@@ -81,6 +95,11 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         onMouseClicked(e);
       }
     });
+    myNameField.getDocument().addDocumentListener(new DocumentListener() {
+      @Override public void insertUpdate(DocumentEvent e) { scheduleNameUpdate(); }
+      @Override public void removeUpdate(DocumentEvent e) { scheduleNameUpdate(); }
+      @Override public void changedUpdate(DocumentEvent e) { scheduleNameUpdate(); }
+    });
   }
 
   private void init(@NotNull ArrangementNodeDisplayManager displayManager) {
@@ -90,8 +109,42 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     Map<ArrangementSettingType, Set<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
     addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
+    addNameFilterIfPossible();
+    applyBackground(UIUtil.getListBackground());
   }
 
+  private void scheduleNameUpdate() {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        updateName();
+      }
+    }, ArrangementConstants.NAME_CONDITION_UPDATE_DELAY_MILLIS);
+  }
+
+  private void updateName() {
+    myAlarm.cancelAllRequests();
+    if (myRow < 0 || myConditionInfo == null) {
+      return;
+    }
+
+    String namePattern = myNameField.getText();
+    if (StringUtil.isEmpty(namePattern)) {
+      namePattern = null;
+    }
+    if (Comparing.equal(namePattern, myConditionInfo.getNamePattern())) {
+      return;
+    }
+    myConditionInfo.setNamePattern(namePattern);
+    ArrangementMatchCondition newCondition = myConditionInfo.buildCondition();
+    Object modelValue = newCondition == null
+                        ? new EmptyArrangementRuleComponent(myControl.getRowHeight(myRow))
+                        : new StdArrangementMatchRule(new StdArrangementEntryMatcher(newCondition));
+    myControl.getModel().set(myRow, modelValue);
+    myControl.repaintRows(myRow, myRow, true);
+  }
+  
   private void addRowIfPossible(@NotNull ArrangementSettingType key,
                                 @NotNull Map<ArrangementSettingType, Set<?>> supportedSettings,
                                 @NotNull ArrangementNodeDisplayManager manager)
@@ -101,23 +154,47 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       return;
     }
 
-    MultiRowFlowPanel valuesPanel = new MultiRowFlowPanel(
-      FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
-    );
+    MultiRowFlowPanel valuesPanel = newRow(manager.getDisplayLabel(key));
     for (Object value : manager.sort(values)) {
       ArrangementAtomMatchConditionComponent component =
         new ArrangementAtomMatchConditionComponent(manager, myColorsProvider, new ArrangementAtomMatchCondition(key, value), null);
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }
+  }
 
-    int top = ArrangementConstants.VERTICAL_PADDING;
-    JLabel label = new JLabel(manager.getDisplayLabel(key) + ":");
-    add(label, new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(top, 0, 0, 0));
+  private void addNameFilterIfPossible() {
+    if (!myFilter.isNameFilterSupported()) {
+      return;
+    }
+    MultiRowFlowPanel panel = newRow(ApplicationBundle.message("arrangement.text.name"));
+    panel.add(myNameField);
+  }
+
+  private MultiRowFlowPanel newRow(@NotNull String rowLabel) {
+    MultiRowFlowPanel result = new MultiRowFlowPanel(
+      FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
+    );
+    JLabel label = new JLabel(rowLabel + ":");
+    add(label, new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(ArrangementConstants.VERTICAL_PADDING, 0, 0, 0));
     myLabelWidth = Math.max(myLabelWidth, label.getPreferredSize().width);
-    add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
-    myRows.add(valuesPanel);
-    applyBackground(UIUtil.getListBackground());
+
+    add(result, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
+    myRows.add(result);
+    return result;
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (myRequestFocus) {
+      if (myNameField.isFocusOwner()) {
+        myRequestFocus = false;
+      }
+      else {
+        myNameField.requestFocusInWindow();
+      }
+    }
+    super.paintComponent(g);
   }
 
   /**
@@ -131,9 +208,13 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   }
   
   private void updateState(int row, boolean newModel) {
+    myAlarm.cancelAllRequests();
     if (newModel) {
       myRow = row;
       myConditionInfo = null;
+      myNameField.setText("");
+      myAlarm.cancelAllRequests();
+      myRequestFocus = true;
     }
 
     // Reset state.
@@ -164,6 +245,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
     ArrangementMatchCondition condition = ((StdArrangementMatchRule)element).getMatcher().getCondition();
     myConditionInfo = ArrangementUtil.extractConditions(condition);
+    myNameField.setText(myConditionInfo.getNamePattern() == null ? "" : myConditionInfo.getNamePattern());
 
     Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
     for (Collection<?> ids : available.values()) {
