@@ -75,6 +75,11 @@ public class ArrangementUtil {
           operand.invite(this);
         }
       }
+
+      @Override
+      public void visit(@NotNull ArrangementNameMatchCondition condition) {
+        result.addOperand(condition);
+      }
     };
     for (ArrangementMatchCondition node : nodes) {
       node.invite(visitor);
@@ -174,6 +179,11 @@ public class ArrangementUtil {
         for (ArrangementMatchCondition operand : condition.getOperands()) {
           operand.invite(this);
         } 
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementNameMatchCondition condition) {
+        result.setNameCondition(condition); 
       }
     });
     return result;

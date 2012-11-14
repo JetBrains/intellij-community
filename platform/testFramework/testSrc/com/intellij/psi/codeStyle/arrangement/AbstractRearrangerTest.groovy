@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementNameMatchCondition
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
@@ -59,17 +60,29 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
 
   @NotNull
-  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
+  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
     group(type, ArrangementEntryOrderType.KEEP)
   }
   
   @NotNull
-  protected ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
+  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
     new ArrangementGroupingRule(type, order)
   }
-  
+
   @NotNull
-  protected StdArrangementMatchRule rule(@NotNull Object ... conditions) {
+  protected static StdArrangementMatchRule rule(@NotNull String name) {
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementNameMatchCondition(name)))
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull String name, Object ... conditions) {
+    def c = conditions.collect { atom(it) }
+    c << new ArrangementNameMatchCondition(name)
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(ArrangementUtil.combine(c as ArrangementMatchCondition[])))
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull Object ... conditions) {
     def condition
     if (conditions.length == 1) {
       condition = atom(conditions[0])
@@ -82,7 +95,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
   
   @NotNull
-  protected ArrangementAtomMatchCondition atom(@NotNull Object condition) {
+  protected static ArrangementAtomMatchCondition atom(@NotNull Object condition) {
     new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition)
   }
   

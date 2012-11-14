@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementNameMatchCondition;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -104,6 +105,21 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     Element actual = mySerializer.serialize(new StdArrangementEntryMatcher(condition));
     assertNotNull(actual);
     checkElements(element, actual);
+  }
+
+  @Test
+  public void nameConditionOnly() {
+    ArrangementNameMatchCondition condition = new ArrangementNameMatchCondition("get*");
+    doTest(condition);
+  }
+  
+  @Test
+  public void compositeConditionWithName() {
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
+    condition.addOperand(new ArrangementAtomMatchCondition(TYPE, METHOD));
+    condition.addOperand(new ArrangementAtomMatchCondition(MODIFIER, SYNCHRONIZED));
+    condition.addOperand(new ArrangementNameMatchCondition("get*"));
+    doTest(condition);
   }
 
   private static void checkElements(@NotNull Element expected, @NotNull Element actual) {
