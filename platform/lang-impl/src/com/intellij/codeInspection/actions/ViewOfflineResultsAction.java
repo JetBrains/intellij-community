@@ -37,13 +37,14 @@ import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvi
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -83,7 +84,17 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
 
     LOG.assertTrue(project != null);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false){
+      @Override
+      public Icon getIcon(VirtualFile file) {
+        if (file.isDirectory()) {
+          if (file.findChild(InspectionApplication.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
+            return AllIcons.Nodes.InspectionResults;
+          }
+        }
+        return super.getIcon(file);
+      }
+    };
     descriptor.setTitle("Select Path");
     descriptor.setDescription("Select directory which contains exported inspections results");
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
