@@ -489,6 +489,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myPreviousButton;
   }
 
+  protected JButton getHelpButton() {
+    return myHelpButton;
+  }
+
   public JButton getCancelButton() {
     return myCancelButton;
   }
