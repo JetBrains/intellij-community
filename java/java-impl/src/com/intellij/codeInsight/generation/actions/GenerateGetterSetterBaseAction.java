@@ -27,10 +27,4 @@ public abstract class GenerateGetterSetterBaseAction extends BaseGenerateAction 
   public GenerateGetterSetterBaseAction(GenerateGetterSetterHandlerBase handler) {
     super(handler);
   }
-
-  @Override
-  protected boolean isValidForClass(PsiClass targetClass) {
-    final GenerateGetterSetterHandlerBase handler = (GenerateGetterSetterHandlerBase)getHandler();
-    return handler.canBeAppliedTo(targetClass);
-  }
 }

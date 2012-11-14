@@ -39,7 +39,7 @@ public class ArrangementSettingsSerializationTest {
     StdArrangementSettings settings = new StdArrangementSettings();
     settings.addGrouping(new ArrangementGroupingRule(ArrangementGroupingType.OVERRIDDEN_METHODS, ArrangementEntryOrderType.BY_NAME));
     ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD);
-    settings.addRule(new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), ArrangementEntryOrderType.KEEP));
+    settings.addRule(new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), ArrangementEntryOrderType.BY_NAME));
 
     Element holder = new Element("holder");
     ArrangementSettingsSerializer instance = DefaultArrangementSettingsSerializer.INSTANCE;

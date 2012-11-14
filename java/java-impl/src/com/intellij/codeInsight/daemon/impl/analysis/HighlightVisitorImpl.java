@@ -1014,6 +1014,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitReferenceParameterList(PsiReferenceParameterList list) {
     myHolder.add(GenericsHighlightUtil.checkParametersAllowed(list));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(list));
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
