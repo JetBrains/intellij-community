@@ -99,10 +99,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
   protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull FrameworkSupportInModuleProvider provider) {
     final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(provider);
     myNodes.get(provider.getFrameworkType()).setChecked(true);
-    if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-      ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable().onFrameworkSelectionChanged(
-        true);
-    }
+    configurable.onFrameworkSelectionChanged(true);
     return configurable;
   }
 

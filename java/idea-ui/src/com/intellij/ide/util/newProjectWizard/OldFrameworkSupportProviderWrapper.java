@@ -152,6 +152,11 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     }
 
     @Override
+    public void onFrameworkSelectionChanged(boolean selected) {
+      myConfigurable.onFrameworkSelectionChanged(selected);
+    }
+
+    @Override
     public boolean isVisible() {
       return myConfigurable.isVisible();
     }

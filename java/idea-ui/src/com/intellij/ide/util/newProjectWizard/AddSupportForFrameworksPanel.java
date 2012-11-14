@@ -81,12 +81,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
         if (!(node instanceof FrameworkSupportNode)) return;
 
         final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
-        updateOptionsPanel();
-        final FrameworkSupportInModuleConfigurable configurable = frameworkSupportNode.getConfigurable();
-        if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-          ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable().onFrameworkSelectionChanged(
-            node.isChecked());
+        if (frameworkSupportNode == getSelectedNode()) {
+          updateOptionsPanel();
         }
+        final FrameworkSupportInModuleConfigurable configurable = frameworkSupportNode.getConfigurable();
+        configurable.onFrameworkSelectionChanged(node.isChecked());
         myModel.onFrameworkSelectionChanged(frameworkSupportNode);
         onFrameworkStateChanged();
       }
@@ -144,6 +143,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       initializeOptionsPanel(node);
       showCard(node.getProvider().getFrameworkType().getId());
       UIUtil.setEnabled(myOptionsPanel, node.isChecked(), true);
+      node.getConfigurable().onFrameworkSelectionChanged(node.isChecked());
     }
     else {
       showCard(EMPTY_CARD);
