@@ -77,7 +77,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     myGroupingTypeLabel = new JLabel(displayManager.getDisplayValue(groupingType));
     myGroupingTypeLabel.addMouseListener(new MouseAdapter() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public void mousePressed(MouseEvent e) {
         myCheckedBox.setSelected(!myCheckedBox.isSelected());
       }
     });
