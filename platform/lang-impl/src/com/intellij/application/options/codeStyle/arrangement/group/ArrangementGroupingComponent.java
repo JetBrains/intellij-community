@@ -66,7 +66,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
     myCheckedBox = new JBCheckBox();
-    myCheckedBox.setBackground(UIUtil.getListBackground());
+    myCheckedBox.setOpaque(false);
     myCheckedBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -163,9 +163,18 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
   public void setRowIndex(int row) {
     myRowIndexControl.setIndex(row);
   }
+
+  public void setHighlight(boolean highlight) {
+    setBackground(highlight ? UIUtil.getDecoratedRowColor() : UIUtil.getListBackground());
+  }
   
   @Nullable
   public ArrangementEntryOrderType getOrderType() {
     return myOrderTypeBox == null ? null : (ArrangementEntryOrderType)myOrderTypeBox.getSelectedItem();
+  }
+
+  @Override
+  public String toString() {
+    return myGroupingType.toString();
   }
 }

@@ -18,10 +18,12 @@ package com.intellij.application.options.codeStyle.arrangement.group;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 11/13/12 7:25 PM
  */
-public class ArrangementGroupingRulesPanel extends JPanel {
+public class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
 
   @NotNull private final ArrangementGroupingRulesControl myControl;
 
@@ -62,5 +64,14 @@ public class ArrangementGroupingRulesPanel extends JPanel {
   @NotNull
   public List<ArrangementGroupingRule> getRules() {
     return myControl.getRules();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (ArrangementConstants.GROUPING_RULES_CONTROL_KEY.is(dataId)) {
+      return myControl;
+    }
+    return null;
   }
 }

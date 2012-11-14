@@ -26,9 +26,9 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 9/28/12 12:16 PM
  */
-public class MoveArrangementRuleUpAction extends AbstractMoveArrangementRuleAction {
+public class MoveArrangementMatchingRuleUpAction extends AbstractMoveArrangementRuleAction {
 
-  public MoveArrangementRuleUpAction() {
+  public MoveArrangementMatchingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.move.up.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.move.up.description"));
   }

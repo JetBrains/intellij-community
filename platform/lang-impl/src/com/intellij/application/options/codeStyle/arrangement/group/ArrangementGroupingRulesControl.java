@@ -34,6 +34,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -45,6 +46,8 @@ public class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull private final Map<ArrangementGroupingType, ArrangementGroupingComponent> myComponents
     = new EnumMap<ArrangementGroupingType, ArrangementGroupingComponent>(ArrangementGroupingType.class);
+  
+  private int myRowUnderMouse = -1;
 
   public ArrangementGroupingRulesControl(@NotNull ArrangementNodeDisplayManager displayManager,
                                          @NotNull ArrangementStandardSettingsAware settingsFilter)
@@ -55,6 +58,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     setShowColumns(false);
     setShowGrid(false);
     setBorder(IdeBorderFactory.createBorder());
+    setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
     for (ArrangementGroupingType groupingType : ArrangementGroupingType.values()) {
@@ -125,12 +129,38 @@ public class ArrangementGroupingRulesControl extends JBTable {
     return result;
   }
 
-  private static class MyRenderer implements TableCellRenderer {
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_MOVED) {
+      int oldRow = myRowUnderMouse;
+      myRowUnderMouse = rowAtPoint(e.getPoint());
+      if (oldRow >= 0 && myRowUnderMouse != oldRow) {
+        getModel().fireTableRowsUpdated(oldRow, oldRow);
+      }
+      if (myRowUnderMouse >= 0 && myRowUnderMouse != oldRow) {
+        getModel().fireTableRowsUpdated(myRowUnderMouse, myRowUnderMouse);
+      }
+    }
+    super.processMouseMotionEvent(e);
+  }
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_EXITED && myRowUnderMouse >= 0) {
+      int row = myRowUnderMouse;
+      myRowUnderMouse = -1;
+      getModel().fireTableRowsUpdated(row, row);
+    }
+    super.processMouseEvent(e);
+  }
+
+  private class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value instanceof ArrangementGroupingComponent) {
         ArrangementGroupingComponent component = (ArrangementGroupingComponent)value;
         component.setRowIndex(row + 1);
+        component.setHighlight(myRowUnderMouse == row || table.isRowSelected(row));
         return component;
       }
       else if (value instanceof ArrangementRepresentationAware) {

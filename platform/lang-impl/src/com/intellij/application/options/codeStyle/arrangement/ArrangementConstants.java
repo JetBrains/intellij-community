@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +26,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ArrangementConstants {
 
-  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY = DataKey.create("Arrangement.RuleEditor");
+  public static final DataKey<ArrangementGroupingRulesControl> GROUPING_RULES_CONTROL_KEY =
+    DataKey.create("Arrangement.Rule.Group.Control");
+  public static final DataKey<ArrangementMatchingRulesControl> MATCHING_RULES_CONTROL_KEY =
+    DataKey.create("Arrangement.Rule.Match.Control");
 
   @NonNls public static final String ACTION_GROUP_GROUPING_RULES_CONTROL_TOOLBAR = "Arrangement.Rule.Group.Control.ToolBar";
   @NonNls public static final String GROUPING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Group.Control.ToolBar.Place";
