@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -917,13 +918,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
+    final Map<File, Set<File>> map = new THashMap<File, Set<File>>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
-      final Set<File> roots = new LinkedHashSet<File>();
+      final Set<File> roots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
