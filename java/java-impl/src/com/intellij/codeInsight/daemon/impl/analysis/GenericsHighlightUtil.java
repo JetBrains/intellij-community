@@ -1395,5 +1395,28 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
+
+  /**
+   * http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8
+   */
+  @Nullable
+  public static HighlightInfo checkRawOnParameterizedType(PsiReferenceParameterList list) {
+    if (list.getTypeArguments().length > 0) return null;
+    final PsiElement parent = list.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        if (((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0) {
+          final PsiElement resolve = ((PsiJavaCodeReferenceElement)parent).resolve();
+          if (resolve instanceof PsiTypeParameterListOwner 
+              && ((PsiTypeParameterListOwner)resolve).hasTypeParameters() 
+              && !((PsiTypeParameterListOwner)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, "Improper formed type; some type parameters are missing");
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
 
