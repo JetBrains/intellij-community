@@ -75,11 +75,6 @@ public class ArrangementUtil {
           operand.invite(this);
         }
       }
-
-      @Override
-      public void visit(@NotNull ArrangementNameMatchCondition condition) {
-        result.addOperand(condition);
-      }
     };
     for (ArrangementMatchCondition node : nodes) {
       node.invite(visitor);
@@ -148,6 +143,9 @@ public class ArrangementUtil {
     else if (condition instanceof ArrangementModifier) {
       return ArrangementSettingType.MODIFIER;
     }
+    else if (condition instanceof String) {
+      return ArrangementSettingType.NAME;
+    }
     else {
       throw new IllegalArgumentException(String.format(
         "Can't parse type for the given condition of class '%s': %s", condition.getClass(), condition
@@ -179,11 +177,6 @@ public class ArrangementUtil {
         for (ArrangementMatchCondition operand : condition.getOperands()) {
           operand.invite(this);
         } 
-      }
-
-      @Override
-      public void visit(@NotNull ArrangementNameMatchCondition condition) {
-        result.setNamePattern(condition.getPattern()); 
       }
     });
     return result;

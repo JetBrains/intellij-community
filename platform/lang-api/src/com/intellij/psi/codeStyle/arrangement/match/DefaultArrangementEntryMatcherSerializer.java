@@ -75,8 +75,6 @@ public class DefaultArrangementEntryMatcherSerializer {
   private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
 
   @NotNull private static final String COMPOSITE_CONDITION_NAME = "AND";
-  @NotNull private static final String PATTERN_CONDITION_NAME   = "NAME";
-
   private static final Set<String> ATOM_SETTINGS_TYPES = new HashSet<String>();
 
   static {
@@ -115,10 +113,7 @@ public class DefaultArrangementEntryMatcherSerializer {
   @Nullable
   private static ArrangementMatchCondition deserializeCondition(@NotNull Element matcherElement) {
     String name = matcherElement.getName();
-    if (PATTERN_CONDITION_NAME.equals(name)) {
-      return new ArrangementNameMatchCondition(StringUtil.unescapeStringCharacters(matcherElement.getText()));
-    }
-    else if (!COMPOSITE_CONDITION_NAME.equals(name)) {
+    if (!COMPOSITE_CONDITION_NAME.equals(name)) {
       if (ATOM_SETTINGS_TYPES.contains(name)) {
         return deserializeAtomCondition(matcherElement);
       }
@@ -150,6 +145,7 @@ public class DefaultArrangementEntryMatcherSerializer {
     switch (settingType) {
       case TYPE: value = ArrangementEntryType.valueOf(matcherElement.getText()); break;
       case MODIFIER: value = ArrangementModifier.valueOf(matcherElement.getText()); break;
+      case NAME: value = StringUtil.unescapeStringCharacters(matcherElement.getText()); break;
       default:
         LOG.warn(String.format(
           "Can't deserialize an arrangement entry matcher from element of type '%s' with text '%s'",
@@ -167,7 +163,11 @@ public class DefaultArrangementEntryMatcherSerializer {
     
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-      Element element = new Element(condition.getType().toString()).setText(condition.getValue().toString());
+      String content = condition.getValue().toString();
+      if (condition.getType() == ArrangementSettingType.NAME) {
+        content = StringUtil.escapeStringCharacters(content);
+      }
+      Element element = new Element(condition.getType().toString()).setText(content);
       register(element);
     }
 
@@ -181,12 +181,6 @@ public class DefaultArrangementEntryMatcherSerializer {
       for (ArrangementMatchCondition c : operands) {
         c.invite(this);
       }
-    }
-
-    @Override
-    public void visit(@NotNull ArrangementNameMatchCondition condition) {
-      Element element = new Element(PATTERN_CONDITION_NAME).setText(StringUtil.escapeStringCharacters(condition.getPattern()));
-      register(element);
     }
 
     private void register(@NotNull Element element) {

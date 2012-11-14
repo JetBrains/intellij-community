@@ -25,11 +25,13 @@ import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Map;
 
 /**
  * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
@@ -47,6 +50,16 @@ import java.awt.event.MouseEvent;
  * @since 8/8/12 10:06 AM
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementMatchConditionComponent {
+
+  @NotNull private static final Map<ArrangementSettingType, BorderStrategy> BORDER_STRATEGIES = ContainerUtilRt.newHashMap();
+  static {
+    BORDER_STRATEGIES.put(ArrangementSettingType.NAME, new NameBorderStrategy());
+    
+    PredefinedConditionBorderStrategy strategy = new PredefinedConditionBorderStrategy();
+    BORDER_STRATEGIES.put(ArrangementSettingType.TYPE, strategy);
+    BORDER_STRATEGIES.put(ArrangementSettingType.MODIFIER, strategy);
+    assert BORDER_STRATEGIES.size() == ArrangementSettingType.values().length;
+  }
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
@@ -71,6 +84,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     }
   };
 
+  @NotNull private final BorderStrategy                myBorderStrategy;
   @NotNull private final String                        myText;
   @NotNull private final ArrangementColorsProvider     myColorsProvider;
   @NotNull private final RoundedLineBorder             myBorder;
@@ -97,10 +111,17 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
+    myBorderStrategy = BORDER_STRATEGIES.get(condition.getType());
     myText = manager.getDisplayValue(condition);
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
-    myTextControlSize = new Dimension(manager.getMaxWidth(condition.getType()), myTextControl.getPreferredSize().height);
+    int maxWidth = manager.getMaxWidth(condition.getType());
+    if (maxWidth > 0) {
+      myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
+    }
+    else {
+      myTextControlSize = myTextControl.getPreferredSize();
+    }
 
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
@@ -123,8 +144,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       };
       myCloseButtonBounds = new Rectangle(0, 0, buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
     }
-
-    
 
     JPanel insetsPanel = new JPanel(new GridBagLayout()) {
       @Override
@@ -158,12 +177,18 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
       public String toString() {
         return "round border panel for " + myText;
       }
+
+      @Override
+      protected void paintBorder(Graphics g) {
+        myBorderStrategy.setup((Graphics2D)g);
+        super.paintBorder(g);
+      }
     };
     roundBorderPanel.add(insetsPanel, new GridBag().anchor(GridBagConstraints.WEST));
     if (myCloseButton != null) {
       roundBorderPanel.add(new InsetsPanel(myCloseButton), new GridBag().anchor(GridBagConstraints.EAST));
     }
-    myBorder = IdeBorderFactory.createRoundedBorder(ArrangementConstants.BORDER_ARC_SIZE);
+    myBorder = myBorderStrategy.create();
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
     
@@ -296,5 +321,36 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   @Override
   public String toString() {
     return myText;
+  }
+  
+  private interface BorderStrategy {
+    RoundedLineBorder create();
+    void setup(@NotNull Graphics2D g);
+  }
+  
+  private static class PredefinedConditionBorderStrategy implements BorderStrategy {
+    @Override
+    public RoundedLineBorder create() {
+      return IdeBorderFactory.createRoundedBorder(ArrangementConstants.BORDER_ARC_SIZE);
+    }
+
+    @Override
+    public void setup(@NotNull Graphics2D g) {
+    }
+  }
+  
+  private static class NameBorderStrategy implements BorderStrategy {
+
+    @NotNull private final BasicStroke myStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);
+
+    @Override
+    public RoundedLineBorder create() {
+      return IdeBorderFactory.createRoundedBorder(ArrangementConstants.BORDER_ARC_SIZE, 2);
+    }
+
+    @Override
+    public void setup(@NotNull Graphics2D g) {
+      g.setStroke(myStroke);
+    }
   }
 }

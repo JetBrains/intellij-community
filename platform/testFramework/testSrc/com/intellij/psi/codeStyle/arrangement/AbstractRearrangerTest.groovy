@@ -29,7 +29,6 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementNameMatchCondition
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
@@ -67,18 +66,6 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   @NotNull
   protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
     new ArrangementGroupingRule(type, order)
-  }
-
-  @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull String name) {
-    new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementNameMatchCondition(name)))
-  }
-
-  @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull String name, Object ... conditions) {
-    def c = conditions.collect { atom(it) }
-    c << new ArrangementNameMatchCondition(name)
-    new StdArrangementMatchRule(new StdArrangementEntryMatcher(ArrangementUtil.combine(c as ArrangementMatchCondition[])))
   }
 
   @NotNull

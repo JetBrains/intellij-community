@@ -48,6 +48,7 @@ import java.util.Set;
 public class ArrangementNodeDisplayManager {
 
   @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
+  
   @NotNull private final ArrangementStandardSettingsAware               myFilter;
   @NotNull private final ArrangementColorsProvider                      myColorsProvider;
   @NotNull private       ArrangementStandardSettingsRepresentationAware myRepresentationManager;
@@ -119,8 +120,16 @@ public class ArrangementNodeDisplayManager {
       return value.toString();
     }
   }
-  
+
+  /**
+   * @param type  target condition type
+   * @return      max width in pixels for the condition value of the given type if any;
+   *              <code>'-1'</code> as an indication that no max width limit exists for the condition value of the given type
+   */
   public int getMaxWidth(@NotNull ArrangementSettingType type) {
+    if (type == ArrangementSettingType.NAME) {
+      return -1;
+    }
     return myMaxWidths.get(type);
   }
 

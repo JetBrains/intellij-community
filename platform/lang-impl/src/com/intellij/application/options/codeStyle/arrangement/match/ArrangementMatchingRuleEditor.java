@@ -46,10 +46,14 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
@@ -74,6 +78,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
   @Nullable private ArrangementConditionInfo myConditionInfo;
   private int myRow = -1;
   private int myLabelWidth;
+  private boolean myRequestFocus;
 
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
                                        @NotNull ArrangementColorsProvider provider,
@@ -113,7 +118,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        updateName(); 
+        updateName();
       }
     }, ArrangementConstants.NAME_CONDITION_UPDATE_DELAY_MILLIS);
   }
@@ -179,6 +184,19 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     return result;
   }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (myRequestFocus) {
+      if (myNameField.isFocusOwner()) {
+        myRequestFocus = false;
+      }
+      else {
+        myNameField.requestFocusInWindow();
+      }
+    }
+    super.paintComponent(g);
+  }
+
   /**
    * Asks current editor to refresh its state in accordance with the arrangement rule shown at the given row.
    *
@@ -196,6 +214,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       myConditionInfo = null;
       myNameField.setText("");
       myAlarm.cancelAllRequests();
+      myRequestFocus = true;
     }
 
     // Reset state.
@@ -226,6 +245,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
     ArrangementMatchCondition condition = ((StdArrangementMatchRule)element).getMatcher().getCondition();
     myConditionInfo = ArrangementUtil.extractConditions(condition);
+    myNameField.setText(myConditionInfo.getNamePattern() == null ? "" : myConditionInfo.getNamePattern());
 
     Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
     for (Collection<?> ids : available.values()) {
