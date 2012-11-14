@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -183,11 +184,20 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public boolean addRoots(final String name, final Collection<AbstractTreeNode> nodes) {
     final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
+
+    final HashSet<AbstractUrl> set = new HashSet<AbstractUrl>(ObjectsConvertor.convert(list, new Convertor<TreeItem<Pair<AbstractUrl, String>>, AbstractUrl>() {
+      @Override
+      public AbstractUrl convert(TreeItem<Pair<AbstractUrl, String>> o) {
+        return o.getData().getFirst();
+      }
+    }));
     for (AbstractTreeNode node : nodes) {
       final Pair<AbstractUrl, String> pair = createPairForNode(node);
       if (pair != null) {
+        if (set.contains(pair.getFirst())) continue;
         final TreeItem<Pair<AbstractUrl, String>> treeItem = new TreeItem<Pair<AbstractUrl, String>>(pair);
         list.add(treeItem);
+        set.add(pair.getFirst());
         appendChildNodes(node, treeItem);
       }
     }
@@ -287,15 +297,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return true;
   }
 
-  public synchronized boolean removeRootByElements(@NotNull String name, @NotNull List<Object> elements) {
-    return findListToRemoveFrom(name, elements, new Convertor<Object, AbstractUrl>() {
-      @Override
-      public AbstractUrl convert(Object o) {
-        return createUrlByElement(o, myProject);
-      }
-    });
-  }
-
   private <T> boolean findListToRemoveFrom(@NotNull String name, @NotNull final List<T> elements,
                                                                        final Convertor<T, AbstractUrl> convertor) {
     Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
@@ -328,12 +329,18 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized boolean removeRoot(@NotNull String name, @NotNull List<AbstractTreeNode> elements) {
-    return findListToRemoveFrom(name, elements, new Convertor<AbstractTreeNode, AbstractUrl>() {
+    final Convertor<AbstractTreeNode, AbstractUrl> convertor = new Convertor<AbstractTreeNode, AbstractUrl>() {
       @Override
       public AbstractUrl convert(AbstractTreeNode obj) {
         return createUrlByElement(obj.getValue(), myProject);
       }
-    });
+    };
+    boolean result = true;
+    for (AbstractTreeNode element : elements) {
+      final List<AbstractTreeNode> path = TaskDefaultFavoriteListProvider.getPathToUsualNode(element);
+      result &= findListToRemoveFrom(name, path.subList(1, path.size()), convertor);
+    }
+    return result;
   }
 
   private TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
@@ -499,7 +506,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   @Nullable
-  private static AbstractUrl createUrlByElement(Object element, final Project project) {
+  public static AbstractUrl createUrlByElement(Object element, final Project project) {
     if (element instanceof SmartPsiElementPointer) element = ((SmartPsiElementPointer)element).getElement();
                                                                                                                                                
     for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
@@ -39,6 +40,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -144,6 +146,32 @@ public class TaskDefaultFavoriteListProvider implements FavoritesListProvider {
         }
       }
     };
+  }
+
+  // ! containing self
+  public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode) {
+    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    AbstractTreeNode current = treeNode;
+    while (current != null && (! (current instanceof FavoritesRootNode))) {
+      result.add(current);
+      current = current.getParent();
+    }
+    Collections.reverse(result);
+    return result;
+  }
+
+  public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode, final Tree tree) {
+    final AbstractTreeNode parent = treeNode.getParent();
+    if (parent instanceof ProjectViewNodeWithChildrenList) {
+      final List<AbstractTreeNode> pathToSelected = FavoritesTreeUtil.getLogicalPathToSelected(tree);
+      if (pathToSelected.isEmpty()) {
+        return pathToSelected;
+      }
+      else {
+        return pathToSelected.subList(0, pathToSelected.size() - 1);
+      }
+    }
+    return Collections.emptyList();
   }
 
   private void showNotePopup(Project project,

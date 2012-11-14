@@ -17,6 +17,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -51,7 +52,7 @@ public class FavoritesTreeUtil {
     return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
   }
 
-  public static List<AbstractTreeNode> getLogicalPathToSelected(final DnDAwareTree tree) {
+  public static List<AbstractTreeNode> getLogicalPathToSelected(final Tree tree) {
     final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     final TreePath selectionPath = tree.getSelectionPath();
     return getLogicalPathTo(result, selectionPath);
