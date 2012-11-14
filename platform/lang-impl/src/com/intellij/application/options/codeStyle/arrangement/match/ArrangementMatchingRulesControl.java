@@ -212,6 +212,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
   public void runOperationIgnoreSelectionChange(@NotNull Runnable task) {
     mySkipSelectionChange = true;
     try {
+      if (isEditing()) {
+        getCellEditor().stopCellEditing();
+      }
       task.run();
     }
     finally {
@@ -228,6 +231,17 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   public void refreshEditor() {
+    ArrangementMatchingRulesModel model = getModel();
+    if (myEditorRow >= model.getSize()) {
+      myEditorRow = -1;
+      for (int i = 0, max = model.getSize(); i < max; i++) {
+        if (model.getElementAt(i) instanceof ArrangementEditorComponent) {
+          myEditorRow = i;
+          break;
+        }
+      }
+    }
+
     if (myEditorRow < 0) {
       return;
     }
