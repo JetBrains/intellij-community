@@ -15,16 +15,19 @@
  */
 package org.jetbrains.idea.maven.vfs;
 
+import com.intellij.lang.properties.IProperty;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 import java.util.Map;
+import java.util.Properties;
 
 public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
   @NonNls public static final String PROTOCOL = "maven-properties";
@@ -34,7 +37,8 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
 
   public static final String[] PROPERTIES_FILES = new String[]{SYSTEM_PROPERTIES_FILE, ENV_PROPERTIES_FILE};
 
-  private final Map<String, VirtualFile> myFiles = new THashMap<String, VirtualFile>();
+  private VirtualFile mySystemPropertiesFile;
+  private VirtualFile myEnvPropertiesFile;
 
   public static MavenPropertiesVirtualFileSystem getInstance() {
     return (MavenPropertiesVirtualFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -45,27 +49,65 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
     return PROTOCOL;
   }
 
+  public VirtualFile getSystemPropertiesFile() {
+    if (mySystemPropertiesFile == null) {
+      Properties systemProperties = new Properties();
+
+      for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+        if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
+          String key = (String)entry.getKey();
+          if (!key.startsWith("idea.")) {
+            systemProperties.setProperty(key, (String)entry.getValue());
+          }
+        }
+      }
+
+      mySystemPropertiesFile = new MavenPropertiesVirtualFile(SYSTEM_PROPERTIES_FILE, systemProperties, this);
+    }
+
+    return mySystemPropertiesFile;
+  }
+
+  public VirtualFile getEnvPropertiesFile() {
+    if (myEnvPropertiesFile == null) {
+      Properties envProperties = new Properties();
+
+      for (Map.Entry<String, String> each : System.getenv().entrySet()) {
+        if (each.getKey().startsWith("=")) continue;
+        envProperties.setProperty(each.getKey(), SystemInfo.isWindows ? each.getValue().toUpperCase() : each.getValue());
+      }
+
+      myEnvPropertiesFile = new MavenPropertiesVirtualFile(ENV_PROPERTIES_FILE, envProperties, this);
+    }
+
+    return myEnvPropertiesFile;
+  }
+
   //@Override
   //public boolean isPhysical() {
   //  return false;
   //}
 
   public synchronized VirtualFile findFileByPath(@NotNull @NonNls String path) {
-    VirtualFile result = myFiles.get(path);
-    if (result != null) return result;
-
-    result = createFile(path);
-    if (result != null) {
-      myFiles.put(path, result);
+    if (path.equals(SYSTEM_PROPERTIES_FILE)) {
+      return getSystemPropertiesFile();
     }
-    return result;
+
+    if (path.equals(ENV_PROPERTIES_FILE)) {
+      return getEnvPropertiesFile();
+    }
+
+    return null;
   }
 
   @Nullable
-  private VirtualFile createFile(String path) {
-    if (SYSTEM_PROPERTIES_FILE.equals(path)) return new MavenPropertiesVirtualFile(path, MavenUtil.getSystemProperties(), this);
-    if (ENV_PROPERTIES_FILE.equals(path)) return new MavenPropertiesVirtualFile(path, MavenUtil.getEnvProperties(), this);
-    return null;
+  public IProperty findSystemProperty(Project project, @NotNull String propertyName) {
+    return MavenDomUtil.findProperty(project, getSystemPropertiesFile(), propertyName);
+  }
+
+  @Nullable
+  public IProperty findEnvProperty(Project project, @NotNull String propertyName) {
+    return MavenDomUtil.findProperty(project, getEnvPropertiesFile(), propertyName);
   }
 
   //protected void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
