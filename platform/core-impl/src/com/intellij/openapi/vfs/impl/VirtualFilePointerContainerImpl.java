@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
@@ -47,17 +47,19 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;
   @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
-  private VirtualFile[] myCachedDirectories;
-  private String[] myCachedUrls;
-  private VirtualFile[] myCachedFiles;
-  private long myTimeStampOfCachedThings = -1;
+  private volatile Trinity<String[], VirtualFile[], VirtualFile[]> myCachedThings;
+  private volatile long myTimeStampOfCachedThings = -1;
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
-  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager, @NotNull Disposable parentDisposable, @Nullable VirtualFilePointerListener listener) {
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
+                                         @NotNull Disposable parentDisposable,
+                                         @Nullable VirtualFilePointerListener listener) {
     //noinspection HardCodedStringLiteral
-    super(TRACE_CREATION ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); listener="+listener) : null);
+    super(TRACE_CREATION
+          ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); listener=" + listener)
+          : null);
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
     myListener = listener;
@@ -165,24 +167,24 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @NotNull
   public String[] getUrls() {
-    assert !myDisposed;
-    String[] cachedUrls = myCachedUrls;
-    if (!isCacheUpToDate()) {
-      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
-      cachedUrls = cached.first;
-    }
-    return cachedUrls;
+    return getOrCache().first;
   }
 
-  private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY = Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+  @NotNull
+  private Trinity<String[], VirtualFile[], VirtualFile[]> getOrCache() {
+    assert !myDisposed;
+    long timeStamp = myTimeStampOfCachedThings;
+    Trinity<String[], VirtualFile[], VirtualFile[]> cached = myCachedThings;
+    return timeStamp == myVirtualFilePointerManager.getModificationCount() ? cached : cacheThings();
+  }
+
+  private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY =
+    Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
 
   @NotNull
   private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
     Trinity<String[], VirtualFile[], VirtualFile[]> result;
     if (myList.isEmpty()) {
-      myCachedDirectories = VirtualFile.EMPTY_ARRAY;
-      myCachedFiles = VirtualFile.EMPTY_ARRAY;
-      myCachedUrls = ArrayUtil.EMPTY_STRING_ARRAY;
       result = EMPTY;
     }
     else {
@@ -206,13 +208,11 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
         }
       }
       VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
-      myCachedDirectories = directories;
-      VirtualFile[] files;
-      myCachedFiles = files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
-      String[] urlsArray;
-      myCachedUrls = urlsArray = ArrayUtil.toStringArray(cachedUrls);
+      VirtualFile[] files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
+      String[] urlsArray = ArrayUtil.toStringArray(cachedUrls);
       result = Trinity.create(urlsArray, files, directories);
     }
+    myCachedThings = result;
     myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
     return result;
   }
@@ -220,29 +220,13 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   @NotNull
   public VirtualFile[] getFiles() {
-    assert !myDisposed;
-    VirtualFile[] cachedFiles = myCachedFiles;
-    if (!isCacheUpToDate()) {
-      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
-      cachedFiles = cached.second;
-    }
-    return cachedFiles;
+    return getOrCache().second;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getDirectories() {
-    assert !myDisposed;
-    VirtualFile[] directories = myCachedDirectories;
-    if (!isCacheUpToDate()) {
-      Trinity<String[], VirtualFile[], VirtualFile[]> cached = cacheThings();
-      directories = cached.third;
-    }
-    return directories;
-  }
-
-  private boolean isCacheUpToDate() {
-    return myTimeStampOfCachedThings == myVirtualFilePointerManager.getModificationCount();
+    return getOrCache().third;
   }
 
   @Override
@@ -295,7 +279,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NonNls
   @Override
   public String toString() {
-    return "VFPContainer: "+myList/*+"; parent:"+myParent*/;
+    return "VFPContainer: " + myList/*+"; parent:"+myParent*/;
   }
 
   @Override
