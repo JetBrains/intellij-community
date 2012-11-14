@@ -1069,7 +1069,7 @@
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiPackageFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.UsageFavoriteNodeProvider"/>
     <favoritesListProvider implementation="com.intellij.ide.favoritesTreeView.ProjectDefaultFavoriteListProvider"/>
-    <favoritesListProvider implementation="com.intellij.ide.favoritesTreeView.TaskDefaultFavoriteListProvider"/>
+    <!-- <favoritesListProvider implementation="com.intellij.ide.favoritesTreeView.TaskDefaultFavoriteListProvider"/> -->
 
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
