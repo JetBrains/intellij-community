@@ -271,6 +271,9 @@ public class MinusculeMatcher implements Matcher {
           if (ranges != null) {
             return prependRange(ranges, nameIndex, i);
           }
+          if (myHasHumps && i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
+            return null;
+          }
         }
       }
       i++;
