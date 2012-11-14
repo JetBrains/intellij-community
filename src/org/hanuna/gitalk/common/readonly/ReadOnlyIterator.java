@@ -8,9 +8,9 @@ import java.util.Iterator;
  * @author erokhins
  */
 public class ReadOnlyIterator<T> implements Iterator<T> {
-    private final Iterator<T> iterator;
+    private final Iterator<? extends T> iterator;
 
-    public ReadOnlyIterator(@NotNull Iterator<T> iterator) {
+    public ReadOnlyIterator(@NotNull Iterator<? extends T> iterator) {
         this.iterator = iterator;
     }
 
