@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
+package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.openapi.wm.WelcomeScreenProvider;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,11 +26,15 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public interface WelcomeScreenProvider {
-  ExtensionPointName<WelcomeScreenProvider> EP_NAME = ExtensionPointName.create("com.intellij.welcomeScreen");
-
+public class DarculaWelcomeScreenProvider implements WelcomeScreenProvider {
   @Nullable
-  WelcomeScreen createWelcomeScreen(JRootPane rootPane);
+  @Override
+  public WelcomeScreen createWelcomeScreen(JRootPane rootPane) {
+    return new DarculaIntelliJWelcomeScreen();
+  }
 
-  boolean isAvailable();
+  @Override
+  public boolean isAvailable() {
+    return UIUtil.isUnderDarcula() && PlatformUtils.isIntelliJ();
+  }
 }
