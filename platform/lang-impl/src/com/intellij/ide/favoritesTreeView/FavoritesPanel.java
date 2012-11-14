@@ -24,6 +24,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
@@ -136,8 +137,11 @@ public class FavoritesPanel {
             if (path.getPathCount() == 3) {
               final AbstractTreeNode abstractTreeNode =
                 ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).getElement();
-              final Object element = abstractTreeNode.getValue();
+              Object element = abstractTreeNode.getValue();
               mgr.removeRoot(listFrom, Collections.singletonList(abstractTreeNode));
+              if (element instanceof SmartPsiElementPointer) {
+                element = ((SmartPsiElementPointer)element).getElement();
+              }
               mgr.addRoots(listTo, null, element);
             }
           }
@@ -146,6 +150,9 @@ public class FavoritesPanel {
             if (elements != null && elements.length > 0) {
               ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
               for (PsiElement element : elements) {
+                if (element instanceof SmartPsiElementPointer) {
+                  element = ((SmartPsiElementPointer)element).getElement();
+                }
                 final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
                   .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
                 nodes.addAll(tmp);
