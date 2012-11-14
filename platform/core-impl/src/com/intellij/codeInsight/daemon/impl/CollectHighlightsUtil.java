@@ -19,12 +19,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -85,7 +81,7 @@ public class CollectHighlightsUtil {
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
     while (true) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
 
       for (Condition<PsiElement> filter : filters) {
         if (!filter.value(element)) {
@@ -158,14 +154,5 @@ public class CollectHighlightsUtil {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }
     return root.findElementAt(offset);
-  }
-
-  public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {
-    if (psiFile == null) return false;
-    if (psiFile instanceof PsiCodeFragment) return false;
-    final VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return false;
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 }

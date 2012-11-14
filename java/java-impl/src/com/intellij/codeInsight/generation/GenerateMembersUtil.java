@@ -431,17 +431,6 @@ public class GenerateMembersUtil {
     return TypeConversionUtil.erasure(type);
   }
 
-  public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
-    PsiClass hisClass = method.getContainingClass();
-    PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    if (typeParameters.length > 0) {
-      if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
-      }
-    }
-    return substitutor;
-  }
-
   public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {
     if (child.equals(first)) return true;
     while (true) {

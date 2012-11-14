@@ -16,8 +16,8 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -78,7 +78,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     for (PsiElement element : elements) {
       final PsiFile containingFile = element.getNavigationElement().getContainingFile();
       if (!(containingFile instanceof PsiClassOwner &&
-            CollectHighlightsUtil.isOutsideSourceRoot(containingFile))) {
+            ProjectRootsUtil.isOutsideSourceRoot(containingFile))) {
         PsiClass[] topLevelClasses = getTopLevelClasses(element);
         if (topLevelClasses == null) {
           if (element instanceof PsiDirectory) {
