@@ -731,20 +731,6 @@ new Base() {
 ''')
   }
 
-  void testDelegateWithDeprecated() {
-    testHighlighting('''\
-interface Foo {
-    @Deprecated
-    void foo()
-}
-
-
-<error descr="Method 'foo' is not implemented">class FooImpl implements Foo</error> {
-    @Delegate(deprecated = false) Foo delegate
-}
-''')
-  }
-
   void testAbstractMethodWithBody() {
     testHighlighting('''\
 interface A {

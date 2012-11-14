@@ -241,16 +241,34 @@ public abstract class Bar implements Foo {
 public class FooBar extends Bar implements Foo {
 }
 ''')
-    def file = myFixture.configureByText('Baz.groovy', '''\
+    assertAllMethodsImplemented('Baz.groovy', '''\
 class Baz {
     @Delegate(deprecated = true)
     FooBar bare
 }
-''') as GroovyFile
+''')
+  }
+
+  private void assertAllMethodsImplemented(String fileName, String text) {
+    def file = myFixture.configureByText(fileName, text) as GroovyFile
 
     assertNotNull(file)
     final clazz = file.classes[0]
     assertNotNull(clazz)
     assertEmpty OverrideImplementUtil.getMethodSignaturesToImplement(clazz)
+  }
+
+  void testDeprecatedFalse() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+interface Foo {
+    @Deprecated
+    void foo()
+}
+''')
+    assertAllMethodsImplemented('text.groovy', '''\
+class FooImpl implements Foo {
+    @Delegate(deprecated = false) Foo delegate
+}
+''')
   }
 }
