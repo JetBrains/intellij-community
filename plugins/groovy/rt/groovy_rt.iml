@@ -11,19 +11,7 @@
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="groovy-rt-constants" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../testdata/griffon" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../testdata/griffon" />
-        </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/../testdata/griffon" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/../testdata/griffon" recursive="false" type="SOURCES" />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="griffon-rt" level="project" />
   </component>
 </module>
 
