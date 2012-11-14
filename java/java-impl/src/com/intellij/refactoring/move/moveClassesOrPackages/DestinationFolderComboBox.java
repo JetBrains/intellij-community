@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -26,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -37,6 +36,7 @@ import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
@@ -253,6 +253,14 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
+
+    final Component root = SwingUtilities.getRoot(comboBox);
+    if (root instanceof Window) {
+      final Dimension preferredSize = root.getPreferredSize();
+      if (preferredSize.getWidth() > root.getSize().getWidth()) {
+        root.setSize(preferredSize);
+      }
+    }
   }
 
   @Nullable
