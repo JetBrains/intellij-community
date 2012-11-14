@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
+package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.AnAction;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface WelcomeScreenProvider {
-  ExtensionPointName<WelcomeScreenProvider> EP_NAME = ExtensionPointName.create("com.intellij.welcomeScreen");
+public class DarculaQuickStartButton extends DarculaWelcomeScreenButtonBase {
+  private JPanel root;
+  private JLabel name;
+  private JLabel description;
+  private JLabel icon;
 
-  @Nullable
-  WelcomeScreen createWelcomeScreen(JRootPane rootPane);
+  public DarculaQuickStartButton(AnAction action) {
+    setup(action, root, name, description, icon);
+  }
 
-  boolean isAvailable();
+  private void createUIComponents() {
+    root = new JPanel() {{enableEvents(AWTEvent.MOUSE_EVENT_MASK);}};
+  }
+
+  public JComponent getComponent() {
+    return root;
+  }
 }

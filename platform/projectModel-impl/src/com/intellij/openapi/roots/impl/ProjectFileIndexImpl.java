@@ -82,11 +82,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   @Nullable
   private DirectoryInfo getInfoForDirectory(@NotNull VirtualFile file) {
-    //if ((! myProject.isOpen()) || myProject.isDisposed()) {
-    //  if (StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
-    //    throw new ProcessCanceledException();
-    //  }
-    //}
     return myDirectoryIndex.getInfoForDirectory(file);
   }
 

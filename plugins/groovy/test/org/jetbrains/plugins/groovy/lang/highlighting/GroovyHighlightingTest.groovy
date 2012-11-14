@@ -927,4 +927,22 @@ class A {
 
     assertNotNull(myFixture.findSingleIntention("Create Method 'abc'"))
   }
+
+  void testTypeParameterIsCorrect() {
+    testHighlighting('''\
+class Component{}
+
+class Window extends Component{
+    Window(i) {
+    }
+}
+
+class Super <C extends Component> {
+
+}
+
+class Sub<W extends Window> extends Super<W> {
+}
+''')
+  }
 }

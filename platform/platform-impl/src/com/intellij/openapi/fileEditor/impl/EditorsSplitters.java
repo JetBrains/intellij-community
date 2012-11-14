@@ -78,7 +78,7 @@ public class EditorsSplitters extends JBPanel {
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     if (UIUtil.isUnderDarcula()) {
-      setBackgroundImage(IconLoader.getIcon("/frame_background.jpg"));
+      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
       if (PlatformUtils.isIntelliJ()) {
         setCenterImage(IconLoader.getIcon("/idea_logo_background.png"));
       }

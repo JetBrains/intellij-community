@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.ui.laf.darcula.ui;
 
 import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface WelcomeScreenProvider {
-  ExtensionPointName<WelcomeScreenProvider> EP_NAME = ExtensionPointName.create("com.intellij.welcomeScreen");
-
-  @Nullable
-  WelcomeScreen createWelcomeScreen(JRootPane rootPane);
-
-  boolean isAvailable();
+public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(JComponent c) {
+    return new DarculaTabbedPaneUI();
+  }
 }

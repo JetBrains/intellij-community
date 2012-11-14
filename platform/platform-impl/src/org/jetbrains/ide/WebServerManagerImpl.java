@@ -1,5 +1,6 @@
 package org.jetbrains.ide;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,29 +40,35 @@ class WebServerManagerImpl extends WebServerManager {
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
       return;
     }
 
-    detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true, new Computable<Consumer<ChannelPipeline>[]>() {
+    application.executeOnPooledThread(new Runnable() {
       @Override
-      public Consumer<ChannelPipeline>[] compute() {
-        Consumer<ChannelPipeline>[] consumers = Extensions.getExtensions(EP_NAME);
-        if (consumers.length == 0) {
-          LOG.warn("web server will be stopped, there are no pipeline consumers");
-          SimpleTimer.getInstance().setUp(server.createShutdownTask(), 3000);
+      public void run() {
+        detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true, new Computable<Consumer<ChannelPipeline>[]>() {
+          @Override
+          public Consumer<ChannelPipeline>[] compute() {
+            Consumer<ChannelPipeline>[] consumers = Extensions.getExtensions(EP_NAME);
+            if (consumers.length == 0) {
+              LOG.warn("web server will be stopped, there are no pipeline consumers");
+              SimpleTimer.getInstance().setUp(server.createShutdownTask(), 3000);
+            }
+            return consumers;
+          }
+        });
+
+        if (detectedPortNumber != -1) {
+          ShutDownTracker.getInstance().registerShutdownTask(server.createShutdownTask());
+          LOG.info("web server started, port " + detectedPortNumber);
         }
-        return consumers;
+        else {
+          LOG.info("web server cannot be started, cannot bind to port");
+        }
       }
     });
-
-    if (detectedPortNumber != -1) {
-      ShutDownTracker.getInstance().registerShutdownTask(server.createShutdownTask());
-      LOG.info("web server started, port " + detectedPortNumber);
-    }
-    else {
-      LOG.info("web server cannot be started, cannot bind to port");
-    }
   }
 
   @Override

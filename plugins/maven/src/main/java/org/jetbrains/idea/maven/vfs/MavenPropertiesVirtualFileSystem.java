@@ -73,8 +73,9 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
       Properties envProperties = new Properties();
 
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
-        if (each.getKey().startsWith("=")) continue;
-        envProperties.setProperty(each.getKey(), SystemInfo.isWindows ? each.getValue().toUpperCase() : each.getValue());
+        String key = each.getKey();
+        if (key.startsWith("=")) continue;
+        envProperties.setProperty(SystemInfo.isWindows ? key.toUpperCase() : key, each.getValue());
       }
 
       myEnvPropertiesFile = new MavenPropertiesVirtualFile(ENV_PROPERTIES_FILE, envProperties, this);

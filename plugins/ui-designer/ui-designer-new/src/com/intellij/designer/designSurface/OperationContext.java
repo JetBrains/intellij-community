@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,10 @@ public final class OperationContext {
 
   public void setType(@Nullable Object type) {
     myType = type;
+  }
+
+  public String getMessage() {
+    return DesignerBundle.message(myType == null ? "command.tool_operation" : myType.toString());
   }
 
   public boolean is(Object type) {

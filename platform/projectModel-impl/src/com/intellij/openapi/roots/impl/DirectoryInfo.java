@@ -16,12 +16,10 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
@@ -32,52 +30,69 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public final class DirectoryInfo {
-  private Module module; // module to which content it belongs or null
-  private VirtualFile libraryClassRoot; // class root in library
-  private VirtualFile contentRoot;
-  private VirtualFile sourceRoot;
+  private final Module module; // module to which content it belongs or null
+  private final VirtualFile libraryClassRoot; // class root in library
+  private final VirtualFile contentRoot;
+  private final VirtualFile sourceRoot;
 
   private static final byte TEST_SOURCE_FLAG = 1; // (makes sense only if MODULE_SOURCE_FLAG is set)
   private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
   private static final byte MODULE_SOURCE_FLAG = 4; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
 
   @MagicConstant(flags = {TEST_SOURCE_FLAG, LIBRARY_SOURCE_FLAG, MODULE_SOURCE_FLAG})
-  private byte sourceFlag;
+  private final byte sourceFlag;
 
   /**
    * orderEntry to (classes of) which a directory belongs
+   * MUST BE SORTED WITH {@link #BY_OWNER_MODULE}
    */
-  private OrderEntry[] orderEntries;
+  private final OrderEntry[] orderEntries;
 
-  public DirectoryInfo() {
+  public DirectoryInfo(Module module,
+                       VirtualFile contentRoot,
+                       VirtualFile sourceRoot,
+                       VirtualFile libraryClassRoot,
+                       @MagicConstant(flags = {TEST_SOURCE_FLAG, LIBRARY_SOURCE_FLAG, MODULE_SOURCE_FLAG}) byte sourceFlag,
+                       OrderEntry[] orderEntries) {
+    this.module = module;
+    this.libraryClassRoot = libraryClassRoot;
+    this.contentRoot = contentRoot;
+    this.sourceRoot = sourceRoot;
+    this.sourceFlag = sourceFlag;
+    this.orderEntries = orderEntries;
   }
 
-  @TestOnly
-  @SuppressWarnings({"unchecked"})
+  @Override
   public boolean equals(Object o) {
-    assert ApplicationManager.getApplication().isUnitTestMode() : "DirectoryInfo.equals should only be used in tests";
-
     if (this == o) return true;
-    if (!(o instanceof DirectoryInfo)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    final DirectoryInfo info = (DirectoryInfo)o;
+    DirectoryInfo info = (DirectoryInfo)o;
 
     if (sourceFlag != info.sourceFlag) return false;
-    if (getModule() != null ? !getModule().equals(info.getModule()) : info.getModule() != null) return false;
-    if (orderEntries != null ? !new HashSet(Arrays.asList(orderEntries)).equals(new HashSet(Arrays.asList(info.orderEntries))) : info.orderEntries != null) return false;
-    if (!Comparing.equal(getLibraryClassRoot(), info.getLibraryClassRoot())) return false;
-    if (!Comparing.equal(getContentRoot(), info.getContentRoot())) return false;
-    if (!Comparing.equal(getSourceRoot(), info.getSourceRoot())) return false;
+    if (contentRoot != null ? !contentRoot.equals(info.contentRoot) : info.contentRoot != null) return false;
+    if (libraryClassRoot != null ? !libraryClassRoot.equals(info.libraryClassRoot) : info.libraryClassRoot != null) return false;
+    if (module != null ? !module.equals(info.module) : info.module != null) return false;
+    if (!Arrays.equals(orderEntries, info.orderEntries)) return false;
+    if (sourceRoot != null ? !sourceRoot.equals(info.sourceRoot) : info.sourceRoot != null) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
-    throw new UnsupportedOperationException("DirectoryInfo shall not be used as a key to HashMap");
+    int result = module != null ? module.hashCode() : 0;
+    result = 31 * result + (libraryClassRoot != null ? libraryClassRoot.hashCode() : 0);
+    result = 31 * result + (contentRoot != null ? contentRoot.hashCode() : 0);
+    result = 31 * result + (sourceRoot != null ? sourceRoot.hashCode() : 0);
+    result = 31 * result + (int)sourceFlag;
+    return result;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -95,7 +110,8 @@ public final class DirectoryInfo {
 
   @NotNull
   public OrderEntry[] getOrderEntries() {
-    return orderEntries == null ? OrderEntry.EMPTY_ARRAY : orderEntries;
+    OrderEntry[] entries = orderEntries;
+    return entries == null ? OrderEntry.EMPTY_ARRAY : entries;
   }
 
   @Nullable
@@ -193,21 +209,25 @@ public final class DirectoryInfo {
   }
 
   // orderEntries must be sorted BY_OWNER_MODULE
-  void addOrderEntries(@NotNull OrderEntry[] orderEntries,
-                       @Nullable final DirectoryInfo parentInfo,
-                       @Nullable final OrderEntry[] oldParentEntries) {
+  @NotNull
+  DirectoryInfo withOrderEntries(@NotNull OrderEntry[] orderEntries,
+                                 @Nullable final DirectoryInfo parentInfo,
+                                 @Nullable final OrderEntry[] oldParentEntries) {
+    OrderEntry[] newOrderEntries;
     if (orderEntries.length == 0) {
-      this.orderEntries = null;
+      newOrderEntries = null;
     }
     else if (this.orderEntries == null) {
-      this.orderEntries = orderEntries;
+      newOrderEntries = orderEntries;
     }
     else if (parentInfo != null && oldParentEntries == this.orderEntries) {
-      this.orderEntries = parentInfo.orderEntries;
+      newOrderEntries = parentInfo.orderEntries;
     }
     else {
-      this.orderEntries = mergeWith(orderEntries);
+      newOrderEntries = mergeWith(orderEntries);
     }
+    
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, newOrderEntries);
   }
 
   // entries must be sorted BY_OWNER_MODULE
@@ -249,10 +269,6 @@ public final class DirectoryInfo {
     }
   };
 
-  public void setInternedOrderEntries(@NotNull OrderEntry[] internedOrderEntries) {
-    orderEntries = internedOrderEntries;
-  }
-
   public VirtualFile getSourceRoot() {
     return sourceRoot;
   }
@@ -275,48 +291,63 @@ public final class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, MODULE_SOURCE_FLAG);
   }
 
-  public void setInModuleSource(boolean inModuleSource) {
-    sourceFlag = (byte)BitUtil.set(sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
+  @NotNull
+  DirectoryInfo withInModuleSource(boolean inModuleSource) {
+    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   public boolean isTestSource() {
     return BitUtil.isSet(sourceFlag, TEST_SOURCE_FLAG);
   }
 
-  public void setTestSource(boolean testSource) {
-    sourceFlag = (byte)BitUtil.set(sourceFlag, TEST_SOURCE_FLAG, testSource);
+  @NotNull
+  DirectoryInfo withTestSource(boolean testSource) {
+    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, TEST_SOURCE_FLAG, testSource);
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   public boolean isInLibrarySource() {
     return BitUtil.isSet(sourceFlag, LIBRARY_SOURCE_FLAG);
   }
 
-  public void setInLibrarySource(boolean inLibrarySource) {
-    sourceFlag = (byte)BitUtil.set(sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
+  @NotNull
+  DirectoryInfo withInLibrarySource(boolean inLibrarySource) {
+    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   public Module getModule() {
     return module;
   }
 
-  public void setModule(Module module) {
-    this.module = module;
+  @NotNull
+  DirectoryInfo withModule(Module module) {
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
-  public void setLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
-    this.libraryClassRoot = libraryClassRoot;
+  @NotNull
+  DirectoryInfo withLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
-  public void setContentRoot(VirtualFile contentRoot) {
-    this.contentRoot = contentRoot;
+  @NotNull
+  DirectoryInfo withContentRoot(VirtualFile contentRoot) {
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
-  public void setSourceRoot(@NotNull VirtualFile sourceRoot) {
-    this.sourceRoot = sourceRoot;
+  @NotNull
+  DirectoryInfo withSourceRoot(@NotNull VirtualFile sourceRoot) {
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
+  }
+
+  @NotNull
+  DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
+    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   @TestOnly
-  public void assertConsistency() {
+  void assertConsistency() {
     OrderEntry[] entries = getOrderEntries();
     for (int i=1; i<entries.length; i++) {
       assert BY_OWNER_MODULE.compare(entries[i-1], entries[i]) <= 0;

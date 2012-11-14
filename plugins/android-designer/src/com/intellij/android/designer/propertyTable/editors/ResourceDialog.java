@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -156,6 +157,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       }
     }
     if (doSelection && value.startsWith("@")) {
+      value = StringUtil.replace(value, "+", "");
       int index = value.indexOf('/');
       if (index != -1) {
         ResourcePanel panel;
@@ -436,7 +438,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     public void showPreview(@Nullable ResourceItem element) {
       CardLayout layout = (CardLayout)myPreviewPanel.getLayout();
 
-      if (element == null) {
+      if (element == null || element.getGroup().getType() == ResourceType.ID) {
         layout.show(myPreviewPanel, NONE);
         return;
       }
@@ -457,7 +459,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
               int size = resources.size();
               if (size == 1) {
-                value = resources.get(0).getRawText();
+                value = getResourceElementValue(resources.get(0));
                 element.setPreviewString(value);
               }
               else if (size > 1) {
@@ -465,9 +467,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
                 String[] tabNames = new String[size];
                 for (int i = 0; i < size; i++) {
                   ResourceElement resource = resources.get(i);
-                  values[i] = resource.getRawText();
+                  values[i] = getResourceElementValue(resource);
 
-                  String tabName = resource.getXmlTag().getContainingFile().getParent().getName();
+                  PsiDirectory directory = resource.getXmlTag().getContainingFile().getParent();
+                  String tabName = directory == null ? "unknown-" + i : directory.getName();
                   tabNames[i] = tabName.substring(tabName.indexOf('-') + 1);
                 }
                 element.setPreviewStrings(values, tabNames);
@@ -557,6 +560,14 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         }
       }
     }
+  }
+
+  private static String getResourceElementValue(ResourceElement element) {
+    String text = element.getRawText();
+    if (StringUtil.isEmpty(text)) {
+      return element.getXmlTag().getText();
+    }
+    return text;
   }
 
   private static class ResourceGroup {

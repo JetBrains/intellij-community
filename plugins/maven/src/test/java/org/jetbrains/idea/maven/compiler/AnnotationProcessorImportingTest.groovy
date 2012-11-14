@@ -160,7 +160,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getProcessorOptions() == ['opt1': '111', 'opt2': '222', 'opt3': '333']
+    def processorOptions = compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getProcessorOptions()
+    assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333']
   }
 
 }

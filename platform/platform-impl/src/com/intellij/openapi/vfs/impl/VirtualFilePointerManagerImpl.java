@@ -50,7 +50,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
   private final JarFileSystem JAR_FILE_SYSTEM;
-  private long myVfsModificationCounter;
+  private volatile long myVfsModificationCounter;
   // guarded by this
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<VirtualFilePointerListener, FilePointerPartNode>();
 

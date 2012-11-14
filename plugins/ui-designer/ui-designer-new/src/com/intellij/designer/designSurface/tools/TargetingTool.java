@@ -79,8 +79,7 @@ public abstract class TargetingTool extends InputTool {
 
   protected void executeCommand() {
     if (myExecuteEnabled) {
-      myToolProvider
-        .execute(Collections.singletonList(myTargetOperation), DesignerBundle.message("command.tool_operation", myContext.getType()));
+      myToolProvider.execute(Collections.singletonList(myTargetOperation), myContext.getMessage());
     }
   }
 

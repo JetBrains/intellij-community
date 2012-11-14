@@ -90,7 +90,7 @@ public class IncProjectBuilder {
   private volatile float myTargetsProcessed = 0.0f;
   private final float myTotalTargetsWork;
   private final int myTotalModuleLevelBuilderCount;
-  private final List<Future> myAsyncTasks = new ArrayList<Future>();
+  private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
                            @Nullable Callbacks.ConstantAffectionResolver constantSearch) {
@@ -188,12 +188,14 @@ public class IncProjectBuilder {
       memWatcher.stop();
       flushContext(context);
       // wait for the async tasks
-      for (Future task : myAsyncTasks) {
-        try {
-          task.get();
-        }
-        catch (Throwable th) {
-          LOG.info(th);
+      synchronized (myAsyncTasks) {
+        for (Future task : myAsyncTasks) {
+          try {
+            task.get();
+          }
+          catch (Throwable th) {
+            LOG.info(th);
+          }
         }
       }
     }

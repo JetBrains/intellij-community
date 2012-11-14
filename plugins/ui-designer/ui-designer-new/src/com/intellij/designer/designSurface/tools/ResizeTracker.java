@@ -134,7 +134,7 @@ public class ResizeTracker extends InputTool {
           operations.add(operation);
         }
       }
-      myToolProvider.execute(operations, DesignerBundle.message("command.tool_operation", myContext.getType()));
+      myToolProvider.execute(operations, DesignerBundle.message("command.tool_operation"));
     }
   }
 
