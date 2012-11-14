@@ -5,11 +5,13 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.TestOnly;
 */
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
+  private final MinusculeMatcher myCaseInsensitiveMatcher;
   private final boolean myCaseSensitive;
   private static boolean ourForceStartMatching;
 
@@ -30,11 +33,28 @@ public class CamelHumpMatcher extends PrefixMatcher {
     super(prefix);
     myCaseSensitive = caseSensitive;
     myMatcher = createMatcher(myCaseSensitive);
+    myCaseInsensitiveMatcher = createMatcher(false);
   }
 
   @Override
   public boolean isStartMatch(String name) {
     return myMatcher.isStartMatch(name);
+  }
+
+  @Override
+  public boolean isStartMatch(LookupElement element) {
+    if (super.isStartMatch(element)) {
+      return true;
+    }
+    if (element.isCaseSensitive()) {
+      return false;
+    }
+    return ContainerUtil.or(element.getAllLookupStrings(), new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return myCaseInsensitiveMatcher.isStartMatch(s);
+      }
+    });
   }
 
   @Override
@@ -53,7 +73,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
         return true;
       }
       if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
-        if (createMatcher(false).matches(name)) {
+        if (myCaseInsensitiveMatcher.matches(name)) {
           return true;
         }
       }
