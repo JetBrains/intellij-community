@@ -116,6 +116,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static boolean OPTION_ENABLE_FORMS_INSTRUMENTATION = false;
   private static boolean OPTION_COPY_FORMS_RUNTIME_CLASSES = false;
 
+  private static final Key<Boolean> USE_ECLIPSE_COMPILER = Key.create("java.builder.use.eclipse.compiler");
+
   static {
     registerClassPostProcessor(new ClassPostProcessor() {
       public void process(CompileContext context, OutputFileObject out) {
@@ -195,6 +197,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
                         final ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+
+    final String compilerId = configuration.getJavaCompilerId();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Java compiler ID: " + compilerId);
+    }
+    if (JavaCompilers.ECLIPSE_ID.equals(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId)) {
+      context.putUserData(USE_ECLIPSE_COMPILER, true);
+    }
+    else if (!(JavaCompilers.JAVAC_ID.equals(compilerId) || JavaCompilers.JAVAC_API_ID.equals(compilerId))) {
+      return ExitCode.NOTHING_DONE;
+    }
+
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
@@ -212,8 +228,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-        context.getProjectDescriptor().getProject()).getCompilerExcludes();
+      final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
@@ -504,7 +519,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        final boolean useEclipse = useEclipseCompiler(context);
+        final boolean useEclipse = USE_ECLIPSE_COMPILER.isIn(context);
         rc = JavacMain.compile(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
         );
@@ -526,11 +541,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.await();
     }
-  }
-
-  private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
   }
 
   private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
@@ -849,7 +859,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final boolean useEclipseCompiler = useEclipseCompiler(context);
     final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
       options.add("-g");
@@ -889,7 +898,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (useEclipseCompiler) {
+    if (USE_ECLIPSE_COMPILER.isIn(context)) {
       for (String option : options) {
         if (option.startsWith("-proceedOnError")) {
           Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);

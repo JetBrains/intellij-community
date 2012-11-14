@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,9 +64,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   @NonNls
-  public String getId() {
-    // used for externalization
-    return "EclipseEmbedded";
+  public String getId() { // used for externalization
+    return JavaCompilers.ECLIPSE_EMBEDDED_ID;
   }
 
   @NotNull
