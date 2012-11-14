@@ -354,8 +354,6 @@ public class TaskVcsTest extends TaskManagerTestCase {
     for (LocalChangeList changeList : myChangeListManager.getChangeLists()) {
       if (!changeList.isDefault()) removeChangeList(changeList);
     }
-    myTaskManager.initComponent();
-
 
     ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
     ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
