@@ -26,4 +26,6 @@ public interface ArrangementMatchConditionVisitor {
   void visit(@NotNull ArrangementAtomMatchCondition condition);
   
   void visit(@NotNull ArrangementCompositeMatchCondition condition);
+
+  void visit(@NotNull ArrangementNameMatchCondition condition);
 }

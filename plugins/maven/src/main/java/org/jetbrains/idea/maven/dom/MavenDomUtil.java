@@ -299,23 +299,10 @@ public class MavenDomUtil {
   }
 
   @Nullable
-  public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull String fileName) {
-    VirtualFile file = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(fileName);
-    if (file == null) return null;
-    return getPropertiesFile(project, file);
-  }
-
-  @Nullable
   public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return null;
     return (PropertiesFile)psiFile;
-  }
-
-  @Nullable
-  public static IProperty findProperty(@NotNull Project project, @NotNull String fileName, @NotNull String propName) {
-    PropertiesFile propertiesFile = getPropertiesFile(project, fileName);
-    return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
   @Nullable

@@ -1,6 +1,7 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License")
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -96,6 +97,8 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testAfterLabel()          { doTest() }
   void testKeywordsInParentheses() { doTest() }
   void testCompletionInTupleVar(){ doTest() }
+  void testAnnotationArg()       { doTest() }
+  void testDefaultAnnotationArg(){ doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 

@@ -185,21 +185,22 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       if (result != null) return result;
     }
 
-    IProperty property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, myText);
+    MavenPropertiesVirtualFileSystem mavenPropertiesVirtualFileSystem = MavenPropertiesVirtualFileSystem.getInstance();
+
+    IProperty property = mavenPropertiesVirtualFileSystem.findSystemProperty(myProject, myText);
     if (property != null) return property.getPsiElement();
 
     if (myText.startsWith("env.")) {
-      property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                           myText.substring("env.".length()));
+      property = mavenPropertiesVirtualFileSystem.findEnvProperty(myProject, myText.substring("env.".length()));
       if (property != null) return property.getPsiElement();
     }
 
     String textWithEnv = "env." + myText;
 
-    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, textWithEnv);
+    property = mavenPropertiesVirtualFileSystem.findSystemProperty(myProject, textWithEnv);
     if (property != null) return property.getPsiElement();
 
-    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, textWithEnv);
+    property = mavenPropertiesVirtualFileSystem.findEnvProperty(myProject, textWithEnv);
     if (property != null) return property.getPsiElement();
 
     if (!hasPrefix) {
@@ -390,7 +391,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private void collectSystemEnvProperties(String propertiesFileName, @Nullable String prefix, List<Object> result) {
-    PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, propertiesFileName);
+    VirtualFile virtualFile = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(propertiesFileName);
+    PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, virtualFile);
     collectPropertiesFileVariants(file, prefix, result);
   }
 

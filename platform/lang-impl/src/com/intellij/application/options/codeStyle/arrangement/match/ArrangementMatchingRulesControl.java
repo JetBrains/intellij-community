@@ -294,12 +294,21 @@ public class ArrangementMatchingRulesControl extends JBTable {
   }
 
   public void showEditor(int rowToEdit) {
+    if (myEditorRow == rowToEdit + 1) {
+      return;
+    }
+    if (myEditorRow >= 0) {
+      if (myEditorRow < rowToEdit) {
+        rowToEdit--;
+      }
+      hideEditor();
+    }
     myEditorRow = rowToEdit + 1;
     ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
     Container parent = getParent();
     int width = getBounds().width;
     if (parent instanceof JViewport) {
-      width -=((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+      width -= ((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
     myEditor.updateState(rowToEdit);
@@ -310,7 +319,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     finally {
       mySkipSelectionChange = false;
     }
-    
+
     Rectangle bounds = getRowsBounds(rowToEdit, myEditorRow);
     if (bounds != null) {
       myRepresentationCallback.ensureVisible(bounds);
