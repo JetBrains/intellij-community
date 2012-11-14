@@ -23,8 +23,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.execution.ParametersListUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.android.compiler.tools.AndroidDxRunner;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
@@ -182,12 +182,12 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
         outputDirs = Collections.emptySet();
       }
       else {
-        fileSet = new HashSet<String>();
-        jars = new HashSet<String>();
-        outputDirs = new HashSet<String>();
+        fileSet = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        jars = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        outputDirs = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
         AndroidJpsUtil.addSubdirectories(classesDir, fileSet);
-        outputDirs.add(classesDir.getPath());
+        outputDirs.add(FileUtil.toSystemIndependentName(classesDir.getPath()));
 
         fileSet.addAll(externalLibraries);
         jars.addAll(externalLibraries);
@@ -208,7 +208,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
           @Override
           public void processJavaModuleOutputDirectory(@NotNull File dir) {
             fileSet.add(dir.getPath());
-            outputDirs.add(dir.getPath());
+            outputDirs.add(FileUtil.toSystemIndependentName(dir.getPath()));
           }
 
           @Override
@@ -224,7 +224,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
 
           if (testsClassDir != null && testsClassDir.isDirectory()) {
             AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
-            outputDirs.add(testsClassDir.getPath());
+            outputDirs.add(FileUtil.toSystemIndependentName(testsClassDir.getPath()));
           }
         }
       }
@@ -284,7 +284,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
 
   @Override
   public void buildStarted(CompileContext context) {
-    final HashSet<String> dirtyOutputDirs = new HashSet<String>();
+    final Set<String> dirtyOutputDirs = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
+
     final BuildListener listener = new BuildListener() {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
@@ -297,8 +298,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       public void filesDeleted(Collection<String> paths) {
       }
     };
-    context.putUserData(DIRTY_OUTPUT_DIRS, dirtyOutputDirs);
-    context.putUserData(BUILD_LISTENER_KEY, listener);
+    DIRTY_OUTPUT_DIRS.set(context, dirtyOutputDirs);
+    BUILD_LISTENER_KEY.set(context, listener);
     context.addBuildListener(listener);
   }
 
@@ -416,25 +417,25 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       return false;
     }
 
-    final Set<String> classFilesDirs = new HashSet<String>();
-    final Set<String> libClassFilesDirs = new HashSet<String>();
-    final Set<String> outputDirs = new HashSet<String>();
+    final Set<String> classFilesDirs = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> libClassFilesDirs = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> outputDirs = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
     AndroidJpsUtil.addSubdirectories(classesDir, classFilesDirs);
-    outputDirs.add(classesDir.getPath());
+    outputDirs.add(FileUtil.toSystemIndependentName(classesDir.getPath()));
 
     AndroidJpsUtil.processClasspath(context, module, new AndroidDependencyProcessor() {
 
       @Override
       public void processAndroidLibraryOutputDirectory(@NotNull File dir) {
         AndroidJpsUtil.addSubdirectories(dir, libClassFilesDirs);
-        outputDirs.add(dir.getPath());
+        outputDirs.add(FileUtil.toSystemIndependentName(dir.getPath()));
       }
 
       @Override
       public void processJavaModuleOutputDirectory(@NotNull File dir) {
         AndroidJpsUtil.addSubdirectories(dir, classFilesDirs);
-        outputDirs.add(dir.getPath());
+        outputDirs.add(FileUtil.toSystemIndependentName(dir.getPath()));
       }
 
       @Override

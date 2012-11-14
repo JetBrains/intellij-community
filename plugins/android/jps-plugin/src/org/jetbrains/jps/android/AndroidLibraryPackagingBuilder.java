@@ -70,7 +70,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       }
 
       if (context.isMake()) {
-        final Set<String> dirtyOutputDirs = context.getUserData(AndroidDexBuilder.DIRTY_OUTPUT_DIRS);
+        final Set<String> dirtyOutputDirs = AndroidDexBuilder.DIRTY_OUTPUT_DIRS.get(context);
         assert dirtyOutputDirs != null;
         if (!dirtyOutputDirs.contains(classesDir.getPath())) {
           continue;

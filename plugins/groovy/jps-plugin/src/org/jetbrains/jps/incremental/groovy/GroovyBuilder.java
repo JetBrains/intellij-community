@@ -345,11 +345,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 new File(
-                                                                                                                                   sourcePath));
-        if (moduleAndRoot != null) {
-          String moduleOutputPath = generationOutputs.get(moduleAndRoot.target);
+        final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+        final JavaSourceRootDescriptor rd = rootIndex.findJavaRootDescriptor(context, new File(sourcePath));
+        if (rd != null) {
+          final String moduleOutputPath = FileUtil.toSystemIndependentName(generationOutputs.get(rd.target));
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
