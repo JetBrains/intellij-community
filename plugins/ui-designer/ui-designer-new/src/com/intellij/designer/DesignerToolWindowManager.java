@@ -90,7 +90,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
         myTreeBuilder.selectFromSurface();
       }
       else {
-        myComponentTree.repaint();
+        myTreeBuilder.queueUpdate();
       }
     }
   }

@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.JpsElement;
  */
 public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   protected final String myConfigFileName;
-  protected String myComponentName;
+  protected final String myComponentName;
 
   protected JpsElementExtensionSerializerBase(@Nullable String configFileName, @NotNull String componentName) {
     myComponentName = componentName;

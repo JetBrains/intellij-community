@@ -712,7 +712,7 @@ public class BuildManager implements ApplicationComponent{
     }
 
     // validate tools.jar presence
-    final File compilerPath;
+    final String compilerPath;
     if (projectJdk.equals(internalJdk)) {
       final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
       if (systemCompiler == null) {
@@ -721,11 +721,10 @@ public class BuildManager implements ApplicationComponent{
       compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
     }
     else {
-      final String path = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
-      if (path == null) {
+      compilerPath = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
+      if (compilerPath == null) {
         throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
       }
-      compilerPath = new File(path);
     }
 
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
@@ -798,12 +797,11 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    cmdLine.addParameter("-classpath");
-
-    final List<File> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
+    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
-    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
+    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
 
+    cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(BuildMain.class.getName());
@@ -929,13 +927,13 @@ public class BuildManager implements ApplicationComponent{
     myProjectDataMap.remove(getProjectPath(project));
   }
 
-  private static String classpathToString(List<File> cp) {
+  private static String classpathToString(List<String> cp) {
     StringBuilder builder = new StringBuilder();
-    for (File file : cp) {
+    for (String file : cp) {
       if (builder.length() > 0) {
         builder.append(File.pathSeparator);
       }
-      builder.append(FileUtil.toCanonicalPath(file.getPath()));
+      builder.append(FileUtil.toCanonicalPath(file));
     }
     return builder.toString();
   }

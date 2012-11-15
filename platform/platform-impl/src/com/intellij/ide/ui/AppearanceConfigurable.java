@@ -158,13 +158,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       if (lafManager.checkLookAndFeel(lafInfo)) {
         update = shouldUpdateUI = true;
-        boolean wasDarcula = UIUtil.isUnderDarcula();
+        final boolean wasDarcula = UIUtil.isUnderDarcula();
         lafManager.setCurrentLookAndFeel(lafInfo);
-        if (UIUtil.isUnderDarcula()) {
-          DarculaInstaller.install();
-        } else if (wasDarcula) {
-          DarculaInstaller.uninstall();
-        }
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (UIUtil.isUnderDarcula()) {
+              DarculaInstaller.install();
+            } else if (wasDarcula) {
+              DarculaInstaller.uninstall();
+            }
+          }
+        });
       }
     }
 

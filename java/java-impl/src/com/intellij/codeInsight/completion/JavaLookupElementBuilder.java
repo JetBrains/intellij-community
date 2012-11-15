@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -82,8 +83,12 @@ public class JavaLookupElementBuilder {
   public static LookupElementBuilder forClass(@NotNull PsiClass psiClass,
                                               final String lookupString,
                                               final boolean withLocation) {
-    final LookupElementBuilder builder =
+    LookupElementBuilder builder =
       LookupElementBuilder.create(psiClass, lookupString).withIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    String name = psiClass.getName();
+    if (StringUtil.isNotEmpty(name)) {
+      builder = builder.withLookupString(name);
+    }
     if (withLocation) {
       return builder.withTailText(" (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", true);
     }

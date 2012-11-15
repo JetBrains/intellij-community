@@ -39,15 +39,14 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
         public void actionPerformed(AnActionEvent e) {
           final UIManager.LookAndFeelInfo cur = manager.getCurrentLookAndFeel();
           if (cur == lf) return;
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.uninstall();
-          }
+          boolean needUninstall = UIUtil.isUnderDarcula();
           manager.setCurrentLookAndFeel(lf);
+          manager.updateUI();
           if (UIUtil.isUnderDarcula()) {
             DarculaInstaller.install();
+          } else if (needUninstall) {
+            DarculaInstaller.uninstall();
           }
-
-          manager.updateUI();
         }
       });
     }

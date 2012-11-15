@@ -21,9 +21,9 @@ package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -63,7 +63,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   private static Icon nonNull(final Icon icon) {
-    return icon != null ? icon : EMPTY_ICON;
+    return icon == null ? EMPTY_ICON : icon;
   }
 
   @Override
@@ -72,107 +72,128 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
     }
 
-    if (!myIsScheduled && !isDone()) {
-      myIsScheduled = true;
+    if (myIsScheduled || isDone()) {
+      return;
+    }
+    myIsScheduled = true;
 
-      final Ref<Component> target = new Ref<Component>(null);
-      final Ref<Component> paintingParent = new Ref<Component>(null);
-      final Ref<Rectangle> paintingParentRec = new Ref<Rectangle>(null);
+    final Component target = getTarget(c);
+    final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
+    final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
 
-      final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
-      if (list != null) {
-        target.set(list);
-      }
-      else {
-        final Container tree = SwingUtilities.getAncestorOfClass(JTree.class, c);
-        if (tree != null) {
-          target.set(tree);
-        }
-        else {
-          final Container table = SwingUtilities.getAncestorOfClass(JTable.class, c);
-          if (table != null) {
-            target.set(table);
-          }
-          else {
-            final Container box = SwingUtilities.getAncestorOfClass(JComboBox.class, c);
-            if (box != null) {
-              target.set(box);
+    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      @Override
+      public void run() {
+        int oldWidth = myDelegateIcon.getIconWidth();
+        final Icon[] evaluated = new Icon[1];
+        final Runnable evalRunnable = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              evaluated[0] = nonNull(myEvaluator.fun(myParam));
             }
-            else {
-              final Container tabLabel = SwingUtilities.getAncestorOfClass(TabLabel.class, c);
-              if(tabLabel != null) {
-                target.set(tabLabel);
-              }
-              else {
-                target.set(c);
-              }
+            catch (ProcessCanceledException e) {
+              evaluated[0] = EMPTY_ICON;
+            }
+            catch (IndexNotReadyException e) {
+              evaluated[0] = EMPTY_ICON;
             }
           }
-        }
-      }
+        };
 
-      Container pp = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
-      paintingParent.set(pp);
-      if (paintingParent.get() != null) {
-        paintingParentRec.set(((PaintingParent)pp).getChildRec(c));
-      }
-
-      JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
-        @Override
-        public void run() {
-          int oldWidth = myDelegateIcon.getIconWidth();
-          final Icon result = evaluate();
-          myDelegateIcon = result;
-
-          final boolean shouldRevalidate =
-            Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
-
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
+        if (myNeedReadAction) {
+          if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
             @Override
             public void run() {
-              setDone(result);
+              IconDeferrerImpl.evaluateDeferred(evalRunnable);
+            }
+          })) {
+            System.out.println("Redeferring");
+            myIsScheduled = false;
+            return;
+          }
+        }
+        else {
+          IconDeferrerImpl.evaluateDeferred(evalRunnable);
+        }
+        final Icon result = evaluated[0];
+        myDelegateIcon = result;
 
-              Component actualTarget = target.get();
-              if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
-                actualTarget = paintingParent.get();
-                if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
-                  actualTarget = null;
-                }
-              }
+        final boolean shouldRevalidate =
+          Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
-              if (actualTarget == null) return;
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            setDone(result);
 
-              if (shouldRevalidate) {
-                // revalidate will not work: jtree caches size of nodes
-                if (actualTarget instanceof JTree) {
-                  final TreeUI ui = ((JTree)actualTarget).getUI();
-                  if (ui instanceof BasicTreeUI) {
-                    // this call is "fake" and only need to reset tree layout cache
-                    ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
-                  }
-                }
-              }
-
-              if (c == actualTarget) {
-                c.repaint(x, y, getIconWidth(), getIconHeight());
-              }
-              else {
-                Rectangle rec = null;
-                if (paintingParentRec.get() != null) {
-                  rec = paintingParentRec.get();
-                }
-
-                ourRepaintScheduler.pushDirtyComponent(actualTarget, rec);
+            Component actualTarget = target;
+            if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
+              actualTarget = paintingParent;
+              if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
+                actualTarget = null;
               }
             }
-          });
-        }
-      });
-    }
+
+            if (actualTarget == null) return;
+
+            if (shouldRevalidate) {
+              // revalidate will not work: jtree caches size of nodes
+              if (actualTarget instanceof JTree) {
+                final TreeUI ui = ((JTree)actualTarget).getUI();
+                if (ui instanceof BasicTreeUI) {
+                  // this call is "fake" and only need to reset tree layout cache
+                  ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
+                }
+              }
+            }
+
+            if (c == actualTarget) {
+              c.repaint(x, y, getIconWidth(), getIconHeight());
+            }
+            else {
+              ourRepaintScheduler.pushDirtyComponent(actualTarget, paintingParentRec);
+            }
+          }
+        });
+      }
+    });
   }
 
-  private void setDone(Icon result) {
+  private static Component getTarget(Component c) {
+    final Component target;
+
+    final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
+    if (list != null) {
+      target = list;
+    }
+    else {
+      final Container tree = SwingUtilities.getAncestorOfClass(JTree.class, c);
+      if (tree != null) {
+        target = tree;
+      }
+      else {
+        final Container table = SwingUtilities.getAncestorOfClass(JTable.class, c);
+        if (table != null) {
+          target = table;
+        }
+        else {
+          final Container box = SwingUtilities.getAncestorOfClass(JComboBox.class, c);
+          if (box != null) {
+            target = box;
+          }
+          else {
+            final Container tabLabel = SwingUtilities.getAncestorOfClass(TabLabel.class, c);
+            target = tabLabel == null ? c : tabLabel;
+          }
+        }
+      }
+    }
+    return target;
+  }
+
+  private void setDone(@NotNull Icon result) {
     if (myEvalListener != null) {
       myEvalListener.evalDone(myParam, result);
     }
@@ -182,33 +203,23 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     myParam = null;
   }
 
+  @NotNull
   @Override
   public Icon evaluate() {
-    final Icon[] evaluated = new Icon[1];
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          evaluated[0] = nonNull(myEvaluator.fun(myParam));
-        }
-        catch (ProcessCanceledException e) {
-          evaluated[0] = EMPTY_ICON;
-        }
-        catch (IndexNotReadyException e) {
-          evaluated[0] = EMPTY_ICON;
-        }
-      }
-    };
-    if (myNeedReadAction) {
-      IconDeferrerImpl.evaluateDeferredInReadAction(runnable);
+    Icon result;
+    try {
+      result = nonNull(myEvaluator.fun(myParam));
     }
-    else {
-      IconDeferrerImpl.evaluateDeferred(runnable);
+    catch (ProcessCanceledException e) {
+      result = EMPTY_ICON;
+    }
+    catch (IndexNotReadyException e) {
+      result = EMPTY_ICON;
     }
 
-    checkDoesntReferenceThis(evaluated[0]);
+    checkDoesntReferenceThis(result);
 
-    return evaluated[0];
+    return result;
   }
 
   private void checkDoesntReferenceThis(final Icon icon) {
@@ -290,14 +301,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }
 
-
-  public DeferredIconImpl setDoneListener(IconListener<T> disposer) {
+  public DeferredIconImpl setDoneListener(@NotNull IconListener<T> disposer) {
     myEvalListener = disposer;
     return this;
   }
 
   public interface IconListener<T> {
-    void evalDone(T key, Icon result);
+    void evalDone(T key, @NotNull Icon result);
   }
-
 }

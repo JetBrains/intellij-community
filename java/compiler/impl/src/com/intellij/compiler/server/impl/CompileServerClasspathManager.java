@@ -15,19 +15,21 @@
  */
 package com.intellij.compiler.server.impl;
 
+import com.intellij.compiler.server.CompileServerPathProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,37 +37,51 @@ import java.util.List;
  */
 public class CompileServerClasspathManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.impl.CompileServerClasspathManager");
-  private List<File> myCompileServerPluginsClasspath;
 
-  public List<File> getCompileServerPluginsClasspath() {
+  private List<String> myCompileServerPluginsClasspath;
+
+  public List<String> getCompileServerPluginsClasspath(Project project) {
+    List<String> staticClasspath = getStaticClasspath();
+    List<String> dynamicClasspath = getDynamicClasspath(project);
+
+    if (dynamicClasspath.isEmpty()) {
+      return staticClasspath;
+    }
+    else {
+      dynamicClasspath.addAll(staticClasspath);
+      return dynamicClasspath;
+    }
+  }
+
+  private List<String> getStaticClasspath() {
     if (myCompileServerPluginsClasspath == null) {
       myCompileServerPluginsClasspath = computeCompileServerPluginsClasspath();
     }
     return myCompileServerPluginsClasspath;
   }
 
-  private static List<File> computeCompileServerPluginsClasspath() {
-    final List<File> classpath = new ArrayList<File>();
+  private static List<String> computeCompileServerPluginsClasspath() {
+    final List<String> classpath = ContainerUtil.newArrayList();
     for (CompileServerPlugin serverPlugin : CompileServerPlugin.EP_NAME.getExtensions()) {
       final PluginId pluginId = serverPlugin.getPluginDescriptor().getPluginId();
       final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       LOG.assertTrue(plugin != null, pluginId);
       final File baseFile = plugin.getPath();
       if (baseFile.isFile()) {
-        classpath.add(baseFile);
+        classpath.add(baseFile.getPath());
       }
       else if (baseFile.isDirectory()) {
         for (String relativePath : StringUtil.split(serverPlugin.getClasspath(), ";")) {
           final File jarFile = new File(new File(baseFile, "lib"), relativePath);
           if (jarFile.exists()) {
-            classpath.add(jarFile);
+            classpath.add(jarFile.getPath());
           }
           else {
             //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name
             final String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
             final File dir = new File(baseFile.getParentFile(), moduleName);
             if (dir.exists()) {
-              classpath.add(dir);
+              classpath.add(dir.getPath());
             }
             else {
               //looks like <jar-name> refers to a library, try to find it under <plugin-dir>/lib
@@ -73,11 +89,11 @@ public class CompileServerClasspathManager {
               if (pluginDir != null) {
                 File libraryFile = new File(pluginDir, "lib" + File.separator + PathUtil.getFileName(relativePath));
                 if (libraryFile.exists()) {
-                  classpath.add(libraryFile);
+                  classpath.add(libraryFile.getPath());
                 }
                 else {
-                  LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: library " +
-                            libraryFile.getAbsolutePath() + " not found");
+                  LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: " +
+                            "library " + libraryFile.getAbsolutePath() + " not found");
                 }
               }
               else {
@@ -86,7 +102,6 @@ public class CompileServerClasspathManager {
             }
           }
         }
-
       }
     }
     return classpath;
@@ -103,5 +118,13 @@ public class CompileServerClasspathManager {
       }
     }
     return null;
+  }
+
+  private static List<String> getDynamicClasspath(Project project) {
+    List<String> classpath = ContainerUtil.newArrayList();
+    for (CompileServerPathProvider provider : project.getExtensions(CompileServerPathProvider.EP_NAME)) {
+      classpath.addAll(provider.getClassPath());
+    }
+    return classpath;
   }
 }

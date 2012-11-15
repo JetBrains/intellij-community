@@ -536,4 +536,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("groovy*.jar", "groovy-1.7.jar");
     assertDoesntMatch("*.ico", "a.i.c.o");
   }
+
+  public void testUsingCapsMeansTheyShouldMatchCaps() {
+    assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
-package com.intellij.ui;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.ide.ui.laf.darcula.ui;
 
 import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicPanelUI;
 
-public interface DeferredIcon extends Icon {
-  @NotNull
-  Icon evaluate();
+/**
+ * @author Konstantin Bulenkov
+ */
+public class DarculaPanelUI extends BasicPanelUI {
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(JComponent c) {
+    return new DarculaPanelUI();
+  }
 }

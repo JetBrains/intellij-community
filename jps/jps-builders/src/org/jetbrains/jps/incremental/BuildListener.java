@@ -12,6 +12,7 @@ import java.util.EventListener;
 public interface BuildListener extends EventListener{
 
   /**
+   * Note: when parallel build is on, might be called from several simultaneously running threads
    * @param paths collection of pairs [output root->relative path to generated file]
    */
   void filesGenerated(Collection<Pair<String, String>> paths);

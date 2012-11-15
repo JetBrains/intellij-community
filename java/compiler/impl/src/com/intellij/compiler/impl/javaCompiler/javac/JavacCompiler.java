@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.*;
@@ -132,7 +133,7 @@ public class JavacCompiler extends ExternalCompiler {
   @NotNull
   @NonNls
   public String getId() { // used for externalization
-    return "Javac";
+    return JavaCompilers.JAVAC_ID;
   }
 
   @NotNull
