@@ -198,6 +198,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testRawOnParameterized() throws Exception { doTest(false); }
   public void testFailedInferenceWithBoxing() throws Exception { doTest(false); }
   public void testFixedFailedInferenceWithBoxing() throws Exception { doTest17Incompatibility(false); }
+  public void testSuperWildcardIsNotWithinItsBound() throws Exception { doTest17Incompatibility(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
