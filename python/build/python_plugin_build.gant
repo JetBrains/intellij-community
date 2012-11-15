@@ -41,6 +41,9 @@ setProperty("classesDir", "${classesRootDir}/python")
 setProperty("restClassesDir", "${classesRootDir}/rest")
 setProperty("localizationClassesDir", "${classesRootDir}/localization")
 
+setProperty("restJarName", "${output}/rest-${buildNumber}.jar")
+setProperty("localizationJarName", "${output}/localization-${buildNumber}.jar")
+
 //Compiler options
 setProperty("compilerDebug", "on")
 setProperty("compilerGenerateNoWarnings", "off")
@@ -141,7 +144,7 @@ target(name: "compileRest", description: "Compile module rest") {
 target(name: "jarRest", description: "Generate jar file for ReST plugin") {
   depends("compileRest")
   ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${jarName}", basedir: "${restClassesDir}") {
+  ant.jar(destfile: "${restJarName}", basedir: "${restClassesDir}") {
     manifest() {
       attribute(name: "Revision", value: "${pluginRevision}")
       //<!--<attribute name="Build" value="${plugin.version}"/>-->
@@ -203,7 +206,7 @@ target(name: "compileLocalization", description: "Compile module localization") 
 target(name: "jarLocalization", description: "Generate jar file for localization plugin") {
   depends("compile")
   ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${jarName}", basedir: "${localizationClassesDir}") {
+  ant.jar(destfile: "${localizationJarName}", basedir: "${localizationClassesDir}") {
     manifest() {
       attribute(name: "Revision", value: "${pluginRevision}")
       //<!--<attribute name="Build" value="${plugin.version}"/>-->
@@ -242,10 +245,8 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
       include(name: "*.jar")
     }
-    fileset(dir: "${output}") {
-      include(name: "localization*.jar")
-      include(name: "rest*.jar")
-    }
+    pathelement(location: restJarName)
+    pathelement(location: localizationJarName)
   }
 
   ant.path(id: "sourcepath") {
