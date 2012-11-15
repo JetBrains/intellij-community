@@ -279,7 +279,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
 
-    myTreeBuilder.getIntialized().doWhenDone(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         myIsTreeUpdating = true;
@@ -298,9 +298,14 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
             }
           });
         }
-        //To change body of implemented methods use File | Settings | File Templates.
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(runnable);
+    }
+    else {
+      myTreeBuilder.getIntialized().doWhenDone(runnable);
+    }
   }
 
   private static NamePathComponent initNamePathComponent(WizardContext context) {
