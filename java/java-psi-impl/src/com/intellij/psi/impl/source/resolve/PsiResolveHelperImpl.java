@@ -1054,7 +1054,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return initializer;
   }
 
-  private static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }

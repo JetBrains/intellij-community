@@ -95,7 +95,7 @@ public class StaticImportMethodFix implements IntentionAction {
   private PsiType getExpectedType() {
     final PsiMethodCallExpression methodCall = myMethodCall.getElement();
     if (methodCall == null) return null;
-    final PsiElement parent = methodCall.getParent();
+    final PsiElement parent = PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall.getParent());
 
     if (parent instanceof PsiVariable) {
       if (methodCall.equals(PsiResolveHelperImpl.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
@@ -126,7 +126,7 @@ public class StaticImportMethodFix implements IntentionAction {
         final PsiElement psiElement = resolveResult.getElement();
         if (psiElement instanceof PsiMethod) {
           final PsiParameter[] parameters = ((PsiMethod)psiElement).getParameterList().getParameters();
-          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), methodCall);
+          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall));
           return idx > -1 ? resolveResult.getSubstitutor().substitute(parameters[idx].getType()) : null;
         }
       }
