@@ -19,7 +19,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -72,7 +71,7 @@ public class IconDeferrerImpl extends IconDeferrer {
         final long started = myLastClearTimestamp;
         result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
           @Override
-          public void evalDone(T key, Icon r) {
+          public void evalDone(T key, @NotNull Icon r) {
             synchronized (LOCK) {
               // check if our results is not outdated yet
               if (started == myLastClearTimestamp) {
@@ -95,17 +94,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
 
-  public static void evaluateDeferredInReadAction(final Runnable runnable) {
-    try {
-      myEvaluationIsInProgress.set(Boolean.TRUE);
-      ApplicationManager.getApplication().runReadAction(runnable);
-    }
-    finally {
-      myEvaluationIsInProgress.set(Boolean.FALSE);
-    }
-  }
-
-  public static void evaluateDeferred(final Runnable runnable) {
+  public static void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();

@@ -19,8 +19,11 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public interface DeferredIcon extends Icon {
+  @NotNull
   Icon evaluate();
 }
