@@ -26,11 +26,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface MethodImplementor {
+public interface MethodImplementor extends MemberImplementorExplorer {
   ExtensionPointName<MethodImplementor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.methodImplementor");
-
-  @NotNull
-  PsiMethod[] getMethodsToImplement(PsiClass aClass);
 
   @NotNull
   PsiMethod[] createImplementationPrototypes(final PsiClass inClass, PsiMethod method) throws IncorrectOperationException;

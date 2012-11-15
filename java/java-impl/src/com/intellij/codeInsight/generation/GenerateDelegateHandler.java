@@ -253,7 +253,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, targetClass, substitutor);
         superSubstitutors.put(superClass, superSubstitutor);
       }
-      PsiSubstitutor methodSubstitutor = GenerateMembersUtil.correctSubstitutor(method, superSubstitutor);
+      PsiSubstitutor methodSubstitutor = OverrideImplementUtil.correctSubstitutor(method, superSubstitutor);
       MethodSignature signature = method.getSignature(methodSubstitutor);
       if (!signatures.contains(signature)) {
         signatures.add(signature);

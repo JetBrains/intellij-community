@@ -17,6 +17,7 @@ package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -512,7 +513,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private PsiMethod delegateMethod(@NonNls String delegationTarget,
                                    PsiMethod method,
                                    PsiSubstitutor substitutor) throws IncorrectOperationException {
-    substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
+    substitutor = OverrideImplementUtil.correctSubstitutor(method, substitutor);
     PsiMethod methodToAdd = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
     final PsiModifierList modifierList = methodToAdd.getModifierList();

@@ -34,15 +34,7 @@ import java.io.File;
       file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
     )}
 )
-public class CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings>, ExportableComponent {
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_IMPORTS = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_METHODS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_FILE_HEADER = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_DOC_COMMENTS = false;
-
-  public static CodeFoldingSettings getInstance() {
-    return ServiceManager.getService(CodeFoldingSettings.class);
-  }
+public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings>, ExportableComponent {
 
   public CodeFoldingSettings getState() {
     return this;

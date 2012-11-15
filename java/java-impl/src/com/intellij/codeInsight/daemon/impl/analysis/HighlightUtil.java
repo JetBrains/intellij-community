@@ -68,7 +68,7 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
  * @author cdr
  * @since Jul 30, 2002
  */
-public class HighlightUtil {
+public class HighlightUtil extends HighlightUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
 
   @NotNull private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
@@ -78,7 +78,6 @@ public class HighlightUtil {
   @NotNull private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
   @NotNull private static final Set<String> ourConstructorNotAllowedModifiers;
 
-  @NonNls public static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
   @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 

@@ -18,8 +18,6 @@ package com.intellij.lang.folding;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 
-import java.util.List;
-
 /**
  * Base class and extension point for custom folding providers.
  *
