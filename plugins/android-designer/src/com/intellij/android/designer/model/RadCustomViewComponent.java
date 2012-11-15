@@ -21,6 +21,7 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.model.*;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
@@ -28,8 +29,11 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -62,8 +66,22 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
   @Nullable
   public static String chooseView(RadComponent rootComponent) {
     ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
-    ChooseClassDialog dialog =
-      new ChooseClassDialog(moduleProvider.getModule(), "Views", false, "android.view.View");
+    ChooseClassDialog dialog = new ChooseClassDialog(moduleProvider.getModule(), "Views", false) {
+      @Override
+      protected void findClasses(Module module, boolean includeAll, DefaultListModel model, String[] classes) {
+        Set<String> names = new HashSet<String>();
+        for (PsiClass psiClass : findInheritors(module, "android.view.View", false)) {
+          model.addElement(psiClass);
+          names.add(psiClass.getQualifiedName());
+        }
+        for (PsiClass psiClass : findInheritors(module, "android.view.View", true)) {
+          String name = psiClass.getQualifiedName();
+          if (!names.contains(name) && name != null && (!name.startsWith("android.") || name.startsWith("android.support"))) {
+            model.addElement(psiClass);
+          }
+        }
+      }
+    };
     dialog.show();
 
     if (dialog.isOK()) {
