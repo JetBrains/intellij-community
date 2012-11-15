@@ -142,6 +142,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final void setSubId(@Nullable String subId) {
+    if (Comparing.strEqual(mySubId, subId)) return;
     saveExpandedPaths();
     mySubId = subId;
   }
