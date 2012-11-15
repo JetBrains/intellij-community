@@ -204,7 +204,7 @@ target(name: "compileLocalization", description: "Compile module localization") 
 }
 
 target(name: "jarLocalization", description: "Generate jar file for localization plugin") {
-  depends("compile")
+  depends("compileLocalization")
   ant.mkdir(dir: "${output}")
   ant.jar(destfile: "${localizationJarName}", basedir: "${localizationClassesDir}") {
     manifest() {
