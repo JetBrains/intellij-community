@@ -58,7 +58,6 @@ com.sixrr.inspectjs.style.UnterminatedStatementJSInspection
 com.siyeh.ig.abstraction.DeclareCollectionAsInterfaceInspection
 com.siyeh.ig.abstraction.FeatureEnvyInspection
 com.siyeh.ig.abstraction.InstanceofChainInspection
-com.siyeh.ig.abstraction.MagicNumberInspection
 com.siyeh.ig.abstraction.MethodOnlyUsedFromInnerClassInspection
 com.siyeh.ig.abstraction.OverlyStrongTypeCastInspection
 com.siyeh.ig.abstraction.PublicMethodNotExposedInInterfaceInspection
@@ -150,7 +149,6 @@ com.siyeh.ig.junit.TestMethodWithoutAssertionInspection
 com.siyeh.ig.logging.ClassWithMultipleLoggersInspection
 com.siyeh.ig.logging.ClassWithoutLoggerInspection
 com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection
-com.siyeh.ig.logging.LogStatementGuardedByLogConditionInspection
 com.siyeh.ig.logging.NonStaticFinalLoggerInspection
 com.siyeh.ig.logging.PublicMethodWithoutLoggingInspection
 com.siyeh.ig.maturity.ObsoleteCollectionInspection
@@ -166,7 +164,6 @@ com.siyeh.ig.methodmetrics.ThrownExceptionsPerMethodInspection
 com.siyeh.ig.migration.ForCanBeForeachInspection
 com.siyeh.ig.migration.IfCanBeSwitchInspection
 com.siyeh.ig.migration.MethodCanBeVariableArityMethodInspection
-com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
 com.siyeh.ig.naming.AnnotationNamingConventionInspection
