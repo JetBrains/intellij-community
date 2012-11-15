@@ -16,6 +16,7 @@
 package org.jetbrains.android.refactoring;
 
 import com.android.resources.ResourceType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
@@ -23,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
@@ -52,6 +54,7 @@ class ExtractStyleDialog extends DialogWrapper {
   private JBLabel myAttributesLabel;
   private JBLabel myModuleLabel;
   private JComboBox myModuleCombo;
+  private JBCheckBox mySearchForStyleApplicationsAfter;
 
   private final Module myModule;
   private final String myFileName;
@@ -59,6 +62,8 @@ class ExtractStyleDialog extends DialogWrapper {
 
   private final CheckboxTree myTree;
   private final CheckedTreeNode myRootNode;
+
+  private static final String SEARCH_STYLE_APPLICATIONS_PROPERTY = "AndroidExtractStyleSearchStyleApplications";
 
   public ExtractStyleDialog(@NotNull Module module,
                             @NotNull String fileName,
@@ -167,6 +172,9 @@ class ExtractStyleDialog extends DialogWrapper {
     decorator.addExtraAction(unselectAll);
 
     myAttributeListWrapper.add(decorator.createPanel());
+
+    final String value = PropertiesComponent.getInstance().getValue(SEARCH_STYLE_APPLICATIONS_PROPERTY);
+    mySearchForStyleApplicationsAfter.setSelected(Boolean.parseBoolean(value));
     init();
   }
 
@@ -182,6 +190,13 @@ class ExtractStyleDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    PropertiesComponent.getInstance().setValue(
+      SEARCH_STYLE_APPLICATIONS_PROPERTY, Boolean.toString(mySearchForStyleApplicationsAfter.isSelected()));
   }
 
   @Override
@@ -229,5 +244,9 @@ class ExtractStyleDialog extends DialogWrapper {
   @Nullable
   public Module getChosenModule() {
     return myModule != null ? myModule : (Module)myModuleCombo.getSelectedItem();
+  }
+
+  public boolean isToSearchStyleApplications() {
+    return mySearchForStyleApplicationsAfter.isSelected();
   }
 }

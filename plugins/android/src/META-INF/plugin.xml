@@ -97,6 +97,10 @@
     </action>
     <action id="AndroidInlineIncludeAction" class="org.jetbrains.android.refactoring.AndroidInlineIncludeAction"
             text="Inline _Layout..." description="Inlines included Android layout"/>
+    <action id="AndroidFindStyleApplicationsAction" class="org.jetbrains.android.refactoring.AndroidFindStyleApplicationsAction"
+            text="Use style _where possible..." description="Replaces attributes by Android style reference where possible">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
   </actions>
 
   <depends>JUnit</depends>
