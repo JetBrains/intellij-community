@@ -86,6 +86,9 @@
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameDirectoryWeigher" id="sameDirectory"
              order="after openedInEditor"/>
+
+    <usageContextPanelProvider implementation="com.intellij.usages.impl.UsagePreviewPanel$Provider"/>
+    <usageContextPanelProvider implementation="com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider"/>
   </extensions>
 
   <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>
