@@ -34,6 +34,6 @@ public class JavaSdkVersionUtil {
         return version != null && version.isAtLeast(minVersion);
       }
     }
-    return false;
+    return true;
   }
 }

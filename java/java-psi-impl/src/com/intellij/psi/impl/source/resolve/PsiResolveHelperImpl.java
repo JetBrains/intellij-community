@@ -1047,7 +1047,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
+  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
     while (initializer instanceof PsiParenthesizedExpression) {
       initializer = ((PsiParenthesizedExpression)initializer).getExpression();
     }

@@ -34,17 +34,14 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +92,51 @@ public class StaticImportMethodFix implements IntentionAction {
       ;
   }
 
+  private PsiType getExpectedType() {
+    final PsiMethodCallExpression methodCall = myMethodCall.getElement();
+    if (methodCall == null) return null;
+    final PsiElement parent = methodCall.getParent();
+
+    if (parent instanceof PsiVariable) {
+      if (methodCall.equals(PsiResolveHelperImpl.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
+        return ((PsiVariable)parent).getType();
+      }
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
+      if (methodCall.equals(PsiResolveHelperImpl.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
+        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+      }
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
+      }
+      else {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          return method.getReturnType();
+        }
+      }
+    }
+    else if (parent instanceof PsiExpressionList) {
+      final PsiElement pParent = parent.getParent();
+      if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
+        final JavaResolveResult resolveResult = ((PsiCallExpression)pParent).resolveMethodGenerics();
+        final PsiElement psiElement = resolveResult.getElement();
+        if (psiElement instanceof PsiMethod) {
+          final PsiParameter[] parameters = ((PsiMethod)psiElement).getParameterList().getParameters();
+          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), methodCall);
+          return idx > -1 ? resolveResult.getSubstitutor().substitute(parameters[idx].getType()) : null;
+        }
+      }
+    }
+    else if (parent instanceof PsiLambdaExpression) {
+      return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+    }
+    return null;
+  }
+  
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
@@ -106,6 +148,7 @@ public class StaticImportMethodFix implements IntentionAction {
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
 
+    final PsiType expectedType = getExpectedType();
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
     cache.processMethodsWithName(name, scope, new Processor<PsiMethod>() {
@@ -124,7 +167,9 @@ public class StaticImportMethodFix implements IntentionAction {
             .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
                                 PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
           if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-            applicableList.add(method);
+            if (expectedType == null || TypeConversionUtil.isAssignable(expectedType, substitutorForMethod.substitute(method.getReturnType()))) {
+              applicableList.add(method);
+            }
           }
         }
         return (applicableList.isEmpty() ? list : applicableList).size() < 50;
