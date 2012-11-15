@@ -1129,6 +1129,7 @@ public class TypeConversionUtil {
                                                    PsiClass base,
                                                    Set<PsiClass> set,
                                                    PsiManager manager) {
+    assert candidateSubstitutor.isValid();
     for (final PsiClassType type : types) {
       final PsiType substitutedType = candidateSubstitutor.substitute(type);
       //if (!(substitutedType instanceof PsiClassType)) return null;
