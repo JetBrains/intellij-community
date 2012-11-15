@@ -524,6 +524,11 @@ public abstract class PropertyTable extends JBTable {
   }
 
   public static int findProperty(List<Property> properties, Property property) {
+    int index = properties.indexOf(property);
+    if (index != -1) {
+      return index;
+    }
+
     String name = property.getName();
     int size = properties.size();
 
