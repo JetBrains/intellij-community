@@ -36,11 +36,11 @@ setProperty("localizationSrcDir", "${pluginHome}/localization/src")
 setProperty("resourcesDir", "${pluginHome}/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
 setProperty("testSrcDir", "${pluginHome}/testSrc")
-setProperty("artifactsDir", "${output}/artifacts")
 
-setProperty("classesDir", "${outDir}/classes/python")
-setProperty("restClassesDir", "${outDir}/classes/rest")
-setProperty("localizationClassesDir", "${basedir}/classes/localization")
+setProperty("classesRootDir", "${outDir}/classes")
+setProperty("classesDir", "${classesRootDir}/python")
+setProperty("restClassesDir", "${classesRootDir}/rest")
+setProperty("localizationClassesDir", "${classesRootDir}/localization")
 
 //Compiler options
 setProperty("compilerDebug", "on")
@@ -70,14 +70,12 @@ def connectorPlugins = ["django-db-config", "python-javascript-debugger", "pytho
 def contribPlugins = ["pycharm-flask", "pycharm-numpy"]
 
 target(name: "clean", description: "Cleanup output") {
+  ant.echo("Cleaning ${output}")
   ant.delete(dir: "${output}", failonerror: "false")
-  ant.delete(dir: "${classesDir}", failonerror: "false")
-  ant.delete(dir: "${outDir}/classes", failonerror: "false")
-  ant.delete(dir: "${outDir}/dist", failonerror: "false")
-  ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
-  ant.delete(dir: "${outDir}/jar", failonerror: "false")
-  ant.delete(dir: "${outDir}/deploy", failonerror: "false")
-  ant.delete(dir: "${ideaHome}", failonerror: "false")
+  ant.echo("Cleaning ${classesRootDir}")
+  ant.delete(dir: "${classesRootDir}", failonerror: "false")
+  ant.echo("Cleaning ${ideaHome}")
+  ant.delete(dir: "${ideaHome}", failonerror: "false")          // out/python/idea/
 }
 
 target(name: "unzip") {
@@ -381,12 +379,6 @@ target(name: "dist", description: "main target") {
   depends("clean")
   depends("build")
   depends("zip")
-}
-
-target(name: "artifacts") {
-  depends("dist")
-  ant.mkdir(dir: "${artifactsDir}")
-  ant.move(file: "${output}/${zipname}", todir: "${artifactsDir}")
 }
 
 target('default': "Build artifacts") {
