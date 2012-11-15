@@ -14,7 +14,7 @@ setProperty("ideaHome", "${ideaDir}/jdk16")
 setProperty("pluginHelp", "${outDir}/help")
 
 setProperty("buildNumber", requireProperty("build.number", snapshot))
-requireProperty("idea.build.number")
+setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
 setProperty("pluginHome", "${basedir}/..")
 setProperty("pluginRevision", "${buildNumber}")
@@ -82,13 +82,7 @@ target(name: "clean", description: "Cleanup output") {
 
 target(name: "unzip") {
   ant.mkdir(dir: "${ideaHome}")
-  ant.unzip(src: "${ideaDir}/ideaIU-${idea.build.number}.zip", dest: "${ideaHome}")
-
-  ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
-    filterchain() {
-      deletecharacters(chars: "IU-")
-    }
-  }
+  ant.unzip(src: "${ideaDir}/ideaIU-${ideaBuildNumber}.zip", dest: "${ideaHome}")
 }
 
 def patchPluginXml(path) {
