@@ -299,9 +299,12 @@ public class PositionManagerImpl implements PositionManager {
           final int finalRangeEnd = rangeEnd;
           return ApplicationManager.getApplication().runReadAction(new NullableComputable<ReferenceType>() {
             public ReferenceType compute() {
+              if (!classToFind.isValid()) {
+                return null;
+              }
               final int line = Math.min(finalRangeBegin + 1, finalRangeEnd);
               final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);
-              return classToFind.equals(JVMNameUtil.getClassAt(candidatePosition))? fromClass : null;
+              return classToFind.equals(JVMNameUtil.getClassAt(candidatePosition)) ? fromClass : null;
             }
           });
         }
