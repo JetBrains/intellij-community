@@ -21,6 +21,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnInfoHandler;
 import org.jetbrains.idea.svn.commandLine.SvnStatusHandler;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
@@ -29,8 +30,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -551,7 +554,8 @@ public class SvnParseCommandLineParseTest extends TestCase {
                      "</status>\n";
 
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
-    final SvnStatusHandler handler = new SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
+    final SvnStatusHandler handler = new
+      SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
         handlerArr[0].getPending().getKind();
@@ -574,8 +578,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
         final int secondIdx = o.getPath().indexOf(":", idx + 1);
         Assert.assertTrue(o.getPath(), secondIdx == -1);
         try {
-          return new IdeaSVNInfo("C:/base/1", SVNURL.parseURIEncoded("http://a.b.c"), SVNRevision.HEAD, SVNNodeKind.FILE, "",
-                                 SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY, 1);
+          return createStubInfo("C:/base/1", "http://a.b.c");
         }
         catch (SVNException e) {
           //
@@ -588,5 +591,91 @@ public class SvnParseCommandLineParseTest extends TestCase {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(new ByteArrayInputStream(s.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
     final MultiMap<String,PortableStatus> changes = handler.getCurrentListChanges();
+  }
+
+  private IdeaSVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {
+    return new IdeaSVNInfo(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
+                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY, 1);
+  }
+
+  public void testStatusInExternalMove() throws Exception {
+    final String status = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                          "<status>\n" +
+                          "<target\n" +
+                          "   path=\".\">\n" +
+                          "<entry\n" +
+                          "   path=\"slave\">\n" +
+                          "<wc-status\n" +
+                          "   item=\"external\"\n" +
+                          "   props=\"none\">\n" +
+                          "</wc-status>\n" +
+                          "</entry>\n" +
+                          "<entry\n" +
+                          "   path=\"src\\com\\test\\just\">\n" +
+                          "<wc-status\n" +
+                          "   props=\"none\"\n" +
+                          "   item=\"unversioned\">\n" +
+                          "</wc-status>\n" +
+                          "</entry>\n" +
+                          "<entry\n" +
+                          "   path=\"C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java\">\n" +
+                          "<wc-status\n" +
+                          "   item=\"added\"\n" +
+                          "   props=\"none\"\n" +
+                          "   copied=\"true\">\n" +
+                          "<commit\n" +
+                          "   revision=\"7\">\n" +
+                          "<author>admin</author>\n" +
+                          "<date>2012-09-12T12:16:51.621000Z</date>\n" +
+                          "</commit>\n" +
+                          "</wc-status>\n" +
+                          "</entry>\n" +
+                          "<entry\n" +
+                          "   path=\"C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java\">\n" +
+                          "<wc-status\n" +
+                          "   props=\"none\"\n" +
+                          "   item=\"deleted\"\n" +
+                          "   revision=\"7\">\n" +
+                          "<commit\n" +
+                          "   revision=\"7\">\n" +
+                          "<author>admin</author>\n" +
+                          "<date>2012-09-12T12:16:51.621000Z</date>\n" +
+                          "</commit>\n" +
+                          "</wc-status>\n" +
+                          "</entry>\n" +
+                          "</target>\n" +
+                          "</status>";
+    final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
+    final SvnStatusHandler[] handler = new SvnStatusHandler[1];
+    final File baseFile = new File(basePath);
+    final SvnStatusHandler.ExternalDataCallback callback = SvnCommandLineStatusClient.createStatusCallback(new ISVNStatusHandler() {
+      @Override
+      public void handleStatus(SVNStatus status) throws SVNException {
+        System.out.println(status.getURL());
+        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java").equals(status.getFile())) {
+          Assert.assertEquals("http://external/src/com/slave/MacMessagesParser.java", status.getURL().toString());
+        }
+        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java").equals(status.getFile())) {
+          Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status.getURL().toString());
+        }
+      }
+    }, baseFile, createStubInfo(basePath, "http://mainurl/"), handler);
+    handler[0] = new SvnStatusHandler(callback, baseFile, new Convertor<File, SVNInfo>() {
+      @Override
+      public SVNInfo convert(File o) {
+        try {
+          if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
+            return createStubInfo(o.getPath(), "http://external");
+          }
+          return createStubInfo(o.getPath(), "http://12345");
+        }
+        catch (SVNException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+    parser.parse(new ByteArrayInputStream(status.getBytes(CharsetToolkit.UTF8_CHARSET)), handler[0]);
+    final MultiMap<String,PortableStatus> changes = handler[0].getCurrentListChanges();
   }
 }
