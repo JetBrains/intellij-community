@@ -58,7 +58,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     PredefinedConditionBorderStrategy strategy = new PredefinedConditionBorderStrategy();
     BORDER_STRATEGIES.put(ArrangementSettingType.TYPE, strategy);
     BORDER_STRATEGIES.put(ArrangementSettingType.MODIFIER, strategy);
-    assert BORDER_STRATEGIES.size() == ArrangementSettingType.values().length;
   }
 
   @NotNull

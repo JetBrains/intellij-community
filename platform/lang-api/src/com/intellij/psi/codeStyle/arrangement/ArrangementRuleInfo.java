@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +34,12 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 10/31/12 12:30 PM
  */
-public class ArrangementConditionInfo {
+public class ArrangementRuleInfo {
 
   @NotNull private final Set<ArrangementAtomMatchCondition> myAtomConditions = ContainerUtilRt.newHashSet();
   @NotNull private final Set<Object>                        myConditions     = ContainerUtilRt.newHashSet();
+
+  @NotNull private ArrangementEntryOrderType myOrderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
 
   @Nullable private String myNamePattern;
 
@@ -44,6 +50,15 @@ public class ArrangementConditionInfo {
 
   public void setNamePattern(@Nullable String namePattern) {
     myNamePattern = namePattern;
+  }
+
+  @NotNull
+  public ArrangementEntryOrderType getOrderType() {
+    return myOrderType;
+  }
+
+  public void setOrderType(@NotNull ArrangementEntryOrderType orderType) {
+    myOrderType = orderType;
   }
 
   public void addAtomCondition(@NotNull ArrangementAtomMatchCondition condition) {
@@ -70,6 +85,32 @@ public class ArrangementConditionInfo {
         break;
       }
     }
+  }
+
+  public void copyConditionsFrom(@NotNull ArrangementRuleInfo info) {
+    clearConditions();
+    myConditions.addAll(info.myConditions);
+    myAtomConditions.addAll(info.myAtomConditions);
+  }
+
+  public void clear() {
+    clearConditions();
+    myOrderType = ArrangementMatchRule.DEFAULT_ORDER_TYPE;
+    myNamePattern = null;
+  }
+
+  public void clearConditions() {
+    myConditions.clear();
+    myAtomConditions.clear();
+  }
+
+  @Nullable
+  public StdArrangementMatchRule buildRule() {
+    ArrangementMatchCondition condition = buildCondition();
+    if (condition == null) {
+      return null;
+    }
+    return new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), myOrderType);
   }
 
   @Nullable
