@@ -17,11 +17,11 @@ package com.intellij.usages;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,16 +31,28 @@ public class UsageLimitUtil {
   public static final int USAGES_LIMIT = 1000;
 
   public static void showAndCancelIfAborted(final Project project, final String message) {
-    int retCode = showTooManyUsagesWarning(project, message);
+    Result retCode = showTooManyUsagesWarning(project, message);
 
-    if (retCode != DialogWrapper.OK_EXIT_CODE) {
+    if (retCode != Result.CONTINUE) {
       throw new ProcessCanceledException();
     }
   }
 
-  public static int showTooManyUsagesWarning(@NotNull Project project, @NotNull String message) {
+  public enum Result {
+    CONTINUE, ABORT
+  }
+
+  @NotNull
+  public static Result showTooManyUsagesWarning(@NotNull Project project, @NotNull String message) {
     String[] buttons = {UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort")};
-    return showMessage(project, message, UsageViewBundle.message("find.excessive.usages.title"), buttons);
+    int r = showMessage(project, message, UsageViewBundle.message("find.excessive.usages.title"), buttons);
+    if (r == 0) {
+      return Result.CONTINUE;
+    }
+    if (r == 1) {
+      return Result.ABORT;
+    }
+    throw new IncorrectOperationException("unexpected return: " + r);
   }
 
   private static int runOrInvokeAndWait(final Computable<Integer> f) {
