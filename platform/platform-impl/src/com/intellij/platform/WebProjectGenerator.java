@@ -16,13 +16,13 @@
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nls;
@@ -82,14 +82,15 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
     @NotNull
     JComponent getComponent();
 
-    @Nullable
-    Pair<String, JComponent> getSettingsField();
+    void buildUI(@NotNull SettingsStep settingsStep);
 
     @NotNull
     T getSettings();
 
     @Nullable
     ValidationInfo validate();
+
+    boolean isBackgroundJobRunning();
 
     void addSettingsStateListener(@NotNull SettingsStateListener listener);
   }
@@ -109,7 +110,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
       myPeer = peer;
       myCenterComponent = peer.getComponent();
       myDescriptionPane = new JTextPane();
-      myDescriptionPane.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+      myDescriptionPane.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 10, 0));
       Messages.configureMessagePaneUi(myDescriptionPane, getDescription());
 
       getOKAction().setEnabled(peer.validate() == null);
@@ -117,6 +118,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
         @Override
         public void stateChanged(boolean validSettings) {
           getOKAction().setEnabled(validSettings);
+          initValidation();
         }
       });
       setTitle(WebProjectGenerator.this.getName());
@@ -130,7 +132,11 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
 
     @Override
     protected ValidationInfo doValidate() {
-      return myPeer.validate();
+      ValidationInfo validationInfo = myPeer.validate();
+      if (validationInfo != null && myPeer.isBackgroundJobRunning()) {
+        return null;
+      }
+      return validationInfo;
     }
 
     @Nullable

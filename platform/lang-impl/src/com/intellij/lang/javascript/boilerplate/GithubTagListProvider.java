@@ -64,15 +64,15 @@ public class GithubTagListProvider {
       @Override
       public void run() {
         final String[] urls = formatTagListDownloadUrls();
+        String firstErrorMessage = null;
         String errorMessage = null;
-        peer.setErrorMessage(null);
         for (String url : urls) {
           try {
             final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
             LOG.info(getGeneratorName() + "Cache has been successfully updated");
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               public void run() {
-                peer.tagsUpdated(tags);
+                peer.onTagsUpdated(tags);
               }
             });
             return;
@@ -85,9 +85,12 @@ public class GithubTagListProvider {
             errorMessage = "Malformed JSON received from " + url;
             LOG.warn(getGeneratorName() + errorMessage, e);
           }
+          if (firstErrorMessage == null) {
+            firstErrorMessage = errorMessage;
+          }
         }
-        if (errorMessage != null) {
-          peer.setErrorMessage(errorMessage);
+        if (firstErrorMessage != null) {
+          peer.onTagsUpdateError(firstErrorMessage);
         }
       }
     };

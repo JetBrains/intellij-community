@@ -528,7 +528,8 @@ public abstract class PropertyTable extends JBTable {
     int size = properties.size();
 
     for (int i = 0; i < size; i++) {
-      if (name.equals(properties.get(i).getName())) {
+      Property nextProperty = properties.get(i);
+      if (Comparing.equal(nextProperty.getGroup(), property.getGroup()) && name.equals(nextProperty.getName())) {
         return i;
       }
     }

@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
@@ -98,6 +99,8 @@ public class ArrangementNodeDisplayManager {
         return ApplicationBundle.message("arrangement.text.type");
       case MODIFIER:
         return ApplicationBundle.message("arrangement.text.modifier");
+      case NAME:
+        return ApplicationBundle.message("arrangement.text.name");
     }
     return type.toString().toLowerCase();
   }
@@ -133,6 +136,23 @@ public class ArrangementNodeDisplayManager {
     return myMaxWidths.get(type);
   }
 
+  public int getMaxWidth(@NotNull ArrangementEntryOrderType... orderTypes) {
+    SimpleColoredComponent renderer = new SimpleColoredComponent();
+    int result = 0;
+    for (ArrangementEntryOrderType type : orderTypes) {
+      renderer.clear();
+      TextAttributes attributes = myColorsProvider.getTextAttributes(ArrangementSettingType.ORDER, true);
+      renderer.append(getDisplayValue(type), SimpleTextAttributes.fromTextAttributes(attributes));
+      result = Math.max(result, renderer.getPreferredSize().width);
+
+      renderer.clear();
+      attributes = myColorsProvider.getTextAttributes(ArrangementSettingType.ORDER, false);
+      renderer.append(getDisplayValue(type), SimpleTextAttributes.fromTextAttributes(attributes));
+      result = Math.max(result, renderer.getPreferredSize().width);
+    }
+    return result;
+  }
+  
   /**
    * Asks current manager to sort in-place given arrangement condition ids ('field', 'class', 'method', 'public', 'static', 'final' etc).
    * 

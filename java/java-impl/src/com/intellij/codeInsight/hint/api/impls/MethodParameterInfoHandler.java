@@ -134,6 +134,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
+      if (!method.isValid()) continue;
       PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate);
       assert substitutor != null;
 

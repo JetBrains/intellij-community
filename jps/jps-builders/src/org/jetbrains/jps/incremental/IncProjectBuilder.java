@@ -602,14 +602,14 @@ public class IncProjectBuilder {
 
       onChunkBuildComplete(context, chunk);
 
-      if (doneSomething && GENERATE_CLASSPATH_INDEX) {
-        myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            createClasspathIndex(chunk);
-          }
-        }));
-      }
+      //if (doneSomething && GENERATE_CLASSPATH_INDEX) {
+      //  myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
+      //    @Override
+      //    public void run() {
+      //      createClasspathIndex(chunk);
+      //    }
+      //  }));
+      //}
     }
     catch (ProjectBuildException e) {
       throw e;

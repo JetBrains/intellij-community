@@ -24,6 +24,7 @@ import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -423,12 +424,14 @@ public class ArrangementMatchingRulesControl extends JBTable {
       if (value instanceof ArrangementRepresentationAware) {
         return ((ArrangementRepresentationAware)value).getComponent();
       }
+
+      if (!(value instanceof StdArrangementMatchRule)) {
+        return EMPTY_RENDERER;
+      }
+
+      StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
       ArrangementListRowDecorator component = myComponents.get(row);
       if (component == null) {
-        if (!(value instanceof StdArrangementMatchRule)) {
-          return EMPTY_RENDERER;
-        }
-        StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         ArrangementMatchConditionComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
         component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);
         myComponents.set(row, component);
@@ -438,6 +441,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       component.setRowIndex((myEditorRow >= 0 && row > myEditorRow) ? row : row + 1);
       component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
       component.setBeingEdited(myEditorRow >= 0 && myEditorRow == row + 1);
+      component.setShowSortIcon(rule.getOrderType() == ArrangementEntryOrderType.BY_NAME);
       return component.getUiComponent();
     }
   }

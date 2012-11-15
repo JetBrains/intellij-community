@@ -1305,7 +1305,23 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
+    if (expr instanceof PsiThisExpression && PsiTreeUtil.getParentOfType(expr, PsiMethod.class) == null) {
+      if (aClass.isInterface()) {
+        return thisNotFoundInInterfaceInfo(expr);
+      }
+
+      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
+        final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+        if (parentClass != null && parentClass.isInterface()) {
+          return thisNotFoundInInterfaceInfo(expr);
+        }
+      }
+    }
     return null;
+  }
+
+  private static HighlightInfo thisNotFoundInInterfaceInfo(PsiExpression expr) {
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expr, "Cannot find symbol variable this");
   }
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,

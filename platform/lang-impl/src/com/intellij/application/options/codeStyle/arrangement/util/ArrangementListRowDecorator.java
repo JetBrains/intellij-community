@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement.util;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchConditionComponent;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -41,6 +42,8 @@ import java.awt.event.MouseEvent;
  */
 public class ArrangementListRowDecorator extends JPanel implements ArrangementMatchConditionComponent {
 
+  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.Icons.Inspector.SortByName);
+
   @NotNull private final ArrangementRuleIndexControl        myRowIndexControl;
   @NotNull private final ArrangementMatchConditionComponent myDelegate;
   @NotNull private final ArrangementMatchingRulesControl    myControl;
@@ -56,7 +59,9 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
   {
     myDelegate = delegate;
     myControl = control;
-
+    
+    mySortLabel.setVisible(false);
+    
     AnAction action = ActionManager.getInstance().getAction("Arrangement.Rule.Edit");
     Presentation presentation = action.getTemplatePresentation().clone();
     Icon editIcon = presentation.getIcon();
@@ -82,6 +87,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     GridBag constraints = new GridBag().anchor(GridBagConstraints.CENTER)
       .insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, ArrangementConstants.HORIZONTAL_GAP * 2);
     add(myRowIndexControl, constraints);
+    add(new InsetsPanel(mySortLabel), new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
     add(myDelegate.getUiComponent(), new GridBag().weightx(1).anchor(GridBagConstraints.WEST));
     add(myEditButton, new GridBag().anchor(GridBagConstraints.EAST));
     setBorder(IdeBorderFactory.createEmptyBorder(ArrangementConstants.VERTICAL_GAP));
@@ -154,6 +160,10 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementMa
     myDelegate.setSelected(selected); 
   }
 
+  public void setShowSortIcon(boolean show) {
+    mySortLabel.setVisible(show);
+  }
+  
   @Override
   public Rectangle onMouseEntered(@NotNull MouseEvent e) {
     setBackground(UIUtil.getDecoratedRowColor());

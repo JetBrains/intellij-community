@@ -164,8 +164,8 @@ public class ArrangementUtil {
   }
 
   @NotNull
-  public static ArrangementConditionInfo extractConditions(@NotNull ArrangementMatchCondition condition) {
-    final ArrangementConditionInfo result = new ArrangementConditionInfo();
+  public static ArrangementRuleInfo extractConditions(@NotNull ArrangementMatchCondition condition) {
+    final ArrangementRuleInfo result = new ArrangementRuleInfo();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
