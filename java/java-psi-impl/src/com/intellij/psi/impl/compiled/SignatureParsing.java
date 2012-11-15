@@ -129,6 +129,14 @@ public class SignatureParsing {
             if(standAlone$) {
               canonicalText.append('$');
               break;
+            } else if (signature.getIndex() + 1 < signature.getEndIndex()) {
+              char next = signature.next();
+              signature.previous();
+              standAlone$ = !StringUtil.isJavaIdentifierPart(next); // $;
+              if(standAlone$) {
+                canonicalText.append('$');
+                break;
+              }
             }
           }
         case '/':
