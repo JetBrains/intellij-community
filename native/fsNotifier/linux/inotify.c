@@ -122,11 +122,19 @@ inline bool watch_limit_reached() {
 static int add_watch(const char* path, watch_node* parent) {
   int wd = inotify_add_watch(inotify_fd, path, EVENT_MASK);
   if (wd < 0) {
-    if (errno == ENOSPC) {
-      limit_reached = true;
+    if (errno == EACCES || errno == ENOENT) {
+      userlog(LOG_DEBUG, "inotify_add_watch(%s): %s", path, strerror(errno));
+      return ERR_IGNORE;
     }
-    userlog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
-    return ERR_CONTINUE;
+    else if (errno == ENOSPC) {
+      userlog(LOG_WARNING, "inotify_add_watch(%s): %s", path, strerror(errno));
+      limit_reached = true;
+      return ERR_CONTINUE;
+    }
+    else {
+      userlog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
+      return ERR_ABORT;
+    }
   }
   else {
     userlog(LOG_DEBUG, "watching %s: %d", path, wd);
@@ -228,7 +236,7 @@ static int walk_tree(const char* path, watch_node* parent, bool recursive, array
   DIR* dir = NULL;
   if (recursive) {
     if ((dir = opendir(path)) == NULL) {
-      if (errno == EACCES || errno == ENOENT) {
+      if (errno == EACCES || errno == ENOENT || errno == ENOTDIR) {
         userlog(LOG_DEBUG, "opendir(%s): %d", path, errno);
         return ERR_IGNORE;
       }
@@ -321,8 +329,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
-  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s",
-      event->wd, event->mask & (~IN_ISDIR), is_dir, node->name);
+  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->name);
 
   char path[PATH_MAX];
   strcpy(path, node->name);
@@ -335,7 +342,7 @@ static bool process_inotify_event(struct inotify_event* event) {
 
   if (is_dir && ((event->mask & IN_CREATE) == IN_CREATE || (event->mask & IN_MOVED_TO) == IN_MOVED_TO)) {
     int result = walk_tree(path, node, true, NULL);
-    if (result < 0 && result != ERR_IGNORE) {
+    if (result < 0 && result != ERR_IGNORE && result != ERR_CONTINUE) {
       return false;
     }
   }
