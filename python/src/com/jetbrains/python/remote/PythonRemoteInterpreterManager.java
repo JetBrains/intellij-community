@@ -78,7 +78,7 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteProjectSettings settings,
                                         RemoteSdkData data);
 
-  public abstract void copyFromRemote(Project project,
+  public abstract void copyFromRemote(@NotNull Project project,
                                       RemoteSdkData data,
                                       List<PathMappingSettings.PathMapping> mappings);
 
