@@ -20,6 +20,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
+import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -359,9 +360,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public List<Module> addModule(Component parent) {
+  public List<Module> addModule(Component parent, boolean anImport) {
     if (myProject.isDefault()) return null;
-    final ProjectBuilder builder = runModuleWizard(parent);
+    final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<Module>();
       final List<Module> commitedModules;
@@ -428,8 +429,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  ProjectBuilder runModuleWizard(Component dialogParent) {
-    AddModuleWizard wizard = new AddModuleWizard(dialogParent, myProject, this);
+  ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport) {
+    AddModuleWizard wizard;
+    if (anImport) {
+      wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
+      if (wizard == null) return null;
+      if (wizard.getStepCount() == 0) return wizard.getProjectBuilder();
+    }
+    else {
+      wizard = new AddModuleWizard(dialogParent, myProject, this);
+    }
     wizard.show();
     if (wizard.isOK()) {
       final ProjectBuilder builder = wizard.getProjectBuilder();

@@ -51,12 +51,14 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
+public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
+{
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
   private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
   private final Project myCurrentProject;
@@ -88,6 +90,15 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   /** Import mode */
   public AddModuleWizard(Project project, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project);
+    myCurrentProject = project;
+    myImportProviders = importProviders;
+    myModulesProvider = DefaultModulesProvider.createForProject(project);
+    initModuleWizard(project, filePath);
+  }
+
+  /** Import mode */
+  public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
+    super(getImportWizardTitle(project, importProviders), dialogParent);
     myCurrentProject = project;
     myImportProviders = importProviders;
     myModulesProvider = DefaultModulesProvider.createForProject(project);
@@ -383,5 +394,24 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       return true;
     }
     return false;
+  }
+
+  public ProjectImportProvider[] getImportProviders() {
+    return myImportProviders;
+  }
+
+  @TestOnly
+  public void doOk() {
+    doOKAction();
+  }
+
+  @TestOnly
+  public boolean isLast() {
+    return isLastStep();
+  }
+
+  @TestOnly
+  public void commit() {
+    commitStepData(getCurrentStepObject());
   }
 }

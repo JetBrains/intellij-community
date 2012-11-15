@@ -36,6 +36,11 @@ public class ModuleImportProvider extends ProjectImportProvider {
   }
 
   @Override
+  public String getPathToBeImported(VirtualFile file) {
+    return file.getPath();
+  }
+
+  @Override
   public boolean canCreateNewProject() {
     return false;
   }

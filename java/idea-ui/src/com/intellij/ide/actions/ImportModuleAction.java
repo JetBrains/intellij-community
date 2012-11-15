@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,16 +25,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,9 +49,54 @@ public class ImportModuleAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
+    doImport(project);
+  }
+
+  public static List<Module> doImport(Project project) {
+    AddModuleWizard wizard = selectFileAndCreateWizard(project, null);
+    if (wizard == null) {
+      return Collections.emptyList();
+    }
+    if (wizard.getStepCount() > 0 && !wizard.showAndGet()) return Collections.emptyList();
+
+    return createFromWizard(project, wizard);
+  }
+
+  public static List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+    if (wizard.getStepCount() > 0) {
+      if (project != null) {
+        Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
+        return Collections.singletonList(module);
+      }
+      else {
+        Project newProject = NewProjectUtil.createFromWizard(wizard, project);
+        return  newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+      }
+    }
+    else {
+      return wizard.getProjectBuilder().commit(project);
+    }
+  }
+
+  @Nullable
+  public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+    String description = getDescription(project, providers);
+    descriptor.setDescription(description);
+
+    FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
+    VirtualFile[] files = chooser.choose(null, project);
+    if (files.length == 0) {
+      return null;
+    }
+
+    final VirtualFile file = files[0];
+    return createImportWizard(project, dialogParent, file, providers);
+  }
+
+  private static String getDescription(final Project project, ProjectImportProvider[] providers) {
     List<ProjectImportProvider> list = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override
       public boolean value(ProjectImportProvider provider) {
@@ -78,18 +126,13 @@ public class ImportModuleAction extends AnAction {
       builder.append(" or");
     }
     builder.append(" directory with <b>existing sources</b> to be imported.</html>");
-    descriptor.setDescription(builder.toString());
-
-    FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
-    VirtualFile[] files = chooser.choose(null, project);
-    if (files.length > 0) {
-      final VirtualFile file = files[0];
-      doImport(project, file);
-    }
+    return builder.toString();
   }
 
-  public List<Module> doImport(final Project project, @NotNull final VirtualFile file) {
-    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+  public static AddModuleWizard createImportWizard(final Project project,
+                                                   Component dialogParent,
+                                                   final VirtualFile file,
+                                                   ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override
       public boolean value(ProjectImportProvider provider) {
@@ -98,7 +141,7 @@ public class ImportModuleAction extends AnAction {
     });
     if (available.isEmpty()) {
       Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
-      return Collections.emptyList();
+      return null;
     }
 
     String path;
@@ -109,33 +152,11 @@ public class ImportModuleAction extends AnAction {
       path = ProjectImportProvider.getDefaultPath(file);
     }
 
-    AddModuleWizard wizard = createWizard(project, available, path);
-    if (wizard.getStepCount() > 0) {
-      if (processWizard(wizard)) {
-        return createFromWizard(project, wizard);
-      }
-      return Collections.emptyList();
-    }
-    else {
-      ProjectImportBuilder builder = available.get(0).getBuilder();
-      builder.setFileToImport(file.getPath());
-      return builder.commit(project);
-    }
+    ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[available.size()]);
+
+    return dialogParent == null ? new AddModuleWizard(project, path, availableProviders) : new AddModuleWizard(project, dialogParent, path, availableProviders);
   }
 
-  protected boolean processWizard(AddModuleWizard wizard) {
-    return wizard.showAndGet();
-  }
-
-  protected AddModuleWizard createWizard(Project project, List<ProjectImportProvider> available, String path) {
-    return new AddModuleWizard(project, path, available.toArray(new ProjectImportProvider[available.size()]));
-  }
-
-
-  public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
-    Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
-    return Collections.singletonList(module);
-  }
 
   @Override
   public void update(AnActionEvent e) {

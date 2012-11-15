@@ -1,7 +1,6 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.actions.ImportProjectAction;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
@@ -38,7 +37,7 @@ import java.util.List;
 public abstract class ProjectWizardTestCase extends PlatformTestCase {
 
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
-  protected TestWizard myWizard;
+  protected AddModuleWizard myWizard;
   @Nullable
   private Project myCreatedProject;
 
@@ -95,7 +94,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   protected void createWizard(Project project) throws IOException {
     File directory = FileUtil.createTempDirectory(getName(), "new", false);
     myFilesToDelete.add(directory);
-    myWizard = new TestWizard(project, directory.getPath());
+    myWizard = new AddModuleWizard(project, DefaultModulesProvider.createForProject(project), directory.getPath());
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
@@ -149,50 +148,12 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
-    ImportModuleAction action = new ImportModuleAction() {
-      @Override
-      protected AddModuleWizard createWizard(Project project, List<ProjectImportProvider> available, String path) {
-        myWizard = new TestWizard(project, path, providers);
-        return myWizard;
-      }
 
-      @Override
-      protected boolean processWizard(AddModuleWizard wizard) {
-        runWizard(null);
-        return true;
-      }
-
-      @Override
-      public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
-        return project == null ? new ImportProjectAction().createFromWizard(project, wizard) : super.createFromWizard(project, wizard);
-      }
-    };
-
-    List<Module> modules = action.doImport(project, file);
+    myWizard = ImportModuleAction.createImportWizard(project, null, file, providers);
+    if (myWizard.getStepCount() > 0) {
+      runWizard(null);
+    }
+    List<Module> modules = ImportModuleAction.createFromWizard(project, myWizard);
     return modules == null || modules.isEmpty() ? null : modules.get(0);
   }
-
-  protected static class TestWizard extends AddModuleWizard {
-
-    public TestWizard(@Nullable Project project, String defaultPath) {
-      super(project, DefaultModulesProvider.createForProject(project), defaultPath);
-    }
-
-    public TestWizard(Project project, String filePath, ProjectImportProvider... importProvider) {
-      super(project, filePath, importProvider);
-    }
-
-    void doOk() {
-      doOKAction();
-    }
-
-    boolean isLast() {
-      return isLastStep();
-    }
-
-    void commit() {
-      commitStepData(getCurrentStepObject());
-    }
-  }
-
 }
