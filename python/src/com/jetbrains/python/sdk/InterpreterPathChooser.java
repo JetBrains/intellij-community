@@ -1,0 +1,136 @@
+package com.jetbrains.python.sdk;
+
+import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.NullableConsumer;
+import com.intellij.util.SystemProperties;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+/**
+* @author yole
+*/
+public class InterpreterPathChooser extends BaseListPopupStep<String> {
+  private final Project myProject;
+  private final Sdk[] myExistingSdks;
+  private final NullableConsumer<Sdk> myCallback;
+
+  private static final String LOCAL = "Local...";
+  private static final String REMOTE = "Remote...";
+
+  public static void show(final Project project,
+                          final Sdk[] existingSdks,
+                          final RelativePoint popupPoint,
+                          final NullableConsumer<Sdk> callback) {
+    ListPopupStep sdkHomesStep = new InterpreterPathChooser(project, existingSdks, callback);
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+    popup.show(popupPoint);
+  }
+
+  public InterpreterPathChooser(Project project,
+                                Sdk[] existingSdks,
+                                NullableConsumer<Sdk> callback) {
+    super("Select Interpreter Path", getSuggestedPythonSdkPaths(existingSdks));
+    myProject = project;
+    myExistingSdks = existingSdks;
+    myCallback = callback;
+  }
+
+  private static List<String> getSuggestedPythonSdkPaths(Sdk[] existingSdks) {
+    List<String> paths = new ArrayList<String>();
+    Collection<String> sdkHomes = PythonSdkType.getInstance().suggestHomePaths();
+    for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, existingSdks)) {
+      paths.add(FileUtil.getLocationRelativeToUserHome(sdkHome));
+    }
+    paths.add(LOCAL);
+    paths.add(REMOTE);
+    return paths;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIconFor(String aValue) {
+    if (LOCAL.equals(aValue) || REMOTE.equals(aValue)) return null;
+    String filePath = aValue;
+    if (StringUtil.startsWithChar(filePath, '~')) {
+      String home = SystemProperties.getUserHome();
+      filePath = home + filePath.substring(1);
+    }
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(filePath);
+    return flavor != null ? flavor.getIcon() : PythonSdkType.getInstance().getIcon();
+  }
+
+  @NotNull
+  @Override
+  public String getTextFor(String value) {
+    return FileUtil.toSystemDependentName(value);
+  }
+
+  private void addToModel(final String selectedValue) {
+    if (LOCAL.equals(selectedValue)) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, PythonSdkType.getInstance());
+        }
+      }, ModalityState.any());
+    }
+    else if (REMOTE.equals(selectedValue)) {
+      PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+      if (remoteInterpreterManager != null) {
+        Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, Lists.newArrayList(myExistingSdks));
+        if (sdk != null) {
+          myCallback.consume(sdk);
+        }
+      }
+      else {
+        Messages.showErrorDialog("WebDeployment is missing. Please enable WebDeployment plugin.", "Add Remote Interpreter");
+      }
+    }
+    else {
+      String filePath = selectedValue;
+      if (StringUtil.startsWithChar(filePath, '~')) {
+        String home = SystemProperties.getUserHome();
+        filePath = home + filePath.substring(1);
+      }
+      Sdk sdk = SdkConfigurationUtil.setupSdk(myExistingSdks,
+                                              LocalFileSystem.getInstance().findFileByPath(filePath),
+                                              PythonSdkType.getInstance(), false, null, null);
+      myCallback.consume(sdk);
+    }
+  }
+
+  @Override
+  public boolean canBeHidden(String value) {
+    return true;
+  }
+
+  @Override
+  public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
+    return doFinalStep(new Runnable() {
+      public void run() {
+        addToModel(selectedValue);
+      }
+    });
+  }
+}
