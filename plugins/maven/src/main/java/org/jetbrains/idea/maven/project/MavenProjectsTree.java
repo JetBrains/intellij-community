@@ -883,6 +883,11 @@ public class MavenProjectsTree {
     try {
       CRC32 crc = new CRC32();
 
+      Set<String> profiles = myExplicitProfiles;
+      if (profiles != null) {
+        updateCrc(crc, profiles.hashCode());
+      }
+
       Collection<MavenProject> allProjects = myVirtualFileToProjectMapping.values();
 
       crc.update(allProjects.size() & 0xFF);
