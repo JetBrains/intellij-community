@@ -1,11 +1,10 @@
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
-includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
+setProperty("projectHome", guessHome(this as Script))
 
-setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
+includeTargets << new File("${projectHome}/community/build/scripts/utils.gant")
+includeTargets << new File("${projectHome}/python/build/python_common.gant")
 
-setProperty("projectHome", "${basedir}/../..")
 setProperty("contribHome", "${projectHome}/contrib")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
@@ -16,14 +15,14 @@ setProperty("pluginHelp", "${outDir}/help")
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
-setProperty("pluginHome", "${basedir}/..")
+setProperty("pluginHome", "${projectHome}/python")
 setProperty("pluginRevision", "${buildNumber}")
 
 setProperty("ideaLib", "${ideaHome}/lib")
 setProperty("ideaPlugins", "${ideaHome}/plugins")
 
 
-setProperty("output", "${basedir}/../dist")
+setProperty("output", "${projectHome}/dist")
 
 setProperty("zipdir", "${output}/zip")
 setProperty("plugindir", "${zipdir}/python")
