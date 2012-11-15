@@ -115,6 +115,9 @@ public class DfaTypeValue extends DfaValue {
   }
 
   public boolean isConvertibleFrom(DfaTypeValue dfaType) {
-    return dfaType != null && myType.isConvertibleFrom(dfaType.myType);
+    if (dfaType == null) return false;
+    assert myType.isValid() : "my type invalid";
+    assert dfaType.myType.isValid() : " their type invalid";
+    return myType.isConvertibleFrom(dfaType.myType);
   }
 }
