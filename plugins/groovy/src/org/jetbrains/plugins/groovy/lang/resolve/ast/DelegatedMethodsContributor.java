@@ -17,12 +17,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashMap;
 import icons.JetgroovyIcons;
@@ -124,7 +124,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         addMethodChecked(signatures, method, substitutor, null);
       }
 
-      for (PsiClassType type : PsiClassImplUtil.getSuperTypes(clazz)) {
+      for (PsiClassType type : getSuperTypes(clazz)) {
         final PsiClassType.ClassResolveResult result = type.resolveGenerics();
         final PsiClass superClass = result.getElement();
         if (superClass == null) continue;
@@ -152,7 +152,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     final List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     //process super methods before delegated methods
-    for (PsiClassType superType : PsiClassImplUtil.getSuperTypes(clazz)) {
+    for (PsiClassType superType : getSuperTypes(clazz)) {
       processClassInner(superType, superClassSubstitutor, shouldProcessDeprecated, result, classToDelegateTo, processedWithoutDeprecated, processedAll);
     }
 
@@ -170,6 +170,18 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     }
 
     collector.addAll(result);
+  }
+
+  private static List<PsiClassType> getSuperTypes(PsiClass clazz) {
+    final PsiReferenceList elist = clazz.getExtendsList();
+    final PsiReferenceList ilist = clazz.getImplementsList();
+
+    if (elist == null && ilist == null) return ContainerUtil.emptyList();
+
+    final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
+    if (elist != null) ContainerUtil.addAll(types, elist.getReferencedTypes());
+    if (ilist != null) ContainerUtil.addAll(types, ilist.getReferencedTypes());
+    return types;
   }
 
   private static void processClassInner(PsiClassType type,
