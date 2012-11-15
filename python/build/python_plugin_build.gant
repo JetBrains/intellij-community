@@ -60,6 +60,7 @@ target(name: "unzip") {
 
 target(name: "compile", description: "Compile module python") {
   depends("unzip")
+
   ant.path(id: "classpath.lib") {
     fileset(dir: "${ideaLib}") {
       include(name: "?*.jar")
@@ -113,7 +114,11 @@ target(name: "compile", description: "Compile module python") {
   //The task requires the following libraries from IntelliJ IDEA distribution:
   //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
   ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
-    classpath(refid: "classpath.lib")
+    classpath {
+      fileset(dir: "${ideaLib}") {
+        include(name: "?*.jar")
+      }
+    }
   }
 
   //Compiler options
