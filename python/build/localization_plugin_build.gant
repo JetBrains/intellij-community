@@ -32,11 +32,11 @@ setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
 target(name: "clean", description: "Cleanup output") {
-  //ant.delete(dir: "${output}", failonerror: "false")
+  ant.delete(dir: "${output}", failonerror: "false")
   ant.delete(dir: "${classesDir}", failonerror: "false")
   ant.delete(dir: "${outDir}/classes", failonerror: "false")
-  //ant.delete(dir: "${outDir}/dist", failonerror: "false")
-  //ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
+  ant.delete(dir: "${outDir}/dist", failonerror: "false")
+  ant.delete(dir: "${outDir}/artifacts", failonerror: "false")
   ant.delete(dir: "${outDir}/jar", failonerror: "false")
   ant.delete(dir: "${outDir}/deploy", failonerror: "false")
   ant.delete(dir: "${ideaDir}/jdk16", failonerror: "false")
@@ -149,7 +149,6 @@ target(name: "jar", description: "Generate jar file") {
 }
 
 target(name: "build") {
-  depends("clean")
   depends("unzip")
   depends("compile")
 }
