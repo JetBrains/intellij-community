@@ -15,20 +15,28 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
@@ -37,6 +45,8 @@ import java.util.zip.ZipInputStream;
  *         Date: 11/14/12
  */
 public class RemoteTemplatesFactory implements ProjectTemplatesFactory {
+
+  private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
   @NotNull
   @Override
@@ -47,21 +57,43 @@ public class RemoteTemplatesFactory implements ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
+    InputStream stream = null;
+    HttpURLConnection connection = null;
+    String code = ApplicationInfo.getInstance().getBuild().getProductCode();
     try {
-      return createFromText("");
+      connection = getConnection(code + "_templates.xml");
+      stream = connection.getInputStream();
+      String text = StreamUtil.readText(stream);
+      return createFromText(text);
     }
     catch (Exception e) {
+      LOG.error(e);
       return ProjectTemplate.EMPTY_ARRAY;
+    }
+    finally {
+      StreamUtil.closeStream(stream);
+      if (connection != null) {
+        connection.disconnect();
+      }
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static ProjectTemplate[] createFromText(String text) throws IOException, JDOMException {
-    @SuppressWarnings("unchecked")
-    List<Element> templates = JDOMUtil.loadDocument(text).getRootElement().getChildren("template");
-    return ContainerUtil.map2Array(templates, ProjectTemplate.class, new Function<Element, ProjectTemplate>() {
+
+    List<Element> elements = JDOMUtil.loadDocument(text).getRootElement().getChildren("template");
+
+    List<ProjectTemplate> templates = ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ProjectTemplate>() {
       @Override
       public ProjectTemplate fun(final Element element) {
 
+        List<Element> plugins = element.getChildren("requiredPlugin");
+        for (Element plugin : plugins) {
+          String id = plugin.getTextTrim();
+          if (!PluginManager.isPluginInstalled(PluginId.getId(id))) {
+            return null;
+          }
+        }
         String type = element.getChildText("moduleType");
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
         return new ArchivedProjectTemplate(element.getChildTextTrim("name")) {
@@ -72,7 +104,15 @@ public class RemoteTemplatesFactory implements ProjectTemplatesFactory {
 
           @Override
           public ZipInputStream getStream() throws IOException {
-            return null;
+            String path = element.getChildText("path");
+            final HttpURLConnection connection = getConnection(path);
+            return new ZipInputStream(connection.getInputStream()) {
+              @Override
+              public void close() throws IOException {
+                super.close();
+                connection.disconnect();
+              }
+            };
           }
 
           @Nullable
@@ -83,5 +123,16 @@ public class RemoteTemplatesFactory implements ProjectTemplatesFactory {
         };
       }
     });
+    return templates.toArray(new ProjectTemplate[templates.size()]);
   }
+
+  private static HttpURLConnection getConnection(String path) throws IOException {
+    HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(URL + path);
+    connection.setConnectTimeout(2000);
+    connection.setReadTimeout(2000);
+    connection.connect();
+    return connection;
+  }
+
+  private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 }

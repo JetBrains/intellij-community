@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -128,9 +129,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void unzip(String path, boolean moduleMode) {
+    File dir = new File(path);
+    ZipInputStream zipInputStream = null;
     try {
-      File dir = new File(path);
-      ZipInputStream zipInputStream = myTemplate.getStream();
+      zipInputStream = myTemplate.getStream();
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
@@ -153,6 +155,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      StreamUtil.closeStream(zipInputStream);
     }
   }
 
