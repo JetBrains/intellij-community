@@ -38,7 +38,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   private final String myListName;
   private final boolean myAllowsTree;
 
-  protected FavoritesListNode(Project project, String listName, boolean tree) {
+  public FavoritesListNode(Project project, String listName, boolean tree) {
     super(project, listName);
     myProject = project;
     myListName = listName;
