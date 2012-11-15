@@ -61,6 +61,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   private static boolean isEnabled(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return false;
+    if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
 
     final List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     if (unversionedFiles != null && (! unversionedFiles.isEmpty())) return true;
@@ -131,6 +132,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
+    if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
