@@ -74,8 +74,7 @@ public class TypeUtils {
   }
 
   //getTypeIfOneOfOrSubtype
-  public static String expressionHasTypeOrSubtype(@Nullable PsiExpression expression,
-    @NonNls @NotNull String... typeNames) {
+  public static String expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String... typeNames) {
     if (expression == null) {
       return null;
     }
