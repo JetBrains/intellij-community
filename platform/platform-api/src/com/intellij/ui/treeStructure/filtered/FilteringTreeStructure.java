@@ -140,9 +140,14 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
+  public boolean isToBuildChildrenInBackground(Object element) {
+    return myBaseStructure.isToBuildChildrenInBackground(element);
+  }
+
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    return (FilteringNode)element;
+    return element instanceof FilteringNode ? (FilteringNode)element : new FilteringNode((SimpleNode)parentDescriptor, element);
   }
 
   @Override
@@ -159,6 +164,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   @Override
   public ActionCallback asyncCommit() {
     return myBaseStructure.asyncCommit();
+  }
+
+  public FilteringNode createFilteringNode(Object delegate) {
+    return new FilteringNode(null, delegate);
   }
 
   public class FilteringNode extends SimpleNode {
@@ -228,7 +237,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     public SimpleNode[] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
-        return SimpleNode.NO_CHILDREN;
+        return myDelegate instanceof SimpleNode ? ((SimpleNode)myDelegate).getChildren() : NO_CHILDREN;
       }
 
       ArrayList<FilteringNode> result = new ArrayList<FilteringNode>();
