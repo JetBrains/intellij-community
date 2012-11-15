@@ -158,6 +158,17 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
+      public void scrollToSelection() {
+        List<RadComponent> selection = getSelection();
+        if (selection.size() == 1) {
+          Rectangle bounds = selection.get(0).getBounds(myLayeredPane);
+          if (bounds != null) {
+            myLayeredPane.scrollRectToVisible(bounds);
+          }
+        }
+      }
+
+      @Override
       public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
         if (myRootComponent != null) {
           FindComponentVisitor visitor = new FindComponentVisitor(myLayeredPane, filter, x, y);

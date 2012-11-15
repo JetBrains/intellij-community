@@ -204,20 +204,24 @@ public abstract class PropertyTable extends JBTable {
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "restoreDefault");
     ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "restoreDefault");
 
-    actionMap.put("expandCurrent", new MyExpandCurrentAction(true));
+    actionMap.put("expandCurrent", new MyExpandCurrentAction(true, false));
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), "expandCurrent");
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "expandCurrent");
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0), "expandCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
+
+    actionMap.put("expandCurrentRight", new MyExpandCurrentAction(true, true));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "expandCurrentRight");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0), "expandCurrentRight");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0));
 
-    actionMap.put("collapseCurrent", new MyExpandCurrentAction(false));
+    actionMap.put("collapseCurrent", new MyExpandCurrentAction(false, false));
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), "collapseCurrent");
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "collapseCurrent");
-    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_LEFT, 0), "collapseCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
+
+    actionMap.put("collapseCurrentLeft", new MyExpandCurrentAction(false, true));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "collapseCurrentLeft");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_LEFT, 0), "collapseCurrentLeft");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_KP_LEFT, 0));
   }
 
@@ -488,7 +492,7 @@ public abstract class PropertyTable extends JBTable {
   private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
-        if (addIfNeeded(component, child,properties)) {
+        if (addIfNeeded(component, child, properties)) {
           addExpandedChildren(component, child, properties);
         }
       }
@@ -939,9 +943,11 @@ public abstract class PropertyTable extends JBTable {
 
   private class MyExpandCurrentAction extends AbstractAction {
     private final boolean myExpand;
+    private final boolean mySelect;
 
-    public MyExpandCurrentAction(boolean expand) {
+    public MyExpandCurrentAction(boolean expand, boolean select) {
       myExpand = expand;
+      mySelect = select;
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -951,16 +957,30 @@ public abstract class PropertyTable extends JBTable {
       }
 
       Property property = myProperties.get(selectedRow);
-      if (!getChildren(property).isEmpty()) {
+      List<Property> children = getChildren(property);
+      if (!children.isEmpty()) {
         if (myExpand) {
           if (!isExpanded(property)) {
             expand(selectedRow);
           }
-        }
-        else {
-          if (isExpanded(property)) {
-            collapse(selectedRow);
+          else if (mySelect) {
+            restoreSelection(children.get(0));
           }
+        }
+        else if (isExpanded(property)) {
+          collapse(selectedRow);
+        }
+        else if (mySelect) {
+          Property parent = property.getParent();
+          if (parent != null) {
+            restoreSelection(parent);
+          }
+        }
+      }
+      else if (!myExpand && mySelect) {
+        Property parent = property.getParent();
+        if (parent != null) {
+          restoreSelection(parent);
         }
       }
     }

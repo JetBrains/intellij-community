@@ -36,7 +36,7 @@ public final class TreeNodeDescriptor extends NodeDescriptor {
 
   @Override
   public boolean update() {
-    return false;
+    return true;
   }
 
   @Override

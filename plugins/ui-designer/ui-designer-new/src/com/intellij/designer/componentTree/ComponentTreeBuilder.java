@@ -87,6 +87,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
       }
       else {
         mySurfaceArea.setSelection(myTreeArea.getSelection());
+        mySurfaceArea.scrollToSelection();
       }
     }
     finally {

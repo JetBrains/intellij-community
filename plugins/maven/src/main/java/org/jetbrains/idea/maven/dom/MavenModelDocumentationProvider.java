@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
@@ -72,6 +73,10 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   private static String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
     e = getMavenElement(e);
     if (e == null) return null;
+
+    if (e instanceof FakePsiElement) {
+      return ((FakePsiElement)e).getPresentableText();
+    }
 
     boolean property = MavenDomUtil.isMavenProperty(e);
 

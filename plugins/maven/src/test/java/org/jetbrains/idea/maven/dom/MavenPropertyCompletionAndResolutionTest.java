@@ -719,7 +719,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertNotNull(ref);
 
     PsiElement resolved = ref.resolve();
-    assertEquals(System.getenv("Path"), ((IProperty)resolved).getValue());
+    assertEquals(System.getenv("Path").replaceAll("[^A-Za-z]", "_"), ((IProperty)resolved).getValue().replaceAll("[^A-Za-z]", "_"));
   }
 
   public void testCaseInsencitiveOnWindows() throws Exception {

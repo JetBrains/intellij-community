@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.model;
+package com.intellij.ide.ui.laf.darcula.ui;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.MavenDomElement;
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicPanelUI;
 
-public interface MavenDomSettingsModel extends MavenDomElement {
-  @NotNull
-  MavenDomProfiles getProfiles();
+/**
+ * @author Konstantin Bulenkov
+ */
+public class DarculaPanelUI extends BasicPanelUI {
 
-  @NotNull
-  MavenDomMirrors getMirrors();
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(JComponent c) {
+    return new DarculaPanelUI();
+  }
 }

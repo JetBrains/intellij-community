@@ -110,6 +110,10 @@ public abstract class ComponentEditableArea implements EditableArea {
     fireSelectionChanged();
   }
 
+  @Override
+  public void scrollToSelection() {
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
