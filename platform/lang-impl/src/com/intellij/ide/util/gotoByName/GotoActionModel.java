@@ -309,6 +309,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
               optionDescriptions.retainAll(descriptions);
             }
           }
+        } else {
+          optionDescriptions = null;
+          break;
         }
       }
       if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
@@ -420,7 +423,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @NotNull
   private Pattern getPattern(@NotNull String pattern) {
-    String converted = convertPattern(pattern);
+    String converted = convertPattern(pattern.trim());
     Pattern compiledPattern = myCompiledPattern;
     if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
       compiledPattern = null;
