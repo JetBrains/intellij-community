@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
@@ -33,4 +32,5 @@ public class ParameterCanBeLocalTest extends InspectionTestCase {
   public void testSimple () throws Exception { doTest(); }
   public void testIf () throws Exception { doTest(); }
   public void testFor () throws Exception { doTest(); }
+  public void testReadOnly () throws Exception { doTest(); }
 }
