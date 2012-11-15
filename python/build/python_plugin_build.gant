@@ -6,6 +6,7 @@ includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
 setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
 
 setProperty("projectHome", "${basedir}/../..")
+setProperty("contribHome", "${projectHome}/contrib")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
 setProperty("ideaHome", "${ideaDir}/jdk16")
@@ -37,6 +38,7 @@ setProperty("classesDir", "${basedir}/dist/classes")
 setProperty("testClassesDir", "${basedir}/dist/test-classes")
 
 def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest"]
+def contribPlugins = ["pycharm-flask", "pycharm-numpy"]
 
 target(name: "clean", description: "Cleanup output") {
   ant.delete(dir: "${output}", failonerror: "false")
@@ -102,6 +104,9 @@ target(name: "compile", description: "Compile module python") {
     connectorPlugins.each {
       pathelement(location: "${pluginHome}/${it}/src")
     }
+    contribPlugins.each {
+      pathelement(location: "${contribHome}/${it}/src")
+    }
     pathelement(location: "${pluginHome}/../ultimate/ultimate-verifier/src")
     pathelement(location: "${pluginHome}/../plugins/remote-run/src")
   }
@@ -136,6 +141,7 @@ target(name: "compile", description: "Compile module python") {
     include(name: "**/?*.py")
     include(name: "**/?*.ft")
     include(name: "**/?*.dic")
+    exclude(name: "**/plugin.xml")
   }
 
   ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
@@ -178,6 +184,12 @@ target(name: "compile", description: "Compile module python") {
         type(type: "file")
       }
     }
+    contribPlugins.each {
+      fileset(dir: "${contribHome}/${it}/resources") {
+        patternset(refid: "resources.pt")
+        type(type: "file")
+      }
+    }
     fileset(dir: "${pluginHome}/../community/colorSchemes/src")
   }
 
@@ -186,9 +198,6 @@ target(name: "compile", description: "Compile module python") {
   ant.copy(todir: "${classesDir}/META-INF") {
     fileset(file: "${pluginHome}/pluginSrc/META-INF/plugin.xml")
     fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
-    connectorPlugins.each {
-      fileset(file: "${pluginHome}/${it}/resources/META-INF/${it}-plugin.xml")
-    }
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
