@@ -77,6 +77,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("myI");
   }
   
+  public void testRenameInPlaceQualifyFieldReferenceInChild() throws Exception {
+    doTestInplaceRename("myI");
+  }
+  
   public void testRenameInPlaceThisNeeded() throws Exception {
     doTestInplaceRename("a");
   }
