@@ -967,7 +967,7 @@ public class ExpressionGenerator extends Generator {
       LOG.assertTrue(qualifier != null);
 
       String qualifierName = createVarByInitializer(qualifier);
-      builder.append(qualifierName).append(" == null ? null : ");
+      builder.append('(').append(qualifierName).append(" == null ? null : ");
 
       qualifierToUse = factory.createReferenceExpressionFromText(qualifierName, referenceExpression);
     }
@@ -1044,6 +1044,11 @@ public class ExpressionGenerator extends Generator {
         }
       }
     }
+
+    if (type == mOPTIONAL_DOT) {
+      builder.append(')');
+    }
+
   }
 
   private String createVarByInitializer(@NotNull GrExpression initializer) {

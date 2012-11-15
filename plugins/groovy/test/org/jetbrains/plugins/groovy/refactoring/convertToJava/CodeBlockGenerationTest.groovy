@@ -185,4 +185,6 @@ public final class Matcher {
   void testClassReference() { doTest() }
 
   void testEquals() { doTest() }
+
+  void testSelfNavigatingOperator() { doTest() }
 }
