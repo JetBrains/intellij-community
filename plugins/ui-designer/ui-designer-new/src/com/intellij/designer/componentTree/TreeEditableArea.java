@@ -136,6 +136,10 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     setRawSelection(null);
   }
 
+  @Override
+  public void scrollToSelection() {
+  }
+
   private Collection<RadComponent> getRawSelection() {
     return myTreeBuilder.getSelectedElements(RadComponent.class);
   }
