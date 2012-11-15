@@ -36,7 +36,6 @@ import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -159,12 +158,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  void setCommits(@Nullable GitRepository defaultRepository, @NotNull Collection<GitRepository> selectedRepositories,
-                  @NotNull GitCommitsByRepoAndBranch commits) {
+  void setCommits(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
     try {
       TREE_CONSTRUCTION_LOCK.writeLock().lock();
       myRootNode.removeAllChildren();
-      createNodes(defaultRepository, selectedRepositories, commits);
+      createNodes(selectedRepositories, commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
@@ -217,28 +215,19 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private void createNodes(@Nullable GitRepository defaultRepository,
-                           @NotNull Collection<GitRepository> selectedRepositories,
-                           @NotNull GitCommitsByRepoAndBranch commits) {
-    for (GitRepository repository : sortRepositories(defaultRepository, selectedRepositories, commits)) {
+  private void createNodes(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
+    for (GitRepository repository : sortRepositories(selectedRepositories, commits)) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
       createRepoNode(repository, selectedRepositories.contains(repository), commitsByBranch, myRootNode);
     }
   }
 
   @NotNull
-  private static List<GitRepository> sortRepositories(@Nullable final GitRepository defaultRepository,
-                                                      @NotNull final Collection<GitRepository> selectedRepositories,
+  private static List<GitRepository> sortRepositories(@NotNull final Collection<GitRepository> selectedRepositories,
                                                       @NotNull final GitCommitsByRepoAndBranch commits) {
     List<GitRepository> repos = new ArrayList<GitRepository>(commits.getRepositories());
     Collections.sort(repos, new Comparator<GitRepository>() {
       @Override public int compare(GitRepository r1, GitRepository r2) {
-        if (r1.equals(defaultRepository)) {
-          return -1;
-        }
-        if (r2.equals(defaultRepository)) {
-          return 1;
-        }
         // deselected repositories - to the end
         if (selectedRepositories.contains(r1) && !selectedRepositories.contains(r2)) {
           return -1;
@@ -313,10 +302,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   /**
-   * @return repositories selected (via checkboxes) to be pushed,
-   * or null if the tree is not ready (therefore no repositories could be selected).
+   * @return repositories selected (via checkboxes) to be pushed.
    */
-  @Nullable
   Collection<GitRepository> getSelectedRepositories() {
     if (myAllRepositories.size() == 1) {
       return myAllRepositories;
@@ -325,12 +312,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     try {
       TREE_CONSTRUCTION_LOCK.readLock().lock();  // wait for tree to be constructed
       if (!myTreeWasConstructed) {
-        return null;
+        return myAllRepositories;
       }
       else {
         Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
-        if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began
-          return null;
+        if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began => returning all repos.
+          return myAllRepositories;
         }
 
         for (int i = 0; i < myRootNode.getChildCount(); i++) {
