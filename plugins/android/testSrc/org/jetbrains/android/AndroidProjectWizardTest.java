@@ -40,7 +40,7 @@ import java.util.Arrays;
 public class AndroidProjectWizardTest extends ProjectWizardTestCase {
 
   public void testCreateProject() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Application", new Consumer<ModuleWizardStep>() {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Application Module", new Consumer<ModuleWizardStep>() {
       @Override
       public void consume(ModuleWizardStep step) {
         if (step instanceof AndroidModuleWizardStep) {
