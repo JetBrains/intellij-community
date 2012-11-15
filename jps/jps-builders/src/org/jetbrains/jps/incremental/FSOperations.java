@@ -178,6 +178,9 @@ public class FSOperations {
 
     Set<File> additionalDirs = null;
     Set<File> toDelete = dirsToDelete;
+    if (toDelete != null) {
+      toDelete.removeAll(doNotDelete);
+    }
     while (toDelete != null) {
       for (File file : toDelete) {
         // important: do not force deletion if the directory is not empty!
