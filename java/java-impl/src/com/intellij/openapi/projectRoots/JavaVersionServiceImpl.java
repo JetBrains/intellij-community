@@ -27,7 +27,7 @@ import org.jetbrains.annotations.TestOnly;
  * @since 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
-  private JavaSdkVersion myTestVersion = null;
+  private JavaSdkVersion myTestVersion = JavaSdkVersion.JDK_1_7;
 
   @TestOnly
   public void setTestVersion(@Nullable JavaSdkVersion testVersion, Disposable parentDisposable) {
@@ -35,7 +35,7 @@ public class JavaVersionServiceImpl extends JavaVersionService {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        myTestVersion = null;
+        myTestVersion = JavaSdkVersion.JDK_1_7;
       }
     });
   }

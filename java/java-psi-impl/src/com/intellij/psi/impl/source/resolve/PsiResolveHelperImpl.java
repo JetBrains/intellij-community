@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -532,6 +534,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (!(param instanceof PsiClassType)) return null;
     PsiManager manager = typeParam.getManager();
     if (arg instanceof PsiPrimitiveType) {
+      if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7)) return null;
       arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
       if (arg == null) return null;
     }
