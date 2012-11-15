@@ -43,10 +43,8 @@ target(name: "clean", description: "Cleanup output") {
 }
 
 target(name: "unzip") {
-  ant.mkdir(dir: "${ideaDir}")
-  ant.unzip(dest: "${ideaDir}/jdk16") {
-    fileset(dir: "${ideaDir}", includes: "ideaIU*.zip")
-  }
+  ant.mkdir(dir: "${ideaHome}")
+  ant.unzip(src: "${ideaDir}/ideaIU-${idea.build.number}.zip", dest: "${ideaHome}")
 }
 
 target(name: "compile", description: "Compile module rest") {
