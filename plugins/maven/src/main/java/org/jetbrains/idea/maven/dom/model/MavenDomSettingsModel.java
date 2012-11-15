@@ -21,4 +21,7 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
 public interface MavenDomSettingsModel extends MavenDomElement {
   @NotNull
   MavenDomProfiles getProfiles();
+
+  @NotNull
+  MavenDomMirrors getMirrors();
 }
