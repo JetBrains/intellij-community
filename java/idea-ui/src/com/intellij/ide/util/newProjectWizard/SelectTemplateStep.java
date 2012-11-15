@@ -36,10 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -860,5 +857,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;
+  }
+
+  @Override
+  public Icon getIcon() {
+    return myWizardContext.getStepIcon();
   }
 }
