@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
@@ -1110,20 +1109,28 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (operand instanceof GrListOrMap && !((GrListOrMap)operand).isMap() && typeElement instanceof GrArrayTypeElement) {
+    final PsiType type = typeElement.getType();
+    if (operand instanceof GrListOrMap && !((GrListOrMap)operand).isMap() && type instanceof PsiArrayType) {
       builder.append("new ");
-      writeTypeForNew(builder, typeElement.getType(), typeCastExpression);
-      builder.append('{');
       final GrExpression[] initializers = ((GrListOrMap)operand).getInitializers();
-      for (GrExpression initializer : initializers) {
-        initializer.accept(this);
-        builder.append(", ");
+      if (initializers.length == 0) {
+        writeTypeForNew(builder, ((PsiArrayType)type).getComponentType(), typeCastExpression);
+        builder.append("[0]");
       }
-      if (initializers.length > 0) {
-        builder.delete(builder.length() - 2, builder.length());
-        //builder.removeFromTheEnd(2);
+      else {
+        writeTypeForNew(builder, type, typeCastExpression);
+
+        builder.append('{');
+        for (GrExpression initializer : initializers) {
+          initializer.accept(this);
+          builder.append(", ");
+        }
+        if (initializers.length > 0) {
+          builder.delete(builder.length() - 2, builder.length());
+          //builder.removeFromTheEnd(2);
+        }
+        builder.append('}');
       }
-      builder.append('}');
       return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 class ArgumentListGenerator {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
 
   private final StringBuilder myBuilder;
   private final ExpressionGenerator myExpressionGenerator;
@@ -141,17 +141,23 @@ class ArgumentListGenerator {
     }
     else if (type instanceof PsiArrayType) {
       myBuilder.append("new ");
-      TypeWriter.writeTypeForNew(myBuilder, type, context);
-      myBuilder.append("{");
-
-      for (PsiElement element : arg.args) {
-        LOG.assertTrue(element instanceof GrExpression);
-        ((GrExpression)element).accept(myExpressionGenerator);
-        myBuilder.append(", ");
+      if (arg.args.isEmpty()) {
+        TypeWriter.writeType(myBuilder, ((PsiArrayType)type).getComponentType(), context);
+        myBuilder.append("[0]");
       }
-      if (arg.args.size() > 0) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
-      //if (arg.args.size() > 0) myBuilder.removeFromTheEnd(2);
-      myBuilder.append('}');
+      else {
+        TypeWriter.writeTypeForNew(myBuilder, type, context);
+        myBuilder.append("{");
+
+        for (PsiElement element : arg.args) {
+          LOG.assertTrue(element instanceof GrExpression);
+          ((GrExpression)element).accept(myExpressionGenerator);
+          myBuilder.append(", ");
+        }
+        if (arg.args.size() > 0) myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
+        //if (arg.args.size() > 0) myBuilder.removeFromTheEnd(2);
+        myBuilder.append('}');
+      }
     }
     else {
       final GrExpression listOrMap = GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, arg.args, type, project);
