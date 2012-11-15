@@ -43,7 +43,6 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -367,19 +366,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             if (!target.isTests()) {
               final File outputDir = target.getOutputDir();
               if (outputDir != null) {
-                final String outputRoot = FileUtil.toSystemIndependentName(outputDir.getPath());
-                final List<File> generatedFiles = CopyResourcesUtil.copyFormsRuntime(outputRoot, false);
-                if (!generatedFiles.isEmpty()) {
-                  // now inform others about files just copied
-                  final FileGeneratedEvent event = new FileGeneratedEvent();
-                  for (File file : generatedFiles) {
-                    final String relativePath = FileUtil.getRelativePath(outputRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
-                    if (relativePath != null) {
-                      event.add(outputRoot, relativePath);
-                    }
-                  }
-                  context.processMessage(event);
-                }
+                CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
               }
             }
           }
