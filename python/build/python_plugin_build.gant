@@ -14,6 +14,7 @@ setProperty("ideaHome", "${ideaDir}/jdk16")
 setProperty("pluginHelp", "${outDir}/help")
 
 setProperty("buildNumber", requireProperty("build.number", snapshot))
+requireProperty("idea.build.number")
 
 setProperty("pluginHome", "${basedir}/..")
 setProperty("pluginRevision", "${buildNumber}")
@@ -29,13 +30,41 @@ setProperty("plugindir", "${zipdir}/python")
 setProperty("zipname", "python-${pluginRevision}.zip")
 
 setProperty("srcDir", "${pluginHome}/src")
+setProperty("restSrcDir", "${pluginHome}/rest/src")
+setProperty("localizationSrcDir", "${pluginHome}/localization/src")
+
 setProperty("resourcesDir", "${pluginHome}/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
 setProperty("testSrcDir", "${pluginHome}/testSrc")
 setProperty("artifactsDir", "${output}/artifacts")
 
-setProperty("classesDir", "${basedir}/dist/classes")
-setProperty("testClassesDir", "${basedir}/dist/test-classes")
+setProperty("classesDir", "${outDir}/classes/python")
+setProperty("restClassesDir", "${outDir}/classes/rest")
+setProperty("localizationClassesDir", "${basedir}/classes/localization")
+
+//Compiler options
+setProperty("compilerDebug", "on")
+setProperty("compilerGenerateNoWarnings", "off")
+setProperty("compilerArgs", "")
+setProperty("compilerMaxMemory", "256m")
+
+ant.patternset(id: "resources.pt") {
+  include(name: "**/?*.properties")
+  include(name: "**/?*.template")
+  include(name: "**/?*.xml")
+  include(name: "**/?*.gif")
+  include(name: "**/?*.png")
+  include(name: "**/?*.txt")
+  include(name: "**/?*.jpeg")
+  include(name: "**/?*.jpg")
+  include(name: "**/?*.html")
+  include(name: "**/?*.dtd")
+  include(name: "**/?*.tld")
+  include(name: "**/?*.py")
+  include(name: "**/?*.ft")
+  include(name: "**/?*.dic")
+  exclude(name: "**/plugin.xml")
+}
 
 def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest"]
 def contribPlugins = ["pycharm-flask", "pycharm-numpy"]
@@ -54,10 +83,148 @@ target(name: "clean", description: "Cleanup output") {
 target(name: "unzip") {
   ant.mkdir(dir: "${ideaHome}")
   ant.unzip(src: "${ideaDir}/ideaIU-${idea.build.number}.zip", dest: "${ideaHome}")
+
+  ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
+    filterchain() {
+      deletecharacters(chars: "IU-")
+    }
+  }
 }
+
+def patchPluginXml(path) {
+  ant.replaceregexp(file: path,
+                    match: "since-build=\"\\d+\\.\\d+\"",
+                    replace: "since-build=\"${ideaBuildNumber}\"")
+  ant.replaceregexp(file: path,
+                    match: "\\d+\\.SNAPSHOT",
+                    replace: "${ideaBuildNumber}")
+
+}
+
+target(name: "compileRest", description: "Compile module rest") {
+  depends("unzip")
+  ant.path(id: "classpath.lib") {
+    fileset(dir: "${ideaLib}") {
+      include(name: "?*.jar")
+    }
+  }
+
+  //The task requires the following libraries from IntelliJ IDEA distribution:
+  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
+  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
+    classpath(refid: "classpath.lib")
+  }
+
+  ant.mkdir(dir: "${restClassesDir}")
+
+  //compile
+  ant.javac2(destdir: "${restClassesDir}",
+             debug: "${compilerDebug}",
+             nowarn: "${compilerGenerateNoWarnings}",
+             memorymaximumsize: "${compilerMaxMemory}",
+             fork: "true") {
+    compilerarg(line: "${compilerArgs}")
+    classpath(refid: "classpath.lib")
+    src {
+      pathelement(location: "${restSrcDir}")
+    }
+  }
+
+  //copy resources
+  ant.copy(todir: "${restClassesDir}") {
+    fileset(dir: "${restSrcDir}") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+  }
+
+  //copy plugin.xml
+  ant.mkdir(dir: "${restClassesDir}/META-INF")
+  ant.copy(todir: "${restClassesDir}/META-INF") {
+    fileset(dir: "${pluginHome}/rest/resources/META-INF")
+  }
+
+  patchPluginXml("${restClassesDir}/META-INF/plugin.xml")
+}
+
+target(name: "jarRest", description: "Generate jar file for ReST plugin") {
+  depends("compileRest")
+  ant.mkdir(dir: "${output}")
+  ant.jar(destfile: "${jarName}", basedir: "${restClassesDir}") {
+    manifest() {
+      attribute(name: "Revision", value: "${pluginRevision}")
+      //<!--<attribute name="Build" value="${plugin.version}"/>-->
+    }
+  }
+}
+
+target(name: "compileLocalization", description: "Compile module localization") {
+  depends("unzip")
+  ant.path(id: "classpath.lib") {
+    fileset(dir: "${ideaLib}") {
+      include(name: "?*.jar")
+    }
+  }
+
+  ant.path(id: "sourcepath") {
+    dirset(dir: "${pluginHome}") {
+      include(name: "localization/src")
+    }
+  }
+  //The task requires the following libraries from IntelliJ IDEA distribution:
+  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
+  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
+    classpath(refid: "classpath.lib")
+  }
+
+  ant.mkdir(dir: "${localizationClassesDir}")
+
+  //compile
+  ant.javac2(destdir: "${localizationClassesDir}",
+             debug: "${compilerDebug}",
+             nowarn: "${compilerGenerateNoWarnings}",
+             memorymaximumsize: "${compilerMaxMemory}",
+             fork: "true") {
+    compilerarg(line: "${compilerArgs}")
+    classpath(refid: "classpath.lib")
+    src {
+      pathelement(location: "${localizationSrcDir}")
+    }
+  }
+
+  //copy resources
+  ant.copy(todir: "${localizationClassesDir}") {
+    fileset(dir: "${localizationSrcDir}") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+  }
+
+  //copy plugin.xml
+  ant.mkdir(dir: "${localizationClassesDir}/META-INF")
+  ant.copy(todir: "${localizationClassesDir}/META-INF") {
+    fileset(dir: "${pluginHome}/localization/resources/META-INF")
+  }
+
+  patchPluginXml("${localizationClassesDir}/META-INF/plugin.xml")
+}
+
+target(name: "jarLocalization", description: "Generate jar file for localization plugin") {
+  depends("compile")
+  ant.mkdir(dir: "${output}")
+  ant.jar(destfile: "${jarName}", basedir: "${localizationClassesDir}") {
+    manifest() {
+      attribute(name: "Revision", value: "${pluginRevision}")
+      //<!--<attribute name="Build" value="${plugin.version}"/>-->
+    }
+  }
+}
+
 
 target(name: "compile", description: "Compile module python") {
   depends("unzip")
+  depends("jarRest")
+  depends("jarLocalization")
 
   ant.path(id: "classpath.lib") {
     fileset(dir: "${ideaLib}") {
@@ -119,40 +286,6 @@ target(name: "compile", description: "Compile module python") {
     }
   }
 
-  //Compiler options
-  setProperty("compilerDebug", "on")
-  setProperty("compilerGenerateNoWarnings", "off")
-  setProperty("compilerArgs", "")
-  setProperty("compilerMaxMemory", "256m")
-
-  ant.patternset(id: "sources.pt") {
-    exclude(name: "**/.svn/**")
-  }
-
-  ant.patternset(id: "resources.pt") {
-    include(name: "**/?*.properties")
-    include(name: "**/?*.template")
-    include(name: "**/?*.xml")
-    include(name: "**/?*.gif")
-    include(name: "**/?*.png")
-    include(name: "**/?*.txt")
-    include(name: "**/?*.jpeg")
-    include(name: "**/?*.jpg")
-    include(name: "**/?*.html")
-    include(name: "**/?*.dtd")
-    include(name: "**/?*.tld")
-    include(name: "**/?*.py")
-    include(name: "**/?*.ft")
-    include(name: "**/?*.dic")
-    exclude(name: "**/plugin.xml")
-  }
-
-  ant.loadfile(srcfile: "${ideaHome}/build.txt", property: "ideaBuildNumber") {
-    filterchain() {
-      deletecharacters(chars: "IU-")
-    }
-  }
-
   ant.mkdir(dir: "${classesDir}")
 
   //compile
@@ -164,7 +297,6 @@ target(name: "compile", description: "Compile module python") {
     compilerarg(line: "${compilerArgs}")
     classpath(refid: "classpath.lib")
     src(refid: "sourcepath")
-    patternset(refid: "sources.pt")
   }
 
   //copy resources
@@ -252,6 +384,7 @@ target(name: "build") {
 }
 
 target(name: "dist", description: "main target") {
+  depends("clean")
   depends("build")
   depends("zip")
 }
