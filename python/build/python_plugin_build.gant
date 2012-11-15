@@ -67,7 +67,8 @@ ant.patternset(id: "resources.pt") {
   exclude(name: "**/plugin.xml")
 }
 
-def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest"]
+def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest",
+                        "python-remote-interpreter"]
 def contribPlugins = ["pycharm-flask", "pycharm-numpy"]
 
 target(name: "clean", description: "Cleanup output") {

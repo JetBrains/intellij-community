@@ -7,6 +7,7 @@
   <depends optional="true" config-file="python-rest-plugin.xml">org.jetbrains.plugins.python-rest</depends>
   <depends optional="true" config-file="python-localization-plugin.xml">org.jetbrains.plugins.python-localization</depends>
   <depends optional="true" config-file="django-db-config-plugin.xml">com.intellij.persistence.database</depends>
+  <depends optional="true" config-file="python-remote-interpreter-plugin.xml">com.jetbrains.plugins.webDeployment</depends>
 
   <xi:include href="/META-INF/pycharm-numpy-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/pycharm-flask-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
