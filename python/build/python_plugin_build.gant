@@ -22,7 +22,7 @@ setProperty("ideaLib", "${ideaHome}/lib")
 setProperty("ideaPlugins", "${ideaHome}/plugins")
 
 
-setProperty("output", "${projectHome}/dist")
+setProperty("output", "${projectHome}/python/dist")
 
 setProperty("zipdir", "${output}/zip")
 setProperty("plugindir", "${zipdir}/python")
@@ -34,7 +34,6 @@ setProperty("localizationSrcDir", "${pluginHome}/localization/src")
 
 setProperty("resourcesDir", "${pluginHome}/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
-setProperty("testSrcDir", "${pluginHome}/testSrc")
 
 setProperty("classesRootDir", "${outDir}/classes")
 setProperty("classesDir", "${classesRootDir}/python")
