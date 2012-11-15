@@ -153,11 +153,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  private static void newReferenceList(JavaClassReferenceListElementType type, StubElement parent, String... types) {
+  public static void newReferenceList(JavaClassReferenceListElementType type, StubElement parent, String... types) {
     PsiReferenceList.Role role;
     if (type == JavaStubElementTypes.EXTENDS_LIST) role = PsiReferenceList.Role.EXTENDS_LIST;
     else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) role = PsiReferenceList.Role.IMPLEMENTS_LIST;
     else if (type == JavaStubElementTypes.THROWS_LIST) role = PsiReferenceList.Role.THROWS_LIST;
+    else if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) role = PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
     else throw new IllegalArgumentException("Unknown type: " + type);
 
     new PsiClassReferenceListStubImpl(type, parent, types, role);
@@ -175,9 +176,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @Nullable
   private static String parseClassSignature(final CharacterIterator signatureIterator, final List<String> convertedInterfaces)
     throws ClsFormatException {
-    final String convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+    final String convertedSuper = SignatureParsing.parseTopLevelClassRefSignature(signatureIterator);
     while (signatureIterator.current() != CharacterIterator.DONE) {
-      final String ifs = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+      final String ifs = SignatureParsing.parseTopLevelClassRefSignature(signatureIterator);
       if (ifs == null) throw new ClsFormatException();
 
       convertedInterfaces.add(ifs);

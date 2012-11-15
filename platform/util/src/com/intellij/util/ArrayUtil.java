@@ -710,7 +710,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static String[] toStringArray(@NotNull Collection<String> collection) {
+  public static String[] toStringArray(@Nullable Collection<String> collection) {
     return ArrayUtilRt.toStringArray(collection);
   }
 

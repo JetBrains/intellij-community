@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -43,9 +44,9 @@ public class ArrayUtilRt {
   public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
 
   @NotNull
-  public static String[] toStringArray(@NotNull Collection<String> collection) {
-    if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
-    return ContainerUtilRt.toArray(collection, new String[collection.size()]);
+  public static String[] toStringArray(@Nullable Collection<String> collection) {
+    return collection == null || collection.isEmpty()
+           ? EMPTY_STRING_ARRAY : ContainerUtilRt.toArray(collection, new String[collection.size()]);
   }
 
   /**
