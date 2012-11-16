@@ -189,7 +189,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       return;
     }
     myRuleInfo.setNamePattern(namePattern);
-    updateModelValue();
+    apply();
   }
 
   @Override
@@ -211,23 +211,18 @@ public class ArrangementMatchingRuleEditor extends JPanel {
    * @param row  row index of the rule which match condition should be edited (if defined);
    *              <code>'-1'</code> as an indication that no settings should be active
    */
-  public void updateState(int row) {
-    updateState(row, true);
-  }
-  
-  private void updateState(int row, boolean newModel) {
-    myAlarm.cancelAllRequests();
-    if (newModel) {
-      myRow = row;
-      myRuleInfo.clear();
-      myNameField.setText("");
-      myAlarm.cancelAllRequests();
-      myRequestFocus = true;
-    }
-
+  public void reset(int row) {
     // Reset state.
+    myNameField.setText("");
+    myAlarm.cancelAllRequests();
+    myRow = row;
+    myRuleInfo.clear();
+    myRequestFocus = true;
     for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
       component.setEnabled(false);
+      component.setSelected(false);
+    }
+    for (ArrangementOrderTypeComponent component : myOrderTypeComponents.values()) {
       component.setSelected(false);
     }
 
@@ -239,15 +234,12 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
     Object element = model.getElementAt(row);
     if (element instanceof EmptyArrangementRuleComponent) {
+      // Disable conditions which are not applicable for empty rules (e.g. we don't want to enable 'volatile' condition
+      // for java rearranger if no 'field' condition is selected.
       for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
         ArrangementAtomMatchCondition condition = component.getMatchCondition();
         Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
         component.setEnabled(map.get(condition.getType()).contains(condition.getValue()));
-      }
-      myRuleInfo.clearConditions();
-      ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(myRuleInfo.getOrderType());
-      if (orderTypeComponent != null) {
-        orderTypeComponent.setSelected(true);
       }
       return;
     }
@@ -256,11 +248,24 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     }
 
     StdArrangementMatchRule rule = (StdArrangementMatchRule)element;
+    myRuleInfo.setOrderType(rule.getOrderType());
+    ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(rule.getOrderType());
+    if (orderTypeComponent != null) {
+      orderTypeComponent.setSelected(true);
+    }
+
     ArrangementMatchCondition condition = rule.getMatcher().getCondition();
     ArrangementRuleInfo infoWithConditions = ArrangementUtil.extractConditions(condition);
     myRuleInfo.copyConditionsFrom(infoWithConditions);
-    myNameField.setText(myRuleInfo.getNamePattern() == null ? "" : myRuleInfo.getNamePattern());
+    myNameField.setText(myRuleInfo.getNamePattern());
+    
+    disableInapplicableConditions(condition);
+  }
 
+  /**
+   * Disable conditions not applicable at the current context (e.g. disable 'synchronized' if no 'method' is selected).
+   */
+  private void disableInapplicableConditions(@NotNull ArrangementMatchCondition condition) {
     Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
@@ -271,23 +276,9 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         }
       }
     }
-    for (ArrangementOrderTypeComponent component : myOrderTypeComponents.values()) {
-      component.setSelected(false);
-    }
-    ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(rule.getOrderType());
-    if (orderTypeComponent != null) {
-      orderTypeComponent.setSelected(true);
-    }
-
-    repaint();
   }
 
-  private void updateState() {
-    updateModelValue();
-    updateState(myRow, false);
-  }
-
-  private void updateModelValue() {
+  private void apply() {
     Object modelValue = myRuleInfo.buildRule();
     if (modelValue == null) {
       modelValue = new EmptyArrangementRuleComponent(myControl.getRowHeight(myRow));
@@ -322,8 +313,14 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         continue;
       }
       if (component.isEnabled()) {
-        onComponentSelected(component);
+        if (myRuleInfo.hasCondition(component.getMatchCondition().getValue())) {
+          removeCondition(component);
+        }
+        else {
+          addCondition(component);
+        }
       }
+      apply();
       return;
     }
     for (ArrangementOrderTypeComponent component : myOrderTypeComponents.values()) {
@@ -332,26 +329,26 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         continue;
       }
       if (component.getOrderType() != myRuleInfo.getOrderType()) {
+        ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(myRuleInfo.getOrderType());
+        if (orderTypeComponent != null) {
+          orderTypeComponent.setSelected(false);
+        }
+        orderTypeComponent = myOrderTypeComponents.get(component.getOrderType());
+        if (orderTypeComponent != null) {
+          orderTypeComponent.setSelected(true);
+        }
         myRuleInfo.setOrderType(component.getOrderType());
-        updateState();
+        apply();
       }
       return;
     }
   }
-  
-  private void onComponentSelected(@NotNull ArrangementAtomMatchConditionComponent component) {
-    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
-    boolean remove = myRuleInfo.hasCondition(chosenCondition.getValue());
-    component.setSelected(!remove);
-    repaintComponent(component);
-    if (remove) {
-      myRuleInfo.removeCondition(chosenCondition.getValue());
-      ensureConsistency();
-      updateState();
-      return;
-    }
 
+  private void addCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
+    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
     Collection<Set<?>> mutexes = myFilter.getMutexes();
+    
+    // Update 'mutex conditions', i.e. conditions which can't be active at the same time (e.g. type 'field' and type 'method').
     for (Set<?> mutex : mutexes) {
       if (!mutex.contains(chosenCondition.getValue())) {
         continue;
@@ -372,13 +369,18 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
           // There is a possible case that some conditions become unavailable, e.g. changing type from 'field' to 'method'
           // makes 'volatile' condition inappropriate.
-          updateState();
+          assert newCondition != null;
+          disableInapplicableConditions(newCondition);
           return;
         }
       }
     }
-    myRuleInfo.addAtomCondition(chosenCondition);
-    updateState();
+    myRuleInfo.addAtomCondition(chosenCondition); 
+  }
+
+  private void removeCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
+    myRuleInfo.removeCondition(component.getMatchCondition().getValue());
+    ensureConsistency();
   }
 
   private void ensureConsistency() {
@@ -401,15 +403,6 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         ensureConsistency();
         return;
       }
-    }
-  }
-
-  private void repaintComponent(@NotNull ArrangementMatchConditionComponent component) {
-    Rectangle bounds = component.getScreenBounds();
-    if (bounds != null) {
-      Point location = bounds.getLocation();
-      SwingUtilities.convertPointFromScreen(location, this);
-      repaint(location.x, location.y, bounds.width, bounds.height);
     }
   }
 

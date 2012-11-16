@@ -327,7 +327,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
       width -= ((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
-    myEditor.updateState(rowToEdit);
+    myEditor.reset(rowToEdit);
     mySkipSelectionChange = true;
     try {
       getModel().insertRow(myEditorRow, new Object[]{editor});
