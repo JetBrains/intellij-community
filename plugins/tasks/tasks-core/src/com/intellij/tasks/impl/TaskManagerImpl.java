@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -57,6 +58,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
@@ -660,6 +662,29 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         activateTimeTrackingToolWindow();
       }
     });
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        IdeEventQueue.getInstance().addIdleListener(new Runnable() {
+          @Override
+          public void run() {
+            if (myTimeTrackingTimer.isRunning()) {
+              myTimeTrackingTimer.stop();
+            }
+          }
+        }, getState().timeTrackingSuspendDelayInSeconds * 1000);
+
+        IdeEventQueue.getInstance().addActivityListener(new Runnable() {
+          @Override
+          public void run() {
+            if (!myTimeTrackingTimer.isRunning()) {
+              myTimeTrackingTimer.start();
+            }
+          }
+        }, myProject);
+      }
+    });
   }
 
   private void activateTimeTrackingToolWindow() {
@@ -919,6 +944,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     @Tag("servers")
     public Element servers = new Element("servers");
+    public int timeTrackingSuspendDelayInSeconds = 60;
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {
