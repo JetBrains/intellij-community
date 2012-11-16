@@ -24,8 +24,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -66,11 +66,13 @@ public class SvnEditCommitMessageAction extends AnAction {
   }
 
   public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<String> listener, final boolean fromVersionControl) {
-    final String edited = Messages.showMultilineInputDialog(project, "Attention! Previous message will be lost!\n\nNew revision comment:",
-                                                            "Edit Revision # " + number + " Comment", oldComment,
-                                                            Messages.getInformationIcon(), null);
-    if (edited == null || edited.trim().equals(oldComment.trim())) return;
-    ProgressManager.getInstance().run(new EditMessageTask(project, edited, location, number, listener, fromVersionControl));
+    final SvnEditCommitMessageDialog dialog = new SvnEditCommitMessageDialog(project, number, oldComment);
+    dialog.show();
+    if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
+      final String edited = dialog.getMessage();
+      if (edited.trim().equals(oldComment.trim())) return;
+      ProgressManager.getInstance().run(new EditMessageTask(project, edited, location, number, listener, fromVersionControl));
+    }
   }
 
   @Override

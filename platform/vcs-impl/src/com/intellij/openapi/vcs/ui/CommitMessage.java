@@ -41,10 +41,14 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   private final EditorTextField myEditorField;
   private final Project         myProject;
   private Consumer<String> myMessageConsumer;
-  private final TitledSeparator mySeparator;
+  private TitledSeparator mySeparator;
   private boolean myCheckSpelling;
 
   public CommitMessage(Project project) {
+    this(project, true);
+  }
+
+  public CommitMessage(Project project, final boolean withSeparator) {
     super(new BorderLayout());
     boolean checkSpelling = true;
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -62,17 +66,23 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
     JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBorder(BorderFactory.createEmptyBorder());
-    mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
-    JPanel separatorPanel = new JPanel(new BorderLayout());
-    separatorPanel.add(mySeparator, BorderLayout.SOUTH);
-    separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
-    labelPanel.add(separatorPanel, BorderLayout.CENTER);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), true);
+    if (withSeparator) {
+      mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
+      JPanel separatorPanel = new JPanel(new BorderLayout());
+      separatorPanel.add(mySeparator, BorderLayout.SOUTH);
+      separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
+      labelPanel.add(separatorPanel, BorderLayout.CENTER);
+    }
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), withSeparator);
     toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
-    labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
-    add(labelPanel, BorderLayout.NORTH);
+    if (withSeparator) {
+      labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+      add(labelPanel, BorderLayout.NORTH);
+    } else {
+      add(toolbar.getComponent(), BorderLayout.EAST);
+    }
 
     setBorder(BorderFactory.createEmptyBorder());
   }
@@ -85,7 +95,9 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   }
 
   public void setSeparatorText(final String text) {
-    mySeparator.setText(text);
+    if (mySeparator != null) {
+      mySeparator.setText(text);
+    }
   }
 
   @Override
