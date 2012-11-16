@@ -116,7 +116,12 @@ public class JavacProtoUtil {
     msgBuilder.setText(diagnostic.getMessage(Locale.US));
 
     final JavaFileObject source = diagnostic.getSource();
-    final URI srcUri = source != null? source.toUri() : null;
+    URI srcUri = null;
+    try {
+      srcUri = source != null? source.toUri() : null;
+    }
+    catch (Exception ignored) {
+    }
     if (srcUri != null) {
       msgBuilder.setSourceUri(srcUri.toString());
     }
