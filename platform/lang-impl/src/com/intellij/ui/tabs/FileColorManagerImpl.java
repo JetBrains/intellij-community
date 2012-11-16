@@ -69,7 +69,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultDarkColors.put("Orange", new Color(0xB85E3A));
     ourDefaultDarkColors.put("Rose", new Color(0x4B193E));
     ourDefaultDarkColors.put("Violet", new Color(0x341657));
-    ourDefaultDarkColors.put("Yellow", new Color(0x402D10));
+    ourDefaultDarkColors.put("Yellow", new Color(0x494539));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
