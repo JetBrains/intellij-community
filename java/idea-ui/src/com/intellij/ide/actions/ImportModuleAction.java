@@ -83,7 +83,7 @@ public class ImportModuleAction extends AnAction {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-    String description = getDescription(project, providers);
+    String description = getFileChooserDescription(project);
     descriptor.setDescription(description);
 
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
@@ -96,11 +96,12 @@ public class ImportModuleAction extends AnAction {
     return createImportWizard(project, dialogParent, file, providers);
   }
 
-  private static String getDescription(final Project project, ProjectImportProvider[] providers) {
+  public static String getFileChooserDescription(final Project project) {
+    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     List<ProjectImportProvider> list = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
       @Override
       public boolean value(ProjectImportProvider provider) {
-        return project == null || provider.canCreateNewProject();
+        return project != null || provider.canCreateNewProject();
       }
     });
     StringBuilder builder = new StringBuilder("<html>Select");
